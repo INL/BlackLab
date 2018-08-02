@@ -13,87 +13,88 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class JobHitsGrouped extends JobWithHits {
 
-	public static class JobDescHitsGrouped extends JobDescription {
+    public static class JobDescHitsGrouped extends JobDescription {
 
-		HitGroupSettings groupSettings;
+        HitGroupSettings groupSettings;
 
-		private HitGroupSortSettings groupSortSettings;
+        private HitGroupSortSettings groupSortSettings;
 
-		public JobDescHitsGrouped(SearchParameters param, JobDescription hitsToGroup, SearchSettings searchSettings, HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
-			super(param, JobHitsGrouped.class, hitsToGroup, searchSettings);
-			this.groupSettings = groupSettings;
-			this.groupSortSettings = groupSortSettings;
-		}
+        public JobDescHitsGrouped(SearchParameters param, JobDescription hitsToGroup, SearchSettings searchSettings,
+                HitGroupSettings groupSettings, HitGroupSortSettings groupSortSettings) {
+            super(param, JobHitsGrouped.class, hitsToGroup, searchSettings);
+            this.groupSettings = groupSettings;
+            this.groupSortSettings = groupSortSettings;
+        }
 
-		@Override
-		public HitGroupSettings getHitGroupSettings() {
-			return groupSettings;
-		}
+        @Override
+        public HitGroupSettings getHitGroupSettings() {
+            return groupSettings;
+        }
 
-		@Override
-		public HitGroupSortSettings getHitGroupSortSettings() {
-			return groupSortSettings;
-		}
+        @Override
+        public HitGroupSortSettings getHitGroupSortSettings() {
+            return groupSortSettings;
+        }
 
-		@Override
-		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
-		}
+        @Override
+        public String uniqueIdentifier() {
+            return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
+        }
 
-		@Override
-		public void dataStreamEntries(DataStream ds) {
-			super.dataStreamEntries(ds);
-			ds	.entry("groupSettings", groupSettings)
-				.entry("groupSortSettings", groupSortSettings);
-		}
+        @Override
+        public void dataStreamEntries(DataStream ds) {
+            super.dataStreamEntries(ds);
+            ds.entry("groupSettings", groupSettings)
+                    .entry("groupSortSettings", groupSortSettings);
+        }
 
-		@Override
-		public String getUrlPath() {
-			return "hits";
-		}
+        @Override
+        public String getUrlPath() {
+            return "hits";
+        }
 
-	}
+    }
 
-	private HitGroups groups;
+    private HitGroups groups;
 
-	public JobHitsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
-		super(searchMan, user, par);
-	}
+    public JobHitsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+        super(searchMan, user, par);
+    }
 
-	@Override
-	protected void performSearch() throws BlsException {
-		// Now, group the hits.
-		hits = ((JobWithHits)inputJob).getHits();
-		setPriorityInternal();
-		HitGroupSettings groupSett = jobDesc.getHitGroupSettings();
-		if (groupSett == null)
-			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "No group property specified.");
-		HitProperty groupProp = null;
-		groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
-		if (groupProp == null)
-			throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupSett.groupBy() + "'.");
-		HitGroups theGroups = hits.groupedBy(groupProp);
+    @Override
+    protected void performSearch() throws BlsException {
+        // Now, group the hits.
+        hits = ((JobWithHits) inputJob).getHits();
+        setPriorityInternal();
+        HitGroupSettings groupSett = jobDesc.getHitGroupSettings();
+        if (groupSett == null)
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "No group property specified.");
+        HitProperty groupProp = null;
+        groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
+        if (groupProp == null)
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupSett.groupBy() + "'.");
+        HitGroups theGroups = hits.groupedBy(groupProp);
 
-		HitGroupSortSettings sortSett = jobDesc.getHitGroupSortSettings();
-		if (sortSett != null)
-			theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
+        HitGroupSortSettings sortSett = jobDesc.getHitGroupSortSettings();
+        if (sortSett != null)
+            theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
 
-		groups = theGroups; // we're done, caller can use the groups now
-	}
+        groups = theGroups; // we're done, caller can use the groups now
+    }
 
-	public HitGroups getGroups() {
-		return groups;
-	}
+    public HitGroups getGroups() {
+        return groups;
+    }
 
-	@Override
-	protected void dataStreamSubclassEntries(DataStream ds) {
-		ds	.entry("hitsRetrieved", hits == null ? -1 : hits.countSoFarHitsRetrieved())
-			.entry("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
-	}
+    @Override
+    protected void dataStreamSubclassEntries(DataStream ds) {
+        ds.entry("hitsRetrieved", hits == null ? -1 : hits.countSoFarHitsRetrieved())
+                .entry("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
+    }
 
-	@Override
-	protected void cleanup() {
-		groups = null;
-		super.cleanup();
-	}
+    @Override
+    protected void cleanup() {
+        groups = null;
+        super.cleanup();
+    }
 }

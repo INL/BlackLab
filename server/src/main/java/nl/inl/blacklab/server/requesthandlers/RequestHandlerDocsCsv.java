@@ -34,26 +34,36 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for hit results.
  */
 public class RequestHandlerDocsCsv extends RequestHandler {
-    public RequestHandlerDocsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
+    public RequestHandlerDocsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+            String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
     /**
-     * Get the docs (and the groups from which they were extracted - if applicable) or the groups for this request.
-     * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
-     * Sorting is already applied to the results.
+     * Get the docs (and the groups from which they were extracted - if applicable)
+     * or the groups for this request. Exceptions cleanly mapping to http error
+     * responses are thrown if any part of the request cannot be fulfilled. Sorting
+     * is already applied to the results.
      *
-     * @return Docs if looking at ungrouped results, Docs+Groups if looking at results within a group, Groups if looking at groups but not within a specific group.
+     * @return Docs if looking at ungrouped results, Docs+Groups if looking at
+     *         results within a group, Groups if looking at groups but not within a
+     *         specific group.
      * @throws BlsException
      */
     // TODO share with regular RequestHandlerHits
     private Pair<DocResults, DocGroups> getDocs() throws BlsException {
         // Might be null
-        String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
-        String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
-        String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
+        String groupBy = searchParam.getString("group");
+        if (groupBy.isEmpty())
+            groupBy = null;
+        String viewGroup = searchParam.getString("viewgroup");
+        if (viewGroup.isEmpty())
+            viewGroup = null;
+        String sortBy = searchParam.getString("sort");
+        if (sortBy.isEmpty())
+            sortBy = null;
 
-        JobWithDocs job= null;
+        JobWithDocs job = null;
         DocResults docs = null;
         DocGroups groups = null;
 
@@ -65,7 +75,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 // don't set docs yet - only return docs if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
+                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(),
+                            viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     DocGroup group = groups.getGroup(groupId);
@@ -85,7 +96,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                         docs.sort(sortProp, sortProp.isReverse());
                     }
                 }
-            } else  {
+            } else {
                 // Don't use JobDocsAll, as we only might not need them all.
                 job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
                 docs = job.getDocResults();
@@ -220,5 +231,3 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         return true;
     }
 }
-
-

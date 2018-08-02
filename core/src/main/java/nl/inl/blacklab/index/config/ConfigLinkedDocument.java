@@ -8,9 +8,7 @@ import java.util.List;
 public class ConfigLinkedDocument {
 
     public static enum MissingLinkPathAction {
-        IGNORE,
-        WARN,
-        FAIL;
+        IGNORE, WARN, FAIL;
 
         public static MissingLinkPathAction fromStringValue(String v) {
             return valueOf(v.toUpperCase());
@@ -24,13 +22,21 @@ public class ConfigLinkedDocument {
     /** Linked document type name, and field name if we're going to store it */
     private String name;
 
-    /** Should we store the linked document in the content store? (default: false) */
+    /**
+     * Should we store the linked document in the content store? (default: false)
+     */
     private boolean store = false;
 
-    /** Where in the document to find the information we need to locate the linked document. */
+    /**
+     * Where in the document to find the information we need to locate the linked
+     * document.
+     */
     List<ConfigLinkValue> linkValues = new ArrayList<>();
 
-    /** What to do if we can't find the link information: ignore, warn or fail (default: fail) */
+    /**
+     * What to do if we can't find the link information: ignore, warn or fail
+     * (default: fail)
+     */
     private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;
 
     /** Format of the linked input file */
@@ -39,10 +45,15 @@ public class ConfigLinkedDocument {
     /** File or URL reference to our linked document (or archive containing it) */
     private String inputFile;
 
-    /** If input file is a TAR or ZIP archive, this is the path inside the archive */
+    /**
+     * If input file is a TAR or ZIP archive, this is the path inside the archive
+     */
     private String pathInsideArchive;
 
-    /** Path to our specific document inside this file (if omitted, file must contain exactly one document) */
+    /**
+     * Path to our specific document inside this file (if omitted, file must contain
+     * exactly one document)
+     */
     private String documentPath;
 
     public ConfigLinkedDocument(String name) {

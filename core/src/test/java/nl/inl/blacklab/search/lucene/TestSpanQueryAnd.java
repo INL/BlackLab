@@ -23,27 +23,27 @@ import org.junit.Test;
 
 public class TestSpanQueryAnd {
 
-	@Test(expected = RuntimeException.class)
-	public void testFieldMismatch() {
-		BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));
-		BLSpanTermQuery second = new BLSpanTermQuery(new Term("contents", "bla"));
+    @Test(expected = RuntimeException.class)
+    public void testFieldMismatch() {
+        BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));
+        BLSpanTermQuery second = new BLSpanTermQuery(new Term("contents", "bla"));
 
-		// Different fields; will throw exception
-		new SpanQueryAnd(first, second);
-	}
+        // Different fields; will throw exception
+        new SpanQueryAnd(first, second);
+    }
 
-	@Test
-	public void testComplexFieldDifferentProperties() {
-		BLSpanTermQuery first = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
-				"prop1"), "bla"));
-		BLSpanTermQuery second = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
-				"prop2"), "bla"));
+    @Test
+    public void testComplexFieldDifferentProperties() {
+        BLSpanTermQuery first = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+                "prop1"), "bla"));
+        BLSpanTermQuery second = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+                "prop2"), "bla"));
 
-		// No exception here because both are properties of complex field "field"
-		SpanQueryAnd q = new SpanQueryAnd(first, second);
+        // No exception here because both are properties of complex field "field"
+        SpanQueryAnd q = new SpanQueryAnd(first, second);
 
-		// getField() will produce "base field name" of complex field
-		Assert.assertEquals("contents", q.getField());
-	}
+        // getField() will produce "base field name" of complex field
+        Assert.assertEquals("contents", q.getField());
+    }
 
 }

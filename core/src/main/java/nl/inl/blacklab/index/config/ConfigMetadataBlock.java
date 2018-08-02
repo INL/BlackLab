@@ -21,7 +21,7 @@ public class ConfigMetadataBlock {
     private Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
 
     public void validate() {
-        for (ConfigMetadataField f: fields) {
+        for (ConfigMetadataField f : fields) {
             f.validate();
         }
     }
@@ -30,7 +30,7 @@ public class ConfigMetadataBlock {
         ConfigMetadataBlock result = new ConfigMetadataBlock();
         result.setContainerPath(containerPath);
         result.setDefaultAnalyzer(defaultAnalyzer);
-        for (ConfigMetadataField f: fields) {
+        for (ConfigMetadataField f : fields) {
             result.addMetadataField(f.copy());
         }
         return result;

@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
- * Process (trees of) files, which may include archives
- * that we want to recursively process as well.
- * This class is thread-safe as long as no configuration is changed during processing.
+ * Process (trees of) files, which may include archives that we want to
+ * recursively process as well. This class is thread-safe as long as no
+ * configuration is changed during processing.
  */
 public class FileProcessor implements AutoCloseable {
 
@@ -23,32 +23,44 @@ public class FileProcessor implements AutoCloseable {
         /**
          * Handle a directory.
          * <p>
-         * Called for all processed child (and descendant if {@link FileProcessor#isRecurseSubdirs()} directories of the input file, excluding the input directory itself.
-         * NOTE: This is only called for regular directories, and not for archives or processed directories within archives.
-         * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the directory names may not match the provided pattern.
+         * Called for all processed child (and descendant if
+         * {@link FileProcessor#isRecurseSubdirs()} directories of the input file,
+         * excluding the input directory itself. NOTE: This is only called for regular
+         * directories, and not for archives or processed directories within archives.
+         * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the
+         * directory names may not match the provided pattern.
          * <p>
-         * This function may be called in multiple threads when FileProcessor was created with thread support (see {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
+         * This function may be called in multiple threads when FileProcessor was
+         * created with thread support (see
+         * {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
          *
          * @param dir the directory
-         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Throwable, String, File)}
+         * @throws Exception these will be passed to
+         *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void directory(File dir) throws Exception;
 
         /**
          * Handle a file stream.
          * <p>
-         * Called for all processed files that match the {@link FileProcessor#pattGlob}, including the input file.
-         * Not called for archives if {@link FileProcessor#isProcessArchives()} is true (though it will then be called for files within those
-         * archives).
+         * Called for all processed files that match the {@link FileProcessor#pattGlob},
+         * including the input file. Not called for archives if
+         * {@link FileProcessor#isProcessArchives()} is true (though it will then be
+         * called for files within those archives).
          * <p>
-         * This function may be called in multiple threads when FileProcessor was created with thread support (see {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
-         * <br>NOTE: the InputStream should be closed by the implementation.
+         * This function may be called in multiple threads when FileProcessor was
+         * created with thread support (see
+         * {@link FileProcessor#FileProcessor(boolean, boolean, boolean)}) <br>
+         * NOTE: the InputStream should be closed by the implementation.
          *
-         * @param path filename, including path inside archives (if the file is within an archive)
+         * @param path filename, including path inside archives (if the file is within
+         *            an archive)
          * @param is
-         * @param file (optional, if known) the file from which the InputStream was built,
-         * or - if the InputStream is a file within an archive - the archive.
-         * @throws Exception these will be passed to {@link ErrorHandler#errorOccurred(Throwable, String, File)}
+         * @param file (optional, if known) the file from which the InputStream was
+         *            built, or - if the InputStream is a file within an archive - the
+         *            archive.
+         * @throws Exception these will be passed to
+         *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void file(String path, InputStream is, File file) throws Exception;
 
@@ -67,9 +79,10 @@ public class FileProcessor implements AutoCloseable {
          * Report an error and decide whether to continue or not.
          *
          * @param e the exception
-         * @param path path to the file that the error occurred in. This includes pathing in archives if the file is inside an archive.
+         * @param path path to the file that the error occurred in. This includes
+         *            pathing in archives if the file is inside an archive.
          * @param f (optional, if known) the file from which the InputStream was built,
-         * or - if the InputStream is a file within an archive - the archive.
+         *            or - if the InputStream is a file within an archive - the archive.
          * @return true if we should continue, false to abort
          */
         boolean errorOccurred(Throwable e, String path, File f);
@@ -94,9 +107,9 @@ public class FileProcessor implements AutoCloseable {
     }
 
     /**
-     * Restrict the files we handle to a file glob?
-     * Note that this pattern is not applied to directories, and directories within archives.
-     * It is also not applied to the input file directly.
+     * Restrict the files we handle to a file glob? Note that this pattern is not
+     * applied to directories, and directories within archives. It is also not
+     * applied to the input file directly.
      */
     private Pattern pattGlob;
 
@@ -104,9 +117,9 @@ public class FileProcessor implements AutoCloseable {
     private boolean recurseSubdirs;
 
     /**
-     * Process archives as directories?
-     * Note that this setting is independent of recurseSubdirs; if this is true,
-     * files inside archives will be processed, even if recurseSubdirs is false.
+     * Process archives as directories? Note that this setting is independent of
+     * recurseSubdirs; if this is true, files inside archives will be processed,
+     * even if recurseSubdirs is false.
      */
     private boolean processArchives;
 
@@ -119,30 +132,38 @@ public class FileProcessor implements AutoCloseable {
     /** Decides whether or not to continue when an error occurs */
     private ErrorHandler errorHandler = new SimpleErrorHandler(false);
 
-    /** Executor used for processing files, uses {@link MainThreadExecutorService} if FileProcess was constructor with useThreads = false */
+    /**
+     * Executor used for processing files, uses {@link MainThreadExecutorService} if
+     * FileProcess was constructor with useThreads = false
+     */
     private ExecutorService executor = null;
 
     /**
-     * FileProcessor operates in two distinct stages:
-     * - The traversal of directories/archives, this is done on the "main" thread (i.e. the thread that initially called processFile/processInputStream)
-     * - Handling of all files/entries, this is usually done asynchronously by our Handler.
+     * FileProcessor operates in two distinct stages: - The traversal of
+     * directories/archives, this is done on the "main" thread (i.e. the thread that
+     * initially called processFile/processInputStream) - Handling of all
+     * files/entries, this is usually done asynchronously by our Handler.
      *
-     * If an exception occurs in the handling stage, we want to stop all ongoing and queued handlers,
-     * but also stop the the main thread if it's still busy traversing and creating more handlers.
-     * The problem is that the main can't directly act on exceptions thrown in handlers, as the exception is thrown asynchronously.
+     * If an exception occurs in the handling stage, we want to stop all ongoing and
+     * queued handlers, but also stop the the main thread if it's still busy
+     * traversing and creating more handlers. The problem is that the main can't
+     * directly act on exceptions thrown in handlers, as the exception is thrown
+     * asynchronously.
      *
-     * So we need a way to signal the main thread to cease all work:
-     * - aborting all handlers/tasks is easy, we can shut down the ExcecutorService directly from the handler thread when the exception occurs.
-     * - aborting the main thread will require setting some flag and some manual checking on its part
-     * we could call Thread.interrupt() on the main thread, but this would require the handlers to keep a reference to the main thread
-     * so instead just use this flag that the main thread checks while it's performing work.
+     * So we need a way to signal the main thread to cease all work: - aborting all
+     * handlers/tasks is easy, we can shut down the ExcecutorService directly from
+     * the handler thread when the exception occurs. - aborting the main thread will
+     * require setting some flag and some manual checking on its part we could call
+     * Thread.interrupt() on the main thread, but this would require the handlers to
+     * keep a reference to the main thread so instead just use this flag that the
+     * main thread checks while it's performing work.
      */
     private volatile boolean closed = false;
 
     /**
      * Separate from closed to allow aborting even while already closed or closing
-     * This happens when an error occurs while processing remainder of queue,
-     * it's also useful to allow aborting when closing unexpectedly takes a long time.
+     * This happens when an error occurs while processing remainder of queue, it's
+     * also useful to allow aborting when closing unexpectedly takes a long time.
      */
     private boolean aborted = false;
 
@@ -160,13 +181,14 @@ public class FileProcessor implements AutoCloseable {
             // just in between checking state and submitting)
             ((ThreadPoolExecutor) executor).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         } else {
-            executor = new MainThreadExecutorService((r, e) ->  { /* swallow RejectedExecutionExceptions, same as above. */ });
+            executor = new MainThreadExecutorService((r, e) -> {
+                /* swallow RejectedExecutionExceptions, same as above. */ });
         }
     }
 
     /**
-     * Only process files matching the glob.
-     * NOTE: this pattern is NOT applied to directories.
+     * Only process files matching the glob. NOTE: this pattern is NOT applied to
+     * directories.
      *
      * @param glob
      */
@@ -175,8 +197,8 @@ public class FileProcessor implements AutoCloseable {
     }
 
     /**
-     * Only process files matching the pattern.
-     * NOTE: this pattern is NOT applied to directories.
+     * Only process files matching the pattern. NOTE: this pattern is NOT applied to
+     * directories.
      *
      * @param pattGlob
      */
@@ -185,8 +207,8 @@ public class FileProcessor implements AutoCloseable {
     }
 
     /**
-     * The pattern to filter files before they are processed.
-     * NOTE: this pattern is NOT applied to directories.
+     * The pattern to filter files before they are processed. NOTE: this pattern is
+     * NOT applied to directories.
      *
      * @return the pattern
      */
@@ -241,9 +263,10 @@ public class FileProcessor implements AutoCloseable {
     /**
      * Process a file or directory.
      *
-     * If this file is a directory, all child files will be processed, files within subdirectories will only be processed if
-     * {@link #isRecurseSubdirs()} is true.
-     * For rules on how files are processed, regarding archives etc, see {@link #processInputStream(String, InputStream, File)}.
+     * If this file is a directory, all child files will be processed, files within
+     * subdirectories will only be processed if {@link #isRecurseSubdirs()} is true.
+     * For rules on how files are processed, regarding archives etc, see
+     * {@link #processInputStream(String, InputStream, File)}.
      *
      * @param file file, directory or archive to process
      * @throws FileNotFoundException
@@ -263,7 +286,7 @@ public class FileProcessor implements AutoCloseable {
                 // Report
                 if (childFile.isDirectory()) {
                     CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(childFile)), executor)
-                    .exceptionally(e -> reportAndAbort(e, childFile.toString(), childFile));
+                            .exceptionally(e -> reportAndAbort(e, childFile.toString(), childFile));
                 }
 
                 if (recurseSubdirs || !childFile.isDirectory())
@@ -277,15 +300,17 @@ public class FileProcessor implements AutoCloseable {
     /**
      * Process from an InputStream, which may be an archive or a regular file.
      *
-     * Archives (.zip and .tar.gz) will only be processed if {@link #isProcessArchives()} is true.
-     * GZipped files (.gz) will be unpacked regardless.
-     * Note that all files within archives will be processed, regardless of whether they match {@link FileProcessor#pattGlob}
+     * Archives (.zip and .tar.gz) will only be processed if
+     * {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked
+     * regardless. Note that all files within archives will be processed, regardless
+     * of whether they match {@link FileProcessor#pattGlob}
      *
-     * @param path filename, optionally including path to the file or path within an archive
+     * @param path filename, optionally including path to the file or path within an
+     *            archive
      * @param is the stream
-     * @param file (optional) the file from which the InputStream was built,
-     * or - if the InputStream is a file within an archive - the archive.
-     * This is only used for reporting to FileHandler and ErrorHandler
+     * @param file (optional) the file from which the InputStream was built, or - if
+     *            the InputStream is a file within an archive - the archive. This is
+     *            only used for reporting to FileHandler and ErrorHandler
      */
     public void processInputStream(String path, InputStream is, File file) {
         if (closed)
@@ -304,19 +329,20 @@ public class FileProcessor implements AutoCloseable {
             TarGzipReader.processGzip(path, is, handler);
         } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
             CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
-            .exceptionally(e -> reportAndAbort(e, path, file));
+                    .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
 
     /**
-     * Callback for when handler throws an exception.
-     * Report it, and if it's irrecoverable, abort.
+     * Callback for when handler throws an exception. Report it, and if it's
+     * irrecoverable, abort.
      * {@link ErrorHandler#errorOccurred(Throwable, String, File)}
      *
      * @param e
      * @param path
      * @param f
-     * @return always null, has return type to enable use as exception handler in CompletableFuture
+     * @return always null, has return type to enable use as exception handler in
+     *         CompletableFuture
      */
     private synchronized Void reportAndAbort(Throwable e, String path, File f) {
         if (e instanceof CompletionException) // async exception
@@ -331,9 +357,11 @@ public class FileProcessor implements AutoCloseable {
     }
 
     /**
-     * Like {@link FileProcessor#close()} but immediately abort all running handler tasks and cancel any pending tasks.
+     * Like {@link FileProcessor#close()} but immediately abort all running handler
+     * tasks and cancel any pending tasks.
      *
-     * Subsequent calls to close, processFile or processInputStream will have no effect.
+     * Subsequent calls to close, processFile or processInputStream will have no
+     * effect.
      */
     // this function can't be synchronized on (this) or we couldn't abort from an async handler while the main thread is working/waiting on close().
     public void abort() {
@@ -348,11 +376,13 @@ public class FileProcessor implements AutoCloseable {
     }
 
     /**
-     * Close the executor and wait until all running and pending handler tasks have completed.
-     * Calling close() while processFile or processInputStream is in progress will cause them to skip all remaining files.
-     * Files for which a task has already been put in the queue will still be processed as normal.
+     * Close the executor and wait until all running and pending handler tasks have
+     * completed. Calling close() while processFile or processInputStream is in
+     * progress will cause them to skip all remaining files. Files for which a task
+     * has already been put in the queue will still be processed as normal.
      *
-     * Subsequent calls to close, processFile or processInputStream will have no effect.
+     * Subsequent calls to close, processFile or processInputStream will have no
+     * effect.
      */
     @Override
     public void close() {

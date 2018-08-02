@@ -20,21 +20,20 @@ package nl.inl.util;
  */
 public class ExUtil {
 
-	private ExUtil() {
-	}
+    private ExUtil() {
+    }
 
-	/**
-	 * If the supplied exception is not already an instance of RuntimeException, wrap it in a
-	 * RuntimeException object.
-	 *
-	 * @param e
-	 *            the exception to wrap
-	 * @return the (possibly) wrapped exception
-	 */
-	public static RuntimeException wrapRuntimeException(Throwable e) {
-		if (e instanceof RuntimeException)
-			return (RuntimeException) e;
-		return new RuntimeException(e);
-	}
+    /**
+     * If the supplied exception is not already an instance of RuntimeException,
+     * wrap it in a RuntimeException object.
+     *
+     * @param e the exception to wrap
+     * @return the (possibly) wrapped exception
+     */
+    public static RuntimeException wrapRuntimeException(Throwable e) {
+        if (e instanceof RuntimeException)
+            return (RuntimeException) e;
+        return new RuntimeException(e);
+    }
 
 }

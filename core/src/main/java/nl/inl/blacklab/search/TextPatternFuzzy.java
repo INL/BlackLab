@@ -24,50 +24,51 @@ import nl.inl.blacklab.search.lucene.SpanFuzzyQuery;
  * A TextPattern matching a word with fuzzy matching.
  */
 public class TextPatternFuzzy extends TextPattern {
-	protected String value;
+    protected String value;
 
-	private int maxEdits;
+    private int maxEdits;
 
-	private int prefixLength;
+    private int prefixLength;
 
-	public TextPatternFuzzy(String value, int maxEdits) {
-		this(value, maxEdits, 0);
-	}
+    public TextPatternFuzzy(String value, int maxEdits) {
+        this(value, maxEdits, 0);
+    }
 
-	public TextPatternFuzzy(String value, int maxEdits, int prefixLength) {
-		this.value = value;
-		this.maxEdits = maxEdits;
-		this.prefixLength = prefixLength;
-	}
+    public TextPatternFuzzy(String value, int maxEdits, int prefixLength) {
+        this.value = value;
+        this.maxEdits = maxEdits;
+        this.prefixLength = prefixLength;
+    }
 
-	public Term getTerm(String fieldName) {
-		return new Term(fieldName, value);
-	}
+    public Term getTerm(String fieldName) {
+        return new Term(fieldName, value);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		int prefixLength1 = prefixLength;
-		String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
-		prefixLength1 += valuePrefix.length();
-		return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)), maxEdits, prefixLength1);
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        int prefixLength1 = prefixLength;
+        String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
+        prefixLength1 += valuePrefix.length();
+        return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)),
+                maxEdits, prefixLength1);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternFuzzy) {
-			TextPatternFuzzy tp = ((TextPatternFuzzy) obj);
-			return value.equals(tp.value) && maxEdits == tp.maxEdits && prefixLength == tp.prefixLength;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternFuzzy) {
+            TextPatternFuzzy tp = ((TextPatternFuzzy) obj);
+            return value.equals(tp.value) && maxEdits == tp.maxEdits && prefixLength == tp.prefixLength;
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return value.hashCode() + 13 * maxEdits + 31 * prefixLength;
-	}
+    @Override
+    public int hashCode() {
+        return value.hashCode() + 13 * maxEdits + 31 * prefixLength;
+    }
 
-	@Override
-	public String toString() {
-		return "FUZZY(" + value + ", " + maxEdits + ", " + prefixLength + ")";
-	}
+    @Override
+    public String toString() {
+        return "FUZZY(" + value + ", " + maxEdits + ", " + prefixLength + ")";
+    }
 }

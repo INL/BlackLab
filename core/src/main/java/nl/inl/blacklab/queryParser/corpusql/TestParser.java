@@ -21,27 +21,27 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 
 public class TestParser {
-	public static void main(String[] args) throws IOException, InterruptedException {
-		BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
+    public static void main(String[] args) throws IOException, InterruptedException {
+        BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
-		while (true) {
-			System.out.print("CorpusQL> ");
-			System.out.flush();
-			String expr = stdin.readLine();
-			if (expr.length() == 0) {
-				System.out.println("EXIT");
-				break;
-			}
-			try {
-				CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
-						expr));
-				System.out.println("Result: " + parser.query() + "\n");
-			} catch (TokenMgrError e) {
-				e.printStackTrace(System.err);
-			} catch (ParseException e) {
-				e.printStackTrace(System.err);
-			}
-			Thread.sleep(100);
-		}
-	}
+        while (true) {
+            System.out.print("CorpusQL> ");
+            System.out.flush();
+            String expr = stdin.readLine();
+            if (expr.length() == 0) {
+                System.out.println("EXIT");
+                break;
+            }
+            try {
+                CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
+                        expr));
+                System.out.println("Result: " + parser.query() + "\n");
+            } catch (TokenMgrError e) {
+                e.printStackTrace(System.err);
+            } catch (ParseException e) {
+                e.printStackTrace(System.err);
+            }
+            Thread.sleep(100);
+        }
+    }
 }

@@ -39,24 +39,33 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for hit results.
  */
 public class RequestHandlerHitsCsv extends RequestHandler {
-    public RequestHandlerHitsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
+    public RequestHandlerHitsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+            String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
     /**
-     * Get the hits (and the groups from which they were extracted - if applicable) or the groups for this request.
-     * Exceptions cleanly mapping to http error responses are thrown if any part of the request cannot be fulfilled.
-     * Sorting is already applied to the hits.
+     * Get the hits (and the groups from which they were extracted - if applicable)
+     * or the groups for this request. Exceptions cleanly mapping to http error
+     * responses are thrown if any part of the request cannot be fulfilled. Sorting
+     * is already applied to the hits.
      *
-     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits within a group, Groups if looking at grouped hits.
+     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
+     *         within a group, Groups if looking at grouped hits.
      * @throws BlsException
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
     private Pair<Hits, HitGroups> getHits() throws BlsException {
         // Might be null
-        String groupBy = searchParam.getString("group"); if (groupBy.isEmpty()) groupBy = null;
-        String viewGroup = searchParam.getString("viewgroup"); if (viewGroup.isEmpty()) viewGroup = null;
-        String sortBy = searchParam.getString("sort"); if (sortBy.isEmpty()) sortBy = null;
+        String groupBy = searchParam.getString("group");
+        if (groupBy.isEmpty())
+            groupBy = null;
+        String viewGroup = searchParam.getString("viewgroup");
+        if (viewGroup.isEmpty())
+            viewGroup = null;
+        String sortBy = searchParam.getString("sort");
+        if (sortBy.isEmpty())
+            sortBy = null;
 
         JobWithHits job = null;
         Hits hits = null;
@@ -90,7 +99,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                         hits = hits.sortedBy(sortProp, sortProp.isReverse());
                     }
                 }
-            } else  {
+            } else {
                 // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
                 job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
                 hits = job.getHits();
@@ -146,7 +155,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         }
     }
 
-    private static void writeHit(Kwic kwic, String mainTokenProperty, List<String> otherTokenProperties, String docPid, String docTitle, ArrayList<String> row) {
+    private static void writeHit(Kwic kwic, String mainTokenProperty, List<String> otherTokenProperties, String docPid,
+            String docTitle, ArrayList<String> row) {
         row.clear();
 
         /*
@@ -169,7 +179,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final String mainTokenProperty = getSearcher().getIndexStructure().getMainContentsField().getMainProperty().getName();
+        final String mainTokenProperty = getSearcher().getIndexStructure().getMainContentsField().getMainProperty()
+                .getName();
         List<String> otherTokenProperties = new ArrayList<>();
 
         try {
@@ -230,7 +241,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         }
     }
 
-
     @Override
     public int handle(DataStream ds) throws BlsException {
         Pair<Hits, HitGroups> result = getHits();
@@ -257,7 +267,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             out.add(b.get(i));
         }
 
-        for (int i = largest.size()-1; i >= smallest.size(); --i)
+        for (int i = largest.size() - 1; i >= smallest.size(); --i)
             out.add(largest.get(i));
 
         return out;

@@ -3,8 +3,8 @@ package nl.inl.blacklab.index;
 import nl.inl.blacklab.search.BLRuntimeException;
 
 /**
- * Thrown when the file you're indexing is malformed in some way
- * (i.e. not well-formed XML) 
+ * Thrown when the file you're indexing is malformed in some way (i.e. not
+ * well-formed XML)
  */
 public class MalformedInputFileException extends BLRuntimeException {
 

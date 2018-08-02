@@ -10,8 +10,8 @@ import com.fasterxml.jackson.databind.node.ValueNode;
 /**
  * Base class for a class that interprets a JSON structure.
  *
- * Contains utility methods that make it easy to check types
- * and throw descriptive errors.
+ * Contains utility methods that make it easy to check types and throw
+ * descriptive errors.
  */
 public class YamlJsonReader {
 

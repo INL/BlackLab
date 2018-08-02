@@ -18,18 +18,18 @@ package nl.inl.blacklab.perdocument;
 import java.util.Comparator;
 
 public class ComparatorDocGroupProperty implements Comparator<DocGroup> {
-	private DocGroupProperty prop;
+    private DocGroupProperty prop;
 
-	boolean sortReverse;
+    boolean sortReverse;
 
-	public ComparatorDocGroupProperty(DocGroupProperty prop, boolean sortReverse) {
-		this.prop = prop;
-		this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
-	}
+    public ComparatorDocGroupProperty(DocGroupProperty prop, boolean sortReverse) {
+        this.prop = prop;
+        this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
+    }
 
-	@Override
-	public int compare(DocGroup first, DocGroup second) {
-		return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
-	}
+    @Override
+    public int compare(DocGroup first, DocGroup second) {
+        return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
+    }
 
 }

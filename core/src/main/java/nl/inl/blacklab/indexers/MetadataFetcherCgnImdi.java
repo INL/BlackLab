@@ -63,173 +63,172 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
         }
     }
 
-	static private ZipFile metadataZipFile = null;
+    static private ZipFile metadataZipFile = null;
 
-	static private File metadataDir = null;
+    static private File metadataDir = null;
 
-	private String metadataPathInZip;
+    private String metadataPathInZip;
 
     @SuppressWarnings("deprecation")
     public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
-		super(docIndexer);
-		if (metadataZipFile == null)
-		    init(docIndexer);
+        super(docIndexer);
+        if (metadataZipFile == null)
+            init(docIndexer);
 
-		metadataPathInZip = docIndexer.getParameter("metadataPath", "");
-		if (metadataPathInZip.length() == 0)
-			metadataPathInZip = docIndexer.getParameter("metadataPathInZip", "");
-		if (metadataPathInZip.length() > 0 && !metadataPathInZip.endsWith("/"))
-			metadataPathInZip += "/";
-	}
+        metadataPathInZip = docIndexer.getParameter("metadataPath", "");
+        if (metadataPathInZip.length() == 0)
+            metadataPathInZip = docIndexer.getParameter("metadataPathInZip", "");
+        if (metadataPathInZip.length() > 0 && !metadataPathInZip.endsWith("/"))
+            metadataPathInZip += "/";
+    }
 
     @Override
-	public void close() {
-		// TODO: make sure zip file is properly closed when done
-		// (change structure so metadata fetcher isn't instantiated for each
-		// document separately)
-		// metadataZipFile.close();
-	}
+    public void close() {
+        // TODO: make sure zip file is properly closed when done
+        // (change structure so metadata fetcher isn't instantiated for each
+        // document separately)
+        // metadataZipFile.close();
+    }
 
-	@Override
-	public void addMetadata() {
+    @Override
+    public void addMetadata() {
 
-		Document luceneDoc = docIndexer.getCurrentLuceneDoc();
-		String fromInputFile = luceneDoc.get("fromInputFile");
+        Document luceneDoc = docIndexer.getCurrentLuceneDoc();
+        String fromInputFile = luceneDoc.get("fromInputFile");
 
-		docIndexer.addMetadataField("Corpus_title", "CGN");
+        docIndexer.addMetadataField("Corpus_title", "CGN");
 
-		fromInputFile = fromInputFile.replaceAll("\\\\", "/");
-		int lastSlash = fromInputFile.lastIndexOf("/");
-		int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash);
-		String metadataFile = fromInputFile.substring(penultimateSlash + 1);
-		metadataFile = metadataFile.replaceAll("\\.folia\\.xml", ".imdi");
-		String[] parts = fromInputFile.split("/");
-		docIndexer.addMetadataField("Collection_title", parts[parts.length - 2]);
+        fromInputFile = fromInputFile.replaceAll("\\\\", "/");
+        int lastSlash = fromInputFile.lastIndexOf("/");
+        int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash);
+        String metadataFile = fromInputFile.substring(penultimateSlash + 1);
+        metadataFile = metadataFile.replaceAll("\\.folia\\.xml", ".imdi");
+        String[] parts = fromInputFile.split("/");
+        docIndexer.addMetadataField("Collection_title", parts[parts.length - 2]);
 
-		docIndexer.addMetadataField("AudioExportFormat", "wav");
-		docIndexer.addMetadataField("AudioWebPlayFormat", "mp3");
+        docIndexer.addMetadataField("AudioExportFormat", "wav");
+        docIndexer.addMetadataField("AudioWebPlayFormat", "mp3");
 
-		try {
-			InputStream is;
-			if (metadataZipFile != null) {
-				ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
-				if (e == null) {
-					// throw new RuntimeException("Entry in zip not found: " +
-					// metadataPathInZip + metadataFile);
-					System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
-					return;
-				}
-				is = metadataZipFile.getInputStream(e);
-			} else {
-				File f = new File(new File(metadataDir, metadataPathInZip), metadataFile);
-				is = new FileInputStream(f);
-			}
+        try {
+            InputStream is;
+            if (metadataZipFile != null) {
+                ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
+                if (e == null) {
+                    // throw new RuntimeException("Entry in zip not found: " +
+                    // metadataPathInZip + metadataFile);
+                    System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
+                    return;
+                }
+                is = metadataZipFile.getInputStream(e);
+            } else {
+                File f = new File(new File(metadataDir, metadataPathInZip), metadataFile);
+                is = new FileInputStream(f);
+            }
 
-			ByteArrayOutputStream cmdiBuffer = new ByteArrayOutputStream(INITIAL_CMDI_BYTEBUFFER_SIZE);
-			is = new TeeInputStream(is, cmdiBuffer);
-			try (BufferedReader reader = new BufferedReader(
-					new InputStreamReader(is, Indexer.DEFAULT_INPUT_ENCODING))) {
-				SAXParserFactory factory = SAXParserFactory.newInstance();
-				factory.setNamespaceAware(true);
-				SAXParser parser;
-				parser = factory.newSAXParser();
-				parser.parse(new InputSource(reader), new MetadataParser());
-			}
+            ByteArrayOutputStream cmdiBuffer = new ByteArrayOutputStream(INITIAL_CMDI_BYTEBUFFER_SIZE);
+            is = new TeeInputStream(is, cmdiBuffer);
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(is, Indexer.DEFAULT_INPUT_ENCODING))) {
+                SAXParserFactory factory = SAXParserFactory.newInstance();
+                factory.setNamespaceAware(true);
+                SAXParser parser;
+                parser = factory.newSAXParser();
+                parser.parse(new InputSource(reader), new MetadataParser());
+            }
 
-			// Store metadata XML in content store and corresponding id in
-			// Lucene document
-			ContentStore cs = docIndexer.getIndexer().getContentStore("metadata");
-			int id = cs.store(cmdiBuffer.toString(Indexer.DEFAULT_INPUT_ENCODING.name()));
-			luceneDoc.add(new IntField("metadataCid", id, Store.YES));
+            // Store metadata XML in content store and corresponding id in
+            // Lucene document
+            ContentStore cs = docIndexer.getIndexer().getContentStore("metadata");
+            int id = cs.store(cmdiBuffer.toString(Indexer.DEFAULT_INPUT_ENCODING.name()));
+            luceneDoc.add(new IntField("metadataCid", id, Store.YES));
 
-			if (metadataZipFile == null)
-				is.close();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
+            if (metadataZipFile == null)
+                is.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	/**
-	 * Handles the metadata XML and adds it to the Lucene document
-	 */
-	class MetadataParser extends DefaultHandler {
+    /**
+     * Handles the metadata XML and adds it to the Lucene document
+     */
+    class MetadataParser extends DefaultHandler {
 
-		private StringBuilder textContent = new StringBuilder();
+        private StringBuilder textContent = new StringBuilder();
 
-		private boolean hasChild = false;
+        private boolean hasChild = false;
 
-		Map<String, String> indexFieldAs = new HashMap<>();
+        Map<String, String> indexFieldAs = new HashMap<>();
 
-		List<String> elementStack = new ArrayList<>();
+        List<String> elementStack = new ArrayList<>();
 
-		/**
-		 * Push the current element name onto the element stack
-		 *
-		 * @param localName
-		 *            the current element name
-		 */
-		private void stackPush(String localName) {
-			elementStack.add(localName);
-		}
+        /**
+         * Push the current element name onto the element stack
+         *
+         * @param localName the current element name
+         */
+        private void stackPush(String localName) {
+            elementStack.add(localName);
+        }
 
-		/**
-		 * Pop the current element name off of the element stack
-		 */
-		private void stackPop() {
-			elementStack.remove(elementStack.size() - 1);
-		}
+        /**
+         * Pop the current element name off of the element stack
+         */
+        private void stackPop() {
+            elementStack.remove(elementStack.size() - 1);
+        }
 
-		public MetadataParser() {
-			indexFieldAs.put("iso-639-3-code", "Language-iso-code");
-			indexFieldAs.put("Name", "AuthorName");
-		}
+        public MetadataParser() {
+            indexFieldAs.put("iso-639-3-code", "Language-iso-code");
+            indexFieldAs.put("Name", "AuthorName");
+        }
 
-		@Override
-		public void startElement(String uri, String localName, String qName, Attributes attributes) {
-			stackPush(localName);
-			hasChild = false; // we haven't seen a child for this element yet
-			textContent.setLength(0); // clear buffer
-		}
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attributes) {
+            stackPush(localName);
+            hasChild = false; // we haven't seen a child for this element yet
+            textContent.setLength(0); // clear buffer
+        }
 
-		@Override
-		public void endElement(String uri, String localName, String qName) {
+        @Override
+        public void endElement(String uri, String localName, String qName) {
 
-			if (!hasChild) {
-				// See if we captured any text content
-				String content = textContent.toString().trim();
-				if (content.length() > 0) {
-					// Yes, leaf element with text content.
-					// Index the value of this element as a metadata field.
+            if (!hasChild) {
+                // See if we captured any text content
+                String content = textContent.toString().trim();
+                if (content.length() > 0) {
+                    // Yes, leaf element with text content.
+                    // Index the value of this element as a metadata field.
 
-					if (localName.equals("Id")) {
-						localName = "LanguageId";
-					}
+                    if (localName.equals("Id")) {
+                        localName = "LanguageId";
+                    }
 
-					// See if we want to index this element under a different
-					// name.
-					String indexAs = indexFieldAs.get(localName);
-					if (indexAs == null || indexAs.length() == 0)
-						indexAs = localName;
+                    // See if we want to index this element under a different
+                    // name.
+                    String indexAs = indexFieldAs.get(localName);
+                    if (indexAs == null || indexAs.length() == 0)
+                        indexAs = localName;
 
-					// Leaf node with content; store as metadata field.
-					if (docIndexer != null) {
-						docIndexer.addMetadataField(indexAs, content);
-					} else {
-						// TEST; print metadata value
-						System.out.println(indexAs + ": " + content);
-					}
-				}
-			}
+                    // Leaf node with content; store as metadata field.
+                    if (docIndexer != null) {
+                        docIndexer.addMetadataField(indexAs, content);
+                    } else {
+                        // TEST; print metadata value
+                        System.out.println(indexAs + ": " + content);
+                    }
+                }
+            }
 
-			hasChild = true; // our parent has at least one child
-			stackPop();
-		}
+            hasChild = true; // our parent has at least one child
+            stackPop();
+        }
 
-		@Override
-		public void characters(char[] ch, int start, int length) {
-			if (!hasChild)
-				textContent.append(ch, start, length);
-		}
-	}
+        @Override
+        public void characters(char[] ch, int start, int length) {
+            if (!hasChild)
+                textContent.append(ch, start, length);
+        }
+    }
 
 }

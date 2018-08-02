@@ -19,14 +19,14 @@ package nl.inl.blacklab.search.grouping;
  * A group of results, with its group identity and the results themselves.
  */
 abstract class Group {
-	protected HitPropValue groupIdentity;
+    protected HitPropValue groupIdentity;
 
-	public Group(HitPropValue groupIdentity) {
-		this.groupIdentity = groupIdentity;
-	}
+    public Group(HitPropValue groupIdentity) {
+        this.groupIdentity = groupIdentity;
+    }
 
-	public HitPropValue getIdentity() {
-		return groupIdentity;
-	}
+    public HitPropValue getIdentity() {
+        return groupIdentity;
+    }
 
 }

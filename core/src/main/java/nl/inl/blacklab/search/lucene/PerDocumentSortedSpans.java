@@ -28,146 +28,146 @@ import nl.inl.blacklab.search.Span;
  */
 class PerDocumentSortedSpans extends BLSpans {
 
-	final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
+    final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
 
-	final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
+    final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
 
-	private int curDoc = -1, curStart = -1, curEnd = -1;
+    private int curDoc = -1, curStart = -1, curEnd = -1;
 
-	private SpansInBuckets bucketedSpans;
+    private SpansInBuckets bucketedSpans;
 
-	private boolean eliminateDuplicates;
+    private boolean eliminateDuplicates;
 
-	private int prevStart, prevEnd;
+    private int prevStart, prevEnd;
 
-	private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
+    private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-	public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
-		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-		bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
+    public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
+        // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
+        bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
-		this.eliminateDuplicates = eliminateDuplicates;
-	}
+        this.eliminateDuplicates = eliminateDuplicates;
+    }
 
-	@Override
-	public int docID() {
-		return curDoc;
-	}
+    @Override
+    public int docID() {
+        return curDoc;
+    }
 
-	@Override
-	public int startPosition() {
-		if (indexInBucket < 0)
-			return -1;
-		if (indexInBucket >= bucketedSpans.bucketSize())
-			return NO_MORE_POSITIONS;
-		return curStart;
-	}
+    @Override
+    public int startPosition() {
+        if (indexInBucket < 0)
+            return -1;
+        if (indexInBucket >= bucketedSpans.bucketSize())
+            return NO_MORE_POSITIONS;
+        return curStart;
+    }
 
-	@Override
-	public int endPosition() {
-		if (indexInBucket < 0)
-			return -1;
-		if (indexInBucket >= bucketedSpans.bucketSize())
-			return NO_MORE_POSITIONS;
-		return curEnd;
-	}
+    @Override
+    public int endPosition() {
+        if (indexInBucket < 0)
+            return -1;
+        if (indexInBucket >= bucketedSpans.bucketSize())
+            return NO_MORE_POSITIONS;
+        return curEnd;
+    }
 
-	@Override
-	public Hit getHit() {
-		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-			return null;
-		return bucketedSpans.getHit(indexInBucket);
-	}
+    @Override
+    public Hit getHit() {
+        if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+            return null;
+        return bucketedSpans.getHit(indexInBucket);
+    }
 
-	@Override
-	public int nextDoc() throws IOException {
-		curDoc = bucketedSpans.nextDoc();
-		indexInBucket = -2;
-		curStart = -1;
-		curEnd = -1;
-		return curDoc;
-	}
+    @Override
+    public int nextDoc() throws IOException {
+        curDoc = bucketedSpans.nextDoc();
+        indexInBucket = -2;
+        curStart = -1;
+        curEnd = -1;
+        return curDoc;
+    }
 
-	@Override
-	public int nextStartPosition() throws IOException {
-		if (!eliminateDuplicates) {
-			// No need to eliminate duplicates
-			if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
-				// Bucket exhausted or no bucket yet; get one
-				if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
-					indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
-					return NO_MORE_POSITIONS;
-				}
-				indexInBucket = -1;
-			}
-			indexInBucket++;
-			curStart = bucketedSpans.startPosition(indexInBucket);
-			curEnd = bucketedSpans.endPosition(indexInBucket);
-		} else {
-			// Eliminate any duplicates
-			do {
-				if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
-					// Bucket exhausted or no bucket yet; get one
-					if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
-						indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
-						return NO_MORE_POSITIONS;
-					}
-					indexInBucket = -1;
-				}
-				if (indexInBucket >= 0) {
-					prevStart = bucketedSpans.startPosition(indexInBucket);
-					prevEnd = bucketedSpans.endPosition(indexInBucket);
-				} else {
-					prevStart = prevEnd = -1;
-				}
-				indexInBucket++;
-				curStart = bucketedSpans.startPosition(indexInBucket);
-				curEnd = bucketedSpans.endPosition(indexInBucket);
-			} while (prevStart == curStart && prevEnd == curEnd);
-		}
-		return curStart;
-	}
+    @Override
+    public int nextStartPosition() throws IOException {
+        if (!eliminateDuplicates) {
+            // No need to eliminate duplicates
+            if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
+                // Bucket exhausted or no bucket yet; get one
+                if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
+                    indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
+                    return NO_MORE_POSITIONS;
+                }
+                indexInBucket = -1;
+            }
+            indexInBucket++;
+            curStart = bucketedSpans.startPosition(indexInBucket);
+            curEnd = bucketedSpans.endPosition(indexInBucket);
+        } else {
+            // Eliminate any duplicates
+            do {
+                if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
+                    // Bucket exhausted or no bucket yet; get one
+                    if (bucketedSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
+                        indexInBucket = SpansInBuckets.NO_MORE_BUCKETS;
+                        return NO_MORE_POSITIONS;
+                    }
+                    indexInBucket = -1;
+                }
+                if (indexInBucket >= 0) {
+                    prevStart = bucketedSpans.startPosition(indexInBucket);
+                    prevEnd = bucketedSpans.endPosition(indexInBucket);
+                } else {
+                    prevStart = prevEnd = -1;
+                }
+                indexInBucket++;
+                curStart = bucketedSpans.startPosition(indexInBucket);
+                curEnd = bucketedSpans.endPosition(indexInBucket);
+            } while (prevStart == curStart && prevEnd == curEnd);
+        }
+        return curStart;
+    }
 
-	@Override
-	public int advance(int target) throws IOException {
-		curDoc = bucketedSpans.advance(target);
-		indexInBucket = -2;
-		curStart = -1;
-		curEnd = -1;
-		return curDoc;
-	}
+    @Override
+    public int advance(int target) throws IOException {
+        curDoc = bucketedSpans.advance(target);
+        indexInBucket = -2;
+        curStart = -1;
+        curEnd = -1;
+        return curDoc;
+    }
 
-	@Override
-	public String toString() {
-		return bucketedSpans.toString();
-	}
+    @Override
+    public String toString() {
+        return bucketedSpans.toString();
+    }
 
-	@Override
-	public void passHitQueryContextToClauses(HitQueryContext context) {
-		bucketedSpans.setHitQueryContext(context);
-	}
+    @Override
+    public void passHitQueryContextToClauses(HitQueryContext context) {
+        bucketedSpans.setHitQueryContext(context);
+    }
 
-	@Override
-	public void getCapturedGroups(Span[] capturedGroups) {
-		if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-			return;
-		bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
-	}
+    @Override
+    public void getCapturedGroups(Span[] capturedGroups) {
+        if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
+            return;
+        bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
+    }
 
-	@Override
-	public int width() {
-		return 0; // should maybe be bucketedSpans.width(indexInBucket) ? but we don't use .width()
-	}
+    @Override
+    public int width() {
+        return 0; // should maybe be bucketedSpans.width(indexInBucket) ? but we don't use .width()
+    }
 
-	@Override
-	public void collect(SpanCollector collector) throws IOException {
-		// BucketedSpans should collect payload as well, but for now, we don't use
-		// payload beyond a "simple" SpanQuery like SpanQueryTags.
-		// bucketedSpans.collect(collector);
-	}
+    @Override
+    public void collect(SpanCollector collector) throws IOException {
+        // BucketedSpans should collect payload as well, but for now, we don't use
+        // payload beyond a "simple" SpanQuery like SpanQueryTags.
+        // bucketedSpans.collect(collector);
+    }
 
-	@Override
-	public float positionsCost() {
-		return 0; // should maybe be bucketedSpans.positionsCost()
-	}
+    @Override
+    public float positionsCost() {
+        return 0; // should maybe be bucketedSpans.positionsCost()
+    }
 }

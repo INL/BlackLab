@@ -61,21 +61,20 @@ import nl.inl.util.StringUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexStructure {
-	private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
+    private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
-	protected static final Logger logger = LogManager.getLogger(IndexStructure.class);
+    protected static final Logger logger = LogManager.getLogger(IndexStructure.class);
 
-	private static final String METADATA_FILE_NAME = "indexmetadata";
+    private static final String METADATA_FILE_NAME = "indexmetadata";
 
-	/**
-	 * The latest index format. Written to the index metadata file.
-	 *
-	 * 3:   first version to include index metadata file
-	 * 3.1: tag length in payload
-	 */
-	static final String LATEST_INDEX_FORMAT = "3.1";
+    /**
+     * The latest index format. Written to the index metadata file.
+     *
+     * 3: first version to include index metadata file 3.1: tag length in payload
+     */
+    static final String LATEST_INDEX_FORMAT = "3.1";
 
-	/** What keys may occur at top level? */
+    /** What keys may occur at top level? */
     static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
             "displayName", "description", "contentViewable", "textDirection",
             "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
@@ -107,16 +106,16 @@ public class IndexStructure {
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
-	/** A named group of ordered metadata fields */
-	public static class MetadataGroup {
+    /** A named group of ordered metadata fields */
+    public static class MetadataGroup {
 
-	    String name;
+        String name;
 
-	    List<String> fields;
+        List<String> fields;
 
-	    boolean addRemainingFields = false;
+        boolean addRemainingFields = false;
 
-	    public void setName(String name) {
+        public void setName(String name) {
             this.name = name;
         }
 
@@ -125,9 +124,9 @@ public class IndexStructure {
         }
 
         public MetadataGroup(String name, List<String> fields) {
-	        this.name = name;
-	        this.fields = new ArrayList<>(fields);
-	    }
+            this.name = name;
+            this.fields = new ArrayList<>(fields);
+        }
 
         public String getName() {
             return name;
@@ -145,106 +144,121 @@ public class IndexStructure {
             this.addRemainingFields = addRemainingFields;
         }
 
-	}
+    }
 
-    /** Logical groups of metadata fields, for presenting them in the user interface. */
-	protected Map<String, MetadataGroup> metadataGroups = new LinkedHashMap<>();
+    /**
+     * Logical groups of metadata fields, for presenting them in the user interface.
+     */
+    protected Map<String, MetadataGroup> metadataGroups = new LinkedHashMap<>();
 
-	/** All non-complex fields in our index (metadata fields) and their types. */
-	protected Map<String, MetadataFieldDesc> metadataFieldInfos;
+    /** All non-complex fields in our index (metadata fields) and their types. */
+    protected Map<String, MetadataFieldDesc> metadataFieldInfos;
 
-	/** When a metadata field value is considered "unknown" (never|missing|empty|missing_or_empty) [never] */
-	protected String defaultUnknownCondition;
+    /**
+     * When a metadata field value is considered "unknown"
+     * (never|missing|empty|missing_or_empty) [never]
+     */
+    protected String defaultUnknownCondition;
 
-	/** What value to index when a metadata field value is unknown [unknown] */
-	protected String defaultUnknownValue;
+    /** What value to index when a metadata field value is unknown [unknown] */
+    protected String defaultUnknownValue;
 
-	/** The complex fields in our index */
-	protected Map<String, ComplexFieldDesc> complexFields;
+    /** The complex fields in our index */
+    protected Map<String, ComplexFieldDesc> complexFields;
 
-	/** The main contents field in our index. This is either the complex field with the name "contents",
-	 *  or if that doesn't exist, the first complex field found. */
-	protected ComplexFieldDesc mainContentsField;
+    /**
+     * The main contents field in our index. This is either the complex field with
+     * the name "contents", or if that doesn't exist, the first complex field found.
+     */
+    protected ComplexFieldDesc mainContentsField;
 
-	/** Where to save indexmetadata.json */
-	protected File indexDir;
+    /** Where to save indexmetadata.json */
+    protected File indexDir;
 
-	/** Index display name */
-	protected String displayName;
+    /** Index display name */
+    protected String displayName;
 
-	/** Index description */
-	protected String description;
+    /** Index description */
+    protected String description;
 
-	/** When BlackLab.jar was built */
-	protected String blackLabBuildTime;
+    /** When BlackLab.jar was built */
+    protected String blackLabBuildTime;
 
-	/** BlackLab version used to (initially) create index */
-	protected String blackLabVersion;
+    /** BlackLab version used to (initially) create index */
+    protected String blackLabVersion;
 
-	/** Format the index uses */
-	protected String indexFormat;
+    /** Format the index uses */
+    protected String indexFormat;
 
-	/** Time at which index was created */
-	protected String timeCreated;
+    /** Time at which index was created */
+    protected String timeCreated;
 
-	/** Time at which index was created */
-	protected String timeModified;
+    /** Time at which index was created */
+    protected String timeModified;
 
-	/** Metadata field containing document title */
-	protected String titleField;
+    /** Metadata field containing document title */
+    protected String titleField;
 
-	/** Metadata field containing document author */
-	protected String authorField;
+    /** Metadata field containing document author */
+    protected String authorField;
 
-	/** Metadata field containing document date */
-	protected String dateField;
+    /** Metadata field containing document date */
+    protected String dateField;
 
-	/** Metadata field containing document pid */
-	protected String pidField;
+    /** Metadata field containing document pid */
+    protected String pidField;
 
-	/** Default analyzer to use for metadata fields */
-	protected String defaultAnalyzerName;
+    /** Default analyzer to use for metadata fields */
+    protected String defaultAnalyzerName;
 
-	/** Do we always have words+1 tokens (before we sometimes did, if an XML tag
-	 *  occurred after the last word; now we always make sure we have it, so we
-	 *  can always skip the last token when matching) */
-	protected boolean alwaysHasClosingToken = false;
+    /**
+     * Do we always have words+1 tokens (before we sometimes did, if an XML tag
+     * occurred after the last word; now we always make sure we have it, so we can
+     * always skip the last token when matching)
+     */
+    protected boolean alwaysHasClosingToken = false;
 
-	/** Do we store tag length in the payload (v3.1) or do we store tag ends
-	 *  in a separate property (v3)? */
-	protected boolean tagLengthInPayload = true;
+    /**
+     * Do we store tag length in the payload (v3.1) or do we store tag ends in a
+     * separate property (v3)?
+     */
+    protected boolean tagLengthInPayload = true;
 
-	/** May all users freely retrieve the full content of documents, or is that restricted? */
-	protected boolean contentViewable = false;
+    /**
+     * May all users freely retrieve the full content of documents, or is that
+     * restricted?
+     */
+    protected boolean contentViewable = false;
 
     /** Text direction for this corpus */
-	protected TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
+    protected TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
-	/** Indication of the document format(s) in this index.
-	 *
-	 * This is in the form of a format identifier as understood
-	 * by the DocumentFormats class (either an abbreviation or a
-	 * (qualified) class name).
-	 */
-	protected String documentFormat;
+    /**
+     * Indication of the document format(s) in this index.
+     *
+     * This is in the form of a format identifier as understood by the
+     * DocumentFormats class (either an abbreviation or a (qualified) class name).
+     */
+    protected String documentFormat;
 
-	protected long tokenCount = 0;
+    protected long tokenCount = 0;
 
-	/**
-	 * When we save this file, should we write it as json or yaml?
-	 */
-	protected boolean saveAsJson = true;
+    /**
+     * When we save this file, should we write it as json or yaml?
+     */
+    protected boolean saveAsJson = true;
 
-	/**
-	 * Construct an IndexStructure object, querying the index for the available
-	 * fields and their types.
-	 * @param reader the index of which we want to know the structure
-	 * @param indexDir where the index (and the metadata file) is stored
-	 * @param createNewIndex whether we're creating a new index
-	 */
-	public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex) {
-		this(reader, indexDir, createNewIndex, (File)null);
-	}
+    /**
+     * Construct an IndexStructure object, querying the index for the available
+     * fields and their types.
+     * 
+     * @param reader the index of which we want to know the structure
+     * @param indexDir where the index (and the metadata file) is stored
+     * @param createNewIndex whether we're creating a new index
+     */
+    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex) {
+        this(reader, indexDir, createNewIndex, (File) null);
+    }
 
     /**
      * Construct an IndexStructure object, querying the index for the available
@@ -253,8 +267,8 @@ public class IndexStructure {
      * @param reader the index of which we want to know the structure
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
-     * @param config input format config to use as template for index structure / metadata
-     *   (if creating new index)
+     * @param config input format config to use as template for index structure /
+     *            metadata (if creating new index)
      */
     public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
         this.indexDir = indexDir;
@@ -263,7 +277,8 @@ public class IndexStructure {
         complexFields = new TreeMap<>();
 
         // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
+        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+                Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
             if (metadataFile.exists() && !metadataFile.delete())
@@ -292,7 +307,7 @@ public class IndexStructure {
             addVersionInfo(jsonRoot);
             ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
             fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-            for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
+            for (Entry<String, String> e : corpusConfig.getSpecialFields().entrySet()) {
                 fieldInfo.put(e.getKey(), e.getValue());
             }
             ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -308,23 +323,25 @@ public class IndexStructure {
         }
     }
 
-	/**
-	 * Construct an IndexStructure object, querying the index for the available
-	 * fields and their types.
-	 * @param reader the index of which we want to know the structure
-	 * @param indexDir where the index (and the metadata file) is stored
-	 * @param createNewIndex whether we're creating a new index
-	 * @param indexTemplateFile JSON file to use as template for index structure / metadata
-	 *   (if creating new index)
-	 */
-	public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
-		this.indexDir = indexDir;
+    /**
+     * Construct an IndexStructure object, querying the index for the available
+     * fields and their types.
+     * 
+     * @param reader the index of which we want to know the structure
+     * @param indexDir where the index (and the metadata file) is stored
+     * @param createNewIndex whether we're creating a new index
+     * @param indexTemplateFile JSON file to use as template for index structure /
+     *            metadata (if creating new index)
+     */
+    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
+        this.indexDir = indexDir;
 
-		metadataFieldInfos = new TreeMap<>();
-		complexFields = new TreeMap<>();
+        metadataFieldInfos = new TreeMap<>();
+        complexFields = new TreeMap<>();
 
-		// Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME, Arrays.asList("json", "yaml", "yml"));
+        // Find existing metadata file, if any.
+        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+                Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
             if (!metadataFile.delete())
@@ -355,24 +372,25 @@ public class IndexStructure {
         saveAsJson = metadataFile.getName().endsWith(".json");
         boolean usedTemplate = false;
         if (createNewIndex && indexTemplateFile != null) {
-        	// Copy the template file to the index dir and read the metadata again.
-        	try {
-        		String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
-        		FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
-        	} catch (IOException e) {
-        		throw new RuntimeException(e);
-        	}
-        	usedTemplate = true;
+            // Copy the template file to the index dir and read the metadata again.
+            try {
+                String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
+                FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            usedTemplate = true;
         }
 
         readOrCreateMetadata(reader, createNewIndex, metadataFile, usedTemplate);
-	}
+    }
 
-    protected void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile, boolean usedTemplate) {
+    protected void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
+            boolean usedTemplate) {
         // Read and interpret index metadata file
-		if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
-			// No metadata file yet; start with a blank one
-			ObjectMapper mapper = Json.getJsonObjectMapper();
+        if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
+            // No metadata file yet; start with a blank one
+            ObjectMapper mapper = Json.getJsonObjectMapper();
             ObjectNode jsonRoot = mapper.createObjectNode();
             jsonRoot.put("displayName", determineIndexName());
             jsonRoot.put("description", "");
@@ -381,24 +399,24 @@ public class IndexStructure {
             fieldInfo.putObject("metadataFields");
             fieldInfo.putObject("complexFields");
             extractFromJson(jsonRoot, reader, false, false);
-		} else {
-			// Read the metadata file
-			try {
-				boolean isJson = metadataFile.getName().endsWith(".json");
+        } else {
+            // Read the metadata file
+            try {
+                boolean isJson = metadataFile.getName().endsWith(".json");
                 ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-                ObjectNode jsonRoot = (ObjectNode)mapper.readTree(metadataFile);
+                ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
                 extractFromJson(jsonRoot, reader, usedTemplate, false);
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		}
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
 
-		// Detect main contents field and main properties of complex fields
+        // Detect main contents field and main properties of complex fields
         if (!createNewIndex) { // new index doesn't have this information yet
             // Detect the main properties for all complex fields
             // (looks for fields with char offset information stored)
             mainContentsField = null;
-            for (ComplexFieldDesc d: complexFields.values()) {
+            for (ComplexFieldDesc d : complexFields.values()) {
                 if (mainContentsField == null || d.getName().equals("contents"))
                     mainContentsField = d;
                 if (tokenCount > 0) // no use trying this on an empty index
@@ -410,23 +428,23 @@ public class IndexStructure {
     protected String determineIndexName() {
         String name = indexDir.getName();
         if (name.equals("index"))
-        	name = indexDir.getAbsoluteFile().getParentFile().getName();
+            name = indexDir.getAbsoluteFile().getParentFile().getName();
         return name;
     }
 
-	public Map<String, MetadataGroup> getMetaFieldGroups() {
-	    return Collections.unmodifiableMap(metadataGroups);
-	}
+    public Map<String, MetadataGroup> getMetaFieldGroups() {
+        return Collections.unmodifiableMap(metadataGroups);
+    }
 
     /**
-	 * Indicate that the index was modified, so that fact
-	 * will be recorded in the metadata file.
-	 */
-	public void setModified() {
-		timeModified = IndexStructure.getTimestamp();
-	}
+     * Indicate that the index was modified, so that fact will be recorded in the
+     * metadata file.
+     */
+    public void setModified() {
+        timeModified = IndexStructure.getTimestamp();
+    }
 
-	public void writeMetadata() {
+    public void writeMetadata() {
         String ext = saveAsJson ? ".json" : ".yaml";
         File metadataFile = new File(indexDir, METADATA_FILE_NAME + ext);
         try {
@@ -438,7 +456,9 @@ public class IndexStructure {
         }
     }
 
-    /** Encode the index structure to an (in-memory) JSON structure.
+    /**
+     * Encode the index structure to an (in-memory) JSON structure.
+     * 
      * @return json structure
      */
     private ObjectNode encodeToJson() {
@@ -460,7 +480,8 @@ public class IndexStructure {
         versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths, and there is no end tag property
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.put("namingScheme", ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS": "DEFAULT");
+        fieldInfo.put("namingScheme",
+                ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
         fieldInfo.put("defaultAnalyzer", defaultAnalyzerName);
         if (titleField != null)
             fieldInfo.put("titleField", titleField);
@@ -475,7 +496,7 @@ public class IndexStructure {
         ObjectNode jsonComplexFields = fieldInfo.putObject("complexFields");
 
         // Add metadata field group info
-        for (MetadataGroup g: metadataGroups.values()) {
+        for (MetadataGroup g : metadataGroups.values()) {
             ObjectNode group = metadataFieldGroups.addObject();
             group.put("name", g.getName());
             if (g.addRemainingFields())
@@ -485,7 +506,7 @@ public class IndexStructure {
         }
 
         // Add metadata field info
-        for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+        for (MetadataFieldDesc f : metadataFieldInfos.values()) {
             UnknownCondition unknownCondition = f.getUnknownCondition();
             ObjectNode fi = metadataFields.putObject(f.getName());
             fi.put("displayName", f.getDisplayName());
@@ -494,34 +515,35 @@ public class IndexStructure {
             fi.put("type", f.getType().stringValue());
             fi.put("analyzer", f.getAnalyzerName());
             fi.put("unknownValue", f.getUnknownValue());
-            fi.put("unknownCondition", unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
+            fi.put("unknownCondition",
+                    unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
             if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
-            	fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
+                fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
             Map<String, Integer> values = f.getValueDistribution();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
-                for (Map.Entry<String, Integer> e: values.entrySet()) {
+                for (Map.Entry<String, Integer> e : values.entrySet()) {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
             Map<String, String> displayValues = f.getDisplayValues();
             if (displayValues != null) {
                 ObjectNode jsonDisplayValues = fi.putObject("displayValues");
-                for (Map.Entry<String, String> e: displayValues.entrySet()) {
+                for (Map.Entry<String, String> e : displayValues.entrySet()) {
                     jsonDisplayValues.put(e.getKey(), e.getValue());
                 }
             }
             List<String> displayOrder = f.getDisplayOrder();
             if (displayOrder != null) {
                 ArrayNode jsonDisplayValues = fi.putArray("displayOrder");
-                for (String value: displayOrder) {
+                for (String value : displayOrder) {
                     jsonDisplayValues.add(value);
                 }
             }
         }
 
         // Add complex field info
-        for (ComplexFieldDesc f: complexFields.values()) {
+        for (ComplexFieldDesc f : complexFields.values()) {
             ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.getName());
             fieldInfo2.put("displayName", f.getDisplayName());
             fieldInfo2.put("description", f.getDescription());
@@ -529,7 +551,7 @@ public class IndexStructure {
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
-            for (String propName: f.getProperties()) {
+            for (String propName : f.getProperties()) {
                 PropertyDesc propDesc = f.getPropertyDesc(propName);
                 ObjectNode annot = annots.addObject();
                 annot.put("name", propDesc.getName());
@@ -543,481 +565,501 @@ public class IndexStructure {
 
     }
 
-	/**
-	 * The main contents field in our index. This is either the complex field with the name "contents",
-	 * or if that doesn't exist, the first complex field found.
-	 * @return the main contents field
-	 */
-	public ComplexFieldDesc getMainContentsField() {
-		return mainContentsField;
-	}
+    /**
+     * The main contents field in our index. This is either the complex field with
+     * the name "contents", or if that doesn't exist, the first complex field found.
+     * 
+     * @return the main contents field
+     */
+    public ComplexFieldDesc getMainContentsField() {
+        return mainContentsField;
+    }
 
-	/** Detect type by finding the first document that includes this
-	 * field and inspecting the Fieldable. This assumes that the field type
-	 * is the same for all documents.
-	 *
-	 * @param fieldName the field name to determine the type for
-	 * @return type of the field (text or numeric)
-	 */
-	@SuppressWarnings("static-method") // might not be static in the future
-	private FieldType getFieldType(String fieldName) {
+    /**
+     * Detect type by finding the first document that includes this field and
+     * inspecting the Fieldable. This assumes that the field type is the same for
+     * all documents.
+     *
+     * @param fieldName the field name to determine the type for
+     * @return type of the field (text or numeric)
+     */
+    @SuppressWarnings("static-method") // might not be static in the future
+    private FieldType getFieldType(String fieldName) {
 
-		/* NOTE: detecting the field type does not work well.
-		 * Querying values and deciding based on those is not the right way
-		 * (you can index ints as text too, after all). Lucene does not
-		 * store the information in the index (and querying the field type does
-		 * not return an IntField, DoubleField or such. In effect, it expects
-		 * the client to know.
-		 *
-		 * We have a simple, bad approach based on field name below.
-		 * The "right way" to do it is to keep a schema of field types during
-		 * indexing.
-		 */
+        /* NOTE: detecting the field type does not work well.
+         * Querying values and deciding based on those is not the right way
+         * (you can index ints as text too, after all). Lucene does not
+         * store the information in the index (and querying the field type does
+         * not return an IntField, DoubleField or such. In effect, it expects
+         * the client to know.
+         *
+         * We have a simple, bad approach based on field name below.
+         * The "right way" to do it is to keep a schema of field types during
+         * indexing.
+         */
 
-		FieldType type = FieldType.TOKENIZED;
-		if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
-			type = FieldType.NUMERIC;
-		return type;
-	}
+        FieldType type = FieldType.TOKENIZED;
+        if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
+            type = FieldType.NUMERIC;
+        return type;
+    }
 
-	/**
-	 * Check if a Lucene field has offsets stored.
-	 *
-	 * @param reader
-	 *            our index
-	 * @param luceneFieldName
-	 *            field to check
-	 * @return true iff field has offsets
-	 */
-	static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
-		// Iterate over documents in the index until we find a property
-		// for this complex field that has stored character offsets. This is
-		// our main property.
+    /**
+     * Check if a Lucene field has offsets stored.
+     *
+     * @param reader our index
+     * @param luceneFieldName field to check
+     * @return true iff field has offsets
+     */
+    static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
+        // Iterate over documents in the index until we find a property
+        // for this complex field that has stored character offsets. This is
+        // our main property.
 
-		// Note that we can't simply retrieve the field from a document and
-		// check the FieldType to see if it has offsets or not, as that information
-		// is incorrect at search time (always set to false, even if it has offsets).
+        // Note that we can't simply retrieve the field from a document and
+        // check the FieldType to see if it has offsets or not, as that information
+        // is incorrect at search time (always set to false, even if it has offsets).
 
-		Bits liveDocs = MultiFields.getLiveDocs(reader);
-		for (int n = 0; n < reader.maxDoc(); n++) {
-			if (liveDocs == null || liveDocs.get(n)) {
-				try {
-					Terms terms = reader.getTermVector(n, luceneFieldName);
-					if (terms == null) {
-						// No term vector; probably not stored in this document.
-						continue;
-					}
-					if (terms.hasOffsets()) {
-						// This field has offsets stored. Must be the main alternative.
-						return true;
-					}
-					// This alternative has no offsets stored. Don't look at any more
-					// documents, go to the next alternative.
-					break;
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
-		return false;
-	}
+        Bits liveDocs = MultiFields.getLiveDocs(reader);
+        for (int n = 0; n < reader.maxDoc(); n++) {
+            if (liveDocs == null || liveDocs.get(n)) {
+                try {
+                    Terms terms = reader.getTermVector(n, luceneFieldName);
+                    if (terms == null) {
+                        // No term vector; probably not stored in this document.
+                        continue;
+                    }
+                    if (terms.hasOffsets()) {
+                        // This field has offsets stored. Must be the main alternative.
+                        return true;
+                    }
+                    // This alternative has no offsets stored. Don't look at any more
+                    // documents, go to the next alternative.
+                    break;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return false;
+    }
 
-	private ComplexFieldDesc getOrCreateComplexField(String name) {
-		ComplexFieldDesc cfd = null;
-		if (complexFields.containsKey(name))
-			cfd = getComplexFieldDesc(name);
-		if (cfd == null) {
-			cfd = new ComplexFieldDesc(name);
-			complexFields.put(name, cfd);
-		}
-		return cfd;
-	}
+    private ComplexFieldDesc getOrCreateComplexField(String name) {
+        ComplexFieldDesc cfd = null;
+        if (complexFields.containsKey(name))
+            cfd = getComplexFieldDesc(name);
+        if (cfd == null) {
+            cfd = new ComplexFieldDesc(name);
+            complexFields.put(name, cfd);
+        }
+        return cfd;
+    }
 
-	/** Get the names of all the complex fields in our index
-	 * @return the complex field names */
-	public Collection<String> getComplexFields() {
-		return complexFields.keySet();
-	}
+    /**
+     * Get the names of all the complex fields in our index
+     * 
+     * @return the complex field names
+     */
+    public Collection<String> getComplexFields() {
+        return complexFields.keySet();
+    }
 
-	/**
-	 * Does the specified complex field exist?
-	 * @param fieldName complex field name
-	 * @return true iff it exists
-	 */
-	public boolean hasComplexField(String fieldName) {
-	    return complexFields.containsKey(fieldName);
-	}
+    /**
+     * Does the specified complex field exist?
+     * 
+     * @param fieldName complex field name
+     * @return true iff it exists
+     */
+    public boolean hasComplexField(String fieldName) {
+        return complexFields.containsKey(fieldName);
+    }
 
-	/** Get the description of one complex field
-	 * @param fieldName name of the field
-	 * @return the field description */
-	public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
-		if (!complexFields.containsKey(fieldName))
-			throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
-		return complexFields.get(fieldName);
-	}
+    /**
+     * Get the description of one complex field
+     * 
+     * @param fieldName name of the field
+     * @return the field description
+     */
+    public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
+        if (!complexFields.containsKey(fieldName))
+            throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
+        return complexFields.get(fieldName);
+    }
 
-	/** Get the names of all the metadata fields in our index
-	 * @return the names */
-	public Collection<String> getMetadataFields() {
-	    // Synchronized because we sometimes register new metadata fields during indexing
-	    synchronized (metadataFieldInfos) {
-    	    // Return a copy because we might create a new metadata field while
-    	    // iterating over this one (because of indexFieldAs)
-    		return new ArrayList<>(metadataFieldInfos.keySet());
-	    }
-	}
-
-	public boolean hasMetadataField(String fieldName) {
-		return metadataFieldInfos.containsKey(fieldName);
-	}
-
-	public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
-	    MetadataFieldDesc d = null;
+    /**
+     * Get the names of all the metadata fields in our index
+     * 
+     * @return the names
+     */
+    public Collection<String> getMetadataFields() {
         // Synchronized because we sometimes register new metadata fields during indexing
-	    synchronized (metadataFieldInfos) {
-	        d = metadataFieldInfos.get(fieldName);
-	    }
+        synchronized (metadataFieldInfos) {
+            // Return a copy because we might create a new metadata field while
+            // iterating over this one (because of indexFieldAs)
+            return new ArrayList<>(metadataFieldInfos.keySet());
+        }
+    }
+
+    public boolean hasMetadataField(String fieldName) {
+        return metadataFieldInfos.containsKey(fieldName);
+    }
+
+    public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
+        MetadataFieldDesc d = null;
+        // Synchronized because we sometimes register new metadata fields during indexing
+        synchronized (metadataFieldInfos) {
+            d = metadataFieldInfos.get(fieldName);
+        }
         if (d == null)
             throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
         return d;
-	}
+    }
 
-	/**
-	 * Returns the metadata field containing the document title, if any.
-	 *
-	 * This field can be configured in the indexmetadata.json file.
-	 * If it wasn't specified there, an intelligent guess is used.
-	 *
-	 * @return name of the title field, or null if none found
-	 */
-	public String titleField() {
-		return titleField;
-	}
+    /**
+     * Returns the metadata field containing the document title, if any.
+     *
+     * This field can be configured in the indexmetadata.json file. If it wasn't
+     * specified there, an intelligent guess is used.
+     *
+     * @return name of the title field, or null if none found
+     */
+    public String titleField() {
+        return titleField;
+    }
 
-	/**
-	 * Returns the metadata field containing the document author, if any.
-	 *
-	 * This field can be configured in the indexmetadata.json file.
-	 * If it wasn't specified there, an intelligent guess is used.
-	 *
-	 * @return name of the author field, or null if none found
-	 */
-	public String authorField() {
-		return authorField;
-	}
+    /**
+     * Returns the metadata field containing the document author, if any.
+     *
+     * This field can be configured in the indexmetadata.json file. If it wasn't
+     * specified there, an intelligent guess is used.
+     *
+     * @return name of the author field, or null if none found
+     */
+    public String authorField() {
+        return authorField;
+    }
 
-	/**
-	 * Returns the metadata field containing the document date, if any.
-	 *
-	 * This field can be configured in the indexmetadata.json file.
-	 * If it wasn't specified there, an intelligent guess is used.
-	 *
-	 * @return name of the date field, or null if none found
-	 */
-	public String dateField() {
-		return dateField;
-	}
+    /**
+     * Returns the metadata field containing the document date, if any.
+     *
+     * This field can be configured in the indexmetadata.json file. If it wasn't
+     * specified there, an intelligent guess is used.
+     *
+     * @return name of the date field, or null if none found
+     */
+    public String dateField() {
+        return dateField;
+    }
 
-	/**
-	 * Returns the metadata field containing the document pid, if any.
-	 *
-	 * This field can be configured in the indexmetadata.json file.
-	 * If it wasn't specified there, an intelligent guess is used.
-	 *
-	 * @return name of the pid field, or null if none found
-	 */
-	public String pidField() {
-		return pidField;
-	}
+    /**
+     * Returns the metadata field containing the document pid, if any.
+     *
+     * This field can be configured in the indexmetadata.json file. If it wasn't
+     * specified there, an intelligent guess is used.
+     *
+     * @return name of the pid field, or null if none found
+     */
+    public String pidField() {
+        return pidField;
+    }
 
-	/**
-	 * Name of the default analyzer to use for metadata fields.
-	 * @return the analyzer name (or DEFAULT for the BlackLab default)
-	 */
-	public String getDefaultAnalyzerName() {
-		return defaultAnalyzerName;
-	}
+    /**
+     * Name of the default analyzer to use for metadata fields.
+     * 
+     * @return the analyzer name (or DEFAULT for the BlackLab default)
+     */
+    public String getDefaultAnalyzerName() {
+        return defaultAnalyzerName;
+    }
 
-	/**
-	 * Find the first (alphabetically) field whose name contains the search string.
-	 *
-	 * @param search the string to search for
-	 * @return the field name, or null if no fields matched
-	 */
-	private String findTextField(String search) {
-		return findTextField(search, true);
-	}
+    /**
+     * Find the first (alphabetically) field whose name contains the search string.
+     *
+     * @param search the string to search for
+     * @return the field name, or null if no fields matched
+     */
+    private String findTextField(String search) {
+        return findTextField(search, true);
+    }
 
-	/**
-	 * Find the first (alphabetically) field matching the search string.
-	 *
-	 * @param search the string to search for
-	 * @param partialMatchOkay if false, only field names identical to the search
-	 *  string match; if true, all field names containing the search string match.
-	 * @return the field name, or null if no fields matched
-	 */
-	private String findTextField(String search, boolean partialMatchOkay) {
-		// Find documents with title in the name
-		List<String> fieldsFound = new ArrayList<>();
-		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-			if (e.getValue().getType() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
-				if (partialMatchOkay || e.getKey().toLowerCase().equals(search))
-					fieldsFound.add(e.getKey());
-			}
-		}
-		if (fieldsFound.isEmpty())
-			return null;
+    /**
+     * Find the first (alphabetically) field matching the search string.
+     *
+     * @param search the string to search for
+     * @param partialMatchOkay if false, only field names identical to the search
+     *            string match; if true, all field names containing the search
+     *            string match.
+     * @return the field name, or null if no fields matched
+     */
+    private String findTextField(String search, boolean partialMatchOkay) {
+        // Find documents with title in the name
+        List<String> fieldsFound = new ArrayList<>();
+        for (Map.Entry<String, MetadataFieldDesc> e : metadataFieldInfos.entrySet()) {
+            if (e.getValue().getType() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
+                if (partialMatchOkay || e.getKey().toLowerCase().equals(search))
+                    fieldsFound.add(e.getKey());
+            }
+        }
+        if (fieldsFound.isEmpty())
+            return null;
 
-		// Sort (so we get titleLevel1 not titleLevel2 for example)
-		Collections.sort(fieldsFound);
-		return fieldsFound.get(0);
-	}
+        // Sort (so we get titleLevel1 not titleLevel2 for example)
+        Collections.sort(fieldsFound);
+        return fieldsFound.get(0);
+    }
 
-	/**
-	 * Print the index structure.
-	 * @param out where to print it
-	 */
-	public void print(PrintWriter out) {
-		out.println("COMPLEX FIELDS");
-		for (ComplexFieldDesc cf: complexFields.values()) {
-			out.println("- " + cf.getName());
-			cf.print(out);
-		}
+    /**
+     * Print the index structure.
+     * 
+     * @param out where to print it
+     */
+    public void print(PrintWriter out) {
+        out.println("COMPLEX FIELDS");
+        for (ComplexFieldDesc cf : complexFields.values()) {
+            out.println("- " + cf.getName());
+            cf.print(out);
+        }
 
-		out.println("\nMETADATA FIELDS");
-		for (Map.Entry<String, MetadataFieldDesc> e: metadataFieldInfos.entrySet()) {
-			if (e.getKey().endsWith("Numeric"))
-				continue; // special case, will probably be removed later
-			FieldType type = e.getValue().getType();
-			String special = "";
-			if (e.getKey().equals(titleField))
-				special = "TITLEFIELD";
-			else if (e.getKey().equals(authorField))
-				special = "AUTHORFIELD";
-			else if (e.getKey().equals(dateField))
-				special = "DATEFIELD";
-			else if (e.getKey().equals(pidField))
-				special = "PIDFIELD";
-			if (special.length() > 0)
-				special = " (" + special + ")";
-			out.println("- " + e.getKey() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
-					+ special);
-		}
-	}
+        out.println("\nMETADATA FIELDS");
+        for (Map.Entry<String, MetadataFieldDesc> e : metadataFieldInfos.entrySet()) {
+            if (e.getKey().endsWith("Numeric"))
+                continue; // special case, will probably be removed later
+            FieldType type = e.getValue().getType();
+            String special = "";
+            if (e.getKey().equals(titleField))
+                special = "TITLEFIELD";
+            else if (e.getKey().equals(authorField))
+                special = "AUTHORFIELD";
+            else if (e.getKey().equals(dateField))
+                special = "DATEFIELD";
+            else if (e.getKey().equals(pidField))
+                special = "PIDFIELD";
+            if (special.length() > 0)
+                special = " (" + special + ")";
+            out.println("- " + e.getKey() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
+                    + special);
+        }
+    }
 
-	/**
-	 * Get the display name for the index.
-	 *
-	 * If no display name was specified, returns the name of the index directory.
-	 *
-	 * @return the display name
-	 */
-	public String getDisplayName() {
-		String dispName = "index";
-		if (displayName != null && displayName.length() != 0)
-			dispName = displayName;
-		if (dispName.equalsIgnoreCase("index"))
-			dispName = StringUtils.capitalize(indexDir.getName());
-		if (dispName.equalsIgnoreCase("index"))
-			dispName = StringUtils.capitalize(indexDir.getAbsoluteFile().getParentFile().getName());
-		return dispName;
-	}
+    /**
+     * Get the display name for the index.
+     *
+     * If no display name was specified, returns the name of the index directory.
+     *
+     * @return the display name
+     */
+    public String getDisplayName() {
+        String dispName = "index";
+        if (displayName != null && displayName.length() != 0)
+            dispName = displayName;
+        if (dispName.equalsIgnoreCase("index"))
+            dispName = StringUtils.capitalize(indexDir.getName());
+        if (dispName.equalsIgnoreCase("index"))
+            dispName = StringUtils.capitalize(indexDir.getAbsoluteFile().getParentFile().getName());
+        return dispName;
+    }
 
-	/**
-	 * Get a description of the index, if specified
-	 * @return the description
-	 */
-	public String getDescription() {
-		return description;
-	}
+    /**
+     * Get a description of the index, if specified
+     * 
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
-	/**
-	 * Is the content freely viewable by all users, or is it restricted?
-	 * @return true if the full content may be retrieved by anyone
-	 */
-	public boolean contentViewable() {
-		return contentViewable;
-	}
+    /**
+     * Is the content freely viewable by all users, or is it restricted?
+     * 
+     * @return true if the full content may be retrieved by anyone
+     */
+    public boolean contentViewable() {
+        return contentViewable;
+    }
 
     /**
      * What's the text direction of this corpus?
+     * 
      * @return text direction
      */
-	public TextDirection getTextDirection() {
-	    return textDirection;
-	}
-
-	/**
-	 * What format(s) is/are the documents in?
-	 *
-	 * This is in the form of a format identifier as understood
-	 * by the DocumentFormats class (either an abbreviation or a
-	 * (qualified) class name).
-	 *
-	 * @return the document format(s)
-	 */
-	public String getDocumentFormat() {
-		return documentFormat;
-	}
-
-	/**
-	 * What version of the index format is this?
-	 * @return the index format version
-	 */
-	public String getIndexFormat() {
-		return indexFormat;
-	}
-
-	/**
-	 * When was this index created?
-	 * @return date/time stamp
-	 */
-	public String getTimeCreated() {
-		return timeCreated;
-	}
-
-	/**
-	 * When was this index last modified?
-	 * @return date/time stamp
-	 */
-	public String getTimeModified() {
-		return timeCreated;
-	}
-
-	/**
-	 * When was the BlackLab.jar used for indexing built?
-	 * @return date/time stamp
-	 */
-	public String getIndexBlackLabBuildTime() {
-		return blackLabBuildTime;
-	}
-
-	/**
-	 * When was the BlackLab.jar used for indexing built?
-	 * @return date/time stamp
-	 */
-	public String getIndexBlackLabVersion() {
-		return blackLabVersion;
-	}
-
-	/**
-	 * While indexing, check if a complex field is already registered in the
-	 * metadata, and if not, add it now.
-	 *
-	 * @param fieldName field name
-	 * @param mainPropName main property name
-	 */
-	public void registerComplexField(String fieldName, String mainPropName) {
-		if (complexFields.containsKey(fieldName))
-			return;
-		// Not registered yet; do so now. Note that we only add the main property,
-		// not the other properties, but that's okay; they're not needed at index
-		// time and will be detected at search time.
-		ComplexFieldDesc cf = getOrCreateComplexField(fieldName);
-		cf.getOrCreateProperty(mainPropName); // create main property
-		cf.setMainPropertyName(mainPropName); // set main property
-	}
-
-	public void registerMetadataField(String fieldName) {
-		if (fieldName == null)
-			throw new IllegalArgumentException("Tried to register a metadata field with null as name");
-        // Synchronized because we might be using the map in another indexing thread
-        synchronized (metadataFieldInfos) {
-    		if (metadataFieldInfos.containsKey(fieldName))
-    			return;
-    		// Not registered yet; do so now.
-    		MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TOKENIZED);
-    		mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-    		mf.setUnknownValue(defaultUnknownValue);
-    		metadataFieldInfos.put(fieldName, mf);
-        }
-	}
-
-	/**
-	 * Do we always have words+1 tokens (before we sometimes did, if an XML tag
-	 * occurred after the last word; now we always make sure we have it, so we
-	 * can always skip the last token when matching)
-	 *
-	 * @return true if we do, false if we don't
-	 */
-	public boolean alwaysHasClosingToken() {
-		return alwaysHasClosingToken;
-	}
-
-	/**
-	 * Are tag lengths stored in the start tag payload (index v3.1 and higher)
-	 * or are tag ends stored in a separate property (up until index v3)?
-	 *
-	 * @return true if tag lengths are stored in the start tag payload
-	 */
-	public boolean tagLengthInPayload() {
-		return tagLengthInPayload;
-	}
-
-	/**
-	 * Is this a new, empty index?
-	 *
-	 * An empty index is one that doesn't have a main contents field yet,
-	 * or has a main contents field but no indexed tokens yet.
-	 *
-	 * @return true if it is, false if not.
-	 */
-	public boolean isNewIndex() {
-		return mainContentsField == null || tokenCount == 0;
-	}
-
-	/**
-	 * Set the display name for this index. Only makes
-	 * sense in index mode where the change will be saved.
-	 * Usually called when creating an index.
-	 *
-	 * @param displayName the display name to set.
-	 */
-	public void setDisplayName(String displayName) {
-		if (displayName.length() > 80)
-			displayName = StringUtil.abbreviate(displayName, 75);
-		this.displayName = displayName;
-	}
-
-	/**
-	 * Set a document format (or formats) for this index.
-	 *
-	 * This should be a format identifier as understood by the
-	 * DocumentFormats class (either an abbreviation or a
-	 * (qualified) class name).
-	 *
-	 * It only makes sense to call this in index mode, where
-	 * this change will be saved.
-	 *
-	 * @param documentFormat the document format to store
-	 */
-	public void setDocumentFormat(String documentFormat) {
-		this.documentFormat = documentFormat;
-	}
-
-	public void addToTokenCount(long tokensProcessed) {
-		tokenCount += tokensProcessed;
-	}
-
-	public long getTokenCount() {
-		return tokenCount;
-	}
+    public TextDirection getTextDirection() {
+        return textDirection;
+    }
 
     /**
-     * Used when creating an index to initialize contentViewable setting. Do not use otherwise.
+     * What format(s) is/are the documents in?
      *
-     * It is also used to support a deprecated configuration setting in BlackLab Server, but
-     * this use will eventually be removed.
+     * This is in the form of a format identifier as understood by the
+     * DocumentFormats class (either an abbreviation or a (qualified) class name).
+     *
+     * @return the document format(s)
+     */
+    public String getDocumentFormat() {
+        return documentFormat;
+    }
+
+    /**
+     * What version of the index format is this?
+     * 
+     * @return the index format version
+     */
+    public String getIndexFormat() {
+        return indexFormat;
+    }
+
+    /**
+     * When was this index created?
+     * 
+     * @return date/time stamp
+     */
+    public String getTimeCreated() {
+        return timeCreated;
+    }
+
+    /**
+     * When was this index last modified?
+     * 
+     * @return date/time stamp
+     */
+    public String getTimeModified() {
+        return timeCreated;
+    }
+
+    /**
+     * When was the BlackLab.jar used for indexing built?
+     * 
+     * @return date/time stamp
+     */
+    public String getIndexBlackLabBuildTime() {
+        return blackLabBuildTime;
+    }
+
+    /**
+     * When was the BlackLab.jar used for indexing built?
+     * 
+     * @return date/time stamp
+     */
+    public String getIndexBlackLabVersion() {
+        return blackLabVersion;
+    }
+
+    /**
+     * While indexing, check if a complex field is already registered in the
+     * metadata, and if not, add it now.
+     *
+     * @param fieldName field name
+     * @param mainPropName main property name
+     */
+    public void registerComplexField(String fieldName, String mainPropName) {
+        if (complexFields.containsKey(fieldName))
+            return;
+        // Not registered yet; do so now. Note that we only add the main property,
+        // not the other properties, but that's okay; they're not needed at index
+        // time and will be detected at search time.
+        ComplexFieldDesc cf = getOrCreateComplexField(fieldName);
+        cf.getOrCreateProperty(mainPropName); // create main property
+        cf.setMainPropertyName(mainPropName); // set main property
+    }
+
+    public void registerMetadataField(String fieldName) {
+        if (fieldName == null)
+            throw new IllegalArgumentException("Tried to register a metadata field with null as name");
+        // Synchronized because we might be using the map in another indexing thread
+        synchronized (metadataFieldInfos) {
+            if (metadataFieldInfos.containsKey(fieldName))
+                return;
+            // Not registered yet; do so now.
+            MetadataFieldDesc mf = new MetadataFieldDesc(fieldName, FieldType.TOKENIZED);
+            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
+            mf.setUnknownValue(defaultUnknownValue);
+            metadataFieldInfos.put(fieldName, mf);
+        }
+    }
+
+    /**
+     * Do we always have words+1 tokens (before we sometimes did, if an XML tag
+     * occurred after the last word; now we always make sure we have it, so we can
+     * always skip the last token when matching)
+     *
+     * @return true if we do, false if we don't
+     */
+    public boolean alwaysHasClosingToken() {
+        return alwaysHasClosingToken;
+    }
+
+    /**
+     * Are tag lengths stored in the start tag payload (index v3.1 and higher) or
+     * are tag ends stored in a separate property (up until index v3)?
+     *
+     * @return true if tag lengths are stored in the start tag payload
+     */
+    public boolean tagLengthInPayload() {
+        return tagLengthInPayload;
+    }
+
+    /**
+     * Is this a new, empty index?
+     *
+     * An empty index is one that doesn't have a main contents field yet, or has a
+     * main contents field but no indexed tokens yet.
+     *
+     * @return true if it is, false if not.
+     */
+    public boolean isNewIndex() {
+        return mainContentsField == null || tokenCount == 0;
+    }
+
+    /**
+     * Set the display name for this index. Only makes sense in index mode where the
+     * change will be saved. Usually called when creating an index.
+     *
+     * @param displayName the display name to set.
+     */
+    public void setDisplayName(String displayName) {
+        if (displayName.length() > 80)
+            displayName = StringUtil.abbreviate(displayName, 75);
+        this.displayName = displayName;
+    }
+
+    /**
+     * Set a document format (or formats) for this index.
+     *
+     * This should be a format identifier as understood by the DocumentFormats class
+     * (either an abbreviation or a (qualified) class name).
+     *
+     * It only makes sense to call this in index mode, where this change will be
+     * saved.
+     *
+     * @param documentFormat the document format to store
+     */
+    public void setDocumentFormat(String documentFormat) {
+        this.documentFormat = documentFormat;
+    }
+
+    public void addToTokenCount(long tokensProcessed) {
+        tokenCount += tokensProcessed;
+    }
+
+    public long getTokenCount() {
+        return tokenCount;
+    }
+
+    /**
+     * Used when creating an index to initialize contentViewable setting. Do not use
+     * otherwise.
+     *
+     * It is also used to support a deprecated configuration setting in BlackLab
+     * Server, but this use will eventually be removed.
      *
      * @param contentViewable whether content may be freely viewed
      */
-	public void setContentViewable(boolean contentViewable) {
-		this.contentViewable = contentViewable;
-	}
+    public void setContentViewable(boolean contentViewable) {
+        this.contentViewable = contentViewable;
+    }
 
     /**
-     * Used when creating an index to initialize textDirection setting. Do not use otherwise.
+     * Used when creating an index to initialize textDirection setting. Do not use
+     * otherwise.
      *
      * @param textDirection text direction
      */
@@ -1026,9 +1068,11 @@ public class IndexStructure {
     }
 
     /**
-     * If the object node contains any keys other than those specified, warn about it
+     * If the object node contains any keys other than those specified, warn about
+     * it
      *
-     * @param where where are we in the file (e.g. "top level", "complex field 'contents'", etc.)
+     * @param where where are we in the file (e.g. "top level", "complex field
+     *            'contents'", etc.)
      * @param node node to check
      * @param knownKeys keys that may occur under this node
      */
@@ -1042,21 +1086,27 @@ public class IndexStructure {
         }
     }
 
-    /** Extract the index structure from the (in-memory) JSON structure (and Lucene index).
+    /**
+     * Extract the index structure from the (in-memory) JSON structure (and Lucene
+     * index).
      *
-     * Looks at the Lucene index to detect certain information (sometimes) missing from the
-     * JSON structure, such as naming scheme and available properties and alternatives for complex
-     * fields. (Should probably eventually all be recorded in the metadata.)
+     * Looks at the Lucene index to detect certain information (sometimes) missing
+     * from the JSON structure, such as naming scheme and available properties and
+     * alternatives for complex fields. (Should probably eventually all be recorded
+     * in the metadata.)
      *
      * @param jsonRoot JSON structure to extract
-     * @param reader index reader used to detect certain information, or null if we don't have an
-     *          index reader (e.g. because we're creating a new index)
-     * @param usedTemplate whether the JSON structure was read from a indextemplate file. If so,
-     *          clear certain parts of it that aren't relevant anymore.
-     * @param initTimestamps whether or not to update blacklab build time, version, and index
-     *          creation/modification time
+     * @param reader index reader used to detect certain information, or null if we
+     *            don't have an index reader (e.g. because we're creating a new
+     *            index)
+     * @param usedTemplate whether the JSON structure was read from a indextemplate
+     *            file. If so, clear certain parts of it that aren't relevant
+     *            anymore.
+     * @param initTimestamps whether or not to update blacklab build time, version,
+     *            and index creation/modification time
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate, boolean initTimestamps) {
+    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate,
+            boolean initTimestamps) {
         // Read and interpret index metadata file
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
         displayName = Json.getString(jsonRoot, "displayName", "");
@@ -1112,10 +1162,12 @@ public class IndexStructure {
                 }
             }
             if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
-                throw new RuntimeException("Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
+                throw new RuntimeException(
+                        "Could not detect index naming scheme. If your index was created with an old version of BlackLab, it may use the old naming scheme and cannot be opened with this version. Please re-index your data, or use a BlackLab version from before August 2014.");
             }
             if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
-                throw new RuntimeException("Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in (metadata) field names and re-index your data.");
+                throw new RuntimeException(
+                        "Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in (metadata) field names and re-index your data.");
             }
             ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
         }
@@ -1149,16 +1201,18 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
-                warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig, KEYS_META_FIELD_CONFIG);
+                warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig,
+                        KEYS_META_FIELD_CONFIG);
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
                 MetadataFieldDesc fieldDesc = new MetadataFieldDesc(fieldName, fieldType);
-                fieldDesc.setDisplayName     (Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setUiType          (Json.getString(fieldConfig, "uiType", ""));
-                fieldDesc.setDescription     (Json.getString(fieldConfig, "description", ""));
-                fieldDesc.setGroup           (Json.getString(fieldConfig, "group", ""));
-                fieldDesc.setAnalyzer        (Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.setUnknownValue    (Json.getString(fieldConfig, "unknownValue", defaultUnknownValue));
-                UnknownCondition unk = UnknownCondition.fromStringValue(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
+                fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
+                fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
+                fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
+                fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
+                fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
+                fieldDesc.setUnknownValue(Json.getString(fieldConfig, "unknownValue", defaultUnknownValue));
+                UnknownCondition unk = UnknownCondition
+                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
                 fieldDesc.setUnknownCondition(unk);
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
@@ -1167,7 +1221,7 @@ public class IndexStructure {
                 if (fieldConfig.has("displayOrder"))
                     fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
                 if (fieldConfig.has("valueListComplete"))
-                	fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
+                    fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFieldInfos.put(fieldName, fieldDesc);
             }
 
@@ -1177,10 +1231,11 @@ public class IndexStructure {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
-                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig, KEYS_COMPLEX_FIELD_CONFIG);
+                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig,
+                        KEYS_COMPLEX_FIELD_CONFIG);
                 ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
-                fieldDesc.setDisplayName (Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setDescription (Json.getString(fieldConfig, "description", ""));
+                fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
+                fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
                 if (mainPropertyName.length() > 0)
                     fieldDesc.setMainPropertyName(mainPropertyName);
@@ -1211,12 +1266,14 @@ public class IndexStructure {
                                 propDesc.setUiType(opt.getValue().textValue());
                                 break;
                             default:
-                                logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName + "' in indexmetadata file");
+                                logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName
+                                        + "' in indexmetadata file");
                                 break;
                             }
                         }
                         if (StringUtils.isEmpty(propDesc.getName()))
-                            logger.warn("Annotation entry without name for field '" + fieldName + "' in indexmetadata file; skipping");
+                            logger.warn("Annotation entry without name for field '" + fieldName
+                                    + "' in indexmetadata file; skipping");
                         else
                             fieldDesc.putProperty(propDesc);
                     }
@@ -1254,40 +1311,41 @@ public class IndexStructure {
         if (fis != null) {
             // Detect fields
             for (int i = 0; i < fis.size(); i++) {
-            	FieldInfo fi = fis.fieldInfo(i);
-            	String name = fi.name;
+                FieldInfo fi = fis.fieldInfo(i);
+                String name = fi.name;
 
-            	// Parse the name to see if it is a metadata field or part of a complex field.
-            	String[] parts;
-            	if (name.endsWith("Numeric")) {
-            		// Special case: this is not a property alternative, but a numeric
-            		// alternative for a metadata field.
-            		// (TODO: this should probably be changed or removed)
-            		parts = new String[] { name };
-            	} else {
-            		parts = ComplexFieldUtil.getNameComponents(name);
-            	}
-            	if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
-            		if (!metadataFieldInfos.containsKey(name)) {
-            			// Metadata field, not found in metadata JSON file
-            			FieldType type = getFieldType(name);
-            			MetadataFieldDesc metadataFieldDesc = new MetadataFieldDesc(name, type);
-            			metadataFieldDesc.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-            			metadataFieldDesc.setUnknownValue(defaultUnknownValue);
-            			metadataFieldInfos.put(name, metadataFieldDesc);
-            		}
-            	} else {
-            		// Part of complex field.
-            		if (metadataFieldInfos.containsKey(parts[0])) {
-            			throw new RuntimeException(
-            					"Complex field and metadata field with same name, error! ("
-            							+ parts[0] + ")");
-            		}
+                // Parse the name to see if it is a metadata field or part of a complex field.
+                String[] parts;
+                if (name.endsWith("Numeric")) {
+                    // Special case: this is not a property alternative, but a numeric
+                    // alternative for a metadata field.
+                    // (TODO: this should probably be changed or removed)
+                    parts = new String[] { name };
+                } else {
+                    parts = ComplexFieldUtil.getNameComponents(name);
+                }
+                if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
+                    if (!metadataFieldInfos.containsKey(name)) {
+                        // Metadata field, not found in metadata JSON file
+                        FieldType type = getFieldType(name);
+                        MetadataFieldDesc metadataFieldDesc = new MetadataFieldDesc(name, type);
+                        metadataFieldDesc
+                                .setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
+                        metadataFieldDesc.setUnknownValue(defaultUnknownValue);
+                        metadataFieldInfos.put(name, metadataFieldDesc);
+                    }
+                } else {
+                    // Part of complex field.
+                    if (metadataFieldInfos.containsKey(parts[0])) {
+                        throw new RuntimeException(
+                                "Complex field and metadata field with same name, error! ("
+                                        + parts[0] + ")");
+                    }
 
-            		// Get or create descriptor object.
-            		ComplexFieldDesc cfd = getOrCreateComplexField(parts[0]);
-            		cfd.processIndexField(parts);
-            	}
+                    // Get or create descriptor object.
+                    ComplexFieldDesc cfd = getOrCreateComplexField(parts[0]);
+                    cfd.processIndexField(parts);
+                }
             } // even if we have metadata, we still have to detect props/alts
         }
 
@@ -1320,7 +1378,7 @@ public class IndexStructure {
             timeModified = timeCreated = IndexStructure.getTimestamp();
 
             // Clear any recorded values in metadata fields
-            for (MetadataFieldDesc f: metadataFieldInfos.values()) {
+            for (MetadataFieldDesc f : metadataFieldInfos.values()) {
                 f.resetForIndexing();
             }
         }
@@ -1337,16 +1395,17 @@ public class IndexStructure {
         versionInfo.put("tagLengthInPayload", true);
     }
 
-    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups, ConfigInputFormat config) {
+    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups,
+            ConfigInputFormat config) {
 
         // Add metadata field groups info
         ConfigCorpus corpusConfig = config.getCorpusConfig();
-        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
+        for (ConfigMetadataFieldGroup g : corpusConfig.getMetadataFieldGroups().values()) {
             ObjectNode h = metaGroups.addObject();
             h.put("name", g.getName());
             if (g.getFields().size() > 0) {
                 ArrayNode i = h.putArray("fields");
-                for (String f: g.getFields()) {
+                for (String f : g.getFields()) {
                     i.add(f);
                 }
             }
@@ -1356,8 +1415,8 @@ public class IndexStructure {
 
         // Add metadata info
         String defaultAnalyzer = config.getMetadataDefaultAnalyzer();
-        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
-            for (ConfigMetadataField f: b.getFields()) {
+        for (ConfigMetadataBlock b : config.getMetadataBlocks()) {
+            for (ConfigMetadataField f : b.getFields()) {
                 if (f.isForEach())
                     continue;
                 ObjectNode g = metadata.putObject(f.getName());
@@ -1370,18 +1429,18 @@ public class IndexStructure {
                 g.put("unknownCondition", f.getUnknownCondition().stringValue());
                 g.put("unknownValue", f.getUnknownValue());
                 ObjectNode h = g.putObject("displayValues");
-                for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
+                for (Entry<String, String> e : f.getDisplayValues().entrySet()) {
                     h.put(e.getKey(), e.getValue());
                 }
                 ArrayNode i = g.putArray("displayOrder");
-                for (String v: f.getDisplayOrder()) {
+                for (String v : f.getDisplayOrder()) {
                     i.add(v);
                 }
             }
         }
 
         // Add complex field info
-        for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField f : config.getAnnotatedFields().values()) {
             ObjectNode g = complex.putObject(f.getName());
             g.put("displayName", f.getDisplayName());
             g.put("description", f.getDescription());
@@ -1389,7 +1448,7 @@ public class IndexStructure {
             ArrayNode displayOrder = g.putArray("displayOrder");
             ArrayNode noForwardIndexProps = g.putArray("noForwardIndexProps");
             ArrayNode annotations = g.putArray("annotations");
-            for (ConfigAnnotation a: f.getAnnotations().values()) {
+            for (ConfigAnnotation a : f.getAnnotations().values()) {
                 displayOrder.add(a.getName());
                 if (!a.createForwardIndex())
                     noForwardIndexProps.add(a.getName());
@@ -1399,8 +1458,8 @@ public class IndexStructure {
                 annotation.put("description", a.getDescription());
                 annotation.put("uiType", a.getUiType());
             }
-            for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
-                for (ConfigAnnotation a: standoff.getAnnotations().values()) {
+            for (ConfigStandoffAnnotations standoff : f.getStandoffAnnotations()) {
+                for (ConfigAnnotation a : standoff.getAnnotations().values()) {
                     displayOrder.add(a.getName());
                     if (!a.createForwardIndex())
                         noForwardIndexProps.add(a.getName());
@@ -1409,7 +1468,7 @@ public class IndexStructure {
         }
 
         // Also (recursively) add metadata and complex field config from any linked documents
-        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+        for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
             if (format.isConfigurationBased())
                 addFieldInfoFromConfig(metadata, complex, metaGroups, format.getConfig());
@@ -1424,8 +1483,7 @@ public class IndexStructure {
     static String getTimestamp() {
         // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
         DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    	return dateTimeFormat.format(new Date());
+        return dateTimeFormat.format(new Date());
     }
-
 
 }

@@ -33,14 +33,20 @@ public class TestFileProcessor {
     }
 
     // Input
-    @Parameter(0) public String fileName;
-    @Parameter(1) public File inputFile;
-    @Parameter(2) public boolean useThreads;
-    @Parameter(3) public boolean recurseSubdirs;
-    @Parameter(4) public boolean processArchives;
+    @Parameter(0)
+    public String fileName;
+    @Parameter(1)
+    public File inputFile;
+    @Parameter(2)
+    public boolean useThreads;
+    @Parameter(3)
+    public boolean recurseSubdirs;
+    @Parameter(4)
+    public boolean processArchives;
 
     // Test behavior
-    @Parameter(5) public boolean shouldTriggerException;
+    @Parameter(5)
+    public boolean shouldTriggerException;
 
     /*
      * Expected results
@@ -49,138 +55,141 @@ public class TestFileProcessor {
      * In singlethread test results must sum to 1 (the first result, be it a directory or a file)
      * In multithread tests the results are nondeterministic, so any total can be valid and these are ignore
      */
-    @Parameter(6) public int expectedDirectories;
-    @Parameter(7) public int expectedFiles;
+    @Parameter(6)
+    public int expectedDirectories;
+    @Parameter(7)
+    public int expectedFiles;
 
-    @Parameters(name="{index} - {0} useThreads:{2} recurse:{3} archives:{4} exception:{5}")
+    @Parameters(name = "{index} - {0} useThreads:{2} recurse:{3} archives:{4} exception:{5}")
     public static Collection<Object[]> data() throws URISyntaxException {
         setup();
 
         return Arrays.asList(new Object[][] {
-            { // Single thread single file
-                testFile.getName(),
-                testFile,
-                false,
-                false,
-                false,
+                { // Single thread single file
+                        testFile.getName(),
+                        testFile,
+                        false,
+                        false,
+                        false,
 
-                false,
+                        false,
 
-                0,
-                1
-            },
-            { // Multiple threads single file
-                testFile.getName(),
-                testFile,
-                true,
-                false,
-                false,
+                        0,
+                        1
+                },
+                { // Multiple threads single file
+                        testFile.getName(),
+                        testFile,
+                        true,
+                        false,
+                        false,
 
-                false,
+                        false,
 
-                0,
-                1
-            },
-            { // Single thread non recursive directory
-                testDirectory.getName(),
-                testDirectory,
-                false,
-                false,
-                false,
+                        0,
+                        1
+                },
+                { // Single thread non recursive directory
+                        testDirectory.getName(),
+                        testDirectory,
+                        false,
+                        false,
+                        false,
 
-                false,
+                        false,
 
-                1,
-                4
-            },
-            { // Single thread recursive directory
-                testDirectory.getName(),
-                testDirectory,
-                false,
-                true,
-                false,
+                        1,
+                        4
+                },
+                { // Single thread recursive directory
+                        testDirectory.getName(),
+                        testDirectory,
+                        false,
+                        true,
+                        false,
 
-                false,
+                        false,
 
-                1,
-                5
-            },
-            { // Single thread recursive directory, throwing exception
-                testDirectory.getName(),
-                testDirectory,
-                false,
-                true,
-                false,
+                        1,
+                        5
+                },
+                { // Single thread recursive directory, throwing exception
+                        testDirectory.getName(),
+                        testDirectory,
+                        false,
+                        true,
+                        false,
 
-                true,
+                        true,
 
-                0, // ignored when throwing
-                0
-            },
-            { // Multi thread recursive directory
-                testDirectory.getName(),
-                testDirectory,
-                true,
-                true,
-                false,
+                        0, // ignored when throwing
+                        0
+                },
+                { // Multi thread recursive directory
+                        testDirectory.getName(),
+                        testDirectory,
+                        true,
+                        true,
+                        false,
 
-                false,
+                        false,
 
-                1,
-                5
-            },
-            { // Multi thread recursive directory, throwing exception
-                testDirectory.getName(),
-                testDirectory,
-                true,
-                true,
-                false,
+                        1,
+                        5
+                },
+                { // Multi thread recursive directory, throwing exception
+                        testDirectory.getName(),
+                        testDirectory,
+                        true,
+                        true,
+                        false,
 
-                true,
+                        true,
 
-                0, // ignored when throwing
-                0
-            },
-            { // Single thread archive
-                testArchive.getName(),
-                testArchive,
-                false,
-                false,
-                true,
+                        0, // ignored when throwing
+                        0
+                },
+                { // Single thread archive
+                        testArchive.getName(),
+                        testArchive,
+                        false,
+                        false,
+                        true,
 
-                false,
+                        false,
 
-                0,
-                5
-            },
-            { // Multi thread archive
-                testArchive.getName(),
-                testArchive,
-                true,
-                false,
-                true,
+                        0,
+                        5
+                },
+                { // Multi thread archive
+                        testArchive.getName(),
+                        testArchive,
+                        true,
+                        false,
+                        true,
 
-                false,
+                        false,
 
-                0,
-                5
-            },
-            { // Multi thread archive, throwing exception
-                testArchive.getName(),
-                testArchive,
-                true,
-                false,
-                true,
+                        0,
+                        5
+                },
+                { // Multi thread archive, throwing exception
+                        testArchive.getName(),
+                        testArchive,
+                        true,
+                        false,
+                        true,
 
-                true,
+                        true,
 
-                0, // ignored when throwing
-                0
-            },
+                        0, // ignored when throwing
+                        0
+                },
         });
     }
 
-    private static class TestException extends Exception {}
+    private static class TestException extends Exception {
+    }
 
     // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests
     // In we didn't synchronize then multiple file() or directory() calls may run simultaneously.

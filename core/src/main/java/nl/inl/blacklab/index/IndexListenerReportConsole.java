@@ -23,93 +23,95 @@ import nl.inl.util.TimeUtil;
  * Used to report progress while indexing, so we can give feedback to the user.
  */
 public class IndexListenerReportConsole extends IndexListener {
-	static final int REPORT_INTERVAL_SEC = 10;
+    static final int REPORT_INTERVAL_SEC = 10;
 
-	long prevCharsDoneReported = 0;
+    long prevCharsDoneReported = 0;
 
-	long prevTokensDoneReported = 0;
+    long prevTokensDoneReported = 0;
 
-	double prevReportTime = 0;
+    double prevReportTime = 0;
 
-	double curSpeed = -1;
+    double curSpeed = -1;
 
-	double curTokensSpeed = -1;
+    double curTokensSpeed = -1;
 
-	@Override
-	public synchronized void charsDone(long charsDone) {
-		super.charsDone(charsDone);
+    @Override
+    public synchronized void charsDone(long charsDone) {
+        super.charsDone(charsDone);
 
-		reportProgress();
-	}
+        reportProgress();
+    }
 
-	private void reportProgress() {
-		reportProgress(false);
-	}
+    private void reportProgress() {
+        reportProgress(false);
+    }
 
-	private void reportProgress(boolean force) {
-		double elapsed = getElapsed();
-		if (elapsed == 0)
-			elapsed = 0.1;
-		double secondsSinceLastReport = elapsed - prevReportTime;
-		if (force || secondsSinceLastReport >= REPORT_INTERVAL_SEC) {
-			long totalCharsDone = getCharsProcessed();
-			long charsDoneSinceLastReport = totalCharsDone - prevCharsDoneReported;
+    private void reportProgress(boolean force) {
+        double elapsed = getElapsed();
+        if (elapsed == 0)
+            elapsed = 0.1;
+        double secondsSinceLastReport = elapsed - prevReportTime;
+        if (force || secondsSinceLastReport >= REPORT_INTERVAL_SEC) {
+            long totalCharsDone = getCharsProcessed();
+            long charsDoneSinceLastReport = totalCharsDone - prevCharsDoneReported;
 
-			double lastMbDone = charsDoneSinceLastReport / 1000000.0;
-			double lastSpeed = lastMbDone / secondsSinceLastReport;
+            double lastMbDone = charsDoneSinceLastReport / 1000000.0;
+            double lastSpeed = lastMbDone / secondsSinceLastReport;
 
-			double mbDone = totalCharsDone / 1000000.0;
-			double overallSpeed = mbDone / elapsed;
+            double mbDone = totalCharsDone / 1000000.0;
+            double overallSpeed = mbDone / elapsed;
 
-			if (curSpeed < 0)
-				curSpeed = overallSpeed;
-			curSpeed = curSpeed * 0.7 + lastSpeed * 0.3;
+            if (curSpeed < 0)
+                curSpeed = overallSpeed;
+            curSpeed = curSpeed * 0.7 + lastSpeed * 0.3;
 
-			long totalTokensDone = getTokensProcessed();
-			long tokensDoneSinceLastReport = totalTokensDone - prevTokensDoneReported;
+            long totalTokensDone = getTokensProcessed();
+            long tokensDoneSinceLastReport = totalTokensDone - prevTokensDoneReported;
 
-			double lastKDone = tokensDoneSinceLastReport / 1000.0;
-			double lastTokensSpeed = lastKDone / secondsSinceLastReport;
+            double lastKDone = tokensDoneSinceLastReport / 1000.0;
+            double lastTokensSpeed = lastKDone / secondsSinceLastReport;
 
-			double kTokensDone = totalTokensDone / 1000.0;
-			double overallTokenSpeed = kTokensDone / elapsed;
+            double kTokensDone = totalTokensDone / 1000.0;
+            double overallTokenSpeed = kTokensDone / elapsed;
 
-			if (curTokensSpeed < 0)
-				curTokensSpeed = overallTokenSpeed;
-			curTokensSpeed = curTokensSpeed * 0.7 + lastTokensSpeed * 0.3;
+            if (curTokensSpeed < 0)
+                curTokensSpeed = overallTokenSpeed;
+            curTokensSpeed = curTokensSpeed * 0.7 + lastTokensSpeed * 0.3;
 
-			System.out
-					.printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), currently %.1fk tokens/s (%.1f MB/s)%n",
-							getDocsDone(), (int) mbDone, (int) kTokensDone, overallTokenSpeed,
-							overallSpeed, curTokensSpeed, curSpeed);
+            System.out
+                    .printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), " +
+                            "currently %.1fk tokens/s (%.1f MB/s)%n",
+                            getDocsDone(), (int) mbDone, (int) kTokensDone, overallTokenSpeed,
+                            overallSpeed, curTokensSpeed, curSpeed);
 
-			prevCharsDoneReported = totalCharsDone;
-			prevTokensDoneReported = totalTokensDone;
-			prevReportTime = elapsed;
-		}
-	}
+            prevCharsDoneReported = totalCharsDone;
+            prevTokensDoneReported = totalTokensDone;
+            prevReportTime = elapsed;
+        }
+    }
 
-	private double getElapsed() {
-		return (System.currentTimeMillis() - getIndexStartTime()) / 1000.0;
-	}
+    private double getElapsed() {
+        return (System.currentTimeMillis() - getIndexStartTime()) / 1000.0;
+    }
 
-	@Override
-	public void indexEnd() {
-		super.indexEnd();
-		reportProgress(true);
-		System.out.println("Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - getIndexStartTime()));
-	}
+    @Override
+    public void indexEnd() {
+        super.indexEnd();
+        reportProgress(true);
+        System.out.println(
+                "Done. Elapsed time: " + TimeUtil.describeInterval(System.currentTimeMillis() - getIndexStartTime()));
+    }
 
-	@Override
-	public boolean errorOccurred(Throwable e, String path, File f) {
-		System.out.println("An error occurred during indexing!");
-		System.out.println("error: " + e.getMessage() + " (in " + path + ")");
-		return super.errorOccurred(e, path, f);
-	}
+    @Override
+    public boolean errorOccurred(Throwable e, String path, File f) {
+        System.out.println("An error occurred during indexing!");
+        System.out.println("error: " + e.getMessage() + " (in " + path + ")");
+        return super.errorOccurred(e, path, f);
+    }
 
-	@Override
-	public void warning(String msg) {
-		System.out.println("WARNING: " + msg);
-	}
+    @Override
+    public void warning(String msg) {
+        System.out.println("WARNING: " + msg);
+    }
 
 }

@@ -7,8 +7,8 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Mock executorService that actually just runs all submitted tasks on the main thread.
- * Note: unlike regular ExecutorService, this class is NOT thread-safe.
+ * Mock executorService that actually just runs all submitted tasks on the main
+ * thread. Note: unlike regular ExecutorService, this class is NOT thread-safe.
  */
 public class MainThreadExecutorService extends AbstractExecutorService {
 
@@ -19,50 +19,50 @@ public class MainThreadExecutorService extends AbstractExecutorService {
 
     private RejectedExecutionHandler handler;
 
-	private boolean shutdown;
+    private boolean shutdown;
 
-	MainThreadExecutorService() {
-	    this((r, e) -> {
-	        throw new RejectedExecutionException("Task " + r.toString() +" rejected from " + e.toString());
-	    });
-	}
+    MainThreadExecutorService() {
+        this((r, e) -> {
+            throw new RejectedExecutionException("Task " + r.toString() + " rejected from " + e.toString());
+        });
+    }
 
-	MainThreadExecutorService(RejectedExecutionHandler h) {
-	    if (h == null)
-	        throw new NullPointerException();
-	    this.handler = h;
-	}
+    MainThreadExecutorService(RejectedExecutionHandler h) {
+        if (h == null)
+            throw new NullPointerException();
+        this.handler = h;
+    }
 
-	@Override
-	public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-		shutdown = true;
-		return true;
-	}
+    @Override
+    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+        shutdown = true;
+        return true;
+    }
 
-	@Override
-	public boolean isShutdown() {
-		return shutdown;
-	}
+    @Override
+    public boolean isShutdown() {
+        return shutdown;
+    }
 
-	@Override
-	public boolean isTerminated() {
-		return shutdown;
-	}
+    @Override
+    public boolean isTerminated() {
+        return shutdown;
+    }
 
-	@Override
-	public void shutdown() {
-		shutdown = true;
-	}
+    @Override
+    public void shutdown() {
+        shutdown = true;
+    }
 
-	@Override
-	public List<Runnable> shutdownNow() {
-		return Collections.emptyList();
-	}
+    @Override
+    public List<Runnable> shutdownNow() {
+        return Collections.emptyList();
+    }
 
-	@Override
-	public void execute(Runnable command) {
-		if (shutdown)
-		    handler.rejectedExecution(command, this);
-	    command.run();
-	}
+    @Override
+    public void execute(Runnable command) {
+        if (shutdown)
+            handler.rejectedExecution(command, this);
+        command.run();
+    }
 }

@@ -16,50 +16,51 @@ import nl.inl.blacklab.server.jobs.User;
  */
 public class RequestHandlerIndexStatus extends RequestHandler {
 
-	public RequestHandlerIndexStatus(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
-		super(servlet, request, user, indexName, urlResource, urlPathPart);
-	}
+    public RequestHandlerIndexStatus(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+            String urlResource, String urlPathPart) {
+        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    }
 
-	@Override
-	public boolean isCacheAllowed() {
-		return false; // because status might change
-	}
+    @Override
+    public boolean isCacheAllowed() {
+        return false; // because status might change
+    }
 
-	@Override
-	public int handle(DataStream ds) throws BlsException {
-		Index index = indexMan.getIndex(indexName);
-		synchronized (index) {
-			IndexStatus status = index.getStatus();
-			IndexStructure struct = index.getIndexStructure();
+    @Override
+    public int handle(DataStream ds) throws BlsException {
+        Index index = indexMan.getIndex(indexName);
+        synchronized (index) {
+            IndexStatus status = index.getStatus();
+            IndexStructure struct = index.getIndexStructure();
 
-			// Assemble response
-			ds.startMap()
-				.entry("indexName", indexName)
-				.entry("displayName", index.getIndexStructure().getDisplayName())
-				.entry("status", status);
+            // Assemble response
+            ds.startMap()
+                    .entry("indexName", indexName)
+                    .entry("displayName", index.getIndexStructure().getDisplayName())
+                    .entry("status", status);
 
-			String formatIdentifier = struct.getDocumentFormat();
-			if (formatIdentifier != null && formatIdentifier.length() > 0)
-				ds.entry("documentFormat", formatIdentifier);
-			ds.entry("timeModified", struct.getTimeModified());
-			if (struct.getTokenCount() > 0)
-				ds.entry("tokenCount", struct.getTokenCount());
+            String formatIdentifier = struct.getDocumentFormat();
+            if (formatIdentifier != null && formatIdentifier.length() > 0)
+                ds.entry("documentFormat", formatIdentifier);
+            ds.entry("timeModified", struct.getTimeModified());
+            if (struct.getTokenCount() > 0)
+                ds.entry("tokenCount", struct.getTokenCount());
 
-			if (status.equals(IndexStatus.INDEXING)) {
-				IndexListener indexProgress = index.getIndexerListener();
-				synchronized (indexProgress) {
-					ds.startEntry("indexProgress").startMap()
-					.entry("filesProcessed", indexProgress.getFilesProcessed())
-					.entry("docsDone", indexProgress.getDocsDone())
-					.entry("tokensProcessed", indexProgress.getTokensProcessed())
-					.endMap().endEntry();
-				}
-			}
+            if (status.equals(IndexStatus.INDEXING)) {
+                IndexListener indexProgress = index.getIndexerListener();
+                synchronized (indexProgress) {
+                    ds.startEntry("indexProgress").startMap()
+                            .entry("filesProcessed", indexProgress.getFilesProcessed())
+                            .entry("docsDone", indexProgress.getDocsDone())
+                            .entry("tokensProcessed", indexProgress.getTokensProcessed())
+                            .endMap().endEntry();
+                }
+            }
 
-			ds.endMap();
-		}
+            ds.endMap();
+        }
 
-		return HTTP_OK;
-	}
+        return HTTP_OK;
+    }
 
 }

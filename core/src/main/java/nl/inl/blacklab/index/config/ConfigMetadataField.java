@@ -18,8 +18,10 @@ public class ConfigMetadataField {
     /** Where to find metadata value */
     private String valuePath;
 
-    /** If null: regular metadata field definition. Otherwise, find all nodes matching this XPath,
-     *  then evaluate fieldName and valuePath as XPaths for each matching node.
+    /**
+     * If null: regular metadata field definition. Otherwise, find all nodes
+     * matching this XPath, then evaluate fieldName and valuePath as XPaths for each
+     * matching node.
      */
     private String forEachPath;
 
@@ -29,7 +31,10 @@ public class ConfigMetadataField {
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
 
-    /** When to index the unknownValue: NEVER|MISSING|EMPTY|MISSING_OR_EMPTY (default: NEVER) */
+    /**
+     * When to index the unknownValue: NEVER|MISSING|EMPTY|MISSING_OR_EMPTY
+     * (default: NEVER)
+     */
     private UnknownCondition unknownCondition = UnknownCondition.NEVER;
 
     /** What to index when unknownCondition is true (default: unknown) */
@@ -84,7 +89,7 @@ public class ConfigMetadataField {
     public void validate() {
         String t = "metadata field";
         ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
-        for (ConfigProcessStep step: process) {
+        for (ConfigProcessStep step : process) {
             step.validate();
         }
     }

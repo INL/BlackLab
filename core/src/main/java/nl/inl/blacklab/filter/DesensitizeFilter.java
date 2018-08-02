@@ -26,44 +26,45 @@ import nl.inl.util.StringUtil;
 /**
  * Lowercases and/or removes any accents from the input.
  *
- * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII characters too.
+ * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII
+ * characters too.
  *
- * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an approach such as
- * RemoveDutchAccentsFilter.
+ * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an
+ * approach such as RemoveDutchAccentsFilter.
  */
 public class DesensitizeFilter extends TokenFilter {
 
-	private CharTermAttribute termAtt;
+    private CharTermAttribute termAtt;
 
-	private boolean lowerCase;
+    private boolean lowerCase;
 
-	private boolean removeAccents;
+    private boolean removeAccents;
 
-	/**
-	 * @param input the token stream to desensitize
-	 * @param lowerCase whether to lower case tokens
-	 * @param removeAccents whether to remove accents
-	 */
-	public DesensitizeFilter(TokenStream input, boolean lowerCase, boolean removeAccents) {
-		super(input);
-		this.lowerCase = lowerCase;
-		this.removeAccents = removeAccents;
-		termAtt = addAttribute(CharTermAttribute.class);
-	}
+    /**
+     * @param input the token stream to desensitize
+     * @param lowerCase whether to lower case tokens
+     * @param removeAccents whether to remove accents
+     */
+    public DesensitizeFilter(TokenStream input, boolean lowerCase, boolean removeAccents) {
+        super(input);
+        this.lowerCase = lowerCase;
+        this.removeAccents = removeAccents;
+        termAtt = addAttribute(CharTermAttribute.class);
+    }
 
-	@Override
-	final public boolean incrementToken() throws IOException {
-		if (input.incrementToken()) {
-			String t = new String(termAtt.buffer(), 0, termAtt.length());
-			if (removeAccents)
-				t = StringUtil.stripAccents(t);
-			if (lowerCase)
-				t = t.toLowerCase();
-			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
-			return true;
-		}
-		return false;
-	}
+    @Override
+    final public boolean incrementToken() throws IOException {
+        if (input.incrementToken()) {
+            String t = new String(termAtt.buffer(), 0, termAtt.length());
+            if (removeAccents)
+                t = StringUtil.stripAccents(t);
+            if (lowerCase)
+                t = t.toLowerCase();
+            termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

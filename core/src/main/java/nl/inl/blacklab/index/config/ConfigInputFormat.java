@@ -25,16 +25,16 @@ import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.util.FileUtil;
 
 /**
- * Configuration for an input format (either contents, or metadata, or a mix of both).
+ * Configuration for an input format (either contents, or metadata, or a mix of
+ * both).
  */
 public class ConfigInputFormat {
 
     /** Basic file types we support */
     public enum FileType {
-        XML,
-        TABULAR,  // csv, tsv
-        TEXT,     // plain text
-    	CHAT;     // CHILDES CHAT format
+        XML, TABULAR, // csv, tsv
+        TEXT, // plain text
+        CHAT; // CHILDES CHAT format
 
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase());
@@ -45,7 +45,9 @@ public class ConfigInputFormat {
         }
     }
 
-    /** This format's name, final to ensure consistency within DocIndexerFactories */
+    /**
+     * This format's name, final to ensure consistency within DocIndexerFactories
+     */
     private final String name;
 
     /** This format's display name (optional) */
@@ -54,20 +56,30 @@ public class ConfigInputFormat {
     /** This format's description (optional) */
     private String description = "";
 
-    /** Link to a help page, e.g. showing an example of a correct input file (optional) */
+    /**
+     * Link to a help page, e.g. showing an example of a correct input file
+     * (optional)
+     */
     private String helpUrl = "";
 
     /**
-     * Should this format be marked as hidden? Mirrors {@link DocIndexerAbstract#isVisible(Class)}.
-     * Used to set {@link Format#isVisible()}, to indicate internal formats to client applications,
-     * but has no other internal meaning.
+     * Should this format be marked as hidden? Mirrors
+     * {@link DocIndexerAbstract#isVisible(Class)}. Used to set
+     * {@link Format#isVisible()}, to indicate internal formats to client
+     * applications, but has no other internal meaning.
      */
     private boolean visible = true;
 
-    /** This format's type indicator (optional, not used by BlackLab. usually 'contents' or 'metadata') */
+    /**
+     * This format's type indicator (optional, not used by BlackLab. usually
+     * 'contents' or 'metadata')
+     */
     private String type = "";
 
-    /** What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass of DocIndexerConfig to instantiate */
+    /**
+     * What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass
+     * of DocIndexerConfig to instantiate
+     */
     private FileType fileType = FileType.XML;
 
     /** Options for the file type (i.e. separator in case of tabular, etc.) */
@@ -85,7 +97,9 @@ public class ConfigInputFormat {
     /** Should we store the document in the content store? (default: yes) */
     private boolean store = true;
 
-    /** Before adding metadata fields to the document, this name mapping is applied. */
+    /**
+     * Before adding metadata fields to the document, this name mapping is applied.
+     */
     Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
     /** What default analyzer to use if not overridden */
@@ -103,10 +117,15 @@ public class ConfigInputFormat {
     /** id of a {@link ConvertPlugin} to run files through prior to indexing */
     private String convertPluginId;
 
-    /** id of a {@link TagPlugin} to run files through prior to indexing, this happens after converting (if applicable) */
+    /**
+     * id of a {@link TagPlugin} to run files through prior to indexing, this
+     * happens after converting (if applicable)
+     */
     private String tagPluginId;
 
-    /** What file was this format read from? Useful if we want to display it in BLS. */
+    /**
+     * What file was this format read from? Useful if we want to display it in BLS.
+     */
     private File readFromFile;
 
     public ConfigInputFormat(String name) {
@@ -115,8 +134,10 @@ public class ConfigInputFormat {
 
     /**
      *
-     * @param file the file to read, the name of this file (minus the .blf.* extension) will be used as this format's name.
-     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @param file the file to read, the name of this file (minus the .blf.*
+     *            extension) will be used as this format's name.
+     * @param finder finder to locate the baseFormat of this config, if set, may be
+     *            null if no baseFormat is required
      * @throws IOException
      */
     public ConfigInputFormat(File file, BaseFormatFinder finder) throws IOException {
@@ -130,7 +151,8 @@ public class ConfigInputFormat {
      * @param name
      * @param reader
      * @param isJson
-     * @param finder finder to locate the baseFormat of this config, if set, may be null if no baseFormat is required
+     * @param finder finder to locate the baseFormat of this config, if set, may be
+     *            null if no baseFormat is required
      * @throws IOException
      */
     public ConfigInputFormat(String name, Reader reader, boolean isJson, BaseFormatFinder finder) throws IOException {
@@ -139,7 +161,9 @@ public class ConfigInputFormat {
     }
 
     /**
-     * Copy everything except name, displayName and description from the specified format.
+     * Copy everything except name, displayName and description from the specified
+     * format.
+     * 
      * @param baseFormat format to copy from
      */
     public void setBaseFormat(ConfigInputFormat baseFormat) {
@@ -155,10 +179,10 @@ public class ConfigInputFormat {
         store = baseFormat.shouldStore();
         indexFieldAs.putAll(baseFormat.getIndexFieldAs());
         metadataDefaultAnalyzer = baseFormat.getMetadataDefaultAnalyzer();
-        for (ConfigMetadataBlock b: baseFormat.getMetadataBlocks()) {
+        for (ConfigMetadataBlock b : baseFormat.getMetadataBlocks()) {
             addMetadataBlock(b.copy());
         }
-        for (ConfigAnnotatedField f: baseFormat.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField f : baseFormat.getAnnotatedFields().values()) {
             addAnnotatedField(f.copy());
         }
         linkedDocuments.putAll(baseFormat.getLinkedDocuments());
@@ -174,14 +198,14 @@ public class ConfigInputFormat {
         req(documentPath, t, "documentPath");
 //        if (tabularOptions != null)
 //            tabularOptions.validate();
-        for (ConfigMetadataBlock b: metadataBlocks)
+        for (ConfigMetadataBlock b : metadataBlocks)
             b.validate();
-        for (ConfigAnnotatedField af: annotatedFields.values()) {
+        for (ConfigAnnotatedField af : annotatedFields.values()) {
             if (fileType != FileType.XML)
                 af.setWordPath("N/A"); // prevent validation error
             af.validate();
         }
-        for (ConfigLinkedDocument ld: linkedDocuments.values())
+        for (ConfigLinkedDocument ld : linkedDocuments.values())
             ld.validate();
     }
 
@@ -387,7 +411,7 @@ public class ConfigInputFormat {
     }
 
     public ConfigMetadataField getMetadataField(String fieldname) {
-        for (ConfigMetadataBlock bl: metadataBlocks) {
+        for (ConfigMetadataBlock bl : metadataBlocks) {
             ConfigMetadataField f = bl.getMetadataField(fieldname);
             if (f != null)
                 return f;
@@ -406,24 +430,25 @@ public class ConfigInputFormat {
         return readFromFile;
     }
 
-	public BufferedReader getFormatFile() {
-		if (readFromFile == null)
-			return null;
+    public BufferedReader getFormatFile() {
+        if (readFromFile == null)
+            return null;
 
-		if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
-            InputStream stream = DocumentFormats.class.getClassLoader().getResourceAsStream("formats/" + getName() + ".blf.yaml");
+        if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
+            InputStream stream = DocumentFormats.class.getClassLoader()
+                    .getResourceAsStream("formats/" + getName() + ".blf.yaml");
             return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
         }
-		return FileUtil.openForReading(readFromFile);
-	}
-
+        return FileUtil.openForReading(readFromFile);
+    }
 
     public void setReadFromFile(File readFromFile) {
         this.readFromFile = readFromFile;
     }
 
     public boolean shouldResolveNamedEntityReferences() {
-        return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences") && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
+        return fileType == FileType.XML && fileTypeOptions.containsKey("resolveNamedEntityReferences")
+                && fileTypeOptions.get("resolveNamedEntityReferences").equalsIgnoreCase("true");
     }
 
     public String getHelpUrl() {

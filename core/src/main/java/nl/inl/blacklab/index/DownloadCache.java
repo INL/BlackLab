@@ -18,14 +18,15 @@ import org.apache.commons.io.FileUtils;
 /**
  * Manages downloaded files.
  *
- * Downloading files takes time, so it's more efficient to keep them around
- * for a while in case we'll access the same file again. Of course, we should
+ * Downloading files takes time, so it's more efficient to keep them around for
+ * a while in case we'll access the same file again. Of course, we should
  * eventually delete them to free up resources as well.
  */
 public class DownloadCache {
 
-    /** Is DocIndexerBase allowed to download files?
-     *  (defaults to false for security; explicitly set it to true if you want this)
+    /**
+     * Is DocIndexerBase allowed to download files? (defaults to false for security;
+     * explicitly set it to true if you want this)
      */
     private static boolean fileDownloadAllowed = false;
 
@@ -183,7 +184,8 @@ public class DownloadCache {
             URL url = new URL(inputFile);
             int urlSize = getUrlSize(url);
             if (urlSize > maxDownloadedFileSize)
-                throw new UnsupportedOperationException("File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
+                throw new UnsupportedOperationException(
+                        "File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
             String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
@@ -208,7 +210,7 @@ public class DownloadCache {
     }
 
     public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
-        maxDownloadedFileSize = (long)maxDownloadedFileSizeMegs * 1000000L;
+        maxDownloadedFileSize = (long) maxDownloadedFileSizeMegs * 1000000L;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }

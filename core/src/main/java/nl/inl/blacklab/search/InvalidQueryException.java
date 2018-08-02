@@ -7,8 +7,8 @@ package nl.inl.blacklab.search;
  */
 public class InvalidQueryException extends BLRuntimeException {
 
-	public InvalidQueryException(String message) {
-		super(message);
-	}
+    public InvalidQueryException(String message) {
+        super(message);
+    }
 
 }

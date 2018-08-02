@@ -23,40 +23,41 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
  */
 public class TextPatternCaptureGroup extends TextPattern {
 
-	private TextPattern input;
+    private TextPattern input;
 
-	private String groupName;
+    private String groupName;
 
-	/**
-	 * Indicate that we want to use a different list of alternatives for this
-	 * part of the query.
-	 * @param input the clause to tag with this name
-	 * @param groupName the tag name
-	 */
-	public TextPatternCaptureGroup(TextPattern input, String groupName) {
-		this.input = input;
-		this.groupName = groupName;
-	}
+    /**
+     * Indicate that we want to use a different list of alternatives for this part
+     * of the query.
+     * 
+     * @param input the clause to tag with this name
+     * @param groupName the tag name
+     */
+    public TextPatternCaptureGroup(TextPattern input, String groupName) {
+        this.input = input;
+        this.groupName = groupName;
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		return new SpanQueryCaptureGroup(input.translate(context), groupName, 0, 0);
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        return new SpanQueryCaptureGroup(input.translate(context), groupName, 0, 0);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		// Capture group clauses are unique.
-		return obj == this;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        // Capture group clauses are unique.
+        return obj == this;
+    }
 
-	@Override
-	public int hashCode() {
-		return input.hashCode() + groupName.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return input.hashCode() + groupName.hashCode();
+    }
 
-	@Override
-	public String toString() {
-		return "CAPTURE(" + input.toString() + ", " + groupName + ")";
-	}
+    @Override
+    public String toString() {
+        return "CAPTURE(" + input.toString() + ", " + groupName + ")";
+    }
 
 }

@@ -11,83 +11,86 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class JobDocsGrouped extends JobWithDocs {
 
-	public static class JobDescDocsGrouped extends JobDescription {
+    public static class JobDescDocsGrouped extends JobDescription {
 
-		DocGroupSettings groupSettings;
+        DocGroupSettings groupSettings;
 
-		private DocGroupSortSettings groupSortSettings;
+        private DocGroupSortSettings groupSortSettings;
 
-		public JobDescDocsGrouped(SearchParameters param, JobDescription docsToGroup, SearchSettings searchSettings, DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
-			super(param, JobDocsGrouped.class, docsToGroup, searchSettings);
-			this.groupSettings = groupSettings;
-			this.groupSortSettings = groupSortSettings;
-		}
+        public JobDescDocsGrouped(SearchParameters param, JobDescription docsToGroup, SearchSettings searchSettings,
+                DocGroupSettings groupSettings, DocGroupSortSettings groupSortSettings) {
+            super(param, JobDocsGrouped.class, docsToGroup, searchSettings);
+            this.groupSettings = groupSettings;
+            this.groupSortSettings = groupSortSettings;
+        }
 
-		@Override
-		public DocGroupSettings getDocGroupSettings() {
-			return groupSettings;
-		}
+        @Override
+        public DocGroupSettings getDocGroupSettings() {
+            return groupSettings;
+        }
 
-		@Override
-		public DocGroupSortSettings getDocGroupSortSettings() {
-			return groupSortSettings;
-		}
+        @Override
+        public DocGroupSortSettings getDocGroupSortSettings() {
+            return groupSortSettings;
+        }
 
-		@Override
-		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
-		}
+        @Override
+        public String uniqueIdentifier() {
+            return super.uniqueIdentifier() + groupSettings + ", " + groupSortSettings + ")";
+        }
 
-		@Override
-		public void dataStreamEntries(DataStream ds) {
-			super.dataStreamEntries(ds);
-			ds	.entry("groupSettings", groupSettings)
-				.entry("groupSortSettings", groupSortSettings);
-		}
+        @Override
+        public void dataStreamEntries(DataStream ds) {
+            super.dataStreamEntries(ds);
+            ds.entry("groupSettings", groupSettings)
+                    .entry("groupSortSettings", groupSortSettings);
+        }
 
-		@Override
-		public String getUrlPath() {
-			return "docs";
-		}
+        @Override
+        public String getUrlPath() {
+            return "docs";
+        }
 
-	}
+    }
 
-	private DocGroups groups;
+    private DocGroups groups;
 
-	public JobDocsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
-		super(searchMan, user, par);
-	}
+    public JobDocsGrouped(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+        super(searchMan, user, par);
+    }
 
-	@Override
-	protected void performSearch() throws BlsException {
-		docResults = ((JobWithDocs)inputJob).getDocResults();
-		setPriorityInternal();
-		DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
-		DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
-		DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();
-		if (sortSett != null)
-			theGroups.sort(sortSett.sortBy(), sortSett.reverse());
+    @Override
+    protected void performSearch() throws BlsException {
+        docResults = ((JobWithDocs) inputJob).getDocResults();
+        setPriorityInternal();
+        DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
+        DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
+        DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();
+        if (sortSett != null)
+            theGroups.sort(sortSett.sortBy(), sortSett.reverse());
 
-		groups = theGroups; // we're done, caller can use the groups now
-	}
+        groups = theGroups; // we're done, caller can use the groups now
+    }
 
-	/**
-	 * Get the grouped documents, or null if not available yet, or if no sortSettings were provided by the JobDesc.
-	 * @return the grouped document results.
-	 */
-	public DocGroups getGroups() {
-		return groups;
-	}
+    /**
+     * Get the grouped documents, or null if not available yet, or if no
+     * sortSettings were provided by the JobDesc.
+     * 
+     * @return the grouped document results.
+     */
+    public DocGroups getGroups() {
+        return groups;
+    }
 
-	@Override
-	protected void dataStreamSubclassEntries(DataStream ds) {
-		ds	.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
-			.entry("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
-	}
+    @Override
+    protected void dataStreamSubclassEntries(DataStream ds) {
+        ds.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
+                .entry("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
+    }
 
-	@Override
-	protected void cleanup() {
-		groups = null;
-		super.cleanup();
-	}
+    @Override
+    protected void cleanup() {
+        groups = null;
+        super.cleanup();
+    }
 }

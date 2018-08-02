@@ -24,86 +24,78 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * Defines a way to access the original indexed content.
  */
 public class ContentAccessor {
-	protected String fieldName;
+    protected String fieldName;
 
-	private ContentStore contentStore;
+    private ContentStore contentStore;
 
-	private String contentIdField = null;
+    private String contentIdField = null;
 
-	public ContentAccessor(String fieldName, ContentStore contentStore) {
-		contentIdField = ComplexFieldUtil.contentIdField(ComplexFieldUtil.getBaseName(fieldName));
-		this.contentStore = contentStore;
-	}
+    public ContentAccessor(String fieldName, ContentStore contentStore) {
+        contentIdField = ComplexFieldUtil.contentIdField(ComplexFieldUtil.getBaseName(fieldName));
+        this.contentStore = contentStore;
+    }
 
-	public String getFieldName() {
-		return fieldName;
-	}
+    public String getFieldName() {
+        return fieldName;
+    }
 
-	public ContentStore getContentStore() {
-		return contentStore;
-	}
+    public ContentStore getContentStore() {
+        return contentStore;
+    }
 
-	public ContentAccessor(String fieldName) {
-		this.fieldName = fieldName;
-	}
+    public ContentAccessor(String fieldName) {
+        this.fieldName = fieldName;
+    }
 
-	/**
-	 * Get substrings from a document.
-	 *
-	 * Note: if start and end are both -1 for a certain substring, the whole document is returned.
-	 *
-	 * @param d
-	 *            the Lucene document (contains the file name)
-	 * @param start
-	 *            start positions of the substrings.
-	 *            -1 means start of document.
-	 * @param end
-	 *            end positions of the substrings.
-	 *            -1 means end of document.
-	 * @return the requested substrings from this document
-	 */
-	public String[] getSubstringsFromDocument(Document d, int[] start, int[] end) {
-		int contentId = getContentId(d);
-		return getSubstringsFromDocument(contentId, start, end);
-	}
+    /**
+     * Get substrings from a document.
+     *
+     * Note: if start and end are both -1 for a certain substring, the whole
+     * document is returned.
+     *
+     * @param d the Lucene document (contains the file name)
+     * @param start start positions of the substrings. -1 means start of document.
+     * @param end end positions of the substrings. -1 means end of document.
+     * @return the requested substrings from this document
+     */
+    public String[] getSubstringsFromDocument(Document d, int[] start, int[] end) {
+        int contentId = getContentId(d);
+        return getSubstringsFromDocument(contentId, start, end);
+    }
 
-	private int getContentId(Document d) {
-		String contentIdStr = d.get(contentIdField);
-		if (contentIdStr == null)
-			throw new RuntimeException("Lucene document has no content id: " + d);
-		int contentId = Integer.parseInt(contentIdStr);
-		return contentId;
-	}
+    private int getContentId(Document d) {
+        String contentIdStr = d.get(contentIdField);
+        if (contentIdStr == null)
+            throw new RuntimeException("Lucene document has no content id: " + d);
+        int contentId = Integer.parseInt(contentIdStr);
+        return contentId;
+    }
 
-	/**
-	 * Get substrings from a document.
-	 *
-	 * Note: if start and end are both -1 for a certain substring, the whole document is returned.
-	 *
-	 * @param contentId
-	 *            the content id
-	 * @param start
-	 *            start positions of the substrings.
-	 *            -1 means start of document.
-	 * @param end
-	 *            end positions of the substrings.
-	 *            -1 means end of document.
-	 * @return the requested substrings from this document
-	 */
-	public String[] getSubstringsFromDocument(int contentId, int[] start, int[] end) {
-		return contentStore.retrieveParts(contentId, start, end);
-	}
+    /**
+     * Get substrings from a document.
+     *
+     * Note: if start and end are both -1 for a certain substring, the whole
+     * document is returned.
+     *
+     * @param contentId the content id
+     * @param start start positions of the substrings. -1 means start of document.
+     * @param end end positions of the substrings. -1 means end of document.
+     * @return the requested substrings from this document
+     */
+    public String[] getSubstringsFromDocument(int contentId, int[] start, int[] end) {
+        return contentStore.retrieveParts(contentId, start, end);
+    }
 
-	public void delete(Document d) {
-		delete(getContentId(d));
-	}
+    public void delete(Document d) {
+        delete(getContentId(d));
+    }
 
-	private void delete(int contentId) {
-		contentStore.delete(contentId);
-	}
+    private void delete(int contentId) {
+        contentStore.delete(contentId);
+    }
 
-	public void close() {
-		contentStore.close();
-	}
+    public void close() {
+        contentStore.close();
+    }
 
 }

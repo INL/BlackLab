@@ -21,50 +21,51 @@ import java.util.List;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 
 /**
- * For grouping DocResult objects on the number of hits. This would put documents with 1 hit in a
- * group, documents with 2 hits in another group, etc.
+ * For grouping DocResult objects on the number of hits. This would put
+ * documents with 1 hit in a group, documents with 2 hits in another group, etc.
  */
 public class DocPropertyNumberOfHits extends DocProperty {
-	@Override
-	public HitPropValueInt get(DocResult result) {
-		return new HitPropValueInt(result.getNumberOfHits());
-	}
+    @Override
+    public HitPropValueInt get(DocResult result) {
+        return new HitPropValueInt(result.getNumberOfHits());
+    }
 
-	/**
-	 * Compares two docs on this property
-	 * @param a first doc
-	 * @param b second doc
-	 * @return 0 if equal, negative if a < b, positive if a > b.
-	 */
-	@Override
-	public int compare(DocResult a, DocResult b) {
-		if (reverse)
-			return b.getNumberOfHits() - a.getNumberOfHits();
-		return a.getNumberOfHits() - b.getNumberOfHits();
-	}
+    /**
+     * Compares two docs on this property
+     * 
+     * @param a first doc
+     * @param b second doc
+     * @return 0 if equal, negative if a < b, positive if a > b.
+     */
+    @Override
+    public int compare(DocResult a, DocResult b) {
+        if (reverse)
+            return b.getNumberOfHits() - a.getNumberOfHits();
+        return a.getNumberOfHits() - b.getNumberOfHits();
+    }
 
-	@Override
-	public boolean defaultSortDescending() {
-		return !reverse;
-	}
+    @Override
+    public boolean defaultSortDescending() {
+        return !reverse;
+    }
 
-	@Override
-	public String getName() {
-		return "number of hits";
-	}
+    @Override
+    public String getName() {
+        return "number of hits";
+    }
 
-	public static DocPropertyNumberOfHits deserialize() {
-		return new DocPropertyNumberOfHits();
-	}
+    public static DocPropertyNumberOfHits deserialize() {
+        return new DocPropertyNumberOfHits();
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "numhits";
-	}
-	
-	@Override
-	public List<String> getPropNames() {
-		return Arrays.asList(serializeReverse() + getName());
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "numhits";
+    }
+
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList(serializeReverse() + getName());
+    }
 
 }

@@ -25,111 +25,113 @@ import nl.inl.util.StringUtil;
  */
 public class RequestHandlerIndexStructure extends RequestHandler {
 
-	public RequestHandlerIndexStructure(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
-		super(servlet, request, user, indexName, urlResource, urlPathPart);
-	}
+    public RequestHandlerIndexStructure(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+            String urlResource, String urlPathPart) {
+        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    }
 
-	@Override
-	public boolean isCacheAllowed() {
-		return false; // because status might change (or you might reindex)
-	}
+    @Override
+    public boolean isCacheAllowed() {
+        return false; // because status might change (or you might reindex)
+    }
 
-	@Override
-	public int handle(DataStream ds) throws BlsException {
+    @Override
+    public int handle(DataStream ds) throws BlsException {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
-    		Searcher searcher = index.getSearcher();
-    		IndexStructure struct = searcher.getIndexStructure();
+            Searcher searcher = index.getSearcher();
+            IndexStructure struct = searcher.getIndexStructure();
 
-    		// Assemble response
-    		IndexStatus status = indexMan.getIndex(indexName).getStatus();
+            // Assemble response
+            IndexStatus status = indexMan.getIndex(indexName).getStatus();
             ds.startMap()
-    			.entry("indexName", indexName)
-    			.entry("displayName", struct.getDisplayName())
-    			.entry("description", struct.getDescription())
-    			.entry("status", status)
-    			.entry("contentViewable", struct.contentViewable())
-    			.entry("textDirection", struct.getTextDirection().getCode());
+                    .entry("indexName", indexName)
+                    .entry("displayName", struct.getDisplayName())
+                    .entry("description", struct.getDescription())
+                    .entry("status", status)
+                    .entry("contentViewable", struct.contentViewable())
+                    .entry("textDirection", struct.getTextDirection().getCode());
 
             if (status.equals(IndexStatus.INDEXING)) {
                 IndexListener indexProgress = index.getIndexerListener();
                 synchronized (indexProgress) {
                     ds.startEntry("indexProgress").startMap()
-                    .entry("filesProcessed", indexProgress.getFilesProcessed())
-                    .entry("docsDone", indexProgress.getDocsDone())
-                    .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                    .endMap().endEntry();
+                            .entry("filesProcessed", indexProgress.getFilesProcessed())
+                            .entry("docsDone", indexProgress.getDocsDone())
+                            .entry("tokensProcessed", indexProgress.getTokensProcessed())
+                            .endMap().endEntry();
                 }
             }
 
-    		String formatIdentifier = struct.getDocumentFormat();
-    		if (formatIdentifier != null && formatIdentifier.length() > 0)
-    			ds.entry("documentFormat", formatIdentifier);
-    		if (struct.getTokenCount() > 0)
-    			ds.entry("tokenCount", struct.getTokenCount());
+            String formatIdentifier = struct.getDocumentFormat();
+            if (formatIdentifier != null && formatIdentifier.length() > 0)
+                ds.entry("documentFormat", formatIdentifier);
+            if (struct.getTokenCount() > 0)
+                ds.entry("tokenCount", struct.getTokenCount());
 
-    		ds.startEntry("versionInfo").startMap()
-    			.entry("blackLabBuildTime", struct.getIndexBlackLabBuildTime())
-    			.entry("blackLabVersion", struct.getIndexBlackLabVersion())
-    			.entry("indexFormat", struct.getIndexFormat())
-    			.entry("timeCreated", struct.getTimeCreated())
-    			.entry("timeModified", struct.getTimeModified())
-    		.endMap().endEntry();
+            ds.startEntry("versionInfo").startMap()
+                    .entry("blackLabBuildTime", struct.getIndexBlackLabBuildTime())
+                    .entry("blackLabVersion", struct.getIndexBlackLabVersion())
+                    .entry("indexFormat", struct.getIndexFormat())
+                    .entry("timeCreated", struct.getTimeCreated())
+                    .entry("timeModified", struct.getTimeModified())
+                    .endMap().endEntry();
 
-    		ds.startEntry("fieldInfo").startMap()
-    			.entry("pidField", StringUtil.nullToEmpty(struct.pidField()))
-    			.entry("titleField", StringUtil.nullToEmpty(struct.titleField()))
-    			.entry("authorField", StringUtil.nullToEmpty(struct.authorField()))
-    			.entry("dateField", StringUtil.nullToEmpty(struct.dateField()))
-    		.endMap().endEntry();
+            ds.startEntry("fieldInfo").startMap()
+                    .entry("pidField", StringUtil.nullToEmpty(struct.pidField()))
+                    .entry("titleField", StringUtil.nullToEmpty(struct.titleField()))
+                    .entry("authorField", StringUtil.nullToEmpty(struct.authorField()))
+                    .entry("dateField", StringUtil.nullToEmpty(struct.dateField()))
+                    .endMap().endEntry();
 
-    		ds.startEntry("complexFields").startMap();
-    		// Complex fields
-    		//DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
-    		for (String name: struct.getComplexFields()) {
-    			ds.startAttrEntry("complexField", "name", name);
+            ds.startEntry("complexFields").startMap();
+            // Complex fields
+            //DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
+            for (String name : struct.getComplexFields()) {
+                ds.startAttrEntry("complexField", "name", name);
 
-    	        Set<String> setShowValuesFor = searchParam.listValuesFor();
-    	        Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-    			ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(name);
-                RequestHandlerFieldInfo.describeComplexField(ds, null, name, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
+                Set<String> setShowValuesFor = searchParam.listValuesFor();
+                Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
+                ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(name);
+                RequestHandlerFieldInfo.describeComplexField(ds, null, name, fieldDesc, searcher, setShowValuesFor,
+                        setShowSubpropsFor);
 
-    			ds.endAttrEntry();
-    		}
-    		ds.endMap().endEntry();
+                ds.endAttrEntry();
+            }
+            ds.endMap().endEntry();
 
-    		ds.startEntry("metadataFields").startMap();
-    		// Metadata fields
-    		//DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
-    		for (String name: struct.getMetadataFields()) {
-    			ds.startAttrEntry("metadataField", "name", name);
+            ds.startEntry("metadataFields").startMap();
+            // Metadata fields
+            //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
+            for (String name : struct.getMetadataFields()) {
+                ds.startAttrEntry("metadataField", "name", name);
 
                 MetadataFieldDesc fd = struct.getMetadataFieldDesc(name);
-    			RequestHandlerFieldInfo.describeMetadataField(ds, null, name, fd, true);
+                RequestHandlerFieldInfo.describeMetadataField(ds, null, name, fd, true);
 
-    			ds.endAttrEntry();
-    		}
-    		ds.endMap().endEntry();
+                ds.endAttrEntry();
+            }
+            ds.endMap().endEntry();
 
             Map<String, MetadataGroup> metaGroups = struct.getMetaFieldGroups();
-    		Set<String> metadataFieldsNotInGroups = new HashSet<>(struct.getMetadataFields());
-            for (MetadataGroup metaGroup: metaGroups.values()) {
-                for (String field: metaGroup.getFields()) {
+            Set<String> metadataFieldsNotInGroups = new HashSet<>(struct.getMetadataFields());
+            for (MetadataGroup metaGroup : metaGroups.values()) {
+                for (String field : metaGroup.getFields()) {
                     metadataFieldsNotInGroups.remove(field);
                 }
             }
             ds.startEntry("metadataFieldGroups").startList();
             boolean addedRemaining = false;
-            for (MetadataGroup metaGroup: metaGroups.values()) {
+            for (MetadataGroup metaGroup : metaGroups.values()) {
                 ds.startItem("metadataFieldGroup").startMap();
                 ds.entry("name", metaGroup.getName());
                 ds.startEntry("fields").startList();
-                for (String field: metaGroup.getFields()) {
+                for (String field : metaGroup.getFields()) {
                     ds.item("field", field);
                 }
                 if (!addedRemaining && metaGroup.addRemainingFields()) {
                     addedRemaining = true;
-                    for (String field: metadataFieldsNotInGroups) {
+                    for (String field : metadataFieldsNotInGroups) {
                         ds.item("field", field);
                     }
                 }
@@ -138,13 +140,13 @@ public class RequestHandlerIndexStructure extends RequestHandler {
             }
             ds.endList().endEntry();
 
-    		// Remove any empty settings
-    		//response.removeEmptyMapValues();
+            // Remove any empty settings
+            //response.removeEmptyMapValues();
 
-    		ds.endMap();
+            ds.endMap();
 
-    		return HTTP_OK;
+            return HTTP_OK;
         }
-	}
+    }
 
 }

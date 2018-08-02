@@ -25,11 +25,14 @@ import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 /**
  * Responsible for loading file conversion and tagging plugins.
  * <p>
- * It will attempt to load all conversion and tagging plugins (according to the {@link ServiceLoader} system) and
- * initialize them with their respective settings from the main blacklab config.
+ * It will attempt to load all conversion and tagging plugins (according to the
+ * {@link ServiceLoader} system) and initialize them with their respective
+ * settings from the main blacklab config.
  * <p>
- * A jar that wishes to register a plugin must contain a file named "nl.inl.blacklab.indexers.preprocess.(Tag|Covert)Plugin" inside
- * "META-INF/services/", containing the qualified classNames of the implementations they contain.
+ * A jar that wishes to register a plugin must contain a file named
+ * "nl.inl.blacklab.indexers.preprocess.(Tag|Covert)Plugin" inside
+ * "META-INF/services/", containing the qualified classNames of the
+ * implementations they contain.
  */
 public class PluginManager {
     private static class PluginData<T extends Plugin> {
@@ -50,7 +53,10 @@ public class PluginManager {
     /** a pluginId may only contain a-z, A-Z, 0-9, and _ */
     private static final Pattern PLUGINID_PATTERN = Pattern.compile("[\\w]+");
 
-    /** Delay initialization of plugins until they are first used. Useful for development */
+    /**
+     * Delay initialization of plugins until they are first used. Useful for
+     * development
+     */
     private static final String PROP_DELAY_INITIALIZATION = "delayInitialization";
 
     /** Is the plugin system itself initialized */
@@ -65,14 +71,17 @@ public class PluginManager {
      * So plugin formats should always be visible by the time they're needed.
      * (except when trying to query available formats before opening a searcher or loading a config...this is an edge case)
      */
-    private PluginManager() {}
+    private PluginManager() {
+    }
 
     /**
-     * Attempts to load and initialize all plugin classes on the classpath, passing the values in the config to the matching plugin.
+     * Attempts to load and initialize all plugin classes on the classpath, passing
+     * the values in the config to the matching plugin.
      *
-     * @param pluginConfig the plugin configurations collection object. The format for this object is
+     * @param pluginConfig the plugin configurations collection object. The format
+     *            for this object is
      *
-     *        <pre>
+     *            <pre>
      * {
      *   "pluginId": {
      *     // arbitrary plugin config here
@@ -81,7 +90,7 @@ public class PluginManager {
      *   "anotherPluginId": { ... },
      *   ...
      * }
-     *        </pre>
+     *            </pre>
      */
     public static void initPlugins(ObjectNode pluginConfig) {
         if (isInitialized)
@@ -97,7 +106,6 @@ public class PluginManager {
         convertPlugins = loadPlugins(ConvertPlugin.class, pluginConfig);
         tagPlugins = loadPlugins(TagPlugin.class, pluginConfig);
 
-
         // Some plugins take a LONG time to init, if we block, we block the loading of the config
         // Which in turn blocks the whole of blacklab(-server), so don't do that
         if (!delayInitialization) {
@@ -109,12 +117,14 @@ public class PluginManager {
                 logger.trace("Finished Initializing plugin system");
             });
         } else {
-            logger.trace("Config setting " + PROP_DELAY_INITIALIZATION + " is true, plugins will be initialized on first use.");
+            logger.trace("Config setting " + PROP_DELAY_INITIALIZATION
+                    + " is true, plugins will be initialized on first use.");
             logger.trace("Finished Initializing plugin system");
         }
     }
 
-    private static <T extends Plugin> Map<String, PluginData<T>> loadPlugins(Class<T> pluginClass, ObjectNode pluginConfig) {
+    private static <T extends Plugin> Map<String, PluginData<T>> loadPlugins(Class<T> pluginClass,
+            ObjectNode pluginConfig) {
         Map<String, PluginData<T>> plugins = new HashMap<>();
 
         Iterator<T> it = ServiceLoader.load(pluginClass).iterator();
@@ -126,13 +136,13 @@ public class PluginManager {
                 id = plugin.getId();
                 if (!PLUGINID_PATTERN.matcher(id).matches()) {
                     logger.warn("Plugin id " + id + " (class " + plugin.getClass().getCanonicalName() +
-                        ") is not a valid id; ignoring plugin.");
+                            ") is not a valid id; ignoring plugin.");
                     continue;
                 }
 
                 Optional<ObjectNode> config = Optional.ofNullable(pluginConfig.get(plugin.getId())) // get key + optional value
-                    .filter(n -> !(n instanceof NullNode)) // if value
-                    .map(n -> YamlJsonReader.obj(n, plugin.getId())); // get value
+                        .filter(n -> !(n instanceof NullNode)) // if value
+                        .map(n -> YamlJsonReader.obj(n, plugin.getId())); // get value
 
                 PluginData<T> data = new PluginData<>(plugin, config);
                 plugins.put(id, data);
@@ -148,7 +158,8 @@ public class PluginManager {
 
     public static Optional<ConvertPlugin> getConverter(String convertPluginId) throws PluginException {
         if (!isInitialized)
-            throw new UnsupportedOperationException("Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
+            throw new UnsupportedOperationException(
+                    "Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
 
         Optional<PluginData<ConvertPlugin>> data = Optional.ofNullable(convertPlugins.get(convertPluginId));
         if (data.isPresent())
@@ -159,7 +170,8 @@ public class PluginManager {
 
     public static Optional<TagPlugin> getTagger(String tagPluginId) throws PluginException {
         if (!isInitialized)
-            throw new UnsupportedOperationException("Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
+            throw new UnsupportedOperationException(
+                    "Plugin system is not initialized, place a top-level key \"plugins\" with per-plugin configuration in your blacklab config to use plugins.");
 
         Optional<PluginData<TagPlugin>> data = Optional.ofNullable(tagPlugins.get(tagPluginId));
         if (data.isPresent())
@@ -170,11 +182,13 @@ public class PluginManager {
 
     /**
      * Initialize the plugin, if it exists and is currently uninitialized.
-     * Previously encountered errors are rethrown.
-     * If am error is encountered, it is stored in the plugin data and rethrown.
+     * Previously encountered errors are rethrown. If am error is encountered, it is
+     * stored in the plugin data and rethrown.
      *
      * @param data plugin data
-     * @throws PluginException when the plugin fails to initialize, care should be taken by the caller to remove it from the list of plugins when this occurs.
+     * @throws PluginException when the plugin fails to initialize, care should be
+     *             taken by the caller to remove it from the list of plugins when
+     *             this occurs.
      */
     private static void initializePlugin(PluginData<?> data) throws PluginException {
         synchronized (data.plugin) {
@@ -200,7 +214,8 @@ public class PluginManager {
     }
 
     /**
-     * Used to initialize all plugins in one go when {@link #PROP_DELAY_INITIALIZATION} is false.
+     * Used to initialize all plugins in one go when
+     * {@link #PROP_DELAY_INITIALIZATION} is false.
      *
      * @param plugins
      */

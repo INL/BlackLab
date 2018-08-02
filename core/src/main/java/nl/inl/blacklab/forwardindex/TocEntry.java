@@ -21,59 +21,58 @@ import java.io.IOException;
 
 /** Table of contents entry; stored in docs.dat */
 class TocEntry implements Comparable<TocEntry> {
-	/** token offset in tokens.dat */
-	public long offset;
+    /** token offset in tokens.dat */
+    public long offset;
 
-	/** number of tokens in document */
-	public int length;
+    /** number of tokens in document */
+    public int length;
 
-	/** was this entry deleted? (remove in next compacting run) */
-	public boolean deleted;
+    /** was this entry deleted? (remove in next compacting run) */
+    public boolean deleted;
 
-	public TocEntry(long offset, int length, boolean deleted) {
-		super();
-		this.offset = offset;
-		this.length = length;
-		this.deleted = deleted;
-	}
+    public TocEntry(long offset, int length, boolean deleted) {
+        super();
+        this.offset = offset;
+        this.length = length;
+        this.deleted = deleted;
+    }
 
-	/**
-	 * Convert TOC entry to a string for storing in the TOC file
-	 *
-	 * @param d
-	 *            where to serialize to
-	 * @throws IOException
-	 */
-	public void serialize(DataOutput d) throws IOException {
-		d.writeLong(offset);
-		d.writeInt(length);
-		d.writeByte(deleted ? 1 : 0);
-	}
+    /**
+     * Convert TOC entry to a string for storing in the TOC file
+     *
+     * @param d where to serialize to
+     * @throws IOException
+     */
+    public void serialize(DataOutput d) throws IOException {
+        d.writeLong(offset);
+        d.writeInt(length);
+        d.writeByte(deleted ? 1 : 0);
+    }
 
-	/**
-	 * Convert string representation back into a TOC entry.
-	 *
-	 * @param d
-	 *            where to read from
-	 * @return new TocEntry
-	 * @throws IOException
-	 */
-	public static TocEntry deserialize(DataInput d) throws IOException {
-		long offset = d.readLong();
-		int length = d.readInt();
-		boolean deleted = d.readByte() != 0;
-		return new TocEntry(offset, length, deleted);
-	}
+    /**
+     * Convert string representation back into a TOC entry.
+     *
+     * @param d where to read from
+     * @return new TocEntry
+     * @throws IOException
+     */
+    public static TocEntry deserialize(DataInput d) throws IOException {
+        long offset = d.readLong();
+        int length = d.readInt();
+        boolean deleted = d.readByte() != 0;
+        return new TocEntry(offset, length, deleted);
+    }
 
-	/**
-	 * Compare this entry to another (for sorting).
-	 * @param o the entry to compare with
-	 * @return the comparison result
-	 */
-	@Override
-	public int compareTo(TocEntry o) {
-		return (int) (offset - o.offset);
-	}
+    /**
+     * Compare this entry to another (for sorting).
+     * 
+     * @param o the entry to compare with
+     * @return the comparison result
+     */
+    @Override
+    public int compareTo(TocEntry o) {
+        return (int) (offset - o.offset);
+    }
 
     @Override
     public int hashCode() {
@@ -102,5 +101,5 @@ class TocEntry implements Comparable<TocEntry> {
             return false;
         return true;
     }
-	
+
 }

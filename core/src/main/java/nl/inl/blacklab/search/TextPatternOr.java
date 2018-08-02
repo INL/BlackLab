@@ -26,28 +26,28 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 public class TextPatternOr extends TextPatternCombiner {
 
-	public TextPatternOr(TextPattern... clauses) {
-		super(clauses);
-	}
+    public TextPatternOr(TextPattern... clauses) {
+        super(clauses);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
-		for (TextPattern cl : clauses) {
-			chResults.add(cl.translate(context));
-		}
-		if (chResults.size() == 1)
-			return chResults.get(0);
-		return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
+        for (TextPattern cl : clauses) {
+            chResults.add(cl.translate(context));
+        }
+        if (chResults.size() == 1)
+            return chResults.get(0);
+        return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternOr) {
-			return super.equals(obj);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternOr) {
+            return super.equals(obj);
+        }
+        return false;
+    }
 
     // appease PMD
     @Override
@@ -55,8 +55,8 @@ public class TextPatternOr extends TextPatternCombiner {
         return super.hashCode();
     }
 
-	@Override
-	public String toString() {
-		return "OR(" + clausesToString(clauses) + ")";
-	}
+    @Override
+    public String toString() {
+        return "OR(" + clausesToString(clauses) + ")";
+    }
 }

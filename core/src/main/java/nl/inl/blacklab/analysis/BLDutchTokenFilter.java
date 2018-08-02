@@ -23,52 +23,54 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 /**
- * The token filter to accompany BLDutchTokenizer. Will get rid of some
- * unwanted tokens or characters in tokens:
- * * tokens containing no letters are eliminated (e.g. "-")
- * * periods, parens and brackets are removed (e.g. "a.u.b." -> "aub", "bel(len)" -> "bellen")
- * * apostrophes at the beginning or end of a token are removed (e.g. multiple words in single quotes)
+ * The token filter to accompany BLDutchTokenizer. Will get rid of some unwanted
+ * tokens or characters in tokens: * tokens containing no letters are eliminated
+ * (e.g. "-") * periods, parens and brackets are removed (e.g. "a.u.b." ->
+ * "aub", "bel(len)" -> "bellen") * apostrophes at the beginning or end of a
+ * token are removed (e.g. multiple words in single quotes)
  */
 public class BLDutchTokenFilter extends TokenFilter {
-	final static Pattern removePattern = Pattern.compile("[\\.\\(\\)\\[\\]]|^'|'$");
+    final static Pattern removePattern = Pattern.compile("[\\.\\(\\)\\[\\]]|^'|'$");
 
-	final static Pattern anyLetterPattern = Pattern.compile("[\\p{L}\\d]");
+    final static Pattern anyLetterPattern = Pattern.compile("[\\p{L}\\d]");
 
-	/**
-	 * Perform filtering on the input string
-	 * @param input the string
-	 * @return same string with periods, parens, brackets and apostrophes at beginning/end removed
-	 */
-	public static String process(String input) {
-		return removePattern.matcher(input).replaceAll("");
-	}
+    /**
+     * Perform filtering on the input string
+     * 
+     * @param input the string
+     * @return same string with periods, parens, brackets and apostrophes at
+     *         beginning/end removed
+     */
+    public static String process(String input) {
+        return removePattern.matcher(input).replaceAll("");
+    }
 
-	private CharTermAttribute termAtt;
+    private CharTermAttribute termAtt;
 
-	/**
-	 * @param input the token stream to remove punctuation from
-	 */
-	public BLDutchTokenFilter(TokenStream input) {
-		super(input);
-		termAtt = addAttribute(CharTermAttribute.class);
-	}
+    /**
+     * @param input the token stream to remove punctuation from
+     */
+    public BLDutchTokenFilter(TokenStream input) {
+        super(input);
+        termAtt = addAttribute(CharTermAttribute.class);
+    }
 
-	@Override
-	final public boolean incrementToken() throws IOException {
-		while (input.incrementToken()) {
-			String t = new String(termAtt.buffer(), 0, termAtt.length());
+    @Override
+    final public boolean incrementToken() throws IOException {
+        while (input.incrementToken()) {
+            String t = new String(termAtt.buffer(), 0, termAtt.length());
 
-			// Filter out some characters
-			t = process(t);
+            // Filter out some characters
+            t = process(t);
 
-			// Output if there's any letters in it
-			if (anyLetterPattern.matcher(t).find()) {
-				termAtt.copyBuffer(t.toCharArray(), 0, t.length());
-				return true;
-			}
-		}
-		return false;
-	}
+            // Output if there's any letters in it
+            if (anyLetterPattern.matcher(t).find()) {
+                termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

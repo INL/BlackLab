@@ -26,46 +26,48 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * Replaces punctuation with space.
  */
 public class RemovePunctuationFilter extends TokenFilter {
-	final static Pattern punctuationPattern = Pattern.compile("\\p{P}+");
+    final static Pattern punctuationPattern = Pattern.compile("\\p{P}+");
 
-	/**
-	 * Remove punctuation from a string
-	 * @param input the string
-	 * @return same string with punctuation removed
-	 */
-	public static String process(String input) {
-		return punctuationPattern.matcher(input).replaceAll("");
-	}
+    /**
+     * Remove punctuation from a string
+     * 
+     * @param input the string
+     * @return same string with punctuation removed
+     */
+    public static String process(String input) {
+        return punctuationPattern.matcher(input).replaceAll("");
+    }
 
-	/**
-	 * Test program
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		String input = "Hé, jij daar!";
-		System.out.println(process(input));
-	}
+    /**
+     * Test program
+     * 
+     * @param args
+     */
+    public static void main(String[] args) {
+        String input = "Hé, jij daar!";
+        System.out.println(process(input));
+    }
 
-	private CharTermAttribute termAtt;
+    private CharTermAttribute termAtt;
 
-	/**
-	 * @param input the token stream to remove punctuation from
-	 */
-	public RemovePunctuationFilter(TokenStream input) {
-		super(input);
-		termAtt = addAttribute(CharTermAttribute.class);
-	}
+    /**
+     * @param input the token stream to remove punctuation from
+     */
+    public RemovePunctuationFilter(TokenStream input) {
+        super(input);
+        termAtt = addAttribute(CharTermAttribute.class);
+    }
 
-	@Override
-	final public boolean incrementToken() throws IOException {
-		if (input.incrementToken()) {
-			String t = new String(termAtt.buffer(), 0, termAtt.length());
-			t = process(t);
-			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
-			return true;
-		}
-		return false;
-	}
+    @Override
+    final public boolean incrementToken() throws IOException {
+        if (input.incrementToken()) {
+            String t = new String(termAtt.buffer(), 0, termAtt.length());
+            t = process(t);
+            termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

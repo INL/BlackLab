@@ -26,18 +26,17 @@ import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
 /**
- * An indexer for tabular file formats, such as tab-separated
- * or comma-separated values.
+ * An indexer for tabular file formats, such as tab-separated or comma-separated
+ * values.
  */
 public class DocIndexerTabular extends DocIndexerConfig {
 
     /** Tabular types we support */
     static enum Type {
-        CSV,
-        TSV;
+        CSV, TSV;
 
         public static Type fromStringValue(String str) {
-            switch(str.toUpperCase()) {
+            switch (str.toUpperCase()) {
             case "TDF":
                 return TSV;
             case "EXCEL":
@@ -51,7 +50,10 @@ public class DocIndexerTabular extends DocIndexerConfig {
         }
     }
 
-    /** Regex for recognizing open or close tag and capturing tag name and attributes part */
+    /**
+     * Regex for recognizing open or close tag and capturing tag name and attributes
+     * part
+     */
     final static Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
 
     /** Single- or double-quoted attribute in a tag */
@@ -85,9 +87,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
     private boolean hasGlueTags;
 
     /**
-     * After an inline tag such as <s>, may there be separator character(s) like on the
-     * non-tag lines? By default, this is not allowed, but this option can be turned on
-     * in the configuration file.
+     * After an inline tag such as <s>, may there be separator character(s) like on
+     * the non-tag lines? By default, this is not allowed, but this option can be
+     * turned on in the configuration file.
      */
     private boolean allowSeparatorsAfterInlineTags;
 
@@ -125,7 +127,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
         else
             tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether
         allowSeparatorsAfterInlineTags = false;
-        if (opt.containsKey("allowSeparatorsAfterInlineTags") && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true"))
+        if (opt.containsKey("allowSeparatorsAfterInlineTags")
+                && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true"))
             allowSeparatorsAfterInlineTags = true;
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
@@ -151,7 +154,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
     @Override
     public void setDocument(Reader reader) {
         try {
-            inputReader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
+            inputReader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
             records = tabularFormat.parse(inputReader);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -183,11 +186,11 @@ public class DocIndexerTabular extends DocIndexerConfig {
         csvData = new StringBuilder();
         try (CSVPrinter p = new CSVPrinter(csvData, tabularFormat)) {
             // For the configured annotated field...
-            for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
+            for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
                 setCurrentComplexField(annotatedField.getName());
 
                 // For each token position
-                for (CSVRecord record: records) {
+                for (CSVRecord record : records) {
                     if (record.size() == 0)
                         continue; // skip empty lines
 
@@ -213,13 +216,14 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                 if (inDocument && isOpenTag)
                                     throw new MalformedInputFileException("Found document open tag inside document");
                                 if (!inDocument && !isOpenTag)
-                                    throw new MalformedInputFileException("Found document close tag outside of document");
+                                    throw new MalformedInputFileException(
+                                            "Found document close tag outside of document");
                                 if (isOpenTag) {
                                     // Start a new document and add attributes as metadata fields
                                     inDocument = true;
                                     startDocument();
-                                    for (Entry<String, String> e: attributes.entrySet()) {
-                                    	String value = processMetadataValue(e.getKey(), e.getValue());
+                                    for (Entry<String, String> e : attributes.entrySet()) {
+                                        String value = processMetadataValue(e.getKey(), e.getValue());
                                         addMetadataField(e.getKey(), value);
                                     }
                                 } else {
@@ -247,7 +251,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                     }
 
                     // For each annotation
-                    for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+                    for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
                         // Either column number of name
                         String value;
                         if (annotation.isValuePathInteger()) {
@@ -266,7 +270,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                         if (annotation.isMultipleValues()) {
                             // Multiple values possible. Split on multipleValuesSeparator.
                             boolean first = true;
-                            for (String v: value.split(multipleValuesSeparator, -1)) {
+                            for (String v : value.split(multipleValuesSeparator, -1)) {
                                 annotation(annotation.getName(), v, first ? 1 : 0, null);
                                 first = false;
                             }
@@ -300,8 +304,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
     }
 
     @Override
-	protected int getCharacterPosition() {
+    protected int getCharacterPosition() {
         return csvData.length();
-	}
+    }
 
 }

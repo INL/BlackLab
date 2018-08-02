@@ -4,18 +4,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Configuration for a block of standoff annotations (annotations that
- * don't reside under the word tag but elsewhere in the document).
+ * Configuration for a block of standoff annotations (annotations that don't
+ * reside under the word tag but elsewhere in the document).
  */
 public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
-	/** Path to the elements containing the values to index
-	 *  (values may apply to multiple token positions)
-	 */
+    /**
+     * Path to the elements containing the values to index (values may apply to
+     * multiple token positions)
+     */
     private String path;
 
-    /** Unique id of the token position(s) to index these values at.
-     *  A uniqueId must be defined for words.
+    /**
+     * Unique id of the token position(s) to index these values at. A uniqueId must
+     * be defined for words.
      */
     private String refTokenPositionIdPath;
 
@@ -34,13 +36,13 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         String t = "standoff annotations";
         ConfigInputFormat.req(path, t, "path");
         ConfigInputFormat.req(refTokenPositionIdPath, t, "refTokenPositionIdPath");
-        for (ConfigAnnotation a: annotations.values())
+        for (ConfigAnnotation a : annotations.values())
             a.validate();
     }
 
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, refTokenPositionIdPath);
-        for (ConfigAnnotation a: annotations.values()) {
+        for (ConfigAnnotation a : annotations.values()) {
             result.addAnnotation(a.copy());
         }
         return result;

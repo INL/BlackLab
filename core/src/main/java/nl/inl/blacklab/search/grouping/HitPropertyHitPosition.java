@@ -22,47 +22,46 @@ import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 
 /**
- * A hit property for sorting on hit token position.
- * Usually to be combined with sorting on document id,
- * for a fast and reproducible sort.
+ * A hit property for sorting on hit token position. Usually to be combined with
+ * sorting on document id, for a fast and reproducible sort.
  */
 public class HitPropertyHitPosition extends HitProperty {
 
-	public HitPropertyHitPosition(Hits hits) {
-		super(hits);
-	}
+    public HitPropertyHitPosition(Hits hits) {
+        super(hits);
+    }
 
-	@Override
-	public HitPropValueInt get(int hitNumber) {
-		Hit result = hits.getByOriginalOrder(hitNumber);
-		return new HitPropValueInt(result.start);
-	}
+    @Override
+    public HitPropValueInt get(int hitNumber) {
+        Hit result = hits.getByOriginalOrder(hitNumber);
+        return new HitPropValueInt(result.start);
+    }
 
-	@Override
-	public String getName() {
-		return "hit position";
-	}
+    @Override
+    public String getName() {
+        return "hit position";
+    }
 
-	@Override
-	public List<String> getPropNames() {
-		return Arrays.asList("hit: position");
-	}
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList("hit: position");
+    }
 
-	@Override
-	public int compare(Object i, Object j) {
-		Hit a = hits.getByOriginalOrder((Integer)i);
-		Hit b = hits.getByOriginalOrder((Integer)j);
-		if (a.start == b.start)
-			return reverse ? b.end - a.end : a.end - b.end;
-		return reverse ? b.start - a.start : a.start - b.start;
-	}
+    @Override
+    public int compare(Object i, Object j) {
+        Hit a = hits.getByOriginalOrder((Integer) i);
+        Hit b = hits.getByOriginalOrder((Integer) j);
+        if (a.start == b.start)
+            return reverse ? b.end - a.end : a.end - b.end;
+        return reverse ? b.start - a.start : a.start - b.start;
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "hitposition";
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "hitposition";
+    }
 
-	public static HitPropertyHitPosition deserialize(Hits hits) {
-		return new HitPropertyHitPosition(hits);
-	}
+    public static HitPropertyHitPosition deserialize(Hits hits) {
+        return new HitPropertyHitPosition(hits);
+    }
 }

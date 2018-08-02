@@ -26,126 +26,131 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
- * Abstract base class for criteria on which to group DocResult objects. Subclasses implement
- * specific grouping criteria (number of hits, the value of a stored field in the Lucene document,
- * ...)
+ * Abstract base class for criteria on which to group DocResult objects.
+ * Subclasses implement specific grouping criteria (number of hits, the value of
+ * a stored field in the Lucene document, ...)
  */
 public abstract class DocProperty {
-	protected static final Logger logger = LogManager.getLogger(DocProperty.class);
+    protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
-	/** Reverse comparison result or not? */
-	protected boolean reverse = false;
+    /** Reverse comparison result or not? */
+    protected boolean reverse = false;
 
-	/**
-	 * Get the desired grouping/sorting property from the DocResult object
-	 *
-	 * @param result
-	 *            the result to get the grouping property for
-	 * @return the grouping property. e.g. this might be "Harry Mulisch" when grouping on author.
-	 */
-	public abstract HitPropValue get(DocResult result);
+    /**
+     * Get the desired grouping/sorting property from the DocResult object
+     *
+     * @param result the result to get the grouping property for
+     * @return the grouping property. e.g. this might be "Harry Mulisch" when
+     *         grouping on author.
+     */
+    public abstract HitPropValue get(DocResult result);
 
-	/**
-	 * Compares two docs on this property
-	 * @param a first doc
-	 * @param b second doc
-	 * @return 0 if equal, negative if a < b, positive if a > b.
-	 */
-	public int compare(DocResult a, DocResult b) {
-		return get(a).compareTo(get(b));
-	}
+    /**
+     * Compares two docs on this property
+     * 
+     * @param a first doc
+     * @param b second doc
+     * @return 0 if equal, negative if a < b, positive if a > b.
+     */
+    public int compare(DocResult a, DocResult b) {
+        return get(a).compareTo(get(b));
+    }
 
-	public boolean defaultSortDescending() {
-		return false;
-	}
+    public boolean defaultSortDescending() {
+        return false;
+    }
 
-	public abstract String getName();
+    public abstract String getName();
 
-	public abstract String serialize();
+    public abstract String serialize();
 
-	/**
-	 * Used by subclasses to add a dash for reverse when serializing
-	 * @return either a dash or the empty string
-	 */
-	protected String serializeReverse() {
-		return reverse ? "-" : "";
-	}
+    /**
+     * Used by subclasses to add a dash for reverse when serializing
+     * 
+     * @return either a dash or the empty string
+     */
+    protected String serializeReverse() {
+        return reverse ? "-" : "";
+    }
 
-	public static DocProperty deserialize(String serialized) {
-		if (PropValSerializeUtil.isMultiple(serialized)) {
-			boolean reverse = false;
-			if (serialized.startsWith("-(") && serialized.endsWith(")")) {
-				reverse = true;
-				serialized = serialized.substring(2, serialized.length() - 1);
-			}
-			DocPropertyMultiple result = DocPropertyMultiple.deserialize(serialized);
-			result.setReverse(reverse);
-			return result;
-		}
+    public static DocProperty deserialize(String serialized) {
+        if (PropValSerializeUtil.isMultiple(serialized)) {
+            boolean reverse = false;
+            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+                reverse = true;
+                serialized = serialized.substring(2, serialized.length() - 1);
+            }
+            DocPropertyMultiple result = DocPropertyMultiple.deserialize(serialized);
+            result.setReverse(reverse);
+            return result;
+        }
 
-		boolean reverse = false;
-		if (serialized.length() > 0 && serialized.charAt(0) == '-') {
-			reverse = true;
-			serialized = serialized.substring(1);
-		}
+        boolean reverse = false;
+        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
+            reverse = true;
+            serialized = serialized.substring(1);
+        }
 
-		String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
-		String type = parts[0].toLowerCase();
-		String info = parts.length > 1 ? parts[1] : "";
-		List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");
-		int typeNum = types.indexOf(type);
-		DocProperty result;
-		switch (typeNum) {
-		case 0:
-			result = DocPropertyDecade.deserialize(info);
-			break;
-		case 1:
-			result = DocPropertyNumberOfHits.deserialize();
-			break;
-		case 2:
-			result = DocPropertyStoredField.deserialize(info);
-			break;
-		case 3:
-			result = DocPropertyComplexFieldLength.deserialize(info);
-			break;
-		default:
-			logger.debug("Unknown DocProperty '" + type + "'");
-			return null;
-		}
-		result.setReverse(reverse);
-		return result;
-	}
+        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
+        String type = parts[0].toLowerCase();
+        String info = parts.length > 1 ? parts[1] : "";
+        List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");
+        int typeNum = types.indexOf(type);
+        DocProperty result;
+        switch (typeNum) {
+        case 0:
+            result = DocPropertyDecade.deserialize(info);
+            break;
+        case 1:
+            result = DocPropertyNumberOfHits.deserialize();
+            break;
+        case 2:
+            result = DocPropertyStoredField.deserialize(info);
+            break;
+        case 3:
+            result = DocPropertyComplexFieldLength.deserialize(info);
+            break;
+        default:
+            logger.debug("Unknown DocProperty '" + type + "'");
+            return null;
+        }
+        result.setReverse(reverse);
+        return result;
+    }
 
-	/**
-	 * Is the comparison reversed?
-	 * @return true if it is, false if not
-	 */
-	public boolean isReverse() {
-		return reverse;
-	}
+    /**
+     * Is the comparison reversed?
+     * 
+     * @return true if it is, false if not
+     */
+    public boolean isReverse() {
+        return reverse;
+    }
 
-	/**
-	 * Set whether to reverse the comparison.
-	 * @param reverse if true, reverses comparison
-	 */
-	public void setReverse(boolean reverse) {
-		this.reverse = reverse;
-	}
+    /**
+     * Set whether to reverse the comparison.
+     * 
+     * @param reverse if true, reverses comparison
+     */
+    public void setReverse(boolean reverse) {
+        this.reverse = reverse;
+    }
 
-	@Override
-	public String toString() {
-		return serialize();
-	}
-	
-	/**
-	 * Get the names of all (sub-)properties separately.
-	 * @return the list
-	 */
-	public abstract List<String> getPropNames();
+    @Override
+    public String toString() {
+        return serialize();
+    }
 
-	public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
-		DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
-		param.put("facets", f.serialize());
-	}
+    /**
+     * Get the names of all (sub-)properties separately.
+     * 
+     * @return the list
+     */
+    public abstract List<String> getPropNames();
+
+    public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
+        DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
+        param.put("facets", f.serialize());
+    }
 
 }

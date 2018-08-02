@@ -35,94 +35,92 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * Useful for faceted search.
  */
 public class DocCounts implements Iterable<DocCount> {
-	Map<HitPropValue, DocCount> counts = new HashMap<>();
+    Map<HitPropValue, DocCount> counts = new HashMap<>();
 
-	List<DocCount> orderedGroups = new ArrayList<>();
+    List<DocCount> orderedGroups = new ArrayList<>();
 
-	private Searcher searcher;
+    private Searcher searcher;
 
-	private int largestGroupSize = 0;
+    private int largestGroupSize = 0;
 
-	private int totalResults = 0;
+    private int totalResults = 0;
 
-	private DocProperty countBy;
+    private DocProperty countBy;
 
-	/**
-	 * The DocResults we were created from
-	 */
-	private DocResults docResults;
+    /**
+     * The DocResults we were created from
+     */
+    private DocResults docResults;
 
-	/**
-	 * Constructor. Fills the groups from the given document results.
-	 *
-	 * @param docResults
-	 *            the results to group.
-	 * @param countBy
-	 *            the criterium to group on.
-	 */
-	DocCounts(DocResults docResults, DocProperty countBy) {
-		this.docResults = docResults;
-		searcher = docResults.getSearcher();
-		this.countBy = countBy;
-		//Thread currentThread = Thread.currentThread();
-		for (DocResult r : docResults) {
+    /**
+     * Constructor. Fills the groups from the given document results.
+     *
+     * @param docResults the results to group.
+     * @param countBy the criterium to group on.
+     */
+    DocCounts(DocResults docResults, DocProperty countBy) {
+        this.docResults = docResults;
+        searcher = docResults.getSearcher();
+        this.countBy = countBy;
+        //Thread currentThread = Thread.currentThread();
+        for (DocResult r : docResults) {
 
-			HitPropValue groupId = countBy.get(r);
-			DocCount count = counts.get(groupId);
-			if (count == null) {
-				count = new DocCount(searcher, groupId);
-				counts.put(groupId, count);
-			}
-			count.increment();
-			if (count.size() > largestGroupSize)
-				largestGroupSize = count.size();
-			totalResults++;
-		}
-		for (DocCount c: counts.values()) {
-			orderedGroups.add(c);
-		}
-	}
+            HitPropValue groupId = countBy.get(r);
+            DocCount count = counts.get(groupId);
+            if (count == null) {
+                count = new DocCount(searcher, groupId);
+                counts.put(groupId, count);
+            }
+            count.increment();
+            if (count.size() > largestGroupSize)
+                largestGroupSize = count.size();
+            totalResults++;
+        }
+        for (DocCount c : counts.values()) {
+            orderedGroups.add(c);
+        }
+    }
 
-	public Collection<DocCount> getCounts() {
-		return Collections.unmodifiableCollection(orderedGroups);
-	}
+    public Collection<DocCount> getCounts() {
+        return Collections.unmodifiableCollection(orderedGroups);
+    }
 
-	public Integer getCount(HitPropValue groupId) {
-		return counts.get(groupId).size();
-	}
+    public Integer getCount(HitPropValue groupId) {
+        return counts.get(groupId).size();
+    }
 
-	public void sort(DocGroupProperty prop, boolean sortReverse) {
-		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
-		Collections.sort(orderedGroups, comparator);
-	}
+    public void sort(DocGroupProperty prop, boolean sortReverse) {
+        Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
+        Collections.sort(orderedGroups, comparator);
+    }
 
-	public void sort(DocGroupProperty prop) {
-		sort(prop, false);
-	}
+    public void sort(DocGroupProperty prop) {
+        sort(prop, false);
+    }
 
-	@Override
-	public Iterator<DocCount> iterator() {
-		return getCounts().iterator();
-	}
+    @Override
+    public Iterator<DocCount> iterator() {
+        return getCounts().iterator();
+    }
 
-	public int numberOfGroups() {
-		return counts.size();
-	}
+    public int numberOfGroups() {
+        return counts.size();
+    }
 
-	public int getLargestGroupSize() {
-		return largestGroupSize;
-	}
+    public int getLargestGroupSize() {
+        return largestGroupSize;
+    }
 
-	public int getTotalResults() {
-		return totalResults;
-	}
+    public int getTotalResults() {
+        return totalResults;
+    }
 
-	public DocProperty getGroupCriteria() {
-		return countBy;
-	}
+    public DocProperty getGroupCriteria() {
+        return countBy;
+    }
 
-	public DocResults getOriginalDocResults() {
-		return docResults;
-	}
+    public DocResults getOriginalDocResults() {
+        return docResults;
+    }
 
 }

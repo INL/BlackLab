@@ -36,186 +36,186 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryAnyToken extends BLSpanQuery {
 
-	/** The minimum number of tokens in this stretch. */
-	protected int min;
+    /** The minimum number of tokens in this stretch. */
+    protected int min;
 
-	/** The maximum number of tokens in this stretch. */
-	protected int max;
+    /** The maximum number of tokens in this stretch. */
+    protected int max;
 
-	boolean alwaysHasClosingToken = true;
+    boolean alwaysHasClosingToken = true;
 
-	String luceneField;
+    String luceneField;
 
-	public SpanQueryAnyToken(int min, int max, String luceneField) {
-		this.min = min;
-		this.max = max;
-		this.luceneField = luceneField;
-	}
+    public SpanQueryAnyToken(int min, int max, String luceneField) {
+        this.min = min;
+        this.max = max;
+        this.luceneField = luceneField;
+    }
 
-	public void setAlwaysHasClosingToken(boolean alwaysHasClosingToken) {
-		this.alwaysHasClosingToken = alwaysHasClosingToken;
-	}
+    public void setAlwaysHasClosingToken(boolean alwaysHasClosingToken) {
+        this.alwaysHasClosingToken = alwaysHasClosingToken;
+    }
 
-	@Override
-	public boolean matchesEmptySequence() {
-		return min == 0;
-	}
+    @Override
+    public boolean matchesEmptySequence() {
+        return min == 0;
+    }
 
-	@Override
-	public BLSpanQuery noEmpty() {
-		if (min > 0)
-			return this;
-		SpanQueryAnyToken result = new SpanQueryAnyToken(1, max, luceneField);
-		if (!alwaysHasClosingToken)
-			result.setAlwaysHasClosingToken(false);
-		return result;
-	}
+    @Override
+    public BLSpanQuery noEmpty() {
+        if (min > 0)
+            return this;
+        SpanQueryAnyToken result = new SpanQueryAnyToken(1, max, luceneField);
+        if (!alwaysHasClosingToken)
+            result.setAlwaysHasClosingToken(false);
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof SpanQueryAnyToken) {
-			SpanQueryAnyToken tp = ((SpanQueryAnyToken) obj);
-			return min == tp.min && max == tp.max;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SpanQueryAnyToken) {
+            SpanQueryAnyToken tp = ((SpanQueryAnyToken) obj);
+            return min == tp.min && max == tp.max;
+        }
+        return false;
+    }
 
-	@Override
-	public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
-		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
-		return new BLSpanWeight(SpanQueryAnyToken.this, searcher, null) {
-			@Override
-			public void extractTerms(Set<Term> terms) {
-				// No terms
-			}
+    @Override
+    public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
+        final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
+        return new BLSpanWeight(SpanQueryAnyToken.this, searcher, null) {
+            @Override
+            public void extractTerms(Set<Term> terms) {
+                // No terms
+            }
 
-			@Override
-			public void extractTermContexts(Map<Term, TermContext> contexts) {
-				// No terms
-			}
+            @Override
+            public void extractTermContexts(Map<Term, TermContext> contexts) {
+                // No terms
+            }
 
-			@Override
-			public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-				return new SpansNGrams(alwaysHasClosingToken, context.reader(), luceneField, realMin, max);
-			}
-		};
-	}
+            @Override
+            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+                return new SpansNGrams(alwaysHasClosingToken, context.reader(), luceneField, realMin, max);
+            }
+        };
+    }
 
-	@Override
-	public String toString(String field) {
-		return "ANYTOKEN(" + min + ", " + inf(max) + ")";
-	}
+    @Override
+    public String toString(String field) {
+        return "ANYTOKEN(" + min + ", " + inf(max) + ")";
+    }
 
-	@Override
-	public String getRealField() {
-		return luceneField;
-	}
+    @Override
+    public String getRealField() {
+        return luceneField;
+    }
 
-	@Override
-	public int hashCode() {
-		return min + 31 * max + luceneField.hashCode() + (alwaysHasClosingToken ? 37 : 0);
-	}
+    @Override
+    public int hashCode() {
+        return min + 31 * max + luceneField.hashCode() + (alwaysHasClosingToken ? 37 : 0);
+    }
 
-	public boolean getAlwaysHasClosingToken() {
-		return alwaysHasClosingToken;
-	}
+    public boolean getAlwaysHasClosingToken() {
+        return alwaysHasClosingToken;
+    }
 
-	@Override
-	public BLSpanQuery inverted() {
-		return new SpanQueryNoHits(luceneField); // Just return our clause, dropping the NOT operation
-	}
+    @Override
+    public BLSpanQuery inverted() {
+        return new SpanQueryNoHits(luceneField); // Just return our clause, dropping the NOT operation
+    }
 
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Yes, inverting is actually an improvement
-		return min == 1 && max == 1;
-	}
+    @Override
+    protected boolean okayToInvertForOptimization() {
+        // Yes, inverting is actually an improvement
+        return min == 1 && max == 1;
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return min == max;
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return min == max;
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return min;
-	}
+    @Override
+    public int hitsLengthMin() {
+        return min;
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return max;
-	}
+    @Override
+    public int hitsLengthMax() {
+        return max;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return hitsAllSameLength();
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return hitsAllSameLength();
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return min == max;
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return min == max;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return min == max;
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return min == max;
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return true;
+    }
 
-	@Override
-	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
-		NfaState state = NfaState.anyToken(luceneField, null);
-		Nfa frag = new Nfa(state, Arrays.asList(state));
-		if (realMin != 1 || max != 1) {
-			frag.repeat(realMin, max);
-		}
-		return frag;
-	}
+    @Override
+    public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+        final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
+        NfaState state = NfaState.anyToken(luceneField, null);
+        Nfa frag = new Nfa(state, Arrays.asList(state));
+        if (realMin != 1 || max != 1) {
+            frag.repeat(realMin, max);
+        }
+        return frag;
+    }
 
-	@Override
-	public boolean canMakeNfa() {
-		return true;
-	}
+    @Override
+    public boolean canMakeNfa() {
+        return true;
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		// Should be rewritten, and if not, it matches all positions in the index.
-		int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
-		return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        // Should be rewritten, and if not, it matches all positions in the index.
+        int numberOfExpansionSteps = max < 0 ? 50 : max - min + 1;
+        return LuceneUtil.getSumTotalTermFreq(reader, luceneField) * numberOfExpansionSteps;
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		int cost = 0;
-		int nMax = max == MAX_UNLIMITED ? 50 : max;
-		for (int i = min; i <= nMax; i++) {
-			cost += i;
-		}
-		return cost;
-	}
+    @Override
+    public int forwardMatchingCost() {
+        int cost = 0;
+        int nMax = max == MAX_UNLIMITED ? 50 : max;
+        for (int i = min; i <= nMax; i++) {
+            cost += i;
+        }
+        return cost;
+    }
 
-	public BLSpanQuery addRep(int addMin, int addMax) {
-		int nMin = min + addMin;
-		int nMax = BLSpanQuery.addMaxValues(max, addMax);
-		SpanQueryAnyToken q = new SpanQueryAnyToken(nMin, nMax, luceneField);
-		if (!alwaysHasClosingToken)
-			q.setAlwaysHasClosingToken(false);
-		return q;
-	}
+    public BLSpanQuery addRep(int addMin, int addMax) {
+        int nMin = min + addMin;
+        int nMax = BLSpanQuery.addMaxValues(max, addMax);
+        SpanQueryAnyToken q = new SpanQueryAnyToken(nMin, nMax, luceneField);
+        if (!alwaysHasClosingToken)
+            q.setAlwaysHasClosingToken(false);
+        return q;
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		return this;
-	}
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        return this;
+    }
 
 }

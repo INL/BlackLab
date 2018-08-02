@@ -21,41 +21,40 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
- * A group of DocResult objects, plus the "group identity". For example, if you're grouping on
- * author name, the group identity might be the string "Harry Mulisch".
+ * A group of DocResult objects, plus the "group identity". For example, if
+ * you're grouping on author name, the group identity might be the string "Harry
+ * Mulisch".
  */
 public class DocGroup {
-	protected HitPropValue groupIdentity;
+    protected HitPropValue groupIdentity;
 
-	private DocResults results;
+    private DocResults results;
 
-	public DocGroup(Searcher searcher, HitPropValue groupIdentity) {
-		this.groupIdentity = groupIdentity;
-		results = new DocResults(searcher);
-	}
+    public DocGroup(Searcher searcher, HitPropValue groupIdentity) {
+        this.groupIdentity = groupIdentity;
+        results = new DocResults(searcher);
+    }
 
-	public DocGroup(Searcher searcher, HitPropValue groupIdentity, List<DocResult> resultList) {
-		this.groupIdentity = groupIdentity;
-		results = new DocResults(searcher, resultList);
-	}
+    public DocGroup(Searcher searcher, HitPropValue groupIdentity, List<DocResult> resultList) {
+        this.groupIdentity = groupIdentity;
+        results = new DocResults(searcher, resultList);
+    }
 
-	public HitPropValue getIdentity() {
-		return groupIdentity;
-	}
+    public HitPropValue getIdentity() {
+        return groupIdentity;
+    }
 
-	public DocResults getResults() {
-		return results;
-	}
+    public DocResults getResults() {
+        return results;
+    }
 
-	public int size() {
-		return results.size();
-	}
+    public int size() {
+        return results.size();
+    }
 
-	@Override
-	public String toString() {
-		return groupIdentity + " (" + size() + ")";
-	}
-
-
+    @Override
+    public String toString() {
+        return groupIdentity + " (" + size() + ")";
+    }
 
 }

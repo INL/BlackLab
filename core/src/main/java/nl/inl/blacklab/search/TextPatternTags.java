@@ -30,65 +30,66 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternTags extends TextPattern {
 
-	protected String elementName;
+    protected String elementName;
 
-	Map<String, String> attr;
+    Map<String, String> attr;
 
-	public TextPatternTags(String elementName, Map<String, String> attr) {
-		this.elementName = elementName;
-		this.attr = attr;
-	}
+    public TextPatternTags(String elementName, Map<String, String> attr) {
+        this.elementName = elementName;
+        this.attr = attr;
+    }
 
-	public TextPatternTags(String elementName) {
-		this(elementName, null);
-	}
+    public TextPatternTags(String elementName) {
+        this(elementName, null);
+    }
 
-	public Term getTerm(String fieldName) {
-		return new Term(fieldName, elementName);
-	}
+    public Term getTerm(String fieldName) {
+        return new Term(fieldName, elementName);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		// Desensitize tag name and attribute values if required
-		String elementName1 = optInsensitive(context, elementName);
-		Map<String, String> attrOptIns = new HashMap<>();
-		for (Map.Entry<String, String> e: attr.entrySet()) {
-			attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue()));
-		}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        // Desensitize tag name and attribute values if required
+        String elementName1 = optInsensitive(context, elementName);
+        Map<String, String> attrOptIns = new HashMap<>();
+        for (Map.Entry<String, String> e : attr.entrySet()) {
+            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue()));
+        }
 
-		// Return the proper SpanQuery depending on index version
-		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
-		String startTagFieldName = startTagContext.luceneField();
-		if (!context.tagLengthInPayload()) {
-		    throw new UnsupportedOperationException("This index is too old for this version of BlackLab. Please re-index your data or use version 1.7.1.");
-		}
-		// Modern index, with tag length in payload
-		return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
-	}
+        // Return the proper SpanQuery depending on index version
+        QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+        String startTagFieldName = startTagContext.luceneField();
+        if (!context.tagLengthInPayload()) {
+            throw new UnsupportedOperationException(
+                    "This index is too old for this version of BlackLab. Please re-index your data or use version 1.7.1.");
+        }
+        // Modern index, with tag length in payload
+        return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternTags) {
-			TextPatternTags tp = ((TextPatternTags) obj);
-			return elementName.equals(tp.elementName) && attr.equals(tp.attr);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternTags) {
+            TextPatternTags tp = ((TextPatternTags) obj);
+            return elementName.equals(tp.elementName) && attr.equals(tp.attr);
+        }
+        return false;
+    }
 
-	public String getElementName() {
-		return elementName;
-	}
+    public String getElementName() {
+        return elementName;
+    }
 
-	@Override
-	public int hashCode() {
-		return elementName.hashCode() + attr.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return elementName.hashCode() + attr.hashCode();
+    }
 
-	@Override
-	public String toString() {
-		if (attr != null && !attr.isEmpty())
-			return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
-		return "TAGS(" + elementName + ")";
-	}
+    @Override
+    public String toString() {
+        if (attr != null && !attr.isEmpty())
+            return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
+        return "TAGS(" + elementName + ")";
+    }
 
 }

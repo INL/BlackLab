@@ -34,70 +34,70 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 
 public class TestQueryRewriteNfa {
 
-	static TestIndex testIndex;
+    static TestIndex testIndex;
 
-	private static  Searcher searcher;
+    private static Searcher searcher;
 
-	@BeforeClass
-	public static void setUp() throws Exception {
-		testIndex = new TestIndex();
-		searcher = testIndex.getSearcher();
-		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
-	}
+    @BeforeClass
+    public static void setUp() throws Exception {
+        testIndex = new TestIndex();
+        searcher = testIndex.getSearcher();
+        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
+    }
 
-	@AfterClass
-	public static void tearDown() {
-		ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
-		searcher.close();
-		testIndex.close();
-	}
+    @AfterClass
+    public static void tearDown() {
+        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
+        searcher.close();
+        testIndex.close();
+    }
 
-	static TextPattern getPatternFromCql(String cqlQuery) {
-		try {
-			cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
-			CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
-					cqlQuery));
-			return parser.query();
-		} catch (ParseException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    static TextPattern getPatternFromCql(String cqlQuery) {
+        try {
+            cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
+            CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
+                    cqlQuery));
+            return parser.query();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-	void assertNoRewrite(String cql, String result) {
-		assertRewrite(cql, result, result);
-	}
+    void assertNoRewrite(String cql, String result) {
+        assertRewrite(cql, result, result);
+    }
 
-	void assertRewrite(String cql, String before, String after) {
-		QueryExplanation explanation = searcher.explain(getPatternFromCql(cql));
-		if (before != null) {
-			BLSpanQuery original = explanation.getOriginalQuery();
-			Assert.assertEquals(before, original.toString());
-		}
-		BLSpanQuery rewritten = explanation.getRewrittenQuery();
-		Assert.assertEquals(after, rewritten.toString());
-	}
+    void assertRewrite(String cql, String before, String after) {
+        QueryExplanation explanation = searcher.explain(getPatternFromCql(cql));
+        if (before != null) {
+            BLSpanQuery original = explanation.getOriginalQuery();
+            Assert.assertEquals(before, original.toString());
+        }
+        BLSpanQuery rewritten = explanation.getRewrittenQuery();
+        Assert.assertEquals(after, rewritten.toString());
+    }
 
-	void assertRewriteResult(String cql, String after) {
-		assertRewrite(cql, null, after);
-	}
+    void assertRewriteResult(String cql, String after) {
+        assertRewrite(cql, null, after);
+    }
 
-	@Test
-	public void testRewrite() {
-		assertRewriteResult("\"the\" [word=\"quick\" & lemma=\"quick\"] [lemma=\"brown\"]",
-		        "FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,DANGLING), 1), NFA:#1:TOKEN(the,DANGLING), -1)");
-	}
+    @Test
+    public void testRewrite() {
+        assertRewriteResult("\"the\" [word=\"quick\" & lemma=\"quick\"] [lemma=\"brown\"]",
+                "FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,DANGLING), 1), NFA:#1:TOKEN(the,DANGLING), -1)");
+    }
 
-	@Ignore // hard to test properly with tiny indices
-	@Test
-	public void testRewriteSuffix() {
-		assertRewriteResult("\"noot\" \".*p\"",
-			"FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(^.*p$,DANGLING), 1)");
-	}
+    @Ignore // hard to test properly with tiny indices
+    @Test
+    public void testRewriteSuffix() {
+        assertRewriteResult("\"noot\" \".*p\"",
+                "FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(^.*p$,DANGLING), 1)");
+    }
 
-	@Test
-	public void testRewritePrefix() {
-		assertRewriteResult("\"a.*\" \"b.*\" \"c.*\"",
-			"FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(b.*,#2:REGEX(c.*,DANGLING)), 1)");
-	}
+    @Test
+    public void testRewritePrefix() {
+        assertRewriteResult("\"a.*\" \"b.*\" \"c.*\"",
+                "FISEQ(TERM(contents%word@i:aap), NFA:#1:REGEX(b.*,#2:REGEX(c.*,DANGLING)), 1)");
+    }
 
 }

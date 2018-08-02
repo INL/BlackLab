@@ -15,31 +15,31 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-
 /**
- * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
+ * Abstract base class for a property of a hit, like document title, hit text,
+ * right context, etc.
  */
 public class GroupPropertySize extends GroupProperty {
-	@Override
-	public HitPropValueInt get(Group result) {
-		return new HitPropValueInt(((HitGroup)result).size());
-	}
+    @Override
+    public HitPropValueInt get(Group result) {
+        return new HitPropValueInt(((HitGroup) result).size());
+    }
 
-	@Override
-	public int compare(Group a, Group b) {
-		if (reverse)
-			return ((HitGroup)b).size() - ((HitGroup)a).size();
-		return ((HitGroup)a).size() - ((HitGroup)b).size();
-	}
+    @Override
+    public int compare(Group a, Group b) {
+        if (reverse)
+            return ((HitGroup) b).size() - ((HitGroup) a).size();
+        return ((HitGroup) a).size() - ((HitGroup) b).size();
+    }
 
-	@Override
-	public boolean defaultSortDescending() {
-		return !reverse;
-	}
+    @Override
+    public boolean defaultSortDescending() {
+        return !reverse;
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "size";
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "size";
+    }
 
 }

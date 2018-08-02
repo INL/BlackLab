@@ -50,14 +50,15 @@ public class SearchManager {
         SearchParameters.setDefault("wordsaroundhit", "" + config.getDefaultContextSize());
         SearchParameters.setDefault("maxretrieve", "" + config.getDefaultMaxHitsToRetrieve());
         SearchParameters.setDefault("maxcount", "" + config.getDefaultMaxHitsToCount());
-        SearchParameters.setDefault("sensitive", config.isDefaultCaseSensitive() && config.isDefaultDiacriticsSensitive() ? "yes" : "no");
+        SearchParameters.setDefault("sensitive",
+                config.isDefaultCaseSensitive() && config.isDefaultDiacriticsSensitive() ? "yes" : "no");
     }
 
     /**
      * Clean up resources.
      *
-     * In particular, stops the load manager thread and
-     * cancels any running searches.
+     * In particular, stops the load manager thread and cancels any running
+     * searches.
      */
     public synchronized void cleanup() {
         // Stop any running searches

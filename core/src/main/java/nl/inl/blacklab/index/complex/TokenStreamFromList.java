@@ -35,58 +35,58 @@ import org.eclipse.collections.api.iterator.IntIterator;
  */
 class TokenStreamFromList extends TokenStream {
 
-	/** Iterator over the terms */
-	protected Iterator<String> iterator;
+    /** Iterator over the terms */
+    protected Iterator<String> iterator;
 
-	/** Iterator over the position increments */
-	private IntIterator incrementIt;
+    /** Iterator over the position increments */
+    private IntIterator incrementIt;
 
-	/** Iterator over the payloads, if any */
-	private Iterator<BytesRef> payloadIt = null;
+    /** Iterator over the payloads, if any */
+    private Iterator<BytesRef> payloadIt = null;
 
-	/**
-	 * Term text of the current token
-	 */
-	protected CharTermAttribute termAttr;
+    /**
+     * Term text of the current token
+     */
+    protected CharTermAttribute termAttr;
 
-	/**
-	 * Position increment of the current token
-	 */
-	protected PositionIncrementAttribute positionIncrementAttr;
+    /**
+     * Position increment of the current token
+     */
+    protected PositionIncrementAttribute positionIncrementAttr;
 
-	/**
-	 * Payload of the current token
-	 */
-	protected PayloadAttribute payloadAttr = null;
+    /**
+     * Payload of the current token
+     */
+    protected PayloadAttribute payloadAttr = null;
 
-	public TokenStreamFromList(Iterable<String> tokens, IntIterable increments, Iterable<BytesRef> payload) {
-		clearAttributes();
-		termAttr = addAttribute(CharTermAttribute.class);
-		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
-		positionIncrementAttr.setPositionIncrement(1);
+    public TokenStreamFromList(Iterable<String> tokens, IntIterable increments, Iterable<BytesRef> payload) {
+        clearAttributes();
+        termAttr = addAttribute(CharTermAttribute.class);
+        positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
+        positionIncrementAttr.setPositionIncrement(1);
 
-		iterator = tokens.iterator();
-		incrementIt = increments.intIterator();
-		if (payload != null) {
-			payloadAttr = addAttribute(PayloadAttribute.class);
-			payloadIt = payload.iterator();
-		}
-	}
+        iterator = tokens.iterator();
+        incrementIt = increments.intIterator();
+        if (payload != null) {
+            payloadAttr = addAttribute(PayloadAttribute.class);
+            payloadIt = payload.iterator();
+        }
+    }
 
-	@Override
-	final public boolean incrementToken() {
-		// Capture token contents
-		if (iterator.hasNext()) {
-			String word = iterator.next();
-			termAttr.copyBuffer(word.toCharArray(), 0, word.length());
-			positionIncrementAttr.setPositionIncrement(incrementIt.next());
-			if (payloadAttr != null) {
-				payloadAttr.setPayload(payloadIt.next());
-			}
-			return true;
-		}
-		return false;
-	}
+    @Override
+    final public boolean incrementToken() {
+        // Capture token contents
+        if (iterator.hasNext()) {
+            String word = iterator.next();
+            termAttr.copyBuffer(word.toCharArray(), 0, word.length());
+            positionIncrementAttr.setPositionIncrement(incrementIt.next());
+            if (payloadAttr != null) {
+                payloadAttr.setPayload(payloadIt.next());
+            }
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

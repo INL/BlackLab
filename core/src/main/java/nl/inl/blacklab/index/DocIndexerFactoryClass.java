@@ -29,104 +29,109 @@ import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.util.UnicodeStream;
 
 /**
- * Supports creation of several types of DocIndexers implemented directly in code.
- * Additionally will attempt to load classes if passed a fully-qualified ClassName, and implementations by name in .indexers package within BlackLab.
+ * Supports creation of several types of DocIndexers implemented directly in
+ * code. Additionally will attempt to load classes if passed a fully-qualified
+ * ClassName, and implementations by name in .indexers package within BlackLab.
  */
 public class DocIndexerFactoryClass implements DocIndexerFactory {
 
-	private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
-	private Set<String> unsupported = new HashSet<>();
+    private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
+    private Set<String> unsupported = new HashSet<>();
 
-	public DocIndexerFactoryClass() {
-		// Init called externally.
-	}
+    public DocIndexerFactoryClass() {
+        // Init called externally.
+    }
 
-	@Override
-	public void init() {
-		// Note that these names should not collide with the builtin config-based formats, or those will be used instead.
+    @Override
+    public void init() {
+        // Note that these names should not collide with the builtin config-based formats, or those will be used instead.
 
-		// Some abbreviations for commonly used builtin DocIndexers.
-		// You can also specify the classname for builtin DocIndexers,
-		// or a fully-qualified name for your custom DocIndexer (must
-		// be on the classpath)
-		supported.put("alto", DocIndexerAlto.class);
-		supported.put("di-folia", DocIndexerFolia.class);
-		supported.put("whitelab2", DocIndexerWhiteLab2.class);
-		supported.put("pagexml", DocIndexerPageXml.class);
-		supported.put("sketchxml", DocIndexerXmlSketch.class);
+        // Some abbreviations for commonly used builtin DocIndexers.
+        // You can also specify the classname for builtin DocIndexers,
+        // or a fully-qualified name for your custom DocIndexer (must
+        // be on the classpath)
+        supported.put("alto", DocIndexerAlto.class);
+        supported.put("di-folia", DocIndexerFolia.class);
+        supported.put("whitelab2", DocIndexerWhiteLab2.class);
+        supported.put("pagexml", DocIndexerPageXml.class);
+        supported.put("sketchxml", DocIndexerXmlSketch.class);
 
-		// TEI has a number of variants
-		// By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
-		// By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
-		supported.put("di-tei", DocIndexerTei.class);
-		supported.put("di-tei-element-text", DocIndexerTeiText.class);
-		supported.put("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
-	}
+        // TEI has a number of variants
+        // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
+        // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
+        supported.put("di-tei", DocIndexerTei.class);
+        supported.put("di-tei-element-text", DocIndexerTeiText.class);
+        supported.put("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
+    }
 
-	@Override
-	public boolean isSupported(String formatIdentifier) {
-		if (!supported.containsKey(formatIdentifier) && !unsupported.contains(formatIdentifier))
-			find(formatIdentifier);
+    @Override
+    public boolean isSupported(String formatIdentifier) {
+        if (!supported.containsKey(formatIdentifier) && !unsupported.contains(formatIdentifier))
+            find(formatIdentifier);
 
-		return supported.containsKey(formatIdentifier);
-	}
+        return supported.containsKey(formatIdentifier);
+    }
 
-	@Override
-	public List<Format> getFormats() {
-		List<Format> ret = new ArrayList<>();
-		for (Entry<String, Class<? extends DocIndexerAbstract>> e : supported.entrySet()) {
-			Format desc = new Format(e.getKey(), DocIndexerAbstract.getDisplayName(e.getValue()), DocIndexerAbstract.getDescription(e.getValue()));
-			desc.setVisible(DocIndexerAbstract.isVisible(e.getValue()));
-			ret.add(desc);
-		}
-		return ret;
-	}
+    @Override
+    public List<Format> getFormats() {
+        List<Format> ret = new ArrayList<>();
+        for (Entry<String, Class<? extends DocIndexerAbstract>> e : supported.entrySet()) {
+            Format desc = new Format(e.getKey(), DocIndexerAbstract.getDisplayName(e.getValue()),
+                    DocIndexerAbstract.getDescription(e.getValue()));
+            desc.setVisible(DocIndexerAbstract.isVisible(e.getValue()));
+            ret.add(desc);
+        }
+        return ret;
+    }
 
-	@Override
-	public Format getFormat(String formatIdentifier) {
-		if (!isSupported(formatIdentifier))
-			return null;
+    @Override
+    public Format getFormat(String formatIdentifier) {
+        if (!isSupported(formatIdentifier))
+            return null;
 
-		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
-		Format desc = new Format(formatIdentifier, DocIndexerAbstract.getDisplayName(docIndexerClass), DocIndexerAbstract.getDescription(docIndexerClass));
-		desc.setVisible(DocIndexerAbstract.isVisible(docIndexerClass));
-		return desc;
-	}
+        Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
+        Format desc = new Format(formatIdentifier, DocIndexerAbstract.getDisplayName(docIndexerClass),
+                DocIndexerAbstract.getDescription(docIndexerClass));
+        desc.setVisible(DocIndexerAbstract.isVisible(docIndexerClass));
+        return desc;
+    }
 
-	public void addFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
-		this.supported.put(formatIdentifier, docIndexerClass);
-	}
+    public void addFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
+        this.supported.put(formatIdentifier, docIndexerClass);
+    }
 
-	@SuppressWarnings("unchecked")
-	private void find(String formatIdentifier) {
-	    // Is it a fully qualified class name?
+    @SuppressWarnings("unchecked")
+    private void find(String formatIdentifier) {
+        // Is it a fully qualified class name?
         Class<? extends DocIndexerAbstract> docIndexerClass = null;
         try {
             docIndexerClass = (Class<? extends DocIndexerAbstract>) Class.forName(formatIdentifier);
         } catch (Exception e1) {
             try {
                 // No. Is it a class in the BlackLab indexers package?
-                docIndexerClass = (Class<? extends DocIndexerAbstract>) Class.forName("nl.inl.blacklab.indexers." + formatIdentifier);
+                docIndexerClass = (Class<? extends DocIndexerAbstract>) Class
+                        .forName("nl.inl.blacklab.indexers." + formatIdentifier);
             } catch (Exception e) {
                 // Couldn't be resolved. That's okay, maybe another factory will support this key
-            	// Cache the key for next time.
-            	unsupported.add(formatIdentifier);
+                // Cache the key for next time.
+                unsupported.add(formatIdentifier);
             }
         }
 
         if (docIndexerClass != null) {
-        	supported.put(formatIdentifier, docIndexerClass);
+            supported.put(formatIdentifier, docIndexerClass);
         }
-	}
+    }
 
     @Override
     public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, Reader reader) {
         if (!isSupported(formatIdentifier))
-        	throw new UnsupportedOperationException("Unknown format '"+formatIdentifier+"', call isSupported(formatIdentifier) before attempting to get()");
+            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
+                    + "', call isSupported(formatIdentifier) before attempting to get()");
 
-    	try {
+        try {
             // Instantiate our DocIndexer class
-    		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
+            Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
@@ -145,8 +150,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
                 docIndexer = constructor.newInstance(indexer, documentName, reader);
             }
             return docIndexer;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException |
-                InvocationTargetException | NoSuchMethodException e) {
+        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
@@ -154,11 +159,12 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     @Override
     public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, InputStream is, Charset cs) {
         if (!isSupported(formatIdentifier))
-        	throw new UnsupportedOperationException("Unknown format '"+formatIdentifier+"', call isSupported(formatIdentifier) before attempting to get()");
+            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
+                    + "', call isSupported(formatIdentifier) before attempting to get()");
 
-    	try {
+        try {
             // Instantiate our DocIndexer class
-    		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
+            Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
@@ -182,11 +188,12 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     @Override
     public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs) {
         if (!isSupported(formatIdentifier))
-        	throw new UnsupportedOperationException("Unknown format '"+formatIdentifier+"', call isSupported(formatIdentifier) before attempting to get()");
+            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
+                    + "', call isSupported(formatIdentifier) before attempting to get()");
 
-    	try {
+        try {
             // Instantiate our DocIndexer class
-    		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
+            Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
@@ -212,11 +219,12 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     @Override
     public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, byte[] contents, Charset cs) {
         if (!isSupported(formatIdentifier))
-        	throw new UnsupportedOperationException("Unknown format '"+formatIdentifier+"', call isSupported(formatIdentifier) before attempting to get()");
+            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
+                    + "', call isSupported(formatIdentifier) before attempting to get()");
 
-    	try {
+        try {
             // Instantiate our DocIndexer class
-    		Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
+            Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
@@ -228,7 +236,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
                 constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
-                docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(new ByteArrayInputStream(contents), cs));
+                docIndexer = constructor.newInstance(indexer, documentName,
+                        new InputStreamReader(new ByteArrayInputStream(contents), cs));
             }
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException

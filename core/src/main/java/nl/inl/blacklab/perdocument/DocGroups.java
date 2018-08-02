@@ -32,105 +32,103 @@ import nl.inl.blacklab.search.grouping.HitPropValue;
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
-	Map<HitPropValue, DocGroup> groups = new HashMap<>();
+    Map<HitPropValue, DocGroup> groups = new HashMap<>();
 
-	List<DocGroup> orderedGroups = new ArrayList<>();
+    List<DocGroup> orderedGroups = new ArrayList<>();
 
-	private Searcher searcher;
+    private Searcher searcher;
 
-	private int largestGroupSize = 0;
+    private int largestGroupSize = 0;
 
-	private int totalResults = 0;
+    private int totalResults = 0;
 
-	private DocProperty groupBy;
+    private DocProperty groupBy;
 
-	/**
-	 * The DocResults we were created from
-	 */
-	private DocResults docResults;
+    /**
+     * The DocResults we were created from
+     */
+    private DocResults docResults;
 
-	/**
-	 * Constructor. Fills the groups from the given document results.
-	 *
-	 * @param docResults
-	 *            the results to group.
-	 * @param groupBy
-	 *            the criterium to group on.
-	 */
-	DocGroups(DocResults docResults, DocProperty groupBy) {
-		this.docResults = docResults;
-		searcher = docResults.getSearcher();
-		this.groupBy = groupBy;
-		//Thread currentThread = Thread.currentThread();
-		Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
-		for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
-			HitPropValue groupId = groupBy.get(r);
-			List<DocResult> group = groupLists.get(groupId);
-			if (group == null) {
-				group = new ArrayList<>();
-				groupLists.put(groupId, group);
-			}
-			group.add(r);
-			if (group.size() > largestGroupSize)
-				largestGroupSize = group.size();
-			totalResults++;
-		}
-		for (Map.Entry<HitPropValue, List<DocResult>> e: groupLists.entrySet()) {
-			DocGroup docGroup = new DocGroup(searcher, e.getKey(), e.getValue());
-			groups.put(e.getKey(), docGroup);
-			orderedGroups.add(docGroup);
-		}
-	}
+    /**
+     * Constructor. Fills the groups from the given document results.
+     *
+     * @param docResults the results to group.
+     * @param groupBy the criterium to group on.
+     */
+    DocGroups(DocResults docResults, DocProperty groupBy) {
+        this.docResults = docResults;
+        searcher = docResults.getSearcher();
+        this.groupBy = groupBy;
+        //Thread currentThread = Thread.currentThread();
+        Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
+        for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
+            HitPropValue groupId = groupBy.get(r);
+            List<DocResult> group = groupLists.get(groupId);
+            if (group == null) {
+                group = new ArrayList<>();
+                groupLists.put(groupId, group);
+            }
+            group.add(r);
+            if (group.size() > largestGroupSize)
+                largestGroupSize = group.size();
+            totalResults++;
+        }
+        for (Map.Entry<HitPropValue, List<DocResult>> e : groupLists.entrySet()) {
+            DocGroup docGroup = new DocGroup(searcher, e.getKey(), e.getValue());
+            groups.put(e.getKey(), docGroup);
+            orderedGroups.add(docGroup);
+        }
+    }
 
-	public Collection<DocGroup> getGroups() {
-		return Collections.unmodifiableCollection(orderedGroups);
-	}
+    public Collection<DocGroup> getGroups() {
+        return Collections.unmodifiableCollection(orderedGroups);
+    }
 
-	public DocGroup getGroup(HitPropValue groupId) {
-		return groups.get(groupId);
-	}
+    public DocGroup getGroup(HitPropValue groupId) {
+        return groups.get(groupId);
+    }
 
-	/**
-	 * Order the groups based on the specified group property.
-	 *
-	 * @param prop the property to sort on
-	 * @param sortReverse if true, perform reverse sort
-	 */
-	public void sort(DocGroupProperty prop, boolean sortReverse) {
-		Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
-		Collections.sort(orderedGroups, comparator);
-	}
+    /**
+     * Order the groups based on the specified group property.
+     *
+     * @param prop the property to sort on
+     * @param sortReverse if true, perform reverse sort
+     */
+    public void sort(DocGroupProperty prop, boolean sortReverse) {
+        Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
+        Collections.sort(orderedGroups, comparator);
+    }
 
-	public void sort(DocGroupProperty prop) {
-		sort(prop, false);
-	}
+    public void sort(DocGroupProperty prop) {
+        sort(prop, false);
+    }
 
-	@Override
-	public Iterator<DocGroup> iterator() {
-		return getGroups().iterator();
-	}
+    @Override
+    public Iterator<DocGroup> iterator() {
+        return getGroups().iterator();
+    }
 
-	@Override
-	public int numberOfGroups() {
-		return groups.size();
-	}
+    @Override
+    public int numberOfGroups() {
+        return groups.size();
+    }
 
-	@Override
-	public int getLargestGroupSize() {
-		return largestGroupSize;
-	}
+    @Override
+    public int getLargestGroupSize() {
+        return largestGroupSize;
+    }
 
-	@Override
-	public int getTotalResults() {
-		return totalResults;
-	}
+    @Override
+    public int getTotalResults() {
+        return totalResults;
+    }
 
-	public DocProperty getGroupCriteria() {
-		return groupBy;
-	}
+    public DocProperty getGroupCriteria() {
+        return groupBy;
+    }
 
-	public DocResults getOriginalDocResults() {
-		return docResults;
-	}
+    public DocResults getOriginalDocResults() {
+        return docResults;
+    }
 
 }

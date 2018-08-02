@@ -7,7 +7,7 @@ package nl.inl.blacklab.search;
  */
 public class TextPatternAnd extends TextPatternAndNot {
 
-	public TextPatternAnd(TextPattern... clauses) {
-		super(clauses);
-	}
+    public TextPatternAnd(TextPattern... clauses) {
+        super(clauses);
+    }
 }

@@ -26,29 +26,29 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MockSpanQuery;
 
 public class TestResultsGrouper {
-	int[] doc = { 1, 2, 1, 3, 2, 1 };
-	int[] start = { 1, 2, 3, 4, 5, 6 };
-	int[] end = { 7, 8, 9, 10, 11, 12 };
+    int[] doc = { 1, 2, 1, 3, 2, 1 };
+    int[] start = { 1, 2, 3, 4, 5, 6 };
+    int[] end = { 7, 8, 9, 10, 11, 12 };
 
-	@Test
-	public void testGrouper() {
-		BLSpanQuery query = new MockSpanQuery(doc, start, end);
-		Hits hits = Hits.fromSpanQuery(new MockSearcher(), query);
-		HitProperty crit = new HitPropertyDocumentId(hits);
-		HitGroups grouper = hits.groupedBy(crit);
-		Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();
+    @Test
+    public void testGrouper() {
+        BLSpanQuery query = new MockSpanQuery(doc, start, end);
+        Hits hits = Hits.fromSpanQuery(new MockSearcher(), query);
+        HitProperty crit = new HitPropertyDocumentId(hits);
+        HitGroups grouper = hits.groupedBy(crit);
+        Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();
 
-		Assert.assertEquals(3, groups.size());
-		HitPropValueInt one = new HitPropValueInt(1);
-		HitGroup group1 = groups.get(one);
-		Assert.assertEquals(one, group1.getIdentity());
-		Assert.assertEquals(3, group1.size());
-		Assert.assertEquals(1, group1.getHits().get(0).doc);
-		Assert.assertEquals(1, group1.getHits().get(1).doc);
-		Assert.assertEquals(1, group1.getHits().get(2).doc);
-		HitPropValueInt two = new HitPropValueInt(2);
-		Assert.assertEquals(2, groups.get(two).size());
-		HitPropValueInt three = new HitPropValueInt(3);
-		Assert.assertEquals(1, groups.get(three).size());
-	}
+        Assert.assertEquals(3, groups.size());
+        HitPropValueInt one = new HitPropValueInt(1);
+        HitGroup group1 = groups.get(one);
+        Assert.assertEquals(one, group1.getIdentity());
+        Assert.assertEquals(3, group1.size());
+        Assert.assertEquals(1, group1.getHits().get(0).doc);
+        Assert.assertEquals(1, group1.getHits().get(1).doc);
+        Assert.assertEquals(1, group1.getHits().get(2).doc);
+        HitPropValueInt two = new HitPropValueInt(2);
+        Assert.assertEquals(2, groups.get(two).size());
+        HitPropValueInt three = new HitPropValueInt(3);
+        Assert.assertEquals(1, groups.get(three).size());
+    }
 }

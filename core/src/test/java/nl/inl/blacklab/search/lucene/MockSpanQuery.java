@@ -35,159 +35,160 @@ import nl.inl.blacklab.search.lucene.BLSpans;
  * from these arrays.
  */
 public class MockSpanQuery extends BLSpanQuery {
-	int[] doc;
+    int[] doc;
 
-	int[] start;
+    int[] start;
 
-	int[] end;
+    int[] end;
 
-	boolean isSimple;
+    boolean isSimple;
 
-	private boolean singleTokenSpans;
+    private boolean singleTokenSpans;
 
-	private boolean sortedSpans;
+    private boolean sortedSpans;
 
-	private boolean uniqueSpans;
+    private boolean uniqueSpans;
 
-	public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
-		this.doc = doc;
-		this.start = start;
-		this.end = end;
-		this.isSimple = isSimple;
+    public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
+        this.doc = doc;
+        this.start = start;
+        this.end = end;
+        this.isSimple = isSimple;
 
-		sortedSpans = singleTokenSpans = uniqueSpans = true;
-		int prevDoc = -1, prevStart = -1, prevEnd = -1;
-		for (int i = 0; i < doc.length; i++) {
-			if (end[i] - start[i] > 1) {
-				// Some hits are longer than 1 token
-				singleTokenSpans = false;
-			}
-			if (doc[i] == prevDoc) {
-				if (prevStart > start[i] || prevStart == start[i] && prevEnd > end[i]) {
-					// Violates sorted rule (sorted by start point, then endpoint)
-					sortedSpans = false;
-				}
-				if (prevStart == start[i] && prevEnd == end[i]) {
-					// Duplicate, so not unique
-					// (this check only works if the spans is sorted but we take that into account below)
-					uniqueSpans = false;
-				}
-			}
-			prevDoc = doc[i];
-			prevStart = start[i];
-			prevEnd = end[i];
-		}
-	}
+        sortedSpans = singleTokenSpans = uniqueSpans = true;
+        int prevDoc = -1, prevStart = -1, prevEnd = -1;
+        for (int i = 0; i < doc.length; i++) {
+            if (end[i] - start[i] > 1) {
+                // Some hits are longer than 1 token
+                singleTokenSpans = false;
+            }
+            if (doc[i] == prevDoc) {
+                if (prevStart > start[i] || prevStart == start[i] && prevEnd > end[i]) {
+                    // Violates sorted rule (sorted by start point, then endpoint)
+                    sortedSpans = false;
+                }
+                if (prevStart == start[i] && prevEnd == end[i]) {
+                    // Duplicate, so not unique
+                    // (this check only works if the spans is sorted but we take that into account below)
+                    uniqueSpans = false;
+                }
+            }
+            prevDoc = doc[i];
+            prevStart = start[i];
+            prevEnd = end[i];
+        }
+    }
 
-	public MockSpanQuery(int[] doc, int[] start, int[] end) {
-		this(doc, start, end, false);
-	}
+    public MockSpanQuery(int[] doc, int[] start, int[] end) {
+        this(doc, start, end, false);
+    }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		return new BLSpanWeight(this, searcher, null) {
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        return new BLSpanWeight(this, searcher, null) {
 
-			@Override
-			public void extractTerms(Set<Term> terms) {
-				// NOP
-			}
+            @Override
+            public void extractTerms(Set<Term> terms) {
+                // NOP
+            }
 
-			@Override
-			public void extractTermContexts(Map<Term, TermContext> contexts) {
-				// NOP
-			}
+            @Override
+            public void extractTermContexts(Map<Term, TermContext> contexts) {
+                // NOP
+            }
 
-			@Override
-			public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-				return new MockSpans(doc, start, end);
-			}
-		};
-	}
+            @Override
+            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+                return new MockSpans(doc, start, end);
+            }
+        };
+    }
 
-	@Override
-	public String toString(String field) {
-		return "MockSpanQuery()";
-	}
+    @Override
+    public String toString(String field) {
+        return "MockSpanQuery()";
+    }
 
-	@Override
-	public String getField() {
-		return "dummy";
-	}
+    @Override
+    public String getField() {
+        return "dummy";
+    }
 
-	@Override
-	public String getRealField() {
-		return "dummy";
-	}
+    @Override
+    public String getRealField() {
+        return "dummy";
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o instanceof MockSpanQuery) {
-			final MockSpanQuery that = (MockSpanQuery) o;
-			return doc.equals(that.doc) && start.equals(that.start) && end.equals(that.end) && isSimple == that.isSimple;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o instanceof MockSpanQuery) {
+            final MockSpanQuery that = (MockSpanQuery) o;
+            return doc.equals(that.doc) && start.equals(that.start) && end.equals(that.end)
+                    && isSimple == that.isSimple;
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return doc.hashCode() ^ start.hashCode() ^ end.hashCode() ^ (isSimple ? 0x23357649 : 0);
-	}
+    @Override
+    public int hashCode() {
+        return doc.hashCode() ^ start.hashCode() ^ end.hashCode() ^ (isSimple ? 0x23357649 : 0);
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return singleTokenSpans;
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return singleTokenSpans;
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return singleTokenSpans ? 1 : 0;
-	}
+    @Override
+    public int hitsLengthMin() {
+        return singleTokenSpans ? 1 : 0;
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return singleTokenSpans ? 1 : Integer.MAX_VALUE;
-	}
+    @Override
+    public int hitsLengthMax() {
+        return singleTokenSpans ? 1 : Integer.MAX_VALUE;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return singleTokenSpans && sortedSpans;
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return singleTokenSpans && sortedSpans;
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return sortedSpans;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return sortedSpans;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return singleTokenSpans && sortedSpans && uniqueSpans;
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return singleTokenSpans && sortedSpans && uniqueSpans;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return singleTokenSpans && sortedSpans && uniqueSpans;
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return singleTokenSpans && sortedSpans && uniqueSpans;
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return sortedSpans && uniqueSpans;
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return sortedSpans && uniqueSpans;
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		return 0;
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        return 0;
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		return 0;
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return 0;
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		return this;
-	}
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        return this;
+    }
 
 }

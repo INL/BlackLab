@@ -25,131 +25,132 @@ import nl.inl.blacklab.search.Searcher;
 
 public class MockSearcher extends Searcher {
 
-	public MockSearcher() {
-		mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
-		hitsSettings().setContextSize(5);
+    public MockSearcher() {
+        mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+        hitsSettings().setContextSize(5);
 
-		// Register ourselves in the mapping from IndexReader to Searcher,
-		// so we can find the corresponding Searcher object from within Lucene code
-		Searcher.registerSearcher(null, this);
-	}
-	
-	@Override
-	public void close() {
-	    Searcher.removeSearcher(this);
-	    super.close();
-	}
+        // Register ourselves in the mapping from IndexReader to Searcher,
+        // so we can find the corresponding Searcher object from within Lucene code
+        Searcher.registerSearcher(null, this);
+    }
 
-	@Override
-	public boolean isEmpty() {
-		//
-		return false;
-	}
+    @Override
+    public void close() {
+        Searcher.removeSearcher(this);
+        super.close();
+    }
 
-	@Override
-	public void rollback() {
-		//
+    @Override
+    public boolean isEmpty() {
+        //
+        return false;
+    }
 
-	}
+    @Override
+    public void rollback() {
+        //
 
-	@Override
-	public Document document(int doc) {
-		//
-		return null;
-	}
+    }
 
-	@Override
-	public boolean isDeleted(int doc) {
-		//
-		return false;
-	}
+    @Override
+    public Document document(int doc) {
+        //
+        return null;
+    }
 
-	@Override
-	public int maxDoc() {
-		//
-		return 0;
-	}
+    @Override
+    public boolean isDeleted(int doc) {
+        //
+        return false;
+    }
 
-	@Override
-	public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public int maxDoc() {
+        //
+        return 0;
+    }
 
-	@Override
-	public IndexReader getIndexReader() {
-		return null;
-	}
+    @Override
+    public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
+            boolean fillInDefaultsIfNotFound) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public ForwardIndex openForwardIndex(String fieldPropName) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public IndexReader getIndexReader() {
+        return null;
+    }
 
-	@Override
-	public ContentStore openContentStore(File indexXmlDir, boolean create) {
-		return null;
-	}
+    @Override
+    public ForwardIndex openForwardIndex(String fieldPropName) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-		return QueryExecutionContext.getSimple(this, fieldName);
-	}
+    @Override
+    public ContentStore openContentStore(File indexXmlDir, boolean create) {
+        return null;
+    }
 
-	@Override
-	public String getIndexName() {
-		return null;
-	}
+    @Override
+    public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
+        return QueryExecutionContext.getSimple(this, fieldName);
+    }
 
-	@Override
-	public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
-			throws IOException, CorruptIndexException, LockObtainFailedException {
-		return null;
-	}
+    @Override
+    public String getIndexName() {
+        return null;
+    }
 
-	@Override
-	public IndexWriter getWriter() {
-		return null;
-	}
+    @Override
+    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
+            throws IOException, CorruptIndexException, LockObtainFailedException {
+        return null;
+    }
 
-	@Override
-	public File getIndexDirectory() {
-		return null;
-	}
+    @Override
+    public IndexWriter getWriter() {
+        return null;
+    }
 
-	@Override
-	public void delete(Query q) {
-		//
-	}
+    @Override
+    public File getIndexDirectory() {
+        return null;
+    }
 
-	@Override
-	public DocResults queryDocuments(Query documentFilterQuery) {
-		return null;
-	}
+    @Override
+    public void delete(Query q) {
+        //
+    }
 
-	@Override
-	public List<String> getFieldTerms(String fieldName, int maxResults) {
-		return null;
-	}
+    @Override
+    public DocResults queryDocuments(Query documentFilterQuery) {
+        return null;
+    }
 
-	@Override
-	public IndexSearcher getIndexSearcher() {
-		IndexSearcher searcher = Mockito.mock(IndexSearcher.class);
-		Mockito.when(searcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
-		return searcher;
-	}
+    @Override
+    public List<String> getFieldTerms(String fieldName, int maxResults) {
+        return null;
+    }
 
-	public void setForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
-		addForwardIndex(fieldPropName, forwardIndex);
-	}
+    @Override
+    public IndexSearcher getIndexSearcher() {
+        IndexSearcher searcher = Mockito.mock(IndexSearcher.class);
+        Mockito.when(searcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
+        return searcher;
+    }
 
-	@Override
-	protected ContentStore openContentStore(String fieldName) {
-		throw new UnsupportedOperationException();
-	}
+    public void setForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
+        addForwardIndex(fieldPropName, forwardIndex);
+    }
 
-	@Override
-	public Set<Integer> docIdSet() {
-		return null;
-	}
+    @Override
+    protected ContentStore openContentStore(String fieldName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Set<Integer> docIdSet() {
+        return null;
+    }
 
 }

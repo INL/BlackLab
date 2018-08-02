@@ -24,87 +24,90 @@ import nl.inl.blacklab.search.Searcher;
 /**
  * Groups results on the basis of a list of criteria.
  *
- * This class allows random access to the groups, and each group
- * provides random access to the hits. Note that this means that all hits found must be retrieved,
- * which may be unfeasible for large results sets.
+ * This class allows random access to the groups, and each group provides random
+ * access to the hits. Note that this means that all hits found must be
+ * retrieved, which may be unfeasible for large results sets.
  */
 public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup>, DocOrHitGroups {
-	Searcher searcher;
+    Searcher searcher;
 
-	public HitGroups(Searcher searcher, HitProperty groupCriteria) {
-		super(groupCriteria);
+    public HitGroups(Searcher searcher, HitProperty groupCriteria) {
+        super(groupCriteria);
 
-		this.searcher = searcher;
-	}
+        this.searcher = searcher;
+    }
 
-	public abstract Map<HitPropValue, HitGroup> getGroupMap();
+    public abstract Map<HitPropValue, HitGroup> getGroupMap();
 
-	public abstract List<HitGroup> getGroups();
+    public abstract List<HitGroup> getGroups();
 
-	/**
-	 * Sort groups by some property.
-	 * @param prop the property to sort on
-	 */
-	public void sortGroups(GroupProperty prop) {
-		sortGroups(prop, false);
-	}
+    /**
+     * Sort groups by some property.
+     * 
+     * @param prop the property to sort on
+     */
+    public void sortGroups(GroupProperty prop) {
+        sortGroups(prop, false);
+    }
 
-	/**
-	 * Sort groups by some property, ascending or descending.
-	 * @param prop the property to sort on
-	 * @param sortReverse if true, reverse the natural sort of the specified property.
-	 */
-	public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
+    /**
+     * Sort groups by some property, ascending or descending.
+     * 
+     * @param prop the property to sort on
+     * @param sortReverse if true, reverse the natural sort of the specified
+     *            property.
+     */
+    public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
-	public HitGroup getGroup(HitPropValue identity) {
-		return getGroupMap().get(identity);
-	}
+    public HitGroup getGroup(HitPropValue identity) {
+        return getGroupMap().get(identity);
+    }
 
-	@Override
-	public Iterator<HitGroup> iterator() {
-		final Iterator<HitGroup> currentIt = getGroups().iterator();
+    @Override
+    public Iterator<HitGroup> iterator() {
+        final Iterator<HitGroup> currentIt = getGroups().iterator();
 
-		return new Iterator<HitGroup>() {
+        return new Iterator<HitGroup>() {
 
-			@Override
-			public boolean hasNext() {
-				return currentIt.hasNext();
-			}
+            @Override
+            public boolean hasNext() {
+                return currentIt.hasNext();
+            }
 
-			@Override
-			public HitGroup next() {
-				return currentIt.next();
-			}
+            @Override
+            public HitGroup next() {
+                return currentIt.next();
+            }
 
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
 
-		};
-	}
+        };
+    }
 
-	/**
-	 * Get the total number of hits
-	 *
-	 * @return the number of hits
-	 */
-	@Override
-	public abstract int getTotalResults();
+    /**
+     * Get the total number of hits
+     *
+     * @return the number of hits
+     */
+    @Override
+    public abstract int getTotalResults();
 
-	/**
-	 * Return the size of the largest group
-	 *
-	 * @return size of the largest group
-	 */
-	@Override
-	public abstract int getLargestGroupSize();
+    /**
+     * Return the size of the largest group
+     *
+     * @return size of the largest group
+     */
+    @Override
+    public abstract int getLargestGroupSize();
 
-	/**
-	 * Return the number of groups
-	 *
-	 * @return number of groups
-	 */
-	@Override
-	public abstract int numberOfGroups();
+    /**
+     * Return the number of groups
+     *
+     * @return number of groups
+     */
+    @Override
+    public abstract int numberOfGroups();
 }

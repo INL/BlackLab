@@ -10,18 +10,18 @@ import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
  */
 public class GetDocFromContentStore {
 
-	public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception {
 
-		if (args.length != 2) {
-			System.err.println("Usage: GetDocFromContentStore <contentStoreDir> <docId>");
-			return;
-		}
+        if (args.length != 2) {
+            System.err.println("Usage: GetDocFromContentStore <contentStoreDir> <docId>");
+            return;
+        }
 
-		File csDir = new File(args[0]);
-		int id = Integer.parseInt(args[1]);
+        File csDir = new File(args[0]);
+        int id = Integer.parseInt(args[1]);
 
-		ContentStore cs = new ContentStoreDirZip(csDir);
-		String content = cs.retrieve(id);
-		System.out.println(content);
-	}
+        ContentStore cs = new ContentStoreDirZip(csDir);
+        String content = cs.retrieve(id);
+        System.out.println(content);
+    }
 }

@@ -24,40 +24,41 @@ import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
  * A TextPattern matching a word.
  */
 public class TextPatternTerm extends TextPattern {
-	protected String value;
+    protected String value;
 
-	public String getValue() {
-		return value;
-	}
+    public String getValue() {
+        return value;
+    }
 
-	public TextPatternTerm(String value) {
-		this.value = value;
-	}
+    public TextPatternTerm(String value) {
+        this.value = value;
+    }
 
-	public Term getTerm(String fieldName) {
-		return new Term(fieldName, value);
-	}
+    public Term getTerm(String fieldName) {
+        return new Term(fieldName, value);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		return new BLSpanTermQuery(new Term(context.luceneField(), context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value))));
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        return new BLSpanTermQuery(new Term(context.luceneField(),
+                context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value))));
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternTerm) {
-			return value.equals(((TextPatternTerm) obj).value);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternTerm) {
+            return value.equals(((TextPatternTerm) obj).value);
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return value.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
 
-	@Override
-	public String toString() {
-		return "TERM(" + value + ")";
-	}
+    @Override
+    public String toString() {
+        return "TERM(" + value + ")";
+    }
 }

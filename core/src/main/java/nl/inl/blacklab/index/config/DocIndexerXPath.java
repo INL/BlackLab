@@ -43,10 +43,7 @@ import nl.inl.util.XmlUtil;
 public class DocIndexerXPath extends DocIndexerConfig {
 
     private static enum FragmentPosition {
-        BEFORE_OPEN_TAG,
-        AFTER_OPEN_TAG,
-        BEFORE_CLOSE_TAG,
-        AFTER_CLOSE_TAG
+        BEFORE_OPEN_TAG, AFTER_OPEN_TAG, BEFORE_CLOSE_TAG, AFTER_CLOSE_TAG
     }
 
     /** Our input document */
@@ -95,7 +92,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     public void setDocument(byte[] contents, Charset defaultCharset) {
         if (config.shouldResolveNamedEntityReferences()) {
             // Document contains old DTD-style named entity declarations. Resolve them because VTD-XML can't deal with these.
-            String doc = XmlUtil.readXmlAndResolveReferences(new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents), defaultCharset)));
+            String doc = XmlUtil.readXmlAndResolveReferences(
+                    new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents), defaultCharset)));
             contents = doc.getBytes(defaultCharset);
         }
         this.inputDocument = contents;
@@ -119,7 +117,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     @Override
     public void setDocument(Reader reader) {
         try {
-            setDocument(IOUtils.toString(reader).getBytes(Indexer.DEFAULT_INPUT_ENCODING), Indexer.DEFAULT_INPUT_ENCODING);
+            setDocument(IOUtils.toString(reader).getBytes(Indexer.DEFAULT_INPUT_ENCODING),
+                    Indexer.DEFAULT_INPUT_ENCODING);
             reader.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -129,12 +128,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /** Map from XPath expression to compiled XPath. */
     private Map<String, AutoPilot> compiledXPaths = new HashMap<>();
 
-    /** AutoPilots that are currently being used. We need to keep track of this
-        to be able to re-add them to compiledXpath with the correct XPath expression later. */
+    /**
+     * AutoPilots that are currently being used. We need to keep track of this to be
+     * able to re-add them to compiledXpath with the correct XPath expression later.
+     */
     private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
      * Create AutoPilot and declare namespaces on it.
+     * 
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
      * @throws XPathParseException
@@ -145,7 +147,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             ap = new AutoPilot(nav);
             if (config.isNamespaceAware()) {
                 ap.declareXPathNameSpace("xml", "http://www.w3.org/XML/1998/namespace"); // builtin
-                for (Entry<String, String> e: config.getNamespaces().entrySet()) {
+                for (Entry<String, String> e : config.getNamespaces().entrySet()) {
                     ap.declareXPathNameSpace(e.getKey(), e.getValue());
                 }
             }
@@ -184,7 +186,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // Find all documents
         AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
-        while(documents.evalXPath() != -1) {
+        while (documents.evalXPath() != -1) {
             indexDocument();
         }
         releaseAutoPilot(documents);
@@ -201,17 +203,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
         startDocument();
 
         // For each configured annotated field...
-        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
-        	processAnnotatedField(annotatedField);
+        for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
+            processAnnotatedField(annotatedField);
         }
 
         // For each configured metadata block..
-        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+        for (ConfigMetadataBlock b : config.getMetadataBlocks()) {
             processMetadataBlock(b);
         }
 
         // For each linked document...
-        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+        for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
             processLinkedDocument(ld);
         }
 
@@ -230,7 +232,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         AutoPilot words = acquireAutoPilot(annotatedField.getWordsPath());
         AutoPilot apEvalToString = acquireAutoPilot(".");
         List<AutoPilot> apsInlineTag = new ArrayList<>();
-        for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
+        for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
             AutoPilot apInlineTag = acquireAutoPilot(inlineTag.getPath());
             apsInlineTag.add(apInlineTag);
         }
@@ -255,7 +257,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // For end tags, we will update the payload of the start tag when we encounter it,
             // just like we do in our SAX parsers.
             List<InlineObject> tagsAndPunct = new ArrayList<>();
-            for (AutoPilot apInlineTag: apsInlineTag) {
+            for (AutoPilot apInlineTag : apsInlineTag) {
                 navpush();
                 apInlineTag.resetXPath();
                 while (apInlineTag.evalXPath() != -1) {
@@ -268,8 +270,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // We have punctuation occurring between word tags (as opposed to
                 // punctuation that is tagged as a word itself). Collect this punctuation.
                 setAddDefaultPunctuation(false);
-            	navpush();
-            	apPunct.resetXPath();
+                navpush();
+                apPunct.resetXPath();
                 while (apPunct.evalXPath() != -1) {
                     apEvalToString.resetXPath();
                     String punct = apEvalToString.evalXPathToString();
@@ -290,14 +292,14 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // so record their positions, sort the list, then restore the position and carry on
             List<Pair<Integer, BookMark>> wordPositions = new ArrayList<>();
             while (words.evalXPath() != -1) {
-            	BookMark b = new BookMark(nav);
-            	b.setCursorPosition();
-            	wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
+                BookMark b = new BookMark(nav);
+                b.setCursorPosition();
+                wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
             }
             wordPositions.sort((a, b) -> a.getKey().compareTo(b.getKey()));
 
-            for(Pair<Integer, BookMark> wordPosition : wordPositions) {
-            	wordPosition.getValue().setCursorPosition();
+            for (Pair<Integer, BookMark> wordPosition : wordPositions) {
+                wordPosition.getValue().setCursorPosition();
 
                 // Capture tokenPositionId for this token position?
                 if (apTokenPositionId != null) {
@@ -308,13 +310,14 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // Does an inline object occur before this word?
                 long wordFragment = nav.getContentFragment();
-                int wordOffset = (int)wordFragment;
+                int wordOffset = (int) wordFragment;
                 while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
                     // Yes. Handle it.
-                	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
-                		punctuation(nextInlineObject.getText());
-                	else
-                		inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObjectType.OPEN_TAG, nextInlineObject.getAttributes());
+                    if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                        punctuation(nextInlineObject.getText());
+                    else
+                        inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObjectType.OPEN_TAG,
+                                nextInlineObject.getAttributes());
                     nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
                 }
 
@@ -322,7 +325,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 beginWord();
 
                 // For each configured annotation...
-                for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+                for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
                     processAnnotation(annotation, null);
                 }
 
@@ -333,10 +336,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             // Handle any inline objects after the last word
             while (nextInlineObject != null) {
-            	if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
-            		punctuation(nextInlineObject.getText());
-            	else
-            		inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObjectType.OPEN_TAG, nextInlineObject.getAttributes());
+                if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                    punctuation(nextInlineObject.getText());
+                else
+                    inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObjectType.OPEN_TAG,
+                            nextInlineObject.getAttributes());
                 nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
             }
 
@@ -344,7 +348,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         navpop();
 
         // For each configured standoff annotation...
-        for (ConfigStandoffAnnotations standoff: annotatedField.getStandoffAnnotations()) {
+        for (ConfigStandoffAnnotations standoff : annotatedField.getStandoffAnnotations()) {
             // For each instance of this standoff annotation..
             navpush();
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
@@ -366,7 +370,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 navpop();
 
-                for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                for (ConfigAnnotation annotation : standoff.getAnnotations().values()) {
                     processAnnotation(annotation, tokenPositions);
                 }
             }
@@ -377,9 +381,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         releaseAutoPilot(words);
         releaseAutoPilot(apEvalToString);
-        for (AutoPilot ap: apsInlineTag) {
+        for (AutoPilot ap : apsInlineTag) {
             releaseAutoPilot(ap);
-    }
+        }
         if (apPunct != null)
             releaseAutoPilot(apPunct);
         if (apTokenPositionId != null)
@@ -398,14 +402,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
         fragPos = fragPosStack.remove(fragPosStack.size() - 1);
     }
 
-    protected void processMetadataBlock(ConfigMetadataBlock b) throws XPathParseException, XPathEvalException, NavException {
+    protected void processMetadataBlock(ConfigMetadataBlock b)
+            throws XPathParseException, XPathEvalException, NavException {
         // For each instance of this metadata block...
         navpush();
         AutoPilot apMetadataBlock = acquireAutoPilot(b.getContainerPath());
         while (apMetadataBlock.evalXPath() != -1) {
 
             // For each configured metadata field...
-            for (ConfigMetadataField f: b.getFields()) {
+            for (ConfigMetadataField f : b.getFields()) {
 
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
@@ -455,7 +460,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     protected void processLinkedDocument(ConfigLinkedDocument ld) throws XPathParseException {
         // Resolve linkPaths to get the information needed to fetch the document
         List<String> results = new ArrayList<>();
-        for (ConfigLinkValue linkValue: ld.getLinkValues()) {
+        for (ConfigLinkValue linkValue : ld.getLinkValues()) {
             String result = "";
             String valuePath = linkValue.getValuePath();
             String valueField = linkValue.getValueField();
@@ -464,11 +469,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 AutoPilot apLinkPath = acquireAutoPilot(valuePath);
                 result = apLinkPath.evalXPathToString();
                 if (result == null || result.isEmpty()) {
-                    switch(ld.getIfLinkPathMissing()) {
+                    switch (ld.getIfLinkPathMissing()) {
                     case IGNORE:
                         break;
                     case WARN:
-                        indexer.getListener().warning("Link path " + valuePath + " not found in document " + documentName);
+                        indexer.getListener()
+                                .warning("Link path " + valuePath + " not found in document " + documentName);
                         break;
                     case FAIL:
                         throw new RuntimeException("Link path " + valuePath + " not found in document " + documentName);
@@ -490,7 +496,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         try {
             // Fetch and index the linked document
-            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(), ld.shouldStore() ? ld.getName() : null);
+            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
+                    ld.shouldStore() ? ld.getName() : null);
         } catch (Exception e) {
             String moreInfo = "(inputFile = " + inputFile;
             if (pathInsideArchive != null)
@@ -498,10 +505,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
             if (documentPath != null)
                 moreInfo += ", documentPath = " + documentPath;
             moreInfo += ")";
-            switch(ld.getIfLinkPathMissing()) {
+            switch (ld.getIfLinkPathMissing()) {
             case IGNORE:
             case WARN:
-                indexer.getListener().warning("Could not find or parse linked document for " + documentName + moreInfo + ": " + e.getMessage());
+                indexer.getListener().warning("Could not find or parse linked document for " + documentName + moreInfo
+                        + ": " + e.getMessage());
                 break;
             case FAIL:
                 throw new RuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
@@ -513,7 +521,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Process an annotation at the current position.
      *
      * @param annotation annotation to process
-     * @param indexAtPositions if null: index at the current position; otherwise, index at all these positions
+     * @param indexAtPositions if null: index at the current position; otherwise,
+     *            index at all these positions
      * @throws VTDException on XPath error
      */
     protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions) throws VTDException {
@@ -530,7 +539,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // See if we want to capture any values and substitute them into the XPath
         int i = 1;
-        for (String captureValuePath: annotation.getCaptureValuePaths()) {
+        for (String captureValuePath : annotation.getCaptureValuePaths()) {
             AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
             String value = apCaptureValuePath.evalXPathToString();
             releaseAutoPilot(apCaptureValuePath);
@@ -542,7 +551,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         findAnnotationMatches(annotation, null, valuePath, indexAtPositions);
 
         // For each configured subannotation...
-        for (ConfigAnnotation subAnnot: annotation.getSubAnnotations()) {
+        for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
             // Subannotation configs without a valuePath are just for
             // adding information about subannotations captured in forEach's,
             // such as extra processing steps
@@ -587,7 +596,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
-    protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath, List<Integer> indexAtPositions)
+    protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath,
+            List<Integer> indexAtPositions)
             throws XPathParseException, XPathEvalException, NavException {
         AutoPilot apValuePath = acquireAutoPilot(valuePath);
         if (annotation.isMultipleValues()) {
@@ -640,9 +650,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
             if (documentXPath != null) {
                 // Find our specific document
                 AutoPilot documents = acquireAutoPilot(documentXPath);
-                while(documents.evalXPath() != -1) {
+                while (documents.evalXPath() != -1) {
                     if (docDone)
-                        throw new RuntimeException("Document link " + documentXPath + " matched multiple documents in " + documentName);
+                        throw new RuntimeException(
+                                "Document link " + documentXPath + " matched multiple documents in " + documentName);
                     indexDocument();
                     docDone = true;
                 }
@@ -650,9 +661,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
             } else {
                 // Process whole file; must be 1 document
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
-                while(documents.evalXPath() != -1) {
+                while (documents.evalXPath() != -1) {
                     if (docDone)
-                        throw new RuntimeException("Linked file contains multiple documents (and no document path given) in " + documentName);
+                        throw new RuntimeException(
+                                "Linked file contains multiple documents (and no document path given) in "
+                                        + documentName);
                     indexDocument();
                     docDone = true;
                 }
@@ -669,37 +682,38 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @param inlineObject list to add the new open/close tag objects to
      * @throws NavException
      */
-	private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
-		// Get the element and content fragments
-		// (element fragment = from start of start tag to end of end tag;
-		//  content fragment = from end of start tag to start of end tag)
+    private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
+        // Get the element and content fragments
+        // (element fragment = from start of start tag to end of end tag;
+        //  content fragment = from end of start tag to start of end tag)
         long elementFragment = nav.getElementFragment();
-        int startTagOffset = (int)elementFragment;
+        int startTagOffset = (int) elementFragment;
         int endTagOffset;
-		long contentFragment = nav.getContentFragment();
-		if (contentFragment == -1) {
-		    // Empty (self-closing) element.
-		    endTagOffset = startTagOffset;
-		} else {
-		    // Regular element with separate open and close tags.
-    		int contentOffset = (int)contentFragment;
-    		int contentLength = (int)(contentFragment >> 32);
-    		int contentEnd = contentOffset + contentLength;
-    		endTagOffset = contentEnd;
-		}
+        long contentFragment = nav.getContentFragment();
+        if (contentFragment == -1) {
+            // Empty (self-closing) element.
+            endTagOffset = startTagOffset;
+        } else {
+            // Regular element with separate open and close tags.
+            int contentOffset = (int) contentFragment;
+            int contentLength = (int) (contentFragment >> 32);
+            int contentEnd = contentOffset + contentLength;
+            endTagOffset = contentEnd;
+        }
 
-		// Find element name
-		int currentIndex = nav.getCurrentIndex();
-		String elementName = dedupe(nav.toString(currentIndex));
+        // Find element name
+        int currentIndex = nav.getCurrentIndex();
+        String elementName = dedupe(nav.toString(currentIndex));
 
-		// Add the inline tags to the list
-		InlineObject openTag = new InlineObject(elementName, startTagOffset, InlineObjectType.OPEN_TAG, getAttributes());
-		InlineObject closeTag = new InlineObject(elementName, endTagOffset, InlineObjectType.CLOSE_TAG, null);
-		openTag.setMatchingTag(closeTag);
-		closeTag.setMatchingTag(openTag);
-		inlineObject.add(openTag);
-		inlineObject.add(closeTag);
-	}
+        // Add the inline tags to the list
+        InlineObject openTag = new InlineObject(elementName, startTagOffset, InlineObjectType.OPEN_TAG,
+                getAttributes());
+        InlineObject closeTag = new InlineObject(elementName, endTagOffset, InlineObjectType.CLOSE_TAG, null);
+        openTag.setMatchingTag(closeTag);
+        closeTag.setMatchingTag(openTag);
+        inlineObject.add(openTag);
+        inlineObject.add(closeTag);
+    }
 
     /**
      * Add InlineObject for a punctuation text node.
@@ -708,39 +722,39 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @param text
      * @throws NavException
      */
-	private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
-		int i = nav.getCurrentIndex();
-		int offset = nav.getTokenOffset(i);
+    private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
+        int i = nav.getCurrentIndex();
+        int offset = nav.getTokenOffset(i);
 //		int length = nav.getTokenLength(i);
 
-		// Make sure we only keep 1 copy of identical punct texts in memory
-		text = dedupe(StringUtil.normalizeWhitespace(text));
+        // Make sure we only keep 1 copy of identical punct texts in memory
+        text = dedupe(StringUtil.normalizeWhitespace(text));
 
-		// Add the punct to the list
-		inlineObjects.add(new InlineObject(text, offset, InlineObjectType.PUNCTUATION, null));
-	}
+        // Add the punct to the list
+        inlineObjects.add(new InlineObject(text, offset, InlineObjectType.PUNCTUATION, null));
+    }
 
-	/**
+    /**
      * Gets attribute map for current element
      */
     private Map<String, String> getAttributes() {
-		navpush();
-		AutoPilot apAttr = new AutoPilot(nav);
-		apAttr.selectAttr("*");
-		int i = -1;
-		Map<String, String> attr = new HashMap<>();
-		try {
-			while ((i = apAttr.iterateAttr()) != -1) {
-				String name = nav.toString(i);
-				String value = nav.toString(i + 1);
-				attr.put(name, value);
-			}
-		} catch (NavException e) {
-			throw new RuntimeException(e);
-		}
-		navpop();
-		return attr;
-	}
+        navpush();
+        AutoPilot apAttr = new AutoPilot(nav);
+        apAttr.selectAttr("*");
+        int i = -1;
+        Map<String, String> attr = new HashMap<>();
+        try {
+            while ((i = apAttr.iterateAttr()) != -1) {
+                String name = nav.toString(i);
+                String value = nav.toString(i + 1);
+                attr.put(name, value);
+            }
+        } catch (NavException e) {
+            throw new RuntimeException(e);
+        }
+        navpop();
+        return attr;
+    }
 
     @Override
     protected void startDocument() {
@@ -748,8 +762,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         try {
             long fragment = nav.getElementFragment();
-            documentByteOffset = (int)fragment;
-            documentLengthBytes = (int)(fragment >> 32);
+            documentByteOffset = (int) fragment;
+            documentLengthBytes = (int) (fragment >> 32);
         } catch (NavException e) {
             throw new RuntimeException(e);
         }
@@ -764,15 +778,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
-	protected int getCharacterPosition() {
-	    // VTD-XML provides no way of getting the current character position,
-	    // only the byte position.
-	    // In order to keep track of character position (which we need for Lucene's term vector),
-	    // we fetch the bytes processed since this method was last called, convert them to a String,
-	    // and use the string length to adjust the character position.
-	    // Note that this only works if this method is called for increasing byte positions,
-	    // which is true because we only use it for word tags.
-		try {
+    protected int getCharacterPosition() {
+        // VTD-XML provides no way of getting the current character position,
+        // only the byte position.
+        // In order to keep track of character position (which we need for Lucene's term vector),
+        // we fetch the bytes processed since this method was last called, convert them to a String,
+        // and use the string length to adjust the character position.
+        // Note that this only works if this method is called for increasing byte positions,
+        // which is true because we only use it for word tags.
+        try {
             int currentByteOffset = getCurrentByteOffset();
             if (currentByteOffset > lastCharPositionByteOffset) {
                 int length = currentByteOffset - lastCharPositionByteOffset;
@@ -784,22 +798,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
         } catch (NavException e) {
             throw new RuntimeException(e);
         }
-	}
+    }
 
     protected int getCurrentByteOffset() throws NavException {
         if (fragPos == FragmentPosition.BEFORE_OPEN_TAG || fragPos == FragmentPosition.AFTER_CLOSE_TAG) {
             long elFrag = nav.getElementFragment();
-            int  elOffset = (int)elFrag;
+            int elOffset = (int) elFrag;
             if (fragPos == FragmentPosition.AFTER_CLOSE_TAG) {
-                int  elLength = (int)(elFrag >> 32);
+                int elLength = (int) (elFrag >> 32);
                 return elOffset + elLength;
             }
             return elOffset;
         }
         long contFrag = nav.getContentFragment();
-        int  contOffset = (int)contFrag;
+        int contOffset = (int) contFrag;
         if (fragPos == FragmentPosition.BEFORE_CLOSE_TAG) {
-            int  contLength = (int)(contFrag >> 32);
+            int contLength = (int) (contFrag >> 32);
             return contOffset + contLength;
         }
         return contOffset;

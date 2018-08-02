@@ -12,11 +12,13 @@ import nl.inl.blacklab.search.Searcher.LuceneDocTask;
 import nl.inl.blacklab.search.indexstructure.IndexStructure;
 import nl.inl.util.LogUtil;
 
-/** Calculate total token count (for older BlackLab indices
- *  that don't store this in the metadata file). */
+/**
+ * Calculate total token count (for older BlackLab indices that don't store this
+ * in the metadata file).
+ */
 public class CountTokens {
 
-	private static final class CountTask implements LuceneDocTask {
+    private static final class CountTask implements LuceneDocTask {
         private final String tokenLengthField;
         int totalDocs;
         int docsDone = 0;
@@ -29,59 +31,60 @@ public class CountTokens {
 
         @Override
         public void perform(Document doc) {
-        	totalTokens += Long.parseLong(doc.get(tokenLengthField));
-        	docsDone++;
-        	if (docsDone % 100 == 0) {
-        		int perc = docsDone * 100 / totalDocs;
-        		System.out.println(docsDone + " docs exported (" + perc + "%)...");
-        	}
+            totalTokens += Long.parseLong(doc.get(tokenLengthField));
+            docsDone++;
+            if (docsDone % 100 == 0) {
+                int perc = docsDone * 100 / totalDocs;
+                System.out.println(docsDone + " docs exported (" + perc + "%)...");
+            }
         }
     }
 
     public static void main(String[] args) throws IOException {
-		LogUtil.setupBasicLoggingConfig(Level.DEBUG);
+        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
-		if (args.length != 1) {
-			System.out.println("Usage: CountTokens <indexDir>");
-			System.exit(1);
-		}
+        if (args.length != 1) {
+            System.out.println("Usage: CountTokens <indexDir>");
+            System.exit(1);
+        }
 
-		File indexDir = new File(args[0]);
-		if (!indexDir.isDirectory() || !indexDir.canRead()) {
-			System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
-			System.exit(1);
-		}
-		if (!Searcher.isIndex(indexDir)) {
-			System.out.println("Not a BlackLab index: " + indexDir);
-			System.exit(1);
-		}
+        File indexDir = new File(args[0]);
+        if (!indexDir.isDirectory() || !indexDir.canRead()) {
+            System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
+            System.exit(1);
+        }
+        if (!Searcher.isIndex(indexDir)) {
+            System.out.println("Not a BlackLab index: " + indexDir);
+            System.exit(1);
+        }
 
-		CountTokens exportCorpus = new CountTokens(indexDir);
-		System.out.println("Calling export()...");
-		exportCorpus.count();
-	}
+        CountTokens exportCorpus = new CountTokens(indexDir);
+        System.out.println("Calling export()...");
+        exportCorpus.count();
+    }
 
-	Searcher searcher;
+    Searcher searcher;
 
-	public CountTokens(File indexDir) throws IOException {
-		System.out.println("Open index " + indexDir + "...");
-		searcher = Searcher.open(indexDir);
-		System.out.println("Done.");
-	}
+    public CountTokens(File indexDir) throws IOException {
+        System.out.println("Open index " + indexDir + "...");
+        searcher = Searcher.open(indexDir);
+        System.out.println("Done.");
+    }
 
-	/** Export the whole corpus.
-	 */
-	private void count() {
+    /**
+     * Export the whole corpus.
+     */
+    private void count() {
 
-		System.out.println("Getting IndexReader...");
-		final IndexReader reader = searcher.getIndexReader();
+        System.out.println("Getting IndexReader...");
+        final IndexReader reader = searcher.getIndexReader();
 
         IndexStructure struct = searcher.getIndexStructure();
         final String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
 
-		System.out.println("Calling forEachDocument()...");
-		CountTask task = new CountTask(reader, tokenLengthField);
+        System.out.println("Calling forEachDocument()...");
+        CountTask task = new CountTask(reader, tokenLengthField);
         searcher.forEachDocument(task);
         System.out.println("TOTAL TOKENS: " + task.totalTokens);
-	}
+    }
 }

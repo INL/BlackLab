@@ -26,33 +26,34 @@ import nl.inl.util.StringUtil;
 /**
  * Removes any accents from the input.
  *
- * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII characters too.
+ * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII
+ * characters too.
  *
- * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an approach such as
- * RemoveDutchAccentsFilter.
+ * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an
+ * approach such as RemoveDutchAccentsFilter.
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
 
-	private CharTermAttribute termAtt;
+    private CharTermAttribute termAtt;
 
-	/**
-	 * @param input the token stream from which to remove accents
-	 */
-	public RemoveAllAccentsFilter(TokenStream input) {
-		super(input);
-		termAtt = addAttribute(CharTermAttribute.class);
-	}
+    /**
+     * @param input the token stream from which to remove accents
+     */
+    public RemoveAllAccentsFilter(TokenStream input) {
+        super(input);
+        termAtt = addAttribute(CharTermAttribute.class);
+    }
 
-	@Override
-	final public boolean incrementToken() throws IOException {
-		if (input.incrementToken()) {
-			String t = new String(termAtt.buffer(), 0, termAtt.length());
-			t = StringUtil.stripAccents(t);
-			termAtt.copyBuffer(t.toCharArray(), 0, t.length());
-			return true;
-		}
-		return false;
-	}
+    @Override
+    final public boolean incrementToken() throws IOException {
+        if (input.incrementToken()) {
+            String t = new String(termAtt.buffer(), 0, termAtt.length());
+            t = StringUtil.stripAccents(t);
+            termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

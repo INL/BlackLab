@@ -36,49 +36,47 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 /**
  * A simple analyzer based on StandardTokenizer that isn't limited to Latin.
  *
- * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
+ * Has the option of analyzing case-/accent-sensitive or -insensitive, depending
+ * on the field name.
  */
 public class BLStandardAnalyzer extends Analyzer {
 
-	@Override
-	protected TokenStreamComponents createComponents(String fieldName) {
-		Tokenizer source = new StandardTokenizerFactory(Collections.<String,String>emptyMap()).create();
-		TokenStream filter = source;
-		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-		if (!caseSensitive)
-		{
-			filter = new LowerCaseFilter(filter);// lowercase all
-		}
-		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-		if (!diacSensitive)
-		{
-			filter = new RemoveAllAccentsFilter(filter); // remove accents
-		}
-		if (!(caseSensitive && diacSensitive))
-		{
-			// Is this necessary and does it do what we want?
-			// e.g. do we want "zon" to ever match "zo'n"? Or are there examples
-			//      where this is useful/required?
-			filter = new RemovePunctuationFilter(filter); // remove punctuation
-		}
-		return new TokenStreamComponents(source, filter);
-	}
+    @Override
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new StandardTokenizerFactory(Collections.<String, String>emptyMap()).create();
+        TokenStream filter = source;
+        boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+        if (!caseSensitive) {
+            filter = new LowerCaseFilter(filter);// lowercase all
+        }
+        boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+        if (!diacSensitive) {
+            filter = new RemoveAllAccentsFilter(filter); // remove accents
+        }
+        if (!(caseSensitive && diacSensitive)) {
+            // Is this necessary and does it do what we want?
+            // e.g. do we want "zon" to ever match "zo'n"? Or are there examples
+            //      where this is useful/required?
+            filter = new RemovePunctuationFilter(filter); // remove punctuation
+        }
+        return new TokenStreamComponents(source, filter);
+    }
 
-	public static void main(String[] args) throws IOException {
-		String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";
+    public static void main(String[] args) throws IOException {
+        String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";
 
-		try (Analyzer a = new BLStandardAnalyzer()) {
-			TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
-			CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
-			while (ts.incrementToken()) {
-				System.out.println(new String(ta.buffer(), 0, ta.length()));
-			}
-			TokenStream ts2 = a.tokenStream(ComplexFieldUtil.propertyField("test", null, "s"),
-					new StringReader(TEST_STR));
-			ta = ts2.addAttribute(CharTermAttribute.class);
-			while (ts2.incrementToken()) {
-				System.out.println(new String(ta.buffer(), 0, ta.length()));
-			}
-		}
-	}
+        try (Analyzer a = new BLStandardAnalyzer()) {
+            TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
+            CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
+            while (ts.incrementToken()) {
+                System.out.println(new String(ta.buffer(), 0, ta.length()));
+            }
+            TokenStream ts2 = a.tokenStream(ComplexFieldUtil.propertyField("test", null, "s"),
+                    new StringReader(TEST_STR));
+            ta = ts2.addAttribute(CharTermAttribute.class);
+            while (ts2.incrementToken()) {
+                System.out.println(new String(ta.buffer(), 0, ta.length()));
+            }
+        }
+    }
 }

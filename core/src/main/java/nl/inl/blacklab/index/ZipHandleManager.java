@@ -13,9 +13,9 @@ import java.util.zip.ZipFile;
 /**
  * Manages opened zip files.
  *
- * Openings large zip files takes time, so it's more efficient to keep zip files open
- * for a while in case we'll access the same zip file again. Of course, we should
- * eventually close them to free up resources as well.
+ * Openings large zip files takes time, so it's more efficient to keep zip files
+ * open for a while in case we'll access the same zip file again. Of course, we
+ * should eventually close them to free up resources as well.
  */
 public class ZipHandleManager {
 
@@ -167,6 +167,5 @@ public class ZipHandleManager {
     public static void setMaxOpen(int maxOpenZipFiles) {
         ZipHandleManager.maxOpenZipFiles = maxOpenZipFiles;
     }
-
 
 }

@@ -65,36 +65,41 @@ public class Indexer {
     public static final Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
 
     /**
-     * FileProcessor FileHandler that creates a DocIndexer for every file and performs some reporting.
+     * FileProcessor FileHandler that creates a DocIndexer for every file and
+     * performs some reporting.
      */
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
 
         @Override
         public void file(String path, InputStream is, File file) throws Exception {
-            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream doesn't contain a a BOM
-            // This doesn't do any character parsing/decoding itself, it just detects and skips the BOM (if present) and exposes the correct character set for this stream (if present)
+            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream 
+            // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
+            // the BOM (if present) and exposes the correct character set for this stream (if present)
             // This way we can later use the charset to decode the input
-            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the default encoding to our DocIndexer
+            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the 
+            // default encoding to our DocIndexer
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
             // and for text docIndexers, passing a binary file is an error in itself already.
             try (
-                UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
-                DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path, inputStream, inputStream.getEncoding());
-            ) {
+                    UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
+                    DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path,
+                            inputStream, inputStream.getEncoding());) {
                 impl(docIndexer, path);
             }
         }
 
         public void file(String path, Reader reader) throws Exception {
-            try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path, reader)) {
+            try (DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path,
+                    reader)) {
                 impl(docIndexer, path);
             }
         }
 
         private void impl(DocIndexer indexer, String documentName) throws Exception {
             // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
-            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the meantime
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
+            // meantime
             getListener().fileStarted(documentName);
             int docsDoneBefore = searcher.getWriter().numDocs();
             long tokensDoneBefore = getListener().getTokensProcessed();
@@ -126,6 +131,7 @@ public class Indexer {
             // We have to process the whole file, we can't do random access.
             PathCapturingFileHandler fileCapturer = new PathCapturingFileHandler() {
                 byte[] file;
+
                 @Override
                 public void directory(File dir) throws Exception {
                     //
@@ -136,6 +142,7 @@ public class Indexer {
                     if (path.endsWith(pathInsideArchive))
                         this.file = IOUtils.toByteArray(is);
                 }
+
                 @Override
                 public byte[] getFile() {
                     return file;
@@ -188,17 +195,20 @@ public class Indexer {
     protected boolean createAndIndexStartReported = false;
 
     /**
-     * When we encounter a zip or tgz file, do we descend into it like it was a directory?
+     * When we encounter a zip or tgz file, do we descend into it like it was a
+     * directory?
      */
     boolean processArchivesAsDirectories = true;
 
     /**
-     * Recursively index files inside a directory? (or archive file, if processArchivesAsDirectories == true)
+     * Recursively index files inside a directory? (or archive file, if
+     * processArchivesAsDirectories == true)
      */
     protected boolean defaultRecurseSubdirs = true;
 
     /**
-     * Format of the documents we're going to be indexing, used to create the correct type of DocIndexer.
+     * Format of the documents we're going to be indexing, used to create the
+     * correct type of DocIndexer.
      */
     protected String formatIdentifier;
 
@@ -216,15 +226,19 @@ public class Indexer {
     /** Where to look for files linked from the input files */
     protected List<File> linkedFileDirs = new ArrayList<>();
 
-    /** If a file cannot be found in the linkedFileDirs, use this to retrieve it (if present) */
+    /**
+     * If a file cannot be found in the linkedFileDirs, use this to retrieve it (if
+     * present)
+     */
     protected Function<String, File> linkedFileResolver;
 
     /** Index using multiple threads? */
     protected boolean useThreads = false;
 
-    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was rollbacked on an empty index
-    // result of this is that the index can never be opened again (the forwardindex is missing files that the indexMetadata.yaml says must exist?)
-    // so record rollbacks and then don't write the updated indexStructure
+    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was 
+    // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex 
+    // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write 
+    // the updated indexStructure
     boolean hasRollback = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
@@ -232,20 +246,24 @@ public class Indexer {
     }
 
     /**
-     * When we encounter a zip or tgz file, do we descend into it like it was a directory?
+     * When we encounter a zip or tgz file, do we descend into it like it was a
+     * directory?
      *
      * Note that for accessing large ZIP files, you need Java 7 which supports the
-     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)" error.
+     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)"
+     * error.
      *
-     * @param b
-     *            if true, treats zipfiles like a directory and processes all the files inside
+     * @param b if true, treats zipfiles like a directory and processes all the
+     *            files inside
      */
     public void setProcessArchivesAsDirectories(boolean b) {
         processArchivesAsDirectories = b;
     }
 
     /**
-     * Should we recursively index files in subdirectories (and archives files, if that setting is on)?
+     * Should we recursively index files in subdirectories (and archives files, if
+     * that setting is on)?
+     * 
      * @param recurseSubdirs true if we should recurse into subdirs
      */
     public void setRecurseSubdirs(boolean recurseSubdirs) {
@@ -255,12 +273,12 @@ public class Indexer {
     /**
      * Construct Indexer
      *
-     * @param directory
-     *            the main BlackLab index directory
-     * @param create
-     *            if true, creates a new index; otherwise, appends to existing index
+     * @param directory the main BlackLab index directory
+     * @param create if true, creates a new index; otherwise, appends to existing
+     *            index
      * @throws IOException
-     * @throws DocumentFormatException if autodetection of the document format failed
+     * @throws DocumentFormatException if autodetection of the document format
+     *             failed
      */
     public Indexer(File directory, boolean create)
             throws IOException, DocumentFormatException {
@@ -271,16 +289,23 @@ public class Indexer {
      * Construct Indexer
      *
      * @param directory the main BlackLab index directory
-     * @param create
-     *            if true, creates a new index; otherwise, appends to existing index.
-     *            When creating a new index, a formatIdentifier or an indexTemplateFile containing a valid "documentFormat" value should also be supplied.
-     *            Otherwise adding new data to the index isn't possible, as we can't construct a DocIndexer to do the actual indexing without a valid formatIdentifier.
-     * @param formatIdentifier (optional) determines how this Indexer will index any new data added to it.
-     *            If omitted, when opening an existing index, the formatIdentifier in its metadata (as "documentFormat") is used instead.
-     *            When creating a new index, this format will be stored as the default for that index, unless another default is already set by the indexTemplateFile (as "documentFormat"), it will still be used by this Indexer however.
-     * @param indexTemplateFile JSON file to use as template for index structure / metadata
-     *   (if creating new index)
-     * @throws DocumentFormatException if no formatIdentifier was specified and autodetection failed
+     * @param create if true, creates a new index; otherwise, appends to existing
+     *            index. When creating a new index, a formatIdentifier or an
+     *            indexTemplateFile containing a valid "documentFormat" value should
+     *            also be supplied. Otherwise adding new data to the index isn't
+     *            possible, as we can't construct a DocIndexer to do the actual
+     *            indexing without a valid formatIdentifier.
+     * @param formatIdentifier (optional) determines how this Indexer will index any
+     *            new data added to it. If omitted, when opening an existing index,
+     *            the formatIdentifier in its metadata (as "documentFormat") is used
+     *            instead. When creating a new index, this format will be stored as
+     *            the default for that index, unless another default is already set
+     *            by the indexTemplateFile (as "documentFormat"), it will still be
+     *            used by this Indexer however.
+     * @param indexTemplateFile JSON file to use as template for index structure /
+     *            metadata (if creating new index)
+     * @throws DocumentFormatException if no formatIdentifier was specified and
+     *             autodetection failed
      * @throws IOException
      */
     public Indexer(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
@@ -288,14 +313,15 @@ public class Indexer {
         init(directory, create, formatIdentifier, indexTemplateFile);
     }
 
-    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile) throws IOException, DocumentFormatException {
+    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
+            throws IOException, DocumentFormatException {
 
         if (create) {
             if (indexTemplateFile != null) {
                 searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
 
-                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index has written it
-                // might be null
+                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
+                // has written it might be null
                 final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
@@ -311,7 +337,9 @@ public class Indexer {
                 } else {
                     // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
                     searcher.close();
-                    throw new DocumentFormatException("Input format config '" + formatIdentifier + "' not found (or format config contains an error) when creating new index in " + directory);
+                    throw new DocumentFormatException("Input format config '" + formatIdentifier
+                            + "' not found (or format config contains an error) when creating new index in "
+                            + directory);
                 }
             } else if (DocumentFormats.isSupported(formatIdentifier)) {
                 this.formatIdentifier = formatIdentifier;
@@ -338,7 +366,8 @@ public class Indexer {
                     searcher.getIndexStructure().writeMetadata();
                 }
             } else {
-                throw new DocumentFormatException("Input format config '" + formatIdentifier + "' not found (or format config contains an error) when creating new index in " + directory);
+                throw new DocumentFormatException("Input format config '" + formatIdentifier
+                        + "' not found (or format config contains an error) when creating new index in " + directory);
             }
         } else { // opening an existing index
 
@@ -351,8 +380,10 @@ public class Indexer {
                 this.formatIdentifier = defaultFormatIdentifier;
             else {
                 searcher.close();
-                String message = formatIdentifier == null ? "No formatIdentifier" : "Unknown formatIdentifier '" + formatIdentifier + "'";
-                throw new DocumentFormatException(message + ", and could not determine the default documentFormat for index " + directory);
+                String message = formatIdentifier == null ? "No formatIdentifier"
+                        : "Unknown formatIdentifier '" + formatIdentifier + "'";
+                throw new DocumentFormatException(
+                        message + ", and could not determine the default documentFormat for index " + directory);
             }
         }
 
@@ -378,13 +409,15 @@ public class Indexer {
 
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
         if (!DocumentFormats.isSupported(formatIdentifier))
-            throw new DocumentFormatException("Cannot set formatIdentifier '"+formatIdentifier+"' for index " + this.searcher.getIndexName() + "; unknown identifier");
+            throw new DocumentFormatException("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
+                    + this.searcher.getIndexName() + "; unknown identifier");
 
         this.formatIdentifier = formatIdentifier;
     }
 
     /**
      * Set the listener object that receives messages about indexing progress.
+     * 
      * @param listener the listener object to report to
      */
     public void setListener(IndexListener listener) {
@@ -393,10 +426,11 @@ public class Indexer {
     }
 
     /**
-     * Get our index listener, or create a console reporting listener if none was set yet.
+     * Get our index listener, or create a console reporting listener if none was
+     * set yet.
      *
-     * Also reports the creation of the Indexer and start of indexing, if it hadn't been reported
-     * already.
+     * Also reports the creation of the Indexer and start of indexing, if it hadn't
+     * been reported already.
      *
      * @return the listener
      */
@@ -414,6 +448,7 @@ public class Indexer {
 
     /**
      * Log an exception that occurred during indexing
+     * 
      * @param msg log message
      * @param e the exception
      */
@@ -422,8 +457,8 @@ public class Indexer {
     }
 
     /**
-     * Set number of documents after which we should stop.
-     * Useful when testing.
+     * Set number of documents after which we should stop. Useful when testing.
+     * 
      * @param n number of documents after which to stop
      */
     public void setMaxNumberOfDocsToIndex(int n) {
@@ -431,9 +466,9 @@ public class Indexer {
     }
 
     /**
-     * Call this to roll back any changes made to the index this session.
-     * Calling close() will automatically commit any changes. If you call this
-     * method, then call close(), no changes will be committed.
+     * Call this to roll back any changes made to the index this session. Calling
+     * close() will automatically commit any changes. If you call this method, then
+     * call close(), no changes will be committed.
      */
     public void rollback() {
         getListener().rollbackStart();
@@ -453,7 +488,7 @@ public class Indexer {
         getListener().indexEnd();
         getListener().closeStart();
 
-        if (!hasRollback){
+        if (!hasRollback) {
             searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
             searcher.getIndexStructure().writeMetadata();
         }
@@ -467,8 +502,7 @@ public class Indexer {
     /**
      * Add a Lucene document to the index
      *
-     * @param document
-     *            the document to add
+     * @param document the document to add
      * @throws CorruptIndexException
      * @throws IOException
      */
@@ -508,10 +542,8 @@ public class Indexer {
     /**
      * Index a document or archive from an InputStream.
      *
-     * @param documentName
-     *            name for the InputStream (e.g. name of the file)
-     * @param input
-     *            the stream
+     * @param documentName name for the InputStream (e.g. name of the file)
+     * @param input the stream
      */
     public void index(String documentName, InputStream input) {
         index(documentName, input, "*");
@@ -520,16 +552,15 @@ public class Indexer {
     /**
      * Index a document from a Reader.
      *
-     * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array directly,
-     * as this can in some cases be parsed more efficiently (e.g. using VTD-XML).
+     * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array
+     * directly, as this can in some cases be parsed more efficiently (e.g. using
+     * VTD-XML).
      *
      * Catches and reports any errors that occur.
      *
-     * @param documentName
-     *            some (preferably unique) name for this document (for example, the file
-     *            name or path)
-     * @param reader
-     *            where to index from
+     * @param documentName some (preferably unique) name for this document (for
+     *            example, the file name or path)
+     * @param reader where to index from
      * @throws Exception
      */
     public void index(String documentName, Reader reader) throws Exception {
@@ -545,18 +576,20 @@ public class Indexer {
             logger.error("Parsing " + documentName + " failed:");
             e.printStackTrace();
             logger.error("(continuing indexing)");
-	    }
+        }
     }
 
     /**
-     * Index a document (or archive if enabled by {@link #setProcessArchivesAsDirectories(boolean)}
+     * Index a document (or archive if enabled by
+     * {@link #setProcessArchivesAsDirectories(boolean)}
      *
      * @param fileName
      * @param input
      * @param fileNameGlob
      */
     public void index(String fileName, InputStream input, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
+        try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs,
+                this.processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener);
@@ -566,35 +599,36 @@ public class Indexer {
 
     /**
      * Index the file or directory specified.
-
-     * Indexes all files in a directory or archive (previously
-     * only indexed *.xml; specify a glob if you want this
-     * behaviour back, see {@link #index(File, String)}.
+     * 
+     * Indexes all files in a directory or archive (previously only indexed *.xml;
+     * specify a glob if you want this behaviour back, see
+     * {@link #index(File, String)}.
      *
      * Recurses into subdirs only if that setting is enabled.
      *
-     * @param file
-     *                 the input file or directory
+     * @param file the input file or directory
      */
     public void index(File file) {
         index(file, "*");
     }
 
     /**
-     * Index a document, archive (if enabled by {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally recursively if set by {@link #setRecurseSubdirs(boolean)}
+     * Index a document, archive (if enabled by
+     * {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally
+     * recursively if set by {@link #setRecurseSubdirs(boolean)}
      *
      * @param file
      * @param fileNameGlob only files
      */
     // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
     public void index(File file, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs, this.processArchivesAsDirectories)) {
+        try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs,
+                this.processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener);
             proc.processFile(file);
-        }
-        catch (FileNotFoundException e) {
+        } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
@@ -602,8 +636,8 @@ public class Indexer {
     /**
      * Should we continue indexing or stop?
      *
-     * We stop if we've reached the maximum that was set (if any),
-     * or if a fatal error has occurred (indicated by terminateIndexing).
+     * We stop if we've reached the maximum that was set (if any), or if a fatal
+     * error has occurred (indicated by terminateIndexing).
      *
      * @return true if we should continue, false if not
      */
@@ -644,6 +678,7 @@ public class Indexer {
 
     /**
      * Get our index directory
+     * 
      * @return the index directory
      */
     public File getIndexLocation() {
@@ -652,6 +687,7 @@ public class Indexer {
 
     /**
      * Set parameters we would like to be passed to the DocIndexer class
+     * 
      * @param indexerParam the parameters
      */
     public void setIndexerParam(Map<String, String> indexerParam) {
@@ -662,6 +698,7 @@ public class Indexer {
      * Get the parameters we would like to be passed to the DocIndexer class.
      *
      * Used by DocIndexer classes to get their parameters.
+     * 
      * @return the parameters
      */
     public Map<String, String> getIndexerParameters() {
@@ -675,7 +712,7 @@ public class Indexer {
      *
      * @return the IndexWriter
      */
-    protected IndexWriter getWriter(){
+    protected IndexWriter getWriter() {
         return searcher.getWriter();
     }
 
@@ -686,9 +723,9 @@ public class Indexer {
     /**
      * Set the directories to search for linked files.
      *
-     * DocIndexerXPath allows us to index a second file into the
-     * same Lucene document, which is useful for external metadata, etc.
-     * This determines how linked files are located.
+     * DocIndexerXPath allows us to index a second file into the same Lucene
+     * document, which is useful for external metadata, etc. This determines how
+     * linked files are located.
      *
      * @param linkedFileDirs directories to search
      */
@@ -700,9 +737,9 @@ public class Indexer {
     /**
      * Add a directory to search for linked files.
      *
-     * DocIndexerXPath allows us to index a second file into the
-     * same Lucene document, which is useful for external metadata, etc.
-     * This determines how linked files are located.
+     * DocIndexerXPath allows us to index a second file into the same Lucene
+     * document, which is useful for external metadata, etc. This determines how
+     * linked files are located.
      *
      * @param linkedFileDir directory to search
      */

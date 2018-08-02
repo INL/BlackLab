@@ -18,20 +18,20 @@ package nl.inl.blacklab.perdocument;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 
 public class DocGroupPropertyIdentity extends DocGroupProperty {
-	@Override
-	public HitPropValue get(DocGroup result) {
-		return result.getIdentity();
-	}
+    @Override
+    public HitPropValue get(DocGroup result) {
+        return result.getIdentity();
+    }
 
-	@Override
-	public int compare(DocGroup a, DocGroup b) {
-		if (reverse)
-			return b.getIdentity().compareTo(a.getIdentity());
-		return a.getIdentity().compareTo(b.getIdentity());
-	}
+    @Override
+    public int compare(DocGroup a, DocGroup b) {
+        if (reverse)
+            return b.getIdentity().compareTo(a.getIdentity());
+        return a.getIdentity().compareTo(b.getIdentity());
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "identity";
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "identity";
+    }
 }

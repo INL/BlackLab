@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class ConfigMetadataFieldGroup {
 
-	/** Group name (often displayed on tab or in list) */
+    /** Group name (often displayed on tab or in list) */
     private String name;
 
     /** Fields in this group */

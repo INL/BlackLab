@@ -28,67 +28,68 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 public class TextPatternWildcard extends TextPatternTerm {
 
-	public TextPatternWildcard(String value) {
-		super(value);
-	}
+    public TextPatternWildcard(String value) {
+        super(value);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		TextPattern result = rewrite();
-		if (result != this)
-			return result.translate(context);
-		try {
-			return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
-					context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
-		} catch (StackOverflowError e) {
-			// If we pass in a really large wildcard expression,
-			// stack overflow might occurs inside Lucene's automaton building
-			// code and we may end up here.
-			throw new RegexpTooLargeException();
-		}
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        TextPattern result = rewrite();
+        if (result != this)
+            return result.translate(context);
+        try {
+            return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
+                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+        } catch (StackOverflowError e) {
+            // If we pass in a really large wildcard expression,
+            // stack overflow might occurs inside Lucene's automaton building
+            // code and we may end up here.
+            throw new RegexpTooLargeException();
+        }
+    }
 
-	/**
-	 * Rewrite to the "best" TextPattern class for the given wildcard query. Tries to make a TextPatternTerm
-	 * or TextPatternPrefix because those tend to be faster than TextPatternWildcard in Lucene.
-	 *
-	 * @return the TextPattern
-	 */
-	public TextPattern rewrite() {
-		// Hey, maybe it doesn't even contain wildcards?
-		if (value.indexOf("*") < 0 && value.indexOf("?") < 0) {
-			// Woot!
-			return new TextPatternTerm(value);
-		}
+    /**
+     * Rewrite to the "best" TextPattern class for the given wildcard query. Tries
+     * to make a TextPatternTerm or TextPatternPrefix because those tend to be
+     * faster than TextPatternWildcard in Lucene.
+     *
+     * @return the TextPattern
+     */
+    public TextPattern rewrite() {
+        // Hey, maybe it doesn't even contain wildcards?
+        if (value.indexOf("*") < 0 && value.indexOf("?") < 0) {
+            // Woot!
+            return new TextPatternTerm(value);
+        }
 
-		// Replace multiple consecutive asterisks with a single one
-		String newValue = value.replaceAll("\\*+", "*");
+        // Replace multiple consecutive asterisks with a single one
+        String newValue = value.replaceAll("\\*+", "*");
 
-		// Is is "any word"?
-		if (newValue.equals("*"))
-			return new TextPatternAnyToken(1, 1);
+        // Is is "any word"?
+        if (newValue.equals("*"))
+            return new TextPatternAnyToken(1, 1);
 
-		// Is it a prefix query? ("bla*")
-		if (newValue.indexOf('*') == newValue.length() - 1 && newValue.indexOf('?') < 0) {
-			// Yes!
-			String prefix = newValue.substring(0, newValue.length() - 1);
-			return new TextPatternPrefix(prefix);
-		}
+        // Is it a prefix query? ("bla*")
+        if (newValue.indexOf('*') == newValue.length() - 1 && newValue.indexOf('?') < 0) {
+            // Yes!
+            String prefix = newValue.substring(0, newValue.length() - 1);
+            return new TextPatternPrefix(prefix);
+        }
 
-		if (!newValue.equals(value))
-			return new TextPatternWildcard(newValue);
+        if (!newValue.equals(value))
+            return new TextPatternWildcard(newValue);
 
-		// Can't simplify, just return ourselves
-		return this;
-	}
+        // Can't simplify, just return ourselves
+        return this;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternWildcard) {
-			return super.equals(obj);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternWildcard) {
+            return super.equals(obj);
+        }
+        return false;
+    }
 
     // appease PMD
     @Override
@@ -96,8 +97,8 @@ public class TextPatternWildcard extends TextPatternTerm {
         return super.hashCode();
     }
 
-	@Override
-	public String toString() {
-		return "WILDCARD(" + value + ")";
-	}
+    @Override
+    public String toString() {
+        return "WILDCARD(" + value + ")";
+    }
 }

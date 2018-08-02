@@ -34,18 +34,22 @@ import nl.inl.util.StringUtil;
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
 public class InputFormatReader extends YamlJsonReader {
-    public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {}
+    public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
+    }
 
     /**
      *
      * @param r
      * @param isJson
      * @param cfg
-     * @param finder responsible for getting (optionally locating/loading) other configs that this config depends on. (for config keys "baseFormat" and "inputFormat")
+     * @param finder responsible for getting (optionally locating/loading) other
+     *            configs that this config depends on. (for config keys "baseFormat"
+     *            and "inputFormat")
      * @throws IOException
      * @throws InputFormatConfigException if the file is not a valid config
      */
-    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
+    public static void read(Reader r, boolean isJson, ConfigInputFormat cfg,
+            Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
         JsonNode root;
@@ -61,53 +65,94 @@ public class InputFormatReader extends YamlJsonReader {
      *
      * @param file
      * @param cfg
-     * @param finder responsible for getting (optionally locating/loading) other configs that this config depends on. ("baseFormat" and "inputFormat")
+     * @param finder responsible for getting (optionally locating/loading) other
+     *            configs that this config depends on. ("baseFormat" and
+     *            "inputFormat")
      * @throws IOException
      * @throws InputFormatConfigException if the file is not a valid config
      */
-    public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
+    public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder)
+            throws IOException {
         read(FileUtil.openForReading(file), file.getName().endsWith(".json"), cfg, finder);
         cfg.setReadFromFile(file);
     }
 
-    protected static void read(JsonNode root, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder) {
+    protected static void read(JsonNode root, ConfigInputFormat cfg,
+            Function<String, Optional<ConfigInputFormat>> finder) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "displayName": cfg.setDisplayName(str(e)); break;
-            case "description": cfg.setDescription(str(e)); break;
-            case "helpUrl": cfg.setHelpUrl(str(e)); break;
+            case "displayName":
+                cfg.setDisplayName(str(e));
+                break;
+            case "description":
+                cfg.setDescription(str(e));
+                break;
+            case "helpUrl":
+                cfg.setHelpUrl(str(e));
+                break;
             case "baseFormat": {
                 String formatIdentifier = str(e);
                 if (finder == null)
-                    throw new InputFormatConfigException("Format depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
+                    throw new InputFormatConfigException(
+                            "Format depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
 
                 ConfigInputFormat baseFormat = finder
                         .apply(formatIdentifier)
-                        .orElseThrow(() ->
-                            new InputFormatConfigException("Base format " + formatIdentifier + " not found for format " + cfg.getName()));
+                        .orElseThrow(() -> new InputFormatConfigException(
+                                "Base format " + formatIdentifier + " not found for format " + cfg.getName()));
 
                 cfg.setBaseFormat(baseFormat);
                 break;
             }
-            case "type": cfg.setType(str(e)); break;
-            case "fileType": cfg.setFileType(FileType.fromStringValue(str(e))); break;
-            case "fileTypeOptions": readFileTypeOptions(e, cfg); break;
+            case "type":
+                cfg.setType(str(e));
+                break;
+            case "fileType":
+                cfg.setFileType(FileType.fromStringValue(str(e)));
+                break;
+            case "fileTypeOptions":
+                readFileTypeOptions(e, cfg);
+                break;
 //            case "tabularOptions": cfg.setTabularOptions(readTabularOptions(e)); break;
-            case "corpusConfig": readCorpusConfig(e, cfg.getCorpusConfig()); break;
-            case "namespaces": readStringMap(e, cfg.namespaces); break;
-            case "documentPath": cfg.setDocumentPath(str(e)); break;
-            case "store": cfg.setStore(bool(e)); break;
-            case "indexFieldAs": readStringMap(e, cfg.indexFieldAs); break;
-            case "annotatedFields": readAnnotatedFields(e, cfg); break;
-            case "metadataDefaultAnalyzer": cfg.setMetadataDefaultAnalyzer(str(e)); break;
-            case "metadata": readMetadata(e, cfg); break;
-            case "linkedDocuments": readLinkedDocuments(e, cfg); break;
-            case "convertPlugin": cfg.setConvertPluginId(str(e)); break;
-            case "tagPlugin": cfg.setTagPluginId(str(e)); break;
-            case "isVisible": cfg.setVisible(bool(e)); break;
+            case "corpusConfig":
+                readCorpusConfig(e, cfg.getCorpusConfig());
+                break;
+            case "namespaces":
+                readStringMap(e, cfg.namespaces);
+                break;
+            case "documentPath":
+                cfg.setDocumentPath(str(e));
+                break;
+            case "store":
+                cfg.setStore(bool(e));
+                break;
+            case "indexFieldAs":
+                readStringMap(e, cfg.indexFieldAs);
+                break;
+            case "annotatedFields":
+                readAnnotatedFields(e, cfg);
+                break;
+            case "metadataDefaultAnalyzer":
+                cfg.setMetadataDefaultAnalyzer(str(e));
+                break;
+            case "metadata":
+                readMetadata(e, cfg);
+                break;
+            case "linkedDocuments":
+                readLinkedDocuments(e, cfg);
+                break;
+            case "convertPlugin":
+                cfg.setConvertPluginId(str(e));
+                break;
+            case "tagPlugin":
+                cfg.setTagPluginId(str(e));
+                break;
+            case "isVisible":
+                cfg.setVisible(bool(e));
+                break;
             default:
                 throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
             }
@@ -119,13 +164,25 @@ public class InputFormatReader extends YamlJsonReader {
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            switch(e.getKey()) {
-            case "displayName": corpusConfig.setDisplayName(str(e)); break;
-            case "description": corpusConfig.setDescription(str(e)); break;
-            case "contentViewable": corpusConfig.setContentViewable(bool(e)); break;
-            case "textDirection": corpusConfig.setTextDirection(TextDirection.fromCode(str(e))); break;
-            case "specialFields": readStringMap(e, corpusConfig.specialFields); break;
-            case "metadataFieldGroups": readMetadataFieldGroups(e, corpusConfig); break;
+            switch (e.getKey()) {
+            case "displayName":
+                corpusConfig.setDisplayName(str(e));
+                break;
+            case "description":
+                corpusConfig.setDescription(str(e));
+                break;
+            case "contentViewable":
+                corpusConfig.setContentViewable(bool(e));
+                break;
+            case "textDirection":
+                corpusConfig.setTextDirection(TextDirection.fromCode(str(e)));
+                break;
+            case "specialFields":
+                readStringMap(e, corpusConfig.specialFields);
+                break;
+            case "metadataFieldGroups":
+                readMetadataFieldGroups(e, corpusConfig);
+                break;
             default:
                 throw new InputFormatConfigException("Unknown key " + e.getKey() + " in corpusConfig");
             }
@@ -167,7 +224,9 @@ public class InputFormatReader extends YamlJsonReader {
             while (itGroup.hasNext()) {
                 Entry<String, JsonNode> e = itGroup.next();
                 switch (e.getKey()) {
-                case "name": g.setName(str(e)); break;
+                case "name":
+                    g.setName(str(e));
+                    break;
                 case "fields":
                     readStringList(e, fields);
                     g.addFields(fields);
@@ -176,7 +235,8 @@ public class InputFormatReader extends YamlJsonReader {
                     g.setAddRemainingFields(bool(e));
                     break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata field group " + g.getName());
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
                 }
             }
             cfg.addMetadataFieldGroup(g);
@@ -193,17 +253,36 @@ public class InputFormatReader extends YamlJsonReader {
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
-                case "displayName": af.setDisplayName(str(e)); break;
-                case "description": af.setDescription(str(e)); break;
-                case "containerPath": af.setContainerPath(str(e)); break;
-                case "wordPath": af.setWordPath(str(e)); break;
-                case "tokenPositionIdPath": af.setTokenPositionIdPath(str(e)); break;
-                case "punctPath": af.setPunctPath(str(e)); break;
-                case "annotations": readAnnotations(e, af); break;
-                case "standoffAnnotations": readStandoffAnnotations(e, af); break;
-                case "inlineTags": readInlineTags(e, af); break;
+                case "displayName":
+                    af.setDisplayName(str(e));
+                    break;
+                case "description":
+                    af.setDescription(str(e));
+                    break;
+                case "containerPath":
+                    af.setContainerPath(str(e));
+                    break;
+                case "wordPath":
+                    af.setWordPath(str(e));
+                    break;
+                case "tokenPositionIdPath":
+                    af.setTokenPositionIdPath(str(e));
+                    break;
+                case "punctPath":
+                    af.setPunctPath(str(e));
+                    break;
+                case "annotations":
+                    readAnnotations(e, af);
+                    break;
+                case "standoffAnnotations":
+                    readStandoffAnnotations(e, af);
+                    break;
+                case "inlineTags":
+                    readInlineTags(e, af);
+                    break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotated field " + fieldName);
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in annotated field " + fieldName);
                 }
             }
         }
@@ -229,9 +308,15 @@ public class InputFormatReader extends YamlJsonReader {
         while (itAnnotation.hasNext()) {
             Entry<String, JsonNode> e = itAnnotation.next();
             switch (e.getKey()) {
-            case "name": annot.setName(str(e)); break;
-            case "value": annot.setValuePath(fixedStringToXpath(str(e))); break;
-            case "valuePath": annot.setValuePath(str(e)); break;
+            case "name":
+                annot.setName(str(e));
+                break;
+            case "value":
+                annot.setValuePath(fixedStringToXpath(str(e)));
+                break;
+            case "valuePath":
+                annot.setValuePath(str(e));
+                break;
             case "captureValuePaths":
                 ArrayNode paths = (ArrayNode) e.getValue();
                 paths.iterator().forEachRemaining((t) -> {
@@ -241,28 +326,47 @@ public class InputFormatReader extends YamlJsonReader {
             case "forEachPath":
                 if (!isSubAnnotation)
                     throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
-                annot.setForEachPath(str(e)); break;
+                annot.setForEachPath(str(e));
+                break;
             case "namePath":
                 if (!isSubAnnotation)
                     throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
-                annot.setName(str(e)); break;
-            case "process": annot.setProcess(readProcess(e)); break;
-            case "displayName": annot.setDisplayName(str(e)); break;
-            case "description": annot.setDescription(str(e)); break;
-            case "basePath": annot.setBasePath(str(e)); break;
+                annot.setName(str(e));
+                break;
+            case "process":
+                annot.setProcess(readProcess(e));
+                break;
+            case "displayName":
+                annot.setDisplayName(str(e));
+                break;
+            case "description":
+                annot.setDescription(str(e));
+                break;
+            case "basePath":
+                annot.setBasePath(str(e));
+                break;
             case "sensitivity":
                 if (isSubAnnotation)
                     throw new InputFormatConfigException("Subannotations may not have their own sensitivity settings");
-                annot.setSensitivity(SensitivitySetting.fromStringValue(str(e))); break;
-            case "uiType": annot.setUiType(str(e)); break;
+                annot.setSensitivity(SensitivitySetting.fromStringValue(str(e)));
+                break;
+            case "uiType":
+                annot.setUiType(str(e));
+                break;
             case "subAnnotations":
                 if (isSubAnnotation)
                     throw new InputFormatConfigException("Subannotations may not have their own subannotations");
-                readSubAnnotations(e, annot); break;
-            case "forwardIndex": annot.setForwardIndex(bool(e)); break;
-            case "multipleValues": annot.setMultipleValues(bool(e)); break;
+                readSubAnnotations(e, annot);
+                break;
+            case "forwardIndex":
+                annot.setForwardIndex(bool(e));
+                break;
+            case "multipleValues":
+                annot.setMultipleValues(bool(e));
+                break;
             default:
-                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
+                throw new InputFormatConfigException(
+                        "Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
             }
         }
         return annot;
@@ -270,6 +374,7 @@ public class InputFormatReader extends YamlJsonReader {
 
     /**
      * Convert a fixed string value to an XPath expression yielding that value.
+     * 
      * @param s fixed string the XPath should evaluate to
      * @return XPath expression
      */
@@ -285,12 +390,19 @@ public class InputFormatReader extends YamlJsonReader {
             Iterator<Entry<String, JsonNode>> it = obj(as, "standoffAnnotation").fields();
             while (it.hasNext()) {
                 Entry<String, JsonNode> e = it.next();
-                switch(e.getKey()) {
-                case "path": s.setPath(str(e)); break;
-                case "refTokenPositionIdPath": s.setRefTokenPositionIdPath(str(e)); break;
-                case "annotations": readAnnotations(e, s); break;
+                switch (e.getKey()) {
+                case "path":
+                    s.setPath(str(e));
+                    break;
+                case "refTokenPositionIdPath":
+                    s.setRefTokenPositionIdPath(str(e));
+                    break;
+                case "annotations":
+                    readAnnotations(e, s);
+                    break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in standoff annotations block");
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in standoff annotations block");
                 }
             }
             af.addStandoffAnnotation(s);
@@ -305,9 +417,13 @@ public class InputFormatReader extends YamlJsonReader {
             Iterator<Entry<String, JsonNode>> itTag = obj(as, "inlineTag").fields();
             while (itTag.hasNext()) {
                 Entry<String, JsonNode> e = itTag.next();
-                switch(e.getKey()) {
-                case "path": t.setPath(str(e)); break;
-                case "displayAs": t.setDisplayAs(str(e)); break;
+                switch (e.getKey()) {
+                case "path":
+                    t.setPath(str(e));
+                    break;
+                case "displayAs":
+                    t.setDisplayAs(str(e));
+                    break;
                 default:
                     throw new InputFormatConfigException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
@@ -338,10 +454,16 @@ public class InputFormatReader extends YamlJsonReader {
         Iterator<Entry<String, JsonNode>> it = obj(as, "metadata block").fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
-            switch(e.getKey()) {
-            case "containerPath": b.setContainerPath(str(e)); break;
-            case "defaultAnalyzer": b.setDefaultAnalyzer(str(e)); break;
-            case "fields": readMetadataFields(e, b); break;
+            switch (e.getKey()) {
+            case "containerPath":
+                b.setContainerPath(str(e));
+                break;
+            case "defaultAnalyzer":
+                b.setDefaultAnalyzer(str(e));
+                break;
+            case "fields":
+                readMetadataFields(e, b);
+                break;
             default:
                 throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata block");
             }
@@ -357,30 +479,56 @@ public class InputFormatReader extends YamlJsonReader {
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
-                case "name": case "namePath": f.setName(str(e)); break;
-                case "value": f.setValuePath(fixedStringToXpath(str(e))); break;
-                case "valuePath": f.setValuePath(str(e)); break;
-                case "forEachPath": f.setForEachPath(str(e)); break;
-                case "process": f.setProcess(readProcess(e)); break;
-                case "displayName": f.setDisplayName(str(e)); break;
-                case "description": f.setDescription(str(e)); break;
-                case "type": f.setType(FieldType.fromStringValue(str(e))); break;
-                case "uiType": f.setUiType(str(e)); break;
-                case "unknownCondition": f.setUnknownCondition(UnknownCondition.fromStringValue(str(e))); break;
-                case "unknownValue": f.setUiType(str(e)); break;
-                case "analyzer": f.setAnalyzer(str(e)); break;
+                case "name":
+                case "namePath":
+                    f.setName(str(e));
+                    break;
+                case "value":
+                    f.setValuePath(fixedStringToXpath(str(e)));
+                    break;
+                case "valuePath":
+                    f.setValuePath(str(e));
+                    break;
+                case "forEachPath":
+                    f.setForEachPath(str(e));
+                    break;
+                case "process":
+                    f.setProcess(readProcess(e));
+                    break;
+                case "displayName":
+                    f.setDisplayName(str(e));
+                    break;
+                case "description":
+                    f.setDescription(str(e));
+                    break;
+                case "type":
+                    f.setType(FieldType.fromStringValue(str(e)));
+                    break;
+                case "uiType":
+                    f.setUiType(str(e));
+                    break;
+                case "unknownCondition":
+                    f.setUnknownCondition(UnknownCondition.fromStringValue(str(e)));
+                    break;
+                case "unknownValue":
+                    f.setUiType(str(e));
+                    break;
+                case "analyzer":
+                    f.setAnalyzer(str(e));
+                    break;
                 case "displayOrder":
                     List<String> fields = new ArrayList<>();
                     readStringList(e, fields);
                     f.addDisplayOrder(fields);
                     break;
                 case "displayValues":
-                    Map<String,String> values = new HashMap<>();
+                    Map<String, String> values = new HashMap<>();
                     readStringMap(e, values);
                     f.addDisplayValues(values);
                     break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata field " + f.getName());
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in metadata field " + f.getName());
                 }
             }
             b.addMetadataField(f);
@@ -396,15 +544,30 @@ public class InputFormatReader extends YamlJsonReader {
             while (itLinkedDoc.hasNext()) {
                 Entry<String, JsonNode> e = itLinkedDoc.next();
                 switch (e.getKey()) {
-                case "store": ld.setStore(bool(e)); break;
-                case "linkValues": readLinkValues(e, ld); break;
-                case "ifLinkPathMissing": ld.setIfLinkPathMissing(MissingLinkPathAction.fromStringValue(str(e))); break;
-                case "inputFile": ld.setInputFile(str(e)); break;
-                case "pathInsideArchive": ld.setPathInsideArchive(str(e)); break;
-                case "documentPath": ld.setDocumentPath(str(e)); break;
-                case "inputFormat": readInputFormat(ld, e); break;
+                case "store":
+                    ld.setStore(bool(e));
+                    break;
+                case "linkValues":
+                    readLinkValues(e, ld);
+                    break;
+                case "ifLinkPathMissing":
+                    ld.setIfLinkPathMissing(MissingLinkPathAction.fromStringValue(str(e)));
+                    break;
+                case "inputFile":
+                    ld.setInputFile(str(e));
+                    break;
+                case "pathInsideArchive":
+                    ld.setPathInsideArchive(str(e));
+                    break;
+                case "documentPath":
+                    ld.setDocumentPath(str(e));
+                    break;
+                case "inputFormat":
+                    readInputFormat(ld, e);
+                    break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
         }
@@ -415,7 +578,8 @@ public class InputFormatReader extends YamlJsonReader {
         String formatIdentifier = str(e);
         Format format = DocumentFormats.getFormat(formatIdentifier);
         if (format == null)
-            throw new InputFormatConfigException("Unknown input format " + str(e) + " in linked document " + ld.getName());
+            throw new InputFormatConfigException(
+                    "Unknown input format " + str(e) + " in linked document " + ld.getName());
 
         ld.setInputFormatIdentifier(formatIdentifier);
     }
@@ -429,12 +593,21 @@ public class InputFormatReader extends YamlJsonReader {
             while (itLinkValue.hasNext()) {
                 Entry<String, JsonNode> e = itLinkValue.next();
                 switch (e.getKey()) {
-                case "value": lv.setValuePath(fixedStringToXpath(str(e))); break;
-                case "valuePath": lv.setValuePath(str(e)); break;
-                case "valueField": lv.setValueField(str(e)); break;
-                case "process": lv.setProcess(readProcess(e)); break;
+                case "value":
+                    lv.setValuePath(fixedStringToXpath(str(e)));
+                    break;
+                case "valuePath":
+                    lv.setValuePath(str(e));
+                    break;
+                case "valueField":
+                    lv.setValueField(str(e));
+                    break;
+                case "process":
+                    lv.setProcess(readProcess(e));
+                    break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in linked document " + ld.getName());
+                    throw new InputFormatConfigException(
+                            "Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
             ld.addLinkValue(lv);
@@ -450,15 +623,18 @@ public class InputFormatReader extends YamlJsonReader {
             Iterator<Entry<String, JsonNode>> itStep = obj(step, "processing step").fields();
             while (itStep.hasNext()) {
                 Entry<String, JsonNode> e = itStep.next();
-                switch(e.getKey()) {
-                case "action": s.setMethod(str(e)); break;
-                default: s.addParam(e.getKey(), str(e)); break;
+                switch (e.getKey()) {
+                case "action":
+                    s.setMethod(str(e));
+                    break;
+                default:
+                    s.addParam(e.getKey(), str(e));
+                    break;
                 }
             }
             p.add(s);
         }
         return p;
     }
-
 
 }

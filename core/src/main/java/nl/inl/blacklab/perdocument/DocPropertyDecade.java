@@ -23,87 +23,88 @@ import nl.inl.blacklab.search.grouping.HitPropertyDocumentDecade;
 import nl.inl.blacklab.search.grouping.PropValSerializeUtil;
 
 /**
- * For grouping DocResult objects by decade based on a
- * stored field containing a year.
+ * For grouping DocResult objects by decade based on a stored field containing a
+ * year.
  */
 public class DocPropertyDecade extends DocProperty {
 
-	private String fieldName;
+    private String fieldName;
 
-	public DocPropertyDecade(String fieldName) {
-		this.fieldName = fieldName;
-	}
+    public DocPropertyDecade(String fieldName) {
+        this.fieldName = fieldName;
+    }
 
-	@Override
-	public HitPropValueDecade get(DocResult result) {
-		String strYear = result.getDocument().get(fieldName);
-		int year;
-		try {
-			year = Integer.parseInt(strYear);
-			year -= year % 10;
-		} catch (NumberFormatException e) {
-			year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-		}
-		return new HitPropValueDecade(year);
-	}
+    @Override
+    public HitPropValueDecade get(DocResult result) {
+        String strYear = result.getDocument().get(fieldName);
+        int year;
+        try {
+            year = Integer.parseInt(strYear);
+            year -= year % 10;
+        } catch (NumberFormatException e) {
+            year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+        }
+        return new HitPropValueDecade(year);
+    }
 
-	/**
-	 * Compares two docs on this property
-	 * @param a first doc
-	 * @param b second doc
-	 * @return 0 if equal, negative if a < b, positive if a > b.
-	 */
-	@Override
-	public int compare(DocResult a, DocResult b) {
-		String strYearA = a.getDocument().get(fieldName);
-		if (strYearA == null)
-			strYearA = "";
-		String strYearB = b.getDocument().get(fieldName);
-		if (strYearB == null)
-			strYearB = "";
-		if (strYearA.length() == 0) { // sort missing year at the end
-		    if (strYearB.length() == 0)
-		        return 0;
-		    else
-		        return reverse ? -1 : 1;
-		}
-		if (strYearB.length() == 0) // sort missing year at the end
-			return reverse ? 1 : -1;
-		int year1;
-		try {
-			year1 = Integer.parseInt(strYearB);
-			year1 -= year1 % 10;
-		} catch (NumberFormatException e) {
-			year1 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-		}
-		int year2;
-		try {
-			year2 = Integer.parseInt(strYearB);
-			year2 -= year2 % 10;
-		} catch (NumberFormatException e) {
-			year2 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-		}
+    /**
+     * Compares two docs on this property
+     * 
+     * @param a first doc
+     * @param b second doc
+     * @return 0 if equal, negative if a < b, positive if a > b.
+     */
+    @Override
+    public int compare(DocResult a, DocResult b) {
+        String strYearA = a.getDocument().get(fieldName);
+        if (strYearA == null)
+            strYearA = "";
+        String strYearB = b.getDocument().get(fieldName);
+        if (strYearB == null)
+            strYearB = "";
+        if (strYearA.length() == 0) { // sort missing year at the end
+            if (strYearB.length() == 0)
+                return 0;
+            else
+                return reverse ? -1 : 1;
+        }
+        if (strYearB.length() == 0) // sort missing year at the end
+            return reverse ? 1 : -1;
+        int year1;
+        try {
+            year1 = Integer.parseInt(strYearB);
+            year1 -= year1 % 10;
+        } catch (NumberFormatException e) {
+            year1 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+        }
+        int year2;
+        try {
+            year2 = Integer.parseInt(strYearB);
+            year2 -= year2 % 10;
+        } catch (NumberFormatException e) {
+            year2 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+        }
 
-		return reverse ? year2 - year1 : year1 - year2;
-	}
+        return reverse ? year2 - year1 : year1 - year2;
+    }
 
-	@Override
-	public String getName() {
-		return "decade";
-	}
+    @Override
+    public String getName() {
+        return "decade";
+    }
 
-	public static DocPropertyDecade deserialize(String info) {
-		return new DocPropertyDecade(info);
-	}
+    public static DocPropertyDecade deserialize(String info) {
+        return new DocPropertyDecade(info);
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
-	}
-	
-	@Override
-	public List<String> getPropNames() {
-		return Arrays.asList(serializeReverse() + getName());
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
+    }
+
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList(serializeReverse() + getName());
+    }
 
 }

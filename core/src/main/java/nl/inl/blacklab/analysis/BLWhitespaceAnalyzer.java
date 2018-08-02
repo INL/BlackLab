@@ -30,24 +30,23 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 /**
  * Simple whitespace analyzer.
  *
- * Has the option of analyzing case-/accent-sensitive or -insensitive, depending on the field name.
+ * Has the option of analyzing case-/accent-sensitive or -insensitive, depending
+ * on the field name.
  */
 public final class BLWhitespaceAnalyzer extends Analyzer {
 
-	@Override
-	protected TokenStreamComponents createComponents(String fieldName) {
-		Tokenizer source = new WhitespaceTokenizer();
-		TokenStream filter = source;
-		boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
-		if (!caseSensitive)
-		{
-			filter = new LowerCaseFilter(filter);// lowercase all
-		}
-		boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
-		if (!diacSensitive)
-		{
-			filter = new RemoveAllAccentsFilter(filter); // remove accents
-		}
-		return new TokenStreamComponents(source, filter);
-	}
+    @Override
+    protected TokenStreamComponents createComponents(String fieldName) {
+        Tokenizer source = new WhitespaceTokenizer();
+        TokenStream filter = source;
+        boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+        if (!caseSensitive) {
+            filter = new LowerCaseFilter(filter);// lowercase all
+        }
+        boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+        if (!diacSensitive) {
+            filter = new RemoveAllAccentsFilter(filter); // remove accents
+        }
+        return new TokenStreamComponents(source, filter);
+    }
 }

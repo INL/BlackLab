@@ -18,23 +18,23 @@ package nl.inl.blacklab.perdocument;
 import nl.inl.blacklab.search.grouping.HitPropValueInt;
 
 public class DocGroupPropertySize extends DocGroupProperty {
-	@Override
-	public HitPropValueInt get(DocGroup result) {
-		return new HitPropValueInt(result.size());
-	}
+    @Override
+    public HitPropValueInt get(DocGroup result) {
+        return new HitPropValueInt(result.size());
+    }
 
-	@Override
-	public boolean defaultSortDescending() {
-		return !reverse;
-	}
+    @Override
+    public boolean defaultSortDescending() {
+        return !reverse;
+    }
 
-	@Override
-	public int compare(DocGroup a, DocGroup b) {
-		return reverse ? b.size() - a.size() : a.size() - b.size();
-	}
+    @Override
+    public int compare(DocGroup a, DocGroup b) {
+        return reverse ? b.size() - a.size() : a.size() - b.size();
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "size";
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "size";
+    }
 }

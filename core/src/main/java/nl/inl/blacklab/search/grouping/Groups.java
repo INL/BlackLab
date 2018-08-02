@@ -17,6 +17,6 @@ package nl.inl.blacklab.search.grouping;
 
 interface Groups {
 
-	abstract HitProperty getGroupCriteria();
+    abstract HitProperty getGroupCriteria();
 
 }

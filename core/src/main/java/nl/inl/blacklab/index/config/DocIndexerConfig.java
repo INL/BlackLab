@@ -20,8 +20,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     protected static String replaceDollarRefs(String pattern, List<String> replacements) {
         if (pattern != null) {
-    	    int i = 1;
-            for (String replacement: replacements) {
+            int i = 1;
+            for (String replacement : replacements) {
                 pattern = pattern.replace("$" + i, replacement);
                 i++;
             }
@@ -33,18 +33,20 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         DocIndexerConfig docIndexer;
         switch (config.getFileType()) {
         case XML:
-        	docIndexer = new DocIndexerXPath();
-        	break;
+            docIndexer = new DocIndexerXPath();
+            break;
         case TABULAR:
-        	docIndexer = new DocIndexerTabular();
-        	break;
+            docIndexer = new DocIndexerTabular();
+            break;
         case TEXT:
-        	docIndexer = new DocIndexerPlainText();
-        	break;
+            docIndexer = new DocIndexerPlainText();
+            break;
         case CHAT:
-        	docIndexer = new DocIndexerChat();
-        	break;
-        default: throw new InputFormatConfigException("Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
+            docIndexer = new DocIndexerChat();
+            break;
+        default:
+            throw new InputFormatConfigException(
+                    "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
         }
 
         docIndexer.setConfigInputFormat(config);
@@ -60,7 +62,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     protected ConfigInputFormat config;
 
     boolean inited = false;
-
 
     public DocIndexerConfig() {
         super();
@@ -80,8 +81,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     @Override
     protected String optTranslateFieldName(String from) {
-    	if (config == null) // test
-    		return from;
+        if (config == null) // test
+            return from;
         String to = config.getIndexFieldAs().get(from);
         return to == null ? from : to;
     }
@@ -92,14 +93,15 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             return;
         inited = true;
         setStoreDocuments(config.shouldStore());
-        for (ConfigAnnotatedField af: config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our complex field
-        	List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
-        	if (annotations.isEmpty())
-        		throw new InputFormatConfigException("No annotations defined for field " + af.getName());
-        	ConfigAnnotation mainAnnotation = annotations.get(0);
-            ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(), getSensitivitySetting(mainAnnotation), false);
+            List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
+            if (annotations.isEmpty())
+                throw new InputFormatConfigException("No annotations defined for field " + af.getName());
+            ConfigAnnotation mainAnnotation = annotations.get(0);
+            ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(),
+                    getSensitivitySetting(mainAnnotation), false);
             addComplexField(complexField);
 
             IndexStructure indexStructure;
@@ -109,26 +111,29 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
                 // If the indexmetadata file specified a list of properties that shouldn't get a forward
                 // index, make the new complex field aware of this.
-                Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName()).getNoForwardIndexProps();
+                Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName())
+                        .getNoForwardIndexProps();
                 complexField.setNoForwardIndexProps(noForwardIndexProps);
             }
 
-            ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
+            ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME,
+                    getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
             propStartTag.setForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
-            	ConfigAnnotation annot = annotations.get(i);
-            	complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
+                ConfigAnnotation annot = annotations.get(i);
+                complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
             }
-            for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
-                for (ConfigAnnotation annot: standoff.getAnnotations().values()) {
+            for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
+                for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
                     complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
             if (!complexField.hasProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
                 // Hasn't been created yet. Create it now.
-                complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME, getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
+                complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME,
+                        getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
             }
         }
     }
@@ -144,69 +149,69 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     protected String processString(String result, List<ConfigProcessStep> process) {
-        for (ConfigProcessStep step: process) {
+        for (ConfigProcessStep step : process) {
             String method = step.getMethod();
             Map<String, String> param = step.getParam();
             switch (method) {
-                case "replace": {
-                    String find = param.get("find");
-                    String replace = param.get("replace");
-                    if (find == null || replace == null)
-                        throw new InputFormatConfigException("replace needs parameters find and replace");
-                    try {
-                        result = result.replaceAll(find, replace);
-                    } catch (PatternSyntaxException e) {
-                        throw new InputFormatConfigException("Syntax error in replace regex: " + find);
-                    }
-                    break;
+            case "replace": {
+                String find = param.get("find");
+                String replace = param.get("replace");
+                if (find == null || replace == null)
+                    throw new InputFormatConfigException("replace needs parameters find and replace");
+                try {
+                    result = result.replaceAll(find, replace);
+                } catch (PatternSyntaxException e) {
+                    throw new InputFormatConfigException("Syntax error in replace regex: " + find);
                 }
-                case "default": {
-                    if (result.length() == 0) {
-                        String field = param.get("field");
-                        String value;
-                        if (field != null)
-                            value = currentLuceneDoc.get(field);
-                        else
-                            value = param.get("value");
-                        if (value != null)
-                            result = value;
-                    }
-                    break;
-                }
-                case "append": {
-                    String separator = param.containsKey("separator") ? param.get("separator") : " ";
+                break;
+            }
+            case "default": {
+                if (result.length() == 0) {
                     String field = param.get("field");
                     String value;
                     if (field != null)
                         value = currentLuceneDoc.get(field);
                     else
                         value = param.get("value");
-                    if (value != null && value.length() > 0) {
-                        if (result.length() > 0)
-                            result += separator;
-                        result += value;
-                    }
-                    break;
+                    if (value != null)
+                        result = value;
                 }
-                case "split": {
-                    // Split on a separator regex and keep one part (first part by default)
-                    String separator = param.containsKey("separator") ? param.get("separator") : ";";
-                    int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
-                    if (keep < 0) {
-                        warn("action 'split', parameter 'keep': must be at least 1");
-                        keep = 0;
-                    }
-                    String[] parts = result.split(separator, -1);
-                    if (keep >= parts.length)
-                        result = "";
-                    else
-                        result = parts[keep];
-                    break;
+                break;
+            }
+            case "append": {
+                String separator = param.containsKey("separator") ? param.get("separator") : " ";
+                String field = param.get("field");
+                String value;
+                if (field != null)
+                    value = currentLuceneDoc.get(field);
+                else
+                    value = param.get("value");
+                if (value != null && value.length() > 0) {
+                    if (result.length() > 0)
+                        result += separator;
+                    result += value;
                 }
-                default: {
-                    // In the future, we'll support user plugins here
-                    throw new UnsupportedOperationException("Unknown processing step method " + method);
+                break;
+            }
+            case "split": {
+                // Split on a separator regex and keep one part (first part by default)
+                String separator = param.containsKey("separator") ? param.get("separator") : ";";
+                int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
+                if (keep < 0) {
+                    warn("action 'split', parameter 'keep': must be at least 1");
+                    keep = 0;
                 }
+                String[] parts = result.split(separator, -1);
+                if (keep >= parts.length)
+                    result = "";
+                else
+                    result = parts[keep];
+                break;
+            }
+            default: {
+                // In the future, we'll support user plugins here
+                throw new UnsupportedOperationException("Unknown processing step method " + method);
+            }
             }
         }
         return result;
@@ -215,12 +220,13 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     /**
      * If any processing steps were defined for this metadata field, apply them now.
      *
-     * This is used for non-XML formats, where we don't actively seek out the metadata
-     * but encounter it as we go.
+     * This is used for non-XML formats, where we don't actively seek out the
+     * metadata but encounter it as we go.
      *
      * @param name metadata field name
      * @param value metadata field value
-     * @return processed value (or orifinal value if not found / no processing steps defined)
+     * @return processed value (or orifinal value if not found / no processing steps
+     *         defined)
      */
     protected String processMetadataValue(String name, String value) {
         ConfigMetadataField f = config.getMetadataField(name);

@@ -25,50 +25,50 @@ import nl.inl.blacklab.search.lucene.SpanQueryEdge;
  */
 public class TextPatternEdge extends TextPatternCombiner {
 
-	private boolean rightEdge;
+    private boolean rightEdge;
 
-	public TextPatternEdge(TextPattern clause, boolean rightEdge) {
-		super(clause);
-		this.rightEdge = rightEdge;
-	}
+    public TextPatternEdge(TextPattern clause, boolean rightEdge) {
+        super(clause);
+        this.rightEdge = rightEdge;
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		return new SpanQueryEdge(clauses.get(0).translate(context), rightEdge);
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        return new SpanQueryEdge(clauses.get(0).translate(context), rightEdge);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternEdge) {
-			return super.equals(obj) && ((TextPatternEdge)obj).rightEdge == rightEdge;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternEdge) {
+            return super.equals(obj) && ((TextPatternEdge) obj).rightEdge == rightEdge;
+        }
+        return false;
+    }
 
-	public boolean isRightEdge() {
-		return rightEdge;
-	}
+    public boolean isRightEdge() {
+        return rightEdge;
+    }
 
-	public String getElementName() {
-		TextPattern cl = getClause();
-		if (cl instanceof TextPatternTags) {
-			return ((TextPatternTags)cl).getElementName();
-		}
-		return null;
-	}
+    public String getElementName() {
+        TextPattern cl = getClause();
+        if (cl instanceof TextPatternTags) {
+            return ((TextPatternTags) cl).getElementName();
+        }
+        return null;
+    }
 
-	public TextPattern getClause() {
-		return clauses.get(0);
-	}
+    public TextPattern getClause() {
+        return clauses.get(0);
+    }
 
-	@Override
-	public int hashCode() {
-		return super.hashCode() + (rightEdge ? 13 : 0);
-	}
+    @Override
+    public int hashCode() {
+        return super.hashCode() + (rightEdge ? 13 : 0);
+    }
 
-	@Override
-	public String toString() {
-		return "EDGE(" + clauses.get(0).toString() + ", " + (rightEdge ? "R" : "L") + ")";
-	}
+    @Override
+    public String toString() {
+        return "EDGE(" + clauses.get(0).toString() + ", " + (rightEdge ? "R" : "L") + ")";
+    }
 
 }

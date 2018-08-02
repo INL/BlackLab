@@ -29,62 +29,62 @@ import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
- * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates through them as a
- * TokenStream.
+ * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates
+ * through them as a TokenStream.
  *
- * The Strings are taken as terms. The two integer-lists are taken as start chars and end chars.
- * Token position increment is always 1.
+ * The Strings are taken as terms. The two integer-lists are taken as start
+ * chars and end chars. Token position increment is always 1.
  */
 class TokenStreamWithOffsets extends TokenStream {
-	/**
-	 * Term text of the current token
-	 */
-	protected CharTermAttribute termAttr;
+    /**
+     * Term text of the current token
+     */
+    protected CharTermAttribute termAttr;
 
-	/**
-	 * Position increment of the current token
-	 */
-	protected PositionIncrementAttribute positionIncrementAttr;
+    /**
+     * Position increment of the current token
+     */
+    protected PositionIncrementAttribute positionIncrementAttr;
 
-	/**
-	 * Character offsets of the current token
-	 */
-	private OffsetAttribute offsetAttr;
+    /**
+     * Character offsets of the current token
+     */
+    private OffsetAttribute offsetAttr;
 
-	protected Iterator<String> iterator;
+    protected Iterator<String> iterator;
 
-	protected IntIterator incrementIt;
+    protected IntIterator incrementIt;
 
-	private IntIterator startCharIt;
+    private IntIterator startCharIt;
 
-	private IntIterator endCharIt;
+    private IntIterator endCharIt;
 
-	public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
-			IntArrayList endChar) {
-		clearAttributes();
-		termAttr = addAttribute(CharTermAttribute.class);
-		offsetAttr = addAttribute(OffsetAttribute.class);
-		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
-		positionIncrementAttr.setPositionIncrement(1);
+    public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
+            IntArrayList endChar) {
+        clearAttributes();
+        termAttr = addAttribute(CharTermAttribute.class);
+        offsetAttr = addAttribute(OffsetAttribute.class);
+        positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
+        positionIncrementAttr.setPositionIncrement(1);
 
-		iterator = tokens.iterator();
-		incrementIt = increments.intIterator();
-		startCharIt = startChar.intIterator();
-		endCharIt = endChar.intIterator();
-	}
+        iterator = tokens.iterator();
+        incrementIt = increments.intIterator();
+        startCharIt = startChar.intIterator();
+        endCharIt = endChar.intIterator();
+    }
 
-	@Override
+    @Override
     final public boolean incrementToken() {
-		// Capture token contents
-		if (iterator.hasNext()) {
-			String term = iterator.next();
-			termAttr.copyBuffer(term.toCharArray(), 0, term.length());
-			positionIncrementAttr.setPositionIncrement(incrementIt.next());
-			offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
-			return true;
-		}
-		return false;
-	}
+        // Capture token contents
+        if (iterator.hasNext()) {
+            String term = iterator.next();
+            termAttr.copyBuffer(term.toCharArray(), 0, term.length());
+            positionIncrementAttr.setPositionIncrement(incrementIt.next());
+            offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
+            return true;
+        }
+        return false;
+    }
 
     @Override
     public int hashCode() {

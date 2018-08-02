@@ -26,11 +26,15 @@ import nl.inl.blacklab.index.Indexer;
  */
 public class DocIndexerTeiPosInFunctionAttr extends DocIndexerTeiBase {
 
-    public static String getDisplayName() { return "TEI-DocIndexer-function (alternate TEI indexer)"; }
-    public static String getDescription() { return
-            "Main contents should be in body element, should be tokenized and PoS tags should be in the function attribute."; }
+    public static String getDisplayName() {
+        return "TEI-DocIndexer-function (alternate TEI indexer)";
+    }
 
-	public DocIndexerTeiPosInFunctionAttr(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader, "body", false);
-	}
+    public static String getDescription() {
+        return "Main contents should be in body element, should be tokenized and PoS tags should be in the function attribute.";
+    }
+
+    public DocIndexerTeiPosInFunctionAttr(Indexer indexer, String fileName, Reader reader) {
+        super(indexer, fileName, reader, "body", false);
+    }
 }

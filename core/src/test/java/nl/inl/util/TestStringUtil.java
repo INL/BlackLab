@@ -24,30 +24,30 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TestStringUtil {
-	@Test
-	public void testJoin() {
-		Assert.assertEquals("aap noot mies",
-				StringUtil.join(Arrays.asList("aap", "noot", "mies"), " "));
-		Assert.assertEquals("aap", StringUtil.join(Arrays.asList("aap"), " "));
-		Assert.assertEquals("", StringUtil.join(new ArrayList<String>(), " "));
-	}
+    @Test
+    public void testJoin() {
+        Assert.assertEquals("aap noot mies",
+                StringUtil.join(Arrays.asList("aap", "noot", "mies"), " "));
+        Assert.assertEquals("aap", StringUtil.join(Arrays.asList("aap"), " "));
+        Assert.assertEquals("", StringUtil.join(new ArrayList<String>(), " "));
+    }
 
-	@Test
-	public void testRemoveAccents() {
-		Assert.assertEquals("He, jij!", StringUtil.stripAccents("Hé, jij!"));
-	}
+    @Test
+    public void testRemoveAccents() {
+        Assert.assertEquals("He, jij!", StringUtil.stripAccents("Hé, jij!"));
+    }
 
-	@Test
-	public void testEscapeXmlChars() {
-		Assert.assertEquals("Test &lt; &amp; &gt; &quot; test",
-				StringEscapeUtils.escapeXml10("Test < & > \" test"));
-	}
+    @Test
+    public void testEscapeXmlChars() {
+        Assert.assertEquals("Test &lt; &amp; &gt; &quot; test",
+                StringEscapeUtils.escapeXml10("Test < & > \" test"));
+    }
 
-	@Test
-	public void testCapitalize() {
-		Assert.assertEquals("Aap", StringUtils.capitalize("aap"));
-		Assert.assertEquals("AAP", StringUtils.capitalize("AAP"));
-		Assert.assertEquals("'aap'", StringUtils.capitalize("'aap'"));
-	}
+    @Test
+    public void testCapitalize() {
+        Assert.assertEquals("Aap", StringUtils.capitalize("aap"));
+        Assert.assertEquals("AAP", StringUtils.capitalize("AAP"));
+        Assert.assertEquals("'aap'", StringUtils.capitalize("'aap'"));
+    }
 
 }

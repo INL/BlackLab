@@ -5,19 +5,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-/** Information about an inline object while parsing.
+/**
+ * Information about an inline object while parsing.
  *
- *  Inline objects are either elements like p, s, b, ne, etc. that
- *  occur within the text of annotated fields, or punctuation occurring
- *  between the words.
+ * Inline objects are either elements like p, s, b, ne, etc. that occur within
+ * the text of annotated fields, or punctuation occurring between the words.
  */
 class InlineObject implements Comparable<InlineObject> {
 
-	public static enum InlineObjectType {
-		OPEN_TAG,
-		CLOSE_TAG,
-		PUNCTUATION
-	}
+    public static enum InlineObjectType {
+        OPEN_TAG, CLOSE_TAG, PUNCTUATION
+    }
 
     private String text;
 
@@ -39,7 +37,7 @@ class InlineObject implements Comparable<InlineObject> {
         this.type = type;
         this.attributes = Collections.emptyMap();
         if (attributes != null)
-        	this.attributes = attributes;
+            this.attributes = attributes;
     }
 
     public String getText() {
@@ -63,7 +61,7 @@ class InlineObject implements Comparable<InlineObject> {
     }
 
     public Map<String, String> getAttributes() {
-    	return attributes;
+        return attributes;
     }
 
     @Override
@@ -77,7 +75,7 @@ class InlineObject implements Comparable<InlineObject> {
 
     @Override
     public String toString() {
-    	return type.toString() + " " + text;
+        return type.toString() + " " + text;
     }
 
     public static void main(String[] args) {

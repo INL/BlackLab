@@ -14,60 +14,61 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class JobHitsFiltered extends JobWithHits {
 
-	public static class JobDescHitsFiltered extends JobDescription {
+    public static class JobDescHitsFiltered extends JobDescription {
 
-		HitFilterSettings filterSettings;
+        HitFilterSettings filterSettings;
 
-		public JobDescHitsFiltered(SearchParameters param, JobDescription hitsToFilter, SearchSettings searchSettings, HitFilterSettings filterSettings) {
-			super(param, JobHitsFiltered.class, hitsToFilter, searchSettings);
-			this.filterSettings = filterSettings;
-		}
+        public JobDescHitsFiltered(SearchParameters param, JobDescription hitsToFilter, SearchSettings searchSettings,
+                HitFilterSettings filterSettings) {
+            super(param, JobHitsFiltered.class, hitsToFilter, searchSettings);
+            this.filterSettings = filterSettings;
+        }
 
-		@Override
-		public HitFilterSettings getHitFilterSettings() {
-			return filterSettings;
-		}
+        @Override
+        public HitFilterSettings getHitFilterSettings() {
+            return filterSettings;
+        }
 
-		@Override
-		public String uniqueIdentifier() {
-			return super.uniqueIdentifier() + filterSettings + ")";
-		}
+        @Override
+        public String uniqueIdentifier() {
+            return super.uniqueIdentifier() + filterSettings + ")";
+        }
 
-		@Override
-		public void dataStreamEntries(DataStream ds) {
-			super.dataStreamEntries(ds);
-			ds	.entry("filterSettings", filterSettings);
-		}
+        @Override
+        public void dataStreamEntries(DataStream ds) {
+            super.dataStreamEntries(ds);
+            ds.entry("filterSettings", filterSettings);
+        }
 
-		@Override
-		public String getUrlPath() {
-			return "hits";
-		}
+        @Override
+        public String getUrlPath() {
+            return "hits";
+        }
 
-	}
+    }
 
-	public JobHitsFiltered(SearchManager searchMan, User user, JobDescription par) throws BlsException {
-		super(searchMan, user, par);
-	}
+    public JobHitsFiltered(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+        super(searchMan, user, par);
+    }
 
-	@Override
-	protected void performSearch() throws BlsException {
-		// Now, filter the hits.
-		Hits hitsUnfiltered = ((JobWithHits)inputJob).getHits();
-		HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
-		HitProperty prop = HitProperty.deserialize(hitsUnfiltered, filterSett.getProperty());
-		HitPropValue value = HitPropValue.deserialize(hitsUnfiltered, filterSett.getValue());
-		if (prop == null || value == null) {
-			throw new BadRequest("ERROR_IN_HITFILTER", "Incorrect hit filter property of value specified.");
-		}
+    @Override
+    protected void performSearch() throws BlsException {
+        // Now, filter the hits.
+        Hits hitsUnfiltered = ((JobWithHits) inputJob).getHits();
+        HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
+        HitProperty prop = HitProperty.deserialize(hitsUnfiltered, filterSett.getProperty());
+        HitPropValue value = HitPropValue.deserialize(hitsUnfiltered, filterSett.getValue());
+        if (prop == null || value == null) {
+            throw new BadRequest("ERROR_IN_HITFILTER", "Incorrect hit filter property of value specified.");
+        }
 
-		hits = hitsUnfiltered.filteredBy(prop, value);
-		setPriorityInternal();
-	}
+        hits = hitsUnfiltered.filteredBy(prop, value);
+        setPriorityInternal();
+    }
 
-	@Override
-	protected void dataStreamSubclassEntries(DataStream ds) {
-		super.dataStreamSubclassEntries(ds);
-		ds	.entry("numberOfHits", hits == null ? -1 : hits.size());
-	}
+    @Override
+    protected void dataStreamSubclassEntries(DataStream ds) {
+        super.dataStreamSubclassEntries(ds);
+        ds.entry("numberOfHits", hits == null ? -1 : hits.size());
+    }
 }

@@ -36,140 +36,141 @@ import org.apache.lucene.search.Weight;
  */
 public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
-	private Query filter;
+    private Query filter;
 
-	/**
-	 * Filter a SpanQuery.
-	 *
-	 * @param source the query to filter
-	 * @param filter the filter query
-	 */
-	public SpanQueryFiltered(BLSpanQuery source, Query filter) {
-		super(source);
-		this.filter = filter;
-	}
+    /**
+     * Filter a SpanQuery.
+     *
+     * @param source the query to filter
+     * @param filter the filter query
+     */
+    public SpanQueryFiltered(BLSpanQuery source, Query filter) {
+        super(source);
+        this.filter = filter;
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		List<BLSpanQuery> rewritten = rewriteClauses(reader);
-		Query rewrittenFilter = filter.rewrite(reader);
-		if (rewrittenFilter instanceof MultiTermQuery) {
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        List<BLSpanQuery> rewritten = rewriteClauses(reader);
+        Query rewrittenFilter = filter.rewrite(reader);
+        if (rewrittenFilter instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
             // "doesn't implement createWeight" problem.
-		    rewrittenFilter = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery)rewrittenFilter).rewrite(reader);
-		}
-		return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
-	}
+            rewrittenFilter = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrittenFilter).rewrite(reader);
+        }
+        return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
+    }
 
-	@Override
-	public boolean matchesEmptySequence() {
-		return clauses.get(0).matchesEmptySequence();
-	}
+    @Override
+    public boolean matchesEmptySequence() {
+        return clauses.get(0).matchesEmptySequence();
+    }
 
-	@Override
-	public BLSpanQuery noEmpty() {
-		return new SpanQueryFiltered(clauses.get(0).noEmpty(), filter);
-	}
+    @Override
+    public BLSpanQuery noEmpty() {
+        return new SpanQueryFiltered(clauses.get(0).noEmpty(), filter);
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return clauses.get(0).hitsAllSameLength();
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return clauses.get(0).hitsAllSameLength();
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return clauses.get(0).hitsLengthMin();
-	}
+    @Override
+    public int hitsLengthMin() {
+        return clauses.get(0).hitsLengthMin();
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return clauses.get(0).hitsLengthMax();
-	}
+    @Override
+    public int hitsLengthMax() {
+        return clauses.get(0).hitsLengthMax();
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return clauses.get(0).hitsEndPointSorted();
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return clauses.get(0).hitsEndPointSorted();
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return clauses.get(0).hitsHaveUniqueStart();
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return clauses.get(0).hitsHaveUniqueStart();
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return clauses.get(0).hitsHaveUniqueEnd();
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return clauses.get(0).hitsHaveUniqueEnd();
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return clauses.get(0).hitsAreUnique();
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return clauses.get(0).hitsAreUnique();
+    }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
         Query rewrite = filter.rewrite(searcher.getIndexReader());
         if (rewrite instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
             // "doesn't implement createWeight" problem.
-            rewrite = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery)rewrite).rewrite(searcher.getIndexReader());
+            rewrite = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrite).rewrite(searcher.getIndexReader());
         }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
         Weight filterWeight = rewrite.createWeight(searcher, false);
-		return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
-	}
+        return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
+    }
 
-	class SpanWeightFiltered extends BLSpanWeight {
+    class SpanWeightFiltered extends BLSpanWeight {
 
-		final BLSpanWeight weight;
+        final BLSpanWeight weight;
 
-		final Weight filterWeight;
+        final Weight filterWeight;
 
-		public SpanWeightFiltered(BLSpanWeight weight, Weight filterWeight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
-			super(SpanQueryFiltered.this, searcher, terms);
-			this.weight = weight;
-			this.filterWeight = filterWeight;
-		}
+        public SpanWeightFiltered(BLSpanWeight weight, Weight filterWeight, IndexSearcher searcher,
+                Map<Term, TermContext> terms) throws IOException {
+            super(SpanQueryFiltered.this, searcher, terms);
+            this.weight = weight;
+            this.filterWeight = filterWeight;
+        }
 
-		@Override
-		public void extractTerms(Set<Term> terms) {
-			weight.extractTerms(terms);
-		}
+        @Override
+        public void extractTerms(Set<Term> terms) {
+            weight.extractTerms(terms);
+        }
 
-		@Override
-		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			weight.extractTermContexts(contexts);
-		}
+        @Override
+        public void extractTermContexts(Map<Term, TermContext> contexts) {
+            weight.extractTermContexts(contexts);
+        }
 
-		@Override
-		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans result = weight.getSpans(context, requiredPostings);
-			if (result == null)
-				return null;
-			return new SpansFiltered(result, filterWeight.scorer(context));
-		}
+        @Override
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            BLSpans result = weight.getSpans(context, requiredPostings);
+            if (result == null)
+                return null;
+            return new SpansFiltered(result, filterWeight.scorer(context));
+        }
 
-	}
+    }
 
-	@Override
-	public String toString(String field) {
-		return "FILTER(" + clausesToString(field) + ", " + filter + ")";
-	}
+    @Override
+    public String toString(String field) {
+        return "FILTER(" + clausesToString(field) + ", " + filter + ")";
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		return clauses.get(0).reverseMatchingCost(reader);
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        return clauses.get(0).reverseMatchingCost(reader);
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		return clauses.get(0).forwardMatchingCost();
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return clauses.get(0).forwardMatchingCost();
+    }
 }

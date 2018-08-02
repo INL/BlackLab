@@ -9,12 +9,12 @@ import java.util.Map;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 
 /**
- * Configuration for a single annotation ("property") of an
- * annotated field ("complex field").
+ * Configuration for a single annotation ("property") of an annotated field
+ * ("complex field").
  */
 public class ConfigAnnotation {
 
-	/** Annotation name, or forEach (or name XPath, if forEach) */
+    /** Annotation name, or forEach (or name XPath, if forEach) */
     private String name;
 
     /** If specified, all other XPath expression are relative to this */
@@ -23,29 +23,38 @@ public class ConfigAnnotation {
     /** Where to find body text */
     private String valuePath;
 
-    /** If valuePath consists only of digits, this is the integer value. Otherwise, it is Integer.MAX_VALUE */
+    /**
+     * If valuePath consists only of digits, this is the integer value. Otherwise,
+     * it is Integer.MAX_VALUE
+     */
     private int valuePathInt = Integer.MAX_VALUE;
 
-    /** If null: regular annotation definition. Otherwise, find all nodes matching this XPath,
-     *  then evaluate name and valuePath as XPaths for each matching node, adding a subannotation
-     *  value for each.
-     *  NOTE: forEach is only supported for subannotations, because all main annotations (complex field
-     *  properties) need to be known from the start.
+    /**
+     * If null: regular annotation definition. Otherwise, find all nodes matching
+     * this XPath, then evaluate name and valuePath as XPaths for each matching
+     * node, adding a subannotation value for each. NOTE: forEach is only supported
+     * for subannotations, because all main annotations (complex field properties)
+     * need to be known from the start.
      */
     private String forEachPath;
 
     /** How to process annotation values (if at all) */
     private List<ConfigProcessStep> process = new ArrayList<>();
 
-    /** What sensitivity setting to use to index this annotation
-     *  (optional, default depends on field name) */
+    /**
+     * What sensitivity setting to use to index this annotation (optional, default
+     * depends on field name)
+     */
     private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
 
     /** XPaths to capture the value of, to substitute for $1-$9 in valuePath */
     private List<String> captureValuePaths = new ArrayList<>();
 
-    /** Our subannotations. Note that only 1 level of subannotations is processed
-     *  (i.e. there's no subsubannotations), although we could process more levels if desired. */
+    /**
+     * Our subannotations. Note that only 1 level of subannotations is processed
+     * (i.e. there's no subsubannotations), although we could process more levels if
+     * desired.
+     */
     private List<ConfigAnnotation> subAnnotations = new ArrayList<>();
 
     /** Our subannotations (except forEach's) by name. */
@@ -73,19 +82,19 @@ public class ConfigAnnotation {
         this(name, valuePath, null);
     }
 
-	public ConfigAnnotation(String name, String valuePath, String forEachPath) {
+    public ConfigAnnotation(String name, String valuePath, String forEachPath) {
         setName(name);
         setValuePath(valuePath);
         setForEachPath(forEachPath);
     }
 
-	public void validate() {
-	    String t = "annotation";
+    public void validate() {
+        String t = "annotation";
         ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
         ConfigInputFormat.req(valuePath, t, "valuePath");
-        for (ConfigAnnotation s: subAnnotations)
+        for (ConfigAnnotation s : subAnnotations)
             s.validate();
-        for (ConfigProcessStep step: process)
+        for (ConfigProcessStep step : process)
             step.validate();
     }
 
@@ -98,7 +107,7 @@ public class ConfigAnnotation {
         result.setUiType(uiType);
         result.setBasePath(basePath);
         result.captureValuePaths.addAll(captureValuePaths);
-        for (ConfigAnnotation a: subAnnotations) {
+        for (ConfigAnnotation a : subAnnotations) {
             result.addSubAnnotation(a.copy());
         }
         result.setForwardIndex(forwardIndex);

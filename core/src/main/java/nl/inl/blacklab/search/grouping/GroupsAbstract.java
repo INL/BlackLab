@@ -15,24 +15,23 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-
 /**
  * A number of groups of hits, grouped on the basis of a list of criteria.
  */
 abstract class GroupsAbstract implements Groups {
-	protected HitProperty criteria;
+    protected HitProperty criteria;
 
-	public GroupsAbstract(HitProperty criteria) {
-		this.criteria = criteria;
-	}
+    public GroupsAbstract(HitProperty criteria) {
+        this.criteria = criteria;
+    }
 
-	protected HitPropValue getGroupIdentity(int index) {
-		return criteria.get(index);
-	}
+    protected HitPropValue getGroupIdentity(int index) {
+        return criteria.get(index);
+    }
 
-	@Override
-	public HitProperty getGroupCriteria() {
-		return criteria;
-	}
+    @Override
+    public HitProperty getGroupCriteria() {
+        return criteria;
+    }
 
 }

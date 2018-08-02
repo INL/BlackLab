@@ -1,4 +1,5 @@
 package nl.inl.blacklab.index.config;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -44,26 +45,26 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     private StringBuilder fullText;
 
-	/** Where to write log messages, or null for no logging */
-	private PrintWriter log = null;
+    /** Where to write log messages, or null for no logging */
+    private PrintWriter log = null;
 
-	/** The locale to use for date parsing (by default, use system locale) */
+    /** The locale to use for date parsing (by default, use system locale) */
     private Locale locale = null;
 
-	/** Fallback locale in case we can't parse the date */
+    /** Fallback locale in case we can't parse the date */
     private Locale usLocale = new Locale("en", "US");
 
     private ConfigAnnotatedField currentAnnotatedField;
 
-	@Override
-	public void indexSpecificDocument(String documentExpr) {
+    @Override
+    public void indexSpecificDocument(String documentExpr) {
         // documentExpr is ignored because CHAT files always contain 1 document
         try {
             index();
         } catch (Exception e) {
             throw ExUtil.wrapRuntimeException(e);
         }
-	}
+    }
 
     @Override
     protected void storeDocument() {
@@ -71,9 +72,9 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-	protected int getCharacterPosition() {
+    protected int getCharacterPosition() {
         return fullText.length();
-	}
+    }
 
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
@@ -84,19 +85,19 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     @Override
     public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
-		String charEncodingLine;
-		try (BufferedReader thefile = FileUtil.openForReading(file, "utf8")) {
-			charEncodingLine = thefile.readLine();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
-		if (charEncoding == null) {
-		    log("No character encoding encountered in " + file.getPath() + "; using utf-8");
-		    charEncoding = defaultCharset;
-		}
-		setDocumentName(file.getPath());
-	    setDocument(FileUtil.openForReading(file, charEncoding));
+        String charEncodingLine;
+        try (BufferedReader thefile = FileUtil.openForReading(file, "utf8")) {
+            charEncodingLine = thefile.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
+        if (charEncoding == null) {
+            log("No character encoding encountered in " + file.getPath() + "; using utf-8");
+            charEncoding = defaultCharset;
+        }
+        setDocumentName(file.getPath());
+        setDocument(FileUtil.openForReading(file, charEncoding));
     }
 
     @Override
@@ -111,7 +112,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     @Override
     public void setDocument(Reader reader) {
-        this.reader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
+        this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
     @Override
@@ -119,8 +120,8 @@ public class DocIndexerChat extends DocIndexerConfig {
         reader.close();
     }
 
-	@Override
-	public void index() throws Exception {
+    @Override
+    public void index() throws Exception {
         super.index();
 
         startDocument();
@@ -128,170 +129,171 @@ public class DocIndexerChat extends DocIndexerConfig {
         fullText = new StringBuilder();
 
         // For the configured annotated field...
-        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             currentAnnotatedField = annotatedField;
             setCurrentComplexField(annotatedField.getName());
 
             log("processing " + documentName + "...");
 
-			metadata = new HashMap<>();
-			currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^\\.]+$", "");
+            metadata = new HashMap<>();
+            currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^\\.]+$", "");
 
-			int lineNumber = 0;
-			int uttId = 0;
-			counter = new HashMap<>();
-			for (String el: SIMPLE_COUNTER_HEADERS)
-			    counter.put(el, 0);
-			boolean headerModified = false;
-			String lineToProcess = "";
-			while (true) {
-			    String line = reader.readLine();
-			    if (line == null)
-			        break;
+            int lineNumber = 0;
+            int uttId = 0;
+            counter = new HashMap<>();
+            for (String el : SIMPLE_COUNTER_HEADERS)
+                counter.put(el, 0);
+            boolean headerModified = false;
+            String lineToProcess = "";
+            while (true) {
+                String line = reader.readLine();
+                if (line == null)
+                    break;
                 if (getStoreDocuments()) {
                     fullText.append(line);
                 }
-			    lineNumber++;
-			    char startChar = line.charAt(0);
-			    if (startChar == '\t')
-			        lineToProcess = combineLines(lineToProcess, line);
-			    else if (START_CHARS_TO_CHECK.contains(startChar)) {
-			        if (!lineToProcess.isEmpty()) {
-			            Pair<Integer, Boolean> result = processLine(lineNumber, lineToProcess, uttId, headerModified);
-			            uttId = result.getLeft();
-			            headerModified = result.getRight();
-			        }
-			        lineToProcess = line;
-			    }
-			    // print(metadata, file = logfile)
-			    // print(input("Continue?"), file = logfile)
-			}
-	    	if (inBlock)
-	    		endBlock();
-			addDocumentMetadata(metadata); // "header metadata" is document metadata (?)
-			// deal with the last line
-			Pair<Integer, Boolean> result2 = processLine(lineNumber, lineToProcess, uttId, headerModified);
-			uttId = result2.getLeft();
-			headerModified = result2.getRight();
+                lineNumber++;
+                char startChar = line.charAt(0);
+                if (startChar == '\t')
+                    lineToProcess = combineLines(lineToProcess, line);
+                else if (START_CHARS_TO_CHECK.contains(startChar)) {
+                    if (!lineToProcess.isEmpty()) {
+                        Pair<Integer, Boolean> result = processLine(lineNumber, lineToProcess, uttId, headerModified);
+                        uttId = result.getLeft();
+                        headerModified = result.getRight();
+                    }
+                    lineToProcess = line;
+                }
+                // print(metadata, file = logfile)
+                // print(input("Continue?"), file = logfile)
+            }
+            if (inBlock)
+                endBlock();
+            addDocumentMetadata(metadata); // "header metadata" is document metadata (?)
+            // deal with the last line
+            Pair<Integer, Boolean> result2 = processLine(lineNumber, lineToProcess, uttId, headerModified);
+            uttId = result2.getLeft();
+            headerModified = result2.getRight();
         }
 
         endDocument();
 
-	}
+    }
 
-
-	// JN Added some helper variables and methods
+    // JN Added some helper variables and methods
 
 //	private static void output(String msg) {
 //        System.out.println(msg);
 //    }
 
-	private void log(String msg) {
-		if (log != null)
-			log.println("LOG: " + msg);
+    private void log(String msg) {
+        if (log != null)
+            log.println("LOG: " + msg);
     }
 
-	private void printToCleanfile(String msg) {
-		if (log != null)
-			log.println("CLN: " + msg);
+    private void printToCleanfile(String msg) {
+        if (log != null)
+            log.println("CLN: " + msg);
     }
 
-	private static String toIsoFormat(Date d) {
+    private static String toIsoFormat(Date d) {
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         df.setTimeZone(tz);
         return df.format(d);
     }
 
-	/**
-	 * Slice a string like Python.
-	 *
-	 * Negative indices are counted from the end of the string.
-	 * Indices out of range result in an empty string, not an exception.
-	 *
-	 * @param str string to slice
-	 * @param start starting point
-	 * @param end end point
-	 * @return slice
-	 */
+    /**
+     * Slice a string like Python.
+     *
+     * Negative indices are counted from the end of the string. Indices out of range
+     * result in an empty string, not an exception.
+     *
+     * @param str string to slice
+     * @param start starting point
+     * @param end end point
+     * @return slice
+     */
     private static String slice(String str, int start, int end) {
-		if (start < 0) {
-			start += str.length();
-			if (start < 0)
-				start = 0;
-		}
-		if (end < 0) {
-			end += str.length();
-			if (end < 0)
-				end = 0;
-		}
-		if (start > str.length())
-			start = str.length();
-		if (end > str.length())
-			end = str.length();
-		return str.substring(start, end);
-	}
+        if (start < 0) {
+            start += str.length();
+            if (start < 0)
+                start = 0;
+        }
+        if (end < 0) {
+            end += str.length();
+            if (end < 0)
+                end = 0;
+        }
+        if (start > str.length())
+            start = str.length();
+        if (end > str.length())
+            end = str.length();
+        return str.substring(start, end);
+    }
 
-	/**
-	 * Slice a string like Python.
-	 *
-	 * Negative indices are counted from the end of the string.
-	 * Indices out of range result in an empty string, not an exception.
-	 *
-	 * @param str string to slice
-	 * @param start starting point
-	 * @return slice
-	 */
+    /**
+     * Slice a string like Python.
+     *
+     * Negative indices are counted from the end of the string. Indices out of range
+     * result in an empty string, not an exception.
+     *
+     * @param str string to slice
+     * @param start starting point
+     * @return slice
+     */
     private static String slice(String str, int start) {
-		return slice(str, start, str.length());
-	}
+        return slice(str, start, str.length());
+    }
 
     /**
      * Set the locale to use for date parsing.
+     * 
      * @param locale locale to use
      */
     public void setLocale(Locale locale) {
-		this.locale = locale;
-	}
+        this.locale = locale;
+    }
 
     /**
      * Set where to write log messages.
+     * 
      * @param log where to write messages, or null to disable logging.
      */
     public void setLog(PrintWriter log) {
-		this.log = log;
-	}
+        this.log = log;
+    }
 
     //-----------------
 
     // Combine continued input lines into one longer line.
-	private static String combineLines(String str1, String str2) {
+    private static String combineLines(String str1, String str2) {
         if (str1.isEmpty())
             return str2;
         return slice(str1, 0, -1) + " " + str2;
     }
 
-	// Trim string and replace internal whitespace with underscore.
-	// Used for outputting metadata names
-	private static String despaceMetadataName(String name) {
+    // Trim string and replace internal whitespace with underscore.
+    // Used for outputting metadata names
+    private static String despaceMetadataName(String name) {
         // remvove leading and trailing spaces
         // replace other sequences of spaces by underscore
         return name.trim().replaceAll(" +", "_");
     }
 
-	// Get the encoding from a possible encoding line, or null if not an encoding line
-	private Charset getCharEncoding(String encodingLine) {
+    // Get the encoding from a possible encoding line, or null if not an encoding line
+    private Charset getCharEncoding(String encodingLine) {
         //  if str[1:] in legalcharencodings) {
         //     result = str[1:]
         //  else:
         //     result = None
         if (encodingLine.charAt(0) == MD_CHAR)
-            return Charset.forName(encodingLine.substring(1));  // (fixed tov origineel)
-        return null;              // (fixed tov origineel)
+            return Charset.forName(encodingLine.substring(1)); // (fixed tov origineel)
+        return null; // (fixed tov origineel)
     }
 
-	// Find name of corpus in metadata structure.
-	// Used to determine parseFile
+    // Find name of corpus in metadata structure.
+    // Used to determine parseFile
 //	private String getCorpus(Map<String, Object> metadata) {
 //        String spkr;
 //        if (metadata.containsKey("speaker"))
@@ -305,8 +307,8 @@ public class DocIndexerChat extends DocIndexerConfig {
 //        return "Unknown_corpus";
 //    }
 
-	// Convert date string to month number
-	private int getMonths(String age) {
+    // Convert date string to month number
+    private int getMonths(String age) {
         // input format is 3;6.14 (y;m.d)
         // also accept y.m.d and y;m;d and y.m;d with a warning or any separators for that matter
         String cleanAge = age.trim();
@@ -347,7 +349,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         return result;
     }
 
-/*
+    /*
     public String[] getoutpaths(String fullname, String inpath, String outpath) {
         String absinpath = new File(inpath).getAbsolutePath();    //absinpath = os.path.abspath(inpath)
         String absoutpath = new File(outpath).getAbsolutePath();  //absoutpath = os.path.abspath(outpath)
@@ -358,7 +360,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
     */
 
-	// Determine parsefile
+    // Determine parsefile
 //	private String getParseFile(String corpus, String base, int uttid) {
 //        String uttidstr = String.format("u%011d", uttid); //"u{:011d}".format(uttid);
 //        String newbase = StringUtils.join(Arrays.asList(corpus, base, uttidstr), UNDERSCORE);
@@ -387,43 +389,43 @@ public class DocIndexerChat extends DocIndexerConfig {
 //        return StringUtils.join(Arrays.asList(META_KW, "text", uel, "=", metadata.get(el).toString()), SPACE);
 //    }
 
-	private void addMetaDate(String el, Map<String, Object> metadata) {
-        Date d = (Date)metadata.get(el);
+    private void addMetaDate(String el, Map<String, Object> metadata) {
+        Date d = (Date) metadata.get(el);
         String normalizeddate = toIsoFormat(d);
         String uel = despaceMetadataName(el);
-    	normalizeddate = processMetadataValue(uel, normalizeddate);
+        normalizeddate = processMetadataValue(uel, normalizeddate);
         addMetadataField(uel, normalizeddate);
     }
 
-	private void addMetaInt(String el, Map<String, Object> metadata) {
+    private void addMetaInt(String el, Map<String, Object> metadata) {
         String uel = despaceMetadataName(el);
         String value = processMetadataValue(uel, metadata.get(el).toString());
         addMetadataField(uel, value);
     }
 
-	private void addMetaTxt(String el, Map<String, Object> metadata) {
+    private void addMetaTxt(String el, Map<String, Object> metadata) {
         String uel = despaceMetadataName(el);
         String value = processMetadataValue(uel, metadata.get(el).toString());
         addMetadataField(uel, value);
     }
 
-	private Date normalizeDate(String str) {
+    private Date normalizeDate(String str) {
         Date date;
         try {
-        	date = DateUtils.parseDate(str, locale, new String[] {"d-M-Y", "dd-MMM-yyyy"});
+            date = DateUtils.parseDate(str, locale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
         } catch (ParseException e) {
             try {
-            	date = DateUtils.parseDate(str, usLocale, new String[] {"d-M-Y", "dd-MMM-yyyy"});
+                date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
             } catch (ParseException e1) {
-            	log("Date " + str + " cannot be interpreted");
-            	throw new RuntimeException(e1);
+                log("Date " + str + " cannot be interpreted");
+                throw new RuntimeException(e1);
             }
         }
         return date;
     }
 
-	private void addDocumentMetadata(Map<String, Object> metadata) {
-        for (Entry<String, Object> entry: metadata.entrySet()) {
+    private void addDocumentMetadata(Map<String, Object> metadata) {
+        for (Entry<String, Object> entry : metadata.entrySet()) {
             String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
@@ -433,12 +435,12 @@ public class DocIndexerChat extends DocIndexerConfig {
                 if (curval instanceof String) {
                     addMetaTxt(el, metadata);
                 } else if (curval instanceof Date) {
-                	addMetaDate(el, metadata);
+                    addMetaDate(el, metadata);
                 } else if (curval instanceof Integer) {
-                	addMetaInt(el, metadata);
+                    addMetaInt(el, metadata);
                 }
                 if (!PRINT_IN_HEADERS.contains(el))
-                    log("unknown metadata element encountered: "  + el);
+                    log("unknown metadata element encountered: " + el);
             }
         }
     }
@@ -506,30 +508,32 @@ public class DocIndexerChat extends DocIndexerConfig {
 //        }
 //    }
 
-    /** Are we inside a "block"? Blocks have their own set of metadata,
-     *  and are indexed just like inline XML tags. */
+    /**
+     * Are we inside a "block"? Blocks have their own set of metadata, and are
+     * indexed just like inline XML tags.
+     */
     boolean inBlock = false;
 
     String blockTagName = "block";
 
     @SuppressWarnings("unchecked")
-	private void startBlock() {
-    	Map<String, String> blockMetadata = new HashMap<>();
-        for (Entry<String, Object> entry: metadata.entrySet()) {
+    private void startBlock() {
+        Map<String, String> blockMetadata = new HashMap<>();
+        for (Entry<String, Object> entry : metadata.entrySet()) {
             String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
             } else if (ALL_HEADERS.contains(el)) {
                 Object curval = metadata.get(el);
                 if (curval instanceof Date) {
-                	blockMetadata.put(despaceMetadataName(el), toIsoFormat((Date) curval));
+                    blockMetadata.put(despaceMetadataName(el), toIsoFormat((Date) curval));
                 } else if (curval instanceof String || curval instanceof Integer) {
-                	blockMetadata.put(despaceMetadataName(el), curval.toString());
+                    blockMetadata.put(despaceMetadataName(el), curval.toString());
                 } else {
                     log("startBlock: unknown type for " + el + " = " + curval);
                 }
                 if (!PRINT_IN_HEADERS.contains(el))
-                    log("unknown metadata element encountered: "  + el);
+                    log("unknown metadata element encountered: " + el);
             }
         }
         if (metadata.containsKey("uttid"))
@@ -540,27 +544,27 @@ public class DocIndexerChat extends DocIndexerConfig {
         if (metadata.containsKey("speaker")) {
             curcode = metadata.get("speaker").toString();
             blockMetadata.put("speaker", curcode);
-            Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
+            Map<String, Object> participants = (Map<String, Object>) metadata.get("participants");
             if (participants != null && participants.containsKey(curcode)) {
-                Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
-                for (Entry<String, Object> entry: codeMap.entrySet()) {
+                Map<String, Object> codeMap = (Map<String, Object>) participants.get(curcode);
+                for (Entry<String, Object> entry : codeMap.entrySet()) {
                     String el = entry.getKey();
                     blockMetadata.put(despaceMetadataName(el), codeMap.get(el).toString());
                 }
             }
         }
         if (metadata.containsKey("id")) {
-            Map<String, Object> mdid = (Map<String, Object>)metadata.get("id");
+            Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
             if (mdid != null) {
-                Map<String, Object> curcodeMap = (Map<String, Object>)mdid.get(curcode);
+                Map<String, Object> curcodeMap = (Map<String, Object>) mdid.get(curcode);
                 if (curcodeMap != null) {
-                    for (Entry<String, Object> entry: curcodeMap.entrySet()) {
+                    for (Entry<String, Object> entry : curcodeMap.entrySet()) {
                         String el = entry.getKey();
                         Object curval = curcodeMap.get(el);
                         if (curval instanceof Date) {
-                        	blockMetadata.put(despaceMetadataName(el), toIsoFormat((Date) curcodeMap.get(el)));
+                            blockMetadata.put(despaceMetadataName(el), toIsoFormat((Date) curcodeMap.get(el)));
                         } else if (curval instanceof String || curval instanceof Integer) {
-                        	blockMetadata.put(despaceMetadataName(el), curcodeMap.get(el).toString());
+                            blockMetadata.put(despaceMetadataName(el), curcodeMap.get(el).toString());
                         } else {
                             log("startBlock: unknown type for " + el + " = " + curval);
                         }
@@ -573,16 +577,16 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     private void endBlock() {
-    	inlineTag(blockTagName, false, null);
+        inlineTag(blockTagName, false, null);
     }
 
     private void addWords(String line) {
         String[] words = line.trim().split("\\s+");
-        for (String word: words) {
+        for (String word : words) {
             beginWord();
-            for (ConfigAnnotation annot: currentAnnotatedField.getAnnotations().values()) {
+            for (ConfigAnnotation annot : currentAnnotatedField.getAnnotations().values()) {
                 String processed = processString(word, annot.getProcess());
-            	annotation(annot.getName(), processed, 1, null);
+                annotation(annot.getName(), processed, 1, null);
             }
             endWord();
         }
@@ -596,8 +600,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             headerModified = true;
         } else {
             if (headerModified) {
-            	if (inBlock)
-            		endBlock();
+                if (inBlock)
+                    endBlock();
 
 //                printHeaderMetadata(metadata);
 //                output("\n\n");
@@ -629,7 +633,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             } else if (startChar == ANNO_CHAR) {
                 // to be implemented
             } else {
-            	addWords(line);
+                addWords(line);
             }
         }
         return new ImmutablePair<>(uttId, headerModified);
@@ -638,7 +642,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static String getCleanEntry(List<String> entryList, int i) {
         int lentrylist = entryList.size();
         if (lentrylist > i)
-			return entryList.get(i).trim();
+            return entryList.get(i).trim();
         return "";
     }
 
@@ -660,8 +664,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             }
 
         } else {
-            String headerName= headerLine.substring(1, headerNameEnd);
-            String entry = headerLine.substring(headerNameEnd+1);
+            String headerName = headerLine.substring(1, headerNameEnd);
+            String entry = headerLine.substring(headerNameEnd + 1);
             String cleanEntry = entry.trim();
             List<String> entryList = Arrays.asList(cleanEntry.split(",", -1));
             String cleanHeaderName = headerName.trim();
@@ -687,24 +691,25 @@ public class DocIndexerChat extends DocIndexerConfig {
             } else if (SKIP_HEADER_NAMES.contains(cleanHeaderName)) {
                 // (pass)
             } else if (SIMPLE_INT_HEADERNAMES.contains(cleanHeaderName)) {
-            	int i;
+                int i;
                 try {
-					i = Integer.parseInt(cleanEntry);
-				} catch (NumberFormatException e) {
-	                log("Warning: couldn't parse integer for header " + cleanHeaderName + ": '" + cleanEntry + "'. Using -1.");
-					i = -1;
-				}
-				metadata.put(cleanHeaderName, i);
+                    i = Integer.parseInt(cleanEntry);
+                } catch (NumberFormatException e) {
+                    log("Warning: couldn't parse integer for header " + cleanHeaderName + ": '" + cleanEntry
+                            + "'. Using -1.");
+                    i = -1;
+                }
+                metadata.put(cleanHeaderName, i);
             } else if (SIMPLE_COUNTER_HEADERS.contains(cleanHeaderName)) {
                 counter.put(cleanHeaderName, counter.get(cleanHeaderName) + 1);
                 metadata.put(cleanHeaderName, counter.get(cleanHeaderName));
             } else if (PARTICIPANT_SPECIFIC_HEADERS.contains(cleanHeaderNameBase)) {
                 if (!metadata.containsKey("id"))
                     metadata.put("id", new HashMap<String, Object>());
-                Map<String, Object> mdid = (Map<String, Object>)metadata.get("id");
+                Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
                 if (!mdid.containsKey(headerParameter))
                     mdid.put(headerParameter, new HashMap<String, String>());
-                Map<String, Object> hp = (Map<String, Object>)mdid.get(headerParameter);
+                Map<String, Object> hp = (Map<String, Object>) mdid.get(headerParameter);
                 if (cleanHeaderNameBase.equals("birth of")) {
                     Date date = normalizeDate(cleanEntry);
                     hp.put(cleanHeaderNameBase, date);
@@ -727,7 +732,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     @SuppressWarnings("unchecked")
     private void treatParticipants(List<String> entryList, Map<String, Object> metadata) {
-        for (String el: entryList) {
+        for (String el : entryList) {
             String[] ellist = el.split("\\s+", -1);
             //int ctr = 0;
             String code = "";
@@ -737,7 +742,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 code = ellist[0];
                 name = ellist[1];
                 role = ellist[2];
-            } else if (ellist.length ==2) {
+            } else if (ellist.length == 2) {
                 code = ellist[0];
                 name = "";
                 role = ellist[1];
@@ -747,10 +752,10 @@ public class DocIndexerChat extends DocIndexerConfig {
             if (!code.isEmpty()) {
                 if (!metadata.containsKey("participants"))
                     metadata.put("participants", new HashMap<String, Object>());
-                Map<String, Object> par = (Map<String, Object>)metadata.get("participants");
+                Map<String, Object> par = (Map<String, Object>) metadata.get("participants");
                 if (!par.containsKey(code))
                     par.put(code, new HashMap<String, String>());
-                Map<String, Object> codeMap = (Map<String, Object>)par.get(code);
+                Map<String, Object> codeMap = (Map<String, Object>) par.get(code);
                 if (!role.isEmpty())
                     codeMap.put("role", role);
                 if (!name.isEmpty())
@@ -767,7 +772,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         if (lEntryList != 11)
             log("Warning in id: " + lEntryList + " elements instead of 11 in " + entry);
         String language = getCleanEntry(entrylist, 0);
-        String corpus  = getCleanEntry(entrylist, 1);
+        String corpus = getCleanEntry(entrylist, 1);
         String code = getCleanEntry(entrylist, 2);
         String age = getCleanEntry(entrylist, 3);
         String sex = getCleanEntry(entrylist, 4);
@@ -781,10 +786,10 @@ public class DocIndexerChat extends DocIndexerConfig {
         } else {
             if (!metadata.containsKey("id"))
                 metadata.put("id", new HashMap<String, Object>());
-            Map<String, Object> mdid = (Map<String, Object>)metadata.get("id");
+            Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
             if (!mdid.containsKey(code))
                 mdid.put(code, new HashMap<String, Object>());
-            Map<String, Object> codeMap = (Map<String, Object>)mdid.get(code);
+            Map<String, Object> codeMap = (Map<String, Object>) mdid.get(code);
             if (!language.isEmpty())
                 codeMap.put("language", language);
             if (!corpus.isEmpty())
@@ -808,7 +813,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private void treatUtt(String line, Map<String, Object> metadata) {
         int endSpk = line.indexOf(":");
         if (endSpk < 0)
-        	log("WARNING, No : in line: " + line);
+            log("WARNING, No : in line: " + line);
         String code = line.substring(1, endSpk);
         metadata.put("speaker", code);
         metadata.put("origutt", line.substring(endSpk + 1, line.length() - 1));
@@ -855,25 +860,25 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final String OPT_DAYS = "(" + ONE_OR_MORE_DIGITS + ")?";
     private static final String OPT_SEP_DAYS = "(\\." + OPT_DAYS + ")?";
     private static final String OPT_MONTHS = "(" + DIGITS_ONE_OR_TWO + OPT_SEP_DAYS + ")?";
-    private static final String OPT_SEP_MONTHS = "(;"  + OPT_MONTHS + ")?";
+    private static final String OPT_SEP_MONTHS = "(;" + OPT_MONTHS + ")?";
     private static final String AGE_REGEX = "^" + ONE_OR_MORE_DIGITS + OPT_SEP_MONTHS + "$";
 
     private static final List<String> SIMPLE_HEADERNAMES = Arrays.asList(
-        "pid",  "transcriber",  "coder",  "date",  "location",
-        "situation", "number", "interaction type", "activities",
-        "comment", "bck", "warning", "transcription",
-        "time start", "time duration", "tape location", "room layout",
-        "recording quality", "number", "media"
-    );
+            "pid", "transcriber", "coder", "date", "location",
+            "situation", "number", "interaction type", "activities",
+            "comment", "bck", "warning", "transcription",
+            "time start", "time duration", "tape location", "room layout",
+            "recording quality", "number", "media");
     private static final List<String> SIMPLE_INT_HEADERNAMES = Arrays.asList("g", "page");
     private static final List<String> SIMPLE_COUNTER_HEADERS = Arrays.asList("new episode");
     private static final List<String> SKIP_HEADER_NAMES = Arrays.asList("exceptions");
-    private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of", "age of");
-    private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker", "origutt");
+    private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of",
+            "age of");
+    private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker",
+            "origutt");
     private static final List<String> DO_NOT_PRINT_IN_HEADERS = Arrays.asList(
             "id", "participants", "languages", "colorwords",
-            "options", "uttid", "parsefile", "speaker", "origutt"
-    );
+            "options", "uttid", "parsefile", "speaker", "origutt");
     private static final List<String> ALL_HEADERS = new ArrayList<>();
     private static final List<String> PRINT_IN_HEADERS = new ArrayList<>();
     private static final List<Character> START_CHARS_TO_CHECK = new ArrayList<>();
@@ -885,7 +890,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         ALL_HEADERS.addAll(CREATED_MD_NAMES);
         ALL_HEADERS.addAll(PARTICIPANT_SPECIFIC_HEADERS);
 
-        for (String headeratt: ALL_HEADERS) {
+        for (String headeratt : ALL_HEADERS) {
             if (!DO_NOT_PRINT_IN_HEADERS.contains(headeratt))
                 PRINT_IN_HEADERS.add(headeratt);
         }
@@ -902,7 +907,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
 //    private PrintStream logfile;
 
-	private String currentFileBaseName;
+    private String currentFileBaseName;
 
 //    public static void main(String[] argv) throws Exception {
 //        File f = new File("D:\\werk\\mee\\chat-examples\\Adler\\adler01a.cha");
@@ -936,7 +941,6 @@ public class DocIndexerChat extends DocIndexerConfig {
 ////        // and convert it to FoliA
 //    }
 
-
 //--------------------------------
 
     //class CleanChildesMetadata {
@@ -956,7 +960,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // scopestr = "<([^<>]*)>\\s*"
 
-    static final String GT_REPL = "\u00A9";  // copyright sign
+    static final String GT_REPL = "\u00A9"; // copyright sign
     static final String LT_REPL = "\u00AE"; // Registered sign
     static final Pattern GT_REPL_SCOPED = Pattern.compile(scoped(GT_REPL));
     static final Pattern LT_REPL_SCOPED = Pattern.compile(scoped(LT_REPL));
@@ -1014,7 +1018,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     // nesting = Pattern.compile(neststr)
 
     public static String bracket(String str) {
-        return "("+ str + ")";
+        return "(" + str + ")";
     }
 
     public static String regexOr(List<String> strList) {
@@ -1026,14 +1030,15 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     // JN fixed(?)
-    private final Pattern CHECK_PATTERN = Pattern.compile("[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
+    private final Pattern CHECK_PATTERN = Pattern.compile(
+            "[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
 
-	// + should not occur except as compund marker black+board
-	private final Pattern PLUS_PATTERN = Pattern.compile("\\W\\+|\\+\\W");
+    // + should not occur except as compund marker black+board
+    private final Pattern PLUS_PATTERN = Pattern.compile("\\W\\+|\\+\\W");
 
-	private void checkLine(String line, String newline, int lineNumber) {
-		if (log == null)
-			return;
+    private void checkLine(String line, String newline, int lineNumber) {
+        if (log == null)
+            return;
         if (CHECK_PATTERN.matcher(newline).find() || PLUS_PATTERN.matcher(newline).find()) {
             log(currentFileBaseName + " " + lineNumber + " suspect character");
             log("input = <" + line.substring(0, line.length() - 1) + ">");
@@ -1043,41 +1048,42 @@ public class DocIndexerChat extends DocIndexerConfig {
         }
     }
 
-	private static final String EMBED = "(<[^<>]*>)";
-	private static final String OTHER = "[^<>]";
-	private static final String EMBED_OR_OTHER = regexOr(Arrays.asList(EMBED, OTHER));
-	private static final String NEST_STR = "(<" + regexStar(OTHER) + EMBED + regexStar(EMBED_OR_OTHER)  + ">)";
-	private static final Pattern NESTING = Pattern.compile(NEST_STR);
+    private static final String EMBED = "(<[^<>]*>)";
+    private static final String OTHER = "[^<>]";
+    private static final String EMBED_OR_OTHER = regexOr(Arrays.asList(EMBED, OTHER));
+    private static final String NEST_STR = "(<" + regexStar(OTHER) + EMBED + regexStar(EMBED_OR_OTHER) + ">)";
+    private static final Pattern NESTING = Pattern.compile(NEST_STR);
 
-	private static final String TIMES_STR = "\\[x[^\\]]*\\]";
-	private static final Pattern TIMES_UNSCOPED = Pattern.compile(TIMES_STR);
-	private static final Pattern TIMES_SCOPED = Pattern.compile(scoped(TIMES_STR));
-	private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[\\% [^\\]]*\\]");
-	private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[\\% [^\\]]*\\]");
-	private static final String TRIPLE_SLASH = "\\[///\\]";
-	private static final Pattern REFORMUL_UNSCOPED = Pattern.compile(TRIPLE_SLASH);
-	private static final Pattern REFORMUL_SCOPED = Pattern.compile(scoped(TRIPLE_SLASH));
-	private static final Pattern END_QUOTE = Pattern.compile("\\+\"/\\.");
-	private static final String ERROR_MARK_STR = "\\[\\*\\]";
-	private static final Pattern ERROR_MARK_UNSCOPED = Pattern.compile(ERROR_MARK_STR);
-	private static final Pattern ERROR_MARK_SCOPED = Pattern.compile(scoped(ERROR_MARK_STR));
-	private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN fixed(?)
-	private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*\\]");
-	private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*\\]");
-	private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch\\]");
-	private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn\\]");
-	private static final Pattern SYLLABLE_PAUSE = Pattern.compile("(\\w)\\^");
-	private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^\\]]*\\]");
-	private static final Pattern CLITIC_LINK = Pattern.compile("~");
+    private static final String TIMES_STR = "\\[x[^\\]]*\\]";
+    private static final Pattern TIMES_UNSCOPED = Pattern.compile(TIMES_STR);
+    private static final Pattern TIMES_SCOPED = Pattern.compile(scoped(TIMES_STR));
+    private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[\\% [^\\]]*\\]");
+    private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[\\% [^\\]]*\\]");
+    private static final String TRIPLE_SLASH = "\\[///\\]";
+    private static final Pattern REFORMUL_UNSCOPED = Pattern.compile(TRIPLE_SLASH);
+    private static final Pattern REFORMUL_SCOPED = Pattern.compile(scoped(TRIPLE_SLASH));
+    private static final Pattern END_QUOTE = Pattern.compile("\\+\"/\\.");
+    private static final String ERROR_MARK_STR = "\\[\\*\\]";
+    private static final Pattern ERROR_MARK_UNSCOPED = Pattern.compile(ERROR_MARK_STR);
+    private static final Pattern ERROR_MARK_SCOPED = Pattern.compile(scoped(ERROR_MARK_STR));
+    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN fixed(?)
+    private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*\\]");
+    private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*\\]");
+    private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch\\]");
+    private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn\\]");
+    private static final Pattern SYLLABLE_PAUSE = Pattern.compile("(\\w)\\^");
+    private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^\\]]*\\]");
+    private static final Pattern CLITIC_LINK = Pattern.compile("~");
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
-	private static final Pattern CHAT_CA_SYMS = Pattern.compile("[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
-	private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
+    private static final Pattern CHAT_CA_SYMS = Pattern.compile(
+            "[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
+    private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
 
-	private String cleanText(String str) {
+    private String cleanText(String str) {
         String result = str;
 
         // if times.search(result) {
-            // print("[x ...] found, line = {}".format(result), file = logfile)
+        // print("[x ...] found, line = {}".format(result), file = logfile)
 
         // page references are to MacWhinney chat manual version 21 april 2015
 
@@ -1157,18 +1163,14 @@ public class DocIndexerChat extends DocIndexerConfig {
         // we keep this too
         //    result = result.replaceAll(r"yyy", '')
 
-
         // remove phonological fragments p. 61
         result = PHON_FRAG1.matcher(result).replaceAll(EMPTY_STRING);
-
-
 
         // remove phonological fragments p.61
         result = PHON_FRAG2.matcher(result).replaceAll(EMPTY_STRING);
 
         // remove www intentionally after phonological fragments
         result = WWW.matcher(result).replaceAll(EMPTY_STRING);
-
 
         // replace 0[A-z] works ok now, raw replacement string!
         result = ZERO_STR.matcher(result).replaceAll("$1");
@@ -1182,7 +1184,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove +..  p. 63
         result = PLUS_DOT_DOT.matcher(result).replaceAll(EMPTY_STRING);
 
-
         // remove [<] and preceding <> on purpose before [//]
         result = LT_REPL_SCOPED.matcher(result).replaceAll("$1 ");
 
@@ -1194,7 +1195,6 @@ public class DocIndexerChat extends DocIndexerConfig {
 
         // remove [>]
         result = GT_REPL_UNSCOPED.matcher(result).replaceAll(SPACE);
-
 
         // remove [//] keep preceding part between <>, drop <>
         result = DOUBLE_SLASH_SCOPED.matcher(result).replaceAll("$1");
@@ -1208,14 +1208,12 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove [!] p.68
         result = EXCLAM2.matcher(result).replaceAll(SPACE);
 
-
         // remove [/] keep preceding part between <> this line and following one: crucial order
         result = SLASH_SCOPED.matcher(result).replaceAll("$1");
 
         // remove [/] keep the word before
         result = SLASH_UNSCOPED.matcher(result).replaceAll(EMPTY_STRING);
         //    result = result.replaceAll(r"\[<\]", '')
-
 
         // remove [?] and preceding <>
         result = Q_REGEX_SCOPED.matcher(result).replaceAll("$1 ");

@@ -6,24 +6,24 @@ import nl.inl.blacklab.perdocument.DocProperty;
 
 public class DocGroupSettings {
 
-	DocProperty groupBy;
+    DocProperty groupBy;
 
-	public DocGroupSettings(DocProperty groupBy) {
-		super();
-		this.groupBy = groupBy;
-	}
+    public DocGroupSettings(DocProperty groupBy) {
+        super();
+        this.groupBy = groupBy;
+    }
 
-	public DocProperty groupBy() {
-		return groupBy;
-	}
+    public DocProperty groupBy() {
+        return groupBy;
+    }
 
-	@Override
-	public String toString() {
-		return "docgroup=" + groupBy.serialize();
-	}
+    @Override
+    public String toString() {
+        return "docgroup=" + groupBy.serialize();
+    }
 
-	public void getUrlParam(Map<String, String> param) {
-		param.put("group", groupBy.serialize());
-	}
+    public void getUrlParam(Map<String, String> param) {
+        param.put("group", groupBy.serialize());
+    }
 
 }

@@ -71,15 +71,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     private SaxParseHandler saxParseHandler = new SaxParseHandler();
 
     /**
-     * What namespace prefix mappings have we encountered but not output in a
-     * start tag yet? (used to make sure the stored XML contains all the
-     * required mappings)
+     * What namespace prefix mappings have we encountered but not output in a start
+     * tag yet? (used to make sure the stored XML contains all the required
+     * mappings)
      */
     final private static Map<String, String> outputPrefixMapping = new HashMap<>();
 
     /**
-     * Handle Document element. Starts a new Lucene document and adds the
-     * attributes of this element (if any) as metadata fields.
+     * Handle Document element. Starts a new Lucene document and adds the attributes
+     * of this element (if any) as metadata fields.
      */
     public class DocumentElementHandler extends ElementHandler {
 
@@ -108,7 +108,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (ComplexFieldProperty prop: contentsField.getProperties()) {
+            for (ComplexFieldProperty prop : contentsField.getProperties()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -120,7 +120,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (ComplexFieldProperty prop: contentsField.getProperties()) {
+            for (ComplexFieldProperty prop : contentsField.getProperties()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -148,7 +148,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (ComplexFieldProperty prop: contentsField.getProperties()) {
+            for (ComplexFieldProperty prop : contentsField.getProperties()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
@@ -175,7 +175,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
             IndexStructure struct = indexer.getSearcher().getIndexStructure();
-            for (String fieldName: struct.getMetadataFields()) {
+            for (String fieldName : struct.getMetadataFields()) {
                 MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fieldName);
@@ -227,8 +227,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * Stores metadata field with element name as name and element content as
-     * value.
+     * Stores metadata field with element name as name and element content as value.
      */
     public class MetadataElementHandler extends ContentCapturingHandler {
         /** Close tag: store the value of this metadata field */
@@ -261,9 +260,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * Add a metadatafield based on two attributes of an element, a name
-     * attribute (giving the field name) and a value attribute (giving the field
-     * value).
+     * Add a metadatafield based on two attributes of an element, a name attribute
+     * (giving the field name) and a value attribute (giving the field value).
      */
     public class MetadataNameValueAttributeHandler extends
             ContentCapturingHandler {
@@ -332,8 +330,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * Base handler for word tags: adds start and end positions around the
-     * element.
+     * Base handler for word tags: adds start and end positions around the element.
      */
     public class WordHandlerBase extends ElementHandler {
 
@@ -346,8 +343,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
 
         /**
-         * Close tag: save end character position, add token to contents field
-         * and report progress.
+         * Close tag: save end character position, add token to contents field and
+         * report progress.
          */
         @Override
         public void endElement(String uri, String localName, String qName) {
@@ -376,8 +373,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
 
         /**
-         * Close tag: save end character position, add token to contents field
-         * and report progress.
+         * Close tag: save end character position, add token to contents field and
+         * report progress.
          */
         @Override
         public void endElement(String uri, String localName, String qName) {
@@ -422,10 +419,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /**
      * Encountered a prefix to namespace mapping; now in effect.
      *
-     * @param prefix
-     *            the prefix that is now in effect
-     * @param uri
-     *            the namespace the prefix refers to
+     * @param prefix the prefix that is now in effect
+     * @param uri the namespace the prefix refers to
      */
     public void startPrefixMapping(String prefix, String uri) {
         outputPrefixMapping.put(prefix, uri);
@@ -434,8 +429,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /**
      * A previously encountered namespace prefix mapping is no longer in effect.
      *
-     * @param prefix
-     *            the prefix that's no longer in effect.
+     * @param prefix the prefix that's no longer in effect.
      */
     public void endPrefixMapping(String prefix) {
         // System.out.println("END PREFIX MAPPING: " + prefix);
@@ -460,7 +454,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
         // Define the properties that make up our complex field
         String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName, getSensitivitySetting(mainPropName), false);
+        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+                getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainProperty();
         propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
         propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag
@@ -472,13 +467,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // If the indexmetadata file specified a list of properties that shouldn't get a forward
         // index,
         // make the new complex field aware of this.
-        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME).getNoForwardIndexProps();
+        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
+                .getNoForwardIndexProps();
         contentsField.setNoForwardIndexProps(noForwardIndexProps);
     }
 
     /**
-     * StringBuffer re-used for building start/end tags and processing
-     * instructions.
+     * StringBuffer re-used for building start/end tags and processing instructions.
      */
     StringBuilder elementBuilder = new StringBuilder();
 
@@ -496,7 +491,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
         // Append any namespace mapping not yet outputted
         if (!outputPrefixMapping.isEmpty()) {
-            for (Map.Entry<String, String> e: outputPrefixMapping.entrySet()) {
+            for (Map.Entry<String, String> e : outputPrefixMapping.entrySet()) {
                 if (e.getKey().length() == 0)
                     elementBuilder.append(" xmlns=\"").append(e.getValue())
                             .append("\"");
@@ -518,8 +513,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     StringBuilder characterContent = new StringBuilder();
 
     /**
-     * Returns and resets the character content captured since the last call to
-     * this method.
+     * Returns and resets the character content captured since the last call to this
+     * method.
      *
      * @return the captured character content.
      */
@@ -542,8 +537,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * Complex field where different aspects (word form, named entity status,
-     * etc.) of the main content of the document are captured for indexing.
+     * Complex field where different aspects (word form, named entity status, etc.)
+     * of the main content of the document are captured for indexing.
      */
     ComplexField contentsField;
 

@@ -18,17 +18,17 @@ package nl.inl.blacklab.perdocument;
 import java.util.Comparator;
 
 public class ComparatorDocProperty implements Comparator<DocResult> {
-	private DocProperty prop;
+    private DocProperty prop;
 
-	boolean sortReverse;
+    boolean sortReverse;
 
-	public ComparatorDocProperty(DocProperty prop) {
-		this.prop = prop;
-		sortReverse = prop.defaultSortDescending();
-	}
+    public ComparatorDocProperty(DocProperty prop) {
+        this.prop = prop;
+        sortReverse = prop.defaultSortDescending();
+    }
 
-	@Override
-	public int compare(DocResult first, DocResult second) {
-		return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
-	}
+    @Override
+    public int compare(DocResult first, DocResult second) {
+        return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
+    }
 }

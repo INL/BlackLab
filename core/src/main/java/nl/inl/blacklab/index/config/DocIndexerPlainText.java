@@ -17,8 +17,8 @@ import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
 /**
- * An indexer for tabular file formats, such as tab-separated
- * or comma-separated values.
+ * An indexer for tabular file formats, such as tab-separated or comma-separated
+ * values.
  */
 public class DocIndexerPlainText extends DocIndexerConfig {
 
@@ -58,7 +58,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
     @Override
     public void setDocument(Reader reader) {
-        this.reader = reader instanceof BufferedReader ? (BufferedReader)reader : new BufferedReader(reader);
+        this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 
     static final Pattern REGEX_WORD = Pattern.compile("\\b\\p{L}+\\b");
@@ -73,8 +73,8 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
         // For the configured annotated field...
         if (config.getAnnotatedFields().size() > 1)
-        	throw new InputFormatConfigException("Plain text files can only have 1 annotated field");
-        for (ConfigAnnotatedField annotatedField: config.getAnnotatedFields().values()) {
+            throw new InputFormatConfigException("Plain text files can only have 1 annotated field");
+        for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             setCurrentComplexField(annotatedField.getName());
 
             // For each line
@@ -97,7 +97,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     String word = m.group();
                     punct.append(line.substring(i, m.start()));
                     i = m.end();
-                    for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+                    for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
                         String processedWord = processString(word, annotation.getProcess());
                         if (annotation.getValuePath().equals(".")) {
                             annotation(annotation.getName(), processedWord, 1, null);
@@ -137,8 +137,8 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     }
 
     @Override
-	protected int getCharacterPosition() {
+    protected int getCharacterPosition() {
         return fullText.length();
-	}
+    }
 
 }

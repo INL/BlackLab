@@ -20,18 +20,18 @@ import org.junit.Test;
 
 public class TestTextPatternRegex {
 
-	@Test
-	public void testEmptyPattern() {
-		TextPattern r = new TextPatternRegex("");
-		Assert.assertEquals("", ((TextPatternRegex)r).getValue());
+    @Test
+    public void testEmptyPattern() {
+        TextPattern r = new TextPatternRegex("");
+        Assert.assertEquals("", ((TextPatternRegex) r).getValue());
 
-		Assert.assertTrue(r instanceof TextPatternTerm);
-		Assert.assertEquals("", ((TextPatternTerm)r).getValue());
-	}
+        Assert.assertTrue(r instanceof TextPatternTerm);
+        Assert.assertEquals("", ((TextPatternTerm) r).getValue());
+    }
 
-	@Test
-	public void testBasicPattern() {
-		TextPattern r = new TextPatternRegex("bla");
-		Assert.assertEquals("bla", ((TextPatternRegex)r).getValue());
-	}
+    @Test
+    public void testBasicPattern() {
+        TextPattern r = new TextPatternRegex("bla");
+        Assert.assertEquals("bla", ((TextPatternRegex) r).getValue());
+    }
 }

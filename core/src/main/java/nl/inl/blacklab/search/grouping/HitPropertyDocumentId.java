@@ -26,39 +26,39 @@ import nl.inl.blacklab.search.Hits;
  */
 public class HitPropertyDocumentId extends HitProperty {
 
-	public HitPropertyDocumentId(Hits hits) {
-		super(hits);
-	}
+    public HitPropertyDocumentId(Hits hits) {
+        super(hits);
+    }
 
-	@Override
-	public HitPropValueInt get(int hitNumber) {
-		Hit result = hits.getByOriginalOrder(hitNumber);
-		return new HitPropValueInt(result.doc);
-	}
+    @Override
+    public HitPropValueInt get(int hitNumber) {
+        Hit result = hits.getByOriginalOrder(hitNumber);
+        return new HitPropValueInt(result.doc);
+    }
 
-	@Override
-	public String getName() {
-		return "document id";
-	}
+    @Override
+    public String getName() {
+        return "document id";
+    }
 
-	@Override
-	public List<String> getPropNames() {
-		return Arrays.asList("document: id");
-	}
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList("document: id");
+    }
 
-	@Override
-	public int compare(Object i, Object j) {
-		Hit a = hits.getByOriginalOrder((Integer)i);
-		Hit b = hits.getByOriginalOrder((Integer)j);
-		return reverse ? b.doc - a.doc : a.doc - b.doc;
-	}
+    @Override
+    public int compare(Object i, Object j) {
+        Hit a = hits.getByOriginalOrder((Integer) i);
+        Hit b = hits.getByOriginalOrder((Integer) j);
+        return reverse ? b.doc - a.doc : a.doc - b.doc;
+    }
 
-	@Override
-	public String serialize() {
-		return serializeReverse() + "docid";
-	}
+    @Override
+    public String serialize() {
+        return serializeReverse() + "docid";
+    }
 
-	public static HitPropertyDocumentId deserialize(Hits hits) {
-		return new HitPropertyDocumentId(hits);
-	}
+    public static HitPropertyDocumentId deserialize(Hits hits) {
+        return new HitPropertyDocumentId(hits);
+    }
 }

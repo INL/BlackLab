@@ -17,90 +17,91 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class JobFacets extends Job {
 
-	public static class JobDescFacets extends JobDescription {
+    public static class JobDescFacets extends JobDescription {
 
-		private List<DocProperty> facets;
+        private List<DocProperty> facets;
 
-		public JobDescFacets(SearchParameters param, JobDescription docsToFacet, SearchSettings searchSettings, List<DocProperty> facets) {
-			super(param, JobFacets.class, docsToFacet, searchSettings);
-			this.facets = facets;
-		}
+        public JobDescFacets(SearchParameters param, JobDescription docsToFacet, SearchSettings searchSettings,
+                List<DocProperty> facets) {
+            super(param, JobFacets.class, docsToFacet, searchSettings);
+            this.facets = facets;
+        }
 
-		@Override
-		public List<DocProperty> getFacets() {
-			return facets;
-		}
+        @Override
+        public List<DocProperty> getFacets() {
+            return facets;
+        }
 
-		@Override
-		public String uniqueIdentifier() {
-			StringBuilder strFacets = new StringBuilder();
-			for (DocProperty facet: facets) {
-				if (strFacets.length() > 0)
-					strFacets.append(", ");
-				strFacets.append(facet.serialize());
-			}
-			return super.uniqueIdentifier() + "[" + facets + "])";
-		}
+        @Override
+        public String uniqueIdentifier() {
+            StringBuilder strFacets = new StringBuilder();
+            for (DocProperty facet : facets) {
+                if (strFacets.length() > 0)
+                    strFacets.append(", ");
+                strFacets.append(facet.serialize());
+            }
+            return super.uniqueIdentifier() + "[" + facets + "])";
+        }
 
-		@Override
-		public void dataStreamEntries(DataStream ds) {
-			super.dataStreamEntries(ds);
-			ds	.entry("facets", facets);
-		}
+        @Override
+        public void dataStreamEntries(DataStream ds) {
+            super.dataStreamEntries(ds);
+            ds.entry("facets", facets);
+        }
 
-		@Override
-		public String getUrlPath() {
-			return "docs";
-		}
+        @Override
+        public String getUrlPath() {
+            return "docs";
+        }
 
-	}
+    }
 
-	private Map<String, DocCounts> counts;
+    private Map<String, DocCounts> counts;
 
-	private DocResults docResults;
+    private DocResults docResults;
 
-	public JobFacets(SearchManager searchMan, User user, JobDescription par) throws BlsException {
-		super(searchMan, user, par);
-	}
+    public JobFacets(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+        super(searchMan, user, par);
+    }
 
-	@Override
-	protected void performSearch() throws BlsException {
-		// Now, group the docs according to the requested facets.
-		docResults = ((JobWithDocs)inputJob).getDocResults();
-		List<DocProperty> props = jobDesc.getFacets();
+    @Override
+    protected void performSearch() throws BlsException {
+        // Now, group the docs according to the requested facets.
+        docResults = ((JobWithDocs) inputJob).getDocResults();
+        List<DocProperty> props = jobDesc.getFacets();
 
-		Map<String, DocCounts> theCounts = new HashMap<>();
-		for (DocProperty facetBy: props) {
-			DocCounts facetCounts = docResults.countBy(facetBy);
-			theCounts.put(facetBy.getName(), facetCounts);
-		}
-		counts = theCounts; // we're done, caller can use the groups now
-	}
+        Map<String, DocCounts> theCounts = new HashMap<>();
+        for (DocProperty facetBy : props) {
+            DocCounts facetCounts = docResults.countBy(facetBy);
+            theCounts.put(facetBy.getName(), facetCounts);
+        }
+        counts = theCounts; // we're done, caller can use the groups now
+    }
 
-	public Map<String, DocCounts> getCounts() {
-		return counts;
-	}
+    public Map<String, DocCounts> getCounts() {
+        return counts;
+    }
 
-	public DocResults getDocResults() {
-		return docResults;
-	}
+    public DocResults getDocResults() {
+        return docResults;
+    }
 
-	@Override
-	protected void dataStreamSubclassEntries(DataStream ds) {
-		ds	.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
-			.entry("numberOfFacets", counts == null ? -1 : counts.size());
-	}
+    @Override
+    protected void dataStreamSubclassEntries(DataStream ds) {
+        ds.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
+                .entry("numberOfFacets", counts == null ? -1 : counts.size());
+    }
 
-	@Override
-	protected void cleanup() {
-		counts = null;
-		docResults = null;
-		super.cleanup();
-	}
+    @Override
+    protected void cleanup() {
+        counts = null;
+        docResults = null;
+        super.cleanup();
+    }
 
-	@Override
-	protected DocResults getObjectToPrioritize() {
-		return docResults;
-	}
+    @Override
+    protected DocResults getObjectToPrioritize() {
+        return docResults;
+    }
 
 }

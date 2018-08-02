@@ -59,14 +59,14 @@ public abstract class DocIndexer implements AutoCloseable {
     protected boolean omitNorms = true;
 
     /**
-     * File we're currently parsing. This can be useful for storing the original filename in the
-     * index.
+     * File we're currently parsing. This can be useful for storing the original
+     * filename in the index.
      */
     protected String documentName;
 
     /**
-     * The Lucene Document we're currently constructing (corresponds to the
-     * document we're indexing)
+     * The Lucene Document we're currently constructing (corresponds to the document
+     * we're indexing)
      */
     protected Document currentLuceneDoc;
 
@@ -81,15 +81,16 @@ public abstract class DocIndexer implements AutoCloseable {
         return currentLuceneDoc;
     }
 
-	/**
-	 * Thrown when the maximum number of documents has been reached
-	 */
-	public static class MaxDocsReachedException extends BLRuntimeException {
-		//
-	}
+    /**
+     * Thrown when the maximum number of documents has been reached
+     */
+    public static class MaxDocsReachedException extends BLRuntimeException {
+        //
+    }
 
     /**
      * Returns our Indexer object
+     * 
      * @return the Indexer object
      */
     public Indexer getIndexer() {
@@ -97,7 +98,8 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * Set the indexer object. Called by Indexer when the DocIndexer is instantiated.
+     * Set the indexer object. Called by Indexer when the DocIndexer is
+     * instantiated.
      *
      * @param indexer our indexer object
      */
@@ -124,13 +126,13 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Set the document to index.
      *
-     * NOTE: you should generally prefer calling the File or byte[] versions
-     * of this method, as those can be more efficient (e.g. when using DocIndexer that
+     * NOTE: you should generally prefer calling the File or byte[] versions of this
+     * method, as those can be more efficient (e.g. when using DocIndexer that
      * parses using VTD-XML).
      *
      * @param reader document
      */
-	public abstract void setDocument(Reader reader);
+    public abstract void setDocument(Reader reader);
 
     /**
      * Set the document to index.
@@ -162,7 +164,8 @@ public abstract class DocIndexer implements AutoCloseable {
      * Set the document to index.
      *
      * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default (utf-8)
+     * @param charset charset to use if no BOM found, or null for the default
+     *            (utf-8)
      * @throws FileNotFoundException if not found
      */
     public void setDocument(File file, Charset charset) throws FileNotFoundException {
@@ -170,14 +173,15 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-	 * Index documents contained in a file.
-	 *
-	 * @throws Exception
-	 */
-	public abstract void index() throws Exception;
+     * Index documents contained in a file.
+     *
+     * @throws Exception
+     */
+    public abstract void index() throws Exception;
 
     /**
      * Check if the specified parameter has a value
+     * 
      * @param name parameter name
      * @return true iff the parameter has a value
      * @deprecated use a DocIndexerConfig-based indexer
@@ -188,7 +192,9 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * Set a parameter for this indexer (such as which type of metadata block to process)
+     * Set a parameter for this indexer (such as which type of metadata block to
+     * process)
+     * 
      * @param name parameter name
      * @param value parameter value
      * @deprecated use a DocIndexerConfig-based indexer
@@ -200,18 +206,20 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Set a number of parameters for this indexer
+     * 
      * @param param the parameter names and values
      * @deprecated use a DocIndexerConfig-based indexer
      */
     @Deprecated
     public void setParameters(Map<String, String> param) {
-        for (Map.Entry<String, String> e: param.entrySet()) {
+        for (Map.Entry<String, String> e : param.entrySet()) {
             parameters.put(e.getKey(), e.getValue());
         }
     }
 
     /**
      * Get a parameter that was set for this indexer
+     * 
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -227,6 +235,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
+     * 
      * @param name parameter name
      * @return the parameter value (or null if it was not specified)
      * @deprecated use a DocIndexerConfig-based indexer
@@ -238,6 +247,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
+     * 
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -254,6 +264,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
+     * 
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -279,6 +290,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Return the fieldtype to use for the specified field.
+     * 
      * @param fieldName the field name
      * @return the fieldtype
      * @deprecated use a DocIndexerConfig-based indexer
@@ -308,8 +320,8 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Enables or disables norms. Norms are disabled by default.
      *
-     * The method name was chosen to match Lucene's Field.setOmitNorms().
-     * Norms are only required if you want to use document-length-normalized scoring.
+     * The method name was chosen to match Lucene's Field.setOmitNorms(). Norms are
+     * only required if you want to use document-length-normalized scoring.
      *
      * @param b if true, doesn't store norms; if false, does store norms
      */
@@ -331,7 +343,8 @@ public abstract class DocIndexer implements AutoCloseable {
 
     public void addMetadataField(String name, String value) {
         if (!ComplexFieldUtil.isValidXmlElementName(name))
-            logger.warn("Field name '" + name + "' is discouraged (field/property names should be valid XML element names)");
+            logger.warn("Field name '" + name
+                    + "' is discouraged (field/property names should be valid XML element names)");
 
         if (name == null || value == null) {
             warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
@@ -378,17 +391,16 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * If any metadata fields were supplied in the indexer parameters,
-     * add them now.
+     * If any metadata fields were supplied in the indexer parameters, add them now.
      *
      * NOTE: we always add these untokenized (because they're usually just
-     * indications of which data set a set of files belongs to), but that
-     * means they don't get lowercased or de-accented. Because metadata queries
-     * are always desensitized, you can't use uppercase or accented letters in
-     * these values or they will never be found. This should be addressed.
+     * indications of which data set a set of files belongs to), but that means they
+     * don't get lowercased or de-accented. Because metadata queries are always
+     * desensitized, you can't use uppercase or accented letters in these values or
+     * they will never be found. This should be addressed.
      */
     protected void addMetadataFieldsFromParameters() {
-        for (Entry<String, String> e: parameters.entrySet()) {
+        for (Entry<String, String> e : parameters.entrySet()) {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
@@ -433,7 +445,7 @@ public abstract class DocIndexer implements AutoCloseable {
         return SensitivitySetting.ONLY_INSENSITIVE;
     }
 
-	protected abstract int getCharacterPosition();
+    protected abstract int getCharacterPosition();
 
     /**
      * Report the amount of new characters processed since the last call

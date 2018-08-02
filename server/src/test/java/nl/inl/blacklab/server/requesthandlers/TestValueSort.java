@@ -12,7 +12,7 @@ import org.junit.Assert;
 import nl.inl.blacklab.server.requesthandlers.RequestHandlerFieldInfo;
 
 public class TestValueSort {
-    
+
     @Test
     public void testValueSort() throws ParseException {
         List<String> list = Arrays.asList("vuur", ")vis(", "noot", "(mies)", "aap", "aa(n)", "aa(s)");

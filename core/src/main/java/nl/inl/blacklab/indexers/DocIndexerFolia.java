@@ -26,128 +26,135 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 
 /**
- * Index a FoLiA file.
- * For information about FoLiA, see http://proycon.github.io/folia/
+ * Index a FoLiA file. For information about FoLiA, see
+ * http://proycon.github.io/folia/
  */
 public class DocIndexerFolia extends DocIndexerXmlHandlers {
 
-    public static String getDisplayName() { return "FoLiA-DocIndexer (alternative indexer)"; }
-    public static String getDescription() { return "DocIndexerFolia, less flexible than config-based one but a bit faster."; }
+    public static String getDisplayName() {
+        return "FoLiA-DocIndexer (alternative indexer)";
+    }
 
-	String wordform;
+    public static String getDescription() {
+        return "DocIndexerFolia, less flexible than config-based one but a bit faster.";
+    }
 
-	String pos;
+    String wordform;
 
-	String lemma;
+    String pos;
 
-	public DocIndexerFolia(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader);
+    String lemma;
 
-		// Get handles to the default properties (the main one & punct)
-		final ComplexFieldProperty propMain = getMainProperty();
-		final ComplexFieldProperty propPunct = getPropPunct();
+    public DocIndexerFolia(Indexer indexer, String fileName, Reader reader) {
+        super(indexer, fileName, reader);
 
-		// Add some extra properties
-		final ComplexFieldProperty propLemma = addProperty("lemma");
-		final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
+        // Get handles to the default properties (the main one & punct)
+        final ComplexFieldProperty propMain = getMainProperty();
+        final ComplexFieldProperty propPunct = getPropPunct();
 
-		// Doc element: the individual documents to index
-		addHandler("/FoLiA", new DocumentElementHandler());
+        // Add some extra properties
+        final ComplexFieldProperty propLemma = addProperty("lemma");
+        final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
 
-		// Word elements: index as main contents
-		addHandler("w", new WordHandlerBase() {
+        // Doc element: the individual documents to index
+        addHandler("/FoLiA", new DocumentElementHandler());
 
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
-				wordform = "";
-				pos = "";
-				lemma = "";
-			}
+        // Word elements: index as main contents
+        addHandler("w", new WordHandlerBase() {
 
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
-				if (wordform.length() > 0) {
-					propMain.addValue(wordform);
-					propPartOfSpeech.addValue(pos);
-					propLemma.addValue(lemma);
-					propPunct.addValue(" ");
-				}
-			}
-		});
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
+                wordform = "";
+                pos = "";
+                lemma = "";
+            }
 
-		// lemma element: contains lemma
-		addHandler("lemma", new ElementHandler() {
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
-				lemma = attributes.getValue("class");
-				if (lemma == null)
-					lemma = "";
-			}
-		});
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
+                if (wordform.length() > 0) {
+                    propMain.addValue(wordform);
+                    propPartOfSpeech.addValue(pos);
+                    propLemma.addValue(lemma);
+                    propPunct.addValue(" ");
+                }
+            }
+        });
 
-		// pos element: contains part of speech
-		addHandler("pos", new ElementHandler() {
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
-				pos = attributes.getValue("class");
-				if (pos == null)
-					pos = "";
-			}
-		});
+        // lemma element: contains lemma
+        addHandler("lemma", new ElementHandler() {
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
+                lemma = attributes.getValue("class");
+                if (lemma == null)
+                    lemma = "";
+            }
+        });
 
-		// t (token) element directly under w (word) element: contains the word form
-		addHandler("w/t", new ContentCapturingHandler() {
+        // pos element: contains part of speech
+        addHandler("pos", new ElementHandler() {
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
+                pos = attributes.getValue("class");
+                if (pos == null)
+                    pos = "";
+            }
+        });
 
-			/** Tokens with a class attribute are (usually?) the original scanned token before correction,
-			 *  so we skip them */
-			boolean isOcr;
+        // t (token) element directly under w (word) element: contains the word form
+        addHandler("w/t", new ContentCapturingHandler() {
 
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
-				isOcr = attributes.getValue("class") != null;
-			}
+            /**
+             * Tokens with a class attribute are (usually?) the original scanned token
+             * before correction, so we skip them
+             */
+            boolean isOcr;
 
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
-				if (!isOcr)
-					wordform = getElementContent();
-			}
-		});
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
+                isOcr = attributes.getValue("class") != null;
+            }
 
-		// Sentence tags: index as tags in the content
-		addHandler("s", new InlineTagHandler());
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
+                if (!isOcr)
+                    wordform = getElementContent();
+            }
+        });
 
-		// Paragraph tags: index as tags in the content
-		addHandler("p", new InlineTagHandler());
+        // Sentence tags: index as tags in the content
+        addHandler("s", new InlineTagHandler());
 
-		// meta elements: metadata fields
-		addHandler("meta", new ContentCapturingHandler() {
+        // Paragraph tags: index as tags in the content
+        addHandler("p", new InlineTagHandler());
 
-			private String metadataFieldName;
+        // meta elements: metadata fields
+        addHandler("meta", new ContentCapturingHandler() {
 
-			/** Open tag: add metadata field */
-			@Override
-			public void startElement(String uri, String localName, String qName, Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
-				metadataFieldName = attributes.getValue("id");
-			}
+            private String metadataFieldName;
 
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
-				if (metadataFieldName != null)
-					addMetadataField(metadataFieldName, getElementContent());
-			}
-		});
-	}
+            /** Open tag: add metadata field */
+            @Override
+            public void startElement(String uri, String localName, String qName, Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
+                metadataFieldName = attributes.getValue("id");
+            }
+
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
+                if (metadataFieldName != null)
+                    addMetadataField(metadataFieldName, getElementContent());
+            }
+        });
+    }
 }

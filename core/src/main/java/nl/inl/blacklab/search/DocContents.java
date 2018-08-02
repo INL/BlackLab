@@ -5,11 +5,11 @@ package nl.inl.blacklab.search;
  */
 public abstract class DocContents {
 
-	@Override
-	public String toString() {
-		return "DocContents: " + getXml();
-	}
+    @Override
+    public String toString() {
+        return "DocContents: " + getXml();
+    }
 
-	public abstract String getXml();
+    public abstract String getXml();
 
 }

@@ -47,11 +47,11 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         ConfigInputFormat.req(name, t, "name");
         ConfigInputFormat.req(containerPath, t, "containerPath");
         ConfigInputFormat.req(wordPath, t, "wordPath");
-        for (ConfigAnnotation a: annotations.values())
+        for (ConfigAnnotation a : annotations.values())
             a.validate();
-        for (ConfigStandoffAnnotations s: standoffAnnotations)
+        for (ConfigStandoffAnnotations s : standoffAnnotations)
             s.validate();
-        for (ConfigInlineTag tag: inlineTags)
+        for (ConfigInlineTag tag : inlineTags)
             tag.validate();
     }
 
@@ -63,11 +63,11 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         result.setWordPath(wordPath);
         result.setTokenPositionIdPath(tokenPositionIdPath);
         result.setPunctPath(punctPath);
-        for (ConfigAnnotation a: annotations.values())
+        for (ConfigAnnotation a : annotations.values())
             result.addAnnotation(a.copy());
-        for (ConfigStandoffAnnotations a: standoffAnnotations)
+        for (ConfigStandoffAnnotations a : standoffAnnotations)
             result.addStandoffAnnotation(a.copy());
-        for (ConfigInlineTag t: inlineTags)
+        for (ConfigInlineTag t : inlineTags)
             result.addInlineTag(t.copy());
         return result;
     }
@@ -89,8 +89,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     }
 
     public void setPunctPath(String punctPath) {
-		this.punctPath = punctPath;
-	}
+        this.punctPath = punctPath;
+    }
 
     public void addInlineTag(ConfigInlineTag inlineTag) {
         this.inlineTags.add(inlineTag);
@@ -125,9 +125,9 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return tokenPositionIdPath;
     }
 
-	public String getPunctPath() {
-		return punctPath;
-	}
+    public String getPunctPath() {
+        return punctPath;
+    }
 
     public List<ConfigInlineTag> getInlineTags() {
         return inlineTags;

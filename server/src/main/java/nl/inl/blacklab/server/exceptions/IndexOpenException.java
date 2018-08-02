@@ -7,19 +7,19 @@ import java.io.IOException;
  */
 public class IndexOpenException extends IOException {
 
-	public IndexOpenException() {
-		super();
-	}
+    public IndexOpenException() {
+        super();
+    }
 
-	public IndexOpenException(String msg) {
-		super(msg);
-	}
+    public IndexOpenException(String msg) {
+        super(msg);
+    }
 
-	public IndexOpenException(Throwable cause) {
-		super(cause);
-	}
+    public IndexOpenException(Throwable cause) {
+        super(cause);
+    }
 
-	public IndexOpenException(String msg, Throwable cause) {
-		super(msg, cause);
-	}
+    public IndexOpenException(String msg, Throwable cause) {
+        super(msg, cause);
+    }
 }

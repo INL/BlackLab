@@ -10,37 +10,37 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public abstract class JobWithHits extends Job {
 
-	/** The hits found */
-	protected Hits hits;
+    /** The hits found */
+    protected Hits hits;
 
-	public JobWithHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
-		super(searchMan, user, par);
-	}
+    public JobWithHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
+        super(searchMan, user, par);
+    }
 
-	public Hits getHits() {
-		return hits;
-	}
+    public Hits getHits() {
+        return hits;
+    }
 
-	@Override
-	protected void dataStreamSubclassEntries(DataStream ds) {
-        ds  .entry("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
-        ds  .entry("hasHitsObject", hits != null);
+    @Override
+    protected void dataStreamSubclassEntries(DataStream ds) {
+        ds.entry("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
+        ds.entry("hasHitsObject", hits != null);
         if (hits != null) {
-            ds  .entry("hitsObjId", hits.getHitsObjId())
-                .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
-                .entry("doneFetchingHits", hits.doneFetchingHits());
+            ds.entry("hitsObjId", hits.getHitsObjId())
+                    .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
+                    .entry("doneFetchingHits", hits.doneFetchingHits());
         }
-	}
+    }
 
-	@Override
-	protected void cleanup() {
-		hits = null;
-		super.cleanup();
-	}
+    @Override
+    protected void cleanup() {
+        hits = null;
+        super.cleanup();
+    }
 
-	@Override
-	protected Hits getObjectToPrioritize() {
-		return hits;
-	}
+    @Override
+    protected Hits getObjectToPrioritize() {
+        return hits;
+    }
 
 }

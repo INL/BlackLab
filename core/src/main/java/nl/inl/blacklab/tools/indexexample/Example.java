@@ -38,153 +38,151 @@ import nl.inl.util.FileUtil.FileTask;
  */
 public class Example {
 
-	/**
-	 * The BlackLab searcher object.
-	 */
-	static Searcher searcher;
+    /**
+     * The BlackLab searcher object.
+     */
+    static Searcher searcher;
 
-	/**
-	 * Some test XML data to index.
-	 */
-	static String[] testData = {
-			"<doc>" + "<w l='the'   p='art' >The</w> " + "<w l='quick' p='adj'>quick</w> "
-					+ "<w l='brown' p='adj'>brown</w> " + "<w l='fox'   p='nou'>fox</w> "
-					+ "<w l='jump'  p='vrb' >jumps</w> " + "<w l='over'  p='pre' >over</w> "
-					+ "<w l='the'   p='art' >the</w> " + "<w l='lazy'  p='adj'>lazy</w> "
-					+ "<w l='dog'   p='nou'>dog</w>" + ".</doc>",
+    /**
+     * Some test XML data to index.
+     */
+    static String[] testData = {
+            "<doc>" + "<w l='the'   p='art' >The</w> " + "<w l='quick' p='adj'>quick</w> "
+                    + "<w l='brown' p='adj'>brown</w> " + "<w l='fox'   p='nou'>fox</w> "
+                    + "<w l='jump'  p='vrb' >jumps</w> " + "<w l='over'  p='pre' >over</w> "
+                    + "<w l='the'   p='art' >the</w> " + "<w l='lazy'  p='adj'>lazy</w> "
+                    + "<w l='dog'   p='nou'>dog</w>" + ".</doc>",
 
-			"<doc> " + "<w l='may' p='vrb'>May</w> " + "<w l='the' p='art'>the</w> "
-					+ "<w l='force' p='nou'>force</w> " + "<w l='be' p='vrb'>be</w> "
-					+ "<w l='with' p='pre'>with</w> " + "<w l='you' p='pro'>you</w>" + ".</doc>", };
+            "<doc> " + "<w l='may' p='vrb'>May</w> " + "<w l='the' p='art'>the</w> "
+                    + "<w l='force' p='nou'>force</w> " + "<w l='be' p='vrb'>be</w> "
+                    + "<w l='with' p='pre'>with</w> " + "<w l='you' p='pro'>you</w>" + ".</doc>", };
 
-	/**
-	 * The main program
-	 * @param args command line arguments
-	 * @throws IOException
-	 */
-	public static void main(String[] args) throws IOException {
+    /**
+     * The main program
+     * 
+     * @param args command line arguments
+     * @throws IOException
+     */
+    public static void main(String[] args) throws IOException {
 
-		// Get a temporary directory for our test index
-		File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");
-		if (indexDir.exists()) {
-			// Delete the old example dir
-			// (NOTE: we cannot do this on exit because memory mappings may
-			//  prevent deletion on Windows)
-			FileUtil.processTree(indexDir, new FileTask() {
-				@Override
-				public void process(File f) {
-					if (!f.delete())
-					    throw new RuntimeException("Could not delete file: " + f);
-				}
-			});
-		}
+        // Get a temporary directory for our test index
+        File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");
+        if (indexDir.exists()) {
+            // Delete the old example dir
+            // (NOTE: we cannot do this on exit because memory mappings may
+            //  prevent deletion on Windows)
+            FileUtil.processTree(indexDir, new FileTask() {
+                @Override
+                public void process(File f) {
+                    if (!f.delete())
+                        throw new RuntimeException("Could not delete file: " + f);
+                }
+            });
+        }
 
-		// Register our custom DocIndexer, then create a BlackLab indexer using it
-		DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
-		Indexer indexer = null;
-		try {
-			indexer = new Indexer(indexDir, true, "exampleformat", (File)null);
-			// Index each of our test "documents".
-			for (int i = 0; i < testData.length; i++) {
-				indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));
-			}
+        // Register our custom DocIndexer, then create a BlackLab indexer using it
+        DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
+        Indexer indexer = null;
+        try {
+            indexer = new Indexer(indexDir, true, "exampleformat", (File) null);
+            // Index each of our test "documents".
+            for (int i = 0; i < testData.length; i++) {
+                indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));
+            }
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			// An error occurred during indexing.
-			System.err.println("An error occurred, aborting indexing. Error details follow.");
-			e.printStackTrace();
+            // An error occurred during indexing.
+            System.err.println("An error occurred, aborting indexing. Error details follow.");
+            e.printStackTrace();
 
-		} finally {
+        } finally {
 
-			// Finalize and close the index.
-		    if (indexer != null)
-		        indexer.close();
+            // Finalize and close the index.
+            if (indexer != null)
+                indexer.close();
 
-		}
+        }
 
-		// Create the BlackLab searcher object
-		searcher = Searcher.open(indexDir);
-		try {
+        // Create the BlackLab searcher object
+        searcher = Searcher.open(indexDir);
+        try {
 
-			// Find the word "the"
-			System.out.println("-----");
-			findPattern(parseCorpusQL(" 'the' "));
+            // Find the word "the"
+            System.out.println("-----");
+            findPattern(parseCorpusQL(" 'the' "));
 
-			// Find prepositions
-			System.out.println("-----");
-			findPattern(parseCorpusQL(" [pos='pre'] "));
+            // Find prepositions
+            System.out.println("-----");
+            findPattern(parseCorpusQL(" [pos='pre'] "));
 
-			// Find sequence of words
-			System.out.println("-----");
-			findPattern(parseCorpusQL(" 'the' []{0,2} 'fo.*' "));
+            // Find sequence of words
+            System.out.println("-----");
+            findPattern(parseCorpusQL(" 'the' []{0,2} 'fo.*' "));
 
-		} catch (ParseException e) {
+        } catch (ParseException e) {
 
-			// Query parse error
-			System.err.println(e.getMessage());
+            // Query parse error
+            System.err.println(e.getMessage());
 
-		} finally {
+        } finally {
 
-			// Close the searcher object
-			searcher.close();
+            // Close the searcher object
+            searcher.close();
 
-		}
-	}
+        }
+    }
 
-	/**
-	 * Parse a Corpus Query Language query
-	 *
-	 * @param query
-	 *            the query to parse
-	 * @return the resulting BlackLab text pattern
-	 * @throws ParseException
-	 */
-	private static TextPattern parseCorpusQL(String query) throws ParseException  {
+    /**
+     * Parse a Corpus Query Language query
+     *
+     * @param query the query to parse
+     * @return the resulting BlackLab text pattern
+     * @throws ParseException
+     */
+    private static TextPattern parseCorpusQL(String query) throws ParseException {
 
-		// A bit of cheating here - CorpusQL only allows double-quoting, but
-		// that makes our example code look ugly (we have to add backslashes).
-		// We may extend CorpusQL to allow single-quoting in the future.
-		query = query.replaceAll("'", "\"");
+        // A bit of cheating here - CorpusQL only allows double-quoting, but
+        // that makes our example code look ugly (we have to add backslashes).
+        // We may extend CorpusQL to allow single-quoting in the future.
+        query = query.replaceAll("'", "\"");
 
-		// Parse query using the CorpusQL parser
-		return CorpusQueryLanguageParser.parse(query);
-	}
+        // Parse query using the CorpusQL parser
+        return CorpusQueryLanguageParser.parse(query);
+    }
 
-	/**
-	 * Find a text pattern in the contents field and display the matches.
-	 *
-	 * @param tp
-	 *            the text pattern to search for
-	 */
-	static void findPattern(TextPattern tp) {
-		// Execute the search
-		Hits hits = searcher.find(tp);
+    /**
+     * Find a text pattern in the contents field and display the matches.
+     *
+     * @param tp the text pattern to search for
+     */
+    static void findPattern(TextPattern tp) {
+        // Execute the search
+        Hits hits = searcher.find(tp);
 
-		Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, "contents"));
+        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, "contents"));
 
-		// Display the concordances
-		displayConcordances(sortedHits);
-	}
+        // Display the concordances
+        displayConcordances(sortedHits);
+    }
 
-	/**
-	 * Display a list of hits.
-	 *
-	 * @param hits
-	 *            the hits to display
-	 */
-	static void displayConcordances(Hits hits) {
-		// Loop over the hits and display.
-		for (Hit hit : hits) {
-			Concordance conc = hits.getConcordance(hit);
-			// Strip out XML tags for display.
-			String[] concParts = conc.partsNoXml();
-			String left = concParts[0];
-			String match = concParts[1];
-			String right = concParts[2];
+    /**
+     * Display a list of hits.
+     *
+     * @param hits the hits to display
+     */
+    static void displayConcordances(Hits hits) {
+        // Loop over the hits and display.
+        for (Hit hit : hits) {
+            Concordance conc = hits.getConcordance(hit);
+            // Strip out XML tags for display.
+            String[] concParts = conc.partsNoXml();
+            String left = concParts[0];
+            String match = concParts[1];
+            String right = concParts[2];
 
-			System.out.printf("[%05d:%06d] %45s[%s]%s%n", hit.doc, hit.start, left, match, right);
-		}
-	}
+            System.out.printf("[%05d:%06d] %45s[%s]%s%n", hit.doc, hit.start, left, match, right);
+        }
+    }
 
 }

@@ -25,7 +25,7 @@ import org.junit.Test;
  * @author eduard
  */
 public class TestYaml {
-    
+
     @Test
     public void testDuplicatObjects() {
         DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig() {
@@ -33,9 +33,9 @@ public class TestYaml {
             public boolean isSupported(String formatIdentifier) {
                 return "nodups".equals(formatIdentifier);
             }
-            
+
         };
-        
+
         try {
             factoryConfig.load("nodups", new File("src/test/resources/yaml/nodups.blf.yaml"));
             Assert.fail("expected duplicates error");
@@ -43,5 +43,5 @@ public class TestYaml {
             Assert.assertTrue(ex.getMessage().contains("Duplicate"));
         }
     }
-    
+
 }

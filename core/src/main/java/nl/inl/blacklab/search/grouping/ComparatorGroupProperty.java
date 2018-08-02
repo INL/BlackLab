@@ -18,18 +18,18 @@ package nl.inl.blacklab.search.grouping;
 import java.util.Comparator;
 
 class ComparatorGroupProperty implements Comparator<Group> {
-	private GroupProperty prop;
+    private GroupProperty prop;
 
-	boolean sortReverse;
+    boolean sortReverse;
 
-	public ComparatorGroupProperty(GroupProperty prop, boolean sortReverse) {
-		this.prop = prop;
-		this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
-	}
+    public ComparatorGroupProperty(GroupProperty prop, boolean sortReverse) {
+        this.prop = prop;
+        this.sortReverse = prop.defaultSortDescending() ? !sortReverse : sortReverse;
+    }
 
-	@Override
-	public int compare(Group first, Group second) {
-		return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
-	}
+    @Override
+    public int compare(Group first, Group second) {
+        return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
+    }
 
 }

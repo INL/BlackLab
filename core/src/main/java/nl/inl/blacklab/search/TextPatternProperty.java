@@ -18,44 +18,45 @@ package nl.inl.blacklab.search;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
- * TextPattern for wrapping another TextPattern so that it applies to a certain word property.
+ * TextPattern for wrapping another TextPattern so that it applies to a certain
+ * word property.
  *
  * For example, to find lemmas starting with "bla": <code>
  * TextPattern tp = new TextPatternProperty("lemma", new TextPatternWildcard("bla*"));
  * </code>
  */
 public class TextPatternProperty extends TextPattern {
-	private TextPattern input;
+    private TextPattern input;
 
-	private String propertyName;
+    private String propertyName;
 
-	public TextPatternProperty(String propertyName, TextPattern input) {
-		this.propertyName = propertyName == null ? "" : propertyName;
-		this.input = input;
-	}
+    public TextPatternProperty(String propertyName, TextPattern input) {
+        this.propertyName = propertyName == null ? "" : propertyName;
+        this.input = input;
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		return input.translate(context.withProperty(propertyName));
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        return input.translate(context.withProperty(propertyName));
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternProperty) {
-			TextPatternProperty tp = ((TextPatternProperty) obj);
-			return input.equals(tp.input) && propertyName.equals(tp.propertyName);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternProperty) {
+            TextPatternProperty tp = ((TextPatternProperty) obj);
+            return input.equals(tp.input) && propertyName.equals(tp.propertyName);
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return input.hashCode() + propertyName.hashCode();
-	}
+    @Override
+    public int hashCode() {
+        return input.hashCode() + propertyName.hashCode();
+    }
 
-	@Override
-	public String toString() {
-		return "PROP(" + propertyName + ", " + input.toString() + ")";
-	}
+    @Override
+    public String toString() {
+        return "PROP(" + propertyName + ", " + input.toString() + ")";
+    }
 
 }

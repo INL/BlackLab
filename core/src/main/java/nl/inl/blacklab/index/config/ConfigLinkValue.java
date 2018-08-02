@@ -27,7 +27,7 @@ public class ConfigLinkValue {
             throw new InputFormatConfigException("Link value must have either valuePath or valueField");
         if (valuePath != null && valueField != null)
             throw new InputFormatConfigException("Link value may only define either valuePath or valueField");
-        for (ConfigProcessStep step: process) {
+        for (ConfigProcessStep step : process) {
             step.validate();
         }
     }

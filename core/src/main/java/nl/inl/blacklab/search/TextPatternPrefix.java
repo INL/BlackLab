@@ -25,39 +25,39 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * A TextPattern matching words that start with the specified prefix.
  */
 public class TextPatternPrefix extends TextPatternTerm {
-	public TextPatternPrefix(String value) {
-		super(value);
-	}
+    public TextPatternPrefix(String value) {
+        super(value);
+    }
 
-	@Override
-	public BLSpanQuery translate(QueryExecutionContext context) {
-		try {
-			return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
-					context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
-		} catch (StackOverflowError e) {
-			// If we pass in a prefix expression matching a lot of words,
-			// stack overflow may occur inside Lucene's automaton building
-			// code and we may end up here.
-			throw new RegexpTooLargeException();
-		}
-	}
+    @Override
+    public BLSpanQuery translate(QueryExecutionContext context) {
+        try {
+            return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
+                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+        } catch (StackOverflowError e) {
+            // If we pass in a prefix expression matching a lot of words,
+            // stack overflow may occur inside Lucene's automaton building
+            // code and we may end up here.
+            throw new RegexpTooLargeException();
+        }
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof TextPatternPrefix) {
-			return super.equals(obj);
-		}
-		return false;
-	}
-	
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof TextPatternPrefix) {
+            return super.equals(obj);
+        }
+        return false;
+    }
+
     // appease PMD
     @Override
     public int hashCode() {
         return super.hashCode();
     }
 
-	@Override
-	public String toString() {
-		return "PREFIX(" + value + ")";
-	}
+    @Override
+    public String toString() {
+        return "PREFIX(" + value + ")";
+    }
 }
