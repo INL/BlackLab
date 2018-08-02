@@ -654,8 +654,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             xmlReader.setEntityResolver(new DummyEntityResolver());
             xmlReader.setContentHandler(saxParseHandler);
             xmlReader.parse(is);
-        } catch (IOException e) {
-            throw e;
         } catch (SAXException e) {
             throw new MalformedInputFileException(e);
         } catch (DocIndexer.MaxDocsReachedException e) {

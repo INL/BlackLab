@@ -15,7 +15,8 @@ class ClauseCombinerNot extends ClauseCombiner {
     private static final int PRIORITY = 4;
 
     enum Type {
-        NOT_CONST, CONST_NOT,
+        NOT_CONST,
+        CONST_NOT,
     }
 
     Type getType(BLSpanQuery left, BLSpanQuery right) {

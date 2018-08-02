@@ -14,7 +14,9 @@ import java.util.Map;
 class InlineObject implements Comparable<InlineObject> {
 
     public static enum InlineObjectType {
-        OPEN_TAG, CLOSE_TAG, PUNCTUATION
+        OPEN_TAG,
+        CLOSE_TAG,
+        PUNCTUATION
     }
 
     private String text;

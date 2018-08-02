@@ -41,7 +41,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
-public class LuceneUtil {
+public final class LuceneUtil {
 
     static final Charset LUCENE_DEFAULT_CHARSET = Charset.forName("utf-8");
     private static final Logger logger = LogManager.getLogger(LuceneUtil.class);

@@ -20,7 +20,8 @@ public class BatchContentStore {
     public static void main(String[] args) throws Exception {
 
         int fileArgNumber = 0;
-        File indexDir = null, inputFile = null;
+        File indexDir = null;
+        File inputFile = null;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.charAt(0) == '-') {

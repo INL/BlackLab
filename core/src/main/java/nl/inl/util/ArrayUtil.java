@@ -1,6 +1,6 @@
 package nl.inl.util;
 
-public class ArrayUtil {
+public final class ArrayUtil {
 
     private ArrayUtil() {
     }

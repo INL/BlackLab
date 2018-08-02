@@ -2,7 +2,9 @@ package nl.inl.blacklab.search.indexstructure;
 
 /** Possible types of metadata fields. */
 public enum FieldType {
-    TOKENIZED, NUMERIC, UNTOKENIZED;
+    TOKENIZED,
+    NUMERIC,
+    UNTOKENIZED;
 
     public static FieldType fromStringValue(String v) {
         switch (v.toLowerCase()) {

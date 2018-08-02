@@ -4,7 +4,8 @@ package nl.inl.blacklab.search.indexstructure;
 public class AltDesc {
     /** Types of property alternatives */
     public enum AltType {
-        UNKNOWN, SENSITIVE
+    UNKNOWN,
+    SENSITIVE
     }
 
     /** name of this alternative */

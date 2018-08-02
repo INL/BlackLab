@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.util;
 
-public class TimeUtil {
+public final class TimeUtil {
 
     private TimeUtil() {
     }

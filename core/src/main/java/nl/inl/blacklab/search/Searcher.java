@@ -783,9 +783,9 @@ public abstract class Searcher {
             ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
-    
+
         getCharacterOffsets(doc, fieldName, starts, ends, true);
-    
+
         List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
             hitspans.add(new HitCharSpan(starts[i], ends[i]));
@@ -882,7 +882,7 @@ public abstract class Searcher {
                 throw new IllegalArgumentException("Field not found: " + fieldName);
             return getWordsFromString(content, startAtWord, endAtWord);
         }
-    
+
         int[] startEnd = startEndWordToCharPos(docId, fieldName, startAtWord, endAtWord);
         return contentStores.getSubstrings(fieldName, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
     }

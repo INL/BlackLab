@@ -346,7 +346,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         this.storeDocuments = storeDocuments;
     }
 
-    protected boolean getStoreDocuments() {
+    protected boolean isStoreDocuments() {
         return storeDocuments;
     }
 
@@ -424,7 +424,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         }
 
-        if (getStoreDocuments()) {
+        if (isStoreDocuments()) {
             storeDocument();
         }
 

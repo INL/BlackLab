@@ -32,9 +32,10 @@ public class ConfigInputFormat {
 
     /** Basic file types we support */
     public enum FileType {
-        XML, TABULAR, // csv, tsv
-        TEXT, // plain text
-        CHAT; // CHILDES CHAT format
+    XML,
+    TABULAR, // csv, tsv
+    TEXT, // plain text
+    CHAT; // CHILDES CHAT format
 
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase());

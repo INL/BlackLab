@@ -282,7 +282,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         xslt.append(XslGenerator.beginTemplate("*[local-name(.)='hl']"))
                 .append("<span class=\"hl\">")
                 .append(XslGenerator.applyTemplates("node()")) // we don't know what level we're at, so explicitly match
-                                                               // everything else
+                // everything else
                 .append("</span>")
                 .append(XslGenerator.endTemplate);
 

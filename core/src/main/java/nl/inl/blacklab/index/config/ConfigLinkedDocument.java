@@ -8,7 +8,9 @@ import java.util.List;
 public class ConfigLinkedDocument {
 
     public static enum MissingLinkPathAction {
-        IGNORE, WARN, FAIL;
+        IGNORE,
+        WARN,
+        FAIL;
 
         public static MissingLinkPathAction fromStringValue(String v) {
             return valueOf(v.toUpperCase());

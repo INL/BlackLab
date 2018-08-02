@@ -17,7 +17,9 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
     private static final int PRIORITY = 3;
 
     enum Type {
-        LEFT_ANY, RIGHT_ANY, BOTH_ANY
+        LEFT_ANY,
+        RIGHT_ANY,
+        BOTH_ANY
     }
 
     Type getType(BLSpanQuery left, BLSpanQuery right) {
@@ -42,13 +44,13 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
             // Expand to left
             any = (SpanQueryAnyToken) left;
             result = new SpanQueryExpansion(right, true, any.hitsLengthMin(), any.hitsLengthMax());
-            result.setIgnoreLastToken(any.getAlwaysHasClosingToken());
+            result.setIgnoreLastToken(any.isAlwaysHasClosingToken());
             return result;
         case RIGHT_ANY:
             // Expand to right
             any = (SpanQueryAnyToken) right;
             result = new SpanQueryExpansion(left, false, any.hitsLengthMin(), any.hitsLengthMax());
-            result.setIgnoreLastToken(any.getAlwaysHasClosingToken());
+            result.setIgnoreLastToken(any.isAlwaysHasClosingToken());
             return result;
         case BOTH_ANY:
             // Combine two anytoken clauses

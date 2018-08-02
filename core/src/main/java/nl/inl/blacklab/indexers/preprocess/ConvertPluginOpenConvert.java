@@ -121,7 +121,7 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 
     private static final Set<String> inputFormats = new HashSet<>(
             Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in
-                                                                                        // openconvert yet): pdf
+                                                                                                                                                      // openconvert yet): pdf
 
     @Override
     public Set<String> getInputFormats() {

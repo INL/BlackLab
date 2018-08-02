@@ -34,8 +34,8 @@ import nl.inl.util.StringUtil;
  *
  * Returns spans corresponding to a certain element (tag) type.
  *
- * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>} elements
- * in the document.
+ * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
+ * elements in the document.
  */
 public class SpanQueryTags extends BLSpanQuery {
 

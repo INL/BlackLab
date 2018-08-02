@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.TextPatternProperty;
 import nl.inl.blacklab.search.TextPatternSequence;
 import nl.inl.blacklab.search.TextPatternWildcard;
 
-public class ContextQlParseUtils {
+public final class ContextQlParseUtils {
 
     private ContextQlParseUtils() {
     }

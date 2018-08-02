@@ -116,7 +116,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         return min + 31 * max + luceneField.hashCode() + (alwaysHasClosingToken ? 37 : 0);
     }
 
-    public boolean getAlwaysHasClosingToken() {
+    public boolean isAlwaysHasClosingToken() {
         return alwaysHasClosingToken;
     }
 

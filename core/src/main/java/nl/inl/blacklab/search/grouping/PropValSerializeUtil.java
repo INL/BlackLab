@@ -6,7 +6,7 @@ import nl.inl.util.StringUtil;
  * Takes care of serializing/deserializing Hit/DocProperties and -Values with
  * proper escaping.
  */
-public class PropValSerializeUtil {
+public final class PropValSerializeUtil {
 
     private final static String PART_SEPARATOR = ":";
 

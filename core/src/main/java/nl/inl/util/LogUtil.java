@@ -30,7 +30,7 @@ import org.apache.logging.log4j.status.StatusLogger;
 /**
  * Utilities for log4j logging.
  */
-public class LogUtil {
+public final class LogUtil {
 
     private LogUtil() {
     }

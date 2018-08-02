@@ -18,7 +18,7 @@ package nl.inl.util;
 /**
  * Exception utilities
  */
-public class ExUtil {
+public final class ExUtil {
 
     private ExUtil() {
     }

@@ -53,7 +53,7 @@ public class JobDocsSorted extends JobWithDocs {
         DocResults unsorted = ((JobWithDocs) inputJob).getDocResults();
         setPriority(unsorted); // set prio manually, so we don't expose the unsorted results by assigning to
                                // this.docResults
-        // Now, sort the docs.
+                               // Now, sort the docs.
         DocSortSettings docSortSett = jobDesc.getDocSortSettings();
         if (docSortSett.sortBy() != null) {
             // Be lenient of clients passing wrong sortBy values; ignore bad sort requests

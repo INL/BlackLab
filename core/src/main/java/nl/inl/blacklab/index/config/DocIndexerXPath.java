@@ -43,7 +43,10 @@ import nl.inl.util.XmlUtil;
 public class DocIndexerXPath extends DocIndexerConfig {
 
     private static enum FragmentPosition {
-        BEFORE_OPEN_TAG, AFTER_OPEN_TAG, BEFORE_CLOSE_TAG, AFTER_CLOSE_TAG
+        BEFORE_OPEN_TAG,
+        AFTER_OPEN_TAG,
+        BEFORE_CLOSE_TAG,
+        AFTER_CLOSE_TAG
     }
 
     /** Our input document */

@@ -18,7 +18,9 @@ public class ThreadPriority implements Prioritizable {
      * The different priorities a thread can have in our system.
      */
     public enum Level {
-        PAUSED, RUNNING_LOW_PRIO, RUNNING
+    PAUSED,
+    RUNNING_LOW_PRIO,
+    RUNNING
     }
 
     protected static final Logger logger = LogManager.getLogger(ThreadPriority.class);

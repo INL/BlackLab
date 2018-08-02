@@ -142,7 +142,7 @@ public class PluginManager {
                 }
 
                 Optional<ObjectNode> config = Optional.ofNullable(pluginConfig.get(plugin.getId())) // get key +
-                                                                                                    // optional value
+                        // optional value
                         .filter(n -> !(n instanceof NullNode)) // if value
                         .map(n -> YamlJsonReader.obj(n, plugin.getId())); // get value
 

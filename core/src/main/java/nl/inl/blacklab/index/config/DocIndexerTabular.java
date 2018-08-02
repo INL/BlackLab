@@ -33,7 +33,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     /** Tabular types we support */
     static enum Type {
-        CSV, TSV;
+    CSV,
+    TSV;
 
         public static Type fromStringValue(String str) {
             switch (str.toUpperCase()) {
@@ -87,9 +88,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
     private boolean hasGlueTags;
 
     /**
-     * After an inline tag such as {@code <s>}, may there be separator character(s) like on
-     * the non-tag lines? By default, this is not allowed, but this option can be
-     * turned on in the configuration file.
+     * After an inline tag such as {@code <s>}, may there be separator character(s)
+     * like on the non-tag lines? By default, this is not allowed, but this option
+     * can be turned on in the configuration file.
      */
     private boolean allowSeparatorsAfterInlineTags;
 
@@ -246,7 +247,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
                     // It's a regular token
                     beginWord();
-                    if (getStoreDocuments()) {
+                    if (isStoreDocuments()) {
                         p.printRecord(record);
                     }
 

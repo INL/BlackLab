@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 /**
  * Some utility functions for dealing with complex field names.
  */
-public class ComplexFieldUtil {
+public final class ComplexFieldUtil {
 
     public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
@@ -125,7 +125,9 @@ public class ComplexFieldUtil {
     }
 
     public enum BookkeepFieldType {
-        CONTENT_ID, FORWARD_INDEX_ID, LENGTH_TOKENS
+        CONTENT_ID,
+        FORWARD_INDEX_ID,
+        LENGTH_TOKENS
     }
 
     public static boolean isBookkeepingSubfield(String bookkeepName) {

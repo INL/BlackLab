@@ -149,7 +149,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 String line = reader.readLine();
                 if (line == null)
                     break;
-                if (getStoreDocuments()) {
+                if (isStoreDocuments()) {
                     fullText.append(line);
                 }
                 lineNumber++;
@@ -283,7 +283,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // Get the encoding from a possible encoding line, or null if not an encoding
     // line
-    private Charset getCharEncoding(String encodingLine) {
+    private static Charset getCharEncoding(String encodingLine) {
         // if str[1:] in legalcharencodings) {
         // result = str[1:]
         // else:

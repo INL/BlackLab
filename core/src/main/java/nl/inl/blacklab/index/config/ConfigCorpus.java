@@ -18,7 +18,8 @@ public class ConfigCorpus {
      * Text direction: left-to-right or right-to-left (and possible future values?)
      */
     public static enum TextDirection {
-        LEFT_TO_RIGHT("ltr", "lefttoright"), RIGHT_TO_LEFT("rtl", "righttoleft");
+    LEFT_TO_RIGHT("ltr", "lefttoright"),
+    RIGHT_TO_LEFT("rtl", "righttoleft");
 
         private String[] codes;
 

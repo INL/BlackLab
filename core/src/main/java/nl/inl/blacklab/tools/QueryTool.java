@@ -148,7 +148,10 @@ public class QueryTool {
 
     /** What results view do we want to see? */
     enum ShowSetting {
-        HITS, DOCS, GROUPS, COLLOC
+        HITS,
+        DOCS,
+        GROUPS,
+        COLLOC
     }
 
     /**

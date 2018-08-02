@@ -35,7 +35,8 @@ public class XmlHighlighter {
      * tag.
      */
     public enum UnbalancedTagsStrategy {
-        ADD_TAG, REMOVE_TAG
+    ADD_TAG,
+    REMOVE_TAG
     }
 
     enum TagType {

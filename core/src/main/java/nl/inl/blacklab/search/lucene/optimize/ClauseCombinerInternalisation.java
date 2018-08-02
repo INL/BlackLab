@@ -13,7 +13,8 @@ class ClauseCombinerInternalisation extends ClauseCombiner {
     private static final int PRIORITY = 2;
 
     enum Type {
-        INTERNALIZE_RIGHT_NEIGHBOUR, INTERNALIZE_LEFT_NEIGHBOUR,
+        INTERNALIZE_RIGHT_NEIGHBOUR,
+        INTERNALIZE_LEFT_NEIGHBOUR,
     }
 
     Type getType(BLSpanQuery left, BLSpanQuery right) {

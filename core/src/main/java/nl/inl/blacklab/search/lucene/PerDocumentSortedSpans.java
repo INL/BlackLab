@@ -33,9 +33,9 @@ class PerDocumentSortedSpans extends BLSpans {
     final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
 
     private int curDoc = -1;
-    
+
     private int curStart = -1;
-    
+
     private int curEnd = -1;
 
     private SpansInBuckets bucketedSpans;

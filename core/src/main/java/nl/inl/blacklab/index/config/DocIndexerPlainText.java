@@ -83,7 +83,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                 String line = reader.readLine();
                 if (line == null)
                     break;
-                if (getStoreDocuments()) {
+                if (isStoreDocuments()) {
                     fullText.append(line);
                 }
 

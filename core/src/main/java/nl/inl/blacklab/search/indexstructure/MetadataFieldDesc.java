@@ -14,10 +14,10 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 
     /** Conditions for using the unknown value */
     public enum UnknownCondition {
-        NEVER, // never use unknown value
-        MISSING, // use unknown value when field is missing (not when empty)
-        EMPTY, // use unknown value when field is empty (not when missing)
-        MISSING_OR_EMPTY; // use unknown value when field is empty or missing
+    NEVER, // never use unknown value
+    MISSING, // use unknown value when field is missing (not when empty)
+    EMPTY, // use unknown value when field is empty (not when missing)
+    MISSING_OR_EMPTY; // use unknown value when field is empty or missing
 
         public static UnknownCondition fromStringValue(String string) {
             return valueOf(string.toUpperCase());
@@ -31,7 +31,8 @@ public class MetadataFieldDesc extends BaseFieldDesc {
     /** Possible value for valueListComplete */
     public enum ValueListComplete {
         UNKNOWN, // not known yet; is treated as 'no'
-        YES, NO
+        YES,
+        NO
     }
 
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
