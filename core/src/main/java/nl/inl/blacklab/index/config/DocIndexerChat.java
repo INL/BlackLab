@@ -90,7 +90,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		Charset charEncoding = getCharEncoding(charEncodingLine);
+		Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
 		if (charEncoding == null) {
 		    log("No character encoding encountered in " + file.getPath() + "; using utf-8");
 		    charEncoding = defaultCharset;
@@ -157,7 +157,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 			        lineToProcess = combineLines(lineToProcess, line);
 			    else if (START_CHARS_TO_CHECK.contains(startChar)) {
 			        if (!lineToProcess.isEmpty()) {
-			            Pair<Integer, Boolean> result = processLine(lineNumber, lineToProcess, metadata, uttId, headerModified);
+			            Pair<Integer, Boolean> result = processLine(lineNumber, lineToProcess, uttId, headerModified);
 			            uttId = result.getLeft();
 			            headerModified = result.getRight();
 			        }
@@ -170,7 +170,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 	    		endBlock();
 			addDocumentMetadata(metadata); // "header metadata" is document metadata (?)
 			// deal with the last line
-			Pair<Integer, Boolean> result2 = processLine(lineNumber, lineToProcess, metadata, uttId, headerModified);
+			Pair<Integer, Boolean> result2 = processLine(lineNumber, lineToProcess, uttId, headerModified);
 			uttId = result2.getLeft();
 			headerModified = result2.getRight();
         }
@@ -200,7 +200,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         TimeZone tz = TimeZone.getTimeZone("UTC");
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
         df.setTimeZone(tz);
-        return df.format(new Date());
+        return df.format(d);
     }
 
 	/**
@@ -427,6 +427,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
+                ;
             } else if (ALL_HEADERS.contains(el)) {
                 Object curval = metadata.get(el);
                 if (curval instanceof String) {
@@ -587,7 +588,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         }
     }
 
-    private Pair<Integer, Boolean> processLine(int lineNumber, String line, Object md, int uttId, boolean headerModified) {
+    private Pair<Integer, Boolean> processLine(int lineNumber, String line, int uttId, boolean headerModified) {
         char startChar = line.charAt(0);
         if (startChar == MD_CHAR) {
             // to implement

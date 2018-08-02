@@ -294,15 +294,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
     }
 
-    /* Position of start tags and their index in the property arrays, so we can add payload when we find the end tags */
-    static class OpenTagInfo {
-        public int index;
-
-        public OpenTagInfo(int index) {
-            this.index = index;
-        }
-    }
-
     List<Integer> openTagIndexes = new ArrayList<>();
 
     /** Handle tags. */
@@ -499,7 +490,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         elementBuilder.setLength(0); // clear
         elementBuilder.append("<").append(qName);
         for (int i = 0; i < attributes.getLength(); i++) {
-            String value = escapeXmlChars(attributes.getValue(i));
+            String value = StringEscapeUtils.escapeXml10(attributes.getValue(i));
             elementBuilder.append(" ").append(attributes.getQName(i))
                     .append("=\"").append(value).append("\"");
         }
@@ -518,45 +509,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
         elementBuilder.append(">");
         processContent(elementBuilder.toString());
-    }
-
-    /**
-     * StringBuffer re-used for escaping XML chars
-     */
-    StringBuilder escapeBuilder = new StringBuilder();
-
-    /**
-     * Escape the special XML chars (<, >, &, ") with their named entity
-     * equivalents.
-     *
-     * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder
-     * for increased memory efficiency.
-     *
-     * @param source
-     *            the source string
-     * @return the escaped string
-     */
-    public String escapeXmlChars(String source) {
-        return StringEscapeUtils.escapeXml10(source);
-    }
-
-    /**
-     * Escape the special XML chars (<, >, &, ") with their named entity
-     * equivalents.
-     *
-     * NOTE: copy of StringUtil.escapeXmlChars that re-uses its StringBuilder
-     * for increased memory efficiency.
-     *
-     * @param source
-     *            the source string
-     * @param start
-     *            start index of the string to escape
-     * @param length
-     *            length of the string to escape
-     * @return the escaped string
-     */
-    public String escapeXmlChars(char[] source, int start, int length) {
-        return StringEscapeUtils.escapeXml10(new String(source, start, length));
     }
 
     /**
@@ -582,7 +534,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         if (characterContent.length() < MAX_CHARACTER_CONTENT_CAPTURE_LENGTH)
             characterContent.append(buffer, start, length);
 
-        String s = escapeXmlChars(buffer, start, length);
+        String s = StringEscapeUtils.escapeXml10(new String(buffer, start, length));
         processContent(s);
 
         // Call any hooks associated with this element

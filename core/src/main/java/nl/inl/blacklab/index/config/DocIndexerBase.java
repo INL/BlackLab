@@ -265,7 +265,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             return new File(inputFile);
         File f = indexer.getLinkedFile(inputFile);
         if (f == null)
-            throw new FileNotFoundException("References file not found: " + f);
+            throw new FileNotFoundException("Referenced file not found");
         if (!f.canRead())
             throw new IOException("Cannot read referenced file " + f);
         return f;

@@ -72,7 +72,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
 	    List<String> order = displayOrder;
 	    if (order == null || order.size() == 0)
 	        order = Arrays.asList("word", "lemma", "pos"); // default ordering
-	    sortProperties(sorted, displayOrder);
+	    sortProperties(sorted, order);
 		return sorted;
 	}
 

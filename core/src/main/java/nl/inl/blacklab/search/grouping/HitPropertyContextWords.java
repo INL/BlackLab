@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +34,7 @@ public class HitPropertyContextWords extends HitProperty {
 	private static final int MAX_HIT_LENGTH = 10;
 
 	/** A location in the hit context to start a stretch of words from. */
-	public enum ContextStart {
+	public static enum ContextStart {
 		LEFT_OF_HIT("L"),          // left context of the hit
 		HIT_TEXT_FROM_START("H"),  // hit text
 		HIT_TEXT_FROM_END("E"),    // hit text, backwards from last matched word
@@ -55,7 +56,7 @@ public class HitPropertyContextWords extends HitProperty {
 	 *  Note the public members because usage of this object in
 	 *  sorting/grouping is performance-critical.
 	 */
-	public static class ContextPart {
+	public static class ContextPart implements Serializable {
 
 		/*
 		 * More generic:

@@ -216,7 +216,7 @@ public class LuceneUtil {
 				return partial;
 			}
 			return concordanceWords;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
@@ -252,7 +252,7 @@ public class LuceneUtil {
 				}
 				freq.put(term, n);
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}

@@ -48,6 +48,24 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 	private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
 
+    @SuppressWarnings("deprecation")
+    private static void init(DocIndexer docIndexer) {
+        String zipFilePath = docIndexer.getParameter("metadataZipFile");
+        if (zipFilePath == null) {
+            zipFilePath = docIndexer.getParameter("metadataDir");
+            if (zipFilePath == null)
+                throw new RuntimeException(
+                        "For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
+            metadataDir = new File(zipFilePath);
+        } else {
+            try {
+                metadataZipFile = new ZipFile(new File(zipFilePath));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 	static private ZipFile metadataZipFile = null;
 
 	static private File metadataDir = null;
@@ -58,21 +76,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
     public MetadataFetcherSonarCmdi(DocIndexer docIndexer) {
 		super(docIndexer);
 
-		if (metadataZipFile == null) {
-			String zipFilePath = docIndexer.getParameter("metadataZipFile");
-			if (zipFilePath == null) {
-				zipFilePath = docIndexer.getParameter("metadataDir");
-				if (zipFilePath == null)
-					throw new RuntimeException("For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
-				metadataDir = new File(zipFilePath);
-			} else {
-				try {
-					metadataZipFile = new ZipFile(new File(zipFilePath));
-				} catch (IOException e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
+		if (metadataZipFile == null)
+			init(docIndexer);
 
 		metadataPathInZip = docIndexer.getParameter("metadataPath", "");
 		if (metadataPathInZip.length() == 0)

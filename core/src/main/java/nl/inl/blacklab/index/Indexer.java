@@ -117,7 +117,7 @@ public class Indexer {
         }
     }
 
-    private static interface PathCapturingFileHandler extends FileProcessor.FileHandler {
+    private interface PathCapturingFileHandler extends FileProcessor.FileHandler {
         byte[] getFile();
     }
 

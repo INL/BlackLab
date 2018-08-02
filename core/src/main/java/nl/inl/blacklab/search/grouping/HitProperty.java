@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -28,7 +29,7 @@ import nl.inl.blacklab.search.Hits;
 /**
  * Abstract base class for a property of a hit, like document title, hit text, right context, etc.
  */
-public abstract class HitProperty implements Comparator<Object> {
+public abstract class HitProperty implements Comparator<Object>, Serializable {
 	protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
 	/** The Hits object we're looking at */

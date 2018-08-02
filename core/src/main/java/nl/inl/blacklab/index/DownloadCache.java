@@ -208,7 +208,7 @@ public class DownloadCache {
     }
 
     public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
-        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1000000;
+        maxDownloadedFileSize = (long)maxDownloadedFileSizeMegs * 1000000L;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }

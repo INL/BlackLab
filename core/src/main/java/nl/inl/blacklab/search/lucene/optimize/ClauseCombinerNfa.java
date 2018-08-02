@@ -20,10 +20,11 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
 	private static final int FORWARD_PRIORITY = 10000000;
 
+	// NOTE: BACKWARD_PRIORITY has slightly different value to prevent FindBugs "same code for two branches" warning
 	/** NOTE: this used to be twice the value of FORWARD_PRIORITY, in an attempt to
 	 *  prevent building NFAs in different directions, resulting in a suboptimal result,
 	 *  but that actually causes good optimization opportunities to be skipped altogether. */
-	private static final int BACKWARD_PRIORITY = 10000000;
+	private static final int BACKWARD_PRIORITY = 10000001;
 
 	/**
 	 * The default value of nfaThreshold.

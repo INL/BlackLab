@@ -1,9 +1,10 @@
 package nl.inl.blacklab.search.grouping;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-public class HitPropValueString extends HitPropValue {
+public class HitPropValueString extends HitPropValue implements Serializable {
 	String value;
 
 	public HitPropValueString(String value) {
@@ -22,7 +23,12 @@ public class HitPropValueString extends HitPropValue {
 
 	@Override
 	public boolean equals(Object obj) {
-		return obj == null ? false : value.equals(((HitPropValueString)obj).value);
+	    if (obj == this)
+	        return true;
+	    if (obj instanceof HitPropValueString) {
+	        return value.equals(((HitPropValueString)obj).value);
+	    }
+        return false;
 	}
 
 	public static HitPropValue deserialize(String info) {

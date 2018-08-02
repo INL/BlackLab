@@ -297,10 +297,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	 */
 	public ContentStoreDirUtf8(File dir, boolean create) {
 		this.dir = dir;
-		if (!dir.exists()) {
-			if (!dir.mkdir())
-			    throw new RuntimeException("Could not create dir: " + dir);
-		}
+		if (!dir.exists() && !dir.mkdir())
+            throw new RuntimeException("Could not create dir: " + dir);
 		tocFile = new File(dir, "toc.dat");
 		if (create && tocFile.exists()) {
 			// Delete the ContentStore files
@@ -536,7 +534,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 		while (true) {
 			// Will we cross a(nother) block boundary writing this part of the content?
 			int nextBlockBoundary = blockOffsetWhileStoring.size() * newEntryBlockSizeCharacters;
-			boolean willWeCrossBlockBoundary = (offsetAfterThisPart > nextBlockBoundary);
+			boolean willWeCrossBlockBoundary = offsetAfterThisPart > nextBlockBoundary;
 			if (!willWeCrossBlockBoundary) {
 				// No; break out of this loop and write the last bit of content.
 				break;

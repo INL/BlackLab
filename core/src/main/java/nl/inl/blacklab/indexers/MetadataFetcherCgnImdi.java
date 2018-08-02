@@ -43,7 +43,25 @@ import nl.inl.blacklab.index.MetadataFetcher;
  */
 public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
-	private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
+    private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
+
+    @SuppressWarnings("deprecation")
+    private static void init(DocIndexer docIndexer) {
+        String zipFilePath = docIndexer.getParameter("metadataZipFile");
+        if (zipFilePath == null) {
+            zipFilePath = docIndexer.getParameter("metadataDir");
+            if (zipFilePath == null)
+                throw new RuntimeException(
+                        "For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
+            metadataDir = new File(zipFilePath);
+        } else {
+            try {
+                metadataZipFile = new ZipFile(new File(zipFilePath));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
 	static private ZipFile metadataZipFile = null;
 
@@ -51,25 +69,11 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
 	private String metadataPathInZip;
 
-	@SuppressWarnings("deprecation")
+    @SuppressWarnings("deprecation")
     public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
 		super(docIndexer);
-		if (metadataZipFile == null) {
-			String zipFilePath = docIndexer.getParameter("metadataZipFile");
-			if (zipFilePath == null) {
-				zipFilePath = docIndexer.getParameter("metadataDir");
-				if (zipFilePath == null)
-					throw new RuntimeException(
-							"For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
-				metadataDir = new File(zipFilePath);
-			} else {
-				try {
-					metadataZipFile = new ZipFile(new File(zipFilePath));
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		}
+		if (metadataZipFile == null)
+		    init(docIndexer);
 
 		metadataPathInZip = docIndexer.getParameter("metadataPath", "");
 		if (metadataPathInZip.length() == 0)
@@ -78,7 +82,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 			metadataPathInZip += "/";
 	}
 
-	@Override
+    @Override
 	public void close() {
 		// TODO: make sure zip file is properly closed when done
 		// (change structure so metadata fetcher isn't instantiated for each

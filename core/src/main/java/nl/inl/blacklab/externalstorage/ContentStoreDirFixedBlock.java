@@ -299,10 +299,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	 */
 	public ContentStoreDirFixedBlock(File dir, boolean create) {
 		this.dir = dir;
-		if (!dir.exists()) {
-			if (!dir.mkdir())
-			    throw new RuntimeException("Could not create dir: " + dir);
-		}
+		if (!dir.exists() && !dir.mkdir())
+            throw new RuntimeException("Could not create dir: " + dir);
 		tocFile = new File(dir, TOC_FILE_NAME);
         contentsFile = new File(dir, CONTENTS_FILE_NAME);
 		if (create && tocFile.exists()) {

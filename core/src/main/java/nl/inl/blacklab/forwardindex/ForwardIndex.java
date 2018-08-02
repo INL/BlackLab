@@ -218,7 +218,7 @@ public abstract class ForwardIndex {
 
 	/** A task to perform on a document in the forward index. */
 	public interface ForwardIndexDocTask {
-		public abstract void perform(int fiid, int[] tokenIds);
+		void perform(int fiid, int[] tokenIds);
 	}
 
 	/** Perform a task on each document in the forward index.

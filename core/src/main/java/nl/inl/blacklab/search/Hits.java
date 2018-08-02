@@ -91,12 +91,16 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
 	}
 
     /** Id the next Hits instance will get */
-    protected static volatile int nextHitsObjId = 0;
+    private static int nextHitsObjId = 0;
+    
+    protected synchronized static int getNextHitsObjId() {
+        return nextHitsObjId++;
+    }
 
 	//----------------------------------------------------------
 
     /** Unique id of this Hits instance */
-    protected final int hitsObjId = nextHitsObjId++;
+    protected final int hitsObjId = getNextHitsObjId();
 
     protected Searcher searcher;
 

@@ -364,12 +364,13 @@ public abstract class DocIndexer implements AutoCloseable {
             }
             // Index these fields as numeric too, for faster range queries
             // (we do both because fields sometimes aren't exclusively numeric)
-            int n = 0;
+            int n;
             try {
                 n = Integer.parseInt(value);
             } catch (NumberFormatException e) {
                 // This just happens sometimes, e.g. given multiple years, or
                 // descriptive text like "around 1900". OK to ignore.
+                n = 0;
             }
             IntField nf = new IntField(numFieldName, n, Store.YES);
             currentLuceneDoc.add(nf);
