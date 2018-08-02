@@ -114,7 +114,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 			if (anchorSpans == null)
 				return null;
 			if (!clauses.get(0).hitsAreUnique())
-				anchorSpans = BLSpans.optSortUniq(anchorSpans, false, true);
+				anchorSpans = BLSpans.optSortUniq(anchorSpans, !clauses.get(0).hitsStartPointSorted(), true);
 			return new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
 					fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
 		}
