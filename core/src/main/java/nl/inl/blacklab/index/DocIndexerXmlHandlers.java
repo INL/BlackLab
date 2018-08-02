@@ -537,7 +537,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * @return the escaped string
      */
     public String escapeXmlChars(String source) {
-        return StringEscapeUtils.escapeXml10(source); //@@@@@@@@@@@
+        return StringEscapeUtils.escapeXml10(source);
     }
 
     /**
@@ -556,31 +556,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * @return the escaped string
      */
     public String escapeXmlChars(char[] source, int start, int length) {
-        escapeBuilder.setLength(0); // clear
-        int end = start + length;
-        for (int i = start; i < end; i++) {
-            char c = source[i];
-            if (c == '<' || c == '>' || c == '&' || c == '"') {
-                escapeBuilder.append(source, start, i - start);
-                switch (c) {
-                case '<':
-                    escapeBuilder.append("&lt;");
-                    break;
-                case '>':
-                    escapeBuilder.append("&gt;");
-                    break;
-                case '&':
-                    escapeBuilder.append("&amp;");
-                    break;
-                case '"':
-                    escapeBuilder.append("&quot;");
-                    break;
-                }
-                start = i + 1;
-            }
-        }
-        escapeBuilder.append(source, start, end - start);
-        return escapeBuilder.toString();
+        return StringEscapeUtils.escapeXml10(new String(source, start, length));
     }
 
     /**
