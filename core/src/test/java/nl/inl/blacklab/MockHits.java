@@ -1,5 +1,6 @@
 package nl.inl.blacklab;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -69,9 +70,8 @@ public class MockHits extends Hits {
 	}
 
 	@Override
-	@Deprecated
-	public void sort(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		throw new UnsupportedOperationException();
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+        throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -122,12 +122,6 @@ public class MockHits extends Hits {
 	@Override
 	public boolean doneFetchingHits() {
 		return true;
-	}
-
-	@SuppressWarnings("deprecation")
-	@Override
-	public Iterable<Hit> hitsInOriginalOrder() {
-		return getHits();
 	}
 
 	@Override
@@ -219,5 +213,25 @@ public class MockHits extends Hits {
 	public String toString() {
         return "MockHits#" + hitsObjId;
 	}
+
+    @Override
+    public Iterator<Hit> iterator() {
+        return new Iterator<Hit>() {
+            
+            int current = -1;
+
+            @Override
+            public boolean hasNext() {
+                return current < doc.length - 1;
+            }
+
+            @Override
+            public Hit next() {
+                current++;
+                return new Hit(doc[current], start[current], end[current]);
+            }
+            
+        };
+    }
 
 }

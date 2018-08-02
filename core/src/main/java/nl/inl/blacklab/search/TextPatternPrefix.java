@@ -50,12 +50,6 @@ public class TextPatternPrefix extends TextPatternTerm {
 		return false;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "PREFIX(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "PREFIX(" + value + ")";

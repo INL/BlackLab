@@ -90,12 +90,6 @@ public class TextPatternWildcard extends TextPatternTerm {
 		return false;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "WILDCARD(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "WILDCARD(" + value + ")";

@@ -49,12 +49,6 @@ public class TextPatternOr extends TextPatternCombiner {
 		return false;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "OR(" + clausesToString(clauses, context) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "OR(" + clausesToString(clauses) + ")";

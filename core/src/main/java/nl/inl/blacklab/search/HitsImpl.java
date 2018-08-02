@@ -196,7 +196,7 @@ public class HitsImpl extends Hits {
 	protected int previousHitDoc = -1;
 
 	@Override
-	public Hits copy() {
+	public HitsImpl copy() {
 		return new HitsImpl(this);
 	}
 
@@ -265,10 +265,8 @@ public class HitsImpl extends Hits {
 	 * @param concordanceFieldName
 	 *            field to use by default when finding concordances
 	 * @param hits the list of hits to wrap
-	 * @deprecated if you need a different concordance field, set it manually
 	 */
-	@Deprecated
-	HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
+	private HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
 		this(searcher, hits);
 		settings.setConcordanceField(concordanceFieldName);
 	}
@@ -329,25 +327,6 @@ public class HitsImpl extends Hits {
 	}
 
 	/**
-	 * Construct a Hits object from a SpanQuery.
-	 *
-	 * @param searcher
-	 *            the searcher object
-	 * @param concordanceFieldPropName
-	 *            field to use by default when finding concordances
-	 * @param sourceQuery
-	 *            the query to execute to get the hits
-	 * @throws TooManyClauses if the query is overly broad (expands to too many terms)
-	 * @deprecated if you need a different concordance field, set it manually
-	 */
-	@Deprecated
-	HitsImpl(Searcher searcher, String concordanceFieldPropName, SpanQuery sourceQuery)
-			throws TooManyClauses {
-		this(searcher, sourceQuery);
-		settings.setConcordanceField(concordanceFieldPropName);
-	}
-
-	/**
 	 * Construct a Hits object from a Spans.
 	 *
 	 * If possible, don't use this constructor, use the one that takes
@@ -369,36 +348,6 @@ public class HitsImpl extends Hits {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-	}
-
-	/**
-	 * Construct a Hits object from a Spans.
-	 *
-	 * If possible, don't use this constructor, use the one that takes
-	 * a SpanQuery, as it's more efficient.
-	 *
-	 * @param searcher
-	 *            the searcher object
-	 * @param concordanceFieldPropName
-	 *            field to use by default when finding concordances
-	 * @param source
-	 *            where to retrieve the Hit objects from
-	 * @deprecated if you need a different concordance field, set it manually
-	 */
-	@Deprecated
-	HitsImpl(Searcher searcher, String concordanceFieldPropName, BLSpans source) {
-		this(searcher, source);
-		settings.setConcordanceField(concordanceFieldPropName);
-	}
-
-	/** Sets the desired context size.
-	 * @param contextSize the context size (number of words to fetch around hits)
-	 * @deprecated use settings().setContextSize()
-	 */
-	@Override
-	@Deprecated
-	public synchronized void setContextSize(int contextSize) {
-		settings().setContextSize(contextSize);
 	}
 
 	/**
@@ -580,11 +529,8 @@ public class HitsImpl extends Hits {
 	 * @param reverseSort
 	 *            if true, sort in descending order
 	 * @param sensitive whether to sort case-sensitively or not
-	 * @deprecated use sortedBy()
 	 */
-	@Override
-	@Deprecated
-	public synchronized void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+	private synchronized void sort(final HitProperty sortProp, boolean reverseSort, boolean sensitive) {
 		try {
 			ensureAllHitsRead();
 		} catch (InterruptedException e) {
@@ -620,6 +566,14 @@ public class HitsImpl extends Hits {
 				sortOrder[i] = sortOrder[n - i - 1];
 			}
 		}
+	}
+	
+	@Override
+	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
+        HitsImpl hits = copy();
+        sortProp = sortProp.copyWithHits(hits);
+        hits.sort(sortProp, reverseSort, sensitive);
+        return hits;
 	}
 
 	/**
@@ -817,8 +771,7 @@ public class HitsImpl extends Hits {
 	 *   returns them in sorted order (if any)
 	 * @return the iterator
 	 */
-	@Override
-	public Iterator<Hit> getIterator(final boolean originalOrder) {
+	private synchronized Iterator<Hit> getIterator(final boolean originalOrder) {
 		// Construct a custom iterator that iterates over the hits in the hits
 		// list, but can also take into account the Spans object that may not have
 		// been fully read. This ensures we don't instantiate Hit objects for all hits
@@ -858,6 +811,11 @@ public class HitsImpl extends Hits {
 
 		};
 	}
+	
+	@Override
+	public Iterator<Hit> iterator() {
+        return getIterator(false);
+	}
 
 	/**
 	 * Return the specified hit number, based on the order they
@@ -889,7 +847,7 @@ public class HitsImpl extends Hits {
 	 * @return the hit, or null if it's beyond the last hit
 	 */
 	@Override
-	public Hit get(int i) {
+	public synchronized Hit get(int i) {
 		try {
 			ensureHitsRead(i + 1);
 		} catch (InterruptedException e) {
@@ -940,7 +898,7 @@ public class HitsImpl extends Hits {
 	 * @return KWIC for this hit
 	 */
 	@Override
-	public Kwic getKwic(Hit h, int contextSize) {
+	public synchronized Kwic getKwic(Hit h, int contextSize) {
 		if (contextSize != settings().contextSize()) {
 			// Different context size than the default for the whole set;
 			// We probably want to show a hit with a larger snippet around it
@@ -1241,7 +1199,7 @@ public class HitsImpl extends Hits {
 	 * @param firstHitIndex index of the first hit
 	 * @param fis forward indices needed for contexts
 	 */
-	private void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
+	private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
 		// Find context for the hits in the current document
 		HitsImpl hitsObj = new HitsImpl(searcher, searcher.getMainContentsFieldName(), hitsInSameDoc);
 		hitsObj.copySettingsFrom(this);
@@ -1374,7 +1332,7 @@ public class HitsImpl extends Hits {
 	 * @return the field name
 	 */
 	@Override
-	public List<String> getContextFieldPropName() {
+	public synchronized List<String> getContextFieldPropName() {
 		return contextFieldsPropName;
 	}
 
@@ -1383,7 +1341,7 @@ public class HitsImpl extends Hits {
 	 * @param contextField the field properties
 	 */
 	@Override
-	public void setContextField(List<String> contextField) {
+	public synchronized void setContextField(List<String> contextField) {
 		this.contextFieldsPropName = contextField == null ? null : new ArrayList<>(
 				contextField);
 	}
@@ -1510,7 +1468,7 @@ public class HitsImpl extends Hits {
 	 * @param contextSources
 	 *            forward indices to get context from
 	 */
-	private void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
+	private synchronized void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
 
 		int n = hits.size();
 		if (n == 0)
@@ -1574,7 +1532,7 @@ public class HitsImpl extends Hits {
 	 *
 	 * @return the context
 	 */
-	private int[][] saveContexts() {
+	private synchronized int[][] saveContexts() {
 		int[][] saved = new int[contexts.length][];
 		for (int i = 0; i < contexts.length; i++) {
 			saved[i] = Arrays.copyOf(contexts[i], contexts[i].length);
@@ -1589,7 +1547,7 @@ public class HitsImpl extends Hits {
 	 *
 	 * @param saved the context to restore
 	 */
-	private void restoreContexts(int[][] saved) {
+	private synchronized void restoreContexts(int[][] saved) {
 		if (contexts == null || contexts.length != saved.length) {
 			contexts = new int[saved.length][];
 		}
@@ -1690,7 +1648,7 @@ public class HitsImpl extends Hits {
 	 * @return the context(s)
 	 */
 	@Override
-	public int[] getHitContext(int hitNumber) {
+	public synchronized int[] getHitContext(int hitNumber) {
 		return contexts[hitNumber];
 	}
 

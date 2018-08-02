@@ -27,9 +27,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -53,31 +53,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 
 	public SpanQueryNot(BLSpanQuery[] _clauses) {
 		super(_clauses);
-	}
-
-	/**
-	 * A BLSpanQuery that simply matches all tokens in a field
-	 * @param matchAllTokensFieldName what field to match all tokens in
-	 */
-	private SpanQueryNot(String matchAllTokensFieldName) {
-		clauses = Arrays.asList((BLSpanQuery)null);
-		baseFieldName = matchAllTokensFieldName;
-	}
-
-	/**
-	 * Return a query that matches all tokens in a field.
-	 *
-	 * @param ignoreLastToken if true, we assume the last token is always a special closing
-	 *     token and ignore it (special closing token is required for punctuation after the last word)
-	 * @param fieldName the field from which to match
-	 * @return the resulting query
-	 * @deprecated use SpanQueryNGrams
-	 */
-	@Deprecated
-	public static BLSpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
-		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
-		spanQueryNot.setIgnoreLastToken(ignoreLastToken);
-		return spanQueryNot;
 	}
 
 	@Override

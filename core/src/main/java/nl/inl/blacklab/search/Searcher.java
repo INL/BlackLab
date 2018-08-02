@@ -374,16 +374,6 @@ public abstract class Searcher {
 		Searcher.traceQueryExecution = traceQueryExecution;
 	}
 
-
-	/**
-	 * @return config directories, in decreasing order of priority
-	 * @deprecated use {@link ConfigReader#getDefaultConfigDirs()}
-	 */
-	@Deprecated // Since 1.7, jan 2018
-    public static List<File> getConfigDirs() {
-        return ConfigReader.getDefaultConfigDirs();
-    }
-
 	//-------------------------------------------------------------------------
 
 	/** The collator to use for sorting. Defaults to English collator. */
@@ -477,40 +467,6 @@ public abstract class Searcher {
 	/** If true, we want to add/delete documents. If false, we're just searching. */
 	protected boolean indexMode = false;
 
-	/** @return the default maximum number of hits to retrieve.
-	 * @deprecated use hitsSettings().maxHitsToRetrieve()
-	 */
-	@Deprecated
-	public int getDefaultMaxHitsToRetrieve() {
-		return hitsSettings().maxHitsToRetrieve();
-	}
-
-	/** Set the default maximum number of hits to retrieve
-	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-	 * @deprecated use hitsSettings().setMaxHitsToRetrieve()
-	 */
-	@Deprecated
-	public void setDefaultMaxHitsToRetrieve(int n) {
-		hitsSettings().setMaxHitsToRetrieve(n);
-	}
-
-	/** @return the default maximum number of hits to count.
-	 * @deprecated use hitsSettings().maxHitsToCount()
-	 */
-	@Deprecated
-	public int getDefaultMaxHitsToCount() {
-		return hitsSettings().maxHitsToCount();
-	}
-
-	/** Set the default maximum number of hits to count
-	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-	 * @deprecated use hitsSettings().setMaxHitsToCount()
-	 */
-	@Deprecated
-	public void setDefaultMaxHitsToCount(int n) {
-		hitsSettings().setMaxHitsToCount(n);
-	}
-
 	/**
 	 * How do we fix well-formedness for snippets of XML?
 	 * @return the setting: either adding or removing unbalanced tags
@@ -525,24 +481,6 @@ public abstract class Searcher {
 	 */
 	public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
 		this.defaultUnbalancedTagsStrategy = strategy;
-	}
-
-	/**
-	 * @return the default concordance type
-	 * @deprecated use hitsSettings().concordanceType()
-	 */
-	@Deprecated
-	public ConcordanceType getDefaultConcordanceType() {
-		return hitsSettings().concordanceType();
-	}
-
-	/**
-	 * @param type the default concordance type
-	 * @deprecated use hitsSettings().setConcordanceType()
-	 */
-	@Deprecated
-	public void setDefaultConcordanceType(ConcordanceType type) {
-		hitsSettings().setConcordanceType(type);
 	}
 
 	/**
@@ -564,38 +502,6 @@ public abstract class Searcher {
 	 */
 	public Collator getCollator() {
 		return collator;
-	}
-
-
-	/**
-	 * Are we making concordances using the forward index (true) or using
-	 * the content store (false)? Forward index is more efficient but returns
-	 * concordances that don't include XML tags.
-	 *
-	 * @return true iff we use the forward index for making concordances.
-	 * @deprecated use hitsSettings().concordanceType()
-	 */
-	@Deprecated
-	public boolean getMakeConcordancesFromForwardIndex() {
-		return getDefaultConcordanceType() == ConcordanceType.FORWARD_INDEX;
-	}
-
-	/**
-	 * Do we want to retrieve concordances from the forward index instead of from the
-	 * content store? This may be more efficient, particularly for small result sets
-	 * (because it eliminates seek time and decompression time), but concordances won't
-	 * include XML tags.
-	 *
-	 * Also, if there is no punctuation forward index ("punct"), concordances won't include
-	 * punctuation.
-	 *
-	 * @param concordancesFromForwardIndex true if we want to use the forward index to make
-	 * concordances.
-	 * @deprecated use hitsSettings().setConcordanceType()
-	 */
-	@Deprecated
-	public void setMakeConcordancesFromForwardIndex(boolean concordancesFromForwardIndex) {
-		setDefaultConcordanceType(concordancesFromForwardIndex ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
 	}
 
 	/**
@@ -684,45 +590,6 @@ public abstract class Searcher {
 	 */
 	public abstract int maxDoc();
 
-	@Deprecated
-	public BLSpanQuery filterDocuments(SpanQuery query, org.apache.lucene.search.Filter filter) {
-		if (!(query instanceof BLSpanQuery))
-			throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-		return new SpanQueryFiltered((BLSpanQuery) query, filter);
-	}
-
-	@Deprecated
-	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
-		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
-			Query filterQuery = filter == null ? null : ((org.apache.lucene.search.QueryWrapperFilter) filter).getQuery();
-			return createSpanQuery(pattern, fieldName, filterQuery);
-		}
-		throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
-	}
-
-	@Deprecated
-	public BLSpanQuery createSpanQuery(TextPattern pattern, org.apache.lucene.search.Filter filter) {
-		return createSpanQuery(pattern, getMainContentsFieldName(), filter);
-	}
-
-	/**
-	 * @deprecated use version that takes a filter, and pass null for no filter
-	 */
-	@SuppressWarnings("javadoc")
-	@Deprecated
-	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName) {
-		return createSpanQuery(pattern, fieldName, (Query)null);
-	}
-
-	/**
-	 * @deprecated use version that takes a filter, and pass null for no filter
-	 */
-	@SuppressWarnings("javadoc")
-	@Deprecated
-	public BLSpanQuery createSpanQuery(TextPattern pattern) {
-		return createSpanQuery(pattern, getMainContentsFieldName(), (Query)null);
-	}
-
 	public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
 		// Convert to SpanQuery
 		//pattern = pattern.rewrite();
@@ -786,37 +653,6 @@ public abstract class Searcher {
 	}
 
 	public Hits find(TextPattern pattern, Query filter) {
-		return find(pattern, getMainContentsFieldName(), filter);
-	}
-
-	/**
-	 * @deprecated use version that takes a Query as a filter
-	 */
-	@SuppressWarnings("javadoc")
-	@Deprecated
-	public Hits find(TextPattern pattern, String fieldName, org.apache.lucene.search.Filter filter) {
-		if (filter == null || filter instanceof org.apache.lucene.search.QueryWrapperFilter) {
-			Query filterQuery = filter == null ? null : ((org.apache.lucene.search.QueryWrapperFilter) filter).getQuery();
-			return find(createSpanQuery(pattern, fieldName, filterQuery), fieldName);
-		}
-		throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
-	}
-
-	/**
-	 * Find hits for a pattern and filter them.
-	 *
-	 * @param pattern
-	 *            the pattern to find
-	 * @param filter
-	 *            determines which documents to search
-	 *
-	 * @return the hits found
-	 * @throws BooleanQuery.TooManyClauses
-	 *             if a wildcard or regular expression term is overly broad
-	 * @deprecated use version that takes a Query as a filter
-	 */
-	@Deprecated
-	public Hits find(TextPattern pattern, org.apache.lucene.search.Filter filter) throws BooleanQuery.TooManyClauses {
 		return find(pattern, getMainContentsFieldName(), filter);
 	}
 
@@ -1344,66 +1180,6 @@ public abstract class Searcher {
 		return rv;
 	}
 
-
-	/**
-	 * Indicate how to use the forward indices to build concordances.
-	 *
-	 * Call this method to set the default for hit sets; call the method in Hits
-	 * to change it for a single hit set.
-	 *
-	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
-	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
-	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
-	 * @deprecated use hitsSettings().setConcordanceProperties()
-	 */
-	@Deprecated
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
-		setConcordanceXmlProperties(wordFI, punctFI, attrFI);
-	}
-
-	/**
-	 * Indicate how to use the forward indices to build concordances.
-	 *
-	 * Only applies if you're building concordances from the forward index.
-	 *
-	 * Call this method to set the default for hit sets; call the method in Hits
-	 * to change it for a single hit set.
-	 *
-	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
-	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
-	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
-	 * @deprecated use hitsSettings().setConcordanceProperties()
-	 */
-	@Deprecated
-	public void setConcordanceXmlProperties(String wordFI, String punctFI,
-			Collection<String> attrFI) {
-		hitsSettings().setConcordanceProperties(wordFI, punctFI, attrFI);
-	}
-
-
-	/**
-	 * Get the default context size used for building concordances
-	 *
-	 * @return the context size
-	 * @deprecated use hitsSettings().contextSize()
-	 */
-	@Deprecated
-	public int getDefaultContextSize() {
-		return hitsSettings().contextSize();
-	}
-
-	/**
-	 * Set the default context size to use for building concordances
-	 *
-	 * @param defaultContextSize
-	 *            the context size
-	 * @deprecated use hitsSettings().setContextSize()
-	 */
-	@Deprecated
-	public void setDefaultContextSize(int defaultContextSize) {
-		hitsSettings().setContextSize(defaultContextSize);
-	}
-
 	/**
 	 * Factory method to create a directory content store.
 	 *
@@ -1535,33 +1311,6 @@ public abstract class Searcher {
 
 	public String getMainContentsFieldName() {
 		return mainContentsFieldName;
-	}
-
-	/**
-	 * @return the word property used for concordances
-	 * @deprecated use hitsSettings().concWordProp()
-	 */
-	@Deprecated
-	public String getConcWordFI() {
-		return hitsSettings().concWordProp();
-	}
-
-	/**
-	 * @return the punctuation property used for concordances
-	 * @deprecated use hitsSettings().concPunctProp()
-	 */
-	@Deprecated
-	public String getConcPunctFI() {
-		return hitsSettings().concPunctProp();
-	}
-
-	/**
-	 * @return the extra attribute properties used for concordances
-	 * @deprecated use hitsSettings().concAttrProps()
-	 */
-	@Deprecated
-	public Collection<String> getConcAttrFI() {
-		return hitsSettings().concAttrProps();
 	}
 
 	public abstract IndexSearcher getIndexSearcher();

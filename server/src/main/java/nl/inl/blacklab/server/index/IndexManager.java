@@ -34,7 +34,6 @@ import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
-import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -95,16 +94,13 @@ public class IndexManager {
 						// blacklab-server.json.
 						logger.warn("blacklab-server.json specifies 'pid' property for index '" + indexName +
 								"'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'pidField')");
-						logger.warn("For now this index will still use the field from blacklab-server.json if it isn't defined in the index metadata, but this will change in the future.");
-
-						index.setDeprecatedPidFieldProperty(indexConfig.get("pid").textValue());
+						logger.warn("*** the setting from blacklab-server.json will be ignored ***");
 					}
 
 					if (indexConfig.has("mayViewContent")) {
 						logger.warn("blacklab-server.json specifies 'mayViewContent' property for index'" + indexName +
 								"'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'contentViewable')");
-						logger.warn("For now this value can still be used to explicitly disable content viewing, but not to enable it if the index itself does not allow viewing.");
-						index.setDeprecatedMayViewContentsProperty(indexConfig.get("mayViewContent").booleanValue());
+                        logger.warn("*** the setting from blacklab-server.json will be ignored ***");
 					}
 
 					indices.put(indexName, index);
@@ -553,22 +549,4 @@ public class IndexManager {
     public DocIndexerFactoryUserFormats getUserFormatManager() {
     	return userFormatManager;
     }
-
-    /**
-	 * @deprecated use {@link Index#getSearcher()}
-	 */
-	@SuppressWarnings("javadoc")
-	@Deprecated
-	public Searcher getSearcher(String indexId) throws IndexNotFound, InternalServerError, ServiceUnavailable {
-		return getIndex(indexId).getSearcher();
-	}
-
-	/**
- 	 * @deprecated use {@link Index#getStatus()}
-	 */
-	@SuppressWarnings("javadoc")
-	@Deprecated
-	public Index.IndexStatus getIndexStatus(String indexId) throws IndexNotFound {
-		return getIndex(indexId).getStatus();
-	}
 }

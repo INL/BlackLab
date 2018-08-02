@@ -2,7 +2,6 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -76,73 +75,6 @@ public abstract class ForwardIndex {
 	 * @param fiid id of the document to delete
 	 */
 	public abstract void deleteDocument(int fiid);
-
-	/**
-	 * Retrieve one or more substrings from the specified content.
-	 *
-	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
-	 * calls, because the file is only opened once and random access is used to read only the
-	 * required parts.
-	 *
-	 * NOTE: if offset and length are both -1, retrieves the whole content. This is used by the
-	 * retrieve(id) method.
-	 *
-	 * @param fiid
-	 *            forward index document id
-	 * @param start
-	 *            the starting points of the substrings (in words)
-	 * @param end
-	 *            the end points (i.e. first token beyond) of the substrings (in words)
-	 * @return the parts
-	 * @deprecated use retrievePartsInt and getTerms().get(id)
-	 */
-	@Deprecated
-	public synchronized List<String[]> retrieveParts(int fiid, int[] start, int[] end) {
-
-		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
-
-		// Translate them to strings using the terms index
-		List<String[]> result = new ArrayList<>(resultInt.size());
-		for (int[] snippetInt: resultInt) {
-			String[] snippet = new String[snippetInt.length];
-			for (int j = 0; j < snippetInt.length; j++) {
-				snippet[j] = getTerms().get(snippetInt[j]);
-			}
-			result.add(snippet);
-		}
-		return result;
-	}
-
-	/**
-	 * Retrieve one or more parts from the specified content, in the form of token sort order ids.
-	 *
-	 * This is more efficient than retrieving the whole content, or retrieving parts in separate
-	 * calls, because the file is only opened once and random access is used to read only the
-	 * required parts.
-	 *
-	 * @param fiid
-	 *            forward index document id
-	 * @param start
-	 *            the starting points of the parts to retrieve (in words)
-	 * @param end
-	 *            the end points (i.e. first token beyond) of the parts to retrieve (in words)
-	 * @param sensitive
-	 *            whether to get the case-sensitive sort order or not
-	 * @return the parts
-	 * @deprecated
-	 */
-	@Deprecated
-	public synchronized List<int[]> retrievePartsSortOrder(int fiid, int[] start, int[] end, boolean sensitive) {
-		// First, retrieve the token ids
-		List<int[]> resultInt = retrievePartsInt(fiid, start, end);
-
-		// Translate them to sort orders
-		for (int[] snippetInt: resultInt) {
-			getTerms().toSortOrder(snippetInt, snippetInt, sensitive);
-		}
-		return resultInt;
-	}
 
 	/**
 	 * Retrieve one or more parts from the specified content, in the form of token ids.

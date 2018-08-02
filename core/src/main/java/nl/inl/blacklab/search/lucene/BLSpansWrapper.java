@@ -18,9 +18,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
 
@@ -69,43 +66,6 @@ public class BLSpansWrapper extends BLSpans {
 	@Override
 	public String toString() {
 		return source.toString();
-	}
-
-	@Deprecated
-	public static BLSpans optWrap(Spans spans) {
-		if (spans == null)
-			return null;
-		if (spans instanceof BLSpans)
-			return (BLSpans)spans;
-		return new BLSpansWrapper(spans);
-	}
-
-	/**
-	 * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
-	 *
-	 * This is used for BLSpanOrQuery and BLSpanMultiTermQueryWrapper: we
-	 * let Lucene rewrite these for us, but the result needs to be BL-ified
-	 * so we know we'll get BLSpans (which contain extra methods for optimization).
-	 *
-	 * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
-	 * @return resulting BLSpanQuery, or the input query if it was one already
-	 * @deprecated moved to BLSpanQuery and renamed to wrap().
-	 */
-	@Deprecated
-	public static BLSpanQuery blSpanQueryFrom(SpanQuery spanQuery) {
-		if (spanQuery instanceof BLSpanQuery) {
-			// Already BL-derived, no wrapper needed.
-			return (BLSpanQuery) spanQuery;
-		} else if (spanQuery instanceof SpanOrQuery) {
-			// Translate to a BLSpanOrQuery, recursively translating the clauses.
-			return BLSpanOrQuery.from((SpanOrQuery) spanQuery);
-		} else if (spanQuery instanceof SpanTermQuery) {
-			// Translate to a BLSpanTermQuery.
-			return BLSpanTermQuery.from((SpanTermQuery) spanQuery);
-		} else {
-			// After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
-			throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
-		}
 	}
 
 	@Override

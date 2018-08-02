@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
-import nl.inl.blacklab.server.index.Index;
 
 public class BlsUtils {
 	private static final Logger logger = LogManager.getLogger(BlsUtils.class);
@@ -229,17 +228,4 @@ public class BlsUtils {
 			return f.isDirectory() && f.canRead();
 		}
 	};
-
-	/**
-	 * Check the index name part (not the user id part, if any)
-	 * of the specified index name.
-	 *
-	 * @param indexId the index name, possibly including user id prefix
-	 * @return whether or not the index name part is valid
-	 * @deprecated use {@link Index#isValidIndexName(String)}
-	 */
-	@Deprecated
-	public static boolean isValidIndexName(String indexId) {
-		return Index.isValidIndexName(indexId);
-	}
 }

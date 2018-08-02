@@ -24,38 +24,19 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.Filter;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 
 /**
  * Filters a SpanQuery.
  */
-@SuppressWarnings("deprecation")
 public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
 	private Query filter;
-
-	/**
-	 * Filter a SpanQuery.
-	 *
-	 * @param source the query to filter
-	 * @param filter the filter query
-	 * @deprecated supply a Query as a filter instead of the deprecated Filter class
-	 */
-	@Deprecated
-	public SpanQueryFiltered(BLSpanQuery source, Filter filter) {
-		super(source);
-		if (!(filter instanceof QueryWrapperFilter)) {
-			throw new UnsupportedOperationException("Filter must be a QueryWrapperFilter!");
-		}
-		this.filter = ((QueryWrapperFilter) filter).getQuery();
-	}
 
 	/**
 	 * Filter a SpanQuery.

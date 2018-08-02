@@ -2,7 +2,6 @@ package nl.inl.blacklab.search;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +12,6 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
-import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -30,62 +28,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	public final static int CONTEXTS_RIGHT_START_INDEX = 1;
 	/** In context arrays, what index indicates the length of the context? */
 	public final static int CONTEXTS_LENGTH_INDEX = 2;
-
-	/**
-	 * Stop retrieving hits after this number.
-	 * @deprecated moved to HitsSettings
-	 */
-	@Deprecated
-	protected static int defaultMaxHitsToRetrieve = 1000000;
-
-	@Deprecated
-	protected static boolean defaultMaxHitsToRetrieveChanged = false;
-
-	/**
-	 * Stop counting hits after this number.
-	 * @deprecated moved to HitsSettings
-	 */
-	@Deprecated
-	protected static int defaultMaxHitsToCount = Searcher.UNLIMITED_HITS;
-
-	@Deprecated
-	protected static boolean defaultMaxHitsToCountChanged = false;
-
-	/** @return the default maximum number of hits to retrieve.
-	 * @deprecated use Searcher.getDefaultMaxHitsToRetrieve()
-	 */
-	@Deprecated
-	public static int getDefaultMaxHitsToRetrieve() {
-		return defaultMaxHitsToRetrieve;
-	}
-
-	/** Set the default maximum number of hits to retrieve
-	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-	 * @deprecated use Searcher.setDefaultMaxHitsToRetrieve()
-	 */
-	@Deprecated
-	public static void setDefaultMaxHitsToRetrieve(int n) {
-		defaultMaxHitsToRetrieve = n;
-		defaultMaxHitsToRetrieveChanged = true;
-	}
-
-	/** @return the default maximum number of hits to count.
-	 * @deprecated use Searcher.getDefaultMaxHitsToCount()
-	 */
-	@Deprecated
-	public static int getDefaultMaxHitsToCount() {
-		return defaultMaxHitsToCount;
-	}
-
-	/** Set the default maximum number of hits to count
-	 * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-	 * @deprecated use Searcher.setDefaultMaxHitsToCount()
-	 */
-	@Deprecated
-	public static void setDefaultMaxHitsToCount(int n) {
-		defaultMaxHitsToCount = n;
-		defaultMaxHitsToCountChanged = true;
-	}
 
 	/**
 	 * Construct an empty Hits object.
@@ -170,19 +112,8 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 
 	public Hits(Searcher searcher) {
 		this.searcher = searcher;
-		settings = new HitsSettings(searcher.hitsSettings(), true); // , concordanceFieldName);
+		settings = new HitsSettings(searcher.hitsSettings()); // , concordanceFieldName);
 		hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
-	}
-
-	/**
-	 * @param searcher searcher object
-	 * @param concordanceFieldName concordance field to use
-	 * @deprecated if you need a different concordance field, change it using settings().setConcordanceField().
-	 */
-	@Deprecated
-	public Hits(Searcher searcher, String concordanceFieldName) {
-		this(searcher);
-		settings.setConcordanceField(concordanceFieldName);
 	}
 
 	/**
@@ -226,7 +157,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @param copyFrom where to copy settings from
 	 */
 	public void copySettingsFrom(Hits copyFrom) {
-		settings = new HitsSettings(copyFrom.settings, false);
+		settings = new HitsSettings(copyFrom.settings);
 		setMaxHitsRetrieved(copyFrom.maxHitsRetrieved());
 		setMaxHitsCounted(copyFrom.maxHitsCounted());
 		setHitQueryContext(copyFrom.getHitQueryContext());
@@ -235,46 +166,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	public abstract void setMaxHitsCounted(boolean maxHitsCounted);
 
 	protected abstract void setMaxHitsRetrieved(boolean maxHitsRetrieved);
-
-	/**
-	 * Returns the field to use for retrieving concordances.
-	 *
-	 * @return the field name
-	 * @deprecated use settings().concordanceField()
-	 */
-	@Deprecated
-	public String getConcordanceFieldName() {
-		return settings().concordanceField();
-	}
-
-	/**
-	 * Sets the field to use for retrieving concordances.
-	 *
-	 * @param concordanceFieldName the field name
-	 * @deprecated use settings().setConcordanceField()
-	 */
-	@Deprecated
-	public void setConcordanceField(String concordanceFieldName) {
-		settings().setConcordanceField(concordanceFieldName);
-	}
-
-	/** Returns the context size.
-	 * @return context size (number of words to fetch around hits)
-	 * @deprecated use settings().contextSize()
-	 */
-	@Deprecated
-	public int getContextSize() {
-		return settings().contextSize();
-	}
-
-	/** Sets the desired context size.
-	 * @param contextSize the context size (number of words to fetch around hits)
-	 * @deprecated use settings().setContextSize()
-	 */
-	@Deprecated
-	public synchronized void setContextSize(int contextSize) {
-		settings().setContextSize(contextSize);
-	}
 
 	/**
 	 * Did we stop retrieving hits because we reached the maximum?
@@ -287,120 +178,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @return true if we reached the maximum and stopped counting hits
 	 */
 	public abstract boolean maxHitsCounted();
-
-	/**
-	 * Get the list of hits.
-	 *
-	 * @return the list of hits
-	 * @deprecated Slow, breaks optimizations. Iterate over the Hits object and/or Hits.window() instead.
-	 */
-	@Deprecated
-	public synchronized List<Hit> getHits() {
-		// We do it this way because if we return (a copy of) the hits list,
-		// you get it unsorted.
-		List<Hit> list = new ArrayList<>();
-		for (Hit h: this) {
-			list.add(h);
-		}
-		return list;
-	}
-
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * @param sortProp
-	 *            the hit property/properties to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 * @deprecated use sortedBy()
-	 */
-	@Deprecated
-	public void sort(HitProperty[] sortProp, boolean reverseSort) {
-		if (sortProp.length == 1)
-			sort(sortProp[0], reverseSort);
-		else
-			sort(new HitPropertyMultiple(sortProp), reverseSort);
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * @param sortProp
-	 *            the hit property/properties to sort on
-	 * @deprecated use sortedBy()
-	 */
-	@Deprecated
-	public void sort(HitProperty... sortProp) {
-		sort(sortProp, false);
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @deprecated use sortedBy()
-	 */
-	@Deprecated
-	public void sort(final HitProperty sortProp) {
-		sort(sortProp, false, searcher.isDefaultSearchCaseSensitive());
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * Case-sensitivity depends on the default case-sensitivity set on the Searcher
-	 * object.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 * @deprecated use sortedBy()
-	 */
-	@Deprecated
-	public void sort(final HitProperty sortProp, boolean reverseSort) {
-		sort(sortProp, reverseSort, searcher.isDefaultSearchCaseSensitive());
-	}
-
-	/**
-	 * Sort the list of hits.
-	 *
-	 * Note that if the thread is interrupted during this, sort may return
-	 * without the hits actually being fully read and sorted. We don't want
-	 * to add throws declarations to our whole API, so we assume the calling
-	 * method will check for thread interruption if the application uses it.
-	 *
-	 * @param sortProp
-	 *            the hit property to sort on
-	 * @param reverseSort
-	 *            if true, sort in descending order
-	 * @param sensitive whether to sort case-sensitively or not
-	 * @deprecated use sortedBy()
-	 */
-	@Deprecated
-	public abstract void sort(HitProperty sortProp, boolean reverseSort, boolean sensitive);
 
 	/**
 	 * Return a new Hits object with these hits sorted by the given property.
@@ -416,12 +193,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @param sensitive whether to sort case-sensitively or not
 	 * @return a new Hits object with the same hits, sorted in the specified way
 	 */
-	public Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive) {
-		Hits hits = copy();
-		sortProp = sortProp.copyWithHits(hits);
-		hits.sort(sortProp, reverseSort, sensitive);
-		return hits;
-	}
+	public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort, boolean sensitive);
 
 	/**
 	 * Return a new Hits object with these hits sorted by the given property.
@@ -603,55 +375,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	public abstract boolean doneFetchingHits();
 
 	/**
-	 * Iterate over the hits in the original (pre-sort) order.
-	 * @return an iterable object that will produce hits in the original order.
-	 * @deprecated if you need the original order, keep that Hits object around and use .sortedBy()
-	 */
-	@Deprecated
-	public Iterable<Hit> hitsInOriginalOrder() {
-		return new Iterable<Hit>() {
-			@Override
-			public Iterator<Hit> iterator() {
-				return Hits.this.getIterator(true);
-			}
-		};
-	}
-
-	/**
-	 * Return an iterator over these hits that produces the
-	 * hits in their original order.
-	 *
-	 * @param originalOrder if true, returns hits in original order. If false,
-	 *   returns them in sorted order (if any)
-	 * @return the iterator
-	 * @deprecated if you need the original order, keep that Hits object around and use .sortedBy(); 
-	 *    otherwise, use iterator()
-	 */
-	@Deprecated
-	public Iterator<Hit> getIterator(boolean originalOrder) {
-		return new Iterator<Hit>() {
-			int i = -1;
-
-			@Override
-			public boolean hasNext() {
-				return i + 1 < size();
-			}
-
-			@Override
-			public Hit next() {
-				i++;
-				return get(i);
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-
-		};
-	}
-
-	/**
 	 * Return an iterator over these hits.
 	 *
 	 * The order is the sorted order, not the original order. Use
@@ -660,9 +383,7 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @return the iterator
 	 */
 	@Override
-	public Iterator<Hit> iterator() {
-		return getIterator(false);
-	}
+	public abstract Iterator<Hit> iterator();
 
 	/**
 	 * Return the specified hit number, based on the order they
@@ -885,40 +606,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 */
 	public abstract void setContextField(List<String> contextField);
 
-	/** @return the maximum number of hits to retrieve.
-	 * @deprecated use settings().maxHitsToRetrieve()
-	 */
-	@Deprecated
-	public int getMaxHitsToRetrieve() {
-		return settings.maxHitsToRetrieve();
-	}
-
-	/** Set the maximum number of hits to retrieve
-	 * @param n the number of hits, or -1 for no limit
-	 * @deprecated use settings().maxHitsToRetrieve()
-	 */
-	@Deprecated
-	public void setMaxHitsToRetrieve(int n) {
-		settings.setMaxHitsToRetrieve(n);
-	}
-
-	/** @return the maximum number of hits to count.
-	 * @deprecated use settings().maxHitsToCount()
-	 */
-	@Deprecated
-	public int getMaxHitsToCount() {
-		return settings.maxHitsToCount();
-	}
-
-	/** Set the maximum number of hits to count
-	 * @param n the number of hits, or -1 for no limit
-	 * @deprecated use settings().maxHitsToCount()
-	 */
-	@Deprecated
-	public void setMaxHitsToCount(int n) {
-		settings.setMaxHitsToCount(n);
-	}
-
 	public HitsSettings settings() {
 		return settings;
 	}
@@ -939,83 +626,6 @@ public abstract class Hits extends AbstractList<Hit> implements Cloneable, Prior
 	 * @return the context(s)
 	 */
 	public abstract int[] getHitContext(int hitNumber);
-
-	/**
-	 * Indicate how to use the forward indices to build concordances.
-	 *
-	 * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default "word"; null for no text content)
-	 * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default "punct"; null for just a space)
-	 * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for all other FIs)
-	 * @deprecated use settings().setConcordanceProperties()
-	 */
-	@Deprecated
-	public void setForwardIndexConcordanceParameters(String wordFI, String punctFI, Collection<String> attrFI) {
-		settings().setConcordanceProperties(wordFI, punctFI, attrFI);
-	}
-
-	/**
-	 * Are we making concordances using the forward index (true) or using
-	 * the content store (false)? Forward index is more efficient but returns
-	 * concordances that don't include XML tags.
-	 *
-	 * @return true iff we use the forward index for making concordances.
-	 */
-
-
-	/**
-	 * Are we making concordances using the forward index (true) or using
-	 * the content store (false)? Forward index is more efficient but returns
-	 * concordances that don't include XML tags.
-	 *
-	 * @return true iff we use the forward index for making concordances.
-	 * @deprecated use settings().concordanceType()
-	 */
-	@Deprecated
-	public ConcordanceType getConcordanceType() {
-		return settings.concordanceType();
-	}
-
-	/**
-	 * Do we want to retrieve concordances from the forward index or from the
-	 * content store? Forward index is more efficient but doesn't exactly reproduces the
-	 * original XML.
-	 *
-	 * The default type can be set by calling Searcher.setDefaultConcordanceType().
-	 *
-	 * @param type the type of concordances to make
-	 * @deprecated use settings().setConcordanceType()
-	 */
-	@Deprecated
-	public void setConcordanceType(ConcordanceType type) {
-		settings().setConcordanceType(type);
-	}
-
-	/**
-	 * @return the property to use as words in concordances
-	 * @deprecated use settings().concWordProp()
-	 */
-	@Deprecated
-	public String getConcWordFI() {
-		return settings().concWordProp();
-	}
-
-	/**
-	 * @return the property to use as punctuation in concordances
-	 * @deprecated use settings().concPunctProp()
-	 */
-	@Deprecated
-	public String getConcPunctFI() {
-		return settings().concPunctProp();
-	}
-
-	/**
-	 * @return the property to use as extra attributes in concordances
-	 * @deprecated use settings().concAttrProps()
-	 */
-	@Deprecated
-	public Collection<String> getConcAttrFI() {
-		return settings().concAttrProps();
-	}
 
 	private HitQueryContext getHitQueryContext() {
 		return hitQueryContext;

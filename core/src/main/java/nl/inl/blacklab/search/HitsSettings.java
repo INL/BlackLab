@@ -36,11 +36,10 @@ public class HitsSettings {
 	/** Our desired context size */
 	private int desiredContextSize;
 
-	@SuppressWarnings("deprecation")
-	public HitsSettings(HitsSettings defaults, boolean staticHitsFieldsOverrideDefaults) {
+	public HitsSettings(HitsSettings defaults) {
 		concordanceFieldName = defaults.concordanceFieldName;
-		maxHitsToRetrieve = (staticHitsFieldsOverrideDefaults && Hits.defaultMaxHitsToRetrieveChanged) ? Hits.defaultMaxHitsToRetrieve : defaults.maxHitsToRetrieve;
-		maxHitsToCount = (staticHitsFieldsOverrideDefaults && Hits.defaultMaxHitsToCountChanged) ? Hits.defaultMaxHitsToCount : defaults.maxHitsToCount;
+		maxHitsToRetrieve = defaults.maxHitsToRetrieve;
+		maxHitsToCount = defaults.maxHitsToCount;
 		concsType = defaults.concsType;
 		concWordProps = defaults.concWordProps;
 		concPunctProps = defaults.concPunctProps;

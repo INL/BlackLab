@@ -89,21 +89,4 @@ public class LogUtil {
 		setupBasicLoggingConfig(Level.WARN); // Log warnings and up
 	}
 
-	/**
-	 * @deprecated renamed to setupBasicLoggingConfig
-	 */
-	@Deprecated
-	public static void initLog4jIfNotAlready() {
-		setupBasicLoggingConfig();
-	}
-
-	/**
-	 * @param level log level
-	 * @deprecated renamed to setupBasicLoggingConfig
-	 */
-	@Deprecated
-	public static void initLog4jIfNotAlready(Level level) {
-		setupBasicLoggingConfig(level);
-	}
-
 }

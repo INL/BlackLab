@@ -7,7 +7,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
@@ -101,24 +100,6 @@ public class DocumentFormats {
 	 */
 	public static boolean isSupported(String formatIdentifier) {
 		return getFactory(formatIdentifier) != null;
-	}
-
-	/**
-	 * Returns an alphabetically sorted list of registered document formats.
-	 * Note that though this list will not contain duplicates, duplicates might exist internally (see {@link DocumentFormats#getFormats()}).
-	 *
-	 * @return the list of registered formatIdentifiers
-	 * @deprecated use getFormats()
-	 */
-    @Deprecated
-	public static List<String> list() {
-		HashSet<String> s = new HashSet<>();
-		for (Format d : getFormats())
-			s.add(d.getId());
-
-		List<String> l = new ArrayList<>(s);
-		Collections.sort(l);
-		return l;
 	}
 
     /**

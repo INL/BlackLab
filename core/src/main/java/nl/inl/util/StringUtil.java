@@ -49,12 +49,6 @@ public class StringUtil {
 	/** Matcht een niet-lege string die alleen whitespace bevat */
 	public final static Pattern PATT_ONLY_WHITESPACE = Pattern.compile("^\\s+$");
 
-	/**
-	 * Matches Unicode diacritics composition characters, which are separated out by the Normalizer
-	 * and then discarded using this regex.
-	 */
-	private static final Pattern PATT_DIACRITICS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-
 	/** Whitespace and/or punctuation at end */
 	final static Pattern PATT_WS_PUNCT_AT_END = Pattern.compile("[\\p{P}\\s]+$");
 
@@ -418,23 +412,6 @@ public class StringUtil {
 	 */
 	public static String nullToEmpty(String str) {
 		return str == null ? "" : str;
-	}
-
-	/**
-	 * Convert accented letters to their unaccented counterparts.
-	 *
-	 * @param input
-	 *            the string possibly containing accented letters.
-	 * @return the unaccented version
-	 * @deprecated use stripAccents(input)
-	 */
-	@Deprecated
-	public static String removeAccents(String input) {
-		// Separate characters into base character and diacritics characters
-		String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
-
-		// Remove diacritics
-		return PATT_DIACRITICS.matcher(normalized).replaceAll("");
 	}
 
     final static Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");

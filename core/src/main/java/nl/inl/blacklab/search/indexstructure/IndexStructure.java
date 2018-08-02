@@ -953,22 +953,6 @@ public class IndexStructure {
 	}
 
 	/**
-	 * Don't use this.
-	 *
-	 * Change the pid field. Do not use this method.
-	 *
-	 * This exists only to support a deprecated configuration setting in BlackLab Server
-	 * and will eventually be removed.
-	 *
-	 * @param newPidField the pid field
-	 * @deprecated method only exists to support deprecated setting, will be removed soon
-	 */
-	@Deprecated
-	public void _setPidField(String newPidField) {
-		this.pidField = newPidField;
-	}
-
-	/**
 	 * Is this a new, empty index?
 	 *
 	 * An empty index is one that doesn't have a main contents field yet,

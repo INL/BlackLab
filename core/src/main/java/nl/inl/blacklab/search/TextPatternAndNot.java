@@ -88,14 +88,6 @@ public class TextPatternAndNot extends TextPattern {
 		return include.hashCode() + exclude.hashCode();
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		if (exclude.isEmpty())
-			return "AND(" + clausesToString(include, context) + ")";
-		return "ANDNOT([" + clausesToString(include, context) + "], [" + clausesToString(exclude, context) + "])";
-	}
-
 	@Override
 	public String toString() {
 		if (exclude.isEmpty())

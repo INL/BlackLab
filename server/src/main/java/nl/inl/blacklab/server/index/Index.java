@@ -43,9 +43,7 @@ public class Index {
 	public enum IndexStatus {
 		EMPTY,       // index has just been created. can be added to but not searched.
 		AVAILABLE,   // index is available for searching and adding to
-		INDEXING,    // index is busy, files are being added to it
-		@Deprecated
-		OPENING;     // index is being opened, this status will never be returned, as getStatus will block until the index has finished opening
+		INDEXING;    // index is busy, files are being added to it
 
 		@Override
 		public String toString() {
@@ -101,10 +99,6 @@ public class Index {
 	private final String id;
 	private final File dir;
 	private SearchCache cache;
-
-	/** see {@link Index#setDeprecatedPidFieldProperty(String)} */
-	private String deprecatedPidField = null;
-	private Boolean deprecatedMayViewContent = null; // Boolean so we know if it's been set
 
 	/**
 	 * Only one of these can be set at a time.
@@ -198,29 +192,6 @@ public class Index {
 	}
 
 	/**
-	 * This function purely exists to support a depecated property in blacklab-server.json.
-	 * The pid field is the persistant identifier for a document within an Index. Usually the name of a metadata property in the document.
-	 * Nowadays the definition of this field has moved into the Blacklab internal IndexMetadata, but this wasn't always the case.
-	 *
-	 * This value will be passed on to all Searchers and Indexers for this Index, iff their IndexMetadata doesn't already define it.
-	 * @param pidField
-	 */
-	public void setDeprecatedPidFieldProperty(String pidField) {
-		if (pidField == null || pidField.isEmpty())
-			this.deprecatedPidField = null;
-		else
-			this.deprecatedPidField = pidField;
-	}
-
-	/**
-	 * As {@link Index#setDeprecatedPidFieldProperty(String)}, but for mayViewContent
-	 * @param mayViewContent
-	 */
-	public void setDeprecatedMayViewContentsProperty(boolean mayViewContent) {
-		this.deprecatedMayViewContent = mayViewContent;
-	}
-
-	/**
 	 * Get the current Searcher backing this Index.
 	 * This is not available while this index is indexing new data.
 	 *
@@ -282,7 +253,6 @@ public class Index {
 	 * @throws InternalServerError
 	 * @throws ServiceUnavailable if the index could not be opened due to currently ongoing indexing
 	 */
-	@SuppressWarnings("deprecation") // _setContentViewable and _setPidField
 	private synchronized void openForSearching() throws InternalServerError, ServiceUnavailable {
 		cleanupClosedIndexerOrThrow();
 
@@ -292,13 +262,6 @@ public class Index {
 		try {
 			logger.debug("Opening index '" + id + "', dir = " + dir);
 			searcher = Searcher.open(this.dir);
-
-			IndexStructure struct = searcher.getIndexStructure();
-			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
-				struct._setPidField(this.deprecatedPidField);
-			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
-				struct.setContentViewable(this.deprecatedMayViewContent);
-
 		} catch (Exception e) {
 			this.searcher = null;
 
@@ -317,19 +280,12 @@ public class Index {
 	 * @throws InternalServerError when the index cannot be opened for some reason
 	 * @throws ServiceUnavailable when there is already an Indexer on this Index that's still processing
 	 */
-	@SuppressWarnings("deprecation") //_setPidField and _setContentViewable
 	public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
 		cleanupClosedIndexerOrThrow();
 		close(); // Close any Searcher that is still in search mode
 		try {
 			this.indexer = new IndexerWithCloseRegistration(this.dir);
 			indexer.setUseThreads(true);
-
-			IndexStructure struct = indexer.getSearcher().getIndexStructure();
-			if (this.deprecatedPidField != null && (struct.pidField() == null || struct.pidField().isEmpty())) // Never set if already defined
-				struct._setPidField(this.deprecatedPidField);
-			if (this.deprecatedMayViewContent != null && struct.contentViewable()) // Never enable viewing when the index itself disallows it
-				struct.setContentViewable(this.deprecatedMayViewContent);
 		} catch (Exception e) {
 			throw new InternalServerError("Could not open index '" + id + "'", 27, e);
 		}

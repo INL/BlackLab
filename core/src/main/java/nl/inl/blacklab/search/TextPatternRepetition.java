@@ -74,12 +74,6 @@ public class TextPatternRepetition extends TextPattern {
 		return base.hashCode() + 13 * min + 31 * max;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "REP(" + base.toString(context) + ", " + min + ", " + inf(max) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "REP(" + base.toString() + ", " + min + ", " + inf(max) + ")";

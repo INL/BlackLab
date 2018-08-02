@@ -34,6 +34,7 @@ import java.util.Set;
 
 import org.eclipse.collections.impl.factory.Maps;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.util.ExUtil;
 
 /**
@@ -45,7 +46,11 @@ import nl.inl.util.ExUtil;
  * the start of (fixed char size) blocks. Block size in bytes can be slightly larger than char size
  * because some UTF-8 characters take up more than 1 byte. If the block size is 1000 chars, block
  * offsets might be [0, 1011, 2015, 3020].
+ * 
+ * Thread-safety: not thread-safe in index mode, but thread-safe while
+ * searching
  */
+@NotThreadSafe // in index mode
 public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 	/** Table of contents entry */
 	static class TocEntry {

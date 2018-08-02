@@ -21,14 +21,6 @@ public class TextPatternConstrained extends TextPatternCombiner {
 		return new SpanQueryConstrained(translate, constraint, fiAccessor);
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		String producer = clauses.get(0).toString(context);
-		String filter = constraint.toString();
-		return "CONSTRAINT(" + producer + ", " + filter + ")";
-	}
-
 	@Override
 	public String toString() {
 		String producer = clauses.get(0).toString();

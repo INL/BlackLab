@@ -73,7 +73,7 @@ public class HitsSampleImpl extends HitsSample {
 	}
 
 	@Override
-	public Hits copy() {
+	public HitsSampleImpl copy() {
 		return new HitsSampleImpl(this);
 	}
 

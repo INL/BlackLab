@@ -56,12 +56,6 @@ public class TextPatternTerm extends TextPattern {
 		return value.hashCode();
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "TERM(" + context.luceneField() + ", " + context.optDesensitize(value) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "TERM(" + value + ")";

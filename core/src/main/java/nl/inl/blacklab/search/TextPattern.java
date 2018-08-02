@@ -66,53 +66,12 @@ public abstract class TextPattern implements Cloneable {
 	@Override
 	public abstract String toString();
 
-	/**
-	 * @param searcher searcher object
-	 * @return string representation
-	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
-	 */
-	@Deprecated
-	public String toString(Searcher searcher) {
-		return toString(searcher.getDefaultExecutionContext());
-	}
-
-	/**
-	 * @param searcher searcher object
-	 * @param fieldName contents field name
-	 * @return string representation
-	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
-	 */
-	@Deprecated
-	public String toString(Searcher searcher, String fieldName) {
-		return toString(searcher.getDefaultExecutionContext());
-	}
-
-	/**
-	 * @param context the execution context
-	 * @return string representation
-	 * @deprecated toString() shouldn't depend on external information. Use {@link #toString()}.
-	 */
-	@Deprecated
-	public abstract String toString(QueryExecutionContext context);
-
 	protected String clausesToString(List<TextPattern> clauses) {
 		StringBuilder b = new StringBuilder();
 		for (TextPattern clause: clauses) {
 			if (b.length() > 0)
 				b.append(", ");
 			b.append(clause.toString());
-		}
-		return b.toString();
-	}
-
-	@Deprecated
-	protected String clausesToString(List<TextPattern> clauses,
-			QueryExecutionContext context) {
-		StringBuilder b = new StringBuilder();
-		for (TextPattern clause: clauses) {
-			if (b.length() > 0)
-				b.append(", ");
-			b.append(context == null ? clause.toString() : clause.toString(context));
 		}
 		return b.toString();
 	}

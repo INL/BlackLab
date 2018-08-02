@@ -33,6 +33,8 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.Maps;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * Keeps a first-come-first-serve list of unique terms.
  * Each term gets a unique index number. These numbers are
@@ -41,7 +43,11 @@ import org.eclipse.collections.impl.factory.Maps;
  *
  * This version of the class stores the terms in a more efficient way so it
  * saves and loads faster, and includes the case-insensitive sorting order.
+ * 
+ * Thread-safety: not thread-safe in index mode, but thread-safe while
+ * searching
  */
+@NotThreadSafe // in index mode
 class TermsImplV3 extends Terms {
 	/** We set this to a lower value on Windows because we can't properly
 	 *  truncate the file due to the file still being mapped (there is no clean way to unmap a mapped file in Java,

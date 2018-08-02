@@ -37,12 +37,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.util.ExUtil;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question
  * "what word occurs in doc X at position Y"?
+ * 
+ * Thread-safety: not thread-safe in index mode, but thread-safe while
+ * searching.
  */
+@NotThreadSafe // in index mode
 class ForwardIndexImplV3 extends ForwardIndex {
 
 	protected static final Logger logger = LogManager.getLogger(ForwardIndexImplV3.class);

@@ -56,21 +56,6 @@ public abstract class BLSpans extends Spans {
 	}
 
 	/**
-	 * Makes a new HitSpan object from the start and end positions (no document id).
-	 *
-	 * Subclasses that already have a HitSpan object available could override this
-	 * and return the existing HitSpan object, to avoid excessive HitSpan instantiations.
-	 * (Right now, no classes use HitSpan internally, however)
-	 *
-	 * @return the HitSpan object for the current hit
-	 * @deprecated not used anymore
-	 */
-	@Deprecated
-	public Span getSpan() {
-		return new Span(startPosition(), endPosition());
-	}
-
-	/**
 	 * Give the BLSpans tree a way to access captured groups, and the capture
 	 * groups themselves a way to register themselves..
 	 *

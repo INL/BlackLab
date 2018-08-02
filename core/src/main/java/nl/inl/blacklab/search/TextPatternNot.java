@@ -43,12 +43,6 @@ public class TextPatternNot extends TextPatternCombiner {
 		return false;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return "NOT(" + clauses.get(0).toString(context) + ")";
-	}
-
 	@Override
 	public String toString() {
 		return "NOT(" + clauses.get(0).toString() + ")";

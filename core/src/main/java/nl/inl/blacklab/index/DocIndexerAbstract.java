@@ -119,23 +119,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 		return charsContentAlreadyStored + content.length();
 	}
 
-	/**
-	 * Provided for compatibility with Meertens' fork of BlackLab;
-	 * will eventually be removed in favor of an "official" way
-	 * to index content without storing in a ContentStore.
-	 *
-	 * Not sure if this will always give the correct position because
-	 * the original input is used for highlighting, not the reconstructed
-	 * XML in the content variable.
-	 *
-	 * @return the content length
-	 * @deprecated will be handled differently in the future.
-	 */
-	@Deprecated
-	public int getContentPositionNoStore(){
-		return content.length();
-	}
-
     /** NOTE: newer DocIndexers should only have a default constructor, and provide methods to set
      * the Indexer object and the document being indexed (which are called by the Indexer). This
      * allows us more flexibility in how we supply the document to this object (e.g. as a file, a

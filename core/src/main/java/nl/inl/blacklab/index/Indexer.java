@@ -40,6 +40,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.externalstorage.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
@@ -52,7 +53,11 @@ import nl.inl.util.UnicodeStream;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
+ * 
+ * Not thread-safe, although indexing itself can use thread in certain cases
+ * (only when using configuration file based indexing right now)
  */
+@NotThreadSafe // in index mode
 public class Indexer {
 
     static final Logger logger = LogManager.getLogger(Indexer.class);
@@ -198,22 +203,6 @@ public class Indexer {
     protected String formatIdentifier;
 
     /**
-     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(Throwable, String, File)}
-     * If an error occurs (e.g. an XML parse error), should we
-     *  try to continue indexing, or abort? */
-    @Deprecated
-    protected boolean continueAfterInputError = true;
-
-    /**
-     * @deprecated (since 1.7) use {@link IndexListener#errorOccurred(Throwable, String, File)}
-     * If an error occurs (e.g. an XML parse error), and we don't
-     * continue indexing, should we re-throw it, or assume the client
-     * picked it up in the listener and return normally?
-     */
-    @Deprecated
-    protected boolean rethrowInputError = true;
-
-    /**
      * Parameters we should pass to our DocIndexers upon instantiation.
      */
     protected Map<String, String> indexerParam;
@@ -240,29 +229,6 @@ public class Indexer {
 
     public FieldType getMetadataFieldType(boolean tokenized) {
         return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
-    }
-
-    /**
-     * @deprecated (since 1.7) use return value of {@link IndexListener#errorOccurred(Throwable, String, File)}
-     * If an error occurs (e.g. an XML parse error), should we
-     *  try to continue indexing, or abort?
-     *  @param b if true, continue; if false, abort
-     */
-    @Deprecated
-    public void setContinueAfterInputError(boolean b) {
-        continueAfterInputError = b;
-    }
-
-    /**
-     * @deprecated only functional for index() using reader
-     * If an error occurs (e.g. an XML parse error), and we don't
-     * continue indexing, should we re-throw it, or assume the client
-     * picked it up in the listener and return normally?
-     *  @param b if true, re-throw it; if false, return as normal
-     */
-    @Deprecated
-    public void setRethrowInputError(boolean b) {
-        rethrowInputError = b;
     }
 
     /**
@@ -293,58 +259,12 @@ public class Indexer {
      *            the main BlackLab index directory
      * @param create
      *            if true, creates a new index; otherwise, appends to existing index
-     * @param docIndexerClass how to index the files, or null to autodetect
-     * @throws IOException
-     * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
-     * @Deprecated use version that takes a formatIdentifier
-     */
-    @Deprecated
-    public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass)
-            throws IOException, DocumentFormatException {
-
-        // docIndexerClass is no longer directly used to instantiate DocIndexers
-        // instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a string identifier
-        // DocIndexerFactoryClasss however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
-        init(directory, create, docIndexerClass != null ? docIndexerClass.getCanonicalName() : null, null);
-    }
-
-    /**
-     * Construct Indexer
-     *
-     * @param directory
-     *            the main BlackLab index directory
-     * @param create
-     *            if true, creates a new index; otherwise, appends to existing index
      * @throws IOException
      * @throws DocumentFormatException if autodetection of the document format failed
      */
     public Indexer(File directory, boolean create)
             throws IOException, DocumentFormatException {
         this(directory, create, (String) null, null);
-    }
-
-    /**
-     * Construct Indexer
-     *
-     * @param directory
-     *            the main BlackLab index directory
-     * @param create
-     *            if true, creates a new index; otherwise, appends to existing index
-     * @param docIndexerClass how to index the files, or null to autodetect
-     * @param indexTemplateFile JSON file to use as template for index structure / metadata
-     *   (if creating new index)
-     * @throws DocumentFormatException if no DocIndexer was specified and autodetection failed
-     * @throws IOException
-     * @Deprecated use version that takes a formatIdentifier
-     */
-    @Deprecated
-    public Indexer(File directory, boolean create, Class<? extends DocIndexer> docIndexerClass, File indexTemplateFile)
-            throws DocumentFormatException, IOException {
-
-        // docIndexerClass is no longer directly used to instantiate DocIndexers
-        // instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a string identifier
-        // DocIndexerFactoryClasss however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
-        this(directory, create, docIndexerClass != null ? docIndexerClass.getCanonicalName() : null, indexTemplateFile);
     }
 
     /**
@@ -545,19 +465,6 @@ public class Indexer {
     }
 
     /**
-     * Set the DocIndexer class we should use to index documents.
-     * @param docIndexerClass the class
-     * @deprecated use setDocIndexerFactory
-     */
-    @Deprecated
-    public void setDocIndexer(Class<? extends DocIndexer> docIndexerClass) {
-        // docIndexerClass is no longer directly used to instantiate DocIndexers
-        // instead is abstracted behind a DocIndexerFactory that exposes the DocIndexer in question using a friendly name
-        // the factory however also accepts qualified class names, so we can still target the requested class by passing its full name to the factory
-        this.formatIdentifier = docIndexerClass.getCanonicalName();
-    }
-
-    /**
      * Add a Lucene document to the index
      *
      * @param document
@@ -630,29 +537,14 @@ public class Indexer {
             docIndexerWrapper.file(documentName, reader);
         } catch (MalformedInputFileException e) {
             listener.errorOccurred(e, documentName, null);
-            if (continueAfterInputError) {
-                logger.error("Parsing " + documentName + " failed:");
-                e.printStackTrace();
-                logger.error("(continuing indexing)");
-            } else {
-                // Don't continue; re-throw the exception so we eventually abort
-                logger.error("Input error while processing " + documentName);
-                if (rethrowInputError)
-                    throw e;
-                e.printStackTrace();
-        }
+            logger.error("Parsing " + documentName + " failed:");
+            e.printStackTrace();
+            logger.error("(continuing indexing)");
         } catch (Exception e) {
             listener.errorOccurred(e, documentName, null);
-            if (continueAfterInputError) {
-                logger.error("Parsing " + documentName + " failed:");
-                e.printStackTrace();
-                logger.error("(continuing indexing)");
-            } else {
-                logger.error("Exception while processing " + documentName);
-                if (rethrowInputError)
-                    throw e;
-                e.printStackTrace();
-	        }
+            logger.error("Parsing " + documentName + " failed:");
+            e.printStackTrace();
+            logger.error("(continuing indexing)");
 	    }
     }
 
@@ -705,23 +597,6 @@ public class Indexer {
         catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    // Purely for compat with 1.6
-    /**
-     * @deprecated use {@link #index(String, InputStream)}
-     *
-     * @param filePath
-     * @param inputStream
-     * @param glob
-     * @param processArchives
-     */
-    @Deprecated
-    public void indexInputStream(final String filePath, InputStream inputStream, String glob, boolean processArchives) {
-        boolean originalProcessArchives = this.processArchivesAsDirectories;
-        setProcessArchivesAsDirectories(processArchives);
-        index(filePath, inputStream, glob);
-        setProcessArchivesAsDirectories(originalProcessArchives);
     }
 
     /**

@@ -91,26 +91,6 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
 		return first + results.size() - 1;
 	}
 
-	/**
-	 * Return the number of results.
-	 * @return number of results
-	 * @deprecated use ResultsWindow.size()
-	 */
-	@Deprecated
-	public int number() {
-		return results.size();
-	}
-
-	/**
-	 * Return the total number of results
-	 * @return total number of results
-	 * @deprecated use ResultsWindow.sourceSize()
-	 */
-	@Deprecated
-	public int totalResults() {
-		return sourceSize();
-	}
-
 	public DocResults getOriginalDocs() {
 		return source;
 	}

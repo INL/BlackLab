@@ -36,6 +36,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.util.CollUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
@@ -48,7 +49,11 @@ import nl.inl.util.SimpleResourcePool;
  * A file allocation table keeps track of each file's blocks as well as the
  * character offset associated with each block so we can quickly access the data.
  * Free blocks will be re-used to save space.
+ * 
+ * Thread-safety: not thread-safe in index mode, but thread-safe while
+ * searching
  */
+@NotThreadSafe // in index mode
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	//private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
@@ -496,7 +501,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 	 * Encode and write the block we've compiled so far and reset for next block
 	 * @param writeLastBlock if true, we'll write the last block too even if it's not full
 	 */
-	public void writeBlocks(boolean writeLastBlock) {
+	private void writeBlocks(boolean writeLastBlock) {
 		ensureContentsFileOpen();
 
 		// Do we have a block to write?

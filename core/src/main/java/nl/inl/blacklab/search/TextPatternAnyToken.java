@@ -69,12 +69,6 @@ public class TextPatternAnyToken extends TextPattern {
 		return min + 31 * max;
 	}
 
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return toString();
-	}
-
 	@Override
 	public String toString() {
 		return "ANYTOKEN(" + min + ", " + max + ")";

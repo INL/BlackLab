@@ -23,13 +23,11 @@ import org.apache.lucene.index.Term;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
-import nl.inl.blacklab.search.lucene.SpanQueryTagsOld;
 import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.
  */
-@SuppressWarnings("deprecation")
 public class TextPatternTags extends TextPattern {
 
 	protected String elementName;
@@ -62,10 +60,7 @@ public class TextPatternTags extends TextPattern {
 		QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
 		String startTagFieldName = startTagContext.luceneField();
 		if (!context.tagLengthInPayload()) {
-			// Older index, with end tags stored in separate property
-			QueryExecutionContext endTagContext = context.withProperty(ComplexFieldUtil.END_TAG_PROP_NAME);
-			String endTagFieldName = endTagContext.luceneField();
-			return new SpanQueryTagsOld(startTagFieldName, endTagFieldName, elementName1, attrOptIns);
+		    throw new UnsupportedOperationException("This index is too old for this version of BlackLab. Please re-index your data or use version 1.7.1.");
 		}
 		// Modern index, with tag length in payload
 		return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
@@ -87,12 +82,6 @@ public class TextPatternTags extends TextPattern {
 	@Override
 	public int hashCode() {
 		return elementName.hashCode() + attr.hashCode();
-	}
-
-	@Deprecated
-	@Override
-	public String toString(QueryExecutionContext context) {
-		return toString();
 	}
 
 	@Override
