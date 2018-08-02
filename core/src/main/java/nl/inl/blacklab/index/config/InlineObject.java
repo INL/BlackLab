@@ -74,11 +74,6 @@ class InlineObject implements Comparable<InlineObject> {
         }
         return offset - o.offset;
     }
-    
-    @Override
-    public boolean equals(Object obj) {
-        return obj instanceof InlineObject ? compareTo((InlineObject) obj) == 0 : false;
-    }
 
     @Override
     public String toString() {
@@ -93,6 +88,49 @@ class InlineObject implements Comparable<InlineObject> {
         l.add(new InlineObject("bla", 3, InlineObjectType.CLOSE_TAG, null));
         Collections.sort(l);
         System.out.println(l);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+        result = prime * result + ((matchingTag == null) ? 0 : matchingTag.hashCode());
+        result = prime * result + offset;
+        result = prime * result + ((text == null) ? 0 : text.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        InlineObject other = (InlineObject) obj;
+        if (attributes == null) {
+            if (other.attributes != null)
+                return false;
+        } else if (!attributes.equals(other.attributes))
+            return false;
+        if (matchingTag == null) {
+            if (other.matchingTag != null)
+                return false;
+        } else if (!matchingTag.equals(other.matchingTag))
+            return false;
+        if (offset != other.offset)
+            return false;
+        if (text == null) {
+            if (other.text != null)
+                return false;
+        } else if (!text.equals(other.text))
+            return false;
+        if (type != other.type)
+            return false;
+        return true;
     }
 
 }

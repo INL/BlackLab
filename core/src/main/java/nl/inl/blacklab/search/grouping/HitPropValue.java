@@ -32,9 +32,7 @@ public abstract class HitPropValue implements Comparable<Object> {
 	public abstract int hashCode();
 
 	@Override
-	public boolean equals(Object obj) {
-		return compareTo(obj) == 0;
-	}
+	public abstract boolean equals(Object obj);
 
 	/**
 	 * Convert the String representation of a HitPropValue back into the HitPropValue

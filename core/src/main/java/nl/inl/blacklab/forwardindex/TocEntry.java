@@ -74,9 +74,33 @@ class TocEntry implements Comparable<TocEntry> {
 	public int compareTo(TocEntry o) {
 		return (int) (offset - o.offset);
 	}
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (deleted ? 1231 : 1237);
+        result = prime * result + length;
+        result = prime * result + (int) (offset ^ (offset >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TocEntry other = (TocEntry) obj;
+        if (deleted != other.deleted)
+            return false;
+        if (length != other.length)
+            return false;
+        if (offset != other.offset)
+            return false;
+        return true;
+    }
 	
-	@Override
-	public boolean equals(Object obj) {
-	    return obj instanceof TocEntry ? compareTo((TocEntry) obj) == 0 : false;
-	}
 }

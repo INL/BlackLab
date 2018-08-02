@@ -88,20 +88,59 @@ class TokenStreamFromList extends TokenStream {
 		return false;
 	}
 
-//	public static void main(String[] args) throws IOException {
-//		TokenStream s = new TokenStreamFromList(Arrays.asList("a", "b", "c"), Arrays.asList(1, 1, 1));
-//		try {
-//			CharTermAttribute term = s.addAttribute(CharTermAttribute.class);
-//			s.incrementToken();
-//			System.out.println(new String(term.buffer(), 0, term.length()));
-//			s.incrementToken();
-//			System.out.println(new String(term.buffer(), 0, term.length()));
-//			s.incrementToken();
-//			System.out.println(new String(term.buffer(), 0, term.length()));
-//			System.out.println(s.incrementToken());
-//		} finally {
-//			s.close();
-//		}
-//	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((incrementIt == null) ? 0 : incrementIt.hashCode());
+        result = prime * result + ((iterator == null) ? 0 : iterator.hashCode());
+        result = prime * result + ((payloadAttr == null) ? 0 : payloadAttr.hashCode());
+        result = prime * result + ((payloadIt == null) ? 0 : payloadIt.hashCode());
+        result = prime * result + ((positionIncrementAttr == null) ? 0 : positionIncrementAttr.hashCode());
+        result = prime * result + ((termAttr == null) ? 0 : termAttr.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TokenStreamFromList other = (TokenStreamFromList) obj;
+        if (incrementIt == null) {
+            if (other.incrementIt != null)
+                return false;
+        } else if (!incrementIt.equals(other.incrementIt))
+            return false;
+        if (iterator == null) {
+            if (other.iterator != null)
+                return false;
+        } else if (!iterator.equals(other.iterator))
+            return false;
+        if (payloadAttr == null) {
+            if (other.payloadAttr != null)
+                return false;
+        } else if (!payloadAttr.equals(other.payloadAttr))
+            return false;
+        if (payloadIt == null) {
+            if (other.payloadIt != null)
+                return false;
+        } else if (!payloadIt.equals(other.payloadIt))
+            return false;
+        if (positionIncrementAttr == null) {
+            if (other.positionIncrementAttr != null)
+                return false;
+        } else if (!positionIncrementAttr.equals(other.positionIncrementAttr))
+            return false;
+        if (termAttr == null) {
+            if (other.termAttr != null)
+                return false;
+        } else if (!termAttr.equals(other.termAttr))
+            return false;
+        return true;
+    }
 
 }

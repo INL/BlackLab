@@ -22,6 +22,15 @@ public class HitPropValueMultiple extends HitPropValue {
 	public int hashCode() {
 		return Arrays.hashCode(value);
 	}
+	
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj instanceof HitPropValueMultiple)
+            return Arrays.equals(value, ((HitPropValueMultiple)obj).value);
+        return false;
+    }
 
 	public static HitPropValueMultiple deserialize(Hits hits, String info) {
 		String[] strValues = PropValSerializeUtil.splitMultiple(info);

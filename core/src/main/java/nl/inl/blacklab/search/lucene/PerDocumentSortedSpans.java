@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Comparator;
 
 import org.apache.lucene.search.spans.SpanCollector;
+
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 
@@ -31,8 +32,6 @@ class PerDocumentSortedSpans extends BLSpans {
 
 	final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
 
-	protected BLSpans source;
-
 	private int curDoc = -1, curStart = -1, curEnd = -1;
 
 	private SpansInBuckets bucketedSpans;
@@ -44,8 +43,6 @@ class PerDocumentSortedSpans extends BLSpans {
 	private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
 	public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
-		this.source = src;
-
 		// Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
 		bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 

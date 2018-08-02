@@ -54,4 +54,29 @@ public class RemoveAllAccentsFilter extends TokenFilter {
 		return false;
 	}
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((termAtt == null) ? 0 : termAtt.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RemoveAllAccentsFilter other = (RemoveAllAccentsFilter) obj;
+        if (termAtt == null) {
+            if (other.termAtt != null)
+                return false;
+        } else if (!termAtt.equals(other.termAtt))
+            return false;
+        return true;
+    }
+
 }

@@ -73,22 +73,8 @@ class TokenStreamWithOffsets extends TokenStream {
 		endCharIt = endChar.intIterator();
 	}
 
-//	public TokenStreamWithOffsets(List<String> tokens, List<Integer> increments, List<Integer> startChar,
-//			List<Integer> endChar) {
-//		clearAttributes();
-//		termAttr = addAttribute(CharTermAttribute.class);
-//		offsetAttr = addAttribute(OffsetAttribute.class);
-//		positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
-//		positionIncrementAttr.setPositionIncrement(1);
-//
-//		iterator = tokens.iterator();
-//		incrementIt = increments.iterator();
-//		startCharIt = startChar.iterator();
-//		endCharIt = endChar.iterator();
-//	}
-
 	@Override
-	final public boolean incrementToken() {
+    final public boolean incrementToken() {
 		// Capture token contents
 		if (iterator.hasNext()) {
 			String term = iterator.next();
@@ -99,5 +85,66 @@ class TokenStreamWithOffsets extends TokenStream {
 		}
 		return false;
 	}
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((endCharIt == null) ? 0 : endCharIt.hashCode());
+        result = prime * result + ((incrementIt == null) ? 0 : incrementIt.hashCode());
+        result = prime * result + ((iterator == null) ? 0 : iterator.hashCode());
+        result = prime * result + ((offsetAttr == null) ? 0 : offsetAttr.hashCode());
+        result = prime * result + ((positionIncrementAttr == null) ? 0 : positionIncrementAttr.hashCode());
+        result = prime * result + ((startCharIt == null) ? 0 : startCharIt.hashCode());
+        result = prime * result + ((termAttr == null) ? 0 : termAttr.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TokenStreamWithOffsets other = (TokenStreamWithOffsets) obj;
+        if (endCharIt == null) {
+            if (other.endCharIt != null)
+                return false;
+        } else if (!endCharIt.equals(other.endCharIt))
+            return false;
+        if (incrementIt == null) {
+            if (other.incrementIt != null)
+                return false;
+        } else if (!incrementIt.equals(other.incrementIt))
+            return false;
+        if (iterator == null) {
+            if (other.iterator != null)
+                return false;
+        } else if (!iterator.equals(other.iterator))
+            return false;
+        if (offsetAttr == null) {
+            if (other.offsetAttr != null)
+                return false;
+        } else if (!offsetAttr.equals(other.offsetAttr))
+            return false;
+        if (positionIncrementAttr == null) {
+            if (other.positionIncrementAttr != null)
+                return false;
+        } else if (!positionIncrementAttr.equals(other.positionIncrementAttr))
+            return false;
+        if (startCharIt == null) {
+            if (other.startCharIt != null)
+                return false;
+        } else if (!startCharIt.equals(other.startCharIt))
+            return false;
+        if (termAttr == null) {
+            if (other.termAttr != null)
+                return false;
+        } else if (!termAttr.equals(other.termAttr))
+            return false;
+        return true;
+    }
 
 }

@@ -31,6 +31,15 @@ public class HitPropValueContextWord extends HitPropValueContext {
 	public int hashCode() {
 		return ((Integer)valueSortOrder).hashCode();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+	    if (this == obj)
+	        return true;
+	    if (obj instanceof HitPropValueContextWord)
+	        return valueSortOrder == ((HitPropValueContextWord)obj).valueSortOrder;
+	    return false;
+	}
 
 	public static HitPropValue deserialize(Hits hits, String info) {
 		String[] parts = PropValSerializeUtil.splitParts(info);

@@ -118,11 +118,46 @@ public class XmlHighlighter {
 		}
 		
 		@Override
-		public boolean equals(Object obj) {
-		    return obj instanceof TagLocation ? compareTo((TagLocation) obj) == 0 : false;
-		}
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + end;
+            result = prime * result + matchingTagStart;
+            result = prime * result + ((name == null) ? 0 : name.hashCode());
+            result = prime * result + (int) (objectNum ^ (objectNum >>> 32));
+            result = prime * result + start;
+            result = prime * result + ((type == null) ? 0 : type.hashCode());
+            return result;
+        }
 
-		@Override
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TagLocation other = (TagLocation) obj;
+            if (end != other.end)
+                return false;
+            if (matchingTagStart != other.matchingTagStart)
+                return false;
+            if (name == null) {
+                if (other.name != null)
+                    return false;
+            } else if (!name.equals(other.name))
+                return false;
+            if (objectNum != other.objectNum)
+                return false;
+            if (start != other.start)
+                return false;
+            if (type != other.type)
+                return false;
+            return true;
+        }
+
+        @Override
 		public String toString() {
 			return type + "@" + start;
 		}
