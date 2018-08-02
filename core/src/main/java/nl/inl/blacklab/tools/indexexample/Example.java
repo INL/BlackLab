@@ -97,7 +97,8 @@ public class Example {
 		} finally {
 
 			// Finalize and close the index.
-			indexer.close();
+		    if (indexer != null)
+		        indexer.close();
 
 		}
 

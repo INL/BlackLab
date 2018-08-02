@@ -134,7 +134,8 @@ public class DownloadCache {
         } catch (IOException e) {
             return -1;
         } finally {
-            c.disconnect();
+            if (c != null)
+                c.disconnect();
         }
     }
 
