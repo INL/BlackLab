@@ -201,7 +201,7 @@ class TermsImplV3 extends Terms {
 		// then check the term string, and repeat until we find a match.
 		int min = 0, max = idPerSortPosition.length - 1;
 		while (true) {
-			int guessedOrdinal = (min + max) / 2;
+			int guessedOrdinal = (min + max) >>> 2;
 			int guessedIndex = idPerSortPosition[guessedOrdinal];
 			String guessedTerm = get(guessedIndex);
 			int cmp = collator.compare(term, guessedTerm);
@@ -250,7 +250,7 @@ class TermsImplV3 extends Terms {
 		// then check the term string, and repeat until we find a match.
 		int min = 0, max = idLookup.length - 1;
 		while (max >= min) {
-			int guessedOrdinal = (min + max) / 2;
+			int guessedOrdinal = (min + max) >>> 2;
 			int guessedIndex = idLookup[guessedOrdinal];
 			String guessedTerm = get(guessedIndex);
 			CollationKey termKey = coll.getCollationKey(term);
