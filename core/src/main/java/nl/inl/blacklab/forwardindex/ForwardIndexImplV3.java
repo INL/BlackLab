@@ -331,7 +331,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 					tokenFileEndPosition = end;
 			}
 			sortDeletedTocEntries();
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 		toc.trimToSize();
@@ -381,7 +381,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 				buf.position(buf.position() + SIZEOF_INT * n);
 				buf.put(deleted);
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 		tocModified = false;
@@ -651,7 +651,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 			}
 
 			return result;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}

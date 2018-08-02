@@ -461,7 +461,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 					freeBlocks.add(i);
 			}
 
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}
@@ -484,7 +484,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 			} finally {
 				closeMappedToc();
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 		tocModified = false;
@@ -761,7 +761,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 				}
 			}
 			return result;
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);
 		}
 	}

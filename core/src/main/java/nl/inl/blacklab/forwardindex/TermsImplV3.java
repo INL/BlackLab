@@ -16,6 +16,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
@@ -465,7 +466,7 @@ class TermsImplV3 extends Terms {
 					}
 				}
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -622,7 +623,7 @@ class TermsImplV3 extends Terms {
 					ib.put(sortPositionPerIdInsensitive);
 				}
 			}
-		} catch (Exception e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}

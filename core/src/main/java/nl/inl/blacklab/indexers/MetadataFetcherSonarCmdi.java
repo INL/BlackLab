@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -22,6 +24,7 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.externalstorage.ContentStore;
@@ -65,7 +68,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 			} else {
 				try {
 					metadataZipFile = new ZipFile(new File(zipFilePath));
-				} catch (Exception e) {
+				} catch (IOException e) {
 					throw new RuntimeException(e);
 				}
 			}
@@ -147,7 +150,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
 			if (metadataZipFile == null)
 				is.close();
-		} catch (Exception e) {
+		} catch (SAXException | ParserConfigurationException | IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
