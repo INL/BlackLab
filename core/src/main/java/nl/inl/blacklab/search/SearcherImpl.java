@@ -220,7 +220,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     	// Register ourselves in the mapping from IndexReader to Searcher,
     	// so we can find the corresponding Searcher object from within Lucene code
-    	searcherFromIndexReader.put(reader, this);
+        Searcher.registerSearcher(reader, this);
 
     	// Detect and open the ContentStore for the contents field
     	if (!createNewIndex) {
@@ -324,7 +324,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
 			super.close();
 
-			searcherFromIndexReader.remove(reader);
+			Searcher.removeSearcher(this);
 
 		} catch (IOException e) {
 			throw ExUtil.wrapRuntimeException(e);

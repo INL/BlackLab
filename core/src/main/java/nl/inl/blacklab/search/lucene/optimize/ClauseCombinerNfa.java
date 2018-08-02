@@ -87,7 +87,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 		boolean forwardPossible = rightNfa && !leftEmpty;
 		//fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
 		//factor == -2569, abs(factor) > nfaThreshold (2000)
-		if (Searcher.traceOptimization) {
+		if (Searcher.isTraceOptimization()) {
 			logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
 				forwardPossible ? 1 : 0,
 				backwardPossible ? 1 : 0,
@@ -121,17 +121,17 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 	@Override
 	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
 		if (nfaThreshold == NO_NFA_MATCHING) {
-			if (Searcher.traceOptimization) logger.debug("   nfa matching switched off");
+			if (Searcher.isTraceOptimization()) logger.debug("   nfa matching switched off");
 			return CANNOT_COMBINE;
 		}
 		long factor = getFactor(left, right, reader);
 		if (factor == 0) {
-			if (Searcher.traceOptimization) logger.debug("   factor == 0");
+			if (Searcher.isTraceOptimization()) logger.debug("   factor == 0");
 			return CANNOT_COMBINE;
 		}
 		long absFactor = Math.abs(factor);
 		if (absFactor > nfaThreshold) {
-			if (Searcher.traceOptimization) logger.debug("   factor == " + factor + ", abs(factor) > nfaThreshold ("+nfaThreshold+")");
+			if (Searcher.isTraceOptimization()) logger.debug("   factor == " + factor + ", abs(factor) > nfaThreshold ("+nfaThreshold+")");
 			return CANNOT_COMBINE;
 		}
 		return factor > 0 ? FORWARD_PRIORITY - (int)(10000 / absFactor) : BACKWARD_PRIORITY - (int)(10000 / absFactor);

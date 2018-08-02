@@ -31,8 +31,14 @@ public class MockSearcher extends Searcher {
 
 		// Register ourselves in the mapping from IndexReader to Searcher,
 		// so we can find the corresponding Searcher object from within Lucene code
-		searcherFromIndexReader.put(null, this);
+		Searcher.registerSearcher(null, this);
 	}
+    
+    @Override
+    public void close() {
+        Searcher.removeSearcher(this);
+        super.close();
+    }
 
 	@Override
 	public boolean isEmpty() {

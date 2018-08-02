@@ -60,13 +60,13 @@ public abstract class Searcher {
 	protected static final Logger logger = LogManager.getLogger(Searcher.class);
 
 	/** Log detailed debug messages about opening an index? */
-	public static boolean traceIndexOpening = false;
+	static boolean traceIndexOpening = false;
 
 	/** Log detailed debug messages about query optimization? */
-	public static boolean traceOptimization = false;
+	static boolean traceOptimization = false;
 
-	/** Log debug messages about query execution at various stages, to analyze what makes a query slow? */
-	public static boolean traceQueryExecution = false;
+    /** Log debug messages about query execution at various stages, to analyze what makes a query slow? */
+	static boolean traceQueryExecution = false;
 
 	/** When setting how many hits to retrieve/count, this means "no limit". */
 	public final static int UNLIMITED_HITS = -1;
@@ -89,7 +89,7 @@ public abstract class Searcher {
 	public static final int DEFAULT_CONTEXT_SIZE = 5;
 
 	/** The collator to use for sorting. Defaults to English collator. */
-	protected static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
+	private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
     /** Analyzer based on WhitespaceTokenizer */
 	final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
@@ -103,11 +103,19 @@ public abstract class Searcher {
 	/** Analyzer that doesn't tokenize */
 	final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
 
-	final protected static Map<IndexReader, Searcher> searcherFromIndexReader = new IdentityHashMap<>();
+	final private static Map<IndexReader, Searcher> searcherFromIndexReader = new IdentityHashMap<>();
 
 	public static Searcher fromIndexReader(IndexReader reader) {
 		return searcherFromIndexReader.get(reader);
 	}
+
+    public static void registerSearcher(IndexReader reader, Searcher searcher) {
+        searcherFromIndexReader.put(reader, searcher);
+    }
+
+    public static void removeSearcher(Searcher searcher) {
+        searcherFromIndexReader.remove(searcher.getIndexReader());
+    }
 
 	/**
 	 * Open an index for writing ("index mode": adding/deleting documents).
@@ -363,6 +371,10 @@ public abstract class Searcher {
 	    logger.debug("Trace index opening: " + traceIndexOpening);
 		Searcher.traceIndexOpening = traceIndexOpening;
 	}
+
+    public static boolean isTraceOptimization() {
+        return traceOptimization;
+    }
 
 	public static void setTraceOptimization(boolean traceOptimization) {
         logger.debug("Trace optimization: " + traceOptimization);

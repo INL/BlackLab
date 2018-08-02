@@ -74,7 +74,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * start tag yet? (used to make sure the stored XML contains all the
      * required mappings)
      */
-    final protected static Map<String, String> outputPrefixMapping = new HashMap<>();
+    final private static Map<String, String> outputPrefixMapping = new HashMap<>();
 
     /**
      * Handle Document element. Starts a new Lucene document and adds the
