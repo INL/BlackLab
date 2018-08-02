@@ -121,7 +121,9 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
             rewrite = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrite).rewrite(searcher.getIndexReader());
         }
         if (rewrite instanceof MatchNoDocsQuery)
-            rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
+            rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the
+                                                                                           // 'Query does not implement
+                                                                                           // createWeight issue'
         Weight filterWeight = rewrite.createWeight(searcher, false);
         return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
     }

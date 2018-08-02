@@ -264,7 +264,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         this.log = log;
     }
 
-    //-----------------
+    // -----------------
 
     // Combine continued input lines into one longer line.
     private static String combineLines(String str1, String str2) {
@@ -281,12 +281,13 @@ public class DocIndexerChat extends DocIndexerConfig {
         return name.trim().replaceAll(" +", "_");
     }
 
-    // Get the encoding from a possible encoding line, or null if not an encoding line
+    // Get the encoding from a possible encoding line, or null if not an encoding
+    // line
     private Charset getCharEncoding(String encodingLine) {
-        //  if str[1:] in legalcharencodings) {
-        //     result = str[1:]
-        //  else:
-        //     result = None
+        // if str[1:] in legalcharencodings) {
+        // result = str[1:]
+        // else:
+        // result = None
         if (encodingLine.charAt(0) == MD_CHAR)
             return Charset.forName(encodingLine.substring(1)); // (fixed tov origineel)
         return null; // (fixed tov origineel)
@@ -310,7 +311,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     // Convert date string to month number
     private int getMonths(String age) {
         // input format is 3;6.14 (y;m.d)
-        // also accept y.m.d and y;m;d and y.m;d with a warning or any separators for that matter
+        // also accept y.m.d and y;m;d and y.m;d with a warning or any separators for
+        // that matter
         String cleanAge = age.trim();
         boolean errorFound = false;
         boolean warningNeeded = false;
@@ -734,7 +736,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private void treatParticipants(List<String> entryList, Map<String, Object> metadata) {
         for (String el : entryList) {
             String[] ellist = el.split("\\s+", -1);
-            //int ctr = 0;
+            // int ctr = 0;
             String code = "";
             String name = "";
             String role = "";
@@ -943,7 +945,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
 //--------------------------------
 
-    //class CleanChildesMetadata {
+    // class CleanChildesMetadata {
 
     public static String scoped(String str) {
         return "<(([^<>]|\\[<\\]|\\[>\\])*)>\\s*" + str;
@@ -956,7 +958,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final int LCTR = 0;
 
     // hexformat = "{0:#06X}"
-    //final String hexformat = "\\u{0:04X}";
+    // final String hexformat = "\\u{0:04X}";
 
     // scopestr = "<([^<>]*)>\\s*"
 
@@ -1066,7 +1068,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final String ERROR_MARK_STR = "\\[\\*\\]";
     private static final Pattern ERROR_MARK_UNSCOPED = Pattern.compile(ERROR_MARK_STR);
     private static final Pattern ERROR_MARK_SCOPED = Pattern.compile(scoped(ERROR_MARK_STR));
-    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN fixed(?)
+    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN
+                                                                                                               // fixed(?)
     private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*\\]");
     private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*\\]");
     private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch\\]");
@@ -1074,7 +1077,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final Pattern SYLLABLE_PAUSE = Pattern.compile("(\\w)\\^");
     private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^\\]]*\\]");
     private static final Pattern CLITIC_LINK = Pattern.compile("~");
-    // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
+    // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode
+    // characters to escape sequences
     private static final Pattern CHAT_CA_SYMS = Pattern.compile(
             "[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
     private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
@@ -1103,10 +1107,12 @@ public class DocIndexerChat extends DocIndexerConfig {
             result = leftStr + newMidStr + rightStr;
         }
 
-        // remove scoped times <...> [x ...] keeping the ... betwen <> not officially defined
+        // remove scoped times <...> [x ...] keeping the ... betwen <> not officially
+        // defined
         result = TIMES_SCOPED.matcher(result).replaceAll("$1");
 
-        // remove scoped inlinecom <...> [% ...] keeping the ... betwen <> not officially defined
+        // remove scoped inlinecom <...> [% ...] keeping the ... betwen <> not
+        // officially defined
         result = INLINE_COM_SCOPED.matcher(result).replaceAll("$1");
 
         // remove pauses
@@ -1143,7 +1149,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
         result = DEPENDENT_TIER.matcher(result).replaceAll(EMPTY_STRING);
 
-        // remove    postcodes p. 75-76
+        // remove postcodes p. 75-76
         result = POST_CODES.matcher(result).replaceAll(EMPTY_STRING);
 
         // remove precodes p.75-76
@@ -1157,11 +1163,11 @@ public class DocIndexerChat extends DocIndexerConfig {
 
         // remove xxx should we do this? or something else? add xxx as a word in Alpino?
         // no we keep this
-        //    result = result.replaceAll(r"xxx", '')
+        // result = result.replaceAll(r"xxx", '')
 
         // remove yyy should we do this? or something else? add xxx as a word in Alpino?
         // we keep this too
-        //    result = result.replaceAll(r"yyy", '')
+        // result = result.replaceAll(r"yyy", '')
 
         // remove phonological fragments p. 61
         result = PHON_FRAG1.matcher(result).replaceAll(EMPTY_STRING);
@@ -1181,13 +1187,13 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove underscore
         result = result.replaceAll("_", EMPTY_STRING);
 
-        // remove +..  p. 63
+        // remove +.. p. 63
         result = PLUS_DOT_DOT.matcher(result).replaceAll(EMPTY_STRING);
 
         // remove [<] and preceding <> on purpose before [//]
         result = LT_REPL_SCOPED.matcher(result).replaceAll("$1 ");
 
-        // remove [<]   on purpose before [//]
+        // remove [<] on purpose before [//]
         result = LT_REPL_UNSCOPED.matcher(result).replaceAll(SPACE);
 
         // remove [>] and preceding <>
@@ -1202,18 +1208,19 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove [//] keep preceding word
         result = DOUBLE_SLASH_UNSCOPED.matcher(result).replaceAll(EMPTY_STRING);
 
-        // remove [!] and <> around preceding text    p.68
+        // remove [!] and <> around preceding text p.68
         result = EXCLAM1.matcher(result).replaceAll("$1");
 
         // remove [!] p.68
         result = EXCLAM2.matcher(result).replaceAll(SPACE);
 
-        // remove [/] keep preceding part between <> this line and following one: crucial order
+        // remove [/] keep preceding part between <> this line and following one:
+        // crucial order
         result = SLASH_SCOPED.matcher(result).replaceAll("$1");
 
         // remove [/] keep the word before
         result = SLASH_UNSCOPED.matcher(result).replaceAll(EMPTY_STRING);
-        //    result = result.replaceAll(r"\[<\]", '')
+        // result = result.replaceAll(r"\[<\]", '')
 
         // remove [?] and preceding <>
         result = Q_REGEX_SCOPED.matcher(result).replaceAll("$1 ");
@@ -1224,7 +1231,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove [=! <text>] and preceding <>
         result = EQ_EXCLAM.matcher(result).replaceAll("$1 ");
 
-        // remove [= <text> ] and preceding <>  p 68/69 explanation
+        // remove [= <text> ] and preceding <> p 68/69 explanation
         result = EQ_TEXT1.matcher(result).replaceAll("$1 ");
 
         // remove [= <text>]
@@ -1242,14 +1249,14 @@ public class DocIndexerChat extends DocIndexerConfig {
         // remove +/. +/? +//. +//?
         result = PLUS3.matcher(result).replaceAll(" ");
 
-        // remove +.  +^ +< +, ++ +" (p. 64-66)
+        // remove +. +^ +< +, ++ +" (p. 64-66)
         result = PLUS2.matcher(result).replaceAll(" ");
 
-        // remove +".    (p. 65)  +!? (p. 63)
+        // remove +". (p. 65) +!? (p. 63)
         result = PLUS_QUOTE.matcher(result).replaceAll(" ");
 
         // remove silence marks (.) (..) (...) done above see pauses
-        //    result = re.sub(r"\(\.(\.)?(\.)?\)", r" ", result)
+        // result = re.sub(r"\(\.(\.)?(\.)?\)", r" ", result)
 
         // remove syllablepauses p. 60
         result = SYLLABLE_PAUSE.matcher(result).replaceAll("$1");
@@ -1267,7 +1274,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         result = TIME_ALIGN.matcher(result).replaceAll(SPACE);
 
         // remove superfluous spaces etc. this also removes CR etc
-        //    result = result.strip()
+        // result = result.strip()
         return result;
         // end function cleantext
     }
@@ -1276,11 +1283,11 @@ public class DocIndexerChat extends DocIndexerConfig {
         List<Pair<Character, String>> result = new ArrayList<>();
         for (int i = 0; i < str.length(); i++) {
             char curChar = str.charAt(i);
-            String curCode = Integer.toHexString(curChar); //hexformat.format(ord(str[i]));
+            String curCode = Integer.toHexString(curChar); // hexformat.format(ord(str[i]));
             result.add(new ImmutablePair<>(curChar, curCode));
         }
         return result;
     }
-    //}
+    // }
 
 }

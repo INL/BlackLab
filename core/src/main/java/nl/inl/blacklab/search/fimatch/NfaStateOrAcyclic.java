@@ -44,7 +44,8 @@ public class NfaStateOrAcyclic extends NfaState {
         boolean clauseMatched = false;
         Set<Integer> clauseMatchEnds = new HashSet<>();
         if (clausesAllSameLength) {
-            // We can short-circuit as soon as we find a single clause hit, because there can only be one match end.
+            // We can short-circuit as soon as we find a single clause hit, because there
+            // can only be one match end.
             for (NfaState clause : clauses) {
                 boolean matchesFound = false;
                 matchesFound = clause.findMatchesInternal(fiDoc, pos, direction, clauseMatchEnds);
@@ -53,7 +54,8 @@ public class NfaStateOrAcyclic extends NfaState {
                     break; // short-circuit OR
             }
         } else {
-            // We have to process all clauses because we need all match ends for the next phase.
+            // We have to process all clauses because we need all match ends for the next
+            // phase.
             for (NfaState clause : clauses) {
                 boolean matchesFound = false;
                 matchesFound = clause.findMatchesInternal(fiDoc, pos, direction, clauseMatchEnds);

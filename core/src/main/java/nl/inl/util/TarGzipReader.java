@@ -62,10 +62,13 @@ public class TarGzipReader {
      */
     public static void processGzip(String fileName, InputStream gzipStream, FileHandler fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
-            // Make a copy of the data, since the stream we pass into fileHandler.handle may be used within another thread
-            // so it (or any of its underlying streams) should not be closed by us inadvertantly
+            // Make a copy of the data, since the stream we pass into fileHandler.handle may
+            // be used within another thread
+            // so it (or any of its underlying streams) should not be closed by us
+            // inadvertantly
             InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
-            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
+            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling
+                                                                                   // uniform across all archives types?
         } catch (Exception e) {
             throw ExUtil.wrapRuntimeException(e);
         }
@@ -85,10 +88,14 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
+                // Make a copy of this file's data, since there is a real chance the returned
+                // stream will be processed by another thread.
+                // It makes sense too, the stream has a bunch of internal data about which entry
+                // is currently being processed
+                // and if we jump to the next entry in between reads in another thread things
+                // would go badly.
+                // NOTE: InputStream is not closed, handler is responsible for closing its
+                // stream
                 ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
                 boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
                 if (!keepProcessing)
@@ -116,10 +123,14 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
+                // Make a copy of this file's data, since there is a real chance the returned
+                // stream will be processed by another thread.
+                // It makes sense too, the stream has a bunch of internal data about which entry
+                // is currently being processed
+                // and if we jump to the next entry in between reads in another thread things
+                // would go badly.
+                // NOTE: InputStream is not closed, handler is responsible for closing its
+                // stream
                 ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
                 boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
                 if (!keepProcessing)

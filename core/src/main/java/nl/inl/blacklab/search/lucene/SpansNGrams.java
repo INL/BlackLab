@@ -190,7 +190,8 @@ class SpansNGrams extends BLSpans {
             currentStart = currentEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
-        // Advance us to just before the requested start point, then call nextStartPosition().
+        // Advance us to just before the requested start point, then call
+        // nextStartPosition().
         currentStart = target - 1;
         currentEnd = currentStart + max;
         return nextStartPosition();

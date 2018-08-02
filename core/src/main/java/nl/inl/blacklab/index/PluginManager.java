@@ -106,7 +106,8 @@ public class PluginManager {
         convertPlugins = loadPlugins(ConvertPlugin.class, pluginConfig);
         tagPlugins = loadPlugins(TagPlugin.class, pluginConfig);
 
-        // Some plugins take a LONG time to init, if we block, we block the loading of the config
+        // Some plugins take a LONG time to init, if we block, we block the loading of
+        // the config
         // Which in turn blocks the whole of blacklab(-server), so don't do that
         if (!delayInitialization) {
             CompletableFuture.runAsync(() -> {
@@ -140,7 +141,8 @@ public class PluginManager {
                     continue;
                 }
 
-                Optional<ObjectNode> config = Optional.ofNullable(pluginConfig.get(plugin.getId())) // get key + optional value
+                Optional<ObjectNode> config = Optional.ofNullable(pluginConfig.get(plugin.getId())) // get key +
+                                                                                                    // optional value
                         .filter(n -> !(n instanceof NullNode)) // if value
                         .map(n -> YamlJsonReader.obj(n, plugin.getId())); // get value
 

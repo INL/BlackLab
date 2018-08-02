@@ -321,11 +321,14 @@ public class XmlHighlighter {
         boolean suspendHighlighting = false;
 
         if (inHighlightTag > 0) {
-            // We should possibly suspend highlighting for this tag to maintain well-formedness.
-            // Check the current (outer) highlighting span and see if our matching tag is inside or outside this highlighting span.
+            // We should possibly suspend highlighting for this tag to maintain
+            // well-formedness.
+            // Check the current (outer) highlighting span and see if our matching tag is
+            // inside or outside this highlighting span.
             if (outerHighlightTag.start > tag.matchingTagStart
                     || outerHighlightTag.matchingTagStart <= tag.matchingTagStart) {
-                // Matching tag is outside the highlighting span; highlighting must be suspended to maintain well-formedness.
+                // Matching tag is outside the highlighting span; highlighting must be suspended
+                // to maintain well-formedness.
                 suspendHighlighting = true;
             }
         }
@@ -363,7 +366,8 @@ public class XmlHighlighter {
         for (HitCharSpan hit : hitSpans) {
             final int a = hit.getStartChar() - offset;
             if (a < 0)
-                continue; // outside highlighting range, or non-highlighting element (e.g. searching for example date range)
+                continue; // outside highlighting range, or non-highlighting element (e.g. searching for
+                          // example date range)
             final int b = hit.getEndChar() - offset;
             if (b > length)
                 continue; // outside highlighting range
@@ -400,7 +404,8 @@ public class XmlHighlighter {
 
         Matcher m = xmlTags.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
-        int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
+        int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct
+                                       // sorting)
         while (m.find()) {
             TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, m.start(), m.end());
 
@@ -484,7 +489,8 @@ public class XmlHighlighter {
                 // Whitespace; continue
                 break;
             default:
-                // We found an attribute or the tag name before encountering a slash, so it's not self-closing.
+                // We found an attribute or the tag name before encountering a slash, so it's
+                // not self-closing.
                 return false;
             }
         }
@@ -534,7 +540,8 @@ public class XmlHighlighter {
         String highlighted = highlightInternal(partialContent, tags, -1);
 
         if (removeEmptyHlTags) {
-            // Because of the way the highlighting (and maintaining of well-formedness) occurs,
+            // Because of the way the highlighting (and maintaining of well-formedness)
+            // occurs,
             // empty highlight tags may have arisen. Remove these.
             highlighted = highlighted.replaceAll(startHighlightTag + "(\\s*)" + endHighlightTag,
                     "$1");

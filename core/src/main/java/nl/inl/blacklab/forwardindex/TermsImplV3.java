@@ -212,7 +212,7 @@ class TermsImplV3 extends Terms {
         }
 
         // No. (this means we are in search mode, because in
-        //      index mode the term index is always available)
+        // index mode the term index is always available)
         // Do a binary search to find term.
         // Note that the binary search is done on the sorted terms,
         // so we need to guess an ordinal, convert it to a term index,
@@ -236,8 +236,9 @@ class TermsImplV3 extends Terms {
 
     @Override
     public void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive) {
-        // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
-        //  right now, diacSensitive is ignored and caseSensitive is used for both.
+        // NOTE: we don't do diacritics and case-sensitivity separately, but could in
+        // the future.
+        // right now, diacSensitive is ignored and caseSensitive is used for both.
         int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
         Collator coll = caseSensitive ? collator : collatorInsensitive;
 
@@ -251,7 +252,8 @@ class TermsImplV3 extends Terms {
                 results.add(termIndex.get(key));
                 return;
             } else if (termIndexInsensitive != null) {
-                // Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
+                // Case-/accent-insensitive. Find the relevant stretch of sort positions and
+                // look up the corresponding ids.
                 FirstAndNumber firstAndNumber = termIndexInsensitive.get(key);
                 for (int i = firstAndNumber.first; i < firstAndNumber.number; i++) {
                     results.add(idLookup[i]);
@@ -261,7 +263,8 @@ class TermsImplV3 extends Terms {
         }
 
         // No termIndex available.
-        // (this means we are in search mode, because in index mode the term index is always available)
+        // (this means we are in search mode, because in index mode the term index is
+        // always available)
         // Do a binary search to find term.
         // Note that the binary search is done on the sorted terms,
         // so we need to guess an ordinal, convert it to a term index,
@@ -273,7 +276,7 @@ class TermsImplV3 extends Terms {
             String guessedTerm = get(guessedIndex);
             CollationKey termKey = coll.getCollationKey(term);
             CollationKey guessedKey = coll.getCollationKey(guessedTerm);
-            int cmp = termKey.compareTo(guessedKey); //coll.compare(term, guessedTerm);
+            int cmp = termKey.compareTo(guessedKey); // coll.compare(term, guessedTerm);
             if (cmp == 0) {
                 // Found a match. Look both ways to see if there's more matching terms.
                 results.add(guessedIndex);
@@ -281,7 +284,7 @@ class TermsImplV3 extends Terms {
                     for (int testOrdinal = guessedOrdinal - 1; testOrdinal >= min; testOrdinal--) {
                         int testIndex = idLookup[testOrdinal];
                         CollationKey testKey = coll.getCollationKey(get(testIndex));
-                        //if (coll.compare(term, get(testIndex)) != 0)
+                        // if (coll.compare(term, get(testIndex)) != 0)
                         if (termKey.compareTo(testKey) != 0)
                             break;
                         results.add(testIndex);
@@ -289,7 +292,7 @@ class TermsImplV3 extends Terms {
                     for (int testOrdinal = guessedOrdinal + 1; testOrdinal <= max; testOrdinal++) {
                         int testIndex = idLookup[testOrdinal];
                         CollationKey testKey = coll.getCollationKey(get(testIndex));
-                        //if (coll.compare(term, get(testIndex)) != 0)
+                        // if (coll.compare(term, get(testIndex)) != 0)
                         if (termKey.compareTo(testKey) != 0)
                             break;
                         results.add(testIndex);
@@ -308,8 +311,9 @@ class TermsImplV3 extends Terms {
 
     @Override
     public boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive) {
-        // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
-        //  right now, diacSensitive is ignored and caseSensitive is used for both.
+        // NOTE: we don't do diacritics and case-sensitivity separately, but could in
+        // the future.
+        // right now, diacSensitive is ignored and caseSensitive is used for both.
         int[] idLookup = caseSensitive ? sortPositionPerId : sortPositionPerIdInsensitive;
         int id0 = idLookup[termId[0]];
         for (int i = 1; i < termId.length; i++) {
@@ -460,13 +464,17 @@ class TermsImplV3 extends Terms {
                         // Read the sort order arrays
                         sortPositionPerId = new int[n];
                         sortPositionPerIdInsensitive = new int[n];
-                        ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                        ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for
+                                                        // file compatibility)
                         ib.get(sortPositionPerId);
-                        ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                        ib.position(ib.position() + n); // Advance past unused sortPos -> id array (left in there for
+                                                        // file compatibility)
                         ib.get(sortPositionPerIdInsensitive);
 
-                        // Invert sortPositionPerId[] array, so we can later do a binary search through our
-                        // terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
+                        // Invert sortPositionPerId[] array, so we can later do a binary search through
+                        // our
+                        // terms to find a specific one. (only needed to deserialize sort/group criteria
+                        // from URL)
                         idPerSortPosition = new int[n];
                         idPerSortPositionInsensitive = new int[n];
                         Arrays.fill(idPerSortPositionInsensitive, -1);
@@ -538,13 +546,16 @@ class TermsImplV3 extends Terms {
                         // Write offset and data arrays to file
                         ib.put(termStringOffsets);
                         ib.put((int) termStringsByteSize); // size of the data block to follow
-                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance
+                                                                                                                 // past
+                                                                                                                 // offsets
+                                                                                                                 // array
                         buf.put(termStrings);
                         ib = buf.asIntBuffer();
                     } else {
                         long fileMapStart = 0, fileMapLength = maxMapSize;
                         buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
-                        buf.putInt(n); // Start with the number of terms      //@4
+                        buf.putInt(n); // Start with the number of terms //@4
                         ib = buf.asIntBuffer();
                         long fileLength = BYTES_PER_INT;
 
@@ -578,13 +589,14 @@ class TermsImplV3 extends Terms {
 
                             long blockSizeBytes = 2 * BYTES_PER_INT + numTermsThisBlock * BYTES_PER_INT + currentOffset;
 
-                            ib.put(numTermsThisBlock); //@4
-                            ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
-                            ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
+                            ib.put(numTermsThisBlock); // @4
+                            ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); // @4 * numTermsThisBlock
+                            ib.put(currentOffset); // include the offset after the last term at position
+                                                   // termStringOffsets[n]
                                                    // (doubles as the size of the data block to follow) //@4
                             int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
                             buf.position(newPosition); // advance past offsets array
-                            buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
+                            buf.put(termStrings, 0, currentOffset); // @blockSize (max. maxBlockSize)
                             ib = buf.asIntBuffer();
                             fileLength += blockSizeBytes;
 

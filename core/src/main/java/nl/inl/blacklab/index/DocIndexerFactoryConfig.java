@@ -41,7 +41,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
     protected boolean isInitialized = false;
 
-    // Entries here are short-lived, the list should be clean as long as there is no scanDirectories call running
+    // Entries here are short-lived, the list should be clean as long as there is no
+    // scanDirectories call running
     protected Map<String, File> unloaded = new HashMap<>();
 
     protected Map<String, ConfigInputFormat> supported = new HashMap<>();
@@ -58,7 +59,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
      * {@link DocIndexerFactoryConfig#unloaded} map until they are loaded
      */
     protected Function<String, Optional<ConfigInputFormat>> finder = formatIdentifier -> {
-        // Give our wrapping DocIndexerFactory a chance to load a new format (in case it's a derived class)
+        // Give our wrapping DocIndexerFactory a chance to load a new format (in case
+        // it's a derived class)
         if (!isSupported(formatIdentifier))
             return Optional.empty();
 
@@ -83,7 +85,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             return;
         isInitialized = true;
 
-        // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, 
+        // Note that these names should not collide with the abbreviations used by
+        // DocIndexerFactoryClass,
         // or this will override those classes.
         String[] formats = { "chat", "cmdi", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog",
                 "tsv", "txt" };
@@ -112,15 +115,18 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         }
         addFormatsInDirectories(formatsDirs);
 
-        // Load any configs that may have been added using addFormatsInDirectories, from before we were initialized
+        // Load any configs that may have been added using addFormatsInDirectories, from
+        // before we were initialized
         loadUnloaded();
     }
 
     @Override
     public boolean isSupported(String formatIdentifier) {
-        // Do not load yet, this is called during discovery of new formats (to detect duplicates)
+        // Do not load yet, this is called during discovery of new formats (to detect
+        // duplicates)
         // We shouldn't load any new format until we've discovered them all,
-        // so that if a format depends on another yet to be loaded format, we know where to find it
+        // so that if a format depends on another yet to be loaded format, we know where
+        // to find it
         return (supported.containsKey(formatIdentifier) || unloaded.containsKey(formatIdentifier));
     }
 
@@ -214,7 +220,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         }
 
         // Don't load until we're initialized,
-        // or the configs won't be able to depend on one of the default configs (which are not loaded until 
+        // or the configs won't be able to depend on one of the default configs (which
+        // are not loaded until
         // after initialization)
         if (isInitialized)
             loadUnloaded();
@@ -234,7 +241,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     protected void loadUnloaded() {
-        // use !isEmpty so we can remove entries during iteration (using the finder above) without messing up iterators
+        // use !isEmpty so we can remove entries during iteration (using the finder
+        // above) without messing up iterators
         while (!unloaded.isEmpty()) {
             Entry<String, File> e = unloaded.entrySet().iterator().next();
             unloaded.remove(e.getKey());
@@ -243,7 +251,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                 load(e.getKey(), e.getValue());
             } catch (InputFormatConfigException ex) {
                 logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
-                // an invalid format somehow got saved, or something else went wrong, just ignore this file then
+                // an invalid format somehow got saved, or something else went wrong, just
+                // ignore this file then
             }
         }
     }

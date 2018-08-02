@@ -20,7 +20,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
     private static final int FORWARD_PRIORITY = 10000000;
 
-    // NOTE: BACKWARD_PRIORITY has slightly different value to prevent FindBugs "same code for two branches" warning
+    // NOTE: BACKWARD_PRIORITY has slightly different value to prevent FindBugs
+    // "same code for two branches" warning
     /**
      * NOTE: this used to be twice the value of FORWARD_PRIORITY, in an attempt to
      * prevent building NFAs in different directions, resulting in a suboptimal
@@ -89,8 +90,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         boolean rightNfa = right.canMakeNfa();
         boolean backwardPossible = leftNfa && !rightEmpty;
         boolean forwardPossible = rightNfa && !leftEmpty;
-        //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
-        //factor == -2569, abs(factor) > nfaThreshold (2000)
+        // fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
+        // factor == -2569, abs(factor) > nfaThreshold (2000)
         if (Searcher.isTraceOptimization()) {
             logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
                     forwardPossible ? 1 : 0,
@@ -153,7 +154,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         if (factor > 0) {
             // Forward (i.e. left is anchor, right is NFA)
             if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) left).getDirection() == 1) {
-                // Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
+                // Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get
+                // same index).
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
@@ -165,7 +167,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
         // Backward (i.e. right is anchor, left is NFA)
         if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) right).getDirection() == -1) {
-            // Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
+            // Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get
+            // same index).
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.

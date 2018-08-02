@@ -95,7 +95,7 @@ public class ExportCorpus {
                     }
                 } catch (RuntimeException e) {
                     // HACK: a bug in an older content store implementation can cause this
-                    //   when exporting an older index. Report and continue.
+                    // when exporting an older index. Report and continue.
                     System.out.flush();
                     e.printStackTrace(System.err);
                     System.err.println("### Error exporting " + fromInputFile + ", skipping ###");

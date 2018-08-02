@@ -72,15 +72,22 @@ public class Indexer {
 
         @Override
         public void file(String path, InputStream is, File file) throws Exception {
-            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream 
-            // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
-            // the BOM (if present) and exposes the correct character set for this stream (if present)
+            // Attempt to detect the encoding of our inputStream, falling back to
+            // DEFAULT_INPUT_ENCODING if the stream
+            // doesn't contain a a BOM This doesn't do any character parsing/decoding
+            // itself, it just detects and skips
+            // the BOM (if present) and exposes the correct character set for this stream
+            // (if present)
             // This way we can later use the charset to decode the input
-            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the 
+            // There is one gotcha however, and that is that if the inputstream contains
+            // non-textual data, we pass the
             // default encoding to our DocIndexer
-            // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
-            // In the case of binary data docIndexers, they should always ignore the encoding anyway
-            // and for text docIndexers, passing a binary file is an error in itself already.
+            // This usually isn't an issue, since docIndexers work exclusively with either
+            // binary data or text.
+            // In the case of binary data docIndexers, they should always ignore the
+            // encoding anyway
+            // and for text docIndexers, passing a binary file is an error in itself
+            // already.
             try (
                     UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = DocumentFormats.get(Indexer.this.formatIdentifier, Indexer.this, path,
@@ -97,8 +104,10 @@ public class Indexer {
         }
 
         private void impl(DocIndexer indexer, String documentName) throws Exception {
-            // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
-            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
+            // FIXME progress reporting is broken in multithreaded indexing, as the listener
+            // is shared between threads
+            // So a docIndexer that didn't index anything can slip through if another thread
+            // did index some data in the
             // meantime
             getListener().fileStarted(documentName);
             int docsDoneBefore = searcher.getWriter().numDocs();
@@ -235,9 +244,12 @@ public class Indexer {
     /** Index using multiple threads? */
     protected boolean useThreads = false;
 
-    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was 
-    // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex 
-    // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write 
+    // TODO this is a workaround for a bug where indexStructure is always written,
+    // even when an indexing task was
+    // rollbacked on an empty index result of this is that the index can never be
+    // opened again (the forwardindex
+    // is missing files that the indexMetadata.yaml says must exist?) so record
+    // rollbacks and then don't write
     // the updated indexStructure
     boolean hasRollback = false;
 
@@ -320,7 +332,8 @@ public class Indexer {
             if (indexTemplateFile != null) {
                 searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
 
-                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
+                // Read back the formatIdentifier that was provided through the
+                // indexTemplateFile now that the index
                 // has written it might be null
                 final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
 
@@ -335,7 +348,8 @@ public class Indexer {
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
                 } else {
-                    // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
+                    // TODO we should delete the newly created index here as it failed, how do we
+                    // clean up files properly?
                     searcher.close();
                     throw new DocumentFormatException("Input format config '" + formatIdentifier
                             + "' not found (or format config contains an error) when creating new index in "
@@ -344,9 +358,12 @@ public class Indexer {
             } else if (DocumentFormats.isSupported(formatIdentifier)) {
                 this.formatIdentifier = formatIdentifier;
 
-                // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of some other DocIndexer implementation)
-                // this ConfigInputFormat could then still be used as a minimal template to setup the index
-                // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
+                // No indexTemplateFile, but maybe the formatIdentifier is backed by a
+                // ConfigInputFormat (instead of some other DocIndexer implementation)
+                // this ConfigInputFormat could then still be used as a minimal template to
+                // setup the index
+                // (if there's no ConfigInputFormat, that's okay too, a default index template
+                // will be used instead)
                 ConfigInputFormat format = null;
                 for (Format desc : DocumentFormats.getFormats()) {
                     if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
@@ -389,7 +406,7 @@ public class Indexer {
 
         metadataFieldTypeTokenized = new FieldType();
         metadataFieldTypeTokenized.setStored(true);
-        //metadataFieldTypeTokenized.setIndexed(true);
+        // metadataFieldTypeTokenized.setIndexed(true);
         metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         metadataFieldTypeTokenized.setTokenized(true);
         metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
@@ -400,7 +417,8 @@ public class Indexer {
 
         metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
         metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-        //metadataFieldTypeUntokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
+        // metadataFieldTypeUntokenized.setTokenized(false); // <-- this should be done
+        // with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
         metadataFieldTypeUntokenized.setStoreTermVectors(false);
         metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
         metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
@@ -483,7 +501,8 @@ public class Indexer {
     // TODO this should call close() on running FileProcessors
     public void close() {
 
-        // Signal to the listener that we're done indexing and closing the index (which might take a
+        // Signal to the listener that we're done indexing and closing the index (which
+        // might take a
         // while)
         getListener().indexEnd();
         getListener().closeStart();
@@ -620,7 +639,8 @@ public class Indexer {
      * @param file
      * @param fileNameGlob only files
      */
-    // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
+    // TODO this is nearly a literal copy of index for a stream, unify them somehow
+    // (take care that file might be a directory)
     public void index(File file, String fileNameGlob) {
         try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs,
                 this.processArchivesAsDirectories)) {

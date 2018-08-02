@@ -574,7 +574,8 @@ public class InputFormatReader extends YamlJsonReader {
     }
 
     protected static void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
-        // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
+        // Resolve the inputFormat right now, instead of potentially failing later when
+        // the format is actually needed at some point during indexing
         String formatIdentifier = str(e);
         Format format = DocumentFormats.getFormat(formatIdentifier);
         if (format == null)

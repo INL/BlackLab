@@ -101,7 +101,7 @@ class SpansNot extends BLSpans {
         liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
         subtractFromLength = ignoreLastToken ? 1 : 0;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-        this.clause = clause == null ? null : clause; //Sort(clause);
+        this.clause = clause == null ? null : clause; // Sort(clause);
     }
 
     /**
@@ -189,7 +189,7 @@ class SpansNot extends BLSpans {
             } else if (clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS) {
 
                 // B - Spans is at currentDoc.
-                //     Look at hit, adjust currentToken
+                // Look at hit, adjust currentToken
 
                 // Current hit beyond currentToken?
                 if (clauseStart > currentStart) {
@@ -213,8 +213,8 @@ class SpansNot extends BLSpans {
             } else {
 
                 // C - Spans is depleted or is pointing beyond current doc.
-                //     Either produce next token (because it's obviously not in
-                //     the spans matches), or move to next doc if we're done with this doc.
+                // Either produce next token (because it's obviously not in
+                // the spans matches), or move to next doc if we're done with this doc.
                 if (currentStart < currentDocLength) {
 
                     // Token is fine to produce.
@@ -241,7 +241,8 @@ class SpansNot extends BLSpans {
             currentStart = currentEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
-        // Advance us to just before the requested start point, then call nextStartPosition().
+        // Advance us to just before the requested start point, then call
+        // nextStartPosition().
         clauseStart = clause.advanceStartPosition(target);
         currentStart = target - 1;
         currentEnd = target;

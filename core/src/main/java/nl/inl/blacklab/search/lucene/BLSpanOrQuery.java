@@ -186,7 +186,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             for (int i = 0; i < rewrittenCl.size(); i++) {
                 rewrittenCl.set(i, rewrittenCl.get(i).inverted());
             }
-            // Note extra rewrite at the end to make sure AND NOT structure is correctly built.
+            // Note extra rewrite at the end to make sure AND NOT structure is correctly
+            // built.
             if (rewrittenCl.size() == 1)
                 return rewrittenCl.get(0).inverted();
             return (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
@@ -392,11 +393,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             if (subSpans.isEmpty()) {
                 return null;
             } else if (subSpans.size() == 1) {
-                //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
-                //   that's why we bypass ScoringWrapperSpans here.
+                // BL we need everything to be a BLSpans, or capturing (and optimizations) won't
+                // work properly
+                // that's why we bypass ScoringWrapperSpans here.
                 return subSpans.get(0) instanceof BLSpans ? (BLSpans) subSpans.get(0)
                         : new BLSpansWrapper(subSpans.get(0));
-                //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
+                // return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0),
+                // getSimScorer(context)));
             }
 
             final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());

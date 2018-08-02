@@ -275,7 +275,7 @@ class SpansExpansionRaw extends BLSpans {
                 expandStepsLeft = Math.min(max - min, maxExpandSteps);
             }
 
-            // Valid expansion?   [shouldn't be necessary anymore because we calculated max]
+            // Valid expansion? [shouldn't be necessary anymore because we calculated max]
             if (expandStepsLeft >= 0) {
                 clauseStart = start; // Yes, return
                 return;

@@ -239,7 +239,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
             // any actual detecting.
             mainProperty = getPropertyDesc(mainPropertyName);
             mainPropertyName = null;
-            //return;
+            // return;
         }
 
         PropertyDesc firstProperty = null;
@@ -270,7 +270,8 @@ public class ComplexFieldDesc extends BaseFieldDesc {
         mainProperty = firstProperty;
 
         // throw new RuntimeException(
-        // "No main property (with char. offsets) detected for complex field " + fieldName);
+        // "No main property (with char. offsets) detected for complex field " +
+        // fieldName);
     }
 
     public void print(PrintWriter out) {

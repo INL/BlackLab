@@ -88,9 +88,10 @@ public class MyTermSpans extends Spans {
             assert position != NO_MORE_POSITIONS;
             return position = NO_MORE_POSITIONS;
         }
-        //int prevPosition = position;
+        // int prevPosition = position;
         position = postings.nextPosition();
-        //assert position >= prevPosition : "prevPosition="+prevPosition+" > position="+position;
+        // assert position >= prevPosition : "prevPosition="+prevPosition+" >
+        // position="+position;
         assert position != NO_MORE_POSITIONS; // int endPosition not possible
         count++;
         readPayload = false;

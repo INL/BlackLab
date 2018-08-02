@@ -53,7 +53,7 @@ public class TestSpansInBuckets {
     @Test
     public void testSkipToFirst() throws IOException {
         Assert.assertEquals(1, hpd.advance(1));
-        //List<Hit> l = hpd.getHits();
+        // List<Hit> l = hpd.getHits();
         Assert.assertEquals(1, hpd.docID());
         Assert.assertEquals(1, hpd.nextBucket());
         Assert.assertEquals(1, hpd.bucketSize());

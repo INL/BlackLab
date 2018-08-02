@@ -160,7 +160,8 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public boolean canMakeNfa() {
-        // Subproperties aren't stored in forward index, so we can't match them using NFAs
+        // Subproperties aren't stored in forward index, so we can't match them using
+        // NFAs
         if (term.text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR))
             return false;
 
@@ -197,13 +198,13 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         // All in all, it's really a wild guess, but it's all we have right now.
         switch (numberOfChars) {
         case 1:
-            return n / 10; // bijv. d.*    komt ca. 55000000  keer voor in x termen
+            return n / 10; // bijv. d.* komt ca. 55000000 keer voor in x termen
         case 2:
-            return n / 50; // bijv. di.*   komt ca.  6600000  keer voor in x termen
+            return n / 50; // bijv. di.* komt ca. 6600000 keer voor in x termen
         case 3:
-            return n / 75; // bijv. die.*  komt ca.  4400000  keer voor in x termen
+            return n / 75; // bijv. die.* komt ca. 4400000 keer voor in x termen
         case 4:
-            return n / 1000; // bijv. dier.* komt ca.   108000  keer voor in x termen
+            return n / 1000; // bijv. dier.* komt ca. 108000 keer voor in x termen
         default:
             // 5 or more characters given.
             // We have no idea how many hits we're likely to get from this.
@@ -222,13 +223,15 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
      */
     public static String findRegexPrefixSuffix(String pattern) {
         String trimmed = pattern.replaceAll("^\\^(\\(\\?\\-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
-        String prefixPostfix = trimmed.replaceAll("^(\\w+)(\\W(|.*\\W))(\\w+)$", "$1$4"); // only retain prefix and suffix
+        String prefixPostfix = trimmed.replaceAll("^(\\w+)(\\W(|.*\\W))(\\w+)$", "$1$4"); // only retain prefix and
+                                                                                          // suffix
         return prefixPostfix;
     }
 
     @Override
     public int forwardMatchingCost() {
-        return 3; // more expensive than a single term, because we have to do FI lookup and regex matching
+        return 3; // more expensive than a single term, because we have to do FI lookup and regex
+                  // matching
     }
 
     @Override

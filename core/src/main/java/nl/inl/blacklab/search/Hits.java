@@ -95,7 +95,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
         return nextHitsObjId++;
     }
 
-    //----------------------------------------------------------
+    // ----------------------------------------------------------
 
     /** Unique id of this Hits instance */
     protected final int hitsObjId = getNextHitsObjId();

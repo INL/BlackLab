@@ -62,7 +62,7 @@ public class DocCounts implements Iterable<DocCount> {
         this.docResults = docResults;
         searcher = docResults.getSearcher();
         this.countBy = countBy;
-        //Thread currentThread = Thread.currentThread();
+        // Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
 
             HitPropValue groupId = countBy.get(r);

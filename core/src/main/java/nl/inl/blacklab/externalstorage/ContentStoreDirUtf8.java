@@ -518,7 +518,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         // (used to determine if we will cross a block boundary)
         int offsetAfterThisPart = charsFromEntryWritten + content.length();
 
-        // See if we're about to cross any block boundaries; if so, write the content up to the
+        // See if we're about to cross any block boundaries; if so, write the content up
+        // to the
         // first block boundary, save the new block offset, and repeat.
         int thisPartCharsWritten = 0, thisPartCharsLeftToWrite = content.length();
 
@@ -554,7 +555,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                 blockOffsetWhileStoring.add(bytesWritten);
             }
         }
-        // No more block boundaries to cross. If there's any content left to write in the
+        // No more block boundaries to cross. If there's any content left to write in
+        // the
         // current block,
         // do so now.
         if (thisPartCharsLeftToWrite > 0) {

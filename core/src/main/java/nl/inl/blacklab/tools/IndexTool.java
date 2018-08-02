@@ -191,8 +191,9 @@ public class IndexTool {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
             return;
-            //System.err.println("No command specified; assuming \"add\" (--help for details)");
-            //command = "add";
+            // System.err.println("No command specified; assuming \"add\" (--help for
+            // details)");
+            // command = "add";
         }
         if (command.equals("delete")) {
             commandDelete(indexDir, deleteQuery);
@@ -242,9 +243,11 @@ public class IndexTool {
         }
 
         // Make sure BlackLab can find our format configuration files
-        // (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
-        //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
-        //  and the parent(s) of the input and index dirs)
+        // (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats,
+        // $HOME/.blacklab/formats
+        // and /etc/blacklab/formats, but we also want it to look in the current dir,
+        // the input dir,
+        // and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
         List<File> formatDirs = new ArrayList<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
         if (!formatDirs.contains(indexDirParent))

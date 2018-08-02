@@ -89,8 +89,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
     @Override
     public void close() {
         // TODO: make sure zip file is properly closed when done
-        //   (change structure so metadata fetcher isn't instantiated for each document separately)
-        //metadataZipFile.close();
+        // (change structure so metadata fetcher isn't instantiated for each document
+        // separately)
+        // metadataZipFile.close();
     }
 
     @Override
@@ -113,7 +114,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
             if (metadataZipFile != null) {
                 ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
                 if (e == null) {
-                    //throw new RuntimeException("Entry in zip not found: " + metadataPathInZip + metadataFile);
+                    // throw new RuntimeException("Entry in zip not found: " + metadataPathInZip +
+                    // metadataFile);
                     System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
                     return;
                 }

@@ -51,7 +51,8 @@ public class JobDocsSorted extends JobWithDocs {
     @Override
     public void performSearch() throws BlsException {
         DocResults unsorted = ((JobWithDocs) inputJob).getDocResults();
-        setPriority(unsorted); // set prio manually, so we don't expose the unsorted results by assigning to this.docResults
+        setPriority(unsorted); // set prio manually, so we don't expose the unsorted results by assigning to
+                               // this.docResults
         // Now, sort the docs.
         DocSortSettings docSortSett = jobDesc.getDocSortSettings();
         if (docSortSett.sortBy() != null) {

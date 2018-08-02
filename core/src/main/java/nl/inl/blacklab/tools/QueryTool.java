@@ -279,7 +279,8 @@ public class QueryTool {
         public TextPattern parse(String query) throws ParseException {
 
             try {
-                //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
+                // outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS
+                // INTENDED");
                 CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, query);
                 includedFilterQuery = q.getFilterQuery();
                 return q.getContentsQuery();
@@ -1078,11 +1079,12 @@ public class QueryTool {
                 errprintln("No query to execute.");
                 return;
             }
-            //pattern = pattern.rewrite();
+            // pattern = pattern.rewrite();
             if (verbose)
                 outprintln("TextPattern: " + pattern.toString());
 
-            // If the query included filter clauses, use those. Otherwise use the global filter, if any.
+            // If the query included filter clauses, use those. Otherwise use the global
+            // filter, if any.
             Query filterForThisQuery = parser.getIncludedFilterQuery();
             if (filterForThisQuery == null)
                 filterForThisQuery = filterQuery;
@@ -1462,7 +1464,8 @@ public class QueryTool {
         // Limit results to the current page
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
-        // Compile hits display info and calculate necessary width of left context column
+        // Compile hits display info and calculate necessary width of left context
+        // column
         String titleField = searcher.getIndexStructure().titleField();
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
@@ -1537,7 +1540,8 @@ public class QueryTool {
         // Limit results to the current page
         HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
 
-        // Compile hits display info and calculate necessary width of left context column
+        // Compile hits display info and calculate necessary width of left context
+        // column
         List<HitToShow> toShow = new ArrayList<>();
         window.settings().setContextSize(contextSize); // number of words around hit
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context

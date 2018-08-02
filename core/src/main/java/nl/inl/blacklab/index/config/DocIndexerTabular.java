@@ -107,7 +107,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
         Type type = opt.containsKey("type") ? Type.fromStringValue(opt.get("type")) : Type.CSV;
-        //ConfigTabularOptions tab = config.getTabularOptions();
+        // ConfigTabularOptions tab = config.getTabularOptions();
         switch (type) {
         case TSV:
             tabularFormat = CSVFormat.TDF;
@@ -290,7 +290,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     @Override
     public void indexSpecificDocument(String documentExpr) {
-        // documentExpr is ignored because tabular format files always contain 1 document
+        // documentExpr is ignored because tabular format files always contain 1
+        // document
         try {
             index();
         } catch (Exception e) {

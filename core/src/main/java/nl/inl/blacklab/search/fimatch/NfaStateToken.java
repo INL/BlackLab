@@ -69,7 +69,8 @@ public class NfaStateToken extends NfaState {
      */
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
-        // Token state. Check if it matches token from token source, and if so, continue.
+        // Token state. Check if it matches token from token source, and if so,
+        // continue.
         int actualToken = fiDoc.getToken(propertyNumber, pos);
         if (acceptAnyToken && actualToken >= 0 || inputTokens.contains(actualToken)) {
             if (nextState == null) {
@@ -143,7 +144,7 @@ public class NfaStateToken extends NfaState {
         propertyNumber = fiAccessor.getPropertyNumber(propertyName);
         boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
         boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
-        inputTokens = new IntHashSet(); //new HashSet<>();
+        inputTokens = new IntHashSet(); // new HashSet<>();
         for (String token : inputTokenStrings) {
             fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);
         }

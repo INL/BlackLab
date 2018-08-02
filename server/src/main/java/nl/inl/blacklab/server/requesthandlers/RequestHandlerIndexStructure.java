@@ -86,7 +86,8 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 
             ds.startEntry("complexFields").startMap();
             // Complex fields
-            //DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
+            // DataObjectMapAttribute doComplexFields = new
+            // DataObjectMapAttribute("complexField", "name");
             for (String name : struct.getComplexFields()) {
                 ds.startAttrEntry("complexField", "name", name);
 
@@ -102,7 +103,8 @@ public class RequestHandlerIndexStructure extends RequestHandler {
 
             ds.startEntry("metadataFields").startMap();
             // Metadata fields
-            //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
+            // DataObjectMapAttribute doMetaFields = new
+            // DataObjectMapAttribute("metadataField", "name");
             for (String name : struct.getMetadataFields()) {
                 ds.startAttrEntry("metadataField", "name", name);
 
@@ -141,7 +143,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
             ds.endList().endEntry();
 
             // Remove any empty settings
-            //response.removeEmptyMapValues();
+            // response.removeEmptyMapValues();
 
             ds.endMap();
 

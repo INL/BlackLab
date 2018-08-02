@@ -74,7 +74,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
         indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
 
-        // If the indexmetadata file specified a list of properties that shouldn't get a forward
+        // If the indexmetadata file specified a list of properties that shouldn't get a
+        // forward
         // index,
         // make the new complex field aware of this.
         Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
@@ -153,10 +154,12 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 break;
             String[] words = line.trim().split("\\s+");
             for (int i = 0; i < words.length; i++) {
-                // Handle space and punctuation between words. Instead of always using a hardcoded
+                // Handle space and punctuation between words. Instead of always using a
+                // hardcoded
                 // space,
                 // you would want to use smarter tokenization and actually capture the space and
-                // punctuation between words (right now the punctuation becomes part of the word,
+                // punctuation between words (right now the punctuation becomes part of the
+                // word,
                 // because
                 // we naively split on whitespace).
                 String punctuation = "";

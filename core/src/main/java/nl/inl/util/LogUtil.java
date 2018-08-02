@@ -46,7 +46,8 @@ public class LogUtil {
      */
     @SuppressWarnings("deprecation")
     public static void setupBasicLoggingConfig(Level level) {
-        // (use a config file (e.g. log4j2.xml) or programmatically configure log4j yourself)
+        // (use a config file (e.g. log4j2.xml) or programmatically configure log4j
+        // yourself)
 
         // Temporarily disable status logger to suppress "no config file found" message
         StatusLogger statusLogger = StatusLogger.getLogger();

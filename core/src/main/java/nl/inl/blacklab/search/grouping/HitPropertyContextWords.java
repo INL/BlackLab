@@ -71,7 +71,7 @@ public class HitPropertyContextWords extends HitProperty {
 
         public int firstWord;
 
-        //public int lastWord;
+        // public int lastWord;
 
         /**
          * Direction: 1 = default direction, -1 = reverse direction. Default direction
@@ -173,7 +173,8 @@ public class HitPropertyContextWords extends HitProperty {
                 }
             }
         }
-        // Add the maximum length of each part so we know the length of the context array needed
+        // Add the maximum length of each part so we know the length of the context
+        // array needed
         totalWords = 0;
         for (ContextPart contextWordDef : this.words) {
             totalWords += contextWordDef.maxLength;
@@ -190,7 +191,8 @@ public class HitPropertyContextWords extends HitProperty {
         int[] dest = new int[totalWords];
         int destIndex = 0;
         for (ContextPart ctxPart : words) {
-            // Determine anchor position, direction to move in, and edge of part (left/hit/right)
+            // Determine anchor position, direction to move in, and edge of part
+            // (left/hit/right)
             int srcStartIndex, srcDirection, firstInvalidSrcIndex;
             srcDirection = ctxPart.getAbsoluteDirection();
             int firstWordSrcIndex;
@@ -203,18 +205,21 @@ public class HitPropertyContextWords extends HitProperty {
             case RIGHT_OF_HIT:
                 srcStartIndex = contextRightStart; // first word after hit
                 firstWordSrcIndex = srcStartIndex + ctxPart.firstWord;
-                firstInvalidSrcIndex = srcDirection > 0 ? contextLength : contextRightStart - 1; // end/start of right context
+                firstInvalidSrcIndex = srcDirection > 0 ? contextLength : contextRightStart - 1; // end/start of right
+                                                                                                 // context
                 break;
             case HIT_TEXT_FROM_END:
                 srcStartIndex = contextRightStart - 1; // last hit word
                 firstWordSrcIndex = srcStartIndex - ctxPart.firstWord;
-                firstInvalidSrcIndex = srcDirection < 0 ? contextHitStart : contextRightStart - 1; // first/last hit word
+                firstInvalidSrcIndex = srcDirection < 0 ? contextHitStart : contextRightStart - 1; // first/last hit
+                                                                                                   // word
                 break;
             case HIT_TEXT_FROM_START:
             default:
                 srcStartIndex = contextHitStart; // first hit word
                 firstWordSrcIndex = srcStartIndex + ctxPart.firstWord;
-                firstInvalidSrcIndex = srcDirection > 0 ? contextRightStart : contextHitStart - 1; // last/first hit word
+                firstInvalidSrcIndex = srcDirection > 0 ? contextRightStart : contextHitStart - 1; // last/first hit
+                                                                                                   // word
                 break;
             }
             // Determine start position, stop position

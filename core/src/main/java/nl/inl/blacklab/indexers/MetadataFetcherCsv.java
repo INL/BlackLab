@@ -63,7 +63,8 @@ public class MetadataFetcherCsv extends MetadataFetcher {
         fromInputFile = luceneDoc.get("fromInputFile");
 
         for (CSVRecord row : metadata) {
-            // TODO: use document id instead of document file name (it is unclear to me how to get the
+            // TODO: use document id instead of document file name (it is unclear to me how
+            // to get the
             // document id from the lucene doc)
             // TODO: what happens if the csv file does not contain an id-column?
             // TODO: some texts have multiple authors. How to deal with that?

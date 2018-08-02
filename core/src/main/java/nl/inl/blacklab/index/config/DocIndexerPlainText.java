@@ -110,7 +110,8 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     endWord();
                 }
                 if (line.length() > i) {
-                    // Capture last bit of "punctuation" on this line and add it to first word on next line.
+                    // Capture last bit of "punctuation" on this line and add it to first word on
+                    // next line.
                     punct.append(line.substring(i, line.length()));
                 }
             }

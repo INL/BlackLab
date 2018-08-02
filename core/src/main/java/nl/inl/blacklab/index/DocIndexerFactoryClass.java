@@ -44,7 +44,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 
     @Override
     public void init() {
-        // Note that these names should not collide with the builtin config-based formats, or those will be used instead.
+        // Note that these names should not collide with the builtin config-based
+        // formats, or those will be used instead.
 
         // Some abbreviations for commonly used builtin DocIndexers.
         // You can also specify the classname for builtin DocIndexers,
@@ -57,8 +58,10 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
         supported.put("sketchxml", DocIndexerXmlSketch.class);
 
         // TEI has a number of variants
-        // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
-        // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
+        // By default, the contents of the "body" element are indexed, but alternatively
+        // you can index the contents of "text".
+        // By default, the "type" attribute is assumed to contain PoS, but alternatively
+        // you can use the "function" attribute.
         supported.put("di-tei", DocIndexerTei.class);
         supported.put("di-tei-element-text", DocIndexerTeiText.class);
         supported.put("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
@@ -112,7 +115,8 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
                 docIndexerClass = (Class<? extends DocIndexerAbstract>) Class
                         .forName("nl.inl.blacklab.indexers." + formatIdentifier);
             } catch (Exception e) {
-                // Couldn't be resolved. That's okay, maybe another factory will support this key
+                // Couldn't be resolved. That's okay, maybe another factory will support this
+                // key
                 // Cache the key for next time.
                 unsupported.add(formatIdentifier);
             }
@@ -135,10 +139,13 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
-                // NOTE: newer DocIndexers have a constructor that takes only an Indexer, not the document
-                // being indexed. This allows us more flexibility in how we supply the document to this object
+                // NOTE: newer DocIndexers have a constructor that takes only an Indexer, not
+                // the document
+                // being indexed. This allows us more flexibility in how we supply the document
+                // to this object
                 // (e.g. as a file, a byte array, a reader, ...).
-                // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
+                // Assume this is a newer DocIndexer, and only construct it the old way if this
+                // fails.
                 constructor = docIndexerClass.getConstructor(Indexer.class);
                 docIndexer = constructor.newInstance();
                 docIndexer.setIndexer(indexer);

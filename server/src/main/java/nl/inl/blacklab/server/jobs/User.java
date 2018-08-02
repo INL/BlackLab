@@ -98,7 +98,7 @@ public class User {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        //return FileUtil.sanitizeFilename(userId);
+        // return FileUtil.sanitizeFilename(userId);
     }
 
     public static boolean isValidUserId(String userId) {

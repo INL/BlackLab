@@ -86,10 +86,15 @@ public class RequestHandlerHits extends RequestHandler {
                 if (group == null)
                     return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-                // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-                // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-                // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                // NOTE: sortBy is automatically applied to regular results, but not to results
+                // within groups
+                // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and
+                // DocResults::constructor
+                // Also see SearchParams (hitsSortSettings, docSortSettings,
+                // hitGroupsSortSettings, docGroupsSortSettings)
+                // There is probably no reason why we can't just sort/use the sort of the input
+                // results, but we need some more testing to see if everything is correct if we
+                // change this
                 String sortBy = searchParam.getString("sort");
                 HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
                         ? HitProperty.deserialize(group.getHits(), sortBy)
@@ -97,7 +102,8 @@ public class RequestHandlerHits extends RequestHandler {
                 Hits hitsInGroup = sortProp != null ? group.getHits().sortedBy(sortProp) : group.getHits();
 
                 // Important, only count hits within this group for the total
-                // We should have retrieved all the hits already, as JobGroups always counts all hits.
+                // We should have retrieved all the hits already, as JobGroups always counts all
+                // hits.
                 total = hitsInGroup;
 
                 int first = Math.max(0, searchParam.getInteger("first"));
@@ -106,7 +112,8 @@ public class RequestHandlerHits extends RequestHandler {
                     return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
                 window = hitsInGroup.window(first, size);
             } else {
-                // Since we're going to always launch a totals count anyway, just do it right away
+                // Since we're going to always launch a totals count anyway, just do it right
+                // away
                 // then construct a window on top of the total
                 job = searchMan.search(user, searchParam.hitsTotal(), false); // always launch totals nonblocking!
                 JobHitsTotal jobTotal = (JobHitsTotal) job;
@@ -125,14 +132,17 @@ public class RequestHandlerHits extends RequestHandler {
                 }
 
                 // check if we have the requested window available
-                // NOTE: don't create the HitsWindow object yet, as it will attempt to resolve the hits immediately and block the thread until they've been found.
-                // Instead, check with the Hits object directly, instead of blindly getting (and thus loading) the hits by creating a window
+                // NOTE: don't create the HitsWindow object yet, as it will attempt to resolve
+                // the hits immediately and block the thread until they've been found.
+                // Instead, check with the Hits object directly, instead of blindly getting (and
+                // thus loading) the hits by creating a window
                 int first = Math.max(0, searchParam.getInteger("first"));
                 int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
                 total.sizeAtLeast(first + size);
 
-                // We blocked, so if we don't have the page available, the request is out of bounds.
+                // We blocked, so if we don't have the page available, the request is out of
+                // bounds.
                 if (total.countSoFarHitsRetrieved() < first)
                     first = 0;
 
@@ -168,8 +178,10 @@ public class RequestHandlerHits extends RequestHandler {
 
             double totalTime = job.threwException() ? -1 : job.userWaitTime();
 
-            // TODO timing is now broken because we always retrieve total and use a window on top of it,
-            // so we can no longer differentiate the total time from the time to retrieve the requested window
+            // TODO timing is now broken because we always retrieve total and use a window
+            // on top of it,
+            // so we can no longer differentiate the total time from the time to retrieve
+            // the requested window
             addSummaryCommonFields(ds, searchParam, job.userWaitTime(), totalTime, window, total, false,
                     (DocResults) null, (DocOrHitGroups) null, window);
             if (includeTokenCount)
@@ -227,7 +239,8 @@ public class RequestHandlerHits extends RequestHandler {
             ds.endList().endEntry();
 
             ds.startEntry("docInfos").startMap();
-            //DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
+            // DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo",
+            // "pid");
             MutableIntSet docsDone = new IntHashSet();
             Document doc = null;
             String lastPid = "";

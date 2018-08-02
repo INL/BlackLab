@@ -328,8 +328,9 @@ public class TestQueryRewrite {
     @Test
     public void testRewritePropertyRegexMatchAll() {
         assertRewriteResult("[lemma='.*']", "ANYTOKEN(1, 1)");
-        //TODO: assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
-        //TODO: assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
+        // TODO: assertRewriteResult("[lemma='.*' & word='de']",
+        // "TERM(contents%word@i:de)");
+        // TODO: assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
     }
 
 }

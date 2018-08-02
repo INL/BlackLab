@@ -97,11 +97,13 @@ class SpansSequenceRaw extends BLSpans {
      */
     public SpansSequenceRaw(BLSpans leftClause, BLSpans rightClause) {
         // Sort the left spans by (1) document (2) end point (3) start point
-        left = leftClause; //new PerDocumentSortedSpans(leftClause, PerDocumentSortedSpans.cmpEndPoint, false);
+        left = leftClause; // new PerDocumentSortedSpans(leftClause, PerDocumentSortedSpans.cmpEndPoint,
+                           // false);
 
-        // From the right spans, let us extract all end points belonging with a start point.
+        // From the right spans, let us extract all end points belonging with a start
+        // point.
         // Already start point sorted.
-        origRight = rightClause; //Sort
+        origRight = rightClause; // Sort
         right = new SpansInBucketsPerStartPoint(origRight);
     }
 
@@ -163,7 +165,8 @@ class SpansSequenceRaw extends BLSpans {
         }
 
         if (indexInBucket == -2 || indexInBucket == right.bucketSize() - 1) {
-            // We're out of end points (right matches). Advance the left Spans and realign both
+            // We're out of end points (right matches). Advance the left Spans and realign
+            // both
             // spans to the mid point.
             leftStart = left.nextStartPosition();
             if (leftStart == NO_MORE_POSITIONS) {
@@ -233,7 +236,8 @@ class SpansSequenceRaw extends BLSpans {
             if (leftStart == NO_MORE_POSITIONS) {
                 rightEnd = NO_MORE_POSITIONS;
             } else {
-                // Reset the end point iterator (end points of right matches starting at this mid point)
+                // Reset the end point iterator (end points of right matches starting at this
+                // mid point)
                 // and save current end position.
                 alreadyAtFirstMatch = true;
                 return currentDoc;
@@ -346,13 +350,15 @@ class SpansSequenceRaw extends BLSpans {
 
     @Override
     public int width() {
-        return left.width(); // should be + right.width(); but not implemented for now and we don't use .width()
+        return left.width(); // should be + right.width(); but not implemented for now and we don't use
+                             // .width()
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
         left.collect(collector);
-        //right.collect(collector); should probably be called as well, but not implemented, and not necessary for now
+        // right.collect(collector); should probably be called as well, but not
+        // implemented, and not necessary for now
         // (we only use payloads in SpansTags)
     }
 

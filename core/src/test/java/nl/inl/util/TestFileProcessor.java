@@ -25,7 +25,8 @@ public class TestFileProcessor {
     public static File testArchive;
     public static File testDirectory;
 
-    // Can't annotate using @BeforeClass, because our @Parameters function runs first
+    // Can't annotate using @BeforeClass, because our @Parameters function runs
+    // first
     public static void setup() throws URISyntaxException {
         testFile = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestFile.txt").toURI());
         testArchive = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestArchive.zip").toURI());
@@ -191,8 +192,10 @@ public class TestFileProcessor {
     private static class TestException extends Exception {
     }
 
-    // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests
-    // In we didn't synchronize then multiple file() or directory() calls may run simultaneously.
+    // Implementation is synchronized so expected file/directory count is
+    // deterministic when throwing exceptions in multithreaded tests
+    // In we didn't synchronize then multiple file() or directory() calls may run
+    // simultaneously.
     // (also ArrayList is not thread-safe)
     private static class LoggingFileHandler implements FileProcessor.FileHandler {
         private boolean triggerException;

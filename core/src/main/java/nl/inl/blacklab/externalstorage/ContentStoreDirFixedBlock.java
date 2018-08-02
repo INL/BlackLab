@@ -54,7 +54,8 @@ import nl.inl.util.SimpleResourcePool;
  */
 @NotThreadSafe // in index mode
 public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
-    //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
+    // private static final Logger logger =
+    // LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
     /**
      * The type of content store. Written to version file and detected when opening.
@@ -335,7 +336,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                     throw new RuntimeException("Could not delete data file: " + f);
             }
         }
-        toc = IntObjectMaps.mutable.empty(); //Maps.mutable.empty();
+        toc = IntObjectMaps.mutable.empty(); // Maps.mutable.empty();
         if (tocFile.exists())
             readToc();
         tocModified = false;
@@ -827,11 +828,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                     if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
                         break;
                     // Doesn't fit; make it a little smaller until it does fit.
-                    //System.err.println("Tried " + length + " characters, encoded length is " + encoded.length);
-                    //int newLength = length - (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
+                    // System.err.println("Tried " + length + " characters, encoded length is " +
+                    // encoded.length);
+                    // int newLength = length - (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
                     float shrinkFactor = 1.0f + (1.05f * (encoded.length - MAX_BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
                     length = (int) (length / shrinkFactor);
-                    //System.err.println("Will try " + length + " characters as blocksize next.");
+                    // System.err.println("Will try " + length + " characters as blocksize next.");
                     doMinCheck = false;
                 }
 
@@ -854,10 +856,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
                 if (compressedDataLength > BLOCK_SIZE_BYTES) {
                     // Compressed block too large.
-                    // Shrink the uncompressed data length by 5% more than what we expect to be required.
+                    // Shrink the uncompressed data length by 5% more than what we expect to be
+                    // required.
                     float shrinkFactor = 1.0f + (1.05f * (compressedDataLength - BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
-                    //logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + 
-                    // compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
+                    // logger.debug("Block size too large, retrying. Char length: " + length + ",
+                    // encoded length: " +
+                    // compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " +
+                    // shrinkFactor);
                     length = (int) (length / shrinkFactor);
                     if (length <= 0)
                         length = 1;
@@ -867,14 +872,17 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                     // Grow the uncompressed data length by 5% less than what we expect is possible.
                     float growFactor = 1.0f
                             + (0.95f * (BLOCK_SIZE_BYTES - compressedDataLength)) / compressedDataLength;
-                    //logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + 
-                    // compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
+                    // logger.debug("Block size too small, retrying. Char length: " + length + ",
+                    // encoded length: " +
+                    // compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor:
+                    // " + growFactor);
                     length = (int) (length * growFactor);
                     if (length > available)
                         length = available;
                 } else {
-                    //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + 
-                    //", waste%: " + waste + ", ratio: " + ratio);
+                    // logger.debug("Block ok. Char length: " + length + ", encoded length: " +
+                    // compressedDataLength +
+                    // ", waste%: " + waste + ", ratio: " + ratio);
                     unwrittenContents.delete(0, length);
                     return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
                 }

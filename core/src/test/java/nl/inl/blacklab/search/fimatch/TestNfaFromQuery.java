@@ -163,8 +163,8 @@ public class TestNfaFromQuery {
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
         frag.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
-        //System.err.println(frag);
-        NfaState start = frag.getStartingState(); //finish();
+        // System.err.println(frag);
+        NfaState start = frag.getStartingState(); // finish();
 
         ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {

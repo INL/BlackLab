@@ -55,7 +55,8 @@ public class RequestHandlerDocs extends RequestHandler {
             boolean block = isBlockingOperation();
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
 
-                // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
+                // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache
+                // sorted group!)
 
                 // Yes. Group, then show hits from the specified group
                 searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), block);
@@ -80,10 +81,15 @@ public class RequestHandlerDocs extends RequestHandler {
                 if (group == null)
                     return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-                // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-                // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-                // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                // NOTE: sortBy is automatically applied to regular results, but not to results
+                // within groups
+                // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and
+                // DocResults::constructor
+                // Also see SearchParams (hitsSortSettings, docSortSettings,
+                // hitGroupsSortSettings, docGroupsSortSettings)
+                // There is probably no reason why we can't just sort/use the sort of the input
+                // results, but we need some more testing to see if everything is correct if we
+                // change this
                 String sortBy = searchParam.getString("sort");
                 DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
                 DocResults docsSorted;
@@ -127,7 +133,7 @@ public class RequestHandlerDocs extends RequestHandler {
             int totalTokens = -1;
             if (includeTokenCount) {
                 // Determine total number of tokens in result set
-                //TODO: use background job?
+                // TODO: use background job?
                 String fieldName = searcher.getIndexStructure().getMainContentsField().getName();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = window.getOriginalDocs().intSum(propTokens);

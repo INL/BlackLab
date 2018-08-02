@@ -21,8 +21,10 @@ public class DocumentFormats {
 
     private static final List<DocIndexerFactory> factories = new ArrayList<>();
 
-    // We keep a handle to these factories to allow programs on top of blacklab to easily add
-    // new configs and DocIndexer classes through the DocumentFormats class instead of
+    // We keep a handle to these factories to allow programs on top of blacklab to
+    // easily add
+    // new configs and DocIndexer classes through the DocumentFormats class instead
+    // of
     // requiring them to always register a new factory for the format
     private static final DocIndexerFactoryClass builtinClassFactory;
     private static final DocIndexerFactoryConfig builtinConfigFactory;
@@ -62,17 +64,20 @@ public class DocumentFormats {
         }
     }
 
-    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    // Convenience method to avoid applications always having to create a
+    // DocIndexerFactory instance
     public static void registerFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
         builtinClassFactory.addFormat(formatIdentifier, docIndexerClass);
     }
 
-    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    // Convenience method to avoid applications always having to create a
+    // DocIndexerFactory instance
     public static void registerFormat(ConfigInputFormat config) {
         builtinConfigFactory.addFormat(config);
     }
 
-    // Convenience method to avoid applications always having to create a DocIndexerFactory instance
+    // Convenience method to avoid applications always having to create a
+    // DocIndexerFactory instance
     public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
         builtinConfigFactory.addFormatsInDirectories(dirs);
     }

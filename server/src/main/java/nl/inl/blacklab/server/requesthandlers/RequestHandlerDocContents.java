@@ -45,7 +45,8 @@ public class RequestHandlerDocContents extends RequestHandler {
                 // Full document; no need for another root element
                 surroundWithRootElement = false;
             } else {
-                // Part of document; surround with root element so we know for sure we'll have a single one
+                // Part of document; surround with root element so we know for sure we'll have a
+                // single one
                 surroundWithRootElement = true;
             }
         }
@@ -73,7 +74,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
         if (luceneDocId < 0 || luceneDocId >= searcher.maxDoc())
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
+        Document document = searcher.document(luceneDocId); // searchMan.getDocumentFromPid(indexName, docId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 9);
         if (!mayView(searcher.getIndexStructure(), document)) {
@@ -82,7 +83,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         Hits hits = null;
         if (searchParam.hasPattern()) {
-            //@@@ TODO: filter on document!
+            // @@@ TODO: filter on document!
             searchParam.put("docpid", docId);
             JobWithHits search;
             search = (JobWithHits) searchMan.search(user, searchParam.hits(), true);
@@ -119,7 +120,8 @@ public class RequestHandlerDocContents extends RequestHandler {
             content = content.substring(m.end());
         }
         if (!hasXmlDeclaration && outputXmlDeclaration) {
-            // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
+            // We haven't outputted an XML declaration yet, and there's none in the
+            // document. Do so now.
             ds.outputProlog();
         }
         ds.plain(content);

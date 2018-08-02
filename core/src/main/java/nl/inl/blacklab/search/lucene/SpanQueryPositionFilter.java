@@ -147,7 +147,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 spansProd = new PerDocumentSortedSpans(spansProd, PerDocumentSortedSpans.cmpStartPoint, false);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
-                // No filter hits. If it's a positive filter, that means no producer hits can match.
+                // No filter hits. If it's a positive filter, that means no producer hits can
+                // match.
                 // If it's a negative filter, all producer hits match.
                 return invert ? spansProd : null;
             }
@@ -293,8 +294,10 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
         if (!clause.hitsAllSameLength())
             throw new RuntimeException("Trying to internalize non-constant-length clause: " + clause);
-        // Create a new position filter query with a constant-length clause added to our producer.
-        // leftAdjust and rightAdjust are updated according to the clause's length, so it is not
+        // Create a new position filter query with a constant-length clause added to our
+        // producer.
+        // leftAdjust and rightAdjust are updated according to the clause's length, so
+        // it is not
         // actually filtered.
         BLSpanQuery producer = clauses.get(0);
         SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(producer, clause, addToRight);

@@ -91,7 +91,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
         if (config.shouldResolveNamedEntityReferences()) {
-            // Document contains old DTD-style named entity declarations. Resolve them because VTD-XML can't deal with these.
+            // Document contains old DTD-style named entity declarations. Resolve them
+            // because VTD-XML can't deal with these.
             String doc = XmlUtil.readXmlAndResolveReferences(
                     new BufferedReader(new InputStreamReader(new ByteArrayInputStream(contents), defaultCharset)));
             contents = doc.getBytes(defaultCharset);
@@ -177,8 +178,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
         vg.setDoc(inputDocument);
         // Whitespace in between elements is normally ignored,
         // but we explicitly allow whitespace in between elements to be collected here.
-        // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
-        // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
+        // This allows punctuation xpath to match this whitespace, in case
+        // punctuation/whitespace in the document isn't contained in a dedicated element
+        // or attribute.
+        // This doesn't mean that this whitespace is always used, it just enables the
+        // punctuation xpath to find this whitespace if it explicitly matches it.
         vg.enableIgnoredWhiteSpace(true);
         vg.parse(config.isNamespaceAware());
 
@@ -228,7 +232,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // and store in instance variables so our methods can access them
         setCurrentAnnotatedField(annotatedField);
 
-        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
+        // Precompile XPaths for words, evalToString, inline tags, punct and
+        // (sub)annotations
         AutoPilot words = acquireAutoPilot(annotatedField.getWordsPath());
         AutoPilot apEvalToString = acquireAutoPilot(".");
         List<AutoPilot> apsInlineTag = new ArrayList<>();
@@ -254,7 +259,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // First we find all inline elements (stuff like s, p, b, etc.) and store
             // the locations of their start and end tags in a sorted list.
             // This way, we can keep track of between which words these tags occur.
-            // For end tags, we will update the payload of the start tag when we encounter it,
+            // For end tags, we will update the payload of the start tag when we encounter
+            // it,
             // just like we do in our SAX parsers.
             List<InlineObject> tagsAndPunct = new ArrayList<>();
             for (AutoPilot apInlineTag : apsInlineTag) {
@@ -287,9 +293,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
             navpush();
             words.resetXPath();
 
-            // first find all words and sort the list -- words are returned out of order when they are at different nesting levels
+            // first find all words and sort the list -- words are returned out of order
+            // when they are at different nesting levels
             // since the xpath spec doesn't enforce any order, there's nothing we can do
-            // so record their positions, sort the list, then restore the position and carry on
+            // so record their positions, sort the list, then restore the position and carry
+            // on
             List<Pair<Integer, BookMark>> wordPositions = new ArrayList<>();
             while (words.evalXPath() != -1) {
                 BookMark b = new BookMark(nav);
@@ -444,7 +452,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     releaseAutoPilot(apFieldName);
                     navpop();
                 } else {
-                    // Regular metadata field; just the fieldName and an XPath expression for the value
+                    // Regular metadata field; just the fieldName and an XPath expression for the
+                    // value
                     String metadataValue = apMetadata.evalXPathToString();
                     metadataValue = processString(metadataValue, f.getProcess());
                     addMetadataField(f.getName(), metadataValue);
@@ -528,7 +537,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions) throws VTDException {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
-            // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
+            // Basepath given. Navigate to the (first) matching element and evaluate the
+            // other XPaths from there.
             navpush();
             AutoPilot apBase = acquireAutoPilot(basePath);
             apBase.evalXPath();
@@ -584,7 +594,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(apName);
                 navpop();
             } else {
-                // Regular metadata field; just the fieldName and an XPath expression for the value
+                // Regular metadata field; just the fieldName and an XPath expression for the
+                // value
                 findAnnotationMatches(annotation, subAnnot, valuePath, indexAtPositions);
             }
             releaseAutoPilot(apValue);
@@ -616,7 +627,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
             releaseAutoPilot(apEvalToString);
 
-            // No annotations have been added, the result of the xPath query must have been empty.
+            // No annotations have been added, the result of the xPath query must have been
+            // empty.
             if (firstValue == true) {
                 // Add default value
                 String annotValue = processString("", annotation.getProcess());
@@ -685,7 +697,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
         // Get the element and content fragments
         // (element fragment = from start of start tag to end of end tag;
-        //  content fragment = from end of start tag to start of end tag)
+        // content fragment = from end of start tag to start of end tag)
         long elementFragment = nav.getElementFragment();
         int startTagOffset = (int) elementFragment;
         int endTagOffset;
@@ -781,10 +793,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
     protected int getCharacterPosition() {
         // VTD-XML provides no way of getting the current character position,
         // only the byte position.
-        // In order to keep track of character position (which we need for Lucene's term vector),
-        // we fetch the bytes processed since this method was last called, convert them to a String,
+        // In order to keep track of character position (which we need for Lucene's term
+        // vector),
+        // we fetch the bytes processed since this method was last called, convert them
+        // to a String,
         // and use the string length to adjust the character position.
-        // Note that this only works if this method is called for increasing byte positions,
+        // Note that this only works if this method is called for increasing byte
+        // positions,
         // which is true because we only use it for word tags.
         try {
             int currentByteOffset = getCurrentByteOffset();

@@ -56,7 +56,7 @@ public class BLStandardAnalyzer extends Analyzer {
         if (!(caseSensitive && diacSensitive)) {
             // Is this necessary and does it do what we want?
             // e.g. do we want "zon" to ever match "zo'n"? Or are there examples
-            //      where this is useful/required?
+            // where this is useful/required?
             filter = new RemovePunctuationFilter(filter); // remove punctuation
         }
         return new TokenStreamComponents(source, filter);

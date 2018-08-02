@@ -80,7 +80,8 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 
         Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
         if (rewrittenFuzzyQuery instanceof BooleanQuery) {
-            // BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
+            // BooleanQuery; make SpanQueries from each of the TermQueries and combine with
+            // OR
             List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
             BLSpanQuery[] spanQueries = new BLSpanQuery[clauses.size()];
             for (int i = 0; i < clauses.size(); i++) {

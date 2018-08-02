@@ -215,15 +215,18 @@ public class SearcherImpl extends Searcher implements Closeable {
         isEmptyIndex = indexStructure.isNewIndex();
 
         // TODO: we need to create the analyzer before opening the index, because
-        //   we can't change the analyzer attached to the IndexWriter (and passing a different
-        //   analyzer in addDocument() went away in Lucene 5.x).
-        //   For now, if we're in index mode, we re-open the index with the analyzer we determined.
+        // we can't change the analyzer attached to the IndexWriter (and passing a
+        // different
+        // analyzer in addDocument() went away in Lucene 5.x).
+        // For now, if we're in index mode, we re-open the index with the analyzer we
+        // determined.
         if (traceIndexOpening)
             logger.debug("  Creating analyzers...");
         createAnalyzers();
 
         if (indexMode) {
-            // Re-open the IndexWriter with the analyzer we've created above (see comment above)
+            // Re-open the IndexWriter with the analyzer we've created above (see comment
+            // above)
             if (traceIndexOpening)
                 logger.debug("  Re-opening IndexWriter with newly created analyzers...");
             reader.close();
@@ -415,7 +418,7 @@ public class SearcherImpl extends Searcher implements Closeable {
                 throw new IllegalArgumentException(
                         "Field " + fieldPropName + " in doc " + doc + " has no character postion information");
 
-            //int lowestPos = -1, highestPos = -1;
+            // int lowestPos = -1, highestPos = -1;
             int lowestPosFirstChar = -1, highestPosLastChar = -1;
             int total = numStarts + numEnds;
             boolean[] done = new boolean[total]; // NOTE: array is automatically initialized to zeroes!
@@ -449,7 +452,8 @@ public class SearcherImpl extends Searcher implements Closeable {
                         }
 
                         // We've calculated the min and max word positions in advance, so
-                        // we know we can skip this position if it's outside the range we're interested in.
+                        // we know we can skip this position if it's outside the range we're interested
+                        // in.
                         // (Saves a little time for large result sets)
                         if (position < minP || position > maxP) {
                             continue;
@@ -539,7 +543,8 @@ public class SearcherImpl extends Searcher implements Closeable {
         ForwardIndex forwardIndex;
         File dir = new File(indexLocation, "fi_" + fieldPropName);
 
-        // Special case for old BL index with "forward" as the name of the single forward index
+        // Special case for old BL index with "forward" as the name of the single
+        // forward index
         // (this should be removed eventually)
         if (!isEmptyIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
             // Default forward index used to be called "forward". Look for that instead.

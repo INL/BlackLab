@@ -69,7 +69,8 @@ public class MockSpanQuery extends BLSpanQuery {
                 }
                 if (prevStart == start[i] && prevEnd == end[i]) {
                     // Duplicate, so not unique
-                    // (this check only works if the spans is sorted but we take that into account below)
+                    // (this check only works if the spans is sorted but we take that into account
+                    // below)
                     uniqueSpans = false;
                 }
             }

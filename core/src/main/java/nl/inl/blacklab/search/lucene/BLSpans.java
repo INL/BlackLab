@@ -129,7 +129,7 @@ public abstract class BLSpans extends Spans {
             return null;
         BLSpans result = spans;
         if (!sort && removeDuplicates) {
-            // Make already-sorted spans unique. 
+            // Make already-sorted spans unique.
             return new SpansUnique(result);
         }
         if (sort) {

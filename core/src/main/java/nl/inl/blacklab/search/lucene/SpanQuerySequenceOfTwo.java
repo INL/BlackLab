@@ -129,7 +129,7 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
         if (parts.size() == 1) {
             // Last clause in the sequence; just return it
             // (noEmpty() version because we will build alternatives
-            //  in the caller if the input matched the empty sequence)
+            // in the caller if the input matched the empty sequence)
             return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
         }
 
@@ -237,7 +237,8 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
                 // We keep track of this and sort them manually if necessary.
                 if (combiUniqueEnds && combiEndpointSorted &&
                         clauses.get(i).hitsStartPointSorted() && clauses.get(i).hitsHaveUniqueStart()) {
-                    // We can take a shortcut because of what we know about the Spans we're combining.
+                    // We can take a shortcut because of what we know about the Spans we're
+                    // combining.
                     combi = new SpansSequenceSimple(combi, si);
                     combiEndpointSorted = clauses.get(i).hitsAllSameLength();
                     combiUniqueEnds = clauses.get(i).hitsHaveUniqueEnd();

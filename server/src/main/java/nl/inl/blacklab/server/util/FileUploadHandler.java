@@ -49,9 +49,12 @@ public class FileUploadHandler {
 
         // Create a new file upload handler
         ServletFileUpload upload = new ServletFileUpload(factory);
-        // maximum file size to be uploaded. Intentionally accept a bit more than we actually support,
-        // because when the SizeLimitExceededException is thrown, the request is aborted (from the browser), and user will never receive/see our response
-        // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
+        // maximum file size to be uploaded. Intentionally accept a bit more than we
+        // actually support,
+        // because when the SizeLimitExceededException is thrown, the request is aborted
+        // (from the browser), and user will never receive/see our response
+        // See
+        // https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
         upload.setSizeMax(MAX_UPLOAD_SIZE * 2);
 
         try {

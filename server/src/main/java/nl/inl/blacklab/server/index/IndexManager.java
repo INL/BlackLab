@@ -113,7 +113,8 @@ public class IndexManager {
             }
         }
 
-        // Collections, these are lazily loaded, and additions/removals within them should be detected.
+        // Collections, these are lazily loaded, and additions/removals within them
+        // should be detected.
         collectionsDirs = new ArrayList<>();
         if (properties.has("indexCollections")) {
             logger.debug("Scanning indexCollections...");
@@ -129,7 +130,8 @@ public class IndexManager {
             logger.debug("No indexCollections setting found.");
         }
 
-        // User collections dir, these are like collections, but within a user's directory
+        // User collections dir, these are like collections, but within a user's
+        // directory
         this.userCollectionsDir = JsonUtil.getFileProp(properties, "userCollectionsDir", null);
         if (userCollectionsDir == null || !userCollectionsDir.canRead()) {
             logger.warn("Configured user collections not found or not readable: " + userCollectionsDir);
@@ -241,7 +243,8 @@ public class IndexManager {
 
         // TODO this should be handled by Index
         if (isPendingDeletion(indexDir)) {
-            // Don't let any deletion markers linger around (when index used to exist and couldn't be fully deleted)
+            // Don't let any deletion markers linger around (when index used to exist and
+            // couldn't be fully deleted)
             BlsUtils.delTree(indexDir);
         }
         boolean contentViewable = true; // user may view his own private corpus documents
@@ -281,7 +284,8 @@ public class IndexManager {
         File indexDir = index.getDir();
         File userDir = getUserCollectionDir(index.getUserId());
 
-        // Generally these should never happen as they would have been triggered when the Index was first loaded
+        // Generally these should never happen as they would have been triggered when
+        // the Index was first loaded
         // But, it can't hurt to be certain
         if (!indexDir.isDirectory())
             throw new InternalServerError("Could not delete index. Not an index.", 17);
@@ -325,8 +329,10 @@ public class IndexManager {
         System.runFinalization();
 
         BlsUtils.delTree(indexDir);
-        // didn't fully delete, this can happen under windows when some memmapped buffers haven't been gc'd yet
-        // This is a system bug, not something we can do anything about, the gc first needs to clean up all references to those maps
+        // didn't fully delete, this can happen under windows when some memmapped
+        // buffers haven't been gc'd yet
+        // This is a system bug, not something we can do anything about, the gc first
+        // needs to clean up all references to those maps
         // Mark the directory and attempt to delete it next time we come across it
         if (indexDir.canRead())
             markForDeletion(indexDir);
@@ -431,8 +437,10 @@ public class IndexManager {
             logger.debug("Looking for indices in collectionsDirs...");
             for (File collection : collectionsDirs) {
                 logger.debug("  Scanning collectionsDir: " + collection);
-                // A file filter that accepts all directories (and files) except the userCollectionsDir,
-                // so if the userCollectionsDir is inside a collectionsDir, it is not suddenly made public
+                // A file filter that accepts all directories (and files) except the
+                // userCollectionsDir,
+                // so if the userCollectionsDir is inside a collectionsDir, it is not suddenly
+                // made public
                 IOFileFilter notUserDirFilter = new IOFileFilter() {
                     @Override
                     public boolean accept(File pathName) {
@@ -455,7 +463,8 @@ public class IndexManager {
 
                     String indexName = subDir.getName();
                     if (indexName.equals("index")) {
-                        // Not a very useful name; the parent directory usually contains the index name in this case
+                        // Not a very useful name; the parent directory usually contains the index name
+                        // in this case
                         indexName = subDir.getAbsoluteFile().getParentFile().getName();
                         if (indices.containsKey(indexName))
                             continue;

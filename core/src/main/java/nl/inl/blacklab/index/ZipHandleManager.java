@@ -104,9 +104,11 @@ public class ZipHandleManager {
 
     public static void closeAllZips() {
         synchronized (openZips) {
-            // We don't close linked document zips immediately; closing them when you're likely to
+            // We don't close linked document zips immediately; closing them when you're
+            // likely to
             // reuse them soon is inefficient.
-            // (we should probably keep track of last access and close them eventually, though)
+            // (we should probably keep track of last access and close them eventually,
+            // though)
             Iterator<ZipHandle> it = openZips.values().iterator();
             while (it.hasNext()) {
                 it.next().close(); // close zip file

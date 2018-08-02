@@ -218,7 +218,8 @@ public class QueryExecutionContext {
             return null;
 
         if (ComplexFieldUtil.isBookkeepingSubfield(propName)) {
-            // Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return it
+            // Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return
+            // it
             // (can be removed when old field naming scheme is removed)
             return ComplexFieldUtil.bookkeepingField(fieldName, propName);
         }
@@ -237,8 +238,8 @@ public class QueryExecutionContext {
         for (String alt : alternatives) {
             if (pd.hasAlternative(alt)) {
                 // NOTE: is this loop necessary at all? getAlternatives() only
-                //  returns available alternatives, so the first one should always
-                //  be okay, right?
+                // returns available alternatives, so the first one should always
+                // be okay, right?
                 return ComplexFieldUtil.propertyField(fieldName, propName, alt);
             }
         }

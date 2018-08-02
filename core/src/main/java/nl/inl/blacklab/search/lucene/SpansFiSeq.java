@@ -267,7 +267,7 @@ class SpansFiSeq extends BLSpans {
     @Override
     public void passHitQueryContextToClauses(HitQueryContext context) {
         anchor.setHitQueryContext(context);
-        //@@@ NFA?
+        // @@@ NFA?
     }
 
     @Override
@@ -275,7 +275,7 @@ class SpansFiSeq extends BLSpans {
         if (!childClausesCaptureGroups)
             return;
         anchor.getCapturedGroups(capturedGroups);
-        //@@@ NFA?
+        // @@@ NFA?
     }
 
     @Override

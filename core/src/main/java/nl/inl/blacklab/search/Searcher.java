@@ -394,7 +394,7 @@ public abstract class Searcher {
         Searcher.traceQueryExecution = traceQueryExecution;
     }
 
-    //-------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     /** The collator to use for sorting. Defaults to English collator. */
     private Collator collator = Searcher.defaultCollator;
@@ -622,7 +622,7 @@ public abstract class Searcher {
 
     public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
         // Convert to SpanQuery
-        //pattern = pattern.rewrite();
+        // pattern = pattern.rewrite();
         BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(fieldName));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
@@ -976,7 +976,8 @@ public abstract class Searcher {
         boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
         boolean mustFixUnbalancedTags = !wholeDocument;
 
-        // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
+        // Do we have anything to highlight, or do we have an XML fragment that needs
+        // balancing?
         if (hits != null || mustFixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitspans = null;

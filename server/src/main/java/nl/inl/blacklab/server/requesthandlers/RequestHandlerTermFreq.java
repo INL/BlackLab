@@ -29,7 +29,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        //TODO: use background job?
+        // TODO: use background job?
 
         Searcher searcher = getSearcher();
         IndexStructure struct = searcher.getIndexStructure();
@@ -63,7 +63,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         // Assemble all the parts
         ds.startMap();
         ds.startEntry("termFreq").startMap();
-        //DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
+        // DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
         for (TermFrequency tf : tfl.subList(first, last)) {
             ds.attrEntry("term", "text", tf.term, tf.frequency);
         }

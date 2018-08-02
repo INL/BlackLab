@@ -176,7 +176,7 @@ public class HookableSaxHandler extends DefaultHandler {
                     throw new IllegalArgumentException("Double slash in simple-xpath expression");
                 }
                 if (parts[i].charAt(0) == '@') {
-                    //throw new RuntimeException("Attribute can only be last path part");
+                    // throw new RuntimeException("Attribute can only be last path part");
                     throw new IllegalArgumentException("Cannot match on attribute");
                 }
                 elementNames.add(parts[i]);

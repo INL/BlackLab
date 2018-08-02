@@ -52,7 +52,8 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
      */
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
-        // Token state. Check if it matches token from token source, and if so, continue.
+        // Token state. Check if it matches token from token source, and if so,
+        // continue.
         int actualToken = fiDoc.getToken(propertyNumber, pos);
         if (actualToken >= 0) {
             String tokenString = fiDoc.getTermString(propertyNumber, actualToken);

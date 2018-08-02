@@ -173,7 +173,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int endPosition() {
-        return endPos; //spans.endPosition();
+        return endPos; // spans.endPosition();
     }
 
     private void setPayloadsInt(int[] aEnd) {

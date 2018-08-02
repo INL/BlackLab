@@ -20,7 +20,7 @@ public class Response {
      */
     @SuppressWarnings("deprecation")
     public static int busy(DataStream ds, BlackLabServer servlet) {
-        int when = 1000; //servlet.getSearchManager().getCheckAgainAdviceMinimumMs();
+        int when = 1000; // servlet.getSearchManager().getCheckAgainAdviceMinimumMs();
         ds.statusObject("WORKING", "Searching, please wait...", when);
         return HttpServletResponse.SC_OK;
     }
