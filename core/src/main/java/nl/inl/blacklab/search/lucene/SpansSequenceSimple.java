@@ -138,8 +138,7 @@ class SpansSequenceSimple extends BLSpans {
             if (leftStart != NO_MORE_POSITIONS)
                 leftStart = realignPos();
             if (leftStart != NO_MORE_POSITIONS) {
-                // Reset the end point iterator (end points of right matches starting at this
-                // mid point)
+                // Reset the end point iterator (end points of right matches starting at this mid point)
                 // and save current end position.
                 alreadyAtFirstMatch = true;
                 return leftStart;
@@ -224,15 +223,13 @@ class SpansSequenceSimple extends BLSpans {
 
     @Override
     public int width() {
-        return left.width(); // should be + right.width(); but not implemented for now and we don't use
-                             // .width()
+        return left.width(); // should be + right.width(); but not implemented for now and we don't use .width()
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
         left.collect(collector);
-        // right.collect(collector); should probably be called as well, but not
-        // implemented, and not necessary for now
+        //right.collect(collector); should probably be called as well, but not implemented, and not necessary for now
         // (we only use payloads in SpansTags)
     }
 

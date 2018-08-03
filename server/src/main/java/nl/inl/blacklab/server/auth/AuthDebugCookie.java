@@ -50,8 +50,7 @@ public class AuthDebugCookie {
         }
 
         if (userId == null) {
-            // No cookie yet. Generate userId based on sessionId. Cookie will be saved in
-            // persistUser().
+            // No cookie yet. Generate userId based on sessionId. Cookie will be saved in persistUser().
             userId = request.getSession().getId();
             if (userId.length() > 6) {
                 userId = userId.substring(0, 6);

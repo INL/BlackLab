@@ -67,8 +67,7 @@ public class TestSpansExpansion {
 
         SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, true, 2, 3);
 
-        // NOTE: first hit cannot be expanded at all (minimum expansion would set start
-        // to -1),
+        // NOTE: first hit cannot be expanded at all (minimum expansion would set start to -1),
         // second hit can only be expanded once.
 
         int[] expDoc = { 2 };

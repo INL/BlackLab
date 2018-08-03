@@ -104,14 +104,12 @@ public class JobHits extends JobWithHits {
         textPattern = jobDesc.getPattern();
         if (textPattern == null)
             throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
-        // debug(logger, "Textpattern: " + textPattern);
+        //debug(logger, "Textpattern: " + textPattern);
         filter = jobDesc.getFilterQuery();
         try {
 
-            // In debug mode, we can experiment with the forward index matching NFA
-            // threshold this way.
-            // Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in
-            // frequency by a factor
+            // In debug mode, we can experiment with the forward index matching NFA threshold this way.
+            // Lower numbers means more NFAs. E.g. 10 means if adjacent words differ in frequency by a factor
             // of 10, create an NFA.
             SearchSettings searchSett = jobDesc.getSearchSettings();
             if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)

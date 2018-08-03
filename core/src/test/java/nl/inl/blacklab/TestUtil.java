@@ -35,8 +35,7 @@ public class TestUtil {
         while (true) {
             int actualDocId;
             if (firstDoc && skipFirstNextDoc) {
-                // Actual Spans already skipped to document for testing. Don't .nextDoc() this
-                // time.
+                // Actual Spans already skipped to document for testing. Don't .nextDoc() this time.
                 firstDoc = false;
                 actualDocId = actual.docID();
             } else {

@@ -207,10 +207,8 @@ public class ComplexFieldProperty {
     public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String altName : alternatives.keySet()) {
-            // doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName,
-            // altName),
-            // getTokenStream(altName, startChars, endChars),
-            // getTermVectorOption(altName)));
+            //doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+            //		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
             doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
                     getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
         }
@@ -262,22 +260,17 @@ public class ComplexFieldProperty {
             value = value.substring(0, MAXIMUM_VALUE_LENGTH);
         }
 
-        // Make sure we don't keep duplicates of strings in memory, but re-use earlier
-        // instances.
+        // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
         String storedValue = storedValues.get(value);
         if (storedValue == null) {
             storedValues.put(value, value);
             storedValue = value;
         }
 
-        // Special case: if previous value was the empty string and position increment
-        // is 0,
-        // replace the previous value. This is convenient to keep all the properties
-        // synched
-        // up while indexing (by adding a dummy empty string if we don't have a value
-        // for a
-        // property), while still being able to add a value to this position later (for
-        // example,
+        // Special case: if previous value was the empty string and position increment is 0,
+        // replace the previous value. This is convenient to keep all the properties synched
+        // up while indexing (by adding a dummy empty string if we don't have a value for a
+        // property), while still being able to add a value to this position later (for example,
         // when we encounter an XML close tag.
         int lastIndex = values.size() - 1;
         if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && increment == 0) {
@@ -315,8 +308,7 @@ public class ComplexFieldProperty {
             // Beyond the last position; regular addValue()
             addValue(value, position - lastValuePosition);
         } else {
-            // Make sure we don't keep duplicates of strings in memory, but re-use earlier
-            // instances.
+            // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
             String storedValue = storedValues.get(value);
             if (storedValue == null) {
                 storedValues.put(value, value);

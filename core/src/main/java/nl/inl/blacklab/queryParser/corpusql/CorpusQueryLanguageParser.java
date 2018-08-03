@@ -87,7 +87,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return allowSingleQuotes;
     }
 
-    private String defaultProperty = "word"; // ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+    private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
     public void setDefaultProperty(IndexStructure structure, String fieldName) {
         defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();

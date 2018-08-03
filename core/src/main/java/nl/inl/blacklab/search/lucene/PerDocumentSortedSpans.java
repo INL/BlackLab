@@ -47,8 +47,7 @@ class PerDocumentSortedSpans extends BLSpans {
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
     public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
-        // Wrap a HitsPerDocument and show it to the client as a normal, sequential
-        // Spans.
+        // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
         bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
         this.eliminateDuplicates = eliminateDuplicates;
@@ -161,8 +160,7 @@ class PerDocumentSortedSpans extends BLSpans {
 
     @Override
     public int width() {
-        return 0; // should maybe be bucketedSpans.width(indexInBucket) ? but we don't use
-                  // .width()
+        return 0; // should maybe be bucketedSpans.width(indexInBucket) ? but we don't use .width()
     }
 
     @Override

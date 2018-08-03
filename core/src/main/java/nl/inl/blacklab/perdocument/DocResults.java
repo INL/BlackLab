@@ -172,10 +172,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 
         this.searcher = searcher;
 
-        // TODO: a better approach is to only read documents we're actually interested
-        // in instead of all of them; compare with Hits.
-        // even better: make DocResults abstract and provide two implementations,
-        // DocResultsFromHits and DocResultsFromQuery.
+        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
 
         try {
             searcher.getIndexSearcher().search(query, new SimpleCollector() {
@@ -209,8 +207,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
             throw new RuntimeException(e);
         }
 
-        // this(searcher, searcher.findDocScores(query == null ? new
-        // MatchAllDocsQuery(): query));
+        //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
     }
 
     DocResults(Searcher searcher) {

@@ -101,8 +101,7 @@ public class ServletUtil {
      * @return the type of content the user would like
      */
     public static DataFormat getOutputType(HttpServletRequest request) {
-        // See if jsonp callback parameter specified. If so, we want JSON (the "P" part
-        // is handled elsewhere)
+        // See if jsonp callback parameter specified. If so, we want JSON (the "P" part is handled elsewhere)
         String jsonpCallback = getParameter(request, "jsonp", "").toLowerCase();
         if (jsonpCallback.length() > 0) {
             return DataFormat.JSON;
@@ -116,7 +115,7 @@ public class ServletUtil {
 
         // No explicit parameter. Check if the Accept header contains either json or xml
         String accept = request.getHeader("Accept");
-        // logger.debug("Accept: " + accept);
+        //logger.debug("Accept: " + accept);
         if (accept != null && accept.length() > 0) {
             if (accept.contains("json"))
                 return DataFormat.JSON;

@@ -64,7 +64,7 @@ public abstract class RequestHandler {
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        // availableHandlers.put("cache-info", RequestHandlerCacheInfo.class);
+        //availableHandlers.put("cache-info", RequestHandlerCacheInfo.class);
         availableHandlers.put("debug", RequestHandlerDebug.class);
         availableHandlers.put("docs", RequestHandlerDocs.class);
         availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
@@ -74,7 +74,7 @@ public abstract class RequestHandler {
         availableHandlers.put("doc-snippet", RequestHandlerDocSnippet.class);
         availableHandlers.put("doc-info", RequestHandlerDocInfo.class);
         availableHandlers.put("fields", RequestHandlerFieldInfo.class);
-        // availableHandlers.put("help", RequestHandlerBlsHelp.class);
+        //availableHandlers.put("help", RequestHandlerBlsHelp.class);
         availableHandlers.put("hits", RequestHandlerHits.class);
         availableHandlers.put("hits-grouped", RequestHandlerHitsGrouped.class);
         availableHandlers.put("hits-csv", RequestHandlerHitsCsv.class);
@@ -123,8 +123,7 @@ public abstract class RequestHandler {
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
         boolean isYourPrivateIndex = false;
-        // logger.debug("Got indexName = \"" + indexName + "\" (len=" +
-        // indexName.length() + ")");
+        //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
         if (indexName.contains(":")) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
@@ -135,8 +134,7 @@ public abstract class RequestHandler {
                     return errorObj.unauthorized("You are not authorized to access this index.");
                 isYourPrivateIndex = user.getUserId().equals(index.getUserId());
             } catch (IndexNotFound e) {
-                // Ignore this here; this is either not an index name but some other request
-                // (e.g. cache-info)
+                // Ignore this here; this is either not an index name but some other request (e.g. cache-info)
                 // or it is an index name but will trigger an error later.
             }
         }
@@ -288,13 +286,12 @@ public abstract class RequestHandler {
                         Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
                         Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
                                 HttpServletRequest.class, User.class, String.class, String.class, String.class);
-                        // servlet.getSearchManager().getSearcher(indexName); // make sure it's open
+                        //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
                         requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (NoSuchMethodException e) {
-                        // (can only happen if the required constructor is not available in the
-                        // RequestHandler subclass)
+                        // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);
                         return errorObj.internalError(e, debugMode, 2);
                     } catch (IllegalArgumentException e) {
@@ -367,9 +364,7 @@ public abstract class RequestHandler {
         indexMan = searchMan.getIndexManager();
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
-        if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying
-                                                                                                                // when
-                                                                                                                // monitoring
+        if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
             logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
@@ -557,7 +552,7 @@ public abstract class RequestHandler {
      */
     public static String getDocumentPid(Searcher searcher, int luceneDocId,
             Document document) {
-        String pidField = searcher.getIndexStructure().pidField(); // getIndexParam(indexName, user).getPidField();
+        String pidField = searcher.getIndexStructure().pidField(); //getIndexParam(indexName, user).getPidField();
         if (pidField == null || pidField.length() == 0)
             return "" + luceneDocId;
         return document.get(pidField);
@@ -607,8 +602,7 @@ public abstract class RequestHandler {
             ds.entry("countTime", (int) (countTime * 1000));
         ds.entry("stillCounting", totalHits == null ? false : !totalHits.doneFetchingHits());
 
-        // Information about the number of hits/docs, and whether there were too many to
-        // retrieve/count
+        // Information about the number of hits/docs, and whether there were too many to retrieve/count
         if (totalHits != null) {
             // We have a hits object we can query for this information
             ds.entry("numberOfHits", countFailed ? -1 : totalHits.countSoFarHitsCounted())

@@ -69,8 +69,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
         if (min == 1 && max == 1)
             return baseRewritten;
         if (baseRewritten instanceof SpanQueryAnyToken) {
-            // Repeating anytoken clause can sometimes be expressed as simple anytoken
-            // clause
+            // Repeating anytoken clause can sometimes be expressed as simple anytoken clause
             SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
@@ -82,8 +81,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             }
         } else if (baseRewritten.isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it
-            // (note the check for min > 0 above, because position filter cannot match the
-            // empty sequence)
+            // (note the check for min > 0 above, because position filter cannot match the empty sequence)
             BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(1, 1, base.getRealField()), min, max);
             container = container.rewrite(reader);
             return new SpanQueryPositionFilter(container, baseRewritten.inverted(),
@@ -266,7 +264,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 //		return cost;
 
         // NOTE: you would expect a more correct cost estimation to be
-        // clauseCost * (min + (min + 1) + ... + max)
+        //   clauseCost * (min + (min + 1) + ... + max)
         // (each alternative path is taken, after all)
         // But it turns out NFA matching repetitions is actually pretty fast,
         // possibly because disk cache factors are more important than

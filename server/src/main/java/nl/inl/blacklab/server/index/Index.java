@@ -210,10 +210,8 @@ public class Index {
      * @throws InternalServerError when there was an error opening this index
      * @throws ServiceUnavailable when the index is in use.
      */
-    // TODO searcher should not have references to it held for longer times outside
-    // of this class
-    // (references should ideally never leave a synchronized(Index) block... [this
-    // might not be possible due to simultaneous searches]
+    // TODO searcher should not have references to it held for longer times outside of this class
+    // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
     // (this is a large job)
     public synchronized Searcher getSearcher() throws InternalServerError, ServiceUnavailable {
         openForSearching();
@@ -233,12 +231,10 @@ public class Index {
             openForSearching();
         } catch (ServiceUnavailable e) {
             // swallow, we're apparently still busy indexing something,
-            // this isn't a problem, we'll just use the Indexer's searcher to get the
-            // structure instead
+            // this isn't a problem, we'll just use the Indexer's searcher to get the structure instead
         } catch (InternalServerError e) {
             // Rethrow here on purpose
-            // this means there is something wrong in such a way that we can't even open a
-            // Searcher anymore
+            // this means there is something wrong in such a way that we can't even open a Searcher anymore
             throw e;
         }
 
@@ -247,8 +243,7 @@ public class Index {
         else if (this.indexer != null)
             return this.indexer.getSearcher().getIndexStructure();
 
-        // This should literally never happen, after openForSearching either searcher or
-        // indexer must be set
+        // This should literally never happen, after openForSearching either searcher or indexer must be set
         throw new RuntimeException(
                 "Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no Searcher and no Indexer");
     }
@@ -367,7 +362,7 @@ public class Index {
         this.indexer = null;
     }
 
-    // ---------------------
+    //---------------------
 
     /**
      * three groups: username plus a ':' separator following it, this group is
@@ -497,7 +492,7 @@ public class Index {
         return indexId;
     }
 
-    // ------------------------
+    //------------------------
 
     @Override
     public boolean equals(Object obj) {

@@ -30,10 +30,8 @@ public class NfaStateOr extends NfaState {
             boolean matchesFound = false;
             matchesFound = nextState.findMatchesInternal(fiDoc, pos, direction, matchEnds);
             if (matchesFound && (matchEnds == null || clausesAllSameLength)) {
-                // We either don't care about the match ends, just that there are matches
-                // (matchEnds == null)
-                // or we know we there's only one match end because all clauses are the same
-                // length.
+                // We either don't care about the match ends, just that there are matches (matchEnds == null)
+                // or we know we there's only one match end because all clauses are the same length.
                 // Short-circuit.
                 return true;
             }

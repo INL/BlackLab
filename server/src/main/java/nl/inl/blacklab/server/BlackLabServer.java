@@ -58,7 +58,7 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public void init() throws ServletException {
         // Default init if no log4j.properties found
-        // LogUtil.initLog4jIfNotAlready(Level.DEBUG);
+        //LogUtil.initLog4jIfNotAlready(Level.DEBUG);
 
         logger.info("Starting BlackLab Server...");
         super.init();
@@ -69,8 +69,7 @@ public class BlackLabServer extends HttpServlet {
         try {
             // load blacklab's internal config before doing anything
             // we will later overwrite some settings from our own config
-            // It's important we do this as early as possible as some things are loaded
-            // depending on the config (such as plugins)
+            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
             try {
                 ConfigReader.loadDefaultConfig();
             } catch (Exception e) {
@@ -231,15 +230,11 @@ public class BlackLabServer extends HttpServlet {
         boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
 
         // The outputType handling is a bit iffy:
-        // For some urls the dataType is required to determined the correct
-        // RequestHandler to instance (the /docs/ and /hits/)
+        // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
         // For some other urls, the RequestHandler can only output a single type of data
-        // and for the rest of the urls, it doesn't matter, so we should just use the
-        // default if no explicit type was requested.
-        // As long as we're careful not to have urls in multiple of these categories
-        // there is never any ambiguity about which handler to use
-        // TODO "outputtype"="csv" is broken on the majority of requests, the
-        // outputstream will swallow the majority of the printed data
+        // and for the rest of the urls, it doesn't matter, so we should just use the default if no explicit type was requested.
+        // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
+        // TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
         DataFormat outputType = ServletUtil.getOutputType(request);
         RequestHandler requestHandler = RequestHandler.create(this, request, debugMode, outputType);
         if (outputType == null)
@@ -247,8 +242,7 @@ public class BlackLabServer extends HttpServlet {
         if (outputType == null)
             outputType = searchManager.config().defaultOutputType();
 
-        // For some auth systems, we need to persist the logged-in user, e.g. by setting
-        // a cookie
+        // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
         searchManager.getAuthSystem().persistUser(this, request, responseObject, requestHandler.getUser());
 
         // Is this a JSONP request?

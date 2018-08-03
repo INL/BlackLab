@@ -54,7 +54,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 valueSortCollator = new RuleBasedCollator(rules);
             } catch (ParseException e) {
                 // Oh well, we'll use the collator as-is
-                // throw new RuntimeException();//DEBUG
+                //throw new RuntimeException();//DEBUG
             }
         }
         return valueSortCollator;
@@ -94,7 +94,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
 
         // Remove any empty settings
-        // response.removeEmptyMapValues();
+        //response.removeEmptyMapValues();
 
         return HTTP_OK;
     }
@@ -102,10 +102,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataFieldDesc fd,
             boolean listValues) {
         ds.startMap();
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); // report false for UNKNOWN
-                                                                                            // - this usually means
-                                                                                            // there's no values either
-                                                                                            // way
+        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); // report false for UNKNOWN - this usually means there's no values either way
 
         // Assemble response
         if (indexName != null)
@@ -148,7 +145,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 public int compare(String o1, String o2) {
                     String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;
                     String d2 = displayValues.containsKey(o2) ? displayValues.get(o2) : o2;
-                    // return d1.compareTo(d2);
+                    //return d1.compareTo(d2);
                     return defaultCollator.compare(d1, d2);
                 }
             });

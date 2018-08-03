@@ -58,8 +58,7 @@ public class JobHitsSorted extends JobWithHits {
         if (sortProp != null) {
             hits = hitsUnsorted.sortedBy(sortProp, sortSett.reverse());
         } else {
-            // Be lenient of clients passing wrong sortBy values; simply ignore bad sort
-            // requests.
+            // Be lenient of clients passing wrong sortBy values; simply ignore bad sort requests.
             hits = hitsUnsorted;
         }
         setPriorityInternal();

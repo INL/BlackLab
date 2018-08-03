@@ -21,7 +21,7 @@ class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
      *            load management
      */
     public LoadManagerThread(SearchCache searchCache) {
-        // logger.debug("Creating LOADMGR thread...");
+        //logger.debug("Creating LOADMGR thread...");
         this.searchCache = searchCache;
         setUncaughtExceptionHandler(this);
     }

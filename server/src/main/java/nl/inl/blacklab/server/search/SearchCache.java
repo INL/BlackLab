@@ -314,11 +314,10 @@ public class SearchCache {
 
         // Sort the searches based on descending "worthiness"
         for (Job s : searches)
-            s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues
-                                     // because of threading
+            s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
         Collections.sort(searches);
 
-        // ------------------
+        //------------------
         // STEP 1: remove least worthy, finished searches from cache
 
         calculateSizeBytes(searches);
@@ -405,9 +404,9 @@ public class SearchCache {
         // NOTE: we used to hint the Java GC to run, but this caused severe
         // slowdowns. It's better to rely on the incremental garbage collection.
 
-        // ------------------
+        //------------------
         // STEP 2: make sure the most worthy searches get the CPU, and pause
-        // any others to avoid bringing down the server.
+        //         any others to avoid bringing down the server.
 
         int coresLeft = cacheConfig.getMaxConcurrentSearches();
         int pauseSlotsLeft = cacheConfig.getMaxPausedSearches();
@@ -527,7 +526,7 @@ public class SearchCache {
     private void checkFreeMemory() throws ServiceUnavailable {
         long freeMegs = MemoryUtil.getFree() / 1000000;
         if (freeMegs < cacheConfig.getMinFreeMemForSearchMegs()) {
-            performLoadManagement(null); // removeOldSearches(); // try to free up space for next search
+            performLoadManagement(null); //removeOldSearches(); // try to free up space for next search
             logger.warn(
                     "Can't start new search, not enough memory (" + freeMegs + "M < "
                             + cacheConfig.getMinFreeMemForSearchMegs() + "M)");

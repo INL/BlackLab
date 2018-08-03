@@ -36,20 +36,16 @@ public class JobDocsTotal extends JobWithDocs {
 
     @Override
     protected void performSearch() throws BlsException {
-        // Get the total number of docs (we ignore the return value because you can
-        // monitor progress
+        // Get the total number of docs (we ignore the return value because you can monitor progress
         // and get the final total through the getDocResults() method yourself.
         docResults = ((JobWithDocs) inputJob).getDocResults();
         setPriorityInternal(); // make sure docResults has the right priority
         docResults.size();
         if (Thread.interrupted()) {
-            // We don't throw anymore because that will cause this error to re-throw even
-            // when we just
-            // want to look at a page of results. maxHitsCounted is set to true, however, so
-            // the application
+            // We don't throw anymore because that will cause this error to re-throw even when we just
+            // want to look at a page of results. maxHitsCounted is set to true, however, so the application
             // can detect that we stopped counting at some point.
-            // throw new ServiceUnavailable("Determining total number of docs took too long,
-            // cancelled");
+            //throw new ServiceUnavailable("Determining total number of docs took too long, cancelled");
             logger.warn("Determining total number of docs took too long, cancelled");
         }
     }

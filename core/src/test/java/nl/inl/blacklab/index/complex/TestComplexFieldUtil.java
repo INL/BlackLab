@@ -22,7 +22,7 @@ import org.junit.Test;
 
 public class TestComplexFieldUtil {
 
-    // private boolean oldFieldNameSetting;
+    //private boolean oldFieldNameSetting;
 
     @Test
     public void testIsAlternative() {
@@ -70,7 +70,7 @@ public class TestComplexFieldUtil {
 
     @Before
     public void setup() {
-        // oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
+        //oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
     }
 
     @After
@@ -81,9 +81,8 @@ public class TestComplexFieldUtil {
     @Test
     public void testGetNameComponents() {
         ComplexFieldUtil.setFieldNameSeparators(false);
-        // testArray(new String[] { "contents" },
-        // ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents",
-        // null, null)));
+        //testArray(new String[] { "contents" },
+        //		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
         testArray(new String[] { "contents", "lemma" },
                 ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", "lemma", null)));
         testArray(new String[] { "contents", "lemma", "s" },

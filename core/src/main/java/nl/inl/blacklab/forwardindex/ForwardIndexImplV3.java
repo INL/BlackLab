@@ -245,11 +245,9 @@ class ForwardIndexImplV3 extends ForwardIndex {
     private void openTokensFileForReading() throws IOException {
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
                 FileChannel tokensFileChannel = tokensFp.getChannel()) {
-            // Map the tokens file in chunks of 2GB each. When retrieving documents, we
-            // always
+            // Map the tokens file in chunks of 2GB each. When retrieving documents, we always
             // read it from just one chunk, not multiple, but because each chunk begins at a
-            // document start, documents of up to 2G tokens can be processed. We could get
-            // around
+            // document start, documents of up to 2G tokens can be processed. We could get around
             // this limitation by reading from multiple chunks, but this would make the code
             // more complex.
             tokensFileChunks = new ArrayList<>();
@@ -423,7 +421,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
             // Close the FileChannel and RandomAccessFile (indexMode only)
             if (writeTokensFileChannel != null) {
                 // Cannot truncate if still mapped; cannot force demapping.
-                // tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
+                //tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
                 writeTokensFileChannel.close();
             }
             if (writeTokensFp != null)

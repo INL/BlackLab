@@ -76,7 +76,7 @@ public class HitPropertyRightContext extends HitProperty {
     @Override
     public HitPropValueContextWords get(int hitNumber) {
         int[] context = hits.getHitContext(hitNumber);
-        // int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
+        //int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
         int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
         int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 

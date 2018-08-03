@@ -57,8 +57,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
      */
     @Override
     public void setDocument(Reader reader) {
-        // Reader outputs chars, so we can determine our own charset when we put them
-        // back into a stream
+        // Reader outputs chars, so we can determine our own charset when we put them back into a stream
         // We just need to make sure to pass it on to whatever consumes the stream
         input = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8), 251);
         charset = StandardCharsets.UTF_8;

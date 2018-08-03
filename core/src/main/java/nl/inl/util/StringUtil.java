@@ -392,9 +392,7 @@ public class StringUtil {
      *
      * @since 3.0
      */
-    // See also Lucene's ASCIIFoldingFilter (Lucene 2.9) that replaces accented
-    // characters by their unaccented equivalent (and uncommitted bug fix:
-    // https://issues.apache.org/jira/browse/LUCENE-1343?focusedCommentId=12858907&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_12858907).
+    // See also Lucene's ASCIIFoldingFilter (Lucene 2.9) that replaces accented characters by their unaccented equivalent (and uncommitted bug fix: https://issues.apache.org/jira/browse/LUCENE-1343?focusedCommentId=12858907&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_12858907).
     public static String stripAccents(final String input) {
         if (input == null) {
             return null;
@@ -508,9 +506,9 @@ public class StringUtil {
         if (dashesToSpaces)
             spaceified = spaceified.replaceAll("[\\-_]", " ");
         return StringUtils.capitalize(spaceified.toLowerCase());
-        // if (str.length() == 0)
-        // return str;
-        // return str.substring(0, 1).toUpperCase() + str.substring(1);
+        //		if (str.length() == 0)
+        //			return str;
+        //		return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
     /**

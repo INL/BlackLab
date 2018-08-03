@@ -70,7 +70,7 @@ public class Example {
         if (indexDir.exists()) {
             // Delete the old example dir
             // (NOTE: we cannot do this on exit because memory mappings may
-            // prevent deletion on Windows)
+            //  prevent deletion on Windows)
             FileUtil.processTree(indexDir, new FileTask() {
                 @Override
                 public void process(File f) {

@@ -71,7 +71,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
         // Filter the tags
         // (NOTE: only works for start tags and full elements because attribute values
-        // are indexed at the start tag!)
+        //  are indexed at the start tag!)
         BLSpanQuery filter;
         if (attrFilters.size() == 1)
             filter = attrFilters.get(0);

@@ -35,8 +35,7 @@ public class UnicodeStream extends InputStream {
     // The steam we're wrapping
     private InputStream stream;
 
-    // Encoding of the character set, either detected through the BOM or a default
-    // value.
+    // Encoding of the character set, either detected through the BOM or a default value.
     private Charset encoding;
 
     /**

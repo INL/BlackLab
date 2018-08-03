@@ -72,8 +72,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
                 job = searchGrouped;
                 groups = searchGrouped.getGroups();
-                // don't set docs yet - only return docs if we're looking within a specific
-                // group
+                // don't set docs yet - only return docs if we're looking within a specific group
 
                 if (viewGroup != null) {
                     HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(),
@@ -86,15 +85,10 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                     docs = group.getResults();
 
-                    // NOTE: sortBy is automatically applied to regular results, but not to results
-                    // within groups
-                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and
-                    // DocResults::constructor
-                    // Also see SearchParams (hitsSortSettings, docSortSettings,
-                    // hitGroupsSortSettings, docGroupsSortSettings)
-                    // There is probably no reason why we can't just sort/use the sort of the input
-                    // results, but we need some more testing to see if everything is correct if we
-                    // change this
+                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
                     if (sortBy != null) {
                         DocProperty sortProp = DocProperty.deserialize(sortBy);
                         if (sortProp == null)
@@ -113,8 +107,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         }
 
         // apply window settings
-        // Different from the regular results, if no window settings are provided, we
-        // export the maximum amount automatically
+        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
@@ -138,8 +131,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             row.addAll(groups.getGroupCriteria().getPropNames());
             row.add("count");
 
-            // Create the header, then explicitly declare the separator, as excel normally
-            // uses a locale-dependent CSV-separator...
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
             CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
             CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
             addSummaryCommonFieldsCSV(format, printer, searchParam);
@@ -166,8 +158,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             String pidField = struct.pidField();
             String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
 
-            // Build the header; 2 columns for pid and length, then 1 for each metadata
-            // field
+            // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();
             row.add("docPid");
             row.add("numberOfHits");
@@ -175,15 +166,13 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 row.add("lengthInTokens");
 
             Collection<String> metadataFieldIds = struct.getMetadataFields();
-            metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're
-                                               // internal/calculated
+            metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");
             metadataFieldIds.remove("mayView");
 
             row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
 
-            // Create the header, then explicitly declare the separator, as excel normally
-            // uses a locale-dependent CSV-separator...
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
             CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
             CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
             addSummaryCommonFieldsCSV(format, printer, searchParam);

@@ -41,7 +41,7 @@ public class UtilsForTesting {
 
         // Remove old ContentStore test dirs from temp dir, if possible
         // (may not be possible because of memory mapping lock on Windows;
-        // in this case we just leave the files and continue)
+        //  in this case we just leave the files and continue)
         for (File testDir : tempDir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File parentDir, String name) {

@@ -348,8 +348,7 @@ public class IndexStructure {
                 throw new RuntimeException("Could not delete file: " + metadataFile);
         }
 
-        // If none found, or creating new index: metadata file should be same format as
-        // template.
+        // If none found, or creating new index: metadata file should be same format as template.
         if (createNewIndex || metadataFile == null) {
             // No metadata file yet, or creating a new index;
             // use same metadata format as the template
@@ -477,10 +476,8 @@ public class IndexStructure {
         versionInfo.put("indexFormat", indexFormat);
         versionInfo.put("timeCreated", timeCreated);
         versionInfo.put("timeModified", timeModified);
-        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is
-                                                        // for XML tags after the last word)
-        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths,
-                                                     // and there is no end tag property
+        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
+        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths, and there is no end tag property
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
@@ -695,8 +692,7 @@ public class IndexStructure {
      * @return the names
      */
     public Collection<String> getMetadataFields() {
-        // Synchronized because we sometimes register new metadata fields during
-        // indexing
+        // Synchronized because we sometimes register new metadata fields during indexing
         synchronized (metadataFieldInfos) {
             // Return a copy because we might create a new metadata field while
             // iterating over this one (because of indexFieldAs)
@@ -710,8 +706,7 @@ public class IndexStructure {
 
     public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
         MetadataFieldDesc d = null;
-        // Synchronized because we sometimes register new metadata fields during
-        // indexing
+        // Synchronized because we sometimes register new metadata fields during indexing
         synchronized (metadataFieldInfos) {
             d = metadataFieldInfos.get(fieldName);
         }
@@ -1288,8 +1283,7 @@ public class IndexStructure {
                 }
 
                 // These properties should get no forward index
-                // TODO: refactor this so this information is stored with each property instead,
-                // deprecating this setting
+                // TODO: refactor this so this information is stored with each property instead, deprecating this setting
                 JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
                 if (nodeNoForwardIndexProps instanceof ArrayNode) {
                     Iterator<JsonNode> itNFIP = nodeNoForwardIndexProps.elements();
@@ -1307,8 +1301,7 @@ public class IndexStructure {
                 }
 
                 // This is the "natural order" of our annotations
-                // (probably not needed anymore - if not specified, the order of the annotations
-                // will be used)
+                // (probably not needed anymore - if not specified, the order of the annotations will be used)
                 List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
                 if (displayOrder.size() == 0) {
                     displayOrder.addAll(annotationOrder);
@@ -1379,8 +1372,7 @@ public class IndexStructure {
 
         if (usedTemplate) {
             // Update / clear possible old values that were in the template file
-            // (template file may simply be the metadata file copied from a previous
-            // version)
+            // (template file may simply be the metadata file copied from a previous version)
 
             // Reset version info
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
@@ -1478,8 +1470,7 @@ public class IndexStructure {
             }
         }
 
-        // Also (recursively) add metadata and complex field config from any linked
-        // documents
+        // Also (recursively) add metadata and complex field config from any linked documents
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
             if (format.isConfigurationBased())

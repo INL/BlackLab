@@ -242,8 +242,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
                 BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
-                // (we used to rewrite() combined here just to be safe, but that could break
-                // optimizations later)
+                // (we used to rewrite() combined here just to be safe, but that could break optimizations later)
                 cl.remove(highestPrioIndex);
                 cl.set(highestPrioIndex - 1, combined);
                 anyRewrittenThisCycle = true;
@@ -268,31 +267,25 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // This doesn't change the query because the sequence operator is associative.
         anyRewritten |= flattenSequence(cl);
 
-        // Find matching tags and rewrite them to position filter (e.g. containing) to
-        // execute more
+        // Find matching tags and rewrite them to position filter (e.g. containing) to execute more
         // efficiently
         anyRewritten |= matchingTagsToPosFilter(cl);
 
         // Try to combine adjacent clauses into more efficient ones.
-        // We do this before rewrite (as well as after) specifically to find clauses
-        // that are slow
+        // We do this before rewrite (as well as after) specifically to find clauses that are slow
         // because
-        // of regular expressions matching many terms (e.g. "s.*" or ".*s") and match
-        // these using an
+        // of regular expressions matching many terms (e.g. "s.*" or ".*s") and match these using an
         // NFA instead.
-        // By doing it before rewriting, we save the time to expand the regex to all its
-        // matching
+        // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
-        // as dealing with each of these (sometimes frequent) terms, which can be
-        // significant.
+        // as dealing with each of these (sometimes frequent) terms, which can be significant.
         anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
 
         // Optimize each clause, and flatten again if necessary
         anyRewritten |= optimizeClauses(cl, reader);
 
         if (!anyRewritten) {
-            // Nothing rewritten. If this is a sequence of length one, just return the
-            // clause;
+            // Nothing rewritten. If this is a sequence of length one, just return the clause;
             // otherwise return this object unchanged.
             if (cl.size() == 1)
                 return cl.get(0);
@@ -313,23 +306,18 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // This doesn't change the query because the sequence operator is associative.
         anyRewritten |= flattenSequence(cl);
 
-        // Find matching tags and rewrite them to position filter (e.g. containing) to
-        // execute more
+        // Find matching tags and rewrite them to position filter (e.g. containing) to execute more
         // efficiently
         anyRewritten |= matchingTagsToPosFilter(cl);
 
         // Try to combine adjacent clauses into more efficient ones.
-        // We do this before rewrite (as well as after) specifically to find clauses
-        // that are slow
+        // We do this before rewrite (as well as after) specifically to find clauses that are slow
         // because
-        // of regular expressions matching many terms (e.g. "s.*" or ".*s") and match
-        // these using an
+        // of regular expressions matching many terms (e.g. "s.*" or ".*s") and match these using an
         // NFA instead.
-        // By doing it before rewriting, we save the time to expand the regex to all its
-        // matching
+        // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
-        // as dealing with each of these (sometimes frequent) terms, which can be
-        // significant.
+        // as dealing with each of these (sometimes frequent) terms, which can be significant.
         anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
 
         // Rewrite each clause, and flatten again if necessary
@@ -337,8 +325,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         if (anyRewritten)
             flattenSequence(cl);
 
-        // Again, try to combine adjacent clauses into more efficient ones. Rewriting
-        // clauses may
+        // Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may
         // have
         // generated new opportunities for combining clauses.
         anyRewritten |= combineAdjacentClauses(cl, reader, getField(), ClauseCombiner.all(canDoNfaMatching));
@@ -347,8 +334,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // rewrite it to several alternatives combined with OR. Do so now.
         List<List<BLSpanQuery>> results = makeAlternatives(cl, reader);
         if (results.size() == 1 && !anyRewritten) {
-            // Nothing rewritten. If this is a sequence of length one, just return the
-            // clause;
+            // Nothing rewritten. If this is a sequence of length one, just return the clause;
             // otherwise return this object unchanged.
             List<BLSpanQuery> seq = results.get(0);
             if (seq.size() == 1)
@@ -767,8 +753,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // NOTE: we (explicitly) return false even though sequences can always
         // internalize neighbours, because sequences are explicitly flattened
         // while rewriting, so this shouldn't be necessary.
-        // The internalize() method is used by other classes' internalize() methods,
-        // though.
+        // The internalize() method is used by other classes' internalize() methods, though.
         return false;
     }
 

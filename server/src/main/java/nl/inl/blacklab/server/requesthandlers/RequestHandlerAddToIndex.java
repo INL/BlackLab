@@ -52,10 +52,8 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         IndexStructure indexStructure = index.getIndexStructure();
 
-        // Read uploaded files before checking for errors, or the client won't see our
-        // response :(
-        // See
-        // https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
+        // Read uploaded files before checking for errors, or the client won't see our response :(
+        // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
         List<FileItem> dataFiles = new ArrayList<>();
         Map<String, File> linkedFiles = new HashMap<>();
         try {
@@ -120,8 +118,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                     indexError = "No tokens were found during indexing, are the files in the correct format?";
             }
 
-            // It's important we roll back on errors, or an incorrect indexstructure might
-            // be written.
+            // It's important we roll back on errors, or an incorrect indexstructure might be written.
             // See Indexer#hasRollback
             if (indexError != null)
                 indexer.rollback();

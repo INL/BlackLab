@@ -65,8 +65,7 @@ public class FileProcessor implements AutoCloseable {
         void file(String path, InputStream is, File file) throws Exception;
 
         // Regular file(File f) function is omitted on purpose.
-        // As we process regular files as well as "virtual" files (entries in archives
-        // and the like) in the same manner.
+        // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
         // This means in some cases there is no actual file backing up the data
     }
 
@@ -174,13 +173,11 @@ public class FileProcessor implements AutoCloseable {
         setFileNameGlob("*");
 
         // We always use an ExecutorService to call our handlers to simplify our code
-        // When not using threads, the service is just a fancy wrapper around doing
-        // task.run() on the calling thread.
+        // When not using threads, the service is just a fancy wrapper around doing task.run() on the calling thread.
         if (useThreads) {
             executor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
             // Never throw RejectedExecutionException in the main thread
-            // (this can rarely happen when the FileProcessor shut down from another thread
-            // (usually a task thread that encountered an exception?)
+            // (this can rarely happen when the FileProcessor shut down from another thread (usually a task thread that encountered an exception?)
             // just in between checking state and submitting)
             ((ThreadPoolExecutor) executor).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         } else {
@@ -366,8 +363,7 @@ public class FileProcessor implements AutoCloseable {
      * Subsequent calls to close, processFile or processInputStream will have no
      * effect.
      */
-    // this function can't be synchronized on (this) or we couldn't abort from an
-    // async handler while the main thread is working/waiting on close().
+    // this function can't be synchronized on (this) or we couldn't abort from an async handler while the main thread is working/waiting on close().
     public void abort() {
         synchronized (this) {
             if (aborted)
@@ -398,8 +394,7 @@ public class FileProcessor implements AutoCloseable {
 
         try {
             executor.shutdown();
-            // Outside the synchronized block to allow calling abort() while waiting for
-            // close() to complete
+            // Outside the synchronized block to allow calling abort() while waiting for close() to complete
             // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {

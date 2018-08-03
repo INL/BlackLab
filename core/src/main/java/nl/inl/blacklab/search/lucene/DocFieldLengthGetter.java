@@ -62,20 +62,17 @@ class DocFieldLengthGetter implements Closeable {
         if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up
             try {
-                // NOTE: UninvertingReader is an IndexReader that can get docValues even when
-                // they weren't explicitly indexed
+                // NOTE: UninvertingReader is an IndexReader that can get docValues even when they weren't explicitly indexed
                 Map<String, UninvertingReader.Type> fields = new HashMap<>();
                 fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
                 uninv = new UninvertingReader(reader, fields);
-                cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName); // FieldCache.DEFAULT.getInts(reader,
-                                                                                       // lengthTokensFieldName, true);
+                cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName); //FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);
 
                 // Check if the cache was retrieved OK
                 boolean allZeroes = true;
                 int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
                 for (int i = 0; i < numToCheck; i++) {
-                    // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter
-                    // here)
+                    // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
                     if (cachedFieldLengths.get(i) != 0) {
                         allZeroes = false;
                         break;
@@ -148,8 +145,7 @@ class DocFieldLengthGetter implements Closeable {
                     lengthFieldIsStored = true;
                     return Integer.parseInt(strLength);
                 }
-                // No, length field is not stored in the index. Always use term vector from now
-                // on.
+                // No, length field is not stored in the index. Always use term vector from now on.
                 lengthFieldIsStored = false;
             } catch (Exception e) {
                 throw new RuntimeException(e);

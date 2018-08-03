@@ -54,8 +54,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
      *         within a group, Groups if looking at grouped hits.
      * @throws BlsException
      */
-    // TODO share with regular RequestHandlerHits, allow configuring windows,
-    // totals, etc ?
+    // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
     private Pair<Hits, HitGroups> getHits() throws BlsException {
         // Might be null
         String groupBy = searchParam.getString("group");
@@ -77,8 +76,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
                 job = searchGrouped;
                 groups = searchGrouped.getGroups();
-                // don't set hits yet - only return hits if we're looking within a specific
-                // group
+                // don't set hits yet - only return hits if we're looking within a specific group
 
                 if (viewGroup != null) {
                     HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
@@ -90,15 +88,10 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
                     hits = group.getHits();
 
-                    // NOTE: sortBy is automatically applied to regular results, but not to results
-                    // within groups
-                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and
-                    // DocResults::constructor
-                    // Also see SearchParams (hitsSortSettings, docSortSettings,
-                    // hitGroupsSortSettings, docGroupsSortSettings)
-                    // There is probably no reason why we can't just sort/use the sort of the input
-                    // results, but we need some more testing to see if everything is correct if we
-                    // change this
+                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
                     if (sortBy != null) {
                         HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
                         if (sortProp == null)
@@ -107,8 +100,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     }
                 }
             } else {
-                // Use a regular job for hits, so that not all hits are actually retrieved yet,
-                // we'll have to construct a pagination view on top of the hits manually
+                // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
                 job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
                 hits = job.getHits();
             }
@@ -119,8 +111,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         }
 
         // apply window settings
-        // Different from the regular results, if no window settings are provided, we
-        // export the maximum amount automatically
+        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
@@ -143,8 +134,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(groups.getGroupCriteria().getPropNames());
             row.add("count");
 
-            // Create the header, then explicitly declare the separator, as excel normally
-            // uses a locale-dependent CSV-separator...
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
             CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
             CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
             addSummaryCommonFieldsCSV(format, printer, searchParam);
@@ -180,8 +170,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         // Only kwic supported, original document output not supported in csv currently.
         row.add(StringUtils.join(interleave(kwic.getLeft("punct"), kwic.getLeft(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and
-                                                                          // whitespace?
+        row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
         row.add(StringUtils.join(interleave(kwic.getRight("punct"), kwic.getRight(mainTokenProperty)).toArray()));
 
         // Add all other properties in this word
@@ -196,8 +185,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         try {
             // Build the table headers
-            // The first few columns are fixed, and an additional columns is appended per
-            // property of tokens in this corpus.
+            // The first few columns are fixed, and an additional columns is appended per property of tokens in this corpus.
             ArrayList<String> row = new ArrayList<>();
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
@@ -214,16 +202,14 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             }
 
-            // Create the header, then explicitly declare the separator, as excel normally
-            // uses a locale-dependent CSV-separator...
+            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
             CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
             CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
             addSummaryCommonFieldsCSV(format, printer, searchParam);
             row.clear();
 
             // Write the hits
-            // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted
-            // by their document, and we need a global order
+            // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
             // So we need to manually retrieve the documents and their data
             Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
             for (Hit hit : hits) {

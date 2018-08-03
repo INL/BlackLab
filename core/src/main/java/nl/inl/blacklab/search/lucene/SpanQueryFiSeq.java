@@ -132,8 +132,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     }
 
     // public SpanQueryFiSeq copy() {
-    // return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction,
-    // fiAccessor);
+    // return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction, fiAccessor);
     // }
 
     @Override

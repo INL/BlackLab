@@ -72,8 +72,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
             hasFunction = getParameter("hasAttr_function", false);
             indexFunctionAs = getParameter("attrPropName_function", "function");
         } else {
-            // Default to "function" attribute containing PoS (unless changed via
-            // parameters)
+            // Default to "function" attribute containing PoS (unless changed via parameters)
             hasType = getParameter("hasAttr_type", false);
             indexTypeAs = getParameter("attrPropName_type", "type");
             hasFunction = getParameter("hasAttr_function", true);
@@ -117,8 +116,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
         // We use the body element by default, but a subclass can change this default by
         // calling superconstructor with extra param, see DocIndexerTeiText.
         //
-        // This handler clears captured character content at the beginning to start
-        // afresh.
+        // This handler clears captured character content at the beginning to start afresh.
         final ElementHandler body = addHandler(contentElement, new ElementHandler() {
             @Override
             public void startElement(String uri, String localName, String qName,
@@ -146,8 +144,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
                 consumeCharacterContent(); // clear it to capture punctuation and words
                 String listBiblId = attributes.getValue("id");
                 @SuppressWarnings("deprecation")
-                String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata"); // TODO: remove
-                                                                                                 // INL-specific stuff
+                String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata"); // TODO: remove INL-specific stuff
                 captureMetadata = listBiblId != null && listBiblId.equals(listBiblIdToCapture);
             }
 
@@ -263,10 +260,8 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
         String author = myLuceneDoc.get("authorLevel1");
         String authorLevel2 = myLuceneDoc.get("authorLevel2");
         if (author != null || authorLevel2 != null) {
-            // Make author field, which is authorLevel1 or authorLevel2 if the first is
-            // empty
-            // Also make authorCombined, which is an indexed field combining the two levels
-            // (for searching).
+            // Make author field, which is authorLevel1 or authorLevel2 if the first is empty
+            // Also make authorCombined, which is an indexed field combining the two levels (for searching).
             if (author == null)
                 author = "";
             if (authorLevel2 == null)
@@ -284,8 +279,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
         String titleLevel2 = myLuceneDoc.get("titleLevel2");
         if (title != null || titleLevel2 != null) {
             // Make title field, which is titleLevel1 or titleLevel2 if the first is empty
-            // Also make titleCombined, which is an indexed field combining the two levels
-            // (for searching).
+            // Also make titleCombined, which is an indexed field combining the two levels (for searching).
             if (title == null)
                 title = "";
             if (titleLevel2 == null)

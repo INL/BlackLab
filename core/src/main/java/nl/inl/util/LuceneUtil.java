@@ -176,9 +176,8 @@ public final class LuceneUtil {
                 docPosEnum = termsEnum.postings(docPosEnum, PostingsEnum.POSITIONS);
                 while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                     // NOTE: .docId() will always return 0 in this case
-                    // if (docPosEnum.docID() != doc)
-                    // throw new RuntimeException("Wrong doc id: " + docPosEnum.docID() + "
-                    // (expected " + doc + ")");
+                    //if (docPosEnum.docID() != doc)
+                    //	throw new RuntimeException("Wrong doc id: " + docPosEnum.docID() + " (expected " + doc + ")");
                     for (int i = 0; i < docPosEnum.freq(); i++) {
                         int position = docPosEnum.nextPosition();
                         if (position == -1)
@@ -381,8 +380,7 @@ public final class LuceneUtil {
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(150); // faster indexing
 
-        // Set merge factor (if using LogMergePolicy, which is the default up to version
-        // LUCENE_32,
+        // Set merge factor (if using LogMergePolicy, which is the default up to version LUCENE_32,
         // so yes)
         MergePolicy mp = config.getMergePolicy();
         if (mp instanceof LogMergePolicy) {

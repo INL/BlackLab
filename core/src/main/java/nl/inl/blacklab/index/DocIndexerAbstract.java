@@ -43,7 +43,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     protected int wordsDone = 0;
     private int wordsDoneAtLastReport = 0;
 
-    // protected ContentStore contentStore;
+    //protected ContentStore contentStore;
 
     private StringBuilder content = new StringBuilder();
 

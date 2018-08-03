@@ -151,13 +151,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected ComplexField getMainComplexField() {
         if (mainComplexField == null) {
-            // The "main complex field" is the field that stores the document content id for
-            // now.
-            // (We will change this eventually so the document content id is not stored with
-            // a complex field
+            // The "main complex field" is the field that stores the document content id for now.
+            // (We will change this eventually so the document content id is not stored with a complex field
             // but as a metadata field instead.)
-            // The main complex field is a field named "contents" or, if that does not
-            // exist, the first
+            // The main complex field is a field named "contents" or, if that does not exist, the first
             // complex field
             for (ComplexField complexField : complexFields.values()) {
                 if (mainComplexField == null)
@@ -234,8 +231,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected void indexLinkedDocument(String inputFile, String pathInsideArchive, String documentPath,
             String inputFormatIdentifier, String storeWithName) throws IOException {
-        // Fetch the input file (either by downloading it to a temporary location, or
-        // opening it from disk)
+        // Fetch the input file (either by downloading it to a temporary location, or opening it from disk)
         File f = resolveFileReference(inputFile);
 
         // Get the data
@@ -267,8 +263,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
                 if (storeWithName != null) {
-                    // If specified, store in this content store and under this name instead of the
-                    // default
+                    // If specified, store in this content store and under this name instead of the default
                     ldi.contentStoreName = storeWithName;
                 }
                 ldi.indexSpecificDocument(documentPath);
@@ -659,17 +654,14 @@ public abstract class DocIndexerBase extends DocIndexer {
 //          if (name.equals("xmlid"))
 //              trace(value + " ");
             property.addValue(value, increment);
-            // System.out.println("Field " + currentComplexField.getName() + ", property " +
-            // property.getName() + ": added " + value + ", lastValuePos = " +
-            // property.lastValuePosition());
+            //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ": added " + value + ", lastValuePos = " + property.lastValuePosition());
         } else {
 //            if (name.equals("rating"))
 //                traceln("{" + value + "}: " + indexAtPositions);
-            // System.out.println("Field " + currentComplexField.getName() + ", property " +
-            // property.getName() + ", value " + value + " (STANDOFF)");
+            //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ", value " + value + " (STANDOFF)");
             for (Integer position : indexAtPositions) {
                 property.addValueAtPosition(value, position);
-                // System.out.println(" added at position " + position);
+                //System.out.println("  added at position " + position);
             }
         }
     }
@@ -690,8 +682,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void subAnnotation(String mainName, String subName, String value, List<Integer> indexAtPositions) {
         String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
         String newVal = sep + subName + sep + value;
-        annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next
-                                                           // token yet
+        annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next token yet
     }
 
     @Override

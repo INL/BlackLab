@@ -368,8 +368,7 @@ public class SearchParameters {
         int contextSize = getInteger("wordsaroundhit");
         int maxContextSize = searchManager.config().maxContextSize();
         if (contextSize > maxContextSize) {
-            // debug(logger, "Clamping context size to " + maxContextSize + " (" +
-            // contextSize + " requested)");
+            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = maxContextSize;
         }
         ConcordanceType concType = getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE
@@ -419,9 +418,7 @@ public class SearchParameters {
         if (isDocsOperation) {
             if (containsKey("group")) {
                 String sortBy = getString("sort");
-                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results
-                                                                                          // within the group when
-                                                                                          // viewing contents of a group
+                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
                     if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
                         reverse = true;
                         sortBy = sortBy.substring(1);
@@ -443,9 +440,7 @@ public class SearchParameters {
 
         String groupBy = getString("groupby");
         if (groupBy != null && !groupBy.isEmpty())
-            return null; // looking at groups, or results within a group, don't bother sorting the
-                         // underlying results themselves (sorting is explicitly ignored anyway in
-                         // ResultsGrouper::init)
+            return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
         String sortBy = getString("sort");
         if (sortBy == null || sortBy.length() == 0)
@@ -468,9 +463,7 @@ public class SearchParameters {
             // not grouping, so no group sort
             if (containsKey("group")) {
                 String sortBy = getString("sort");
-                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results
-                                                                                          // within the group when
-                                                                                          // viewing contents of a group
+                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
                     if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
                         reverse = true;
                         sortBy = sortBy.substring(1);
@@ -501,9 +494,7 @@ public class SearchParameters {
 
         String groupBy = getString("groupby");
         if (groupBy != null && !groupBy.isEmpty())
-            return null; // looking at groups, or results within a group, don't bother sorting the
-                         // underlying results themselves (sorting is explicitly ignored anyway in
-                         // ResultsGrouper::init)
+            return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
         String sortBy = getString("sort");
         if (sortBy == null || sortBy.length() == 0)

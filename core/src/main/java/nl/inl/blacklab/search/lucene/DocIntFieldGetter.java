@@ -35,8 +35,7 @@ public class DocIntFieldGetter implements Closeable {
 
         // Cache the lengths for this field to speed things up
         try {
-            // NOTE: UninvertingReader is an IndexReader that can get docValues even when
-            // they weren't explicitly indexed
+            // NOTE: UninvertingReader is an IndexReader that can get docValues even when they weren't explicitly indexed
             Map<String, UninvertingReader.Type> fields = new HashMap<>();
             fields.put(intFieldName, UninvertingReader.Type.INTEGER);
             uninv = new UninvertingReader(reader, fields);

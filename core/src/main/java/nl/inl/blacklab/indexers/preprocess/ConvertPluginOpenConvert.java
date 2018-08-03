@@ -68,14 +68,10 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     @Override
     public void perform(InputStream is, Charset inputCharset, String inputFormat, OutputStream os)
             throws PluginException {
-        // Set the ContextClassLoader to use the UrlClassLoader we pointed at the
-        // OpenConvert jar.
-        // This is required because OpenConvert implicitly loads some dependencies
-        // through locators/providers (such as its xml transformers)
-        // and these locators/providers sometimes prefer to use the ContextClassLoader,
-        // which may have been set by a servlet container or the like.
-        // If those cases, the contextClassLoader does not have the jar we loaded on its
-        // classpath, and so it cannot find the correct classes.
+        // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
+        // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
+        // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
+        // If those cases, the contextClassLoader does not have the jar we loaded on its classpath, and so it cannot find the correct classes.
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
@@ -120,8 +116,7 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     }
 
     private static final Set<String> inputFormats = new HashSet<>(
-            Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in
-                                                                                                                                                      // openconvert yet): pdf
+            Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in openconvert yet): pdf
 
     @Override
     public Set<String> getInputFormats() {

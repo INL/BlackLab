@@ -252,14 +252,12 @@ class SpansRepetition extends BLSpans {
 
     @Override
     public int width() {
-        return 0; // should be source.width(); but not currently supported and we don't use
-                  // .width()
+        return 0; // should be source.width(); but not currently supported and we don't use .width()
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        // Should be source.collect(collector); but not currently supported and we don't
-        // use
+        // Should be  source.collect(collector); but not currently supported and we don't use
         // payloads except in simple queries like SpanQueryTags.
     }
 

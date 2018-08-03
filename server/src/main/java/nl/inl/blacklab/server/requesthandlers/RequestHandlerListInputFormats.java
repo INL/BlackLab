@@ -79,17 +79,17 @@ public class RequestHandlerListInputFormats extends RequestHandler {
          */
         public static String joinXpath(String a, String b) {
 
-            // a -> a
-            // /a -> a
-            // ./a -> a
-            // //a -> //a
-            // .//a -> //a
+            // 	a 			-> a
+            //	/a			-> a
+            // 	./a			-> a
+            // 	//a 		-> //a
+            // 	.//a		-> //a
 
-            // b -> /b
-            // /b -> /b
-            // ./b -> /b
-            // //b -> //b
-            // .//b -> //b
+            // 	b			-> /b
+            // 	/b			-> /b
+            // 	./b			-> /b
+            // 	//b			-> //b
+            // .//b			-> //b
 
             // return a+/+b
 
@@ -205,14 +205,12 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         ds.endMap().endEntry();
 
         // List supported input formats
-        // Formats from other users are hidden in the master list, but are considered
-        // public for all other purposes (if you know the name)
+        // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
         ds.startEntry("supportedInputFormats").startMap();
         for (Format format : DocumentFormats.getFormats()) {
             try {
                 String userId = DocIndexerFactoryUserFormats.getUserIdOrFormatName(format.getId(), false);
-                // Other user's formats are not explicitly enumerated (but should still be
-                // considered public)
+                // Other user's formats are not explicitly enumerated (but should still be considered public)
                 if (!userId.equals(user.getUserId()))
                     continue;
             } catch (IllegalUserFormatIdentifier e) {
@@ -277,41 +275,32 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 .append(XslGenerator.endTemplate);
 
         // transform inserted <hl> tags into spans
-        // use local-name to sidestep namespaces (we can do this because the hl tags are
-        // inserted by blacklab, so we know the data in this case)
+        // use local-name to sidestep namespaces (we can do this because the hl tags are inserted by blacklab, so we know the data in this case)
         xslt.append(XslGenerator.beginTemplate("*[local-name(.)='hl']"))
                 .append("<span class=\"hl\">")
-                .append(XslGenerator.applyTemplates("node()")) // we don't know what level we're at, so explicitly match
-                // everything else
+                .append(XslGenerator.applyTemplates("node()")) // we don't know what level we're at, so explicitly match everything else
                 .append("</span>")
                 .append(XslGenerator.endTemplate);
 
         // generate the templates for all words
-        // NOTE: 'annotation' here refers to a linguistic annotation - not an xml
-        // attribute/annotation!
+        // NOTE: 'annotation' here refers to a linguistic annotation - not an xml attribute/annotation!
         for (ConfigAnnotatedField f : config.getAnnotatedFields().values()) {
             if (f.getAnnotations().isEmpty())
                 continue; // No annotations for this word at all? can't display anything...
 
-            // By default attempt to display the annotations of the word named "lemma" and
-            // "word"
+            // By default attempt to display the annotations of the word named "lemma" and "word"
             ConfigAnnotation wordAnnot = f.getAnnotations().get("word");
             ConfigAnnotation lemmaAnnot = f.getAnnotations().get("lemma");
 
-            // Since the annotation can be named anything there is no guarantee there is a
-            // "word" annotation
-            // (it's just a reasonable default guess), so just attempt to display whatever
-            // is first in the list otherwise
-            // This ought to be correct - see DocIndexerConfig::init(), it sets the main
-            // property as the first annotation in the list
-            // As for the "lemma" property that's used to generate hover tooltips, it's just
-            // a reasonable guess
+            // Since the annotation can be named anything there is no guarantee there is a "word" annotation
+            // (it's just a reasonable default guess), so just attempt to display whatever is first in the list otherwise
+            // This ought to be correct - see DocIndexerConfig::init(), it sets the main property as the first annotation in the list
+            // As for the "lemma" property that's used to generate hover tooltips, it's just a reasonable guess
             if (wordAnnot == null)
                 wordAnnot = f.getAnnotations().values().iterator().next();
 
             // Begin word template
-            // TODO: take containerPath into account too (optional, goes between
-            // documentPath and wordPath)
+            // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
             String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
             xslt.append(XslGenerator.beginTemplate(wordBase))
                     .append("<span class=\"word\">");
@@ -403,10 +392,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                             "</xsl:template>");
 
             // Strip namespaces before delegating to entry
-            // A preprocessing step that (optionally) strips namespaces from the document
-            // before passing it on to the template above.
-            // (This happens when there are no namespaces declared - which in blacklab means
-            // to ignore all namespaces, this is impossible in xslt without this workaround)
+            // A preprocessing step that (optionally) strips namespaces from the document before passing it on to the template above.
+            // (This happens when there are no namespaces declared - which in blacklab means to ignore all namespaces, this is impossible in xslt without this workaround)
             if (config.getNamespaces().isEmpty()) {
                 xslt.append(XslGenerator.beginTemplate("/"))
                         .append("<!-- Since no namespaces are used in the source document format, namespaces are stripped from the document before processing it -->")

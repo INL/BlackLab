@@ -295,7 +295,7 @@ public class HitsImpl extends Hits {
                 logger.debug("HitsImpl(): rewrite");
             spanQuery = optimize.rewrite(reader);
 
-            // System.err.println(spanQuery);
+            //System.err.println(spanQuery);
             termContexts = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
@@ -442,7 +442,7 @@ public class HitsImpl extends Hits {
                             LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
                             currentDocBase = context.docBase;
                             BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
-                            currentSourceSpans = spans; // BLSpansWrapper.optWrapSortUniq(spans);
+                            currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
                         } else {
                             // TESTING
                             currentDocBase = 0;
@@ -451,20 +451,19 @@ public class HitsImpl extends Hits {
                                 return;
                             }
                             BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
-                            currentSourceSpans = spans; // BLSpansWrapper.optWrapSortUniq(spans);
+                            currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
                         }
 
                         if (currentSourceSpans != null) {
                             // Update the hit query context with our new spans,
                             // and notify the spans of the hit query context
                             // (TODO: figure out if we need to call setHitQueryContext()
-                            // for each segment or not; if it's just about capture groups
-                            // registering themselves, we only need that for the first Spans.
-                            // But it's probably required for backreferences, etc. anyway,
-                            // and there won't be that many segments, so it's probably ok)
+                            //    for each segment or not; if it's just about capture groups
+                            //    registering themselves, we only need that for the first Spans.
+                            //    But it's probably required for backreferences, etc. anyway,
+                            //    and there won't be that many segments, so it's probably ok)
                             hitQueryContext.setSpans(currentSourceSpans);
-                            currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register
-                                                                                    // themselves
+                            currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
                             if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
                                 capturedGroups = new HashMap<>();
                             }
@@ -1267,8 +1266,7 @@ public class HitsImpl extends Hits {
             if (!caseSensitive) {
                 word = word.toLowerCase();
             }
-            // Note that multiple ids may map to the same word (because of sensitivity
-            // settings)
+            // Note that multiple ids may map to the same word (because of sensitivity settings)
             // Here, those groups are merged.
             Integer n = wordFreq.get(word);
             if (n == null) {
@@ -1602,8 +1600,7 @@ public class HitsImpl extends Hits {
             startEndArrayIndex += 2;
         }
 
-        // Get the relevant character offsets (overwrites the startsOfWords and
-        // endsOfWords
+        // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         searcher.getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
 

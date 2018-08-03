@@ -72,14 +72,10 @@ public class TagPluginDutchTagger implements TagPlugin {
 
     @Override
     public synchronized void perform(Reader reader, Writer writer) throws PluginException {
-        // Set the ContextClassLoader to use the UrlClassLoader we pointed at the
-        // OpenConvert jar.
-        // This is required because OpenConvert implicitly loads some dependencies
-        // through locators/providers (such as its xml transformers)
-        // and these locators/providers sometimes prefer to use the ContextClassLoader,
-        // which may have been set by a servlet container or the like.
-        // If those cases, the contextClassLoader does not have the jar we loaded on its
-        // classpath, and so it cannot find the correct classes.
+        // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
+        // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
+        // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
+        // If those cases, the contextClassLoader does not have the jar we loaded on its classpath, and so it cannot find the correct classes.
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
@@ -96,8 +92,7 @@ public class TagPluginDutchTagger implements TagPlugin {
             tmpInput = Files.createTempFile("", ".xml");
             tmpOutput = Files.createTempFile("", ".xml");
 
-            // Use this, as the tagger is a little dumb and doesn't allow us to specify a
-            // charset
+            // Use this, as the tagger is a little dumb and doesn't allow us to specify a charset
             final Charset intermediateCharset = Charset.defaultCharset();
             try (FileOutputStream os = new FileOutputStream(tmpInput.toFile())) {
                 IOUtils.copy(reader, os, intermediateCharset);

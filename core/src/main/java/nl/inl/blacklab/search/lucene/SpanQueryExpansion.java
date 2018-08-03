@@ -292,8 +292,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             // Internalization on the side of our non-expanded clause. Always possible.
             return true;
         }
-        // Internalization on the side of our expansion. Only possible for any token
-        // clauses.
+        // Internalization on the side of our expansion. Only possible for any token clauses.
         return clause instanceof SpanQueryAnyToken;
     }
 
@@ -305,8 +304,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         }
         if (onTheRight == expandToLeft) {
             // "Gobble up" a clause into the clause we're expanding.
-            // If we're expanding to the left, the clause is added to the right of what we
-            // were expanding, and vice versa.
+            // If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
             SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
             SpanQueryExpansion result = new SpanQueryExpansion(seq, expandToLeft, min, max);
             result.setIgnoreLastToken(ignoreLastToken);

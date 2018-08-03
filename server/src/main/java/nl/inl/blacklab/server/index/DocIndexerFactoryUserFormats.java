@@ -137,8 +137,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             }
         }
 
-        // Loading of user formats must be performed after initialization, or we won't
-        // have the base formats loaded yet
+        // Loading of user formats must be performed after initialization, or we won't have the base formats loaded yet
         if (isInitialized)
             loadUnloaded();
     }
@@ -167,8 +166,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             String formatIdentifier = getFormatIdentifier(user.getUserId(), fileName);
 
             // This is a little stupid, but we need to read the stream twice:
-            // once to validate the file's contents, then again to store the file once the
-            // validation passes
+            // once to validate the file's contents, then again to store the file once the validation passes
             byte[] content = IOUtils.toByteArray(is);
 
             ConfigInputFormat config = new ConfigInputFormat(formatIdentifier);
@@ -226,8 +224,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
         supported.remove(formatIdentifier);
     }
 
-    // Overridden to remove duplicate check, we just overwrite the format with the
-    // new one
+    // Overridden to remove duplicate check, we just overwrite the format with the new one
     @Override
     protected void addFormat(ConfigInputFormat format) throws InputFormatConfigException {
         format.validate();
@@ -250,8 +247,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
         // step down 2 levels, global dir > user dir > userformat dir
         File userDir = new File(new File(formatDir, User.getUserDirNameFromId(userId)), FORMATS_SUBDIR_NAME);
 
-        Files.createDirectories(userDir.toPath()); // does nothing if dir already exists, throws if dir is actually file
-                                                   // or can't create
+        Files.createDirectories(userDir.toPath()); // does nothing if dir already exists, throws if dir is actually file or can't create
         if (!Files.isReadable(userDir.toPath()))
             throw new IOException("Could not read user format directory " + userDir);
 
@@ -317,8 +313,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             // so it isn't built in by definition
             return false;
         } catch (IllegalUserFormatIdentifier e) {
-            // it's not a valid userFormat evidently, so if we support it, then it must be
-            // builtin
+            // it's not a valid userFormat evidently, so if we support it, then it must be builtin
             return isSupported(formatIdentifier);
         }
     }

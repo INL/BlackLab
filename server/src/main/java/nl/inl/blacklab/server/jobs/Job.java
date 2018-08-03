@@ -172,8 +172,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
             worthiness = Math.max(0, 9999 - notAccessedFor());
         } else if (totalExecTime() > YOUTH_THRESHOLD_SEC) {
             // 10000 ... 19999: search has been running for a long time and is counting hits
-            // 20000 ... 29999: search has been running for a long time and is retrieving
-            // hits
+            // 20000 ... 29999: search has been running for a long time and is retrieving hits
             // (younger searches are considered worthier)
             boolean isCount = this instanceof JobHitsTotal || this instanceof JobDocsTotal;
             worthiness = Math.max(10000, 19999 - totalExecTime()) + (isCount ? 0 : 10000);
@@ -184,8 +183,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
             boolean justPaused = pause > ALMOST_ZERO && pause < RUN_PAUSE_PHASE_JUST_STARTED;
             if (!justPaused && !justStartedRunning) {
                 // 30000 ... 39999: search has been running for a short time
-                // (older searches are considered worthier, to give searches just started a fair
-                // chance of completing)
+                // (older searches are considered worthier, to give searches just started a fair chance of completing)
                 worthiness = Math.min(39999, 30000 + totalExecTime());
             } else if (justPaused) {
                 // 40000 ... 49999: search was just paused
@@ -254,7 +252,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         // Create and start thread
         // TODO: use thread pooling..?
         startedAt = System.currentTimeMillis();
-        // logger.debug("Search " + this + " started at " + startedAt);
+        //logger.debug("Search " + this + " started at " + startedAt);
         setLevelRunningAt = startedAt;
         searchThread = new SearchThread(this);
         searchThread.start();
@@ -590,8 +588,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         refsToJob--;
         if (refsToJob < 0) {
             // Because of a bug in the reference counting mechanism, this sometimes happens
-            // and will lead to the "Cannot decrement refs, job was already cleaned up!"
-            // error.
+            // and will lead to the "Cannot decrement refs, job was already cleaned up!" error.
             // For now, we reset the refsToJob to -1 to prevent this error.
             logger.error("Job has negative reference count: " + this);
             refsToJob = -1;
@@ -803,13 +800,13 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
 
     public void setFinished() {
         lastAccessed = finishedAt = System.currentTimeMillis();
-        // logger.debug("Search " + this + " finished at " + finishedAt);
+        //logger.debug("Search " + this + " finished at " + finishedAt);
         if (level != Level.RUNNING) {
             // Don't confuse the system by still being in PAUSED
             // (possible because this is cooperative multitasking,
-            // so PAUSED doesn't necessarily mean the thread isn't
-            // running right now and it might actually finish while
-            // "PAUSED")
+            //  so PAUSED doesn't necessarily mean the thread isn't
+            //  running right now and it might actually finish while
+            //  "PAUSED")
             setPriorityLevel(Level.RUNNING);
         }
     }

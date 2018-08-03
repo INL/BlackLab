@@ -65,7 +65,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
      * @param source (startpoint-sorted) source spans
      */
     public SpansInBucketsPerStartPoint(BLSpans source) {
-        this.source = source; // Sort
+        this.source = source; //Sort
     }
 
     @Override

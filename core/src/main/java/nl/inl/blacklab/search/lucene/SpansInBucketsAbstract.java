@@ -121,7 +121,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
             currentDoc = source.nextDoc();
             if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
                 source.nextStartPosition(); // start gathering at the first hit
-                // gatherHitsInternal();
+                //gatherHitsInternal();
             }
         }
         return currentDoc;
@@ -161,7 +161,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
                 currentDoc = source.advance(target);
                 if (currentDoc != DocIdSetIterator.NO_MORE_DOCS) {
                     source.nextStartPosition(); // start gathering at the first hit
-                    // gatherHitsInternal();
+                    //gatherHitsInternal();
                 }
             }
         }

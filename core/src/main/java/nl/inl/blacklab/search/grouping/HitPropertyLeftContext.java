@@ -77,7 +77,7 @@ public class HitPropertyLeftContext extends HitProperty {
     public HitPropValueContextWords get(int hitNumber) {
         int[] context = hits.getHitContext(hitNumber);
         int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
-        // int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
+        //int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
         int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
         // Copy the desired part of the context
@@ -101,8 +101,8 @@ public class HitPropertyLeftContext extends HitProperty {
 
     @Override
     public int compare(Object i, Object j) {
-        // Hit a = hits.getByOriginalOrder((Integer)i);
-        // Hit b = hits.getByOriginalOrder((Integer)j);
+        //Hit a = hits.getByOriginalOrder((Integer)i);
+        //Hit b = hits.getByOriginalOrder((Integer)j);
         int[] ca = hits.getHitContext((Integer) i);
         int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
         int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];

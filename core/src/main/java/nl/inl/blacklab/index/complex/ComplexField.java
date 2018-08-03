@@ -135,8 +135,8 @@ public class ComplexField {
         // because we need to be able to find this property quickly
         // for SpanQueryNot.
         // (Also note that this is the actual number of words + 1,
-        // because we always store a dummy "closing token" at the end
-        // that doesn't contain a word but may contain trailing punctuation)
+        //  because we always store a dummy "closing token" at the end
+        //  that doesn't contain a word but may contain trailing punctuation)
         doc.add(new IntField(ComplexFieldUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
     }
 

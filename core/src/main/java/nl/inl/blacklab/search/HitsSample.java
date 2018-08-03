@@ -59,8 +59,7 @@ public abstract class HitsSample extends HitsImpl {
      * @return the sample
      */
     public static HitsSample fromHits(Hits hits, float ratio, long seed) {
-        // We can later provide an optimized version that uses a HitsSampleCopy or
-        // somesuch
+        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(hits, ratio, seed);
     }
@@ -75,8 +74,7 @@ public abstract class HitsSample extends HitsImpl {
      * @return the sample
      */
     public static HitsSample fromHits(Hits hits, int number, long seed) {
-        // We can later provide an optimized version that uses a HitsSampleCopy or
-        // somesuch
+        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(hits, number, seed);
     }
@@ -92,8 +90,7 @@ public abstract class HitsSample extends HitsImpl {
      * @return the sample
      */
     public static HitsSample fromSpanQuery(Searcher searcher, SpanQuery query, float ratio, long seed) {
-        // We can later provide an optimized version that uses a HitsSampleSpans or
-        // somesuch
+        // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
@@ -111,8 +108,7 @@ public abstract class HitsSample extends HitsImpl {
      * @return the sample
      */
     public static HitsSample fromSpanQuery(Searcher searcher, SpanQuery query, int number, long seed) {
-        // We can later provide an optimized version that uses a HitsSampleSpans or
-        // somesuch
+        // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");

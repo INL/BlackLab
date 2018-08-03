@@ -34,20 +34,16 @@ public class JobHitsTotal extends JobWithHits {
 
     @Override
     protected void performSearch() throws BlsException {
-        // Get the total number of hits (we ignore the value because you can monitor
-        // progress
+        // Get the total number of hits (we ignore the value because you can monitor progress
         // and get the final total through the getHits() method yourself.
         hits = ((JobWithHits) inputJob).getHits();
         setPriorityInternal(); // make sure hits has the right priority
         hits.size();
         if (Thread.interrupted()) {
-            // We don't throw anymore because that will cause this error to re-throw even
-            // when we just
-            // want to look at a page of results. maxHitsCounted is set to true, however, so
-            // the application
+            // We don't throw anymore because that will cause this error to re-throw even when we just
+            // want to look at a page of results. maxHitsCounted is set to true, however, so the application
             // can detect that we stopped counting at some point.
-            // throw new ServiceUnavailable("Determining total number of hits took too long,
-            // cancelled");
+            //throw new ServiceUnavailable("Determining total number of hits took too long, cancelled");
             if (threwException()) {
                 logger.warn("Exception occurred while counting hits: " + getThrownException().getMessage());
             } else {

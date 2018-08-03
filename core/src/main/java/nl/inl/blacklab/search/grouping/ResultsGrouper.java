@@ -97,7 +97,7 @@ public class ResultsGrouper extends HitGroups {
             hits.findContext(requiredContext);
         }
         contextField = hits.getContextFieldPropName();
-        // Thread currentThread = Thread.currentThread();
+        //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
         for (int i = 0; i < hits.size(); i++) {
 

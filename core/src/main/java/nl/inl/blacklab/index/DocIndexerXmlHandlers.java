@@ -464,8 +464,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         IndexStructure indexStructure = indexer.getSearcher().getIndexStructure();
         indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
 
-        // If the indexmetadata file specified a list of properties that shouldn't get a
-        // forward
+        // If the indexmetadata file specified a list of properties that shouldn't get a forward
         // index,
         // make the new complex field aware of this.
         Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME)

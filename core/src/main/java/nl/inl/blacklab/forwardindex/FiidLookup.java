@@ -88,8 +88,7 @@ class FiidLookup {
         // Check if the cache was retrieved OK
         boolean allZeroes = true;
         for (int i = 0; i < numToCheck; i++) {
-            // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter
-            // here)
+            // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
             if (get(i) != 0) {
                 allZeroes = false;
                 break;

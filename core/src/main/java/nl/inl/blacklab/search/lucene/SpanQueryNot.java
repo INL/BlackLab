@@ -196,7 +196,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
-        // nfa.finish();
+        //nfa.finish();
         nfa.invert();
         NfaState not = nfa.getStartingState();
         return new Nfa(not, Arrays.asList(not)); // ignore the dangling arrows in the clause we've inverted
@@ -209,8 +209,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
 
     @Override
     public long reverseMatchingCost(IndexReader reader) {
-        // Should be rewritten, but if it can't, calculate a rough indication of the
-        // number of token hits
+        // Should be rewritten, but if it can't, calculate a rough indication of the number of token hits
         long freq = clauses.get(0).reverseMatchingCost(reader);
         return LuceneUtil.getSumTotalTermFreq(reader, getRealField()) - freq;
     }

@@ -34,10 +34,10 @@ final class SearchThread extends Thread implements UncaughtExceptionHandler {
             search.setFinished();
         } catch (Throwable e) {
             // NOTE: we catch Throwable here (while it's normally good practice to
-            // catch only Exception and derived classes) because we need to know if
-            // our thread crashed or not. The Throwable will be re-thrown by the
-            // main thread, so any non-Exception Throwables will then go uncaught
-            // as they "should".
+            //  catch only Exception and derived classes) because we need to know if
+            //  our thread crashed or not. The Throwable will be re-thrown by the
+            //  main thread, so any non-Exception Throwables will then go uncaught
+            //  as they "should".
 
             // We've also set an UncaughtExceptionHandler (the thread object itself)
             // which does the same thing, because apparently some exceptions can occur
