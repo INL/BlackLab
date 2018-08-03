@@ -24,8 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.index.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;

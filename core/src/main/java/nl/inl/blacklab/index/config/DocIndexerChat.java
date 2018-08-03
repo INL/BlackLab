@@ -431,7 +431,6 @@ public class DocIndexerChat extends DocIndexerConfig {
             String el = entry.getKey();
             if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
                 // (pass)
-                ;
             } else if (ALL_HEADERS.contains(el)) {
                 Object curval = metadata.get(el);
                 if (curval instanceof String) {

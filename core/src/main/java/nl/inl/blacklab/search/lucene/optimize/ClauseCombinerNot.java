@@ -55,7 +55,8 @@ class ClauseCombinerNot extends ClauseCombiner {
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
             posf.adjustLeft(prevLen);
             return posf;
+        default:
+            throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
         }
-        throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
     }
 }

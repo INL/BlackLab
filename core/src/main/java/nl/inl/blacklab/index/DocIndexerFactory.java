@@ -40,7 +40,7 @@ public interface DocIndexerFactory {
     /**
      * Description of a supported input format
      */
-    static class Format {
+    class Format {
 
         private String formatIdentifier;
 

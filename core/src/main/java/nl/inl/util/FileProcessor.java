@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  */
 public class FileProcessor implements AutoCloseable {
 
-    public static interface FileHandler {
+    public interface FileHandler {
         /**
          * Handle a directory.
          * <p>
@@ -74,7 +74,7 @@ public class FileProcessor implements AutoCloseable {
      * Handles error, and decides whether to continue processing or not.
      */
     @FunctionalInterface
-    public static interface ErrorHandler {
+    public interface ErrorHandler {
 
         /**
          * Report an error and decide whether to continue or not.
@@ -420,7 +420,7 @@ public class FileProcessor implements AutoCloseable {
     }
 
     @FunctionalInterface
-    private static interface ThrowingRunnable<E extends Throwable> {
+    private interface ThrowingRunnable<E extends Throwable> {
         void call() throws E;
     }
 

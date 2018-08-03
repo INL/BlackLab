@@ -83,10 +83,10 @@ public class DocContentsFromForwardIndex extends DocContents {
             for (int k = 1; k < properties.size() - 1; k++) {
                 String name = properties.get(k);
                 String value = tokens.get(vIndex + 1 + j);
-                b.append(" ").append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append("\"");
+                b.append(' ').append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append('"');
                 j++;
             }
-            b.append(">");
+            b.append('>');
             b.append(StringEscapeUtils.escapeXml10(tokens.get(vIndex + 1 + j)));
             b.append("</w>");
         }

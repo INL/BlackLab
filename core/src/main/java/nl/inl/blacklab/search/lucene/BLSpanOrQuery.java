@@ -664,12 +664,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         boolean canBeTokenState = false;
         if (hitsAllSameLength() && hitsLengthMax() == 1) {
             canBeTokenState = true;
-            String luceneField = null;
             if (terms == null && clausesAreSimpleTermsInSameProperty) {
                 // We know all our clauses are simple terms, and we
                 // don't care about which terms at this point. Just return true.
                 return true;
             }
+            String luceneField = null;
             for (SpanQuery cl : getClauses()) {
                 if (!clausesAreSimpleTermsInSameProperty && !(cl instanceof BLSpanTermQuery)) {
                     // Not all simple term queries. Can't rewrite to token state.
@@ -712,10 +712,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     public long reverseMatchingCost(IndexReader reader) {
         // Add the costs of our clauses, since we won't
         // be able to skip any hits.
-        int cost = 0;
         SpanQuery[] clauses = getClauses();
         if (clauses.length == 0)
             return 0;
+        int cost = 0;
         int skip = getCostCalculationSkip(clauses.length);
         int clausesCalculated = 0;
         for (int i = 0; i < clauses.length; i++) {
@@ -747,9 +747,9 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         boolean producesSingleState = getNfaTokenStateTerms(null);
         if (!producesSingleState) {
             // Add the costs of our clauses.
-            int cost = 1;
             if (clauses.length == 0)
                 return 0;
+            int cost = 1;
             int skip = getCostCalculationSkip(clauses.length);
             int clausesCalculated = 0;
             for (int i = 0; i < clauses.length; i++) {

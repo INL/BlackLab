@@ -32,9 +32,9 @@ import nl.inl.util.FileUtil;
 public class DocIndexerTabular extends DocIndexerConfig {
 
     /** Tabular types we support */
-    static enum Type {
-    CSV,
-    TSV;
+    enum Type {
+        CSV,
+        TSV;
 
         public static Type fromStringValue(String str) {
             switch (str.toUpperCase()) {

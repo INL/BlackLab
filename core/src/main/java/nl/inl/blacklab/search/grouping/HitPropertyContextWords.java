@@ -34,7 +34,7 @@ public class HitPropertyContextWords extends HitProperty {
     private static final int MAX_HIT_LENGTH = 10;
 
     /** A location in the hit context to start a stretch of words from. */
-    public static enum ContextStart {
+    public enum ContextStart {
         LEFT_OF_HIT("L"), // left context of the hit
         HIT_TEXT_FROM_START("H"), // hit text
         HIT_TEXT_FROM_END("E"), // hit text, backwards from last matched word

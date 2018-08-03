@@ -37,7 +37,8 @@ class ClauseCombinerInternalisation extends ClauseCombiner {
             return right.internalizeNeighbour(left, false);
         case INTERNALIZE_RIGHT_NEIGHBOUR:
             return left.internalizeNeighbour(right, true);
+        default:
+            throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
         }
-        throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
     }
 }

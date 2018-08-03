@@ -14,7 +14,7 @@ public class BatchForwardIndex {
 
     private static final int SNIPPET_LENGTH_WORDS = 11;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning
 
@@ -83,7 +83,7 @@ public class BatchForwardIndex {
                         time));
 
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
                 System.err.println("Error with line '" + query + "'; skipping...");
             }
 

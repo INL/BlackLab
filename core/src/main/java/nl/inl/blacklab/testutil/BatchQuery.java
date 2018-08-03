@@ -1,6 +1,9 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.io.IOException;
+
+import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.Hits;
@@ -16,7 +19,7 @@ import nl.inl.util.Timer;
  */
 public class BatchQuery {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws CorruptIndexException, IOException {
 
         boolean determineTotalHits = true;
         int fileArgNumber = 0;
@@ -88,7 +91,7 @@ public class BatchQuery {
                 }
                 System.out.println("");
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
                 System.err.println("Error with query " + query + "; skipping...");
             }
         }

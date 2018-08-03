@@ -17,7 +17,7 @@ public class BatchContentStore {
 
     private static final int SNIPPET_LENGTH_CHARS = 100;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         int fileArgNumber = 0;
         File indexDir = null;
@@ -90,7 +90,7 @@ public class BatchContentStore {
                         time));
 
             } catch (Exception e) {
-                e.printStackTrace();
+                e.printStackTrace(System.err);
                 System.err.println("Error with line '" + query + "'; skipping...");
             }
 

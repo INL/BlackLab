@@ -23,6 +23,11 @@ public abstract class ForwardIndex {
      */
 
     /**
+     * Current forward index format version
+     */
+    private static final String CURRENT_VERSION = "5";
+
+    /**
      * Indicate how to translate Lucene document ids to forward index ids (by
      * looking them up in the index).
      *
@@ -137,13 +142,8 @@ public abstract class ForwardIndex {
      */
     public abstract int getDocLength(int fiid);
 
-    /**
-     * Current forward index format version
-     */
-    private static final String CURRENT_VERSION = "5";
-
     /** Different versions of insensitive collator */
-    public static enum CollatorVersion {
+    public enum CollatorVersion {
         V1, // ignored dash and space
         V2 // doesn't ignore dash and space
     }

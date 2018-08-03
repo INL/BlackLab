@@ -646,7 +646,6 @@
                     <targetJdk>1.7</targetJdk>
                     <excludes>
                         <exclude>**/queryParser/**/*</exclude>
-                        <exclude>**/util/json/**/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>

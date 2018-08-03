@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
 import nl.inl.blacklab.index.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.index.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexstructure.FieldType;
