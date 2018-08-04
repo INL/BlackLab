@@ -20,6 +20,9 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockHits;
 import nl.inl.blacklab.MockSearcher;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSample;
 
 public class TestHitsSample {
 

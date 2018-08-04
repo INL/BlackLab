@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.Random;
 
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 public abstract class HitsSample extends HitsImpl {

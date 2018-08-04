@@ -13,7 +13,9 @@ import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitProperties {
 

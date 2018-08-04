@@ -6,13 +6,13 @@ import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 
 public class MockHits extends Hits {
 

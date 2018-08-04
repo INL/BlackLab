@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.perdocument;
+package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,8 +34,6 @@ import org.apache.lucene.search.SimpleCollector;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ReverseComparator;

@@ -2,7 +2,7 @@ package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 
 public abstract class HitPropValueContext extends HitPropValue {
 

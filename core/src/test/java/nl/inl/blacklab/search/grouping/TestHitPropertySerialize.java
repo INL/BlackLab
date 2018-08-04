@@ -25,7 +25,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 

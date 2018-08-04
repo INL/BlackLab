@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,6 +53,14 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.TermFrequency;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;
@@ -287,11 +295,11 @@ public class HitsImpl extends Hits {
             if (!(sourceQuery instanceof BLSpanQuery))
                 throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 
-            if (Searcher.traceQueryExecution)
+            if (Searcher.isTraceQueryExecution())
                 logger.debug("HitsImpl(): optimize");
             BLSpanQuery optimize = ((BLSpanQuery) sourceQuery).optimize(reader);
 
-            if (Searcher.traceQueryExecution)
+            if (Searcher.isTraceQueryExecution())
                 logger.debug("HitsImpl(): rewrite");
             spanQuery = optimize.rewrite(reader);
 
@@ -299,12 +307,12 @@ public class HitsImpl extends Hits {
             termContexts = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-            if (Searcher.traceQueryExecution)
+            if (Searcher.isTraceQueryExecution())
                 logger.debug("HitsImpl(): createWeight");
             weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);
             weight.extractTerms(terms);
             etiquette = new ThreadPriority();
-            if (Searcher.traceQueryExecution)
+            if (Searcher.isTraceQueryExecution())
                 logger.debug("HitsImpl(): extract terms");
             for (Term term : terms) {
                 try {
@@ -327,7 +335,7 @@ public class HitsImpl extends Hits {
         }
 
         sourceSpansFullyRead = false;
-        if (Searcher.traceQueryExecution)
+        if (Searcher.isTraceQueryExecution())
             logger.debug("HitsImpl(): done");
     }
 

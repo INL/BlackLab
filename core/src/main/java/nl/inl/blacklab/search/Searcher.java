@@ -49,10 +49,13 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.index.config.TextDirection;
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
 
@@ -643,7 +646,7 @@ public abstract class Searcher {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         Hits hits = Hits.fromSpanQuery(this, query);
-        hits.settings.setConcordanceField(fieldNameConc);
+        hits.settings().setConcordanceField(fieldNameConc);
         return hits;
     }
 
@@ -673,7 +676,7 @@ public abstract class Searcher {
     public Hits find(TextPattern pattern, String fieldName, Query filter)
             throws BooleanQuery.TooManyClauses {
         Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, fieldName, filter));
-        hits.settings.setConcordanceField(fieldName);
+        hits.settings().setConcordanceField(fieldName);
         return hits;
     }
 
@@ -832,7 +835,7 @@ public abstract class Searcher {
             int endAtWord) {
         Hit hit = new Hit(docId, startAtWord, endAtWord);
         Hits hits = Hits.fromList(this, Arrays.asList(hit));
-        hits.settings.setConcordanceField(fieldName);
+        hits.settings().setConcordanceField(fieldName);
         Kwic kwic = hits.getKwic(hit, 0);
         return kwic.getDocContents();
     }
@@ -1339,6 +1342,10 @@ public abstract class Searcher {
             return false;
         ForwardIndex fi = forwardIndices.values().iterator().next();
         return fi.canDoNfaMatching();
+    }
+
+    public static boolean isTraceQueryExecution() {
+        return traceQueryExecution;
     }
 
 }

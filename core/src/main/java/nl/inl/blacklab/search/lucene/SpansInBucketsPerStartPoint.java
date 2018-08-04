@@ -23,8 +23,8 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits.

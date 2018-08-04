@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Compare two hits (assumed to be in the same document) by end point, then by

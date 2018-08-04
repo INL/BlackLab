@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.perdocument.DocCounts;
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.search.results.DocCounts;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;

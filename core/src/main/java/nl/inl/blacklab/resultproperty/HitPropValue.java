@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.StringUtil;
 
 /**

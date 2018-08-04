@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 public interface ResultsWindow {
     /**

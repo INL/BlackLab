@@ -17,13 +17,13 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.grouping.HitGroup;
-import nl.inl.blacklab.search.grouping.HitGroups;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;

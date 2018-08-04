@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.index.config.YamlJsonReader;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 

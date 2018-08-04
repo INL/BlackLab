@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.grouping;
+package nl.inl.blacklab.search.results;
 
 public interface DocOrHitGroups {
     /**

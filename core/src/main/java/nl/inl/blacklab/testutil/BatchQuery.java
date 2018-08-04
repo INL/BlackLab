@@ -6,8 +6,8 @@ import java.io.IOException;
 import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;

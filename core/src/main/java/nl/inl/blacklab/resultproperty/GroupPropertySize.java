@@ -15,8 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.grouping.Group;
-import nl.inl.blacklab.search.grouping.HitGroup;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.HitGroup;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

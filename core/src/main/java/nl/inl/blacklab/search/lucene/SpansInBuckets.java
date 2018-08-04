@@ -18,8 +18,8 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")

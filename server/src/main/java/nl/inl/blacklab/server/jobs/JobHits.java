@@ -3,9 +3,9 @@ package nl.inl.blacklab.server.jobs;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.HitsSettings;
 import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;

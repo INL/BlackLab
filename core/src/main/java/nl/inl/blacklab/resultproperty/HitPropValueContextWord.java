@@ -5,7 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 
 public class HitPropValueContextWord extends HitPropValueContext {
     int valueTokenId;

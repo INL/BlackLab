@@ -22,7 +22,7 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.perdocument.DocResult;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.

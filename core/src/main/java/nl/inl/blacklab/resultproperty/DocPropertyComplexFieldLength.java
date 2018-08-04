@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.perdocument.DocResult;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * Retrieves the length of a complex field (i.e. the main "contents" field) in

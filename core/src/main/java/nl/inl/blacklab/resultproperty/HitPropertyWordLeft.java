@@ -20,8 +20,8 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the context of the hit. Requires

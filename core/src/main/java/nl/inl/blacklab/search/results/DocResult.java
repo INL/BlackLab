@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.perdocument;
+package nl.inl.blacklab.search.results;
 
 import java.util.List;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 
 /**

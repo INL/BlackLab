@@ -13,22 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search.grouping;
+package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A group of results, with its group identity and the results themselves.
+ * A number of groups of hits, grouped on the basis of a list of criteria.
  */
-public abstract class Group {
-    protected HitPropValue groupIdentity;
+abstract class GroupsAbstract implements Groups {
+    protected HitProperty criteria;
 
-    public Group(HitPropValue groupIdentity) {
-        this.groupIdentity = groupIdentity;
+    public GroupsAbstract(HitProperty criteria) {
+        this.criteria = criteria;
     }
 
-    public HitPropValue getIdentity() {
-        return groupIdentity;
+    protected HitPropValue getGroupIdentity(int index) {
+        return criteria.get(index);
+    }
+
+    @Override
+    public HitProperty getGroupCriteria() {
+        return criteria;
     }
 
 }

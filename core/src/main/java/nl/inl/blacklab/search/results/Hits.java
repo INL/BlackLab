@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -8,11 +8,15 @@ import java.util.Map;
 
 import org.apache.lucene.search.spans.SpanQuery;
 
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.grouping.HitGroups;
-import nl.inl.blacklab.search.grouping.ResultsGrouper;
+import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.Prioritizable;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;

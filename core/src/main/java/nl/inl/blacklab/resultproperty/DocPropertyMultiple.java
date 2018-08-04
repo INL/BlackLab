@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import nl.inl.blacklab.perdocument.DocResult;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * A collection of GroupProperty's identifying a particular group.

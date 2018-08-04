@@ -18,7 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.perdocument.DocResult;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * For grouping DocResult objects on the number of hits. This would put

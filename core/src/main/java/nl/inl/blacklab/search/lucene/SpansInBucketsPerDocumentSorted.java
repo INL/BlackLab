@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Wrap a Spans to retrieve hits per document, so we can process all matches in

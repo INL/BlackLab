@@ -4,20 +4,20 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.perdocument.DocGroup;
-import nl.inl.blacklab.perdocument.DocGroups;
-import nl.inl.blacklab.perdocument.DocResult;
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.perdocument.DocResultsWindow;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.DocOrHitGroups;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocOrHitGroups;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.DocResultsWindow;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;

@@ -19,9 +19,9 @@ import org.mockito.Mockito;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.results.DocResults;
 
 public class MockSearcher extends Searcher {
 

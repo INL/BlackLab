@@ -22,10 +22,10 @@ import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.SpansInBuckets;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Stub SpansInBuckets class for testing. Takes arrays and iterates through

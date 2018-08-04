@@ -18,8 +18,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping per document.

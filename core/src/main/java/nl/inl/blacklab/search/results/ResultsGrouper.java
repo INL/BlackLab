@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search.grouping;
+package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,8 +26,6 @@ import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
 
 /**
  * Groups results on the basis of a list of criteria, and provide random access

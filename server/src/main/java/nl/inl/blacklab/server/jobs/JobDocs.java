@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;

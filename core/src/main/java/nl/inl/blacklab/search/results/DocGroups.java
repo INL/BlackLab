@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.perdocument;
+package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +29,6 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 
 /**
  * Applies grouping to the results in a DocResults object.

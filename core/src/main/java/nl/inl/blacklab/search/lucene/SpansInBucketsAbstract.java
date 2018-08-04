@@ -25,8 +25,9 @@ import java.util.Map;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
-import nl.inl.blacklab.search.Hit;
+
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we

@@ -17,7 +17,7 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.perdocument.DocGroup;
+import nl.inl.blacklab.search.results.DocGroup;
 
 public class ComparatorDocGroupProperty implements Comparator<DocGroup> {
     private DocGroupProperty prop;

@@ -1,6 +1,9 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 import java.util.Collection;
+
+import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Searcher;
 
 public class HitsSettings {
 

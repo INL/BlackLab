@@ -21,8 +21,8 @@ import java.util.List;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.Hit;
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene

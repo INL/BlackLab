@@ -25,6 +25,8 @@ import org.junit.Test;
 import nl.inl.blacklab.MockHits;
 import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHits {
 

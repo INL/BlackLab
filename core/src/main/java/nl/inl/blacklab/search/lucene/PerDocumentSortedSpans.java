@@ -20,8 +20,8 @@ import java.util.Comparator;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Sort the given Spans per document, according to the given comparator.

@@ -2,11 +2,11 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.ResultsWindow;
-import nl.inl.blacklab.search.grouping.HitGroup;
-import nl.inl.blacklab.search.grouping.HitGroups;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;

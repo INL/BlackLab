@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.results;
 
 /**
  * Class for a hit. Normally, hits are iterated over in a Lucene Spans object,

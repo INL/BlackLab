@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.Hits;
+import nl.inl.blacklab.search.results.Hits;
 
 public class HitPropValueMultiple extends HitPropValue {
     HitPropValue[] value;

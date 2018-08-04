@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.perdocument;
+package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-
-import nl.inl.blacklab.search.ResultsWindow;
 
 /**
  * A list of DocResult objects (document-level query results). The list may be

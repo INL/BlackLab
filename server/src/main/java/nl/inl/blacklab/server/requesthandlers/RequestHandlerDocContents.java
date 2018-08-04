@@ -7,8 +7,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
