@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.config;
+package nl.inl.blacklab.indexers.config;
 
 /**
  * Configuration for an XML element occurring in an annotated field.

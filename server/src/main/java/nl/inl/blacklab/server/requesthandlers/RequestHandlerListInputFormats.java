@@ -13,11 +13,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
+import nl.inl.blacklab.indexers.config.ConfigAnnotation;
+import nl.inl.blacklab.indexers.config.ConfigInlineTag;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.config.ConfigAnnotatedField;
-import nl.inl.blacklab.index.config.ConfigAnnotation;
-import nl.inl.blacklab.index.config.ConfigInlineTag;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;

@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import nl.inl.blacklab.index.config.YamlJsonReader;
+import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.datastream.DataFormat;

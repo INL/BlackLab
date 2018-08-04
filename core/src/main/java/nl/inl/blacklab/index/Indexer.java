@@ -45,7 +45,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;

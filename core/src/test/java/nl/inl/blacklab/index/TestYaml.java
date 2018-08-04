@@ -16,9 +16,11 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.indexers.config.InputFormatConfigException;
 
 /**
  *

@@ -7,7 +7,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import nl.inl.blacklab.index.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 
 /**
  * Factory responsible for creating {@link DocIndexer} instances. Through this

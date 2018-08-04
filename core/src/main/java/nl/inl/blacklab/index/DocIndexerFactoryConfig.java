@@ -21,10 +21,10 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.DocIndexerConfig;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
-import nl.inl.blacklab.index.config.InputFormatReader;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.DocIndexerConfig;
+import nl.inl.blacklab.indexers.config.InputFormatConfigException;
+import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;

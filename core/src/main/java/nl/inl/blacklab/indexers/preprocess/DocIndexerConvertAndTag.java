@@ -17,8 +17,8 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.PluginManager;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.DocIndexerConfig;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 
 /**
  * Wrapper class for a regular DocIndexer. It's activated when a format has the

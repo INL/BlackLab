@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.config;
+package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -19,7 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.config.InputFormatReader.BaseFormatFinder;
+import nl.inl.blacklab.indexers.config.InputFormatReader.BaseFormatFinder;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.util.FileUtil;

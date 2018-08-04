@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.config;
+package nl.inl.blacklab.indexers.config;
 
 /**
  * Text direction: left-to-right or right-to-left (and possible future values?)

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index.config;
+package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -32,7 +32,7 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;

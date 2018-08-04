@@ -18,9 +18,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.DocIndexerFactoryConfig;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
-import nl.inl.blacklab.index.config.InputFormatReader;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.InputFormatConfigException;
+import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;

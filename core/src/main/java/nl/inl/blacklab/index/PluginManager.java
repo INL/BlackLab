@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.index.config.YamlJsonReader;
+import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.Plugin;
 import nl.inl.blacklab.indexers.preprocess.Plugin.PluginException;
