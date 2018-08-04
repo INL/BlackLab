@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.util.CountingReader;
 
 /**

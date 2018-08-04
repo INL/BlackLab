@@ -41,7 +41,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;

@@ -27,7 +27,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;

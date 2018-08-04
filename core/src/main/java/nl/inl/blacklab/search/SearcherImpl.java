@@ -54,7 +54,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;

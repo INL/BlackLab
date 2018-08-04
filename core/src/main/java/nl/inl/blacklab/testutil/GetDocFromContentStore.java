@@ -2,8 +2,8 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreDirZip;
 
 /**
  * Retrieves and displays a document from a BlackLab content store.

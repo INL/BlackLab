@@ -22,7 +22,7 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;

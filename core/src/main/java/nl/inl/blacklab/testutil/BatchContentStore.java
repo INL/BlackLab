@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
-import nl.inl.blacklab.externalstorage.ContentStoreDirZip;
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreDirZip;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
 

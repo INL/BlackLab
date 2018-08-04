@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.externalstorage;
+package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreDirFixedBlock;
 import nl.inl.util.UtilsForTesting;
 
 import org.junit.After;

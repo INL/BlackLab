@@ -1,4 +1,4 @@
-package nl.inl.blacklab.externalstorage;
+package nl.inl.blacklab.contentstore;
 
 import java.util.HashMap;
 import java.util.Map;

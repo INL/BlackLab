@@ -17,7 +17,7 @@ import org.apache.lucene.store.LockObtainFailedException;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.QueryExecutionContext;
