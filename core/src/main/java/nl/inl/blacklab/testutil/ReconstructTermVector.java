@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.debug;
+package nl.inl.blacklab.testutil;
 
 import java.nio.file.Paths;
 
