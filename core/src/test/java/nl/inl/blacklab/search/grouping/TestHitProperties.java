@@ -9,6 +9,10 @@ import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.Hits;
 
 public class TestHitProperties {

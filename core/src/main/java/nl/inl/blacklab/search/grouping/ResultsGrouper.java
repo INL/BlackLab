@@ -22,6 +22,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
+import nl.inl.blacklab.resultproperty.GroupProperty;
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 

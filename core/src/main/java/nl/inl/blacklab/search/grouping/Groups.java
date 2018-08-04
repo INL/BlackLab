@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.resultproperty.HitProperty;
+
 interface Groups {
 
     HitProperty getGroupCriteria();

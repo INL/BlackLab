@@ -15,8 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.perdocument;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
  * A value plus a count for a certain group of documents that have some property

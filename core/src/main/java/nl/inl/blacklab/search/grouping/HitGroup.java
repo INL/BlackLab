@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.grouping;
 
 import java.util.List;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;

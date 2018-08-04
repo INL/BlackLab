@@ -52,7 +52,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.grouping.HitProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;

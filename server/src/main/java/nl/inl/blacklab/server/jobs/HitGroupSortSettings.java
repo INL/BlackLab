@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 import java.util.Map;
 
-import nl.inl.blacklab.search.grouping.GroupProperty;
+import nl.inl.blacklab.resultproperty.GroupProperty;
 
 public class HitGroupSortSettings {
 

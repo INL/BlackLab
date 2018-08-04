@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 import java.util.Map;
 
-import nl.inl.blacklab.perdocument.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocGroupProperty;
 
 public class DocGroupSortSettings {
 

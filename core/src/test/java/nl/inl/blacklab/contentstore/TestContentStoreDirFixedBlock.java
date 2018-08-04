@@ -23,14 +23,12 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreDirFixedBlock;
-import nl.inl.util.UtilsForTesting;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirFixedBlock {
 

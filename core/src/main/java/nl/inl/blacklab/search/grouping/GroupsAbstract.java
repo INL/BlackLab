@@ -15,6 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitProperty;
+
 /**
  * A number of groups of hits, grouped on the basis of a list of criteria.
  */

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.grouping.HitGroups;
-import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;

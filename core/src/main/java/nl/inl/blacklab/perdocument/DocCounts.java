@@ -24,8 +24,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
  * Counts the number of documents that have a certain property.

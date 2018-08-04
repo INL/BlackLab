@@ -17,8 +17,8 @@ package nl.inl.blacklab.perdocument;
 
 import java.util.List;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.grouping.HitPropValue;
 
 /**
  * A group of DocResult objects, plus the "group identity". For example, if

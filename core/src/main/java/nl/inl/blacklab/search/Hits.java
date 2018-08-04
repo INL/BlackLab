@@ -9,9 +9,9 @@ import java.util.Map;
 import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.grouping.HitGroups;
-import nl.inl.blacklab.search.grouping.HitPropValue;
-import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.grouping.ResultsGrouper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;

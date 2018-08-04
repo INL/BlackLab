@@ -15,13 +15,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitGroups;
-import nl.inl.blacklab.search.grouping.HitPropValue;
-import nl.inl.blacklab.search.grouping.HitProperty;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;

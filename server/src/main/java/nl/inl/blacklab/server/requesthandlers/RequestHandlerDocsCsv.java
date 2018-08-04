@@ -14,10 +14,10 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.perdocument.DocGroup;
 import nl.inl.blacklab.perdocument.DocGroups;
-import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.grouping.HitPropValue;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;

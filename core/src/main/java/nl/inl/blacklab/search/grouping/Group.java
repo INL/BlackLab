@@ -15,10 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
+import nl.inl.blacklab.resultproperty.HitPropValue;
+
 /**
  * A group of results, with its group identity and the results themselves.
  */
-abstract class Group {
+public abstract class Group {
     protected HitPropValue groupIdentity;
 
     public Group(HitPropValue groupIdentity) {

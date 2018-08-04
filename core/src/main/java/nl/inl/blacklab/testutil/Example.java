@@ -24,12 +24,12 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.grouping.HitPropertyHitText;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 

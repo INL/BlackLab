@@ -11,11 +11,21 @@ import nl.inl.blacklab.MockForwardIndex;
 import nl.inl.blacklab.MockHits;
 import nl.inl.blacklab.MockSearcher;
 import nl.inl.blacklab.MockTerms;
-import nl.inl.blacklab.perdocument.DocProperty;
-import nl.inl.blacklab.perdocument.DocPropertyDecade;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyDecade;
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitPropValueContextWord;
+import nl.inl.blacklab.resultproperty.HitPropValueDecade;
+import nl.inl.blacklab.resultproperty.HitPropValueMultiple;
+import nl.inl.blacklab.resultproperty.HitPropValueString;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
 import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextPart;
-import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextStart;
 
 public class TestHitPropertySerialize {
 

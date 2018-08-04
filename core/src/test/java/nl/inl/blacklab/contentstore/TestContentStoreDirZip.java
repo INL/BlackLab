@@ -22,8 +22,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreDirZip;
 import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirZip {

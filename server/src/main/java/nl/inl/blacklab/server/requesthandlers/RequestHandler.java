@@ -22,9 +22,9 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.perdocument.DocCount;
 import nl.inl.blacklab.perdocument.DocCounts;
-import nl.inl.blacklab.perdocument.DocGroupProperty;
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
+import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.ResultsWindow;
