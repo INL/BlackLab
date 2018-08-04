@@ -41,9 +41,9 @@ import org.apache.lucene.document.IntField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.BLRuntimeException;
-import nl.inl.blacklab.search.indexstructure.FieldType;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -351,7 +351,7 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        IndexStructure struct = indexer.getSearcher().getIndexStructure();
+        IndexMetadata struct = indexer.getSearcher().getIndexStructure();
         struct.registerMetadataField(name);
 
         MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);

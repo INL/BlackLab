@@ -9,8 +9,8 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -32,7 +32,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         //TODO: use background job?
 
         Searcher searcher = getSearcher();
-        IndexStructure struct = searcher.getIndexStructure();
+        IndexMetadata struct = searcher.getIndexStructure();
         ComplexFieldDesc cfd = struct.getMainContentsField();
         String propName = searchParam.getString("property");
         boolean sensitive = searchParam.getBoolean("sensitive");

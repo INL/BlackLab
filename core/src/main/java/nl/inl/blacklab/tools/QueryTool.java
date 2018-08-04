@@ -69,8 +69,8 @@ import nl.inl.blacklab.search.grouping.HitPropertyMultiple;
 import nl.inl.blacklab.search.grouping.HitPropertyRightContext;
 import nl.inl.blacklab.search.grouping.HitPropertyWordLeft;
 import nl.inl.blacklab.search.grouping.HitPropertyWordRight;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -943,7 +943,7 @@ public class QueryTool {
     }
 
     private void showIndexStructure() {
-        IndexStructure s = searcher.getIndexStructure();
+        IndexMetadata s = searcher.getIndexStructure();
         outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
         s.print(out);
     }

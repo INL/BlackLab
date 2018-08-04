@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexstructure;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Map;
 import java.util.TreeMap;
@@ -152,7 +152,7 @@ public class PropertyDesc {
         for (AltDesc alt : alternatives.values()) {
             String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name,
                     alt.getName());
-            if (IndexStructure.hasOffsets(reader, luceneAltName)) {
+            if (IndexMetadata.hasOffsets(reader, luceneAltName)) {
                 offsetsAlternative = alt;
                 return true;
             }

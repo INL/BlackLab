@@ -8,10 +8,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.IndexStructure.MetadataGroup;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata.MetadataGroup;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -40,7 +40,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
             Searcher searcher = index.getSearcher();
-            IndexStructure struct = searcher.getIndexStructure();
+            IndexMetadata struct = searcher.getIndexStructure();
 
             // Assemble response
             IndexStatus status = indexMan.getIndex(indexName).getStatus();

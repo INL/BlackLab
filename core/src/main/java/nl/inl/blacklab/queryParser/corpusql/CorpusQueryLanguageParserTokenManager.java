@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternRepetition;
 import nl.inl.blacklab.search.TextPatternSequence;
 import nl.inl.blacklab.search.TextPatternTags;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;

@@ -11,7 +11,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -100,7 +100,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     getSensitivitySetting(mainAnnotation), false);
             addComplexField(complexField);
 
-            IndexStructure indexStructure;
+            IndexMetadata indexStructure;
             if (indexer != null) {
                 indexStructure = indexer.getSearcher().getIndexStructure();
                 indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());

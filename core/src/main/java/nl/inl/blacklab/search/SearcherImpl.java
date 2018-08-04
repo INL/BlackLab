@@ -58,11 +58,11 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.FieldType;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
@@ -135,7 +135,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexStructure = new IndexStructure(reader, indexDir, createNewIndex, config);
+        indexStructure = new IndexMetadata(reader, indexDir, createNewIndex, config);
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }
@@ -161,7 +161,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexStructure = new IndexStructure(reader, indexDir, createNewIndex, indexTemplateFile);
+        indexStructure = new IndexMetadata(reader, indexDir, createNewIndex, indexTemplateFile);
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }

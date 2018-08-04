@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexstructure;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,8 +51,8 @@ import nl.inl.blacklab.index.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.index.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.index.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -60,10 +60,10 @@ import nl.inl.util.StringUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexStructure {
+public class IndexMetadata {
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
-    protected static final Logger logger = LogManager.getLogger(IndexStructure.class);
+    protected static final Logger logger = LogManager.getLogger(IndexMetadata.class);
 
     private static final String METADATA_FILE_NAME = "indexmetadata";
 
@@ -256,7 +256,7 @@ public class IndexStructure {
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
      */
-    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex) {
+    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex) {
         this(reader, indexDir, createNewIndex, (File) null);
     }
 
@@ -270,7 +270,7 @@ public class IndexStructure {
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      */
-    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
+    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
         this.indexDir = indexDir;
 
         metadataFieldInfos = new TreeMap<>();
@@ -333,7 +333,7 @@ public class IndexStructure {
      * @param indexTemplateFile JSON file to use as template for index structure /
      *            metadata (if creating new index)
      */
-    public IndexStructure(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
+    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
         this.indexDir = indexDir;
 
         metadataFieldInfos = new TreeMap<>();
@@ -441,7 +441,7 @@ public class IndexStructure {
      * metadata file.
      */
     public void setModified() {
-        timeModified = IndexStructure.getTimestamp();
+        timeModified = IndexMetadata.getTimestamp();
     }
 
     public void writeMetadata() {
@@ -1122,7 +1122,7 @@ public class IndexStructure {
         if (initTimestamps) {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
-            timeModified = timeCreated = IndexStructure.getTimestamp();
+            timeModified = timeCreated = IndexMetadata.getTimestamp();
         } else {
             blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
             blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
@@ -1376,7 +1376,7 @@ public class IndexStructure {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
-            timeModified = timeCreated = IndexStructure.getTimestamp();
+            timeModified = timeCreated = IndexMetadata.getTimestamp();
 
             // Clear any recorded values in metadata fields
             for (MetadataFieldDesc f : metadataFieldInfos.values()) {
@@ -1389,9 +1389,9 @@ public class IndexStructure {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
         versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
-        versionInfo.put("timeCreated", IndexStructure.getTimestamp());
-        versionInfo.put("timeModified", IndexStructure.getTimestamp());
-        versionInfo.put("indexFormat", IndexStructure.LATEST_INDEX_FORMAT);
+        versionInfo.put("timeCreated", IndexMetadata.getTimestamp());
+        versionInfo.put("timeModified", IndexMetadata.getTimestamp());
+        versionInfo.put("indexFormat", IndexMetadata.LATEST_INDEX_FORMAT);
         versionInfo.put("alwaysAddClosingToken", true);
         versionInfo.put("tagLengthInPayload", true);
     }

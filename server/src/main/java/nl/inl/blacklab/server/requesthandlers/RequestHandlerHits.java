@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.grouping.DocOrHitGroups;
 import nl.inl.blacklab.search.grouping.HitGroup;
 import nl.inl.blacklab.search.grouping.HitPropValue;
 import nl.inl.blacklab.search.grouping.HitProperty;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -150,7 +150,7 @@ public class RequestHandlerHits extends RequestHandler {
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
-            IndexStructure struct = searcher.getIndexStructure();
+            IndexMetadata struct = searcher.getIndexStructure();
             if (includeTokenCount) {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set

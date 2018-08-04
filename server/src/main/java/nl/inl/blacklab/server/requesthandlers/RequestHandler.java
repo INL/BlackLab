@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.ResultsWindow;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.grouping.DocOrHitGroups;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -446,7 +446,7 @@ public abstract class RequestHandler {
      */
     public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
         ds.startMap();
-        IndexStructure struct = searcher.getIndexStructure();
+        IndexMetadata struct = searcher.getIndexStructure();
         for (String metadataFieldName : struct.getMetadataFields()) {
             String value = document.get(metadataFieldName);
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
@@ -469,7 +469,7 @@ public abstract class RequestHandler {
      * @param document
      * @return true iff the content from documents in the index may be viewed
      */
-    protected boolean mayView(IndexStructure struct, Document document) {
+    protected boolean mayView(IndexMetadata struct, Document document) {
         if (struct.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
         return struct.contentViewable();
@@ -514,7 +514,7 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    public static void dataStreamDocFields(DataStream ds, IndexStructure struct) {
+    public static void dataStreamDocFields(DataStream ds, IndexMetadata struct) {
         ds.startMap();
         if (struct.pidField() != null)
             ds.entry("pidField", struct.pidField());

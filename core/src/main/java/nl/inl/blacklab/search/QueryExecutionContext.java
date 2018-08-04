@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
 import nl.inl.util.StringUtil;
 
 /**

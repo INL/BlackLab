@@ -23,7 +23,7 @@ import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -226,7 +226,7 @@ public class Index {
      * @return the IndexStructure
      * @throws InternalServerError when no searcher could not be opened
      */
-    public synchronized IndexStructure getIndexStructure() throws InternalServerError {
+    public synchronized IndexMetadata getIndexStructure() throws InternalServerError {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {

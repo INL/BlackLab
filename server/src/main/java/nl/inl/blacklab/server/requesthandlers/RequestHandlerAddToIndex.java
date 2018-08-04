@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -50,7 +50,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         debug(logger, "REQ add data: " + indexName);
 
         Index index = indexMan.getIndex(indexName);
-        IndexStructure indexStructure = index.getIndexStructure();
+        IndexMetadata indexStructure = index.getIndexStructure();
 
         // Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751

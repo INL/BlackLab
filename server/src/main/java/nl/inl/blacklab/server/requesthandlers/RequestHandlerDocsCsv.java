@@ -18,7 +18,7 @@ import nl.inl.blacklab.perdocument.DocProperty;
 import nl.inl.blacklab.perdocument.DocResult;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.grouping.HitPropValue;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -154,7 +154,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
-            IndexStructure struct = this.getSearcher().getIndexStructure();
+            IndexMetadata struct = this.getSearcher().getIndexStructure();
             String pidField = struct.pidField();
             String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
 

@@ -32,9 +32,9 @@ import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
@@ -436,7 +436,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexStructure struct = indexer.getSearcher().getIndexStructure();
+            IndexMetadata struct = indexer.getSearcher().getIndexStructure();
             for (String fieldName : struct.getMetadataFields()) {
                 MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
                 boolean missing = false, empty = false;

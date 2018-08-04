@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 
 /**
  * Some utility functions for dealing with complex field names.
@@ -161,7 +161,7 @@ public final class ComplexFieldUtil {
         return bookkeepingField(propFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
     }
 
-    public static String forwardIndexIdField(IndexStructure structure, String fieldName) {
+    public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
         String propName = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
         return forwardIndexIdField(propertyField(fieldName, propName));
     }
@@ -397,13 +397,13 @@ public final class ComplexFieldUtil {
         return fieldPropAltName.endsWith(altSuffix);
     }
 
-    public static String mainPropertyField(IndexStructure structure, String fieldName) {
+    public static String mainPropertyField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
         PropertyDesc pr = cf.getMainProperty();
         return propertyField(fieldName, pr.getName());
     }
 
-    public static String mainPropertyOffsetsField(IndexStructure structure, String fieldName) {
+    public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
         PropertyDesc pr = cf.getMainProperty();
         return propertyField(fieldName, pr.getName(), pr.offsetsAlternative());

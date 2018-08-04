@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexstructure;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexstructure;
+package nl.inl.blacklab.search.indexmetadata;
 
 /** Description of a property alternative */
 public class AltDesc {

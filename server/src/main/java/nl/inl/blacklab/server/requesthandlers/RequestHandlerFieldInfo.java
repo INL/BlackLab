@@ -16,11 +16,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
-import nl.inl.blacklab.search.indexstructure.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -81,7 +81,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
 
         Searcher searcher = getSearcher();
-        IndexStructure struct = searcher.getIndexStructure();
+        IndexMetadata struct = searcher.getIndexStructure();
 
         if (struct.getComplexFields().contains(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();

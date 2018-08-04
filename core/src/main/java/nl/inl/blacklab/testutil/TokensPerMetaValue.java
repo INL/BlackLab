@@ -11,9 +11,9 @@ import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.perdocument.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexstructure.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -35,7 +35,7 @@ public class TokensPerMetaValue {
         Searcher searcher = Searcher.open(new File(indexDir));
         try {
             // Loop over all metadata fields
-            IndexStructure indexStructure = searcher.getIndexStructure();
+            IndexMetadata indexStructure = searcher.getIndexStructure();
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
             for (String metaFieldName : indexStructure.getMetadataFields()) {
                 // Check if this field has only a few values
