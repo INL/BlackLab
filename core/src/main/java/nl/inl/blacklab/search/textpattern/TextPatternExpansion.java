@@ -1,5 +1,6 @@
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 

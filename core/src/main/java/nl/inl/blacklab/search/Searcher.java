@@ -53,6 +53,7 @@ import nl.inl.blacklab.perdocument.DocResults;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
 
 public abstract class Searcher {

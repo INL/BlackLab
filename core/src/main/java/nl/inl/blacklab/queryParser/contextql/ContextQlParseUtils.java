@@ -10,10 +10,10 @@ import org.apache.lucene.search.WildcardQuery;
 
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternProperty;
-import nl.inl.blacklab.search.TextPatternSequence;
-import nl.inl.blacklab.search.TextPatternWildcard;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternProperty;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 
 public final class ContextQlParseUtils {
 

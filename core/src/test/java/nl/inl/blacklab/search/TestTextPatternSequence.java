@@ -18,6 +18,11 @@ package nl.inl.blacklab.search;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternTerm;
+
 public class TestTextPatternSequence {
 
     @Test

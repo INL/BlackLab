@@ -27,6 +27,7 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestQueryRewrite {
 

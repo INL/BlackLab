@@ -1,6 +1,12 @@
 package nl.inl.blacklab.search;
 
 import org.apache.lucene.search.BooleanClause.Occur;
+
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAndNot;
+import nl.inl.blacklab.search.textpattern.TextPatternNot;
+import nl.inl.blacklab.search.textpattern.TextPatternOr;
+
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 

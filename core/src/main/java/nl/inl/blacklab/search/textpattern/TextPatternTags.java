@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,6 +21,7 @@ import java.util.Map;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
 import nl.inl.util.StringUtil;

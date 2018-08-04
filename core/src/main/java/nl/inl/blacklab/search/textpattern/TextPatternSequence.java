@@ -13,37 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 /**
- * A TextPattern matching at least one of its child clauses.
+ * A sequence of patterns. The patterns specified may be any pattern, and may
+ * themselves be sequences if desired.
  */
-public class TextPatternOr extends TextPatternCombiner {
-
-    public TextPatternOr(TextPattern... clauses) {
+public class TextPatternSequence extends TextPatternAndNot {
+    public TextPatternSequence(TextPattern... clauses) {
         super(clauses);
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
-        for (TextPattern cl : clauses) {
+        if (!exclude.isEmpty())
+            throw new RuntimeException("clausesNot not empty!");
+        List<BLSpanQuery> chResults = new ArrayList<>();
+        for (TextPattern cl : include) {
             chResults.add(cl.translate(context));
         }
         if (chResults.size() == 1)
-            return chResults.get(0);
-        return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
+            return chResults.get(0); // just one part, return that
+        return new SpanQuerySequence(chResults);
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternOr) {
+        if (obj instanceof TextPatternSequence) {
             return super.equals(obj);
         }
         return false;
@@ -57,6 +60,6 @@ public class TextPatternOr extends TextPatternCombiner {
 
     @Override
     public String toString() {
-        return "OR(" + clausesToString(clauses) + ")";
+        return "SEQ(" + clausesToString(include) + ")";
     }
 }

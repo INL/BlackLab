@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.HitsSample;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.SingleDocIdFilter;
-import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;

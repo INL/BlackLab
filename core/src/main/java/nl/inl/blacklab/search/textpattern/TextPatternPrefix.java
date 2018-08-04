@@ -13,31 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.PrefixQuery;
+
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.RegexpTooLargeException;
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryNot;
 
 /**
- * NOT operator for TextPattern queries at token and sequence level. Really only
- * makes sense for 1-token clauses, as it produces all tokens that don't match
- * the clause.
+ * A TextPattern matching words that start with the specified prefix.
  */
-public class TextPatternNot extends TextPatternCombiner {
-    public TextPatternNot(TextPattern clause) {
-        super(clause);
+public class TextPatternPrefix extends TextPatternTerm {
+    public TextPatternPrefix(String value) {
+        super(value);
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        SpanQueryNot spanQueryNot = new SpanQueryNot(clauses.get(0).translate(context));
-        spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
-        return spanQueryNot;
+        try {
+            return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
+                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+        } catch (StackOverflowError e) {
+            // If we pass in a prefix expression matching a lot of words,
+            // stack overflow may occur inside Lucene's automaton building
+            // code and we may end up here.
+            throw new RegexpTooLargeException();
+        }
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternNot) {
+        if (obj instanceof TextPatternPrefix) {
             return super.equals(obj);
         }
         return false;
@@ -51,6 +60,6 @@ public class TextPatternNot extends TextPatternCombiner {
 
     @Override
     public String toString() {
-        return "NOT(" + clauses.get(0).toString() + ")";
+        return "PREFIX(" + value + ")";
     }
 }

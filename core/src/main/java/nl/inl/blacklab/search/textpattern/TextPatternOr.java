@@ -13,38 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.PrefixQuery;
+import java.util.ArrayList;
+import java.util.List;
 
-import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
- * A TextPattern matching words that start with the specified prefix.
+ * A TextPattern matching at least one of its child clauses.
  */
-public class TextPatternPrefix extends TextPatternTerm {
-    public TextPatternPrefix(String value) {
-        super(value);
+public class TextPatternOr extends TextPatternCombiner {
+
+    public TextPatternOr(TextPattern... clauses) {
+        super(clauses);
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        try {
-            return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
-                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
-        } catch (StackOverflowError e) {
-            // If we pass in a prefix expression matching a lot of words,
-            // stack overflow may occur inside Lucene's automaton building
-            // code and we may end up here.
-            throw new RegexpTooLargeException();
+        List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
+        for (TextPattern cl : clauses) {
+            chResults.add(cl.translate(context));
         }
+        if (chResults.size() == 1)
+            return chResults.get(0);
+        return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternPrefix) {
+        if (obj instanceof TextPatternOr) {
             return super.equals(obj);
         }
         return false;
@@ -58,6 +58,6 @@ public class TextPatternPrefix extends TextPatternTerm {
 
     @Override
     public String toString() {
-        return "PREFIX(" + value + ")";
+        return "OR(" + clausesToString(clauses) + ")";
     }
 }

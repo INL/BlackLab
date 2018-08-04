@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;

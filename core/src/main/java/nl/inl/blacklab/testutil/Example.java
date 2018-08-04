@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Hit;
 import nl.inl.blacklab.search.Hits;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 

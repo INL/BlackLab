@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
@@ -25,38 +26,50 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * TextPattern tp = new TextPatternProperty("lemma", new TextPatternWildcard("bla*"));
  * </code>
  */
-public class TextPatternProperty extends TextPattern {
+public class TextPatternSensitive extends TextPattern {
+    private boolean caseSensitive;
+
+    private boolean diacriticsSensitive;
+
     private TextPattern input;
 
-    private String propertyName;
-
-    public TextPatternProperty(String propertyName, TextPattern input) {
-        this.propertyName = propertyName == null ? "" : propertyName;
+    /**
+     * Indicate that we want to use a different list of alternatives for this part
+     * of the query.
+     * 
+     * @param caseSensitive search case-sensitively?
+     * @param diacriticsSensitive search diacritics-sensitively?
+     * @param input
+     */
+    public TextPatternSensitive(boolean caseSensitive, boolean diacriticsSensitive, TextPattern input) {
+        this.caseSensitive = caseSensitive;
+        this.diacriticsSensitive = diacriticsSensitive;
         this.input = input;
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        return input.translate(context.withProperty(propertyName));
+        return input.translate(context.withSensitive(caseSensitive, diacriticsSensitive));
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternProperty) {
-            TextPatternProperty tp = ((TextPatternProperty) obj);
-            return input.equals(tp.input) && propertyName.equals(tp.propertyName);
+        if (obj instanceof TextPatternSensitive) {
+            TextPatternSensitive tp = ((TextPatternSensitive) obj);
+            return caseSensitive == tp.caseSensitive && diacriticsSensitive == tp.diacriticsSensitive &&
+                    input.equals(tp.input);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return input.hashCode() + propertyName.hashCode();
+        return (caseSensitive ? 13 : 0) + (diacriticsSensitive ? 31 : 0) + input.hashCode();
     }
 
     @Override
     public String toString() {
-        return "PROP(" + propertyName + ", " + input.toString() + ")";
+        String sett = caseSensitive ? (diacriticsSensitive ? "s" : "c") : (diacriticsSensitive ? "d" : "i");
+        return "SENSITIVE(" + sett + ", " + input.toString() + ")";
     }
-
 }

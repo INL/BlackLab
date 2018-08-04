@@ -20,7 +20,7 @@ import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;

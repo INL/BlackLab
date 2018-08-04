@@ -13,52 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search;
+package nl.inl.blacklab.search.textpattern;
 
-import org.apache.lucene.index.Term;
-
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryNot;
 
 /**
- * A TextPattern matching a word.
+ * NOT operator for TextPattern queries at token and sequence level. Really only
+ * makes sense for 1-token clauses, as it produces all tokens that don't match
+ * the clause.
  */
-public class TextPatternTerm extends TextPattern {
-    protected String value;
-
-    public String getValue() {
-        return value;
-    }
-
-    public TextPatternTerm(String value) {
-        this.value = value;
-    }
-
-    public Term getTerm(String fieldName) {
-        return new Term(fieldName, value);
+public class TextPatternNot extends TextPatternCombiner {
+    public TextPatternNot(TextPattern clause) {
+        super(clause);
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        return new BLSpanTermQuery(new Term(context.luceneField(),
-                context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value))));
+        SpanQueryNot spanQueryNot = new SpanQueryNot(clauses.get(0).translate(context));
+        spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
+        return spanQueryNot;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternTerm) {
-            return value.equals(((TextPatternTerm) obj).value);
+        if (obj instanceof TextPatternNot) {
+            return super.equals(obj);
         }
         return false;
     }
 
+    // appease PMD
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return super.hashCode();
     }
 
     @Override
     public String toString() {
-        return "TERM(" + value + ")";
+        return "NOT(" + clauses.get(0).toString() + ")";
     }
 }

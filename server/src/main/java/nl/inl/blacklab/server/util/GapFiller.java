@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternOr;
 
 /**
  * Fills gaps in a template string with column values from TSV data.
