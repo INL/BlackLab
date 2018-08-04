@@ -235,7 +235,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
                     // Capture the features inside this pos element (and add the head PoS now)
                     capturePosFeatures = true;
                     posFeatures.clear();
-                    String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf("(")).trim() : pos;
+                    String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf('(')).trim() : pos;
                     posFeatures.put("head", posHead);
                 }
             }
@@ -349,7 +349,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
             @Override
             public void endElement(String uri, String localName, String qName) {
                 speaker = null;
-                while (ids.size() > 0) {
+                while (!ids.isEmpty()) {
                     ids.remove(0);
                     propBeginTime.addValue("");
                     propEndTime.addValue("");

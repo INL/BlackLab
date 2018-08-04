@@ -580,7 +580,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             int currentPos = getCurrentTokenPosition();
 
             // Add payload to start tag property indicating end position
-            if (openInlineTags.size() == 0)
+            if (openInlineTags.isEmpty())
                 throw new MalformedInputFileException("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
             if (!openTag.name.equals(tagName))

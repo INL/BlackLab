@@ -244,7 +244,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return a HitGroups object representing the grouped hits
      */
     public HitGroups groupedBy(final HitProperty criteria) {
-        return ResultsGrouper._fromHits(this, criteria);
+        return ResultsGrouper.fromHits(this, criteria);
     }
 
     /**
@@ -253,7 +253,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return the per-document view.
      */
     public DocResults perDocResults() {
-        return DocResults._fromHits(getSearcher(), this);
+        return DocResults.fromHits(getSearcher(), this);
     }
 
     /**

@@ -83,7 +83,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param hits hits to get per-doc result for
      * @return the per-document results.
      */
-    public static DocResults _fromHits(Searcher searcher, Hits hits) {
+    public static DocResults fromHits(Searcher searcher, Hits hits) {
         return new DocResults(searcher, hits);
     }
 
@@ -158,7 +158,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param query query to execute
      * @return per-document results
      */
-    public static DocResults _fromQuery(Searcher searcher, Query query) {
+    public static DocResults fromQuery(Searcher searcher, Query query) {
         return new DocResults(searcher, query);
     }
 

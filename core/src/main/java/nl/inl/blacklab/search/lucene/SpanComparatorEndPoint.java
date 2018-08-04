@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.Serializable;
 import java.util.Comparator;
 
 import nl.inl.blacklab.search.Hit;
@@ -44,7 +43,7 @@ import nl.inl.blacklab.search.Hit;
  * (2, 4)
  * </pre>
  */
-class SpanComparatorEndPoint implements Comparator<Hit>, Serializable {
+class SpanComparatorEndPoint implements Comparator<Hit> {
     @Override
     public int compare(Hit o1, Hit o2) {
         if (o2.end != o1.end)

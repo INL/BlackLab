@@ -282,7 +282,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     // Get the encoding from a possible encoding line, or null if not an encoding line
-    private Charset getCharEncoding(String encodingLine) {
+    private static Charset getCharEncoding(String encodingLine) {
         //  if str[1:] in legalcharencodings) {
         //     result = str[1:]
         //  else:
@@ -616,7 +616,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 //                String parseFileName = getParseFile(corpus, currentFileBaseName, uttId);
 //                metadata.put("parsefile", parseFileName);
 
-                int endspk = line.indexOf(":");
+                int endspk = line.indexOf(':');
                 if (endspk < 0)
                     log("error in line: " + line);
                 String entry = line.substring(endspk + 2);
@@ -796,7 +796,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             codeMap.put("age", age);
             String months;
             if (!age.isEmpty())
-                months = "" + getMonths(age);
+                months = Integer.toString(getMonths(age));
             else
                 months = "";
             codeMap.put("months", months);
@@ -810,7 +810,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     private void treatUtt(String line, Map<String, Object> metadata) {
-        int endSpk = line.indexOf(":");
+        int endSpk = line.indexOf(':');
         if (endSpk < 0)
             log("WARNING, No : in line: " + line);
         String code = line.substring(1, endSpk);

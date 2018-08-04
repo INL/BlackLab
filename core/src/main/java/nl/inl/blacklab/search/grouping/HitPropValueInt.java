@@ -1,10 +1,9 @@
 package nl.inl.blacklab.search.grouping;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
-public class HitPropValueInt extends HitPropValue implements Serializable {
+public class HitPropValueInt extends HitPropValue {
     int value;
 
     public int getValue() {
@@ -47,12 +46,12 @@ public class HitPropValueInt extends HitPropValue implements Serializable {
 
     @Override
     public String toString() {
-        return value + "";
+        return Integer.toString(value);
     }
 
     @Override
     public String serialize() {
-        return PropValSerializeUtil.combineParts("int", "" + value);
+        return PropValSerializeUtil.combineParts("int", Integer.toString(value));
     }
 
     @Override

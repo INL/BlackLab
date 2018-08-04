@@ -150,9 +150,8 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            BLSpans spans = new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(),
+            return new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(),
                     spansSource, expandToLeft, min, max);
-            return spans;
         }
 
     }

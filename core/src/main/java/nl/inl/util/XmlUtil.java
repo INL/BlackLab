@@ -61,8 +61,7 @@ public class XmlUtil {
             DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
             // Avoid errors written to stderr
             domBuilder.setErrorHandler(new SimpleErrorHandler());
-            Document document = domBuilder.parse(new InputSource(reader));
-            return document;
+            return domBuilder.parse(new InputSource(reader));
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
         } catch (IOException e) {

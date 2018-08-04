@@ -74,7 +74,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
     public Collection<String> getProperties() {
         List<String> sorted = new ArrayList<>(props.keySet());
         List<String> order = displayOrder;
-        if (order == null || order.size() == 0)
+        if (order == null || order.isEmpty())
             order = Arrays.asList("word", "lemma", "pos"); // default ordering
         sortProperties(sorted, order);
         return sorted;

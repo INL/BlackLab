@@ -115,10 +115,7 @@ public class NfaStateOrAcyclic extends NfaState {
                 break;
             }
         }
-        if (anyMatchEmpty && (nextState == null || nextState.matchesEmptySequence(statesVisited))) {
-            return true;
-        }
-        return false;
+        return anyMatchEmpty && (nextState == null || nextState.matchesEmptySequence(statesVisited));
     }
 
     @Override

@@ -385,10 +385,6 @@ public class HookableSaxHandler extends DefaultHandler {
     /** To keep track of the position within the document */
     protected Locator locator;
 
-    public HookableSaxHandler() {
-        //
-    }
-
     /**
      * Add a hook to the parser.
      *

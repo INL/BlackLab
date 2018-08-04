@@ -126,7 +126,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     }
 
     public static String inf(int max) {
-        return max == MAX_UNLIMITED ? "INF" : "" + max;
+        return max == MAX_UNLIMITED ? "INF" : Integer.toString(max);
     }
 
     @Override
@@ -332,8 +332,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     public NfaTwoWay getNfaTwoWay(ForwardIndexAccessor fiAccessor, int nativeDirection) {
         Nfa nfa = getNfa(fiAccessor, nativeDirection);
         Nfa nfaRev = getNfa(fiAccessor, -nativeDirection);
-        NfaTwoWay nfaTwoWay = new NfaTwoWay(nfa, nfaRev);
-        return nfaTwoWay;
+        return new NfaTwoWay(nfa, nfaRev);
     }
 
     /**

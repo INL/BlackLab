@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.grouping;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -57,7 +56,7 @@ public class HitPropertyContextWords extends HitProperty {
      * public members because usage of this object in sorting/grouping is
      * performance-critical.
      */
-    public static class ContextPart implements Serializable {
+    public static class ContextPart {
 
         /*
          * More generic:
@@ -329,8 +328,8 @@ public class HitPropertyContextWords extends HitProperty {
             case 'R':
                 startFrom = ContextStart.RIGHT_OF_HIT;
                 break;
-            default:
             case 'H':
+            default:
                 startFrom = ContextStart.HIT_TEXT_FROM_START;
                 break;
             }

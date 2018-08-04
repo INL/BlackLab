@@ -194,10 +194,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
     @Override
     public boolean canMakeNfa() {
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        if (query.getTerm().text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR))
-            return false;
-
-        return true;
+        return !query.getTerm().text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
     }
 
     @Override

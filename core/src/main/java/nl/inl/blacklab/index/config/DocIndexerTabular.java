@@ -98,9 +98,6 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
     private BufferedReader inputReader;
 
-    public DocIndexerTabular() {
-    }
-
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         if (config.getAnnotatedFields().size() > 1)
@@ -233,7 +230,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                 }
                             } else if (hasGlueTags && tagName.equals(GLUE_TAG_NAME)) {
                                 // Glue tag. Don't add default punctuation when adding next word.
-                                if (attributes.size() > 0)
+                                if (!attributes.isEmpty())
                                     warn("Glue tag has attributes: " + attributes.toString());
                                 setPreventNextDefaultPunctuation();
                             } else {

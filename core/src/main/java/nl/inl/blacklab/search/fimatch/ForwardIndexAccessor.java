@@ -15,11 +15,6 @@ public abstract class ForwardIndexAccessor {
     public static ForwardIndexAccessor fromSearcher(Searcher searcher, String searchField) {
         return new ForwardIndexAccessorImpl(searcher, searchField);
     }
-
-    public ForwardIndexAccessor() {
-        super();
-    }
-
     /**
      * Get the index number corresponding to the given property name.
      *

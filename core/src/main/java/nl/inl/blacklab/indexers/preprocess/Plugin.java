@@ -12,7 +12,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  */
 public interface Plugin {
 
-    static class PluginException extends Exception {
+    class PluginException extends Exception {
         public PluginException() {
             super();
         }

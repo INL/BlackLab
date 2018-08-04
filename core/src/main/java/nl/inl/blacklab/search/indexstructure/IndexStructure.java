@@ -796,7 +796,7 @@ public class IndexStructure {
         List<String> fieldsFound = new ArrayList<>();
         for (Map.Entry<String, MetadataFieldDesc> e : metadataFieldInfos.entrySet()) {
             if (e.getValue().getType() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
-                if (partialMatchOkay || e.getKey().toLowerCase().equals(search))
+                if (partialMatchOkay || e.getKey().equalsIgnoreCase(search))
                     fieldsFound.add(e.getKey());
             }
         }
@@ -1143,7 +1143,8 @@ public class IndexStructure {
             if (!namingScheme.equals("DEFAULT") && !namingScheme.equals("NO_SPECIAL_CHARS")) {
                 throw new RuntimeException("Unknown value for namingScheme: " + namingScheme);
             }
-            ComplexFieldUtil.setFieldNameSeparators(namingScheme.equals("NO_SPECIAL_CHARS"));
+            if (!namingScheme.equals("DEFAULT"))
+                logger.error("non-default namingScheme setting found, but this is no longer supported");
         } else {
             // Not specified; detect it.
             boolean hasNoFieldsYet = fis == null || fis.size() == 0;
@@ -1161,18 +1162,15 @@ public class IndexStructure {
                     }
                 }
             }
+            if (usingCharacterCodesAsSeparators)
+                throw new RuntimeException(
+                        "Your index uses _PR_, _AL_, _BK_ as separators (namingScheme). This is no longer supported. Use version 1.7.1 or re-index your data..");
             if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
                 throw new RuntimeException(
                         "Could not detect index naming scheme. If your index was created with an old version of " +
                                 "BlackLab, it may use the old naming scheme and cannot be opened with this version. " +
                                 "Please re-index your data, or use a BlackLab version from before August 2014.");
             }
-            if (usingSpecialCharsAsSeparators && usingCharacterCodesAsSeparators) {
-                throw new RuntimeException(
-                        "Your index seems to use two different naming schemes. Avoid using '%', '@', '#' or '_' in " +
-                                "(metadata) field names and re-index your data.");
-            }
-            ComplexFieldUtil.setFieldNameSeparators(usingCharacterCodesAsSeparators);
         }
         defaultUnknownCondition = Json.getString(fieldInfo, "unknownCondition", "NEVER");
         defaultUnknownValue = Json.getString(fieldInfo, "unknownValue", "unknown");
@@ -1303,7 +1301,7 @@ public class IndexStructure {
                 // This is the "natural order" of our annotations
                 // (probably not needed anymore - if not specified, the order of the annotations will be used)
                 List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
-                if (displayOrder.size() == 0) {
+                if (displayOrder.isEmpty()) {
                     displayOrder.addAll(annotationOrder);
                 }
                 fieldDesc.setDisplayOrder(displayOrder);

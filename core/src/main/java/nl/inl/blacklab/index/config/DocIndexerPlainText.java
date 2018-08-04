@@ -26,9 +26,6 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
     private StringBuilder fullText;
 
-    public DocIndexerPlainText() {
-    }
-
     @Override
     public void close() throws Exception {
         reader.close();

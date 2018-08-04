@@ -158,7 +158,7 @@ public final class LuceneUtil {
         // NOTE: might be faster to retrieve all term vectors at once
 
         try {
-            org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
+            Terms terms = reader.getTermVector(doc, luceneName);
             if (terms == null) {
                 throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
             }
@@ -200,8 +200,8 @@ public final class LuceneUtil {
                 // If we simply ran into the end of the document, that's okay;
                 // but if words are missing in the middle, that's not.
                 String[] partial = new String[numFound];
+                System.arraycopy(concordanceWords, 0, partial, 0, numFound);
                 for (int i = 0; i < numFound; i++) {
-                    partial[i] = concordanceWords[i];
                     if (partial[i] == null) {
                         throw new RuntimeException("Not all words found (" + numFound + " out of "
                                 + concordanceWords.length
@@ -227,7 +227,7 @@ public final class LuceneUtil {
     public static void getFrequenciesFromTermVector(IndexReader reader, int doc,
             String luceneName, Map<String, Integer> freq) {
         try {
-            org.apache.lucene.index.Terms terms = reader.getTermVector(doc, luceneName);
+            Terms terms = reader.getTermVector(doc, luceneName);
             if (terms == null) {
                 throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
             }

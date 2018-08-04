@@ -314,7 +314,7 @@ public class ConfigInputFormat {
     }
 
     public boolean isNamespaceAware() {
-        return namespaces.size() > 0;
+        return !namespaces.isEmpty();
     }
 
     public Map<String, String> getNamespaces() {

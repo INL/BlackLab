@@ -34,13 +34,6 @@ public abstract class TextPattern {
     }
 
     /**
-     * Default constructor; does nothing.
-     */
-    public TextPattern() {
-        //
-    }
-
-    /**
      * Translate this TextPattern into a BLSpanQuery.
      *
      * @param context query execution context to use

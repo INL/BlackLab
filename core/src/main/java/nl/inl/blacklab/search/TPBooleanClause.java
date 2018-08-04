@@ -69,7 +69,7 @@ public class TPBooleanClause {
     /** Returns true if <code>o</code> is equal to this. */
     @Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof TPBooleanClause))
+        if (!(o instanceof TPBooleanClause))
             return false;
         TPBooleanClause other = (TPBooleanClause) o;
         return query.equals(other.query) && occur == other.occur;

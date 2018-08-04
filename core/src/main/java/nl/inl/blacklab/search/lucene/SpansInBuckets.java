@@ -44,12 +44,12 @@ import nl.inl.blacklab.search.Span;
  */
 public interface SpansInBuckets {
     /** When to reallocate arraylists to avoid holding on to too much memory */
-    static final int ARRAYLIST_REALLOC_THRESHOLD = 1000;
+    int ARRAYLIST_REALLOC_THRESHOLD = 1000;
 
-    final static int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
+    int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
-    public static interface BucketSpanComparator {
-        abstract public int compare(int start1, int end1, int start2, int end2);
+    interface BucketSpanComparator {
+        int compare(int start1, int end1, int start2, int end2);
     }
 
     /**

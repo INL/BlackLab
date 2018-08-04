@@ -56,11 +56,7 @@ public class MatchFilterEquals extends MatchFilter {
                 return false;
         } else if (!b.equals(other.b))
             return false;
-        if (caseSensitive != other.caseSensitive)
-            return false;
-        if (diacSensitive != other.diacSensitive)
-            return false;
-        return true;
+        return caseSensitive == other.caseSensitive && diacSensitive == other.diacSensitive;
     }
 
     @Override

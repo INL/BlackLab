@@ -28,6 +28,7 @@ public class TagPluginNoop implements TagPlugin {
 
     @Override
     public void init(Optional<ObjectNode> config) throws PluginException {
+        // NO OP
     }
 
     @Override

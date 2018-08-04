@@ -13,7 +13,7 @@ import java.util.Map;
  */
 class InlineObject implements Comparable<InlineObject> {
 
-    public static enum InlineObjectType {
+    public enum InlineObjectType {
         OPEN_TAG,
         CLOSE_TAG,
         PUNCTUATION
@@ -128,9 +128,7 @@ class InlineObject implements Comparable<InlineObject> {
                 return false;
         } else if (!text.equals(other.text))
             return false;
-        if (type != other.type)
-            return false;
-        return true;
+        return type == other.type;
     }
 
 }

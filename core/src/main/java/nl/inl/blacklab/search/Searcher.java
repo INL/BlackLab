@@ -824,8 +824,7 @@ public abstract class Searcher {
             starts[0] = -1;
         if (endAtEndOfDoc)
             ends[0] = -1;
-        int[] startEnd = new int[] { starts[0], ends[0] };
-        return startEnd;
+        return new int[] { starts[0], ends[0] };
     }
 
     public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord,
@@ -1300,7 +1299,7 @@ public abstract class Searcher {
      * @return the matching documents
      */
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults._fromQuery(this, documentFilterQuery);
+        return DocResults.fromQuery(this, documentFilterQuery);
     }
 
     /**
@@ -1335,7 +1334,7 @@ public abstract class Searcher {
     }
 
     public boolean canDoNfaMatching() {
-        if (forwardIndices.size() == 0)
+        if (forwardIndices.isEmpty())
             return false;
         ForwardIndex fi = forwardIndices.values().iterator().next();
         return fi.canDoNfaMatching();

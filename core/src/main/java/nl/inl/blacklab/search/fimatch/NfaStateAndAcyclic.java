@@ -47,12 +47,12 @@ public class NfaStateAndAcyclic extends NfaState {
             } else {
                 // Determine intersection with previous matches
                 clausesMatchEnds.retainAll(matchEndsThisClause);
-                if (clausesMatchEnds.size() == 0)
+                if (clausesMatchEnds.isEmpty())
                     return false; // there are no hits left; short circuit AND
             }
         }
         boolean foundMatch = false;
-        if (clausesMatchEnds.size() > 0) {
+        if (!clausesMatchEnds.isEmpty()) {
             // Continue matching from the matches to our OR clauses
             for (Integer clauseMatchEnd : clausesMatchEnds) {
                 foundMatch |= nextState.findMatchesInternal(fiDoc, clauseMatchEnd, direction, matchEnds);

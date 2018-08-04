@@ -38,10 +38,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
     private Set<String> unsupported = new HashSet<>();
 
-    public DocIndexerFactoryClass() {
-        // Init called externally.
-    }
-
     @Override
     public void init() {
         // Note that these names should not collide with the builtin config-based formats, or those will be used instead.

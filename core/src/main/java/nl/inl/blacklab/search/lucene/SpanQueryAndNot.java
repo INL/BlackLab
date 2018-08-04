@@ -53,7 +53,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     private void checkBaseFieldName() {
-        if (include.size() > 0) {
+        if (!include.isEmpty()) {
             String baseFieldName = ComplexFieldUtil.getBaseName(include.get(0).getField());
             for (BLSpanQuery clause : include) {
                 String f = ComplexFieldUtil.getBaseName(clause.getField());
@@ -214,7 +214,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        if (exclude.size() > 0)
+        if (!exclude.isEmpty())
             throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
 
         List<BLSpanWeight> weights = new ArrayList<>();
@@ -277,18 +277,18 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public String getField() {
-        if (include.size() > 0)
+        if (!include.isEmpty())
             return include.get(0).getField();
-        if (exclude.size() > 0)
+        if (!exclude.isEmpty())
             return exclude.get(0).getField();
         throw new RuntimeException("Query has no clauses");
     }
 
     @Override
     public String getRealField() {
-        if (include.size() > 0)
+        if (!include.isEmpty())
             return include.get(0).getRealField();
-        if (exclude.size() > 0)
+        if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
         throw new RuntimeException("Query has no clauses");
     }
@@ -381,7 +381,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-        if (exclude.size() > 0)
+        if (!exclude.isEmpty())
             throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
         List<NfaState> nfaClauses = new ArrayList<>();
 //		List<NfaState> dangling = new ArrayList<>();
@@ -396,7 +396,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public boolean canMakeNfa() {
-        if (exclude.size() > 0)
+        if (!exclude.isEmpty())
             return false;
         for (BLSpanQuery clause : include) {
             if (!clause.canMakeNfa())

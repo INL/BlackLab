@@ -103,7 +103,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
         docIndexer.addMetadataField("Corpus_title", "SoNaR");
 
         fromInputFile = fromInputFile.replaceAll("\\\\", "/");
-        int lastSlash = fromInputFile.lastIndexOf("/");
+        int lastSlash = fromInputFile.lastIndexOf('/');
         int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash - 1);
         String metadataFile = fromInputFile.substring(penultimateSlash + 1);
         metadataFile = metadataFile.replaceAll("\\.folia\\.", ".cmdi.");

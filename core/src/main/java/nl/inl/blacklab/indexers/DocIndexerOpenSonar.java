@@ -173,7 +173,7 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
                     // Capture the features inside this pos element (and add the head PoS now)
                     capturePosFeatures = true;
                     posFeatures.clear();
-                    String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf("(")).trim() : pos;
+                    String posHead = pos.contains("(") ? pos.substring(0, pos.indexOf('(')).trim() : pos;
                     posFeatures.put("head", posHead);
                 }
             }

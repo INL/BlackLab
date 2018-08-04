@@ -75,12 +75,10 @@ public class TestComplexFieldUtil {
 
     @After
     public void shutdown() {
-        ComplexFieldUtil.setFieldNameSeparators(false);
     }
 
     @Test
     public void testGetNameComponents() {
-        ComplexFieldUtil.setFieldNameSeparators(false);
         //testArray(new String[] { "contents" },
         //		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
         testArray(new String[] { "contents", "lemma" },

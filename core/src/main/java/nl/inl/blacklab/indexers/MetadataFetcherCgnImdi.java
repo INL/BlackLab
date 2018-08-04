@@ -99,8 +99,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
         docIndexer.addMetadataField("Corpus_title", "CGN");
 
         fromInputFile = fromInputFile.replaceAll("\\\\", "/");
-        int lastSlash = fromInputFile.lastIndexOf("/");
-        int penultimateSlash = fromInputFile.lastIndexOf("/", lastSlash);
+        int lastSlash = fromInputFile.lastIndexOf('/');
+        int penultimateSlash = fromInputFile.lastIndexOf('/', lastSlash);
         String metadataFile = fromInputFile.substring(penultimateSlash + 1);
         metadataFile = metadataFile.replaceAll("\\.folia\\.xml", ".imdi");
         String[] parts = fromInputFile.split("/");

@@ -93,13 +93,7 @@ class TocEntry implements Comparable<TocEntry> {
         if (getClass() != obj.getClass())
             return false;
         TocEntry other = (TocEntry) obj;
-        if (deleted != other.deleted)
-            return false;
-        if (length != other.length)
-            return false;
-        if (offset != other.offset)
-            return false;
-        return true;
+        return deleted == other.deleted && length == other.length && offset == other.offset;
     }
 
 }

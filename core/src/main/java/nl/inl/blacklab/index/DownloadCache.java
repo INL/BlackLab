@@ -99,9 +99,7 @@ public class DownloadCache {
                     return false;
             } else if (!key.equals(other.key))
                 return false;
-            if (lastUsed != other.lastUsed)
-                return false;
-            return true;
+            return lastUsed == other.lastUsed;
         }
 
         public long timeSinceLastUsed() {

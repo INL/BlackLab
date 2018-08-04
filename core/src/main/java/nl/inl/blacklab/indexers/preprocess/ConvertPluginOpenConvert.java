@@ -35,10 +35,6 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     private Class<?> SimpleInputOutputProcess;
     private Method SimpleInputOutputProcess_handleStream;
 
-    public ConvertPluginOpenConvert() {
-        //
-    }
-
     @Override
     public void init(Optional<ObjectNode> configNode) throws PluginException {
         ObjectNode config = configNode.orElseThrow(() -> new PluginException("This plugin requires a configuration."));

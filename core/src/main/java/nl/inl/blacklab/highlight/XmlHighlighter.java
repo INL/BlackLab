@@ -54,7 +54,11 @@ public class XmlHighlighter {
      */
     static class TagLocation implements Comparable<TagLocation> {
         /** Counter for assigning unique id to objectNum */
-        public static long n = 0;
+        private static long n = 0;
+        
+        static synchronized long getNextUniqueId() {
+            return n++;
+        }
 
         /**
          * Whether this is an existing tag from the original content, a start highlight
@@ -96,8 +100,7 @@ public class XmlHighlighter {
             this.start = start;
             this.end = end;
             matchingTagStart = -1; // unmatched tag (until we find its match)
-            objectNum = n;
-            n++;
+            objectNum = getNextUniqueId();
         }
 
         @Override
@@ -152,9 +155,7 @@ public class XmlHighlighter {
                 return false;
             if (start != other.start)
                 return false;
-            if (type != other.type)
-                return false;
-            return true;
+            return type == other.type;
         }
 
         @Override

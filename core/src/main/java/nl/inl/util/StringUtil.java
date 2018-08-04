@@ -142,7 +142,7 @@ public class StringUtil {
      *
      * @return the Dutch, case-insensitive collator.
      */
-    public static Collator getDutchInsensitiveCollator() {
+    public static synchronized Collator getDutchInsensitiveCollator() {
         if (dutchInsensitiveCollator == null) {
             dutchInsensitiveCollator = Collator.getInstance(dutchLocale);
             dutchInsensitiveCollator.setStrength(Collator.SECONDARY);
@@ -155,7 +155,7 @@ public class StringUtil {
      *
      * @return the Dutch, case-insensitive collator.
      */
-    public static Collator getEnglishInsensitiveCollator() {
+    public static synchronized Collator getEnglishInsensitiveCollator() {
         if (englishInsensitiveCollator == null) {
             englishInsensitiveCollator = Collator.getInstance(englishLocale);
             englishInsensitiveCollator.setStrength(Collator.SECONDARY);

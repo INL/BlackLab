@@ -158,7 +158,7 @@ public class FileProcessor implements AutoCloseable {
      * keep a reference to the main thread so instead just use this flag that the
      * main thread checks while it's performing work.
      */
-    private volatile boolean closed = false;
+    private volatile boolean closed = false; // TODO: should this be AtomicBoolean?
 
     /**
      * Separate from closed to allow aborting even while already closed or closing

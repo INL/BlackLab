@@ -40,7 +40,7 @@ public abstract class TextPatternCombiner extends TextPattern {
     @Override
     public abstract BLSpanQuery translate(QueryExecutionContext context);
 
-    public void addClause(TextPattern clause) {
+    public final void addClause(TextPattern clause) {
         clauses.add(clause);
     }
 

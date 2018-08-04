@@ -84,26 +84,25 @@ public class CompleteQuery {
      * @return the resulting query
      */
     public CompleteQuery or(CompleteQuery other) {
-        TextPattern a, b, c;
-        Query d, e, f;
+        TextPattern a = contentsQuery;
+        TextPattern b = other.contentsQuery;
+        Query d = filterQuery;
+        Query e = other.filterQuery;
 
-        a = contentsQuery;
-        b = other.contentsQuery;
-        d = filterQuery;
-        e = other.filterQuery;
-
-        if ((a == null) != (b == null) ||
-                (d == null) != (e == null)) {
+        if (a == null && b != null || a != null && b == null ||
+            d == null && e != null || d != null && e == null) {
             throw new UnsupportedOperationException(
                     "or can only be used to combine contents clauses or metadata clauses; " +
                             "you can't combine the two with eachother with or");
         }
-
+        
+        TextPattern c;
         if (a != null && b != null)
             c = new TextPatternOr(a, b);
         else
             c = a == null ? b : a;
 
+        Query f;
         if (d != null && e != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
             bb.add(d, Occur.SHOULD);

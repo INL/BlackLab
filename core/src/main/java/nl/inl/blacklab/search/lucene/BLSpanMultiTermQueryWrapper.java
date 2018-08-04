@@ -161,10 +161,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     @Override
     public boolean canMakeNfa() {
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        if (term.text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR))
-            return false;
-
-        return true;
+        return !term.text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
     }
 
     @Override
@@ -222,8 +219,8 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
      */
     public static String findRegexPrefixSuffix(String pattern) {
         String trimmed = pattern.replaceAll("^\\^(\\(\\?\\-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
-        String prefixPostfix = trimmed.replaceAll("^(\\w+)(\\W(|.*\\W))(\\w+)$", "$1$4"); // only retain prefix and suffix
-        return prefixPostfix;
+         // only retain prefix and suffix
+        return trimmed.replaceAll("^(\\w+)(\\W(|.*\\W))(\\w+)$", "$1$4");
     }
 
     @Override

@@ -73,10 +73,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         return Optional.ofNullable(supported.get(formatIdentifier));
     };
 
-    public DocIndexerFactoryConfig() {
-        // Init called externally.
-    }
-
     @Override
     public void init() throws InputFormatConfigException {
         if (isInitialized)

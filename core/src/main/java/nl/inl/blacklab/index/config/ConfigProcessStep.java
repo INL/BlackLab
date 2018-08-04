@@ -12,9 +12,6 @@ public class ConfigProcessStep {
     /** Extra parameters to pass */
     private Map<String, String> param = new LinkedHashMap<>();
 
-    public ConfigProcessStep() {
-    }
-
     public void validate() {
         String t = "processing step";
         ConfigInputFormat.req(method, t, "method");

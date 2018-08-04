@@ -177,8 +177,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
         if (getClass() != obj.getClass())
             return false;
         SpanQueryEdge other = (SpanQueryEdge) obj;
-        if (rightEdge != other.rightEdge)
-            return false;
-        return true;
+        return rightEdge == other.rightEdge;
     }
 }

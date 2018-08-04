@@ -128,7 +128,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 @Override
                 public String getNamespaceURI(String prefix) {
                     if (prefix == null)
-                        throw new NullPointerException("Null prefix");
+                        throw new IllegalArgumentException("Null prefix");
                     if (prefix.equals("xsi"))
                         return "http://www.w3.org/2001/XMLSchema-instance";
                     if (prefix.equals("dc"))

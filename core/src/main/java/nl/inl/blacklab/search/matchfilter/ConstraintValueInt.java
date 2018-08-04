@@ -29,9 +29,7 @@ public class ConstraintValueInt extends ConstraintValue {
         if (getClass() != obj.getClass())
             return false;
         ConstraintValueInt other = (ConstraintValueInt) obj;
-        if (i != other.i)
-            return false;
-        return true;
+        return i == other.i;
     }
 
     @Override
@@ -41,7 +39,7 @@ public class ConstraintValueInt extends ConstraintValue {
 
     @Override
     public String toString() {
-        return "" + i;
+        return Integer.toString(i);
     }
 
 }

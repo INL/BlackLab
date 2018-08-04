@@ -66,7 +66,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
 
     private void determineBaseFieldName() {
-        if (clauses.size() > 0) {
+        if (!clauses.isEmpty()) {
             luceneFieldName = clauses.get(0).getRealField();
             baseFieldName = ComplexFieldUtil.getBaseName(clauses.get(0).getField());
             for (int i = 1; i < clauses.size(); i++) {
@@ -87,10 +87,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
         final BLSpanQueryAbstract that = (BLSpanQueryAbstract) o;
 
-        if (clauses.equals(that.clauses))
-            return true;
-
-        return false;
+        return clauses.equals(that.clauses);
     }
 
     @Override

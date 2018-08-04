@@ -63,10 +63,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     boolean inited = false;
 
-    public DocIndexerConfig() {
-        super();
-    }
-
     public void setConfigInputFormat(ConfigInputFormat config) {
         this.config = config;
     }

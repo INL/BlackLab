@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit;
 public class MainThreadExecutorService extends AbstractExecutorService {
 
     @FunctionalInterface
-    public static interface RejectedExecutionHandler {
-        public void rejectedExecution(Runnable r, MainThreadExecutorService e);
+    public interface RejectedExecutionHandler {
+        void rejectedExecution(Runnable r, MainThreadExecutorService e);
     }
 
     private RejectedExecutionHandler handler;
@@ -29,7 +29,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
 
     MainThreadExecutorService(RejectedExecutionHandler h) {
         if (h == null)
-            throw new NullPointerException();
+            throw new IllegalArgumentException();
         this.handler = h;
     }
 

@@ -84,32 +84,38 @@ public final class ComplexFieldUtil {
      * String used to separate the base field name (say, contents) and the field
      * property (pos, lemma, etc.)
      */
-    static String PROP_SEP;
+    static final String PROP_SEP;
 
     /**
      * String used to separate the field/property name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
-    static String ALT_SEP;
+    static final String ALT_SEP;
 
     /**
      * String used to separate the field/property name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
-    static String BOOKKEEPING_SEP;
+    static final String BOOKKEEPING_SEP;
 
     /** Length of the ALT separator */
-    static int ALT_SEP_LEN;
+    static final int ALT_SEP_LEN;
 
     /** Length of the PROP separator */
-    static int PROP_SEP_LEN;
+    static final int PROP_SEP_LEN;
 
     /** Length of the BOOKKEEPING separator */
-    static int BOOKKEEPING_SEP_LEN;
+    static final int BOOKKEEPING_SEP_LEN;
 
     static {
-        // Default: use new field naming scheme.
-        setFieldNameSeparators(false);
+        // Lucene doesn't have any restrictions on characters in field names;
+        // use the short, symbolic ones.
+        PROP_SEP = "%";
+        ALT_SEP = "@";
+        BOOKKEEPING_SEP = "#";
+        ALT_SEP_LEN = ALT_SEP.length();
+        PROP_SEP_LEN = PROP_SEP.length();
+        BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
     }
 
     /**
@@ -170,32 +176,6 @@ public final class ComplexFieldUtil {
 
     public static String endTagPropertyField(String fieldName) {
         return propertyField(fieldName, END_TAG_PROP_NAME);
-    }
-
-    /**
-     * Set what field name separators to use.
-     * 
-     * @param avoidSpecialChars if true, use only standard identifier characters for
-     *            the separators. If false, use special chars %, @, #.
-     */
-    public static void setFieldNameSeparators(boolean avoidSpecialChars) {
-        if (avoidSpecialChars) {
-            // Avoid using special characters in fieldnames, in case
-            // this clashes with other Lucene-based software (such as e.g. Solr)
-            PROP_SEP = "_PR_";
-            ALT_SEP = "_AL_";
-            BOOKKEEPING_SEP = "_BK_";
-        } else {
-            // Lucene doesn't have any restrictions on characters in field names;
-            // use the short, symbolic ones.
-            PROP_SEP = "%";
-            ALT_SEP = "@";
-            BOOKKEEPING_SEP = "#";
-        }
-
-        ALT_SEP_LEN = ALT_SEP.length();
-        PROP_SEP_LEN = PROP_SEP.length();
-        BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
     }
 
     /**

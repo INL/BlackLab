@@ -511,7 +511,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     public synchronized void storePart(String content) {
         if (content.length() == 0)
             return;
-        if (blockOffsetWhileStoring.size() == 0)
+        if (blockOffsetWhileStoring.isEmpty())
             blockOffsetWhileStoring.add(0); // first offset is always 0
 
         // Calculate what charsFromEntryWritten will be after storing this part
@@ -658,8 +658,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
      * @return the File object
      */
     private File getContentFile(int fileId) {
-        File f = new File(dir, String.format("data%04d.dat", fileId));
-        return f;
+        return new File(dir, String.format("data%04d.dat", fileId));
     }
 
     /**

@@ -1106,7 +1106,7 @@ public class QueryTool {
             showResultsPage();
             reportTime(t.elapsed());
             if (determineTotalNumberOfHits)
-                statInfo = "" + hits.size();
+                statInfo = Integer.toString(hits.size());
             else
                 statInfo = "?";
             commandWasQuery = true;

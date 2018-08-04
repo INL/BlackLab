@@ -86,7 +86,7 @@ public class ResultsGrouper extends HitGroups {
      * @param criteria criteria to group by
      * @return grouped hits
      */
-    public static ResultsGrouper _fromHits(Hits hits, HitProperty criteria) {
+    public static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
         return new ResultsGrouper(hits, criteria);
     }
 

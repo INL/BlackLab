@@ -32,7 +32,7 @@ public class NfaStateAnd extends NfaState {
             } else {
                 // Calculate intersection
                 newHitsFound.retainAll(matchesForClause);
-                if (newHitsFound.size() == 0)
+                if (newHitsFound.isEmpty())
                     return false; // no hits left; short-circuit
             }
         }

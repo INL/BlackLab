@@ -79,9 +79,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /** The config for the annotated (complex) field we're currently processing. */
     private ConfigAnnotatedField currentAnnotatedField;
 
-    public DocIndexerXPath() {
-    }
-
     @Override
     public void close() throws Exception {
         // NOP, we already closed our input after we read it
@@ -620,7 +617,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             releaseAutoPilot(apEvalToString);
 
             // No annotations have been added, the result of the xPath query must have been empty.
-            if (firstValue == true) {
+            if (firstValue) {
                 // Add default value
                 String annotValue = processString("", annotation.getProcess());
                 annotation(annotation.getName(), annotValue, 1, indexAtPositions);

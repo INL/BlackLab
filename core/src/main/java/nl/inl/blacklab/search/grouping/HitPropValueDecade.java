@@ -30,6 +30,6 @@ public class HitPropValueDecade extends HitPropValueInt {
     public String serialize() {
         if (value == HitPropertyDocumentDecade.UNKNOWN_VALUE)
             return "unknown";
-        return PropValSerializeUtil.combineParts("dec", "" + value);
+        return PropValSerializeUtil.combineParts("dec", Integer.toString(value));
     }
 }

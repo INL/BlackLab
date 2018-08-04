@@ -35,9 +35,7 @@ public class ConstraintValueBoolean extends ConstraintValue {
         if (getClass() != obj.getClass())
             return false;
         ConstraintValueBoolean other = (ConstraintValueBoolean) obj;
-        if (b != other.b)
-            return false;
-        return true;
+        return b == other.b;
     }
 
 }
