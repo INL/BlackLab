@@ -22,8 +22,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
-import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
+import nl.inl.util.XmlHighlighter;
+import nl.inl.util.XmlHighlighter.HitCharSpan;
+import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class TestXmlHighlighter {
 

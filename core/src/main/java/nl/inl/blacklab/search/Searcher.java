@@ -42,9 +42,6 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.highlight.XmlHighlighter;
-import nl.inl.blacklab.highlight.XmlHighlighter.HitCharSpan;
-import nl.inl.blacklab.highlight.XmlHighlighter.UnbalancedTagsStrategy;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.config.ConfigInputFormat;
@@ -58,6 +55,9 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
+import nl.inl.util.XmlHighlighter;
+import nl.inl.util.XmlHighlighter.HitCharSpan;
+import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public abstract class Searcher {
 

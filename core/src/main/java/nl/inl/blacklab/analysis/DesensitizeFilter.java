@@ -13,48 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.filter;
+package nl.inl.blacklab.analysis;
 
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
+import nl.inl.util.StringUtil;
+
 /**
- * Replaces punctuation with space.
+ * Lowercases and/or removes any accents from the input.
+ *
+ * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII
+ * characters too.
+ *
+ * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an
+ * approach such as RemoveDutchAccentsFilter.
  */
-public class RemovePunctuationFilter extends TokenFilter {
-    final static Pattern punctuationPattern = Pattern.compile("\\p{P}+");
-
-    /**
-     * Remove punctuation from a string
-     * 
-     * @param input the string
-     * @return same string with punctuation removed
-     */
-    public static String process(String input) {
-        return punctuationPattern.matcher(input).replaceAll("");
-    }
-
-    /**
-     * Test program
-     * 
-     * @param args
-     */
-    public static void main(String[] args) {
-        String input = "Hé, jij daar!";
-        System.out.println(process(input));
-    }
+public class DesensitizeFilter extends TokenFilter {
 
     private CharTermAttribute termAtt;
 
+    private boolean lowerCase;
+
+    private boolean removeAccents;
+
     /**
-     * @param input the token stream to remove punctuation from
+     * @param input the token stream to desensitize
+     * @param lowerCase whether to lower case tokens
+     * @param removeAccents whether to remove accents
      */
-    public RemovePunctuationFilter(TokenStream input) {
+    public DesensitizeFilter(TokenStream input, boolean lowerCase, boolean removeAccents) {
         super(input);
+        this.lowerCase = lowerCase;
+        this.removeAccents = removeAccents;
         termAtt = addAttribute(CharTermAttribute.class);
     }
 
@@ -62,7 +56,10 @@ public class RemovePunctuationFilter extends TokenFilter {
     final public boolean incrementToken() throws IOException {
         if (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
-            t = process(t);
+            if (removeAccents)
+                t = StringUtil.stripAccents(t);
+            if (lowerCase)
+                t = t.toLowerCase();
             termAtt.copyBuffer(t.toCharArray(), 0, t.length());
             return true;
         }
@@ -73,6 +70,8 @@ public class RemovePunctuationFilter extends TokenFilter {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + (lowerCase ? 1231 : 1237);
+        result = prime * result + (removeAccents ? 1231 : 1237);
         result = prime * result + ((termAtt == null) ? 0 : termAtt.hashCode());
         return result;
     }
@@ -85,7 +84,11 @@ public class RemovePunctuationFilter extends TokenFilter {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        RemovePunctuationFilter other = (RemovePunctuationFilter) obj;
+        DesensitizeFilter other = (DesensitizeFilter) obj;
+        if (lowerCase != other.lowerCase)
+            return false;
+        if (removeAccents != other.removeAccents)
+            return false;
         if (termAtt == null) {
             if (other.termAtt != null)
                 return false;

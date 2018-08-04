@@ -50,7 +50,6 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.highlight.XmlHighlighter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Concordance;
@@ -65,6 +64,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
+import nl.inl.util.XmlHighlighter;
 
 /**
  * Represents a list of Hit objects. Also maintains information about the

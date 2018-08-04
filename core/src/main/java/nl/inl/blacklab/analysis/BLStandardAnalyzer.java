@@ -29,8 +29,6 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
-import nl.inl.blacklab.filter.RemovePunctuationFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**

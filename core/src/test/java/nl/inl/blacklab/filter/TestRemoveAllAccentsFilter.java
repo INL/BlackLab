@@ -22,6 +22,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.analysis.RemoveAllAccentsFilter;
+
 public class TestRemoveAllAccentsFilter {
 
     @Test

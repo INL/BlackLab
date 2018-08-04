@@ -24,7 +24,6 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**

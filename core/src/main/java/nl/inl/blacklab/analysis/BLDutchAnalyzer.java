@@ -23,7 +23,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
-import nl.inl.blacklab.filter.RemoveAllAccentsFilter;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
 /**

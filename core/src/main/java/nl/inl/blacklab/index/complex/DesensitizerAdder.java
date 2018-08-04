@@ -2,7 +2,7 @@ package nl.inl.blacklab.index.complex;
 
 import org.apache.lucene.analysis.TokenStream;
 
-import nl.inl.blacklab.filter.DesensitizeFilter;
+import nl.inl.blacklab.analysis.DesensitizeFilter;
 
 public class DesensitizerAdder implements TokenFilterAdder {
 
