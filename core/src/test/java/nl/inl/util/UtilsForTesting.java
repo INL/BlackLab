@@ -24,7 +24,7 @@ import nl.inl.util.FileUtil.FileTask;
 /**
  * Misc. testing utilities.
  */
-public class UtilsForTesting {
+public final class UtilsForTesting {
 
     private UtilsForTesting() {
     }

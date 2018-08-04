@@ -133,7 +133,7 @@ public class TestContentStoreDirFixedBlock {
                 storedKeys.clear();
             }
 
-            if (stored.size() > 0 && random.nextInt(3) == 0) {
+            if (!stored.isEmpty() && random.nextInt(3) == 0) {
                 // Choose random document. Assert it was stored correctly, then delete it.
                 int keyIndex = random.nextInt(stored.size());
                 Integer key = storedKeys.remove(keyIndex);

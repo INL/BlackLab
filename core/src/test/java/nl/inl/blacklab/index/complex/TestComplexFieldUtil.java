@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.index.complex;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -69,12 +68,8 @@ public class TestComplexFieldUtil {
     }
 
     @Before
-    public void setup() {
+    public void setUp() {
         //oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
-    }
-
-    @After
-    public void shutdown() {
     }
 
     @Test

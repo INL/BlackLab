@@ -43,8 +43,6 @@ public class DocResult {
     /**
      * Construct a DocResult.
      *
-     * @param searcher the index we searched
-     * @param concField concordance field (e.g. "contents")
      * @param doc the Lucene document id
      * @param docHits hits in the document
      */

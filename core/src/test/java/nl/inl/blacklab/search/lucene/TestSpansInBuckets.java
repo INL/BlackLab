@@ -17,16 +17,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.MockSpansInBuckets;
-import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.SpansInBuckets;
-import nl.inl.blacklab.search.lucene.SpansInBucketsPerDocument;
-
 import org.apache.lucene.search.DocIdSetIterator;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.MockSpansInBuckets;
+import nl.inl.blacklab.TestUtil;
 
 public class TestSpansInBuckets {
     private SpansInBuckets hpd;

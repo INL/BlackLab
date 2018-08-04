@@ -147,7 +147,7 @@ public abstract class BLSpanQuery extends SpanQuery {
      *
      * @param reader index reader
      * @return optimized query
-     * @throws IOException
+     * @throws IOException on error
      */
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         return this; // by default, don't do any optimization

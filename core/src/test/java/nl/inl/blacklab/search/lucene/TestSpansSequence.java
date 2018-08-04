@@ -22,9 +22,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.SpansSequenceRaw;
-import nl.inl.blacklab.search.lucene.SpansSequenceSimple;
 
 public class TestSpansSequence {
 

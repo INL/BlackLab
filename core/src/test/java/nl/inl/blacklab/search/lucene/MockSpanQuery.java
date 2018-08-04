@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,9 +27,6 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.BLSpans;
 
 /**
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'
@@ -125,15 +123,14 @@ public class MockSpanQuery extends BLSpanQuery {
             return true;
         if (o instanceof MockSpanQuery) {
             final MockSpanQuery that = (MockSpanQuery) o;
-            return doc.equals(that.doc) && start.equals(that.start) && end.equals(that.end)
-                    && isSimple == that.isSimple;
+            return doc == that.doc && start == that.start && end == that.end && isSimple == that.isSimple;
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return doc.hashCode() ^ start.hashCode() ^ end.hashCode() ^ (isSimple ? 0x23357649 : 0);
+        return Arrays.hashCode(doc) ^ Arrays.hashCode(start) ^ Arrays.hashCode(end) ^ (isSimple ? 0x23357649 : 0);
     }
 
     @Override

@@ -83,7 +83,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
-        return new BLSpanWeight(SpanQueryAnyToken.this, searcher, null) {
+        return new BLSpanWeight(this, searcher, null) {
             @Override
             public void extractTerms(Set<Term> terms) {
                 // No terms

@@ -20,11 +20,9 @@ import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockSpansInBuckets;
 import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.MockSpansInBuckets;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.SpansInBuckets;
-import nl.inl.blacklab.search.lucene.SpansInBucketsPerStartPoint;
 
 public class TestSpansInBucketsPerStartPoint {
     private SpansInBuckets hpd;

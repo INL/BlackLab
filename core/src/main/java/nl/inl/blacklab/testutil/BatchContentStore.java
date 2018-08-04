@@ -22,8 +22,8 @@ public class BatchContentStore {
         int fileArgNumber = 0;
         File indexDir = null;
         File inputFile = null;
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].trim();
+        for (String arg : args) {
+            arg = arg.trim();
             if (arg.charAt(0) == '-') {
                 if (arg.equals("-t")) {
                     // determineTotalHits = false;
@@ -124,7 +124,7 @@ public class BatchContentStore {
         Timer t = new Timer();
         int docPos = first;
         for (int i = 0; i < number; i++) {
-            int id, length;
+                int id, length;
             do {
                 if (docPos >= docIds.size())
                     throw new RuntimeException("Performance test went beyond end of content store ("

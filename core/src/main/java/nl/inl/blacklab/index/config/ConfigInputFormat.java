@@ -129,6 +129,11 @@ public class ConfigInputFormat {
      */
     private File readFromFile;
 
+    /**
+     * Construct empty input format instance.
+     * 
+     * @param name format name
+     */
     public ConfigInputFormat(String name) {
         this.name = name;
     }
@@ -139,7 +144,7 @@ public class ConfigInputFormat {
      *            extension) will be used as this format's name.
      * @param finder finder to locate the baseFormat of this config, if set, may be
      *            null if no baseFormat is required
-     * @throws IOException
+     * @throws IOException on error
      */
     public ConfigInputFormat(File file, BaseFormatFinder finder) throws IOException {
         this.readFromFile = file;
@@ -149,9 +154,9 @@ public class ConfigInputFormat {
 
     /**
      *
-     * @param name
-     * @param reader
-     * @param isJson
+     * @param name format name
+     * @param reader format file to read
+     * @param isJson true if json, false if yaml
      * @param finder finder to locate the baseFormat of this config, if set, may be
      *            null if no baseFormat is required
      * @throws IOException

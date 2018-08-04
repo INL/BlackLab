@@ -32,7 +32,7 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     @Override
     public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
-        return new BLSpanWeight(SpanQueryNoHits.this, searcher, null) {
+        return new BLSpanWeight(this, searcher, null) {
             @Override
             public void extractTerms(Set<Term> terms) {
                 // No terms

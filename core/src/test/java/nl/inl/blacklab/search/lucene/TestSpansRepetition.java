@@ -17,14 +17,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
 
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.SpansRepetition;
 
-@SuppressWarnings("unused")
 public class TestSpansRepetition {
     @Test
     public void testRepetition() throws IOException {

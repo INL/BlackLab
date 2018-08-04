@@ -102,7 +102,7 @@ public abstract class BLSpans extends Spans {
      * @param target target start position to advance to
      * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with
      *         this document
-     * @throws IOException
+     * @throws IOException on error
      */
     public int advanceStartPosition(int target) throws IOException {
         // Naive implementations; subclasses may provide a faster version.

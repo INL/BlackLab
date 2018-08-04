@@ -22,7 +22,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.MockSpans;
 import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.search.lucene.PerDocumentSortedSpans;
 
 public class TestPerDocumentSortedSpans {
     private PerDocumentSortedSpans hpd;

@@ -44,7 +44,7 @@ public class TestNfa {
         public String getTermString(int propIndex, int termId) {
             if (propIndex != 0)
                 throw new RuntimeException("only 0 is valid property");
-            return "" + ((char) termId);
+            return Character.toString((char) termId);
         }
 
         @Override
@@ -85,7 +85,7 @@ public class TestNfa {
         public String getTermString(int propIndex, int termId) {
             if (propIndex != 0)
                 throw new RuntimeException("only 0 is valid property");
-            return "" + ((char) termId);
+            return Character.toString((char) termId);
         }
 
         @Override

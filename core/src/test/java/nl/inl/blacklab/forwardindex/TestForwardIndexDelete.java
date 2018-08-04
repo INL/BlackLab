@@ -68,7 +68,7 @@ public class TestForwardIndexDelete {
         // Make test doc: first token is 0, each subsequent
         // token is one more. Corresponds to term ids.
         for (int i = 0; i < length; i++) {
-            content.add(i + "");
+            content.add(Integer.toString(i));
         }
         int fiid = fi.addDocument(content);
 

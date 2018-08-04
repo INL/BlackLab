@@ -26,7 +26,7 @@ public class TestFileProcessor {
     public static File testDirectory;
 
     // Can't annotate using @BeforeClass, because our @Parameters function runs first
-    public static void setup() throws URISyntaxException {
+    public static void init() throws URISyntaxException {
         testFile = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestFile.txt").toURI());
         testArchive = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestArchive.zip").toURI());
         testDirectory = new File(TestFileProcessor.class.getResource("/TestFileProcessor/TestDirectory").toURI());
@@ -62,7 +62,7 @@ public class TestFileProcessor {
 
     @Parameters(name = "{index} - {0} useThreads:{2} recurse:{3} archives:{4} exception:{5}")
     public static Collection<Object[]> data() throws URISyntaxException {
-        setup();
+        init();
 
         return Arrays.asList(new Object[][] {
                 { // Single thread single file
