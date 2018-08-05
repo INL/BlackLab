@@ -36,7 +36,7 @@ package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 
 @SuppressWarnings("all")
 
@@ -77,8 +77,8 @@ public class ContextualQueryLanguageParser {
     
     private String defaultProperty = "contents.word";
     
-    public void setDefaultProperty(IndexStructure structure, String fieldName) {
-        defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+    public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
+        defaultProperty = indexMetadata.getComplexFieldDesc(fieldName).getMainProperty().getName();
     }
 
     public void setDefaultProperty(String property) {

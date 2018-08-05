@@ -8,11 +8,11 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
 
@@ -35,11 +35,11 @@ public class TokensPerMetaValue {
         Searcher searcher = Searcher.open(new File(indexDir));
         try {
             // Loop over all metadata fields
-            IndexMetadata indexStructure = searcher.getIndexStructure();
+            IndexMetadata indexMetadata = searcher.getIndexMetadata();
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
-            for (String metaFieldName : indexStructure.getMetadataFields()) {
+            for (String metaFieldName : indexMetadata.getMetadataFields()) {
                 // Check if this field has only a few values
-                MetadataField fd = indexStructure.metadataField(metaFieldName);
+                MetadataField fd = indexMetadata.metadataField(metaFieldName);
                 if (fd.isValueListComplete().equals(ValueListComplete.YES)) {
                     // Loop over the values
                     for (Map.Entry<String, Integer> entry : fd.valueDistribution().entrySet()) {

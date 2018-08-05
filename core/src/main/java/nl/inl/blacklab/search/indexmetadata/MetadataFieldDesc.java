@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import nl.inl.blacklab.interfaces.struct.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 
 public class MetadataFieldDesc extends BaseFieldDesc implements MetadataField {
 

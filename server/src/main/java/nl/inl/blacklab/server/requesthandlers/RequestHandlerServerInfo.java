@@ -44,10 +44,10 @@ public class RequestHandlerServerInfo extends RequestHandler {
             ds.startMap();
 
             synchronized (index) {
-                IndexMetadata struct = index.getIndexStructure();
+                IndexMetadata indexMetadata = index.getIndexMetadata();
                 IndexStatus status = index.getStatus();
 
-                ds.entry("displayName", struct.getDisplayName());
+                ds.entry("displayName", indexMetadata.getDisplayName());
                 ds.entry("status", status);
 
                 if (status.equals(IndexStatus.INDEXING)) {
@@ -61,12 +61,12 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     }
                 }
 
-                String formatIdentifier = struct.getDocumentFormat();
+                String formatIdentifier = indexMetadata.getDocumentFormat();
                 if (formatIdentifier != null && formatIdentifier.length() > 0)
                     ds.entry("documentFormat", formatIdentifier);
-                ds.entry("timeModified", struct.getTimeModified());
-                if (struct.getTokenCount() > 0)
-                    ds.entry("tokenCount", struct.getTokenCount());
+                ds.entry("timeModified", indexMetadata.getTimeModified());
+                if (indexMetadata.getTokenCount() > 0)
+                    ds.entry("tokenCount", indexMetadata.getTokenCount());
 
             }
 

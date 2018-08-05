@@ -219,14 +219,14 @@ public class Index {
     }
 
     /**
-     * Get the indexStructure for this Index. This could also be gotten from the
+     * Get the IndexMetadata for this Index. This could also be gotten from the
      * internal Searcher or Indexer inside this Index, but this always gets the most
      * up-to-date version.
      *
-     * @return the IndexStructure
+     * @return the index metadata
      * @throws InternalServerError when no searcher could not be opened
      */
-    public synchronized IndexMetadata getIndexStructure() throws InternalServerError {
+    public synchronized IndexMetadata getIndexMetadata() throws InternalServerError {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {
@@ -239,9 +239,9 @@ public class Index {
         }
 
         if (this.searcher != null)
-            return this.searcher.getIndexStructure();
+            return this.searcher.getIndexMetadata();
         else if (this.indexer != null)
-            return this.indexer.getSearcher().getIndexStructure();
+            return this.indexer.getSearcher().getIndexMetadata();
 
         // This should literally never happen, after openForSearching either searcher or indexer must be set
         throw new RuntimeException(

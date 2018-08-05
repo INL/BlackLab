@@ -79,8 +79,8 @@ public class CountTokens {
         System.out.println("Getting IndexReader...");
         final IndexReader reader = searcher.getIndexReader();
 
-        IndexMetadata struct = searcher.getIndexStructure();
-        final String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        final String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
 
         System.out.println("Calling forEachDocument()...");
         CountTask task = new CountTask(reader, tokenLengthField);

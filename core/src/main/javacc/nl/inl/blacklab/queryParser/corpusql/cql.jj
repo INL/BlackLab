@@ -50,7 +50,7 @@ import nl.inl.blacklab.search.TextPatternRegex;
 import nl.inl.blacklab.search.TextPatternRepetition;
 import nl.inl.blacklab.search.TextPatternSequence;
 import nl.inl.blacklab.search.TextPatternTags;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -125,7 +125,7 @@ public class CorpusQueryLanguageParser {
 
     private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
     
-    public void setDefaultProperty(IndexStructure structure, String fieldName) {
+    public void setDefaultProperty(IndexMetadata structure, String fieldName) {
         defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
     }
 

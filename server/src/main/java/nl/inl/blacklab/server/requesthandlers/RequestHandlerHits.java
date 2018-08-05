@@ -150,11 +150,11 @@ public class RequestHandlerHits extends RequestHandler {
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
-            IndexMetadata struct = searcher.getIndexStructure();
+            IndexMetadata indexMetadata = searcher.getIndexMetadata();
             if (includeTokenCount) {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set
-                String fieldName = struct.getMainContentsField().name();
+                String fieldName = indexMetadata.getMainContentsField().name();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = perDocResults.intSum(propTokens);
             }
@@ -175,7 +175,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
+            RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
             ds.endEntry();
             if (searchParam.getBoolean("explain")) {
                 TextPattern tp = searchParam.getPattern();

@@ -52,8 +52,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
                     "Bad URL. Specify a field name and optionally a property to autocomplete.");
         }
         Searcher searcher = getSearcher();
-        IndexMetadata struct = searcher.getIndexStructure();
-        if (complexFieldName == null && struct.getComplexFields().contains(fieldName))
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        if (complexFieldName == null && indexMetadata.getComplexFields().contains(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Also specify a property to autocomplete for complexfield: " + fieldName);
 
@@ -64,7 +64,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          * Rather specific code:
          * We require the exact name of the property in the lucene index in order to find autocompletion results
          *
-         * For metadata fields this is just the value as specified in the IndexStructure,
+         * For metadata fields this is just the value as specified in the IndexMetadata,
          * but word properties have multiple internal names.
          * the property is part of a "complexField", and (usually) has multiple variants for case/accent-sensitive/insensitive versions.
          * The name needs to account for all of these things.
@@ -76,9 +76,9 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          */
         boolean sensitiveMatching = true;
         if (complexFieldName != null && !complexFieldName.isEmpty()) {
-            if (!struct.hasComplexField(complexFieldName))
+            if (!indexMetadata.hasComplexField(complexFieldName))
                 throw new BadRequest("UNKNOWN_FIELD", "Complex field '" + complexFieldName + "' does not exist.");
-            ComplexFieldDesc complexFieldDesc = struct.getComplexFieldDesc(complexFieldName);
+            ComplexFieldDesc complexFieldDesc = indexMetadata.getComplexFieldDesc(complexFieldName);
             if (!complexFieldDesc.hasProperty(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",
                         "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");

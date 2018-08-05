@@ -834,7 +834,7 @@ public class QueryTool {
                 showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");
                 System.out.println("Show document titles: " + (showDocTitle ? "ON" : "OFF"));
             } else if (lcased.equals("struct") || lcased.equals("structure")) {
-                showIndexStructure();
+                showIndexMetadata();
             } else if (lcased.startsWith("sort by ")) {
                 sortBy(cmd.substring(8));
             } else if (lcased.startsWith("sort ")) {
@@ -942,8 +942,8 @@ public class QueryTool {
         }
     }
 
-    private void showIndexStructure() {
-        IndexMetadata s = searcher.getIndexStructure();
+    private void showIndexMetadata() {
+        IndexMetadata s = searcher.getIndexMetadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
         s.print(out);
     }
@@ -1231,7 +1231,7 @@ public class QueryTool {
                 HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField, "lemma");
                 HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField, "pos");
                 crit = new HitPropertyMultiple(p1, p2);
-            } else if (searcher.getIndexStructure().getMetadataFields().contains(sortBy)) {
+            } else if (searcher.getIndexMetadata().getMetadataFields().contains(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
             }
 
@@ -1408,7 +1408,7 @@ public class QueryTool {
             // Case-sensitive collocations..?
             String fieldName = hits.settings().concordanceField();
             if (collocProperty == null) {
-                ComplexFieldDesc cf = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
+                ComplexFieldDesc cf = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
                 collocProperty = cf.getMainProperty().getName();
             }
 
@@ -1466,7 +1466,7 @@ public class QueryTool {
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        String titleField = searcher.getIndexStructure().titleField();
+        String titleField = searcher.getIndexMetadata().titleField();
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
@@ -1563,7 +1563,7 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        String titleField = searcher.getIndexStructure().titleField();
+        String titleField = searcher.getIndexMetadata().titleField();
         int hitNr = window.first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {

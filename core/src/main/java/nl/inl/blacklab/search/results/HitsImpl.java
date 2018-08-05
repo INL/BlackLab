@@ -1231,7 +1231,7 @@ public class HitsImpl extends Hits {
     public synchronized TermFrequencyList getCollocations(String propName,
             QueryExecutionContext ctx) {
         if (propName == null)
-            propName = searcher.getIndexStructure().getMainContentsField().getMainProperty().getName();
+            propName = searcher.getIndexMetadata().getMainContentsField().getMainProperty().getName();
         if (ctx == null)
             ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
         ctx = ctx.withProperty(propName);

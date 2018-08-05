@@ -219,18 +219,18 @@ public abstract class Searcher {
     public static Searcher createIndex(File indexDir, ConfigInputFormat config, String displayName,
             String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
         Searcher rv = openForWriting(indexDir, true, config);
-        IndexMetadata struct = rv.getIndexStructure();
+        IndexMetadata indexMetadata = rv.getIndexMetadata();
         if (!StringUtils.isEmpty(displayName))
-            struct.setDisplayName(displayName);
+            indexMetadata.setDisplayName(displayName);
         if (config != null && config.getName() != null)
-            struct.setDocumentFormat(config.getName());
+            indexMetadata.setDocumentFormat(config.getName());
         else if (!StringUtils.isEmpty(formatIdentifier)) {
-            struct.setDocumentFormat(formatIdentifier);
+            indexMetadata.setDocumentFormat(formatIdentifier);
         }
-        struct.setContentViewable(contentViewable);
+        indexMetadata.setContentViewable(contentViewable);
         if (textDirection != null)
-            struct.setTextDirection(textDirection);
-        struct.writeMetadata();
+            indexMetadata.setTextDirection(textDirection);
+        indexMetadata.writeMetadata();
         return rv;
     }
 
@@ -407,7 +407,7 @@ public abstract class Searcher {
     protected Analyzer analyzer = new BLStandardAnalyzer();
 
     /** Structure of our index */
-    protected IndexMetadata indexStructure;
+    protected IndexMetadata indexMetadata;
 
     protected ContentStoresManager contentStores = new ContentStoresManager();
 
@@ -566,8 +566,8 @@ public abstract class Searcher {
      *
      * @return the structure object
      */
-    public IndexMetadata getIndexStructure() {
-        return indexStructure;
+    public IndexMetadata getIndexMetadata() {
+        return indexMetadata;
     }
 
     /**
@@ -1229,7 +1229,7 @@ public abstract class Searcher {
      *             hence no Terms object.
      */
     public Terms getTerms() {
-        return getTerms(ComplexFieldUtil.mainPropertyField(getIndexStructure(), getMainContentsFieldName()));
+        return getTerms(ComplexFieldUtil.mainPropertyField(getIndexMetadata(), getMainContentsFieldName()));
     }
 
     public boolean isDefaultSearchCaseSensitive() {

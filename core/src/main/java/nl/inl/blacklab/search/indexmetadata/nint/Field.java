@@ -1,4 +1,4 @@
-package nl.inl.blacklab.interfaces.struct;
+package nl.inl.blacklab.search.indexmetadata.nint;
 
 /** Shared base interface between metadata and annotated fields */
 public interface Field {

@@ -47,10 +47,10 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
@@ -174,9 +174,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadata struct = indexer.getSearcher().getIndexStructure();
-            for (String fieldName : struct.getMetadataFields()) {
-                MetadataField fd = struct.metadataField(fieldName);
+            IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+            for (String fieldName : indexMetadata.getMetadataFields()) {
+                MetadataField fd = indexMetadata.metadataField(fieldName);
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fieldName);
                 if (currentValue == null)
@@ -461,13 +461,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag
                                                                                 // positions
         propStartTag.setForwardIndex(false);
-        IndexMetadata indexStructure = indexer.getSearcher().getIndexStructure();
-        indexStructure.registerComplexField(contentsField.getName(), propMain.getName());
+        IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+        indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
 
         // If the indexmetadata file specified a list of properties that shouldn't get a forward
         // index,
         // make the new complex field aware of this.
-        Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
+        Set<String> noForwardIndexProps = indexMetadata.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME)
                 .getNoForwardIndexProps();
         contentsField.setNoForwardIndexProps(noForwardIndexProps);
     }

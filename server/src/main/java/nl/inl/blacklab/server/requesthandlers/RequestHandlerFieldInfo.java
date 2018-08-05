@@ -15,11 +15,11 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -81,15 +81,15 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
 
         Searcher searcher = getSearcher();
-        IndexMetadata struct = searcher.getIndexStructure();
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
 
-        if (struct.getComplexFields().contains(fieldName)) {
+        if (indexMetadata.getComplexFields().contains(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-            ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(fieldName);
+            ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
             describeComplexField(ds, indexName, fieldName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
-            MetadataField fieldDesc = struct.metadataField(fieldName);
+            MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
             describeMetadataField(ds, indexName, fieldName, fieldDesc, true);
         }
 

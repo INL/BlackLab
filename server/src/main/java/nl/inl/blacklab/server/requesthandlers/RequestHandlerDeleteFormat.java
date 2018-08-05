@@ -37,7 +37,7 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
         }
 
         for (Index i : indexMan.getAvailablePrivateIndices(user.getUserId())) {
-            if (formatIdentifier.equals(i.getIndexStructure().getDocumentFormat()))
+            if (formatIdentifier.equals(i.getIndexMetadata().getDocumentFormat()))
                 throw new BadRequest("CANNOT_DELETE_INDEX ",
                         "Could not delete format. The format is still being used by a corpus.");
         }

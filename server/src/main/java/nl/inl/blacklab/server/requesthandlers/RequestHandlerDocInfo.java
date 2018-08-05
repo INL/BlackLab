@@ -51,7 +51,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         ds.endEntry();
 
         ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
+        RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
         ds.endEntry();
 
         ds.endMap();

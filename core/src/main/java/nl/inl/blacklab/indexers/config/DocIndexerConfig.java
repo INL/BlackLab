@@ -100,14 +100,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     getSensitivitySetting(mainAnnotation), false);
             addComplexField(complexField);
 
-            IndexMetadata indexStructure;
+            IndexMetadata indexMetadata;
             if (indexer != null) {
-                indexStructure = indexer.getSearcher().getIndexStructure();
-                indexStructure.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+                indexMetadata = indexer.getSearcher().getIndexMetadata();
+                indexMetadata.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
 
                 // If the indexmetadata file specified a list of properties that shouldn't get a forward
                 // index, make the new complex field aware of this.
-                Set<String> noForwardIndexProps = indexStructure.getComplexFieldDesc(complexField.getName())
+                Set<String> noForwardIndexProps = indexMetadata.getComplexFieldDesc(complexField.getName())
                         .getNoForwardIndexProps();
                 complexField.setNoForwardIndexProps(noForwardIndexProps);
             }

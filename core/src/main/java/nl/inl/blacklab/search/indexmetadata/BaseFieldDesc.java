@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.interfaces.struct.Field;
+import nl.inl.blacklab.search.indexmetadata.nint.Field;
 import nl.inl.util.StringUtil;
 
 public abstract class BaseFieldDesc implements Field {

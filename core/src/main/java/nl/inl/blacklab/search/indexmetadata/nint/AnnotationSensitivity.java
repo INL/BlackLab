@@ -1,4 +1,4 @@
-package nl.inl.blacklab.interfaces.struct;
+package nl.inl.blacklab.search.indexmetadata.nint;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 

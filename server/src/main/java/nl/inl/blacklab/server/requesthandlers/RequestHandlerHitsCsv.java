@@ -179,7 +179,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final String mainTokenProperty = getSearcher().getIndexStructure().getMainContentsField().getMainProperty()
+        final String mainTokenProperty = getSearcher().getIndexMetadata().getMainContentsField().getMainProperty()
                 .getName();
         List<String> otherTokenProperties = new ArrayList<>();
 
@@ -190,8 +190,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
             // Retrieve the additional columns
-            for (String complexFieldName : getSearcher().getIndexStructure().getComplexFields()) {
-                ComplexFieldDesc complexField = getSearcher().getIndexStructure().getComplexFieldDesc(complexFieldName);
+            for (String complexFieldName : getSearcher().getIndexMetadata().getComplexFields()) {
+                ComplexFieldDesc complexField = getSearcher().getIndexMetadata().getComplexFieldDesc(complexFieldName);
                 for (String tokenProperty : complexField.getProperties()) {
                     PropertyDesc desc = complexField.getPropertyDesc(tokenProperty);
                     if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
@@ -219,7 +219,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
                     Document doc = getSearcher().document(hit.doc);
                     pid = getDocumentPid(getSearcher(), hit.doc, doc);
-                    title = doc.get(getSearcher().getIndexStructure().titleField());
+                    title = doc.get(getSearcher().getIndexMetadata().titleField());
 
                     if (title == null || title.isEmpty())
                         title = "unknown (pid: " + pid + ")";

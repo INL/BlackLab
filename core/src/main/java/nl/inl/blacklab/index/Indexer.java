@@ -235,10 +235,10 @@ public class Indexer {
     /** Index using multiple threads? */
     protected boolean useThreads = false;
 
-    // TODO this is a workaround for a bug where indexStructure is always written, even when an indexing task was 
+    // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was 
     // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex 
     // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write 
-    // the updated indexStructure
+    // the updated indexMetadata
     boolean hasRollback = false;
 
     public FieldType getMetadataFieldType(boolean tokenized) {
@@ -322,15 +322,15 @@ public class Indexer {
 
                 // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
                 // has written it might be null
-                final String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
+                final String defaultFormatIdentifier = searcher.getIndexMetadata().getDocumentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
                     this.formatIdentifier = formatIdentifier;
                     if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                         // indexTemplateFile didn't provide a default formatIdentifier,
                         // overwrite it with our provided formatIdentifier
-                        searcher.getIndexStructure().setDocumentFormat(formatIdentifier);
-                        searcher.getIndexStructure().writeMetadata();
+                        searcher.getIndexMetadata().setDocumentFormat(formatIdentifier);
+                        searcher.getIndexMetadata().writeMetadata();
                     }
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
@@ -358,12 +358,12 @@ public class Indexer {
                 // template might still be null, in that case a default will be created
                 searcher = Searcher.openForWriting(directory, true, format);
 
-                String defaultFormatIdentifier = searcher.getIndexStructure().getDocumentFormat();
+                String defaultFormatIdentifier = searcher.getIndexMetadata().getDocumentFormat();
                 if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                     // ConfigInputFormat didn't provide a default formatIdentifier,
                     // overwrite it with our provided formatIdentifier
-                    searcher.getIndexStructure().setDocumentFormat(formatIdentifier);
-                    searcher.getIndexStructure().writeMetadata();
+                    searcher.getIndexMetadata().setDocumentFormat(formatIdentifier);
+                    searcher.getIndexMetadata().writeMetadata();
                 }
             } else {
                 throw new DocumentFormatException("Input format config '" + formatIdentifier
@@ -372,7 +372,7 @@ public class Indexer {
         } else { // opening an existing index
 
             this.searcher = Searcher.openForWriting(directory, false);
-            String defaultFormatIdentifier = this.searcher.getIndexStructure().getDocumentFormat();
+            String defaultFormatIdentifier = this.searcher.getIndexMetadata().getDocumentFormat();
 
             if (DocumentFormats.isSupported(formatIdentifier))
                 this.formatIdentifier = formatIdentifier;
@@ -489,8 +489,8 @@ public class Indexer {
         getListener().closeStart();
 
         if (!hasRollback) {
-            searcher.getIndexStructure().addToTokenCount(getListener().getTokensProcessed());
-            searcher.getIndexStructure().writeMetadata();
+            searcher.getIndexMetadata().addToTokenCount(getListener().getTokensProcessed());
+            searcher.getIndexMetadata().writeMetadata();
         }
         searcher.close();
 

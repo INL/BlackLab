@@ -128,7 +128,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (includeTokenCount) {
                 // Determine total number of tokens in result set
                 //TODO: use background job?
-                String fieldName = searcher.getIndexStructure().getMainContentsField().name();
+                String fieldName = searcher.getIndexMetadata().getMainContentsField().name();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = window.getOriginalDocs().intSum(propTokens);
             }
@@ -147,7 +147,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.getIndexStructure());
+            RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
             ds.endEntry();
             ds.endMap().endEntry();
 

@@ -58,11 +58,11 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
@@ -135,7 +135,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexStructure = new IndexMetadata(reader, indexDir, createNewIndex, config);
+        indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, config);
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }
@@ -161,7 +161,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexStructure = new IndexMetadata(reader, indexDir, createNewIndex, indexTemplateFile);
+        indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, indexTemplateFile);
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }
@@ -212,7 +212,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
             throws IOException, CorruptIndexException, LockObtainFailedException {
-        isEmptyIndex = indexStructure.isNewIndex();
+        isEmptyIndex = indexMetadata.isNewIndex();
 
         // TODO: we need to create the analyzer before opening the index, because
         //   we can't change the analyzer attached to the IndexWriter (and passing a different
@@ -244,7 +244,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (!createNewIndex) {
             if (traceIndexOpening)
                 logger.debug("  Determining main contents field name...");
-            ComplexFieldDesc mainContentsField = indexStructure.getMainContentsField();
+            ComplexFieldDesc mainContentsField = indexMetadata.getMainContentsField();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
@@ -267,8 +267,8 @@ public class SearcherImpl extends Searcher implements Closeable {
             // Register content stores
             if (traceIndexOpening)
                 logger.debug("  Opening content stores...");
-            for (String cfn : indexStructure.getComplexFields()) {
-                if (indexStructure.getComplexFieldDesc(cfn).hasContentStore()) {
+            for (String cfn : indexMetadata.getComplexFields()) {
+                if (indexMetadata.getComplexFieldDesc(cfn).hasContentStore()) {
                     File dir = new File(indexDir, "cs_" + cfn);
                     if (!dir.exists()) {
                         dir = new File(indexDir, "xml"); // OLD, should eventually be removed
@@ -307,9 +307,9 @@ public class SearcherImpl extends Searcher implements Closeable {
     private void createAnalyzers() {
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
         fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
-        Analyzer baseAnalyzer = getAnalyzerInstance(indexStructure.getDefaultAnalyzerName());
-        for (String fieldName : indexStructure.getMetadataFields()) {
-            MetadataField fd = indexStructure.metadataField(fieldName);
+        Analyzer baseAnalyzer = getAnalyzerInstance(indexMetadata.getDefaultAnalyzerName());
+        for (String fieldName : indexMetadata.getMetadataFields()) {
+            MetadataField fd = indexMetadata.metadataField(fieldName);
             String analyzerName = fd.analyzerName();
             if (fd.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
@@ -406,7 +406,7 @@ public class SearcherImpl extends Searcher implements Closeable {
             if (minP < 0 || maxP < 0)
                 throw new RuntimeException("Can't determine min and max positions");
 
-            String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexStructure, fieldName);
+            String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexMetadata, fieldName);
 
             org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
             if (terms == null)
@@ -519,8 +519,8 @@ public class SearcherImpl extends Searcher implements Closeable {
      * constructing the Searcher.
      */
     private void openForwardIndices() {
-        for (String field : indexStructure.getComplexFields()) {
-            ComplexFieldDesc fieldDesc = indexStructure.getComplexFieldDesc(field);
+        for (String field : indexMetadata.getComplexFields()) {
+            ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(field);
             for (String property : fieldDesc.getProperties()) {
                 PropertyDesc propDesc = fieldDesc.getPropertyDesc(property);
                 if (propDesc.hasForwardIndex()) {
@@ -562,7 +562,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        ComplexFieldDesc complexFieldDesc = indexStructure.getComplexFieldDesc(fieldName);
+        ComplexFieldDesc complexFieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
         if (complexFieldDesc == null)
             throw new IllegalArgumentException("Unknown complex field " + fieldName);
         PropertyDesc mainProperty = complexFieldDesc.getMainProperty();

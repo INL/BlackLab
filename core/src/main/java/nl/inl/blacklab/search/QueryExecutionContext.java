@@ -132,7 +132,7 @@ public class QueryExecutionContext {
         final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
         final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
-        ComplexFieldDesc cfd = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
+        ComplexFieldDesc cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
         if (cfd == null)
             return null;
 
@@ -213,7 +213,7 @@ public class QueryExecutionContext {
         }
 
         // Find the field and the property.
-        ComplexFieldDesc cfd = searcher.getIndexStructure().getComplexFieldDesc(fieldName);
+        ComplexFieldDesc cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
         if (cfd == null)
             return null;
 
@@ -271,7 +271,7 @@ public class QueryExecutionContext {
      * @return true if there are closing tokens
      */
     public boolean alwaysHasClosingToken() {
-        return searcher.getIndexStructure().alwaysHasClosingToken();
+        return searcher.getIndexMetadata().alwaysHasClosingToken();
     }
 
     /**
@@ -282,7 +282,7 @@ public class QueryExecutionContext {
      * @return true if tag lengths are in payload
      */
     public boolean tagLengthInPayload() {
-        return searcher.getIndexStructure().tagLengthInPayload();
+        return searcher.getIndexMetadata().tagLengthInPayload();
     }
 
     /**

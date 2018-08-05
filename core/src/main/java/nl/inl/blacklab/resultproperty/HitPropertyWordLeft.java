@@ -56,7 +56,7 @@ public class HitPropertyWordLeft extends HitProperty {
         super(hits);
         this.searcher = hits.getSearcher();
         if (property == null || property.length() == 0) {
-            this.luceneFieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexStructure(), field);
+            this.luceneFieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexMetadata(), field);
             this.propName = ComplexFieldUtil.getDefaultMainPropName();
         } else {
             this.luceneFieldName = ComplexFieldUtil.propertyField(field, property);

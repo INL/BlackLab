@@ -31,20 +31,20 @@ public class RequestHandlerIndexStatus extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
             IndexStatus status = index.getStatus();
-            IndexMetadata struct = index.getIndexStructure();
+            IndexMetadata indexMetadata = index.getIndexMetadata();
 
             // Assemble response
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", index.getIndexStructure().getDisplayName())
+                    .entry("displayName", index.getIndexMetadata().getDisplayName())
                     .entry("status", status);
 
-            String formatIdentifier = struct.getDocumentFormat();
+            String formatIdentifier = indexMetadata.getDocumentFormat();
             if (formatIdentifier != null && formatIdentifier.length() > 0)
                 ds.entry("documentFormat", formatIdentifier);
-            ds.entry("timeModified", struct.getTimeModified());
-            if (struct.getTokenCount() > 0)
-                ds.entry("tokenCount", struct.getTokenCount());
+            ds.entry("timeModified", indexMetadata.getTimeModified());
+            if (indexMetadata.getTokenCount() > 0)
+                ds.entry("tokenCount", indexMetadata.getTokenCount());
 
             if (status.equals(IndexStatus.INDEXING)) {
                 IndexListener indexProgress = index.getIndexerListener();

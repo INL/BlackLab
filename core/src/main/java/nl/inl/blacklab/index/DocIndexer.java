@@ -223,7 +223,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
-     * @deprecated use ConfigInputFormat, IndexStructure
+     * @deprecated use ConfigInputFormat, IndexMetadata
      */
     @Deprecated
     public String getParameter(String name, String defaultValue) {
@@ -304,7 +304,7 @@ public abstract class DocIndexer implements AutoCloseable {
         return FieldType.UNTOKENIZED;
     }
 
-    protected org.apache.lucene.document.FieldType luceneTypeFromIndexStructType(FieldType type) {
+    protected org.apache.lucene.document.FieldType luceneTypeFromIndexMetadataType(FieldType type) {
         switch (type) {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
@@ -351,10 +351,10 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        IndexMetadata struct = indexer.getSearcher().getIndexStructure();
-        struct.registerMetadataField(name);
+        IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+        indexMetadata.registerMetadataField(name);
 
-        MetadataFieldDesc desc = (MetadataFieldDesc)struct.metadataField(name);
+        MetadataFieldDesc desc = (MetadataFieldDesc)indexMetadata.metadataField(name);
         FieldType type = desc.type();
         desc.addValue(value);
 
@@ -368,7 +368,7 @@ public abstract class DocIndexer implements AutoCloseable {
         }
 
         if (type != FieldType.NUMERIC) {
-            currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexStructType(type)));
+            currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
             String numFieldName = name;

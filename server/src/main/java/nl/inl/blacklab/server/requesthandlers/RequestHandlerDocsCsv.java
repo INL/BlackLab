@@ -154,9 +154,9 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
-            IndexMetadata struct = this.getSearcher().getIndexStructure();
-            String pidField = struct.pidField();
-            String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+            IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
+            String pidField = indexMetadata.pidField();
+            String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();
@@ -165,7 +165,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = struct.getMetadataFields();
+            Collection<String> metadataFieldIds = indexMetadata.getMetadataFields();
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");
             metadataFieldIds.remove("mayView");
@@ -178,7 +178,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             addSummaryCommonFieldsCSV(format, printer, searchParam);
             row.clear();
 
-            int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
+            int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
             for (DocResult docResult : docs) {
                 Document doc = docResult.getDocument();
                 row.clear();

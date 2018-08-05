@@ -81,7 +81,7 @@ public abstract class RequestHandler {
         availableHandlers.put("hits-grouped-csv", RequestHandlerHitsCsv.class);
         availableHandlers.put("status", RequestHandlerIndexStatus.class);
         availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
-        availableHandlers.put("", RequestHandlerIndexStructure.class);
+        availableHandlers.put("", RequestHandlerIndexMetadata.class);
         availableHandlers.put("explain", RequestHandlerExplain.class);
         availableHandlers.put("autocomplete", RequestHandlerAutocomplete.class);
         availableHandlers.put("sharing", RequestHandlerSharing.class);
@@ -446,18 +446,18 @@ public abstract class RequestHandler {
      */
     public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
         ds.startMap();
-        IndexMetadata struct = searcher.getIndexStructure();
-        for (String metadataFieldName : struct.getMetadataFields()) {
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        for (String metadataFieldName : indexMetadata.getMetadataFields()) {
             String value = document.get(metadataFieldName);
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
                 ds.entry(metadataFieldName, value);
         }
-        int subtractFromLength = struct.alwaysHasClosingToken() ? 1 : 0;
-        String tokenLengthField = struct.getMainContentsField().getTokenLengthField();
+        int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
+        String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
 
         if (tokenLengthField != null)
             ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
-        ds.entry("mayView", mayView(struct, document))
+        ds.entry("mayView", mayView(indexMetadata, document))
                 .endMap();
     }
 
@@ -465,14 +465,14 @@ public abstract class RequestHandler {
      * a document may be viewed when a contentViewable metadata field with a value
      * true is registered with either the document or with the index metadata.
      * 
-     * @param struct
-     * @param document
+     * @param indexMetadata our index metadata
+     * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
      */
-    protected boolean mayView(IndexMetadata struct, Document document) {
-        if (struct.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
+    protected boolean mayView(IndexMetadata indexMetadata, Document document) {
+        if (indexMetadata.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
-        return struct.contentViewable();
+        return indexMetadata.contentViewable();
     }
 
     protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc)
@@ -514,16 +514,16 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    public static void dataStreamDocFields(DataStream ds, IndexMetadata struct) {
+    public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
-        if (struct.pidField() != null)
-            ds.entry("pidField", struct.pidField());
-        if (struct.titleField() != null)
-            ds.entry("titleField", struct.titleField());
-        if (struct.authorField() != null)
-            ds.entry("authorField", struct.authorField());
-        if (struct.dateField() != null)
-            ds.entry("dateField", struct.dateField());
+        if (indexMetadata.pidField() != null)
+            ds.entry("pidField", indexMetadata.pidField());
+        if (indexMetadata.titleField() != null)
+            ds.entry("titleField", indexMetadata.titleField());
+        if (indexMetadata.authorField() != null)
+            ds.entry("authorField", indexMetadata.authorField());
+        if (indexMetadata.dateField() != null)
+            ds.entry("dateField", indexMetadata.dateField());
         ds.endMap();
     }
 
@@ -552,7 +552,7 @@ public abstract class RequestHandler {
      */
     public static String getDocumentPid(Searcher searcher, int luceneDocId,
             Document document) {
-        String pidField = searcher.getIndexStructure().pidField(); //getIndexParam(indexName, user).getPidField();
+        String pidField = searcher.getIndexMetadata().pidField(); //getIndexParam(indexName, user).getPidField();
         if (pidField == null || pidField.length() == 0)
             return "" + luceneDocId;
         return document.get(pidField);

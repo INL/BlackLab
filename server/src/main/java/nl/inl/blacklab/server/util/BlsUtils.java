@@ -130,7 +130,7 @@ public class BlsUtils {
      * @return the document id, or -1 if it doesn't exist
      */
     public static int getLuceneDocIdFromPid(Searcher searcher, String pid) {
-        String pidField = searcher.getIndexStructure().pidField();
+        String pidField = searcher.getIndexMetadata().pidField();
         if (pidField == null || pidField.length() == 0) {
             int luceneDocId;
             try {

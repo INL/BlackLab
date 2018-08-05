@@ -50,10 +50,10 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
-import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -250,7 +250,7 @@ public class IndexMetadata {
     protected boolean saveAsJson = true;
 
     /**
-     * Construct an IndexStructure object, querying the index for the available
+     * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      * 
      * @param reader the index of which we want to know the structure
@@ -262,7 +262,7 @@ public class IndexMetadata {
     }
 
     /**
-     * Construct an IndexStructure object, querying the index for the available
+     * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      *
      * @param reader the index of which we want to know the structure
@@ -325,7 +325,7 @@ public class IndexMetadata {
     }
 
     /**
-     * Construct an IndexStructure object, querying the index for the available
+     * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      * 
      * @param reader the index of which we want to know the structure
