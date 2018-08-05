@@ -354,8 +354,8 @@ public abstract class DocIndexer implements AutoCloseable {
         IndexMetadata struct = indexer.getSearcher().getIndexStructure();
         struct.registerMetadataField(name);
 
-        MetadataFieldDesc desc = struct.getMetadataFieldDesc(name);
-        FieldType type = desc.getType();
+        MetadataFieldDesc desc = (MetadataFieldDesc)struct.metadataField(name);
+        FieldType type = desc.type();
         desc.addValue(value);
 
         // There used to be another way of specifying metadata field type,

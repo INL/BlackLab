@@ -30,9 +30,9 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
 import nl.inl.util.ExUtil;
 
@@ -249,14 +249,14 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // if desired.
             IndexMetadata struct = indexer.getSearcher().getIndexStructure();
             for (String fieldName : struct.getMetadataFields()) {
-                MetadataFieldDesc fd = struct.getMetadataFieldDesc(fieldName);
+                MetadataField fd = struct.metadataField(fieldName);
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fieldName);
                 if (currentValue == null)
                     missing = true;
                 else if (currentValue.length() == 0)
                     empty = true;
-                UnknownCondition cond = fd.getUnknownCondition();
+                UnknownCondition cond = fd.unknownCondition();
                 boolean useUnknownValue = false;
                 switch (cond) {
                 case EMPTY:
@@ -273,7 +273,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                     break;
                 }
                 if (useUnknownValue)
-                    addMetadataField(fieldName, fd.getUnknownValue());
+                    addMetadataField(fieldName, fd.unknownValue());
             }
 
             try {

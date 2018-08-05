@@ -7,10 +7,10 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata.MetadataGroup;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -106,7 +106,7 @@ public class RequestHandlerIndexStructure extends RequestHandler {
             for (String name : struct.getMetadataFields()) {
                 ds.startAttrEntry("metadataField", "name", name);
 
-                MetadataFieldDesc fd = struct.getMetadataFieldDesc(name);
+                MetadataField fd = struct.metadataField(name);
                 RequestHandlerFieldInfo.describeMetadataField(ds, null, name, fd, true);
 
                 ds.endAttrEntry();

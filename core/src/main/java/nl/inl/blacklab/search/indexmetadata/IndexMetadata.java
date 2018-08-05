@@ -50,6 +50,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
@@ -506,34 +507,34 @@ public class IndexMetadata {
         }
 
         // Add metadata field info
-        for (MetadataFieldDesc f : metadataFieldInfos.values()) {
-            UnknownCondition unknownCondition = f.getUnknownCondition();
+        for (MetadataField f : metadataFieldInfos.values()) {
+            UnknownCondition unknownCondition = f.unknownCondition();
             ObjectNode fi = metadataFields.putObject(f.name());
             fi.put("displayName", f.displayName());
-            fi.put("uiType", f.getUiType());
+            fi.put("uiType", f.uiType());
             fi.put("description", f.description());
-            fi.put("type", f.getType().stringValue());
-            fi.put("analyzer", f.getAnalyzerName());
-            fi.put("unknownValue", f.getUnknownValue());
+            fi.put("type", f.type().stringValue());
+            fi.put("analyzer", f.analyzerName());
+            fi.put("unknownValue", f.unknownValue());
             fi.put("unknownCondition",
                     unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
             if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
                 fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
-            Map<String, Integer> values = f.getValueDistribution();
+            Map<String, Integer> values = f.valueDistribution();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
                 for (Map.Entry<String, Integer> e : values.entrySet()) {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
-            Map<String, String> displayValues = f.getDisplayValues();
+            Map<String, String> displayValues = f.displayValues();
             if (displayValues != null) {
                 ObjectNode jsonDisplayValues = fi.putObject("displayValues");
                 for (Map.Entry<String, String> e : displayValues.entrySet()) {
                     jsonDisplayValues.put(e.getKey(), e.getValue());
                 }
             }
-            List<String> displayOrder = f.getDisplayOrder();
+            List<String> displayOrder = f.displayOrder();
             if (displayOrder != null) {
                 ArrayNode jsonDisplayValues = fi.putArray("displayOrder");
                 for (String value : displayOrder) {
@@ -704,8 +705,8 @@ public class IndexMetadata {
         return metadataFieldInfos.containsKey(fieldName);
     }
 
-    public MetadataFieldDesc getMetadataFieldDesc(String fieldName) {
-        MetadataFieldDesc d = null;
+    public MetadataField metadataField(String fieldName) {
+        MetadataField d = null;
         // Synchronized because we sometimes register new metadata fields during indexing
         synchronized (metadataFieldInfos) {
             d = metadataFieldInfos.get(fieldName);
@@ -795,7 +796,7 @@ public class IndexMetadata {
         // Find documents with title in the name
         List<String> fieldsFound = new ArrayList<>();
         for (Map.Entry<String, MetadataFieldDesc> e : metadataFieldInfos.entrySet()) {
-            if (e.getValue().getType() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
+            if (e.getValue().type() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
                 if (partialMatchOkay || e.getKey().equalsIgnoreCase(search))
                     fieldsFound.add(e.getKey());
             }
@@ -824,7 +825,7 @@ public class IndexMetadata {
         for (Map.Entry<String, MetadataFieldDesc> e : metadataFieldInfos.entrySet()) {
             if (e.getKey().endsWith("Numeric"))
                 continue; // special case, will probably be removed later
-            FieldType type = e.getValue().getType();
+            FieldType type = e.getValue().type();
             String special = "";
             if (e.getKey().equals(titleField))
                 special = "TITLEFIELD";

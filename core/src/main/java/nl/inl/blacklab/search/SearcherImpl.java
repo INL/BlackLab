@@ -58,10 +58,10 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LuceneUtil;
@@ -309,9 +309,9 @@ public class SearcherImpl extends Searcher implements Closeable {
         fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
         Analyzer baseAnalyzer = getAnalyzerInstance(indexStructure.getDefaultAnalyzerName());
         for (String fieldName : indexStructure.getMetadataFields()) {
-            MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(fieldName);
-            String analyzerName = fd.getAnalyzerName();
-            if (fd.getType() == FieldType.UNTOKENIZED)
+            MetadataField fd = indexStructure.metadataField(fieldName);
+            String analyzerName = fd.analyzerName();
+            if (fd.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
             if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
                 Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);

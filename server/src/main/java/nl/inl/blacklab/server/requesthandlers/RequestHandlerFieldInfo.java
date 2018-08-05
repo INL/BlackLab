@@ -15,12 +15,12 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
-import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -89,7 +89,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ComplexFieldDesc fieldDesc = struct.getComplexFieldDesc(fieldName);
             describeComplexField(ds, indexName, fieldName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
-            MetadataFieldDesc fieldDesc = struct.getMetadataFieldDesc(fieldName);
+            MetadataField fieldDesc = struct.metadataField(fieldName);
             describeMetadataField(ds, indexName, fieldName, fieldDesc, true);
         }
 
@@ -99,7 +99,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         return HTTP_OK;
     }
 
-    public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataFieldDesc fd,
+    public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataField fd,
             boolean listValues) {
         ds.startMap();
         boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); // report false for UNKNOWN - this usually means there's no values either way
@@ -111,17 +111,17 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("isComplexField", "false")
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
-                .entry("uiType", fd.getUiType());
-        String group = fd.getGroup();
+                .entry("uiType", fd.uiType());
+        String group = fd.group();
         if (group != null && group.length() > 0)
             ds.entry("group", group);
         ds
-                .entry("type", fd.getType().toString())
-                .entry("analyzer", fd.getAnalyzerName())
-                .entry("unknownCondition", fd.getUnknownCondition().toString())
-                .entry("unknownValue", fd.getUnknownValue());
+                .entry("type", fd.type().toString())
+                .entry("analyzer", fd.analyzerName())
+                .entry("unknownCondition", fd.unknownCondition().toString())
+                .entry("unknownValue", fd.unknownValue());
         if (listValues) {
-            final Map<String, String> displayValues = fd.getDisplayValues();
+            final Map<String, String> displayValues = fd.displayValues();
             ds.startEntry("displayValues").startMap();
             for (Map.Entry<String, String> e : displayValues.entrySet()) {
                 ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
@@ -132,9 +132,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             // If not all values are mentioned in display order, show the rest at the end,
             // sorted by their displayValue (or regular value if no displayValue specified)
             ds.startEntry("fieldValues").startMap();
-            Map<String, Integer> values = fd.getValueDistribution();
+            Map<String, Integer> values = fd.valueDistribution();
             Set<String> valuesLeft = new HashSet<>(values.keySet());
-            for (String value : fd.getDisplayOrder()) {
+            for (String value : fd.displayOrder()) {
                 ds.attrEntry("value", "text", value, values.get(value));
                 valuesLeft.remove(value);
             }

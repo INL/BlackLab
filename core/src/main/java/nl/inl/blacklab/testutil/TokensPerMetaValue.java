@@ -8,10 +8,10 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.interfaces.struct.MetadataField;
 import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
@@ -39,10 +39,10 @@ public class TokensPerMetaValue {
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
             for (String metaFieldName : indexStructure.getMetadataFields()) {
                 // Check if this field has only a few values
-                MetadataFieldDesc fd = indexStructure.getMetadataFieldDesc(metaFieldName);
+                MetadataField fd = indexStructure.metadataField(metaFieldName);
                 if (fd.isValueListComplete().equals(ValueListComplete.YES)) {
                     // Loop over the values
-                    for (Map.Entry<String, Integer> entry : fd.getValueDistribution().entrySet()) {
+                    for (Map.Entry<String, Integer> entry : fd.valueDistribution().entrySet()) {
                         // Determine token count for this value
                         String fieldName = fd.name();
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",

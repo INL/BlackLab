@@ -10,16 +10,18 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-public class MetadataFieldDesc extends BaseFieldDesc {
+import nl.inl.blacklab.interfaces.struct.MetadataField;
+
+public class MetadataFieldDesc extends BaseFieldDesc implements MetadataField {
 
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
 
     /** Conditions for using the unknown value */
     public enum UnknownCondition {
-    NEVER, // never use unknown value
-    MISSING, // use unknown value when field is missing (not when empty)
-    EMPTY, // use unknown value when field is empty (not when missing)
-    MISSING_OR_EMPTY; // use unknown value when field is empty or missing
+        NEVER, // never use unknown value
+        MISSING, // use unknown value when field is missing (not when empty)
+        EMPTY, // use unknown value when field is empty (not when missing)
+        MISSING_OR_EMPTY; // use unknown value when field is empty or missing
 
         public static UnknownCondition fromStringValue(String string) {
             return valueOf(string.toUpperCase());
@@ -105,8 +107,44 @@ public class MetadataFieldDesc extends BaseFieldDesc {
 //		}
 //	}
 
-    public FieldType getType() {
+    public FieldType type() {
         return type;
+    }
+
+    public List<String> displayOrder() {
+        return Collections.unmodifiableList(displayOrder);
+    }
+
+    public String analyzerName() {
+        return analyzer;
+    }
+
+    public String unknownValue() {
+        return unknownValue;
+    }
+
+    public UnknownCondition unknownCondition() {
+        return unknownCondition;
+    }
+
+    public Map<String, Integer> valueDistribution() {
+        return Collections.unmodifiableMap(values);
+    }
+
+    public ValueListComplete isValueListComplete() {
+        return valueListComplete;
+    }
+
+    public Map<String, String> displayValues() {
+        return Collections.unmodifiableMap(displayValues);
+    }
+
+    public String group() {
+        return group;
+    }
+
+    public String uiType() {
+        return uiType;
     }
 
     public void setAnalyzer(String analyzer) {
@@ -148,45 +186,8 @@ public class MetadataFieldDesc extends BaseFieldDesc {
         this.displayOrder.addAll(displayOrder);
     }
 
-    public List<String> getDisplayOrder() {
-        return Collections.unmodifiableList(displayOrder);
-    }
-
     public void setValueListComplete(boolean valueListComplete) {
         this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
-    }
-
-    public String getAnalyzerName() {
-        return analyzer;
-    }
-
-    public String getUnknownValue() {
-        return unknownValue;
-    }
-
-    public UnknownCondition getUnknownCondition() {
-        return unknownCondition;
-    }
-
-    public Map<String, Integer> getValueDistribution() {
-        return Collections.unmodifiableMap(values);
-    }
-
-    public ValueListComplete isValueListComplete() {
-        return valueListComplete;
-    }
-
-    public Map<String, String> getDisplayValues() {
-        return Collections.unmodifiableMap(displayValues);
-    }
-
-    /**
-     * Reset the information that is dependent on input data (i.e. list of values,
-     * etc.) because we're going to (re-)index the data.
-     */
-    public void resetForIndexing() {
-        this.values.clear();
-        valueListComplete = ValueListComplete.UNKNOWN;
     }
 
     /**
@@ -201,7 +202,7 @@ public class MetadataFieldDesc extends BaseFieldDesc {
         // we'll change the value to NO.
         if (valueListComplete == ValueListComplete.UNKNOWN)
             valueListComplete = ValueListComplete.YES;
-
+    
         if (value.length() > 100) {
             // Value too long to store.
             valueListComplete = ValueListComplete.NO;
@@ -222,20 +223,21 @@ public class MetadataFieldDesc extends BaseFieldDesc {
         }
     }
 
+    /**
+     * Reset the information that is dependent on input data (i.e. list of values,
+     * etc.) because we're going to (re-)index the data.
+     */
+    public void resetForIndexing() {
+        this.values.clear();
+        valueListComplete = ValueListComplete.UNKNOWN;
+    }
+
     public void setGroup(String group) {
         this.group = group;
     }
 
-    public String getGroup() {
-        return group;
-    }
-
     public void setUiType(String uiType) {
         this.uiType = uiType;
-    }
-
-    public String getUiType() {
-        return uiType;
     }
 
 }
