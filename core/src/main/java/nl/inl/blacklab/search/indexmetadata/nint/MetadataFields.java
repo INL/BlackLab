@@ -27,33 +27,6 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
 	MetadataField get(String fieldName);
 	
-	/**
-	 * A named, ordered list of metadata fields.
-	 * 
-	 * Used to divide metadata into logical groups.
-	 */
-	interface MetadataFieldGroup extends Iterable<MetadataField> {
-
-	    String name();
-
-        Stream<MetadataField> stream();
-
-        boolean addRemainingFields();
-	}
-	
-	/**
-	 * Groups of metadata fields.
-	 * 
-	 * Used to divide metadata into logical groups.
-	 */
-	interface MetadataFieldGroups extends Iterable<MetadataFieldGroup> {
-	    
-        Stream<MetadataFieldGroup> stream();
-        
-        MetadataFieldGroup get(String name);
-        
-	}
-
 	MetadataFieldGroups groups();
 	
 	/**

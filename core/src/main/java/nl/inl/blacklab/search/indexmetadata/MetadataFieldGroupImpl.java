@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroup;
 
 /**
  * A named, ordered list of metadata fields.
@@ -18,24 +18,17 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     private MetadataFields metadataFieldsAccessor;
 
-    String name;
+    private String name;
 
-    List<String> fieldsInGroup;
+    private List<String> fieldNamesInGroup;
 
     boolean addRemainingFields = false;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setFields(List<String> fields) {
-        this.fieldsInGroup = fields;
-    }
-
-    public MetadataFieldGroupImpl(MetadataFields metadataFieldsAccessor, String name, List<String> fields) {
+    public MetadataFieldGroupImpl(MetadataFields metadataFieldsAccessor, String name, List<String> fieldNames, boolean addRemainingFields) {
         this.metadataFieldsAccessor = metadataFieldsAccessor;
         this.name = name;
-        this.fieldsInGroup = new ArrayList<>(fields);
+        this.fieldNamesInGroup = new ArrayList<>(fieldNames);
+        this.addRemainingFields = addRemainingFields;
     }
 
     public String name() {
@@ -43,20 +36,16 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
     }
 
     public List<String> getFields() {
-        return fieldsInGroup;
+        return fieldNamesInGroup;
     }
 
     public boolean addRemainingFields() {
         return addRemainingFields;
     }
 
-    public void setAddRemainingFields(boolean addRemainingFields) {
-        this.addRemainingFields = addRemainingFields;
-    }
-
     @Override
     public Iterator<MetadataField> iterator() {
-        Iterator<String> it = fieldsInGroup.iterator();
+        Iterator<String> it = fieldNamesInGroup.iterator();
         return new Iterator<MetadataField>() {
             @Override
             public boolean hasNext() {
@@ -72,7 +61,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     @Override
     public Stream<MetadataField> stream() {
-        return fieldsInGroup.stream().map(name -> metadataFieldsAccessor.get(name));
+        return fieldNamesInGroup.stream().map(name -> metadataFieldsAccessor.get(name));
     }
 
 }

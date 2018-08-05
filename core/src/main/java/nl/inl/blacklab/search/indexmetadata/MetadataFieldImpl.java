@@ -21,7 +21,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     /**
      * The field type: text, untokenized or numeric.
      */
-    protected FieldType type = FieldType.TOKENIZED;
+    private FieldType type = FieldType.TOKENIZED;
 
     /**
      * The analyzer to use for indexing and querying this field.
@@ -112,6 +112,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     public String uiType() {
         return uiType;
     }
+    
+    // Methods that mutate data
+    // -------------------------------------------------
 
     public void setAnalyzer(String analyzer) {
         this.analyzer = analyzer;

@@ -10,6 +10,8 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 
 /**
@@ -168,10 +170,8 @@ class MetadataFieldsImpl implements MetadataFields {
         // Find documents with title in the name
         List<MetadataField> fieldsFound = new ArrayList<>();
         for (MetadataField field: metadataFieldInfos.values()) {
-            if (field.type() == FieldType.TOKENIZED && field.name().toLowerCase().contains(search)) {
-                if (true || field.name().equalsIgnoreCase(search))
-                    fieldsFound.add(field);
-            }
+            if (field.type() == FieldType.TOKENIZED && field.name().toLowerCase().contains(search))
+                fieldsFound.add(field);
         }
         if (fieldsFound.isEmpty())
             return null;

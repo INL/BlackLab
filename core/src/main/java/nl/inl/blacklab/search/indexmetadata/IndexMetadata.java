@@ -51,8 +51,8 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroup;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -986,9 +986,8 @@ public class IndexMetadata {
                 warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
-                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields);
-                if (Json.getBoolean(group, "addRemainingFields", false))
-                    metadataGroup.setAddRemainingFields(true);
+                boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
+                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields, addRemainingFields);
                 metadataFields.putMetadataGroup(name, metadataGroup);
             }
         }
