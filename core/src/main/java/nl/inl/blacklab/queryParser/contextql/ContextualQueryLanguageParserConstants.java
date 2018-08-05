@@ -30,29 +30,8 @@ public interface ContextualQueryLanguageParserConstants {
     int DEFAULT = 0;
 
     /** Literal token values. */
-    String[] tokenImage = {
-            "<EOF>",
-            "\" \"",
-            "\"\\t\"",
-            "\"\\n\"",
-            "\"\\r\"",
-            "<SINGLE_LINE_COMMENT>",
-            "<MULTI_LINE_COMMENT>",
-            "\"and\"",
-            "\"or\"",
-            "\"not\"",
-            "\"prox\"",
-            "<IDENTIFIER>",
-            "<STRING>",
-            "\">\"",
-            "\"=\"",
-            "\"(\"",
-            "\")\"",
-            "\"<\"",
-            "\">=\"",
-            "\"<=\"",
-            "\"<>\"",
-            "\"/\"",
-    };
+    String[] tokenImage = { "<EOF>", "\" \"", "\"\\t\"", "\"\\n\"", "\"\\r\"", "<SINGLE_LINE_COMMENT>",
+            "<MULTI_LINE_COMMENT>", "\"and\"", "\"or\"", "\"not\"", "\"prox\"", "<IDENTIFIER>", "<STRING>", "\">\"",
+            "\"=\"", "\"(\"", "\")\"", "\"<\"", "\">=\"", "\"<=\"", "\"<>\"", "\"/\"", };
 
 }

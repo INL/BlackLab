@@ -32,24 +32,9 @@ PARSER_BEGIN(CorpusQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.corpusql;
 
-import java.util.Map;
 import java.util.HashMap;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import java.util.Map;
 
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
-import nl.inl.blacklab.search.TextPatternAnyToken;
-import nl.inl.blacklab.search.TextPatternCaptureGroup;
-import nl.inl.blacklab.search.TextPatternConstrained;
-import nl.inl.blacklab.search.TextPatternEdge;
-import nl.inl.blacklab.search.TextPatternNot;
-import nl.inl.blacklab.search.TextPatternOr;
-import nl.inl.blacklab.search.TextPatternPositionFilter;
-import nl.inl.blacklab.search.TextPatternProperty;
-import nl.inl.blacklab.search.TextPatternRegex;
-import nl.inl.blacklab.search.TextPatternRepetition;
-import nl.inl.blacklab.search.TextPatternSequence;
-import nl.inl.blacklab.search.TextPatternTags;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
@@ -61,6 +46,20 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
+import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
+import nl.inl.blacklab.search.textpattern.TextPatternEdge;
+import nl.inl.blacklab.search.textpattern.TextPatternNot;
+import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternProperty;
+import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 @SuppressWarnings("all")
 
@@ -125,8 +124,8 @@ public class CorpusQueryLanguageParser {
 
     private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
     
-    public void setDefaultProperty(IndexMetadata structure, String fieldName) {
-        defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+    public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
+        defaultProperty = indexMetadata.getComplexFieldDesc(fieldName).getMainProperty().getName();
     }
 
     public void setDefaultProperty(String property) {
