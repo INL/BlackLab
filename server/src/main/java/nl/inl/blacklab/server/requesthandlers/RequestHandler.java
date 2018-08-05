@@ -518,16 +518,16 @@ public abstract class RequestHandler {
 
     public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
-        MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_PID);
+        MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
         if (pidField != null)
             ds.entry("pidField", pidField.name());
-        MetadataField titleField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
+        MetadataField titleField = indexMetadata.metadataFields().special(MetadataFields.TITLE);
         if (titleField != null)
             ds.entry("titleField", titleField.name());
-        MetadataField authorField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_AUTHOR);
+        MetadataField authorField = indexMetadata.metadataFields().special(MetadataFields.AUTHOR);
         if (authorField != null)
             ds.entry("authorField", authorField.name());
-        MetadataField dateField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_DATE);
+        MetadataField dateField = indexMetadata.metadataFields().special(MetadataFields.DATE);
         if (dateField != null)
             ds.entry("dateField", dateField.name());
         ds.endMap();
@@ -558,7 +558,7 @@ public abstract class RequestHandler {
      */
     public static String getDocumentPid(Searcher searcher, int luceneDocId,
             Document document) {
-        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_PID); //getIndexParam(indexName, user).getPidField();
+        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
         if (pidField == null)
             return Integer.toString(luceneDocId);
         return document.get(pidField.name());

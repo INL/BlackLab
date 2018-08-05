@@ -12,6 +12,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 
+/**
+ * A metadata field in an index.
+ */
 public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
 

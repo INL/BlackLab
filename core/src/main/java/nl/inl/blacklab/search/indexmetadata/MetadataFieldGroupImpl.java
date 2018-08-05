@@ -9,7 +9,11 @@ import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroup;
 
-/** A named group of ordered metadata fields */
+/**
+ * A named, ordered list of metadata fields.
+ * 
+ * Used to divide metadata into logical groups.
+ */
 public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     private MetadataFields metadataFieldsAccessor;

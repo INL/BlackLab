@@ -132,7 +132,7 @@ public class BlsUtils {
      * @return the document id, or -1 if it doesn't exist
      */
     public static int getLuceneDocIdFromPid(Searcher searcher, String pid) {
-        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_PID);
+        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.PID);
         if (pidField == null) {
             int luceneDocId;
             try {

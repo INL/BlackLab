@@ -6,16 +6,16 @@ import java.util.stream.Stream;
 public interface MetadataFields extends Iterable<MetadataField> {
 	
     /** Name of special field type for persistent identifier */
-    String SPECIAL_FIELD_PID = "pid";
+    String PID = "pid";
 
     /** Name of special field type for document title */
-    String SPECIAL_FIELD_TITLE = "title";
+    String TITLE = "title";
 
     /** Name of special field type for document author */
-    String SPECIAL_FIELD_AUTHOR = "author";
+    String AUTHOR = "author";
 
     /** Name of special field type for document date */
-    String SPECIAL_FIELD_DATE = "date";
+    String DATE = "date";
 
 	/**
 	 * Name of the default analyzer to use for metadata fields.
@@ -27,7 +27,11 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
 	MetadataField get(String fieldName);
 	
-	/** A named group of ordered metadata fields */
+	/**
+	 * A named, ordered list of metadata fields.
+	 * 
+	 * Used to divide metadata into logical groups.
+	 */
 	interface MetadataFieldGroup extends Iterable<MetadataField> {
 
 	    String name();
@@ -37,6 +41,11 @@ public interface MetadataFields extends Iterable<MetadataField> {
         boolean addRemainingFields();
 	}
 	
+	/**
+	 * Groups of metadata fields.
+	 * 
+	 * Used to divide metadata into logical groups.
+	 */
 	interface MetadataFieldGroups extends Iterable<MetadataFieldGroup> {
 	    
         Stream<MetadataFieldGroup> stream();

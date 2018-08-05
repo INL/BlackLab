@@ -1468,7 +1468,7 @@ public class QueryTool {
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
+        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
@@ -1565,7 +1565,7 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
+        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {

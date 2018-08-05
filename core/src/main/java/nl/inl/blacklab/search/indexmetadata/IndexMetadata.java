@@ -9,17 +9,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,6 +52,7 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroup;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -62,6 +61,7 @@ import nl.inl.util.StringUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexMetadata {
+    
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
     protected static final Logger logger = LogManager.getLogger(IndexMetadata.class);
@@ -107,23 +107,6 @@ public class IndexMetadata {
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
-    /**
-     * Logical groups of metadata fields, for presenting them in the user interface.
-     */
-    protected Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
-
-    /** All non-complex fields in our index (metadata fields) and their types. */
-    protected Map<String, MetadataFieldImpl> metadataFieldInfos;
-
-    /**
-     * When a metadata field value is considered "unknown"
-     * (never|missing|empty|missing_or_empty) [never]
-     */
-    protected String defaultUnknownCondition;
-
-    /** What value to index when a metadata field value is unknown [unknown] */
-    protected String defaultUnknownValue;
-
     /** The complex fields in our index */
     protected Map<String, ComplexFieldDesc> complexFields;
 
@@ -156,21 +139,6 @@ public class IndexMetadata {
 
     /** Time at which index was created */
     protected String timeModified;
-
-    /** Metadata field containing document title */
-    protected String titleField;
-
-    /** Metadata field containing document author */
-    protected String authorField;
-
-    /** Metadata field containing document date */
-    protected String dateField;
-
-    /** Metadata field containing document pid */
-    protected String pidField;
-
-    /** Default analyzer to use for metadata fields */
-    protected String defaultAnalyzerName;
 
     /**
      * Do we always have words+1 tokens (before we sometimes did, if an XML tag
@@ -209,6 +177,8 @@ public class IndexMetadata {
      */
     protected boolean saveAsJson = true;
 
+    private MetadataFieldsImpl metadataFields;
+
     /**
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
@@ -234,7 +204,7 @@ public class IndexMetadata {
     public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
         this.indexDir = indexDir;
 
-        metadataFieldInfos = new TreeMap<>();
+        metadataFields = new MetadataFieldsImpl();
         complexFields = new TreeMap<>();
 
         // Find existing metadata file, if any.
@@ -297,7 +267,7 @@ public class IndexMetadata {
     public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
         this.indexDir = indexDir;
 
-        metadataFieldInfos = new TreeMap<>();
+        metadataFields = new MetadataFieldsImpl();
         complexFields = new TreeMap<>();
 
         // Find existing metadata file, if any.
@@ -439,31 +409,31 @@ public class IndexMetadata {
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
                 ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
-        fieldInfo.put("defaultAnalyzer", defaultAnalyzerName);
-        if (titleField != null)
-            fieldInfo.put("titleField", titleField);
-        if (authorField != null)
-            fieldInfo.put("authorField", authorField);
-        if (dateField != null)
-            fieldInfo.put("dateField", dateField);
-        if (pidField != null)
-            fieldInfo.put("pidField", pidField);
+        fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName);
+        if (metadataFields.titleField() != null)
+            fieldInfo.put("titleField", metadataFields.titleField().name());
+        if (metadataFields.authorField() != null)
+            fieldInfo.put("authorField", metadataFields.authorField().name());
+        if (metadataFields.dateField() != null)
+            fieldInfo.put("dateField", metadataFields.dateField().name());
+        if (metadataFields.pidField() != null)
+            fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
         ObjectNode jsonComplexFields = fieldInfo.putObject("complexFields");
 
         // Add metadata field group info
-        for (MetadataFieldGroupImpl g : metadataGroups.values()) {
+        for (MetadataFieldGroup g: metadataFields().groups()) {
             ObjectNode group = metadataFieldGroups.addObject();
             group.put("name", g.name());
             if (g.addRemainingFields())
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.getFields());
+            Json.arrayOfStrings(arr, g.stream().map(f -> f.name()).collect(Collectors.toList()));
         }
 
         // Add metadata field info
-        for (MetadataField f : metadataFieldInfos.values()) {
+        for (MetadataField f: this.metadataFields) {
             UnknownCondition unknownCondition = f.unknownCondition();
             ObjectNode fi = metadataFields.putObject(f.name());
             fi.put("displayName", f.displayName());
@@ -472,8 +442,7 @@ public class IndexMetadata {
             fi.put("type", f.type().stringValue());
             fi.put("analyzer", f.analyzerName());
             fi.put("unknownValue", f.unknownValue());
-            fi.put("unknownCondition",
-                    unknownCondition == null ? defaultUnknownCondition : unknownCondition.toString());
+            fi.put("unknownCondition", unknownCondition.toString());
             if (f.isValueListComplete() != ValueListComplete.UNKNOWN)
                 fi.put("valueListComplete", f.isValueListComplete().equals(ValueListComplete.YES));
             Map<String, Integer> values = f.valueDistribution();
@@ -644,147 +613,7 @@ public class IndexMetadata {
     }
     
     public MetadataFields metadataFields() {
-        
-        return new MetadataFields() {
-            @Override
-            public String defaultAnalyzerName() {
-                return getDefaultAnalyzerName();
-            }
-
-            @Override
-            public Iterator<MetadataField> iterator() {
-                final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
-                return new Iterator<MetadataField>() {
-                    @Override
-                    public boolean hasNext() {
-                        return it.hasNext();
-                    }
-
-                    @Override
-                    public MetadataField next() {
-                        return it.next();
-                    }
-                };
-            }
-
-            @Override
-            public Stream<MetadataField> stream() {
-                return metadataFieldInfos.values().stream().map(f -> (MetadataField)f);
-            }
-
-            @Override
-            public MetadataField get(String fieldName) {
-                return metadataField(fieldName);
-            }
-
-            @Override
-            public boolean exists(String name) {
-                return metadataFieldInfos.containsKey(name);
-            }
-
-            @Override
-            public MetadataFieldGroups groups() {
-                return new MetadataFieldGroups() {
-                    @Override
-                    public Iterator<MetadataFieldGroup> iterator() {
-                        Iterator<MetadataFieldGroupImpl> it = metadataGroups.values().iterator();
-                        return new Iterator<MetadataFieldGroup>() {
-                            @Override
-                            public boolean hasNext() {
-                                return it.hasNext();
-                            }
-
-                            @Override
-                            public MetadataFieldGroup next() {
-                                return it.next();
-                            }
-                        };
-                    }
-
-                    @Override
-                    public Stream<MetadataFieldGroup> stream() {
-                        return metadataGroups.values().stream().map(g -> (MetadataFieldGroup)g);
-                    }
-
-                    @Override
-                    public MetadataFieldGroup get(String name) {
-                        return metadataGroups.get(name);
-                    }
-                };
-            }
-
-            @Override
-            public MetadataField special(String specialFieldType) {
-                switch(specialFieldType) {
-                case "pid":
-                    return metadataField(pidField);
-                case "title":
-                    return metadataField(titleField);
-                case "author":
-                    return metadataField(authorField);
-                case "date":
-                    return metadataField(dateField);
-                }
-                return null;
-            }
-        };
-        
-    }
-
-    MetadataField metadataField(String fieldName) {
-        MetadataField d = null;
-        // Synchronized because we sometimes register new metadata fields during indexing
-        synchronized (metadataFieldInfos) {
-            d = metadataFieldInfos.get(fieldName);
-        }
-        if (d == null)
-            throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
-        return d;
-    }
-
-    /**
-     * Name of the default analyzer to use for metadata fields.
-     * 
-     * @return the analyzer name (or DEFAULT for the BlackLab default)
-     */
-    String getDefaultAnalyzerName() {
-        return defaultAnalyzerName;
-    }
-
-    /**
-     * Find the first (alphabetically) field whose name contains the search string.
-     *
-     * @param search the string to search for
-     * @return the field name, or null if no fields matched
-     */
-    private String findTextField(String search) {
-        return findTextField(search, true);
-    }
-
-    /**
-     * Find the first (alphabetically) field matching the search string.
-     *
-     * @param search the string to search for
-     * @param partialMatchOkay if false, only field names identical to the search
-     *            string match; if true, all field names containing the search
-     *            string match.
-     * @return the field name, or null if no fields matched
-     */
-    private String findTextField(String search, boolean partialMatchOkay) {
-        // Find documents with title in the name
-        List<String> fieldsFound = new ArrayList<>();
-        for (Map.Entry<String, MetadataFieldImpl> e : metadataFieldInfos.entrySet()) {
-            if (e.getValue().type() == FieldType.TOKENIZED && e.getKey().toLowerCase().contains(search)) {
-                if (partialMatchOkay || e.getKey().equalsIgnoreCase(search))
-                    fieldsFound.add(e.getKey());
-            }
-        }
-        if (fieldsFound.isEmpty())
-            return null;
-
-        // Sort (so we get titleLevel1 not titleLevel2 for example)
-        Collections.sort(fieldsFound);
-        return fieldsFound.get(0);
+        return metadataFields;
     }
 
     /**
@@ -800,22 +629,22 @@ public class IndexMetadata {
         }
 
         out.println("\nMETADATA FIELDS");
-        for (Map.Entry<String, MetadataFieldImpl> e : metadataFieldInfos.entrySet()) {
-            if (e.getKey().endsWith("Numeric"))
+        for (MetadataField field: metadataFields) {
+            if (field.name().endsWith("Numeric"))
                 continue; // special case, will probably be removed later
-            FieldType type = e.getValue().type();
             String special = "";
-            if (e.getKey().equals(titleField))
+            if (field.equals(metadataFields.titleField()))
                 special = "TITLEFIELD";
-            else if (e.getKey().equals(authorField))
+            else if (field.equals(metadataFields.authorField()))
                 special = "AUTHORFIELD";
-            else if (e.getKey().equals(dateField))
+            else if (field.equals(metadataFields.dateField()))
                 special = "DATEFIELD";
-            else if (e.getKey().equals(pidField))
+            else if (field.equals(metadataFields.pidField()))
                 special = "PIDFIELD";
             if (special.length() > 0)
                 special = " (" + special + ")";
-            out.println("- " + e.getKey() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
+            FieldType type = field.type();
+            out.println("- " + field.name() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
                     + special);
         }
     }
@@ -941,20 +770,9 @@ public class IndexMetadata {
     }
 
     public void registerMetadataField(String fieldName) {
-        if (fieldName == null)
-            throw new IllegalArgumentException("Tried to register a metadata field with null as name");
-        // Synchronized because we might be using the map in another indexing thread
-        synchronized (metadataFieldInfos) {
-            if (metadataFieldInfos.containsKey(fieldName))
-                return;
-            // Not registered yet; do so now.
-            MetadataFieldImpl mf = new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
-            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-            mf.setUnknownValue(defaultUnknownValue);
-            metadataFieldInfos.put(fieldName, mf);
-        }
+        metadataFields.register(fieldName);
     }
-
+    
     /**
      * Do we always have words+1 tokens (before we sometimes did, if an XML tag
      * occurred after the last word; now we always make sure we have it, so we can
@@ -1151,8 +969,8 @@ public class IndexMetadata {
                                 "Please re-index your data, or use a BlackLab version from before August 2014.");
             }
         }
-        defaultUnknownCondition = Json.getString(fieldInfo, "unknownCondition", "NEVER");
-        defaultUnknownValue = Json.getString(fieldInfo, "unknownValue", "unknown");
+        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
+        metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
         ObjectNode metaFieldConfigs = Json.getObject(fieldInfo, "metadataFields");
         boolean hasMetaFields = metaFieldConfigs.size() > 0;
@@ -1161,7 +979,7 @@ public class IndexMetadata {
         boolean hasFieldInfo = hasMetaFields || hasComplexFields;
 
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
-            metadataGroups.clear();
+            metadataFields.clearMetadataGroups();
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
             for (int i = 0; i < groups.size(); i++) {
                 JsonNode group = groups.get(i);
@@ -1171,7 +989,7 @@ public class IndexMetadata {
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields);
                 if (Json.getBoolean(group, "addRemainingFields", false))
                     metadataGroup.setAddRemainingFields(true);
-                metadataGroups.put(name, metadataGroup);
+                metadataFields.putMetadataGroup(name, metadataGroup);
             }
         }
         if (hasFieldInfo) {
@@ -1190,9 +1008,9 @@ public class IndexMetadata {
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.setUnknownValue(Json.getString(fieldConfig, "unknownValue", defaultUnknownValue));
+                fieldDesc.setUnknownValue(Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
                 UnknownCondition unk = UnknownCondition
-                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition", defaultUnknownCondition));
+                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition", metadataFields.defaultUnknownCondition()));
                 fieldDesc.setUnknownCondition(unk);
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
@@ -1202,7 +1020,7 @@ public class IndexMetadata {
                     fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
                 if (fieldConfig.has("valueListComplete"))
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
-                metadataFieldInfos.put(fieldName, fieldDesc);
+                metadataFields.put(fieldName, fieldDesc);
             }
 
             // Complex fields
@@ -1305,18 +1123,18 @@ public class IndexMetadata {
                     parts = ComplexFieldUtil.getNameComponents(name);
                 }
                 if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
-                    if (!metadataFieldInfos.containsKey(name)) {
+                    if (!metadataFields.exists(name)) {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
                         MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type);
                         metadataFieldDesc
-                                .setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-                        metadataFieldDesc.setUnknownValue(defaultUnknownValue);
-                        metadataFieldInfos.put(name, metadataFieldDesc);
+                                .setUnknownCondition(UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
+                        metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
+                        metadataFields.put(name, metadataFieldDesc);
                     }
                 } else {
                     // Part of complex field.
-                    if (metadataFieldInfos.containsKey(parts[0])) {
+                    if (metadataFields.exists(parts[0])) {
                         throw new RuntimeException(
                                 "Complex field and metadata field with same name, error! ("
                                         + parts[0] + ")");
@@ -1329,23 +1147,24 @@ public class IndexMetadata {
             } // even if we have metadata, we still have to detect props/alts
         }
 
-        defaultAnalyzerName = Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT");
+        metadataFields.defaultAnalyzerName = Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT");
 
-        titleField = authorField = dateField = pidField = null;
+        metadataFields.clearSpecialFields();
         if (fieldInfo.has("titleField"))
-            titleField = fieldInfo.get("titleField").textValue();
-        if (titleField == null) {
-            titleField = findTextField("title");
-            if (titleField == null) {
-                titleField = "fromInputFile";
+            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
+        if (metadataFields.titleField() == null) {
+            MetadataField titleField = metadataFields.findTextField("title");
+            metadataFields.setSpecialField(MetadataFields.TITLE, titleField == null ? null : titleField.name());
+            if (metadataFields.titleField() == null) {
+                metadataFields.setSpecialField(MetadataFields.TITLE, "fromInputFile");
             }
         }
         if (fieldInfo.has("authorField"))
-            authorField = fieldInfo.get("authorField").textValue();
+            metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
         if (fieldInfo.has("dateField"))
-            dateField = fieldInfo.get("dateField").textValue();
+            metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
-            pidField = fieldInfo.get("pidField").textValue();
+            metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
 
         if (usedTemplate) {
             // Update / clear possible old values that were in the template file
@@ -1358,9 +1177,7 @@ public class IndexMetadata {
             timeModified = timeCreated = IndexMetadata.getTimestamp();
 
             // Clear any recorded values in metadata fields
-            for (MetadataFieldImpl f : metadataFieldInfos.values()) {
-                f.resetForIndexing();
-            }
+            metadataFields.resetForIndexing();
         }
     }
 

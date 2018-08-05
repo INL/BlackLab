@@ -85,10 +85,10 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
             MetadataFields fields = indexMetadata.metadataFields();
             ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_PID))
-                    .entry("titleField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_TITLE))
-                    .entry("authorField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_AUTHOR))
-                    .entry("dateField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_DATE))
+                    .entry("pidField", optSpecialFieldName(fields, MetadataFields.PID))
+                    .entry("titleField", optSpecialFieldName(fields, MetadataFields.TITLE))
+                    .entry("authorField", optSpecialFieldName(fields, MetadataFields.AUTHOR))
+                    .entry("dateField", optSpecialFieldName(fields, MetadataFields.DATE))
                     .endMap().endEntry();
 
             ds.startEntry("complexFields").startMap();
