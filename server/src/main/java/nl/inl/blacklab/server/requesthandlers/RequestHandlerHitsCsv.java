@@ -19,7 +19,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -194,7 +194,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (String complexFieldName : getSearcher().getIndexMetadata().getComplexFields()) {
                 ComplexFieldDesc complexField = getSearcher().getIndexMetadata().getComplexFieldDesc(complexFieldName);
                 for (String tokenProperty : complexField.getProperties()) {
-                    PropertyDesc desc = complexField.getPropertyDesc(tokenProperty);
+                    AnnotationImpl desc = complexField.getPropertyDesc(tokenProperty);
                     if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
                         continue;
 

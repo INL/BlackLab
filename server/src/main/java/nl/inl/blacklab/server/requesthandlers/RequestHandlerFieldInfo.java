@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -174,7 +174,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.startEntry("properties").startMap();
         List<String> properties = new ArrayList<>(fieldDesc.getProperties());
         for (String propName : properties) {
-            PropertyDesc propDesc = fieldDesc.getPropertyDesc(propName);
+            AnnotationImpl propDesc = fieldDesc.getPropertyDesc(propName);
             ds.startAttrEntry("property", "name", propName).startMap();
             ds
                     .entry("displayName", propDesc.getDisplayName())

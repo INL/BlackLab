@@ -9,7 +9,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -82,7 +82,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             if (!complexFieldDesc.hasProperty(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",
                         "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
-            PropertyDesc prop = complexFieldDesc.getPropertyDesc(fieldName);
+            AnnotationImpl prop = complexFieldDesc.getPropertyDesc(fieldName);
             if (prop.hasAlternative(ComplexFieldUtil.INSENSITIVE_ALT_NAME)) {
                 sensitiveMatching = false;
                 fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName,
