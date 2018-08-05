@@ -23,6 +23,8 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocCount;
 import nl.inl.blacklab.search.results.DocCounts;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
@@ -447,10 +449,10 @@ public abstract class RequestHandler {
     public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
         ds.startMap();
         IndexMetadata indexMetadata = searcher.getIndexMetadata();
-        for (String metadataFieldName : indexMetadata.getMetadataFields()) {
-            String value = document.get(metadataFieldName);
+        for (MetadataField f: indexMetadata.metadataFields()) {
+            String value = document.get(f.name());
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
-                ds.entry(metadataFieldName, value);
+                ds.entry(f.name(), value);
         }
         int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
         String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
@@ -470,7 +472,7 @@ public abstract class RequestHandler {
      * @return true iff the content from documents in the index may be viewed
      */
     protected boolean mayView(IndexMetadata indexMetadata, Document document) {
-        if (indexMetadata.hasMetadataField(METADATA_FIELD_CONTENT_VIEWABLE))
+        if (indexMetadata.metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
         return indexMetadata.contentViewable();
     }
@@ -516,14 +518,18 @@ public abstract class RequestHandler {
 
     public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
-        if (indexMetadata.pidField() != null)
-            ds.entry("pidField", indexMetadata.pidField());
-        if (indexMetadata.titleField() != null)
-            ds.entry("titleField", indexMetadata.titleField());
-        if (indexMetadata.authorField() != null)
-            ds.entry("authorField", indexMetadata.authorField());
-        if (indexMetadata.dateField() != null)
-            ds.entry("dateField", indexMetadata.dateField());
+        MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_PID);
+        if (pidField != null)
+            ds.entry("pidField", pidField.name());
+        MetadataField titleField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
+        if (titleField != null)
+            ds.entry("titleField", titleField.name());
+        MetadataField authorField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_AUTHOR);
+        if (authorField != null)
+            ds.entry("authorField", authorField.name());
+        MetadataField dateField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_DATE);
+        if (dateField != null)
+            ds.entry("dateField", dateField.name());
         ds.endMap();
     }
 
@@ -552,10 +558,10 @@ public abstract class RequestHandler {
      */
     public static String getDocumentPid(Searcher searcher, int luceneDocId,
             Document document) {
-        String pidField = searcher.getIndexMetadata().pidField(); //getIndexParam(indexName, user).getPidField();
-        if (pidField == null || pidField.length() == 0)
-            return "" + luceneDocId;
-        return document.get(pidField);
+        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_PID); //getIndexParam(indexName, user).getPidField();
+        if (pidField == null)
+            return Integer.toString(luceneDocId);
+        return document.get(pidField.name());
     }
 
     /**

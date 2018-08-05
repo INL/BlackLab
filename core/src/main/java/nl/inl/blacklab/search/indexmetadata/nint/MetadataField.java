@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 
 /** A metadata field. */
 public interface MetadataField extends Field {

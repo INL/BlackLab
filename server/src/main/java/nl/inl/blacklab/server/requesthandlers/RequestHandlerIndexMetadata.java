@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -10,15 +10,16 @@ import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata.MetadataGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroup;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields.MetadataFieldGroups;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.util.StringUtil;
 
 /**
  * Get information about the structure of an index.
@@ -33,6 +34,11 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
     @Override
     public boolean isCacheAllowed() {
         return false; // because status might change (or you might reindex)
+    }
+    
+    String optSpecialFieldName(MetadataFields metadataFields, String type) {
+        MetadataField specialField = metadataFields.special(type);
+        return specialField == null ? "" : specialField.name();
     }
 
     @Override
@@ -77,11 +83,12 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("timeModified", indexMetadata.getTimeModified())
                     .endMap().endEntry();
 
+            MetadataFields fields = indexMetadata.metadataFields();
             ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", StringUtil.nullToEmpty(indexMetadata.pidField()))
-                    .entry("titleField", StringUtil.nullToEmpty(indexMetadata.titleField()))
-                    .entry("authorField", StringUtil.nullToEmpty(indexMetadata.authorField()))
-                    .entry("dateField", StringUtil.nullToEmpty(indexMetadata.dateField()))
+                    .entry("pidField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_PID))
+                    .entry("titleField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_TITLE))
+                    .entry("authorField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_AUTHOR))
+                    .entry("dateField", optSpecialFieldName(fields, MetadataFields.SPECIAL_FIELD_DATE))
                     .endMap().endEntry();
 
             ds.startEntry("complexFields").startMap();
@@ -103,36 +110,36 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             ds.startEntry("metadataFields").startMap();
             // Metadata fields
             //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
-            for (String name : indexMetadata.getMetadataFields()) {
-                ds.startAttrEntry("metadataField", "name", name);
+            for (MetadataField f: fields) {
+                ds.startAttrEntry("metadataField", "name", f.name());
 
-                MetadataField fd = indexMetadata.metadataField(name);
-                RequestHandlerFieldInfo.describeMetadataField(ds, null, name, fd, true);
+                MetadataField fd = fields.get(f.name());
+                RequestHandlerFieldInfo.describeMetadataField(ds, null, f.name(), fd, true);
 
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
 
-            Map<String, MetadataGroup> metaGroups = indexMetadata.getMetaFieldGroups();
-            Set<String> metadataFieldsNotInGroups = new HashSet<>(indexMetadata.getMetadataFields());
-            for (MetadataGroup metaGroup : metaGroups.values()) {
-                for (String field : metaGroup.getFields()) {
+            MetadataFieldGroups metaGroups = indexMetadata.metadataFields().groups();
+            Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(indexMetadata.metadataFields().stream().collect(Collectors.toSet()));
+            for (MetadataFieldGroup metaGroup : metaGroups) {
+                for (MetadataField field: metaGroup) {
                     metadataFieldsNotInGroups.remove(field);
                 }
             }
             ds.startEntry("metadataFieldGroups").startList();
             boolean addedRemaining = false;
-            for (MetadataGroup metaGroup : metaGroups.values()) {
+            for (MetadataFieldGroup metaGroup : metaGroups) {
                 ds.startItem("metadataFieldGroup").startMap();
-                ds.entry("name", metaGroup.getName());
+                ds.entry("name", metaGroup.name());
                 ds.startEntry("fields").startList();
-                for (String field : metaGroup.getFields()) {
-                    ds.item("field", field);
+                for (MetadataField field: metaGroup) {
+                    ds.item("field", field.name());
                 }
                 if (!addedRemaining && metaGroup.addRemainingFields()) {
                     addedRemaining = true;
-                    for (String field : metadataFieldsNotInGroups) {
-                        ds.item("field", field);
+                    for (MetadataField field: metadataFieldsNotInGroups) {
+                        ds.item("field", field.name());
                     }
                 }
                 ds.endList().endEntry();

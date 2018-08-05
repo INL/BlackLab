@@ -11,7 +11,7 @@ import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
@@ -37,19 +37,17 @@ public class TokensPerMetaValue {
             // Loop over all metadata fields
             IndexMetadata indexMetadata = searcher.getIndexMetadata();
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
-            for (String metaFieldName : indexMetadata.getMetadataFields()) {
+            for (MetadataField field: indexMetadata.metadataFields()) {
                 // Check if this field has only a few values
-                MetadataField fd = indexMetadata.metadataField(metaFieldName);
-                if (fd.isValueListComplete().equals(ValueListComplete.YES)) {
+                if (field.isValueListComplete().equals(ValueListComplete.YES)) {
                     // Loop over the values
-                    for (Map.Entry<String, Integer> entry : fd.valueDistribution().entrySet()) {
+                    for (Map.Entry<String, Integer> entry : field.valueDistribution().entrySet()) {
                         // Determine token count for this value
-                        String fieldName = fd.name();
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
-                                new BLDutchAnalyzer(), fieldName);
+                                new BLDutchAnalyzer(), field.name());
                         DocResults docs = searcher.queryDocuments(filter);
                         int totalNumberOfTokens = docs.intSum(new DocPropertyComplexFieldLength(complexFieldName));
-                        System.out.println(fieldName + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
+                        System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
                                 + totalNumberOfTokens);
                     }
                 }

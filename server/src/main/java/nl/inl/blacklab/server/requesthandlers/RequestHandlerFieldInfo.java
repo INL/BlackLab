@@ -18,9 +18,9 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.ValueListComplete;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -89,7 +89,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
             describeComplexField(ds, indexName, fieldName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
-            MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
+            MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);
             describeMetadataField(ds, indexName, fieldName, fieldDesc, true);
         }
 

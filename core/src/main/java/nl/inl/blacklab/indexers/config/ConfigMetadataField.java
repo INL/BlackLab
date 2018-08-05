@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
 /** Configuration for metadata field(s). */
 public class ConfigMetadataField {

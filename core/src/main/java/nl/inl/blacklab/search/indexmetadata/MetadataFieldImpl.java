@@ -12,32 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 
-public class MetadataFieldDesc extends BaseFieldDesc implements MetadataField {
-
+public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
-
-    /** Conditions for using the unknown value */
-    public enum UnknownCondition {
-        NEVER, // never use unknown value
-        MISSING, // use unknown value when field is missing (not when empty)
-        EMPTY, // use unknown value when field is empty (not when missing)
-        MISSING_OR_EMPTY; // use unknown value when field is empty or missing
-
-        public static UnknownCondition fromStringValue(String string) {
-            return valueOf(string.toUpperCase());
-        }
-
-        public String stringValue() {
-            return toString().toLowerCase();
-        }
-    }
-
-    /** Possible value for valueListComplete */
-    public enum ValueListComplete {
-        UNKNOWN, // not known yet; is treated as 'no'
-        YES,
-        NO
-    }
 
     /**
      * The field type: text, untokenized or numeric.
@@ -89,23 +65,10 @@ public class MetadataFieldDesc extends BaseFieldDesc implements MetadataField {
      */
     private String uiType = "";
 
-    public MetadataFieldDesc(String fieldName, FieldType type) {
+    public MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
         this.type = type;
     }
-
-//	public MetadataFieldDesc(String fieldName, String typeName) {
-//		super(fieldName);
-//		if (typeName.equals("untokenized")) {
-//			this.type = FieldType.UNTOKENIZED;
-//		} else if (typeName.equals("tokenized") || typeName.equals("text")) {
-//			this.type = FieldType.TOKENIZED;
-//		} else if (typeName.equals("numeric")) {
-//			this.type = FieldType.NUMERIC;
-//		} else {
-//			throw new IllegalArgumentException("Unknown field type name: " + typeName);
-//		}
-//	}
 
     public FieldType type() {
         return type;

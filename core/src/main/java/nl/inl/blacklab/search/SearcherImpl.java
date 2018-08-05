@@ -307,19 +307,18 @@ public class SearcherImpl extends Searcher implements Closeable {
     private void createAnalyzers() {
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
         fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
-        Analyzer baseAnalyzer = getAnalyzerInstance(indexMetadata.getDefaultAnalyzerName());
-        for (String fieldName : indexMetadata.getMetadataFields()) {
-            MetadataField fd = indexMetadata.metadataField(fieldName);
-            String analyzerName = fd.analyzerName();
-            if (fd.type() == FieldType.UNTOKENIZED)
+        Analyzer baseAnalyzer = getAnalyzerInstance(indexMetadata.metadataFields().defaultAnalyzerName());
+        for (MetadataField field: indexMetadata.metadataFields()) {
+            String analyzerName = field.analyzerName();
+            if (field.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
             if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
                 Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);
                 if (fieldAnalyzer == null) {
-                    logger.error("Unknown analyzer name " + analyzerName + " for field " + fieldName);
+                    logger.error("Unknown analyzer name " + analyzerName + " for field " + field.name());
                 } else {
                     if (fieldAnalyzer != baseAnalyzer)
-                        fieldAnalyzers.put(fieldName, fieldAnalyzer);
+                        fieldAnalyzers.put(field.name(), fieldAnalyzer);
                 }
             }
         }

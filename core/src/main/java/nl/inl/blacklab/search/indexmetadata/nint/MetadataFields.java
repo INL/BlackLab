@@ -1,35 +1,52 @@
 package nl.inl.blacklab.search.indexmetadata.nint;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.stream.Stream;
 
 /** Metadata fields in an index. */
-public interface MetadataFields {
+public interface MetadataFields extends Iterable<MetadataField> {
 	
+    /** Name of special field type for persistent identifier */
+    String SPECIAL_FIELD_PID = "pid";
+
+    /** Name of special field type for document title */
+    String SPECIAL_FIELD_TITLE = "title";
+
+    /** Name of special field type for document author */
+    String SPECIAL_FIELD_AUTHOR = "author";
+
+    /** Name of special field type for document date */
+    String SPECIAL_FIELD_DATE = "date";
+
 	/**
 	 * Name of the default analyzer to use for metadata fields.
 	 * @return the analyzer name (or DEFAULT for the BlackLab default)
 	 */
 	String defaultAnalyzerName();
 
-	/** Get the names of all the metadata fields in our index
-	 * @return the names */
-	Collection<MetadataField> fields();
+	Stream<MetadataField> stream();
 
-	MetadataField field(String fieldName);
+	MetadataField get(String fieldName);
 	
 	/** A named group of ordered metadata fields */
-	interface Group {
+	interface MetadataFieldGroup extends Iterable<MetadataField> {
 
 	    String name();
 
-        List<String> fields();
+        Stream<MetadataField> stream();
 
         boolean addRemainingFields();
 	}
+	
+	interface MetadataFieldGroups extends Iterable<MetadataFieldGroup> {
+	    
+        Stream<MetadataFieldGroup> stream();
+        
+        MetadataFieldGroup get(String name);
+        
+	}
 
-	Collection<MetadataFields.Group> fieldGroups();
-
+	MetadataFieldGroups groups();
+	
 	/**
 	 * Returns the one of the special fields, if configured.
 	 *
@@ -45,6 +62,14 @@ public interface MetadataFields {
 	 * @param specialFieldType type of field 
 	 * @return name of the pid field, or null if none found
 	 */
-	MetadataField specialField(String specialFieldType);
+	MetadataField special(String specialFieldType);
+
+	/**
+	 * Does the specified field exist?
+	 * 
+	 * @param name
+	 * @return true if it exists, false if not
+	 */
+    boolean exists(String name);
 	
 }

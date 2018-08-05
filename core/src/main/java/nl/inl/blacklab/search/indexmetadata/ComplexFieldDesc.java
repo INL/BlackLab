@@ -20,7 +20,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
 /** Description of a complex field */
-public class ComplexFieldDesc extends BaseFieldDesc {
+public class ComplexFieldDesc extends FieldImpl {
     protected static final Logger logger = LogManager.getLogger(ComplexFieldDesc.class);
 
     /** This complex field's properties */

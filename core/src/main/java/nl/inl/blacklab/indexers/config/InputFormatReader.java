@@ -24,7 +24,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;

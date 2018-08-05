@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.Field;
 import nl.inl.util.StringUtil;
 
-public abstract class BaseFieldDesc implements Field {
+public abstract class FieldImpl implements Field {
     /** Complex field's name */
     protected String fieldName;
 
@@ -16,11 +16,11 @@ public abstract class BaseFieldDesc implements Field {
     /** Does the field have an associated content store? */
     protected boolean contentStore;
 
-    public BaseFieldDesc(String fieldName) {
+    public FieldImpl(String fieldName) {
         this(fieldName, null);
     }
 
-    public BaseFieldDesc(String fieldName, String displayName) {
+    public FieldImpl(String fieldName, String displayName) {
         this.fieldName = fieldName;
         if (displayName == null)
             this.displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
@@ -65,6 +65,23 @@ public abstract class BaseFieldDesc implements Field {
 
     public boolean hasContentStore() {
         return contentStore;
+    }
+
+    @Override
+    public int hashCode() {
+        return fieldName.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        FieldImpl other = (FieldImpl) obj;
+        return fieldName.equals(other.fieldName);
     }
 
 }

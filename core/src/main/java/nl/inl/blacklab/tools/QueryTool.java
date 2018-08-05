@@ -62,6 +62,8 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
@@ -1231,7 +1233,7 @@ public class QueryTool {
                 HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField, "lemma");
                 HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField, "pos");
                 crit = new HitPropertyMultiple(p1, p2);
-            } else if (searcher.getIndexMetadata().getMetadataFields().contains(sortBy)) {
+            } else if (searcher.getIndexMetadata().metadataFields().exists(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
             }
 
@@ -1466,14 +1468,14 @@ public class QueryTool {
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        String titleField = searcher.getIndexMetadata().titleField();
+        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
             Document d = searcher.document(id);
-            String title = d.get(titleField);
+            String title = d.get(titleField.name());
             if (title == null)
-                title = "(doc #" + id + ", no " + titleField + " given)";
+                title = "(doc #" + id + ", no " + titleField.name() + " given)";
             else
                 title = title + " (doc #" + id + ")";
             outprintf("%4d. %s\n", hitNr, title);
@@ -1563,7 +1565,7 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        String titleField = searcher.getIndexMetadata().titleField();
+        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE);
         int hitNr = window.first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {
@@ -1571,9 +1573,9 @@ public class QueryTool {
                     outprintln("");
                 currentDoc = hit.doc;
                 Document d = searcher.document(currentDoc);
-                String title = d.get(titleField);
+                String title = d.get(titleField.name());
                 if (title == null)
-                    title = "(doc #" + currentDoc + ", no " + titleField + " given)";
+                    title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";
                 else
                     title = title + " (doc #" + currentDoc + ")";
                 outprintln("--- " + title + " ---");

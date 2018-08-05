@@ -20,6 +20,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.PropertyDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -219,7 +220,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
                     Document doc = getSearcher().document(hit.doc);
                     pid = getDocumentPid(getSearcher(), hit.doc, doc);
-                    title = doc.get(getSearcher().getIndexMetadata().titleField());
+                    String titleField = getSearcher().getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_TITLE).name();
+                    title = doc.get(titleField);
 
                     if (title == null || title.isEmpty())
                         title = "unknown (pid: " + pid + ")";

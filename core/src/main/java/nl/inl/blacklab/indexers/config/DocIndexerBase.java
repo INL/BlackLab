@@ -33,7 +33,7 @@ import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldDesc.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
@@ -437,10 +437,9 @@ public abstract class DocIndexerBase extends DocIndexer {
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
             IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
-            for (String fieldName : indexMetadata.getMetadataFields()) {
-                MetadataField fd = indexMetadata.metadataField(fieldName);
+            for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
-                String currentValue = currentLuceneDoc.get(fieldName);
+                String currentValue = currentLuceneDoc.get(fd.name());
                 if (currentValue == null)
                     missing = true;
                 else if (currentValue.length() == 0)
@@ -462,7 +461,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     break;
                 }
                 if (useUnknownValue)
-                    addMetadataField(optTranslateFieldName(fieldName), fd.unknownValue());
+                    addMetadataField(optTranslateFieldName(fd.name()), fd.unknownValue());
             }
         }
 

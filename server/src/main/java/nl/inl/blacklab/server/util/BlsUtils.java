@@ -19,6 +19,8 @@ import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -130,8 +132,8 @@ public class BlsUtils {
      * @return the document id, or -1 if it doesn't exist
      */
     public static int getLuceneDocIdFromPid(Searcher searcher, String pid) {
-        String pidField = searcher.getIndexMetadata().pidField();
-        if (pidField == null || pidField.length() == 0) {
+        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.SPECIAL_FIELD_PID);
+        if (pidField == null) {
             int luceneDocId;
             try {
                 luceneDocId = Integer.parseInt(pid);
@@ -147,7 +149,7 @@ public class BlsUtils {
         DocResults docResults;
         while (true) {
             String p = lowerCase ? pid.toLowerCase() : pid;
-            TermQuery documentFilterQuery = new TermQuery(new Term(pidField, p));
+            TermQuery documentFilterQuery = new TermQuery(new Term(pidField.name(), p));
             docResults = searcher.queryDocuments(documentFilterQuery);
             if (docResults.size() > 1) {
                 // Should probably throw a fatal exception, but sometimes

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -15,6 +16,8 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
@@ -155,7 +158,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
             IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
-            String pidField = indexMetadata.pidField();
+            MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.SPECIAL_FIELD_PID);
             String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
@@ -165,7 +168,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = indexMetadata.getMetadataFields();
+            Collection<String> metadataFieldIds = indexMetadata.metadataFields().stream().map(f -> f.name()).collect(Collectors.toList());
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");
             metadataFieldIds.remove("mayView");
@@ -184,8 +187,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 row.clear();
 
                 // Pid field, use lucene doc id if not provided
-                if (pidField != null && doc.get(pidField) != null)
-                    row.add(doc.get(pidField));
+                if (pidField != null && doc.get(pidField.name()) != null)
+                    row.add(doc.get(pidField.name()));
                 else
                     row.add(Integer.toString(docResult.getDocId()));
 
