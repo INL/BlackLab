@@ -10,12 +10,13 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 
 /**
  * A metadata field in an index.
  */
-public class MetadataFieldImpl extends FieldImpl implements MetadataField {
+public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable {
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
 
     /**
@@ -68,6 +69,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      */
     private String uiType = "";
 
+    /**
+     * If true, this instance is frozen and may not be mutated anymore.
+     * Doing so anyway will throw an exception.
+     */
+    private boolean frozen;
+
     public MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
         this.type = type;
@@ -115,20 +122,34 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     
     // Methods that mutate data
     // -------------------------------------------------
+    
 
+
+    public synchronized void freeze() {
+        this.frozen = true;
+    }
+    
+    public synchronized boolean isFrozen() {
+        return this.frozen;
+    }
+    
     public void setAnalyzer(String analyzer) {
+        ensureNotFrozen();
         this.analyzer = analyzer;
     }
 
     public void setUnknownValue(String unknownValue) {
+        ensureNotFrozen();
         this.unknownValue = unknownValue;
     }
 
     public void setUnknownCondition(UnknownCondition unknownCondition) {
+        ensureNotFrozen();
         this.unknownCondition = unknownCondition;
     }
 
     public void setValues(JsonNode values) {
+        ensureNotFrozen();
         this.values.clear();
         Iterator<Entry<String, JsonNode>> it = values.fields();
         while (it.hasNext()) {
@@ -140,6 +161,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     }
 
     public void setDisplayValues(JsonNode displayValues) {
+        ensureNotFrozen();
         this.displayValues.clear();
         Iterator<Entry<String, JsonNode>> it = displayValues.fields();
         while (it.hasNext()) {
@@ -151,11 +173,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     }
 
     public void setDisplayOrder(List<String> displayOrder) {
+        ensureNotFrozen();
         this.displayOrder.clear();
         this.displayOrder.addAll(displayOrder);
     }
 
     public void setValueListComplete(boolean valueListComplete) {
+        ensureNotFrozen();
         this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
     }
 
@@ -166,6 +190,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      * @param value field value
      */
     public void addValue(String value) {
+        ensureNotFrozen();
         // If we've seen a value, assume we'll get to see all values;
         // when it turns out there's too many or they're too long,
         // we'll change the value to NO.
@@ -197,15 +222,18 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
      * etc.) because we're going to (re-)index the data.
      */
     public void resetForIndexing() {
+        ensureNotFrozen();
         this.values.clear();
         valueListComplete = ValueListComplete.UNKNOWN;
     }
 
     public void setGroup(String group) {
+        ensureNotFrozen();
         this.group = group;
     }
 
     public void setUiType(String uiType) {
+        ensureNotFrozen();
         this.uiType = uiType;
     }
 

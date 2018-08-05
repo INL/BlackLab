@@ -136,6 +136,8 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
         indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, config);
+        if (!indexMode)
+            indexMetadata.freeze();
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }
@@ -162,6 +164,8 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
         indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, indexTemplateFile);
+        if (!indexMode)
+            indexMetadata.freeze();
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }

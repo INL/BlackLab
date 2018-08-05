@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroups;
@@ -17,7 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 /**
  * The metadata fields in an index.
  */
-class MetadataFieldsImpl implements MetadataFields {
+class MetadataFieldsImpl implements MetadataFields, Freezable {
     
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
@@ -50,6 +51,9 @@ class MetadataFieldsImpl implements MetadataFields {
 
     /** Default analyzer to use for metadata fields */
     private String defaultAnalyzerName;
+
+    /** Is the object frozen, not allowing any modifications? */
+    private boolean frozen = false;
     
     public MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
@@ -193,6 +197,7 @@ class MetadataFieldsImpl implements MetadataFields {
     // ------------------------------------
 
     public void register(String fieldName) {
+        ensureNotFrozen();
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
         // Synchronized because we might be using the map in another indexing thread
@@ -208,36 +213,44 @@ class MetadataFieldsImpl implements MetadataFields {
     }
 
     public void clearMetadataGroups() {
+        ensureNotFrozen();
         metadataGroups.clear();
     }
 
     public void putMetadataGroup(String name, MetadataFieldGroupImpl metadataGroup) {
+        ensureNotFrozen();
         metadataGroups.put(name, metadataGroup);
     }
 
     public void put(String fieldName, MetadataFieldImpl fieldDesc) {
+        ensureNotFrozen();
         metadataFieldInfos.put(fieldName, fieldDesc);
     }
 
     public void resetForIndexing() {
+        ensureNotFrozen();
         for (MetadataFieldImpl f: metadataFieldInfos.values()) {
             f.resetForIndexing();
         }
     }
 
     public void setDefaultUnknownCondition(String unknownCondition) {
+        ensureNotFrozen();
         this.defaultUnknownCondition = unknownCondition;
     }
 
     public void setDefaultUnknownValue(String value) {
+        ensureNotFrozen();
         this.defaultUnknownValue = value;
     }
 
     public void clearSpecialFields() {
+        ensureNotFrozen();
         titleField = authorField = dateField = pidField = null;
     }
 
     public void setSpecialField(String specialFieldType, String fieldName) {
+        ensureNotFrozen();
         switch(specialFieldType) {
         case "pid":
             pidField = fieldName;
@@ -254,10 +267,22 @@ class MetadataFieldsImpl implements MetadataFields {
         default:
             throw new IllegalArgumentException("Unknown special field type: " + fieldName);
         }
-   }
+    }
 
     public void setDefaultAnalyzerName(String name) {
+        ensureNotFrozen();
         this.defaultAnalyzerName = name;
+    }
+
+    public synchronized void freeze() {
+        this.frozen = true;
+        for (MetadataFieldImpl field: metadataFieldInfos.values()) {
+            field.freeze();
+        }
+    }
+    
+    public synchronized boolean isFrozen() {
+        return this.frozen;
     }
 
 }
