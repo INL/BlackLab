@@ -432,17 +432,17 @@ public class IndexMetadata implements Freezable {
             ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
-            fieldInfo2.put("mainProperty", f.getMainProperty().getName());
+            fieldInfo2.put("mainProperty", f.getMainProperty().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
             for (String propName : f.getProperties()) {
                 AnnotationImpl propDesc = f.getPropertyDesc(propName);
                 ObjectNode annot = annots.addObject();
-                annot.put("name", propDesc.getName());
-                annot.put("displayName", propDesc.getDisplayName());
-                annot.put("description", propDesc.getDescription());
-                annot.put("uiType", propDesc.getUiType());
+                annot.put("name", propDesc.name());
+                annot.put("displayName", propDesc.displayName());
+                annot.put("description", propDesc.description());
+                annot.put("uiType", propDesc.uiType());
             }
         }
 
@@ -937,7 +937,7 @@ public class IndexMetadata implements Freezable {
                                 break;
                             }
                         }
-                        if (StringUtils.isEmpty(propDesc.getName()))
+                        if (StringUtils.isEmpty(propDesc.name()))
                             logger.warn("Annotation entry without name for field '" + fieldName
                                     + "' in indexmetadata file; skipping");
                         else

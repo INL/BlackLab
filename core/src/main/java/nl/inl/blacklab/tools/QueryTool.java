@@ -1411,7 +1411,7 @@ public class QueryTool {
             String fieldName = hits.settings().concordanceField();
             if (collocProperty == null) {
                 ComplexFieldDesc cf = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
-                collocProperty = cf.getMainProperty().getName();
+                collocProperty = cf.getMainProperty().name();
             }
 
             collocations = hits.getCollocations(collocProperty,

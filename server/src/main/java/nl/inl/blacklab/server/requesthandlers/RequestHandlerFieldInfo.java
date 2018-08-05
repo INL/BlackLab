@@ -170,18 +170,18 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
-                .entry("mainProperty", fieldDesc.getMainProperty().getName());
+                .entry("mainProperty", fieldDesc.getMainProperty().name());
         ds.startEntry("properties").startMap();
         List<String> properties = new ArrayList<>(fieldDesc.getProperties());
         for (String propName : properties) {
             AnnotationImpl propDesc = fieldDesc.getPropertyDesc(propName);
             ds.startAttrEntry("property", "name", propName).startMap();
             ds
-                    .entry("displayName", propDesc.getDisplayName())
-                    .entry("description", propDesc.getDescription())
-                    .entry("uiType", propDesc.getUiType())
+                    .entry("displayName", propDesc.displayName())
+                    .entry("description", propDesc.description())
+                    .entry("uiType", propDesc.uiType())
                     .entry("hasForwardIndex", propDesc.hasForwardIndex())
-                    .entry("sensitivity", propDesc.getSensitivity().toString())
+                    .entry("sensitivity", propDesc.sensitivities().toString())
                     .entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative().luceneFieldSuffix()))
                     .entry("isInternal", propDesc.isInternal());
             String luceneField = ComplexFieldUtil.propertyField(fieldName, propName,

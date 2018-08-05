@@ -9,6 +9,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -83,10 +84,9 @@ public class RequestHandlerAutocomplete extends RequestHandler {
                 throw new BadRequest("UNKNOWN_PROPERTY",
                         "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
             AnnotationImpl prop = complexFieldDesc.getPropertyDesc(fieldName);
-            if (prop.hasAlternative(ComplexFieldUtil.INSENSITIVE_ALT_NAME)) {
+            if (prop.hasAlternative(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
-                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName,
-                        ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
             } else {
                 sensitiveMatching = true;
                 fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, prop.offsetsAlternative().luceneFieldSuffix());

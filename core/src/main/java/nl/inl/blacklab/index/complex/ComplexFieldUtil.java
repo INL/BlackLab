@@ -162,7 +162,7 @@ public final class ComplexFieldUtil {
     }
 
     public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
-        String propName = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
+        String propName = structure.getComplexFieldDesc(fieldName).getMainProperty().name();
         return forwardIndexIdField(propertyField(fieldName, propName));
     }
 
@@ -400,13 +400,13 @@ public final class ComplexFieldUtil {
     public static String mainPropertyField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
         AnnotationImpl pr = cf.getMainProperty();
-        return propertyField(fieldName, pr.getName());
+        return propertyField(fieldName, pr.name());
     }
 
     public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
         AnnotationImpl pr = cf.getMainProperty();
-        return propertyField(fieldName, pr.getName(), pr.offsetsAlternative().luceneFieldSuffix());
+        return propertyField(fieldName, pr.name(), pr.offsetsAlternative().luceneFieldSuffix());
     }
 
     public static String getDefaultMainPropName() {

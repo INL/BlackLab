@@ -571,7 +571,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         AnnotationImpl mainProperty = complexFieldDesc.getMainProperty();
         if (mainProperty == null)
             throw new IllegalArgumentException("Main property not found for " + fieldName);
-        String mainPropName = mainProperty.getName();
+        String mainPropName = mainProperty.name();
         return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
                 defaultDiacriticsSensitive);
     }

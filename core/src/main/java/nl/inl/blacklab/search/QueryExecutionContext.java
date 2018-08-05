@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.util.StringUtil;
@@ -138,7 +139,7 @@ public class QueryExecutionContext {
 
         // Find the property
         AnnotationImpl pd = cfd.getPropertyDesc(propName);
-        SensitivitySetting sensitivity = pd.getSensitivity();
+        SensitivitySetting sensitivity = pd.sensitivities();
 //		Collection<String> availableAlternatives = Collections.emptyList();
 //		if (pd != null) {
 //			availableAlternatives = pd.getAlternatives();
@@ -235,7 +236,7 @@ public class QueryExecutionContext {
 
         // Find the first available alternative to use
         for (String alt : alternatives) {
-            if (pd.hasAlternative(alt)) {
+            if (pd.hasAlternative(MatchSensitivity.fromLuceneFieldCode(alt))) {
                 // NOTE: is this loop necessary at all? getAlternatives() only
                 //  returns available alternatives, so the first one should always
                 //  be okay, right?

@@ -181,7 +181,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
         final String mainTokenProperty = getSearcher().getIndexMetadata().getMainContentsField().getMainProperty()
-                .getName();
+                .name();
         List<String> otherTokenProperties = new ArrayList<>();
 
         try {

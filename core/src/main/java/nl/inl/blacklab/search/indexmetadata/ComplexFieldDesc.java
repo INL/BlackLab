@@ -221,7 +221,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
     
         // Not a bookkeeping field; must be a property (alternative).
         AnnotationImpl pd = getOrCreateProperty(propPart);
-        if (pd.getName().equals(ComplexFieldUtil.START_TAG_PROP_NAME))
+        if (pd.name().equals(ComplexFieldUtil.START_TAG_PROP_NAME))
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
@@ -249,7 +249,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
 
     void putProperty(AnnotationImpl propDesc) {
         ensureNotFrozen();
-        props.put(propDesc.getName(), propDesc);
+        props.put(propDesc.name(), propDesc);
     }
 
     public void detectMainProperty(IndexReader reader) {
@@ -275,7 +275,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
                     // Was already set from metadata file; same..?
                     if (mainProperty != pr) {
                         logger.warn("Metadata says main property for field " + name() + " is "
-                                + mainProperty.getName() + ", but offsets are stored in " + pr.getName());
+                                + mainProperty.name() + ", but offsets are stored in " + pr.name());
                     }
                 }
                 return;
@@ -286,7 +286,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         // (note that not having any offsets makes it impossible to highlight the
         // original content, but this may not be an issue. We probably need
         // a better way to keep track of the main property)
-        logger.warn("No property with offsets found; assume first property (" + firstProperty.getName()
+        logger.warn("No property with offsets found; assume first property (" + firstProperty.name()
                 + ") is main property");
         mainProperty = firstProperty;
     

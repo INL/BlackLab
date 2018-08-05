@@ -59,12 +59,6 @@ public class AnnotationImpl implements Freezable {
 
     @Override
     public String toString() {
-//		String altDesc = "";
-//		String altList = StringUtil.join(alternatives.values(), "\", \"");
-//		if (alternatives.size() > 1)
-//			altDesc = ", with alternatives \"" + altList + "\"";
-//		else if (alternatives.size() == 1)
-//			altDesc = ", with alternative \"" + altList + "\"";
         String sensitivityDesc;
         switch (sensitivity) {
         case ONLY_SENSITIVE:
@@ -95,7 +89,7 @@ public class AnnotationImpl implements Freezable {
      * 
      * @return the name
      */
-    public String getName() {
+    public String name() {
         return name;
     }
 
@@ -104,7 +98,7 @@ public class AnnotationImpl implements Freezable {
      * 
      * @return the sensitivity setting
      */
-    public SensitivitySetting getSensitivity() {
+    public SensitivitySetting sensitivities() {
         return sensitivity;
     }
 
@@ -122,21 +116,14 @@ public class AnnotationImpl implements Freezable {
     /**
      * Does this property have the sensitivity alternative specified?
      * 
-     * @param alt name of the sensitivity alternative: s, i, ci, di.
+     * @param sensitivity sensitivity alternative
      * @return true if it exists, false if not
      */
-    public boolean hasAlternative(String alt) {
-        if (alt.equals("s")) {
-            return sensitivity != SensitivitySetting.ONLY_INSENSITIVE;
-        } else if (alt.equals("i")) {
-            return sensitivity != SensitivitySetting.ONLY_SENSITIVE;
-        } else if (alt.equals("ci") || alt.equals("di")) {
-            return sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
-        }
-        throw new IllegalArgumentException("Unknown sensitivity alternative ' " + alt + "'! Valid: s, i, ci, di");
+    public boolean hasAlternative(MatchSensitivity sensitivity) {
+        return alternatives.contains(sensitivity);
     }
 
-    public String getDisplayName() {
+    public String displayName() {
         if (displayName != null)
             return displayName;
         if (name.equals("pos"))
@@ -150,11 +137,11 @@ public class AnnotationImpl implements Freezable {
                 name.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
     }
 
-    public String getUiType() {
+    public String uiType() {
         return uiType;
     }
 
-    public String getDescription() {
+    public String description() {
         return description;
     }
     
