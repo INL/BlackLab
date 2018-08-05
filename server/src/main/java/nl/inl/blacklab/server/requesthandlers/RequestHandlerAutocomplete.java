@@ -89,7 +89,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
                         ComplexFieldUtil.INSENSITIVE_ALT_NAME);
             } else {
                 sensitiveMatching = true;
-                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, prop.offsetsAlternative());
+                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, prop.offsetsAlternative().luceneFieldSuffix());
             }
         }
 

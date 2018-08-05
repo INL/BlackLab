@@ -1,13 +1,14 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 
 /** Description of a property */
 public class PropertyDesc {
@@ -27,7 +28,7 @@ public class PropertyDesc {
     private String uiType = "";
 
     /** Any alternatives this property may have */
-    private Map<String, AltDesc> alternatives;
+    private Set<MatchSensitivity> alternatives = new HashSet<>();
 
     private boolean forwardIndex;
 
@@ -41,7 +42,7 @@ public class PropertyDesc {
      * Which of the alternatives is the main one (containing the offset info, if
      * present)
      */
-    private AltDesc offsetsAlternative;
+    private MatchSensitivity offsetsAlternative;
 
     public PropertyDesc() {
         this(null);
@@ -49,7 +50,6 @@ public class PropertyDesc {
 
     public PropertyDesc(String name) {
         this.name = name;
-        alternatives = new TreeMap<>();
         forwardIndex = false;
     }
 
@@ -90,14 +90,13 @@ public class PropertyDesc {
         return forwardIndex;
     }
 
-    void addAlternative(String name) {
-        AltDesc altDesc = new AltDesc(name);
-        alternatives.put(name, altDesc);
+    void addAlternative(MatchSensitivity matchSensitivity) {
+        alternatives.add(matchSensitivity);
 
         // Update the sensitivity settings based on the alternatives we've seen so far.
-        if (alternatives.containsKey("s")) {
-            if (alternatives.containsKey("i")) {
-                if (alternatives.containsKey("ci")) {
+        if (alternatives.contains(MatchSensitivity.SENSITIVE)) {
+            if (alternatives.contains(MatchSensitivity.INSENSITIVE)) {
+                if (alternatives.contains(MatchSensitivity.CASE_INSENSITIVE)) {
                     sensitivity = SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
                 } else {
                     sensitivity = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
@@ -149,11 +148,10 @@ public class PropertyDesc {
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main property.
         // If not, keep searching.
-        for (AltDesc alt : alternatives.values()) {
-            String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name,
-                    alt.getName());
+        for (MatchSensitivity sensitivity: alternatives) {
+            String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name, sensitivity.luceneFieldSuffix());
             if (IndexMetadata.hasOffsets(reader, luceneAltName)) {
-                offsetsAlternative = alt;
+                offsetsAlternative = sensitivity;
                 return true;
             }
         }
@@ -168,8 +166,8 @@ public class PropertyDesc {
      *
      * @return the alternative, or null if there is none.
      */
-    public String offsetsAlternative() {
-        return offsetsAlternative == null ? null : offsetsAlternative.getName();
+    public MatchSensitivity offsetsAlternative() {
+        return offsetsAlternative == null ? null : offsetsAlternative;
     }
 
     /**

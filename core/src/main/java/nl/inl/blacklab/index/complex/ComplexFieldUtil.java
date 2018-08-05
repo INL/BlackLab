@@ -406,7 +406,7 @@ public final class ComplexFieldUtil {
     public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
         PropertyDesc pr = cf.getMainProperty();
-        return propertyField(fieldName, pr.getName(), pr.offsetsAlternative());
+        return propertyField(fieldName, pr.getName(), pr.offsetsAlternative().luceneFieldSuffix());
     }
 
     public static String getDefaultMainPropName() {

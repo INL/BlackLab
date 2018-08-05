@@ -17,6 +17,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /** Description of a complex field */
@@ -184,7 +185,7 @@ public class ComplexFieldDesc extends FieldImpl {
         if (parts.length > 2) {
             if (parts[2] != null) {
                 // Alternative
-                pd.addAlternative(parts[2]);
+                pd.addAlternative(MatchSensitivity.fromLuceneFieldCode(parts[2]));
             } else {
                 // Property bookkeeping field
                 if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
