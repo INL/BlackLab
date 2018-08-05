@@ -3,7 +3,7 @@ package nl.inl.blacklab.interfaces.results;
 import java.util.function.Predicate;
 
 /** A list of term frequencies, for example collocations. */
-public interface TermFrequencyList extends Results<TermFrequency> {
+interface TermFrequencyList extends Results<TermFrequency> {
 
     @Override
     default TermFrequencyList save() {
@@ -16,9 +16,9 @@ public interface TermFrequencyList extends Results<TermFrequency> {
      * @param token the token to get the frequency for
      * @return the frequency
      */
-    public long getFrequency(String token);
+    long getFrequency(String token);
 
-    public long getTotalFrequency();
+    long getTotalFrequency();
 
     TermFrequencyList window(int first, int number);
     

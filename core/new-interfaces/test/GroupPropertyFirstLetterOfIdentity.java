@@ -21,7 +21,7 @@ public final class GroupPropertyFirstLetterOfIdentity<T> implements ResultProper
 
     @Override
     public ResultPropertyValue get(Group<T> result) {
-        return ResultPropertyValueString.get(getFirstLetter(result) + "");
+        return ResultPropertyValueString.get(Character.toString(getFirstLetter(result)));
     }
 
     @Override

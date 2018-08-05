@@ -3,7 +3,6 @@ package nl.inl.blacklab.interfaces.struct;
 import java.util.Collection;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.interfaces.MatchSensitivity;
 
 /** An annotation on an annotated field. */
 interface Annotation {

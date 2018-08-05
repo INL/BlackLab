@@ -255,7 +255,7 @@ public class SearcherImpl extends Searcher implements Closeable {
                     this.mainContentsFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
                 }
             } else {
-                this.mainContentsFieldName = mainContentsField.getName();
+                this.mainContentsFieldName = mainContentsField.name();
 
                 // See if we have a punctuation forward index. If we do,
                 // default to creating concordances using that.

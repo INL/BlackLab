@@ -44,7 +44,7 @@ public class TokensPerMetaValue {
                     // Loop over the values
                     for (Map.Entry<String, Integer> entry : fd.getValueDistribution().entrySet()) {
                         // Determine token count for this value
-                        String fieldName = fd.getName();
+                        String fieldName = fd.name();
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
                                 new BLDutchAnalyzer(), fieldName);
                         DocResults docs = searcher.queryDocuments(filter);

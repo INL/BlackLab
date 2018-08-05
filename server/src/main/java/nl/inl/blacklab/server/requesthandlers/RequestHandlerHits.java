@@ -154,7 +154,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (includeTokenCount) {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set
-                String fieldName = struct.getMainContentsField().getName();
+                String fieldName = struct.getMainContentsField().name();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = perDocResults.intSum(propTokens);
             }

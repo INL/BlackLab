@@ -18,7 +18,7 @@ import nl.inl.blacklab.interfaces.struct.IndexMetadata;
 /**
  * Interface the DocIndexer gets to store documents.
  */
-public interface DocWriter {
+interface DocWriter {
     
     /**
      * Get the general index writer object.
@@ -53,7 +53,7 @@ public interface DocWriter {
      * @param prop the property to get values and position increments from
      * @return the id assigned to the content
      */
-    public int addToForwardIndex(AnnotatedField field, ComplexFieldProperty prop);
+    int addToForwardIndex(AnnotatedField field, ComplexFieldProperty prop);
 
     /**
      * Should we continue indexing or stop?
@@ -63,18 +63,18 @@ public interface DocWriter {
      *
      * @return true if we should continue, false if not
      */
-    public boolean continueIndexing();
+    boolean continueIndexing();
 
     /**
      * How many more documents should we process?
      *
      * @return the number of documents
      */
-    public int docsToDoLeft();
+    int docsToDoLeft();
 
-    public File getLinkedFile(String inputFile);
+    File getLinkedFile(String inputFile);
     
-    public FieldType getMetadataFieldType(boolean tokenized);
+    FieldType getMetadataFieldType(boolean tokenized);
 
     /**
      * Get our index listener, or create a console reporting listener if none was set yet.
@@ -92,8 +92,8 @@ public interface DocWriter {
      * Used by DocIndexer classes to get their parameters.
      * @return the parameters
      */
-    public Map<String, String> getIndexerParameters();
+    Map<String, String> getIndexerParameters();
 
-    public Optional<Function<String, File>> getLinkedFileResolver();
+    Optional<Function<String, File>> getLinkedFileResolver();
 
 }

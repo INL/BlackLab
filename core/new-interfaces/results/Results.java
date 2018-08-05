@@ -19,14 +19,14 @@ import java.util.stream.Stream;
  * it is said to be exhausted if all of its results have been seen, or the maximum number
  * of results to process was reached.
  * 
- * @param <Result> type of results
+ * @param <T> type of results
  */
-public interface Results<Result> extends Iterable<Result>, SearchResult {
+public interface Results<T> extends Iterable<T>, SearchResult {
 	
 	/**
 	 * A value indicating there is no limit (typically on the number of results gathered).
 	 */
-	public static final int NO_LIMIT = -1;
+	int NO_LIMIT = -1;
 	
     /**
      * Pause/resume gathering of results, if applicable.
@@ -49,7 +49,7 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * @return results iterator
 	 */
 	@Override
-	Iterator<Result> iterator();
+	Iterator<T> iterator();
 	
 	/**
 	 * Stream all results sequentially.
@@ -57,17 +57,17 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * NOTE: Must be called on a pristine-sequential or random access instance.
 	 * Calling this will exhaust a sequential instance.
 	 * 
-	 * Assume a streamed result to be ephemeral. If you wish to store it, call Result.save() to get
+	 * Assume a streamed result to be ephemeral. If you wish to store it, call T.save() to get
 	 * an immutable copy.
 	 * 
 	 * @return stream of results
 	 */
-	Stream<Result> stream();
+	Stream<T> stream();
 	
 	
 	// Random-access related methods
 	// ===============================================================
-	// Applications must be able to get random access to Results<Result> objects,
+	// Applications must be able to get random access to Results<T> objects,
 	// even if they have to wrap them to do so.
 	
 	/**
@@ -86,10 +86,10 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * 
 	 * @return random-access version of this instance.
 	 */
-	Results<Result> withRandomAccess();
+	Results<T> withRandomAccess();
 	
 	@Override
-	default Results<Result> save() {
+	default Results<T> save() {
 	    // random-access Results are (effectively) immutable,
 	    // sequential ones are not
 	    return withRandomAccess();
@@ -101,33 +101,33 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * Only works for random access instances.
 	 * 
 	 * The returned result may be ephemeral. If you wish to store it, call 
-	 * Result.save() to get an immutable copy.
+	 * T.save() to get an immutable copy.
 	 * 
 	 * @param index result index to get (0-based)
 	 * @return the result
 	 */
-	Result get(int index);
+	T get(int index);
 	
-	// Methods for deriving other (Results<Result>) objects
+	// Methods for deriving other (Results<T>) objects
 	// ===============================================================
-	// Applications must be able to apply actions on Results<Result> objects to sort,
-	// filter and group them, resulting in a new Results<Result> object with the desired
+	// Applications must be able to apply actions on Results<T> objects to sort,
+	// filter and group them, resulting in a new Results<T> object with the desired
 	// properties.
 	
 	/**
-	 * Return part of the results represented by this Results<Result> object.
+	 * Return part of the results represented by this Results<T> object.
 	 * 
 	 * NOTE: this will (partially) exhaust sequential instances,
 	 * but they can be used afterwards to fetch results occurring after this window.
 	 * 
 	 * Calling this on a sequential instance to fetch a window containing
 	 * results this class has already seen will throw an exception. In that case,
-	 * you must create a new Results<Result> object and iterate to the point you need.
+	 * you must create a new Results<T> object and iterate to the point you need.
 	 * 
 	 * Returns null if the first result you request doesn't exist, or is larger than 
 	 * the maximum number of results we process. This is the 'proper' way of discovering
 	 * whether or not a window is valid or not (unless you've already determined the 
-	 * total number of results ealier, using another Results<Result> object)
+	 * total number of results ealier, using another Results<T> object)
 	 * 
 	 * The returned instance is always random-access.
 	 * 
@@ -136,10 +136,10 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * @return window of results, or null if the first result doesn't exist or goes beyond
 	 *   our maximum number of results to process
 	 */
-	Results<Result> window(int first, int number);
+	Results<T> window(int first, int number);
 	
 	/**
-	 * Return a new Results<Result> object with these results sorted by the given property.
+	 * Return a new Results<T> object with these results sorted by the given property.
 	 * 
 	 * NOTE: Must be called on a pristine-sequential or random access instance.
 	 * Calling this will exhaust a sequential instance.
@@ -148,9 +148,9 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * 
 	 * @param sort the result calculation (often just a property) to sort on
 	 * @param reverse whether to sort in reverse or not
-	 * @return a new Results<Result> object with the same results, sorted in the specified way
+	 * @return a new Results<T> object with the same results, sorted in the specified way
 	 */
-	Results<Result> sortedBy(ResultProperty<Result> sort, boolean reverse);
+	Results<T> sortedBy(ResultProperty<T> sort, boolean reverse);
 	
 	/**
 	 * Select only the results where the specified property has the specified value.
@@ -165,7 +165,7 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * @param test predicate that decides whether a result matches or not
 	 * @return filtered results
 	 */
-	Results<Result> filteredBy(Predicate<Result> test);
+	Results<T> filteredBy(Predicate<T> test);
 	
 	/**
 	 * Return a random sample of results.
@@ -173,7 +173,7 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 * @param amount how much to sample
 	 * @return random sample
 	 */
-	Results<Result> sample(SampleParameters amount);
+	Results<T> sample(SampleParameters amount);
 
 	/**
 	 * Group these results by a criterium (or several criteria).
@@ -205,9 +205,9 @@ public interface Results<Result> extends Iterable<Result>, SearchResult {
 	 *   NO_LIMIT for all
 	 * @return a HitGroups object representing the grouped results
 	 */
-	Groups<? extends Result, ? extends Group<Result>> groupedBy(final ResultProperty<Result> criteria, int maxResultsToGatherPerGroup);
+	Groups<? extends T, ? extends Group<T>> groupedBy(final ResultProperty<T> criteria, int maxResultsToGatherPerGroup);
 	
-	default Groups<? extends Result, ? extends Group<Result>> groupedBy(final ResultProperty<Result> criteria) {
+	default Groups<? extends T, ? extends Group<T>> groupedBy(final ResultProperty<T> criteria) {
 		return groupedBy(criteria, NO_LIMIT);
 	}
     

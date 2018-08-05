@@ -1,8 +1,9 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import nl.inl.blacklab.interfaces.struct.Field;
 import nl.inl.util.StringUtil;
 
-public abstract class BaseFieldDesc {
+public abstract class BaseFieldDesc implements Field {
     /** Complex field's name */
     protected String fieldName;
 
@@ -11,6 +12,9 @@ public abstract class BaseFieldDesc {
 
     /** Complex field's name */
     protected String description = "";
+
+    /** Does the field have an associated content store? */
+    protected boolean contentStore;
 
     public BaseFieldDesc(String fieldName) {
         this(fieldName, null);
@@ -29,7 +33,7 @@ public abstract class BaseFieldDesc {
      * 
      * @return this field's name
      */
-    public String getName() {
+    public String name() {
         return fieldName;
     }
 
@@ -42,7 +46,7 @@ public abstract class BaseFieldDesc {
      * 
      * @return this field's display name
      */
-    public String getDisplayName() {
+    public String displayName() {
         return displayName;
     }
 
@@ -55,8 +59,12 @@ public abstract class BaseFieldDesc {
      * 
      * @return this field's display name
      */
-    public String getDescription() {
+    public String description() {
         return description;
+    }
+
+    public boolean hasContentStore() {
+        return contentStore;
     }
 
 }

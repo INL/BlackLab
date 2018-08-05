@@ -9,12 +9,12 @@ import nl.inl.blacklab.interfaces.MatchSensitivity;
 /**
  * Keeps a list of unique terms and their sort positions.
  */
-public interface Terms extends Iterable<String> {
+interface Terms extends Iterable<String> {
 	
 	/**
 	 * "no term at this position" value (kind of like null)
 	 */
-	static final int NO_TERM = -1;
+	int NO_TERM = -1;
 
 	/**
 	 * Clear the Terms object.

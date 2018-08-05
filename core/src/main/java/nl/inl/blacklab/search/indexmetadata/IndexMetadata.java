@@ -417,7 +417,7 @@ public class IndexMetadata {
             // (looks for fields with char offset information stored)
             mainContentsField = null;
             for (ComplexFieldDesc d : complexFields.values()) {
-                if (mainContentsField == null || d.getName().equals("contents"))
+                if (mainContentsField == null || d.name().equals("contents"))
                     mainContentsField = d;
                 if (tokenCount > 0) // no use trying this on an empty index
                     d.detectMainProperty(reader);
@@ -508,10 +508,10 @@ public class IndexMetadata {
         // Add metadata field info
         for (MetadataFieldDesc f : metadataFieldInfos.values()) {
             UnknownCondition unknownCondition = f.getUnknownCondition();
-            ObjectNode fi = metadataFields.putObject(f.getName());
-            fi.put("displayName", f.getDisplayName());
+            ObjectNode fi = metadataFields.putObject(f.name());
+            fi.put("displayName", f.displayName());
             fi.put("uiType", f.getUiType());
-            fi.put("description", f.getDescription());
+            fi.put("description", f.description());
             fi.put("type", f.getType().stringValue());
             fi.put("analyzer", f.getAnalyzerName());
             fi.put("unknownValue", f.getUnknownValue());
@@ -544,9 +544,9 @@ public class IndexMetadata {
 
         // Add complex field info
         for (ComplexFieldDesc f : complexFields.values()) {
-            ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.getName());
-            fieldInfo2.put("displayName", f.getDisplayName());
-            fieldInfo2.put("description", f.getDescription());
+            ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
+            fieldInfo2.put("displayName", f.displayName());
+            fieldInfo2.put("description", f.description());
             fieldInfo2.put("mainProperty", f.getMainProperty().getName());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
@@ -816,7 +816,7 @@ public class IndexMetadata {
     public void print(PrintWriter out) {
         out.println("COMPLEX FIELDS");
         for (ComplexFieldDesc cf : complexFields.values()) {
-            out.println("- " + cf.getName());
+            out.println("- " + cf.name());
             cf.print(out);
         }
 

@@ -3,9 +3,9 @@ package nl.inl.blacklab.interfaces.results;
 /**
  * Groups of results
  *
- * @param <Result> result type
+ * @param <T> result type
  */
-public interface Group<Result> {
+public interface Group<T> {
 	
 	/** Identity of the group, i.e. the value that was used for grouping.
 	 *  
@@ -18,7 +18,7 @@ public interface Group<Result> {
 	 * larger than <code>members().size().total()</code>.
 	 *  
 	 * @return hits in this group */
-	Results<Result> members();
+	Results<T> members();
 	
 	/**
 	 * Total size of this group.

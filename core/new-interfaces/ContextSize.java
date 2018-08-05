@@ -3,11 +3,11 @@ package nl.inl.blacklab.interfaces;
 /**
  * Represents the size of the context around a hit.
  */
-public interface ContextSize {
+interface ContextSize {
 	
-	public int left();
+	int left();
 
-	public int right();
+	int right();
 	
 	/**
 	 * Should the hit itself be included in the context or not?

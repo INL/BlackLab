@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class MetadataFieldDesc extends BaseFieldDesc {
 
+    private static final int MAX_METADATA_VALUES_TO_STORE = 50;
+
     /** Conditions for using the unknown value */
     public enum UnknownCondition {
     NEVER, // never use unknown value
@@ -34,8 +36,6 @@ public class MetadataFieldDesc extends BaseFieldDesc {
         YES,
         NO
     }
-
-    private static final int MAX_METADATA_VALUES_TO_STORE = 50;
 
     /**
      * The field type: text, untokenized or numeric.

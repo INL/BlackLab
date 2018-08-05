@@ -9,7 +9,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
  * and "case/diacritics-sensitivity" when talking about matching, but
  * those are the same thing)
  */
-public class MatchSensitivity {
+public final class MatchSensitivity {
     
     public static final MatchSensitivity SENSITIVE = new MatchSensitivity(true, true);
     

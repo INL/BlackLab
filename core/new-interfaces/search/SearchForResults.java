@@ -10,9 +10,9 @@ import nl.inl.blacklab.interfaces.results.SampleParameters;
 /**
  * Search operation that produces a list of results (e.g. Hit).
  * 
- * @param <Result> type of result 
+ * @param <T> type of result 
  */
-public abstract class SearchForResults<Result> extends AbstractSearch {
+public abstract class SearchForResults<T> extends AbstractSearch {
 
 	/**
 	 * Execute the search operation, returning the final response.
@@ -20,7 +20,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
 	 * @return result of the operation
 	 */
 	@Override
-	public abstract Results<Result> execute();
+	public abstract Results<T> execute();
 
 	/**
 	 * Report the intermediate result.
@@ -29,7 +29,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
 	 * @return resulting operation
 	 */
 	@Override
-	public abstract SearchForResults<Result> custom(SearchOperation receiver);
+	public abstract SearchForResults<T> custom(SearchOperation receiver);
 	
 	/**
 	 * Group hits by a property.
@@ -38,7 +38,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
 	 * @param maxResultsToGatherPerGroup how many results to gather per group
 	 * @return resulting operation
 	 */
-	public abstract SearchForResults<? extends Group<Result>> groupBy(ResultProperty<Result> groupBy, int maxResultsToGatherPerGroup);
+	public abstract SearchForResults<? extends Group<T>> groupBy(ResultProperty<T> groupBy, int maxResultsToGatherPerGroup);
 
 	/**
 	 * Sort hits.
@@ -46,7 +46,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
 	 * @param sortBy what to sort by
 	 * @return resulting operation
 	 */
-	public abstract SearchForResults<Result> sortBy(ResultProperty<Result> sortBy);
+	public abstract SearchForResults<T> sortBy(ResultProperty<T> sortBy);
 
     /**
      * Sample hits.
@@ -54,7 +54,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
      * @param par how many hits to sample; seed
      * @return resulting operation
      */
-	public abstract SearchForResults<Result> sample(SampleParameters par);
+	public abstract SearchForResults<T> sample(SampleParameters par);
 
     /**
      * Filter hits.
@@ -62,7 +62,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
      * @param test what hits to keep
      * @return resulting operation
      */
-    public abstract SearchForResults<Result> filter(Predicate<Result> test);
+    public abstract SearchForResults<T> filter(Predicate<T> test);
 
     /**
      * Get window of hits.
@@ -71,7 +71,7 @@ public abstract class SearchForResults<Result> extends AbstractSearch {
      * @param number number of hits to select
      * @return resulting operation
      */
-    public abstract SearchForResults<Result> window(int first, int number);
+    public abstract SearchForResults<T> window(int first, int number);
 
     /**
      * Count hits.

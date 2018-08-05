@@ -35,9 +35,6 @@ public class ComplexFieldDesc extends BaseFieldDesc {
      */
     private String mainPropertyName;
 
-    /** Does the field have an associated content store? */
-    private boolean contentStore;
-
     /** Is the field length in tokens stored? */
     private boolean lengthInTokens;
 
@@ -113,10 +110,6 @@ public class ComplexFieldDesc extends BaseFieldDesc {
         if (!props.containsKey(name))
             throw new IllegalArgumentException("Property '" + name + "' not found!");
         return props.get(name);
-    }
-
-    public boolean hasContentStore() {
-        return contentStore;
     }
 
     public boolean hasLengthTokens() {
@@ -253,7 +246,7 @@ public class ComplexFieldDesc extends BaseFieldDesc {
                 } else {
                     // Was already set from metadata file; same..?
                     if (mainProperty != pr) {
-                        logger.warn("Metadata says main property for field " + getName() + " is "
+                        logger.warn("Metadata says main property for field " + name() + " is "
                                 + mainProperty.getName() + ", but offsets are stored in " + pr.getName());
                     }
                 }

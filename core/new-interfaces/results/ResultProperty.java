@@ -11,11 +11,11 @@ import java.util.stream.Stream;
  * This is used to sort and group on a variety of properties, like context,
  * metadata fields, group size, etc.
  *
- * @param <Result> type of result
+ * @param <T> type of result
  */
-public interface ResultProperty<Result> extends Comparator<Result>, Iterable<ResultProperty<Result>> {
+public interface ResultProperty<T> extends Comparator<T>, Iterable<ResultProperty<T>> {
 	
-	ResultPropertyValue get(Result result);
+	ResultPropertyValue get(T result);
 
 	/**
 	 * Compares two hits on this property.
@@ -29,7 +29,7 @@ public interface ResultProperty<Result> extends Comparator<Result>, Iterable<Res
 	 * @return 0 if equal, negative if a < b, positive if a > b.
 	 */
 	@Override
-	default int compare(Result a, Result b) {
+	default int compare(T a, T b) {
 		return get(a).compareTo(get(b));
 	}
 
@@ -77,7 +77,7 @@ public interface ResultProperty<Result> extends Comparator<Result>, Iterable<Res
      * @return iterator over constituent values
      */
     @Override
-    default Iterator<ResultProperty<Result>> iterator() {
+    default Iterator<ResultProperty<T>> iterator() {
         return Collections.emptyIterator();
     }
 
@@ -93,7 +93,7 @@ public interface ResultProperty<Result> extends Comparator<Result>, Iterable<Res
      * 
      * @return stream of constituent values
      */
-    default Stream<ResultProperty<Result>> stream() {
+    default Stream<ResultProperty<T>> stream() {
         return Stream.empty();
     }
 

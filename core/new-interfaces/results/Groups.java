@@ -5,12 +5,12 @@ import java.util.function.Predicate;
 /**
  * A set of results separated into groups based on some criterium.
  * 
- * @param <Result> type of result that's grouped 
- * @param <ResultGroup> type of the groups
+ * @param <T> type of result that's grouped 
+ * @param <G> type of the groups
  */
-public interface Groups<Result, ResultGroup> extends Results<ResultGroup> {
+public interface Groups<T, G> extends Results<G> {
 
-    // Specific to Groups<Result>
+    // Specific to Groups<T>
     //-----------------------------------------
     
     /**
@@ -19,44 +19,44 @@ public interface Groups<Result, ResultGroup> extends Results<ResultGroup> {
      * Only works for random access instances.
      * 
      * The returned result may be ephemeral. If you wish to store it, call 
-     * Result.save() to get an immutable copy.
+     * T.save() to get an immutable copy.
      * 
      * @param identity group identity
      * @param index result index to get (0-based)
      * @return the result
      */
-    ResultGroup get(ResultPropertyValue identity);
+    G get(ResultPropertyValue identity);
 
     
-    // Inherited from Results<Group<Result>>
+    // Inherited from Results<Group<T>>
     //-----------------------------------------
     
     @Override
-    Groups<Result, ResultGroup> withRandomAccess();
+    Groups<T, G> withRandomAccess();
     
     @Override
-    default Groups<Result, ResultGroup> save() {
+    default Groups<T, G> save() {
         // random-access Results are (effectively) immutable,
         // sequential ones are not
         return withRandomAccess();
     }
     
     @Override
-    ResultGroup get(int index);
+    G get(int index);
     
     @Override
-    Groups<Result, ResultGroup> window(int first, int number);
+    Groups<T, G> window(int first, int number);
     
     @Override
-    Groups<Result, ResultGroup> sortedBy(ResultProperty<ResultGroup> sort, boolean reverse);
+    Groups<T, G> sortedBy(ResultProperty<G> sort, boolean reverse);
     
     @Override
-    Groups<Result, ResultGroup> filteredBy(Predicate<ResultGroup> test);
+    Groups<T, G> filteredBy(Predicate<G> test);
     
     @Override
-    Groups<Result, ResultGroup> sample(SampleParameters amount);
+    Groups<T, G> sample(SampleParameters amount);
     
     @Override
-    Groups<? extends ResultGroup, ? extends Group<ResultGroup>> groupedBy(ResultProperty<ResultGroup> criteria, int maxResultsToGatherPerGroup);
+    Groups<? extends G, ? extends Group<G>> groupedBy(ResultProperty<G> criteria, int maxResultsToGatherPerGroup);
     
 }

@@ -15,9 +15,9 @@ import java.util.stream.Stream;
  * and {@link Doc#contentStoreDoc(nl.inl.blacklab.interfaces.struct.Field)}, which fetch documents based on the Lucene id,
  * automatically performing any necessary id translations.
  *
- * @param <DocType> document type
+ * @param <T> document type
  */
-public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
+public interface DocStore<T> extends Closeable, Iterable<T> {
     /**
      * Clear the entire content store.
      */
@@ -27,7 +27,7 @@ public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
      * Create a new document to be stored.
      * 
      * Fill the document using methods on the document type,
-     * then call {@link #store(DocType)} to store it.
+     * then call {@link #store(T)} to store it.
      * 
      * The reason for this create() method is that large documents
      * may be partially stored while they are being filled (e.g.
@@ -36,7 +36,7 @@ public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
      * 
      * @return a new, empty document
      */
-    DocType create();
+    T create();
     
     /**
      * Store a document created with {@link #create()}.
@@ -44,7 +44,7 @@ public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
      * @param doc document to store
      * @return document store id
      */
-    int store(DocType doc);
+    int store(T doc);
     
     /**
      * Iterate over documents
@@ -52,14 +52,14 @@ public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
      * @return documents iterator
      */
     @Override
-    Iterator<DocType> iterator();
+    Iterator<T> iterator();
     
     /**
      * Stream all documents
      * 
      * @return stream of documents
      */
-    Stream<DocType> stream();
+    Stream<T> stream();
 
     /**
      * Get a document in the store.
@@ -67,7 +67,7 @@ public interface DocStore<DocType> extends Closeable, Iterable<DocType> {
      * @param id the document's store id
      * @return document handle
      */
-    DocType doc(int id);
+    T doc(int id);
 
     /**
      * @return the number of documents 

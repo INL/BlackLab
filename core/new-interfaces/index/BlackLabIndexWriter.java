@@ -18,7 +18,7 @@ import nl.inl.blacklab.interfaces.struct.IndexMetadataWriter;
 /**
  * Interface for writing to a BlackLab index.
  */
-public interface BlackLabIndexWriter extends Closeable {
+interface BlackLabIndexWriter extends Closeable {
     
     /**
      * Get the Lucene index writer.
@@ -72,7 +72,7 @@ public interface BlackLabIndexWriter extends Closeable {
      * @param input
      *            the stream
      */
-    public void index(String documentName, InputStream input);
+    void index(String documentName, InputStream input);
     
     /**
      * Index a document from a Reader.
@@ -89,7 +89,7 @@ public interface BlackLabIndexWriter extends Closeable {
      *            where to index from
      * @throws Exception
      */
-    public void index(String documentName, Reader reader);
+    void index(String documentName, Reader reader);
 
     /**
      * Index a document (or archive if enabled by {@link #setProcessArchivesAsDirectories(boolean)}
@@ -98,7 +98,7 @@ public interface BlackLabIndexWriter extends Closeable {
      * @param input
      * @param fileNameGlob
      */
-    public void index(String fileName, InputStream input, String fileNameGlob);
+    void index(String fileName, InputStream input, String fileNameGlob);
 
     /**
      * Index the file or directory specified.
@@ -112,7 +112,7 @@ public interface BlackLabIndexWriter extends Closeable {
      * @param file
      *                 the input file or directory
      */
-    public void index(File file);
+    void index(File file);
 
     /**
      * Index a document, archive (if enabled by {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally recursively if set by {@link #setRecurseSubdirs(boolean)}
@@ -121,13 +121,13 @@ public interface BlackLabIndexWriter extends Closeable {
      * @param fileNameGlob only files
      */
     // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
-    public void index(File file, String fileNameGlob);
+    void index(File file, String fileNameGlob);
 
     /**
      * Set parameters we would like to be passed to the DocIndexer class
      * @param indexerParam the parameters
      */
-    public void setIndexerParam(Map<String, String> indexerParam);
+    void setIndexerParam(Map<String, String> indexerParam);
 
     /**
      * Set the directories to search for linked files.
@@ -138,7 +138,7 @@ public interface BlackLabIndexWriter extends Closeable {
      *
      * @param linkedFileDirs directories to search
      */
-    public void setLinkedFileDirs(List<File> linkedFileDirs);
+    void setLinkedFileDirs(List<File> linkedFileDirs);
 
     /**
      * Add a directory to search for linked files.
@@ -149,11 +149,11 @@ public interface BlackLabIndexWriter extends Closeable {
      *
      * @param linkedFileDir directory to search
      */
-    public void addLinkedFileDir(File linkedFileDir);
+    void addLinkedFileDir(File linkedFileDir);
 
-    public void setLinkedFileResolver(Function<String, File> resolver);
+    void setLinkedFileResolver(Function<String, File> resolver);
 
-    public void setUseThreads(boolean useThreads);
+    void setUseThreads(boolean useThreads);
 
     
 }

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.interfaces.struct;
 
 /** Shared base interface between metadata and annotated fields */
-interface Field {
+public interface Field {
 	
 	/** Get this complex field's name
 	 * @return this field's name */

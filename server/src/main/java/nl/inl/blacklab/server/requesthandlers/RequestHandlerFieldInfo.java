@@ -109,8 +109,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fieldName)
                 .entry("isComplexField", "false")
-                .entry("displayName", fd.getDisplayName())
-                .entry("description", fd.getDescription())
+                .entry("displayName", fd.displayName())
+                .entry("description", fd.description())
                 .entry("uiType", fd.getUiType());
         String group = fd.getGroup();
         if (group != null && group.length() > 0)
@@ -165,8 +165,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fieldName)
                 .entry("isComplexField", "true")
-                .entry("displayName", fieldDesc.getDisplayName())
-                .entry("description", fieldDesc.getDescription())
+                .entry("displayName", fieldDesc.displayName())
+                .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())

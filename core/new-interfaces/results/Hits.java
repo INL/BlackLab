@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
  * it is said to be exhausted if all of its hits have been seen, or the maximum number
  * of hits to process was reached.
  */
-public interface Hits extends Results<Hit> {
+interface Hits extends Results<Hit> {
     
     // Specific to Hits
     //-----------------------------------------
@@ -61,7 +61,7 @@ public interface Hits extends Results<Hit> {
      * Get the list of captured group names.
      * @return list of captured group names or null if no groups were captured
      */
-    public List<String> capturedGroupNames();
+    List<String> capturedGroupNames();
 
     /**
      * Were groups captured for this query?
