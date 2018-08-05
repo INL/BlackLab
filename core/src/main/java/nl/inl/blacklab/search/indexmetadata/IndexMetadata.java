@@ -409,7 +409,7 @@ public class IndexMetadata {
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
                 ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
-        fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName);
+        fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         if (metadataFields.titleField() != null)
             fieldInfo.put("titleField", metadataFields.titleField().name());
         if (metadataFields.authorField() != null)
@@ -1147,7 +1147,7 @@ public class IndexMetadata {
             } // even if we have metadata, we still have to detect props/alts
         }
 
-        metadataFields.defaultAnalyzerName = Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT");
+        metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
         metadataFields.clearSpecialFields();
         if (fieldInfo.has("titleField"))

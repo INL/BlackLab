@@ -47,8 +47,7 @@ class MetadataFieldsImpl implements MetadataFields {
     private String pidField;
 
     /** Default analyzer to use for metadata fields */
-    protected String defaultAnalyzerName;
-
+    private String defaultAnalyzerName;
     
     public MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
@@ -143,6 +142,22 @@ class MetadataFieldsImpl implements MetadataFields {
         return null;
     }
     
+    public MetadataField titleField() {
+        return special(TITLE);
+    }
+
+    public MetadataField authorField() {
+        return special(AUTHOR);
+    }
+
+    public MetadataField pidField() {
+        return special(PID);
+    }
+
+    public MetadataField dateField() {
+        return special(DATE);
+    }
+
     /**
      * Find the first (alphabetically) field whose name contains the search string.
      *
@@ -150,30 +165,17 @@ class MetadataFieldsImpl implements MetadataFields {
      * @return the field name, or null if no fields matched
      */
     MetadataField findTextField(String search) {
-        return findTextField(search, true);
-    }
-
-    /**
-     * Find the first (alphabetically) field matching the search string.
-     *
-     * @param search the string to search for
-     * @param partialMatchOkay if false, only field names identical to the search
-     *            string match; if true, all field names containing the search
-     *            string match.
-     * @return the field name, or null if no fields matched
-     */
-    private MetadataField findTextField(String search, boolean partialMatchOkay) {
         // Find documents with title in the name
         List<MetadataField> fieldsFound = new ArrayList<>();
         for (MetadataField field: metadataFieldInfos.values()) {
             if (field.type() == FieldType.TOKENIZED && field.name().toLowerCase().contains(search)) {
-                if (partialMatchOkay || field.name().equalsIgnoreCase(search))
+                if (true || field.name().equalsIgnoreCase(search))
                     fieldsFound.add(field);
             }
         }
         if (fieldsFound.isEmpty())
             return null;
-
+        
         // Sort (so we get titleLevel1 not titleLevel2 for example)
         Collections.sort(fieldsFound, (a, b) -> a.name().compareTo(b.name()) );
         return fieldsFound.get(0);
@@ -186,6 +188,9 @@ class MetadataFieldsImpl implements MetadataFields {
     public String defaultUnknownValue() {
         return defaultUnknownValue;
     }
+    
+    // Methods that mutate data
+    // ------------------------------------
 
     public void register(String fieldName) {
         if (fieldName == null)
@@ -228,22 +233,6 @@ class MetadataFieldsImpl implements MetadataFields {
         this.defaultUnknownValue = value;
     }
 
-    public MetadataField titleField() {
-        return special(TITLE);
-    }
-
-    public MetadataField authorField() {
-        return special(AUTHOR);
-    }
-
-    public MetadataField pidField() {
-        return special(PID);
-    }
-
-    public MetadataField dateField() {
-        return special(DATE);
-    }
-
     public void clearSpecialFields() {
         titleField = authorField = dateField = pidField = null;
     }
@@ -266,5 +255,9 @@ class MetadataFieldsImpl implements MetadataFields {
             throw new IllegalArgumentException("Unknown special field type: " + fieldName);
         }
    }
+
+    public void setDefaultAnalyzerName(String name) {
+        this.defaultAnalyzerName = name;
+    }
 
 }
