@@ -1,0 +1,98 @@
+package nl.inl.blacklab.interfaces.struct;
+
+import java.util.Date;
+
+import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
+
+/** Information about a BlackLab index, including its fields structure. */
+public interface IndexMetadata {
+	
+	AnnotatedFields annotated();
+	
+	MetadataFields metadata();
+
+	/**
+	 * Get the display name for the index.
+	 *
+	 * If no display name was specified, returns the name of the index directory.
+	 *
+	 * @return the display name
+	 */
+	String displayName();
+
+	/**
+	 * Get a description of the index, if specified
+	 * @return the description
+	 */
+	String description();
+
+	/**
+	 * Is the content freely viewable by all users, or is it restricted?
+	 * @return true if the full content may be retrieved by anyone
+	 */
+	boolean contentViewable();
+
+    /**
+     * What's the text direction of this corpus?
+     * @return text direction
+     */
+	TextDirection textDirection();
+
+	/**
+	 * What format(s) is/are the documents in?
+	 *
+	 * This is in the form of a format identifier as understood
+	 * by the DocumentFormats class (either an abbreviation or a
+	 * (qualified) class name).
+	 *
+	 * @return the document format(s)
+	 */
+	String documentFormat();
+
+	/**
+	 * What version of the index format is this?
+	 * @return the index format version
+	 */
+	String indexFormat();
+
+	/**
+	 * When was this index created?
+	 * @return date/time
+	 */
+	Date timeCreated();
+
+	/**
+	 * When was this index last modified?
+	 * @return date/time
+	 */
+	Date timeModified();
+
+	/**
+	 * When was the BlackLab.jar used for indexing built?
+	 * @return date/time
+	 */
+	Date indexBlackLabBuildTime();
+
+	/**
+	 * When was the BlackLab.jar used for indexing built?
+	 * @return date/time stamp
+	 */
+	String indexBlackLabVersion();
+
+	/**
+	 * How many tokens are in the index?
+	 * @return number of tokens
+	 */
+	long tokenCount();
+
+	/**
+	 * Is this a new, empty index?
+	 *
+	 * An empty index is one that doesn't have a main contents field yet,
+	 * or has a main contents field but no indexed tokens yet.
+	 *
+	 * @return true if it is, false if not.
+	 */
+	boolean isNewIndex();
+	
+}
