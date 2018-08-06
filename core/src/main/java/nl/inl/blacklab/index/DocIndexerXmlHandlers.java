@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -48,9 +47,9 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
@@ -462,14 +461,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                                                                                 // positions
         propStartTag.setForwardIndex(false);
         IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
-        indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
-
-        // If the indexmetadata file specified a list of properties that shouldn't get a forward
-        // index,
-        // make the new complex field aware of this.
-        Set<String> noForwardIndexProps = ((AnnotatedFieldImpl)indexMetadata.getComplexFieldDesc(Searcher.DEFAULT_CONTENTS_FIELD_NAME))
-                .getNoForwardIndexProps();
-        contentsField.setNoForwardIndexProps(noForwardIndexProps);
+        AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
+        contentsField.setAnnotatedField(f);
     }
 
     /**

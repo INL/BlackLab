@@ -31,6 +31,15 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
+            if (mainProperty == null && mainPropertyName != null) {
+                // Set during indexing, when we don't actually have property information
+                // available (because the index is being built up, so we couldn't detect
+                // it on startup).
+                // Just create a property with the correct name, or retrieve it if it
+                // was defined in the indexmetadata.
+                mainProperty = getOrCreateProperty(mainPropertyName);
+                mainPropertyName = null;
+            }
             return mainProperty;
         }
 
@@ -137,18 +146,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return annotationsImpl;
     }
 
-    /**
-     * Get a property description.
-     * 
-     * @param name name of the property
-     * @return the description
-     */
-    public AnnotationImpl getPropertyDesc(String name) {
-        if (!props.containsKey(name))
-            throw new IllegalArgumentException("Property '" + name + "' not found!");
-        return props.get(name);
-    }
-
     @Override
     public boolean hasLengthTokens() {
         return lengthInTokens;
@@ -183,24 +180,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return pd != null && pd.hasForwardIndex();
     }
 
-    public boolean hasProperty(String fieldName) {
-        return props.containsKey(fieldName);
-    }
-
-    public Annotation getMainProperty() {
-        if (mainProperty == null && mainPropertyName != null) {
-            // Set during indexing, when we don't actually have property information
-            // available (because the index is being built up, so we couldn't detect
-            // it on startup).
-            // Just create a property with the correct name, or retrieve it if it
-            // was defined in the indexmetadata.
-            mainProperty = getOrCreateProperty(mainPropertyName);
-            mainPropertyName = null;
-        }
-        return mainProperty;
-    }
-
-    public void print(PrintWriter out) {
+    void print(PrintWriter out) {
         for (Annotation pr : props.values()) {
             out.println("  * Property: " + pr.toString());
         }
@@ -209,11 +189,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
     }
 
+    // (public because used in ComplexField while indexing) 
     public Set<String> getNoForwardIndexProps() {
         return noForwardIndexProps;
     }
 
-    public List<String> getDisplayOrder() {
+    List<String> getDisplayOrder() {
         return Collections.unmodifiableList(displayOrder);
     }
     
@@ -291,13 +272,15 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
-    public void detectMainProperty(IndexReader reader) {
+    void detectMainProperty(IndexReader reader) {
         ensureNotFrozen();
         if (mainPropertyName != null && mainPropertyName.length() > 0) {
             // Main property name was set from index metadata before we
             // had the property desc. available; use that now and don't do
             // any actual detecting.
-            mainProperty = getPropertyDesc(mainPropertyName);
+            if (!props.containsKey(mainPropertyName))
+                throw new IllegalArgumentException("Main property '" + mainPropertyName + "' (from index metadata) not found!");
+            mainProperty = props.get(mainPropertyName);
             mainPropertyName = null;
             //return;
         }
@@ -333,19 +316,19 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         // "No main property (with char. offsets) detected for complex field " + fieldName);
     }
 
-    public void setMainPropertyName(String mainPropertyName) {
+    void setMainPropertyName(String mainPropertyName) {
         ensureNotFrozen();
         this.mainPropertyName = mainPropertyName;
         if (props.containsKey(mainPropertyName))
             mainProperty = props.get(mainPropertyName);
     }
 
-    public void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
+    void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
         ensureNotFrozen();
         this.noForwardIndexProps = noForwardIndexProps;
     }
 
-    public void setDisplayOrder(List<String> displayOrder) {
+    void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
         this.displayOrder.clear();
         this.displayOrder.addAll(displayOrder);

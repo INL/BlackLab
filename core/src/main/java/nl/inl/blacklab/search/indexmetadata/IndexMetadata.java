@@ -434,7 +434,7 @@ public class IndexMetadata implements Freezable {
             ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
-            fieldInfo2.put("mainProperty", f.getMainProperty().name());
+            fieldInfo2.put("mainProperty", f.annotations().main().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
@@ -1119,17 +1119,19 @@ public class IndexMetadata implements Freezable {
      *
      * @param fieldName field name
      * @param mainPropName main property name
+     * @return the annotated field
      */
-    public void registerComplexField(String fieldName, String mainPropName) {
+    public AnnotatedField registerComplexField(String fieldName, String mainPropName) {
         ensureNotFrozen();
         if (complexFields.containsKey(fieldName))
-            return;
+            return complexFields.get(fieldName);
         // Not registered yet; do so now. Note that we only add the main property,
         // not the other properties, but that's okay; they're not needed at index
         // time and will be detected at search time.
         AnnotatedFieldImpl cf = getOrCreateComplexField(fieldName);
         cf.getOrCreateProperty(mainPropName); // create main property
         cf.setMainPropertyName(mainPropName); // set main property
+        return cf;
     }
 
     public void registerMetadataField(String fieldName) {

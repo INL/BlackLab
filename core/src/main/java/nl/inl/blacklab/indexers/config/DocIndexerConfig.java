@@ -3,7 +3,6 @@ package nl.inl.blacklab.indexers.config;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
 import nl.inl.blacklab.index.complex.ComplexField;
@@ -11,8 +10,8 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -104,13 +103,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             IndexMetadata indexMetadata;
             if (indexer != null) {
                 indexMetadata = indexer.getSearcher().getIndexMetadata();
-                indexMetadata.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
-
-                // If the indexmetadata file specified a list of properties that shouldn't get a forward
-                // index, make the new complex field aware of this.
-                Set<String> noForwardIndexProps = ((AnnotatedFieldImpl)indexMetadata.getComplexFieldDesc(complexField.getName()))
-                        .getNoForwardIndexProps();
-                complexField.setNoForwardIndexProps(noForwardIndexProps);
+                AnnotatedField f = indexMetadata.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+                complexField.setAnnotatedField(f);
             }
 
             ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME,

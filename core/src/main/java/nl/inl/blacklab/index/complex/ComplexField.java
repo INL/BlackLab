@@ -29,6 +29,8 @@ import org.apache.lucene.document.IntField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
 /**
  * A complex field is like a Lucene field, but in addition to its "normal"
@@ -194,5 +196,12 @@ public class ComplexField {
 
     public Collection<ComplexFieldProperty> getProperties() {
         return properties.values();
+    }
+
+    public void setAnnotatedField(AnnotatedField field) {
+        // If the indexmetadata file specified a list of properties that shouldn't get a forward
+        // index, we need to know.
+        AnnotatedFieldImpl fieldImpl = (AnnotatedFieldImpl)field;
+        setNoForwardIndexProps(fieldImpl.getNoForwardIndexProps());
     }
 }
