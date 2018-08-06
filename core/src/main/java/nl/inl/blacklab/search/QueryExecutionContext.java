@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
@@ -139,42 +140,37 @@ public class QueryExecutionContext {
 
         // Find the property
         Annotation pd = cfd.getPropertyDesc(propName);
-        SensitivitySetting sensitivity = pd.sensitivitySetting();
-//		Collection<String> availableAlternatives = Collections.emptyList();
-//		if (pd != null) {
-//			availableAlternatives = pd.getAlternatives();
-//		}
 
         // New alternative naming scheme (every alternative has a name)
         List<String> validAlternatives = new ArrayList<>();
         if (!caseSensitive && !diacriticsSensitive) {
             // search insensitive if available
-            if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
                 validAlternatives.add(i);
-            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
                 validAlternatives.add(s);
         } else if (caseSensitive && diacriticsSensitive) {
             // search fully-sensitive if available
-            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
                 validAlternatives.add(s);
-            if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
                 validAlternatives.add(i);
         } else if (!diacriticsSensitive) {
             // search case-sensitive if available
-            if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE)
+            if (pd.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
                 validAlternatives.add(di);
-            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
                 validAlternatives.add(s);
-            if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
                 validAlternatives.add(i);
         } else {
             // search diacritics-sensitive if available
-            if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE)
-                validAlternatives.add(ci);
-            if (sensitivity != SensitivitySetting.ONLY_SENSITIVE)
-                validAlternatives.add(i);
-            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE)
+            if (pd.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
+                validAlternatives.add(di);
+            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
                 validAlternatives.add(s);
+            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                validAlternatives.add(i);
         }
         return validAlternatives.toArray(new String[] {});
     }

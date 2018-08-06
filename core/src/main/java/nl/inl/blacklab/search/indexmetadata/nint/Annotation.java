@@ -30,8 +30,14 @@ public interface Annotation {
 	 */
 	AnnotationSensitivity offsetsSensitivity();
 
-	@Deprecated
-    SensitivitySetting sensitivitySetting();
+	/**
+	 * Describe what sensitivities are available.
+	 * 
+	 * Used in BLS. Replaces old SensitivitySetting enum.
+	 * 
+	 * @return description of the available sensitivities, e.g. "ONLY_INSENSITIVE"
+	 */
+    String sensitivitySettingDesc();
 
 	/**
 	 * What sensitivity alternatives were indexed for this property?

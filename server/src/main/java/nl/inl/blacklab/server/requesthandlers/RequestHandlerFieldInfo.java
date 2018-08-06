@@ -181,7 +181,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("description", propDesc.description())
                     .entry("uiType", propDesc.uiType())
                     .entry("hasForwardIndex", propDesc.hasForwardIndex())
-                    .entry("sensitivity", propDesc.sensitivitySetting().toString())
+                    .entry("sensitivity", propDesc.sensitivitySettingDesc())
                     .entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
                     .entry("isInternal", propDesc.isInternal());
             String luceneField = ComplexFieldUtil.propertyField(fieldName, propName,

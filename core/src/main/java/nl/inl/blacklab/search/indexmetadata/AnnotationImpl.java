@@ -106,15 +106,11 @@ class AnnotationImpl implements Annotation, Freezable {
         return name;
     }
 
-    /**
-     * What sensitivity alternatives were indexed for this property?
-     * 
-     * @return the sensitivity setting
-     */
-    public SensitivitySetting sensitivitySetting() {
-        return sensitivity;
+    @Override
+    public String sensitivitySettingDesc() {
+        return sensitivity.toString();
     }
-    
+
     public Collection<MatchSensitivity> sensitivities() {
         return Collections.unmodifiableSet(alternatives);
     }
