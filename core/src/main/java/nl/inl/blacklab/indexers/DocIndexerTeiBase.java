@@ -23,7 +23,7 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.util.StringUtil;
 
 /**
@@ -86,12 +86,12 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
     public void init() {
 
         // Get handles to the default properties (the main one & punct)
-        final ComplexFieldProperty propMain = getMainProperty();
-        final ComplexFieldProperty propPunct = getPropPunct();
+        final AnnotationWriter propMain = getMainProperty();
+        final AnnotationWriter propPunct = getPropPunct();
 
-        final ComplexFieldProperty propLemma = hasLemma ? addProperty(indexLemmaAs) : null;
-        final ComplexFieldProperty propType = hasType ? addProperty(indexTypeAs) : null;
-        final ComplexFieldProperty propFunction = hasFunction ? addProperty(indexFunctionAs) : null;
+        final AnnotationWriter propLemma = hasLemma ? addProperty(indexLemmaAs) : null;
+        final AnnotationWriter propType = hasType ? addProperty(indexTypeAs) : null;
+        final AnnotationWriter propFunction = hasFunction ? addProperty(indexFunctionAs) : null;
 
         // Doc element: the individual documents to index
         // Note that we add handlers for both TEI and TEI.2, to

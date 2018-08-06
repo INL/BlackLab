@@ -14,8 +14,8 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
@@ -184,14 +184,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", annotation.sensitivitySettingDesc())
                     .entry("offsetsAlternative", StringUtil.nullToEmpty(annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
                     .entry("isInternal", annotation.isInternal());
-            String luceneField = ComplexFieldUtil.propertyField(fieldDesc.name(), annotation.name(), ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+            String luceneField = AnnotatedFieldNameUtil.propertyField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
                 Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
                 int n = 0;
                 for (String value : values) {
-                    if (!value.contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR))
+                    if (!value.contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR))
                         ds.item("value", value);
                     n++;
                     if (n == MAX_FIELD_VALUES)

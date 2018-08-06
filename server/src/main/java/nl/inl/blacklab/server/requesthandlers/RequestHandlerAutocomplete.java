@@ -5,8 +5,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
@@ -88,7 +88,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             Annotation prop = annotations.get(fieldName);
             if (prop.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
-                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                fieldName = AnnotatedFieldNameUtil.propertyField(complexFieldName, fieldName, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             } else {
                 sensitiveMatching = true;
                 fieldName = prop.offsetsSensitivity().luceneField();

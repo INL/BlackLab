@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexmetadata.FieldType;

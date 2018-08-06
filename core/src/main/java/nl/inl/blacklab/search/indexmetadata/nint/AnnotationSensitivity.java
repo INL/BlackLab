@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata.nint;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * An annotation on a field with a specific sensitivity.
@@ -14,6 +14,6 @@ public interface AnnotationSensitivity {
 	MatchSensitivity sensitivity();
 	
 	default String luceneField() {
-		return ComplexFieldUtil.propertyAlternative(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
+		return AnnotatedFieldNameUtil.propertyAlternative(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
 	}
 }

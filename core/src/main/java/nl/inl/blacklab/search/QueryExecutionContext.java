@@ -3,7 +3,7 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
@@ -61,7 +61,7 @@ public class QueryExecutionContext {
         if (parts.length > 2)
             throw new IllegalArgumentException("propName contains more than one colon!");
         this.propName = parts[0];
-        String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
+        String sep = AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR;
         this.subpropPrefix = parts.length == 2 ? sep + parts[1] + sep : "";
         this.caseSensitive = caseSensitive;
         this.diacriticsSensitive = diacriticsSensitive;
@@ -83,12 +83,12 @@ public class QueryExecutionContext {
 
     public String optDesensitize(String value) {
 
-        final String s = ComplexFieldUtil.SENSITIVE_ALT_NAME;
-        final String i = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
-        final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
-        final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
+        final String s = AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME;
+        final String i = AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME;
+        final String ci = AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME;
+        final String di = AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
-        String[] parts = ComplexFieldUtil.getNameComponents(luceneField());
+        String[] parts = AnnotatedFieldNameUtil.getNameComponents(luceneField());
 
         String alt = parts.length >= 3 ? parts[2] : "";
         if (alt.equals(s)) {
@@ -123,8 +123,8 @@ public class QueryExecutionContext {
         if (searcher.getClass().getName().endsWith("MockSearcher")) {
             // TODO: give MockSearcher an index structure so we don't need this hack
             if (caseSensitive)
-                return new String[] { ComplexFieldUtil.SENSITIVE_ALT_NAME, ComplexFieldUtil.INSENSITIVE_ALT_NAME };
-            return new String[] { ComplexFieldUtil.INSENSITIVE_ALT_NAME, ComplexFieldUtil.SENSITIVE_ALT_NAME };
+                return new String[] { AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME };
+            return new String[] { AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME };
         }
 
         AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
@@ -139,31 +139,31 @@ public class QueryExecutionContext {
         if (!caseSensitive && !diacriticsSensitive) {
             // search insensitive if available
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
         } else if (caseSensitive && diacriticsSensitive) {
             // search fully-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
         } else if (!diacriticsSensitive) {
             // search case-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
         } else {
             // search diacritics-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
         }
         return validAlternatives.toArray(new String[] {});
     }
@@ -198,8 +198,8 @@ public class QueryExecutionContext {
             // Mostly for testing. Don't check, just combine field parts.
             // TODO: give MockSearcher an index structure so we don't need this hack
             if (alternatives == null || alternatives.length == 0)
-                return ComplexFieldUtil.propertyField(fieldName, propName);
-            return ComplexFieldUtil.propertyField(fieldName, propName, alternatives[0]);
+                return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
+            return AnnotatedFieldNameUtil.propertyField(fieldName, propName, alternatives[0]);
         }
 
         // Find the field and the property.
@@ -207,20 +207,20 @@ public class QueryExecutionContext {
         if (cfd == null)
             return null;
 
-        if (ComplexFieldUtil.isBookkeepingSubfield(propName)) {
+        if (AnnotatedFieldNameUtil.isBookkeepingSubfield(propName)) {
             // Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return it
             // (can be removed when old field naming scheme is removed)
-            return ComplexFieldUtil.bookkeepingField(fieldName, propName);
+            return AnnotatedFieldNameUtil.bookkeepingField(fieldName, propName);
         }
 
         // Find the property
         Annotation pd = cfd.annotations().get(propName);
         if (pd == null)
-            return ComplexFieldUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
+            return AnnotatedFieldNameUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
 
         if (alternatives == null || alternatives.length == 0) {
             // Don't use any alternatives
-            return ComplexFieldUtil.propertyField(fieldName, propName);
+            return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
         }
 
         // Find the first available alternative to use
@@ -229,14 +229,14 @@ public class QueryExecutionContext {
                 // NOTE: is this loop necessary at all? getAlternatives() only
                 //  returns available alternatives, so the first one should always
                 //  be okay, right?
-                return ComplexFieldUtil.propertyField(fieldName, propName, alt);
+                return AnnotatedFieldNameUtil.propertyField(fieldName, propName, alt);
             }
         }
 
         // No valid alternative found. Use plain property.
         // NOTE: should never happen, and doesn't make sense anymore as there are
         // no 'plain properties' anymore.
-        return ComplexFieldUtil.propertyField(fieldName, propName);
+        return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
     }
 
     /**
@@ -248,7 +248,7 @@ public class QueryExecutionContext {
      * @return the context
      */
     public static QueryExecutionContext getSimple(Searcher searcher, String fieldName) {
-        String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainPropName();
         return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
     }
 

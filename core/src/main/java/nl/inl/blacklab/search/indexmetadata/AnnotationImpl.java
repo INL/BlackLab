@@ -8,8 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotationSensitivity;
@@ -168,9 +167,9 @@ class AnnotationImpl implements Annotation, Freezable {
 
     @Override
     public boolean isInternal() {
-        return name.equals(ComplexFieldUtil.START_TAG_PROP_NAME) ||
-                name.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
-                name.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+        return name.equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME) ||
+                name.equals(AnnotatedFieldNameUtil.END_TAG_PROP_NAME) ||
+                name.equals(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
     }
 
     @Override

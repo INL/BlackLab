@@ -19,8 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -55,10 +55,10 @@ public class HitPropertyHitText extends HitProperty {
         super(hits);
         this.searcher = hits.getSearcher();
         if (property == null || property.length() == 0) {
-            this.luceneFieldName = ComplexFieldUtil.mainPropertyField(searcher.getIndexMetadata(), field);
-            this.propName = ComplexFieldUtil.getDefaultMainPropName();
+            this.luceneFieldName = AnnotatedFieldNameUtil.mainPropertyField(searcher.getIndexMetadata(), field);
+            this.propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
         } else {
-            this.luceneFieldName = ComplexFieldUtil.propertyField(field, property);
+            this.luceneFieldName = AnnotatedFieldNameUtil.propertyField(field, property);
             this.propName = property;
         }
 
@@ -155,7 +155,7 @@ public class HitPropertyHitText extends HitProperty {
         String fieldName = hits.settings().concordanceField();
         String propName = parts[0];
         if (propName.length() == 0)
-            propName = ComplexFieldUtil.getDefaultMainPropName();
+            propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
         boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
         if (fieldName == null || fieldName.length() == 0)
             return new HitPropertyHitText(hits, sensitive);

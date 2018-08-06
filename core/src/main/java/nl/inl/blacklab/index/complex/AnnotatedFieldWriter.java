@@ -28,8 +28,9 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
 /**
@@ -54,11 +55,11 @@ import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
  * addStartChar() and addEndChar() (although, if you don't want any offsets, you
  * need not call these).
  */
-public class ComplexField {
+public class AnnotatedFieldWriter {
 
-    protected static final Logger logger = LogManager.getLogger(ComplexField.class);
+    protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
 
-    private Map<String, ComplexFieldProperty> properties = new HashMap<>();
+    private Map<String, AnnotationWriter> properties = new HashMap<>();
 
     private IntArrayList start = new IntArrayList();
 
@@ -66,7 +67,7 @@ public class ComplexField {
 
     private String fieldName;
 
-    private ComplexFieldProperty mainProperty;
+    private AnnotationWriter mainProperty;
 
     private Set<String> noForwardIndexProps = new HashSet<>();
 
@@ -84,19 +85,19 @@ public class ComplexField {
      *            diacritics-sensitivity.
      * @param mainPropHasPayloads does the main property have payloads?
      */
-    public ComplexField(String name, String mainPropertyName, SensitivitySetting sensitivity,
+    public AnnotatedFieldWriter(String name, String mainPropertyName, SensitivitySetting sensitivity,
             boolean mainPropHasPayloads) {
-        if (!ComplexFieldUtil.isValidXmlElementName(name))
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/property names should be valid XML element names)");
-        if (!ComplexFieldUtil.isValidXmlElementName(mainPropertyName))
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainPropertyName))
             logger.warn("Property name '" + mainPropertyName
                     + "' is discouraged (field/property names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
         if (mainPropertyName == null)
-            mainPropertyName = ComplexFieldUtil.getDefaultMainPropName();
-        mainProperty = new ComplexFieldProperty(mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
+            mainPropertyName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        mainProperty = new AnnotationWriter(mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
         properties.put(mainPropertyName, mainProperty);
     }
 
@@ -104,11 +105,11 @@ public class ComplexField {
         return start.size();
     }
 
-    public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity, boolean includePayloads) {
-        if (!ComplexFieldUtil.isValidXmlElementName(name))
+    public AnnotationWriter addProperty(String name, SensitivitySetting sensitivity, boolean includePayloads) {
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Property name '" + name
                     + "' is discouraged (field/property names should be valid XML element names)");
-        ComplexFieldProperty p = new ComplexFieldProperty(name, sensitivity, false, includePayloads);
+        AnnotationWriter p = new AnnotationWriter(name, sensitivity, false, includePayloads);
         if (noForwardIndexProps.contains(name)) {
             p.setForwardIndex(false);
         }
@@ -116,7 +117,7 @@ public class ComplexField {
         return p;
     }
 
-    public ComplexFieldProperty addProperty(String name, SensitivitySetting sensitivity) {
+    public AnnotationWriter addProperty(String name, SensitivitySetting sensitivity) {
         return addProperty(name, sensitivity, false);
     }
 
@@ -129,7 +130,7 @@ public class ComplexField {
     }
 
     public void addToLuceneDoc(Document doc) {
-        for (ComplexFieldProperty p : properties.values()) {
+        for (AnnotationWriter p : properties.values()) {
             p.addToLuceneDoc(doc, fieldName, start, end);
         }
 
@@ -139,14 +140,14 @@ public class ComplexField {
         // (Also note that this is the actual number of words + 1,
         //  because we always store a dummy "closing token" at the end
         //  that doesn't contain a word but may contain trailing punctuation)
-        doc.add(new IntField(ComplexFieldUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
+        doc.add(new IntField(AnnotatedFieldNameUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
     }
 
     /**
      * Clear the internal state for reuse.
      *
      * @param reuseBuffers IMPORTANT: reuseBuffers should not be used if any
-     *            document passed to {@link ComplexField#addToLuceneDoc(Document)}
+     *            document passed to {@link AnnotatedFieldWriter#addToLuceneDoc(Document)}
      *            has not been added to the IndexWriter yet. (though
      *            IndexWriter::commit is not required). Document does not copy data
      *            until it as added, so clearing our internal buffers before adding
@@ -162,13 +163,13 @@ public class ComplexField {
             end = new IntArrayList();
         }
 
-        for (ComplexFieldProperty p : properties.values()) {
+        for (AnnotationWriter p : properties.values()) {
             p.clear(reuseBuffers);
         }
     }
 
-    public ComplexFieldProperty getProperty(String name) {
-        ComplexFieldProperty p = properties.get(name);
+    public AnnotationWriter getProperty(String name) {
+        AnnotationWriter p = properties.get(name);
         if (p == null)
             throw new IllegalArgumentException("Undefined property '" + name + "'");
         return p;
@@ -178,23 +179,23 @@ public class ComplexField {
         return properties.containsKey(name);
     }
 
-    public ComplexFieldProperty getMainProperty() {
+    public AnnotationWriter getMainProperty() {
         return mainProperty;
     }
 
-    public ComplexFieldProperty getTagProperty() {
-        return getProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+    public AnnotationWriter getTagProperty() {
+        return getProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME);
     }
 
-    public ComplexFieldProperty getPunctProperty() {
-        return getProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+    public AnnotationWriter getPunctProperty() {
+        return getProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
     }
 
     public String getName() {
         return fieldName;
     }
 
-    public Collection<ComplexFieldProperty> getProperties() {
+    public Collection<AnnotationWriter> getProperties() {
         return properties.values();
     }
 

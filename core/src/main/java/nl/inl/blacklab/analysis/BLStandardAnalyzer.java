@@ -26,7 +26,7 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * A simple analyzer based on StandardTokenizer that isn't limited to Latin.
@@ -40,11 +40,11 @@ public class BLStandardAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new StandardTokenizerFactory(Collections.<String, String>emptyMap()).create();
         TokenStream filter = source;
-        boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(fieldName);
         if (!caseSensitive) {
             filter = new LowerCaseFilter(filter);// lowercase all
         }
-        boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(fieldName);
         if (!diacSensitive) {
             filter = new RemoveAllAccentsFilter(filter); // remove accents
         }

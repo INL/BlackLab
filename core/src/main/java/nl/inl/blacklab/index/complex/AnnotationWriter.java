@@ -29,12 +29,13 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CollUtil;
 
 /**
  * A property in a complex field. See ComplexField for details.
  */
-public class ComplexFieldProperty {
+public class AnnotationWriter {
 
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
@@ -153,7 +154,7 @@ public class ComplexFieldProperty {
      *            alternative
      * @param includePayloads will this property include payloads?
      */
-    public ComplexFieldProperty(String name, SensitivitySetting sensitivity,
+    public AnnotationWriter(String name, SensitivitySetting sensitivity,
             boolean includeOffsets, boolean includePayloads) {
         super();
         propName = name;
@@ -161,19 +162,19 @@ public class ComplexFieldProperty {
         mainAlternative = null;
         if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
             // Add sensitive alternative
-            alternatives.put(ComplexFieldUtil.SENSITIVE_ALT_NAME, null);
-            mainAlternative = ComplexFieldUtil.SENSITIVE_ALT_NAME;
+            alternatives.put(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, null);
+            mainAlternative = AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME;
         }
         if (sensitivity != SensitivitySetting.ONLY_SENSITIVE) {
             // Add insensitive alternative
-            alternatives.put(ComplexFieldUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
+            alternatives.put(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
             if (mainAlternative == null)
-                mainAlternative = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
+                mainAlternative = AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME;
         }
         if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE) {
             // Add case-insensitive and diacritics-insensitive alternatives
-            alternatives.put(ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
-            alternatives.put(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
+            alternatives.put(AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
+            alternatives.put(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
         }
 
         this.includeOffsets = includeOffsets;
@@ -209,7 +210,7 @@ public class ComplexFieldProperty {
         for (String altName : alternatives.keySet()) {
             //doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
             //		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
-            doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
+            doc.add(new Field(AnnotatedFieldNameUtil.propertyField(fieldName, propName, altName),
                     getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
         }
     }

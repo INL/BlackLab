@@ -25,9 +25,9 @@ import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
@@ -364,7 +364,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     @Override
     public String getField() {
         // Return only base name of complex field!
-        return ComplexFieldUtil.getBaseName(getRealField());
+        return AnnotatedFieldNameUtil.getBaseName(getRealField());
     }
 
     public abstract String getRealField();

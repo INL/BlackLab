@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 
 /**
  * Configuration for a single annotation ("property") of an annotated field

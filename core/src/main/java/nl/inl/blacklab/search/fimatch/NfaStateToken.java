@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -138,11 +138,11 @@ public class NfaStateToken extends NfaState {
 
     @Override
     public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        String[] comp = ComplexFieldUtil.getNameComponents(luceneField);
+        String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
         String propertyName = comp[1];
         propertyNumber = fiAccessor.getPropertyNumber(propertyName);
-        boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
-        boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
+        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(luceneField);
+        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(luceneField);
         inputTokens = new IntHashSet(); //new HashSet<>();
         for (String token : inputTokenStrings) {
             fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);

@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.ArrayUtil;
 
@@ -48,7 +48,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
         String propName = parts[0];
         boolean sensitive = parts[1].equalsIgnoreCase("s");
         int[] ids = new int[parts.length - 2];
-        Terms termsObj = hits.getSearcher().getForwardIndex(ComplexFieldUtil.propertyField(fieldName, propName))
+        Terms termsObj = hits.getSearcher().getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName, propName))
                 .getTerms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);

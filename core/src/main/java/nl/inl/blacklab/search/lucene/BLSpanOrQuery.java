@@ -42,11 +42,11 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Matches the union of its clauses.
@@ -126,7 +126,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      */
     public void setField(String luceneField) {
         this.luceneField = luceneField;
-        this.field = ComplexFieldUtil.getBaseName(luceneField);
+        this.field = AnnotatedFieldNameUtil.getBaseName(luceneField);
     }
 
     @Override

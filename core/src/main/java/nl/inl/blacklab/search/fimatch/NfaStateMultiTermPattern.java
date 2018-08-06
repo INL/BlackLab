@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -35,8 +35,8 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 
     public NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
         this.luceneField = luceneField;
-        this.caseSensitive = ComplexFieldUtil.isCaseSensitive(luceneField);
-        this.diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(luceneField);
+        this.caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(luceneField);
+        this.diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(luceneField);
         this.pattern = pattern;
         this.nextState = nextState;
     }
@@ -139,7 +139,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 
     @Override
     public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        String[] comp = ComplexFieldUtil.getNameComponents(luceneField);
+        String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
         String propertyName = comp[1];
         propertyNumber = fiAccessor.getPropertyNumber(propertyName);
         if (nextState != null)

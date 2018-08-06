@@ -22,7 +22,7 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
 
 /**
  * Index a Sketch XML file.
@@ -55,13 +55,13 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)
-        final ComplexFieldProperty propMain = getMainProperty();
-        final ComplexFieldProperty propPunct = getPropPunct();
+        final AnnotationWriter propMain = getMainProperty();
+        final AnnotationWriter propPunct = getPropPunct();
 
         // Add some extra properties
-        final ComplexFieldProperty propLemma = addProperty("lemma");
-        final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
-        final ComplexFieldProperty propWordClass = addProperty("class");
+        final AnnotationWriter propLemma = addProperty("lemma");
+        final AnnotationWriter propPartOfSpeech = addProperty("pos");
+        final AnnotationWriter propWordClass = addProperty("class");
 
         // Doc element: the individual documents to index (one or more per file)
         addHandler("/docs/doc", new DocumentElementHandler() {

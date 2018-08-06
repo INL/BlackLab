@@ -20,8 +20,8 @@ import java.util.Map;
 
 import org.apache.lucene.index.Term;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
 import nl.inl.util.StringUtil;
@@ -58,7 +58,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
+        QueryExecutionContext startTagContext = context.withProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME);
         String startTagFieldName = startTagContext.luceneField();
         return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
     }

@@ -42,11 +42,11 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.complex.ComplexField;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
@@ -108,7 +108,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -120,7 +120,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -138,7 +138,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (Note that we do this after adding the dummy token, so the character
             // positions for the dummy token still make (some) sense)
             int contentId = storeCapturedContent();
-            currentLuceneDoc.add(new IntField(ComplexFieldUtil
+            currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                     .contentIdField(contentsField.getName()), contentId,
                     Store.YES));
 
@@ -148,17 +148,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
                 // Add property (case-sensitive tokens) to forward index and add
                 // id to Lucene doc
                 String propName = prop.getName();
-                String fieldName = ComplexFieldUtil.propertyField(
+                String fieldName = AnnotatedFieldNameUtil.propertyField(
                         contentsField.getName(), propName);
                 int fiid = indexer.addToForwardIndex(fieldName, prop);
-                currentLuceneDoc.add(new IntField(ComplexFieldUtil
+                currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                         .forwardIndexIdField(fieldName), fiid, Store.YES));
             }
 
@@ -434,16 +434,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // System.out.println("END PREFIX MAPPING: " + prefix);
     }
 
-    protected ComplexFieldProperty addProperty(String propName) {
+    protected AnnotationWriter addProperty(String propName) {
         return addProperty(propName, false);
     }
 
     @SuppressWarnings("deprecation")
-    protected ComplexFieldProperty addProperty(String propName, boolean includePayloads) {
+    protected AnnotationWriter addProperty(String propName, boolean includePayloads) {
         return contentsField.addProperty(propName, getSensitivitySetting(propName), includePayloads);
     }
 
-    public ComplexFieldProperty addProperty(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
         return contentsField.addProperty(propName, sensitivity);
     }
 
@@ -452,12 +452,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         super(indexer, fileName, reader);
 
         // Define the properties that make up our complex field
-        String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        contentsField = new AnnotatedFieldWriter(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainProperty();
-        propPunct = addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
-        propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag
+        propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+        propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME, true); // start tag
                                                                                 // positions
         propStartTag.setForwardIndex(false);
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
@@ -533,16 +533,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * Complex field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    ComplexField contentsField;
+    AnnotatedFieldWriter contentsField;
 
     /** The main property (usually "word") */
-    ComplexFieldProperty propMain;
+    AnnotationWriter propMain;
 
     /** The punctuation property */
-    ComplexFieldProperty propPunct;
+    AnnotationWriter propPunct;
 
     /** The start tag property. Also contains tag length in payload. */
-    ComplexFieldProperty propStartTag;
+    AnnotationWriter propStartTag;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the
@@ -576,19 +576,19 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return metadataFetcher;
     }
 
-    public ComplexFieldProperty getPropPunct() {
+    public AnnotationWriter getPropPunct() {
         return propPunct;
     }
 
-    public ComplexFieldProperty getPropStartTag() {
+    public AnnotationWriter getPropStartTag() {
         return propStartTag;
     }
 
-    public ComplexFieldProperty getMainProperty() {
+    public AnnotationWriter getMainProperty() {
         return propMain;
     }
 
-    public ComplexField getContentsField() {
+    public AnnotatedFieldWriter getContentsField() {
         return contentsField;
     }
 

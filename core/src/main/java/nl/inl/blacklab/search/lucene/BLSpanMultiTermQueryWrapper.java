@@ -16,10 +16,10 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -161,7 +161,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     @Override
     public boolean canMakeNfa() {
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        return !term.text().contains(ComplexFieldUtil.SUBPROPERTY_SEPARATOR);
+        return !term.text().contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR);
     }
 
     @Override

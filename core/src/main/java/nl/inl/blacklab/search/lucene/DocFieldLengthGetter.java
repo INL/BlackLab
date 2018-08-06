@@ -12,8 +12,8 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Used to get the field length in tokens for a document.
@@ -57,7 +57,7 @@ class DocFieldLengthGetter implements Closeable {
     public DocFieldLengthGetter(LeafReader reader, String fieldName) {
         this.reader = reader;
         this.fieldName = fieldName;
-        lengthTokensFieldName = ComplexFieldUtil.lengthTokensField(fieldName);
+        lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
         if (fieldName.equals(Searcher.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up

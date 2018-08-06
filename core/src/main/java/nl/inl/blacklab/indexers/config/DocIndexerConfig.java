@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
-import nl.inl.blacklab.index.complex.ComplexField;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
@@ -96,7 +96,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (annotations.isEmpty())
                 throw new InputFormatConfigException("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
-            ComplexField complexField = new ComplexField(af.getName(), mainAnnotation.getName(),
+            AnnotatedFieldWriter complexField = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
                     getSensitivitySetting(mainAnnotation), false);
             addComplexField(complexField);
 
@@ -107,8 +107,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 complexField.setAnnotatedField(f);
             }
 
-            ComplexFieldProperty propStartTag = complexField.addProperty(ComplexFieldUtil.START_TAG_PROP_NAME,
-                    getSensitivitySetting(ComplexFieldUtil.START_TAG_PROP_NAME), true);
+            AnnotationWriter propStartTag = complexField.addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME,
+                    getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_PROP_NAME), true);
             propStartTag.setForwardIndex(false);
 
             // Create properties for the other annotations
@@ -121,10 +121,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
-            if (!complexField.hasProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
+            if (!complexField.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME)) {
                 // Hasn't been created yet. Create it now.
-                complexField.addProperty(ComplexFieldUtil.PUNCTUATION_PROP_NAME,
-                        getSensitivitySetting(ComplexFieldUtil.PUNCTUATION_PROP_NAME), false);
+                complexField.addProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME,
+                        getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME), false);
             }
         }
     }

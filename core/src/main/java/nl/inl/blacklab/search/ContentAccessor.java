@@ -18,7 +18,7 @@ package nl.inl.blacklab.search;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Defines a way to access the original indexed content.
@@ -31,7 +31,7 @@ public class ContentAccessor {
     private String contentIdField = null;
 
     public ContentAccessor(String fieldName, ContentStore contentStore) {
-        contentIdField = ComplexFieldUtil.contentIdField(ComplexFieldUtil.getBaseName(fieldName));
+        contentIdField = AnnotatedFieldNameUtil.contentIdField(AnnotatedFieldNameUtil.getBaseName(fieldName));
         this.contentStore = contentStore;
     }
 

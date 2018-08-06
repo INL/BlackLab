@@ -56,8 +56,8 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
@@ -406,7 +406,7 @@ public class SearcherImpl extends Searcher implements Closeable {
             if (minP < 0 || maxP < 0)
                 throw new RuntimeException("Can't determine min and max positions");
 
-            String fieldPropName = ComplexFieldUtil.mainPropertyOffsetsField(indexMetadata, fieldName);
+            String fieldPropName = AnnotatedFieldNameUtil.mainPropertyOffsetsField(indexMetadata, fieldName);
 
             org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
             if (terms == null)

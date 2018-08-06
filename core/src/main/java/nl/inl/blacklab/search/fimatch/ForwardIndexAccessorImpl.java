@@ -10,8 +10,8 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
@@ -59,7 +59,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             propertyNumbers.put(propertyName, n);
             propertyNames.add(propertyName);
             ForwardIndex fi = searcher
-                    .getForwardIndex(ComplexFieldUtil.propertyField(complexFieldBaseName, propertyName));
+                    .getForwardIndex(AnnotatedFieldNameUtil.propertyField(complexFieldBaseName, propertyName));
             fis.add(fi);
             terms.add(fi.getTerms());
         }
@@ -111,8 +111,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             DocIntFieldGetter g = fiidGetters.get(propIndex);
             if (g == null) {
                 String propertyName = propertyNames.get(propIndex);
-                String propFieldName = ComplexFieldUtil.propertyField(complexFieldBaseName, propertyName);
-                String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(propFieldName);
+                String propFieldName = AnnotatedFieldNameUtil.propertyField(complexFieldBaseName, propertyName);
+                String fiidFieldName = AnnotatedFieldNameUtil.forwardIndexIdField(propFieldName);
                 g = new DocIntFieldGetter(reader, fiidFieldName);
                 fiidGetters.set(propIndex, g);
             }

@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.indexmetadata.nint;
 
 import java.util.Collection;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /** An annotation on an annotated field. */
 public interface Annotation {
@@ -76,7 +76,7 @@ public interface Annotation {
      * @return Lucene field prefix
      */
 	default String luceneFieldPrefix() {
-		return ComplexFieldUtil.propertyField(field().name(), name());
+		return AnnotatedFieldNameUtil.propertyField(field().name(), name());
 	}
 
 }

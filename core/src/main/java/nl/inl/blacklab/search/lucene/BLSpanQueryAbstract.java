@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default
@@ -68,9 +68,9 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     private void determineBaseFieldName() {
         if (!clauses.isEmpty()) {
             luceneFieldName = clauses.get(0).getRealField();
-            baseFieldName = ComplexFieldUtil.getBaseName(clauses.get(0).getField());
+            baseFieldName = AnnotatedFieldNameUtil.getBaseName(clauses.get(0).getField());
             for (int i = 1; i < clauses.size(); i++) {
-                String f = ComplexFieldUtil.getBaseName(clauses.get(i).getField());
+                String f = AnnotatedFieldNameUtil.getBaseName(clauses.get(i).getField());
                 if (!baseFieldName.equals(f))
                     throw new RuntimeException("Mix of incompatible fields in query ("
                             + baseFieldName + " and " + f + ")");

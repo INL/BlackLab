@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.index.complex;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,9 +24,9 @@ import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 
 /**
- * Some utility functions for dealing with complex field names.
+ * Some utility functions for dealing with annotated field names.
  */
-public final class ComplexFieldUtil {
+public final class AnnotatedFieldNameUtil {
 
     public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
@@ -127,7 +127,7 @@ public final class ComplexFieldUtil {
             FORWARD_INDEX_ID_BOOKKEEP_NAME,
             LENGTH_TOKENS_BOOKKEEP_NAME);
 
-    private ComplexFieldUtil() {
+    private AnnotatedFieldNameUtil() {
     }
 
     public enum BookkeepFieldType {
@@ -179,25 +179,24 @@ public final class ComplexFieldUtil {
     }
 
     /**
-     * Construct a complex field bookkeeping subfield name.
+     * Construct Lucene field name for annotated field bookkeeping subfield.
      *
      * @param fieldName the base field name
-     * @param propName the property name, or null if this is bookkeeping for the
-     *            whole complex field
+     * @param annotName the annotation name, or null if this is bookkeeping for the whole field
      * @param bookkeepName name of the bookkeeping value
-     * @return the combined complex field name
+     * @return the Lucene field name
      */
-    public static String bookkeepingField(String fieldName, String propName, String bookkeepName) {
+    public static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
         String fieldPropName;
-        boolean propGiven = propName != null && propName.length() > 0;
+        boolean propGiven = annotName != null && annotName.length() > 0;
         if (fieldName == null || fieldName.length() == 0) {
             if (propGiven) {
-                fieldPropName = propName;
+                fieldPropName = annotName;
             } else
                 throw new IllegalArgumentException("Must specify a base name, a property name or both: " + fieldName
-                        + ", " + propName + ", " + bookkeepName);
+                        + ", " + annotName + ", " + bookkeepName);
         } else {
-            fieldPropName = fieldName + (propGiven ? PROP_SEP + propName : "");
+            fieldPropName = fieldName + (propGiven ? PROP_SEP + annotName : "");
         }
 
         if (bookkeepName == null || bookkeepName.length() == 0)
@@ -206,25 +205,25 @@ public final class ComplexFieldUtil {
     }
 
     /**
-     * Construct a complex field bookkeeping subfield name.
+     * Construct Lucene field name for annotated field bookkeeping subfield.
      *
      * @param fieldName the base field name
      * @param bookkeepName name of the bookkeeping value
-     * @return the combined complex field name
+     * @return the Lucene field name
      */
     public static String bookkeepingField(String fieldName, String bookkeepName) {
         return bookkeepingField(fieldName, null, bookkeepName);
     }
 
     /**
-     * Construct a complex field property name.
+     * Construct (partial) Lucene field name for annotation on annotated field. 
      *
-     * @param fieldName the base field name
-     * @param propName the property name
-     * @param altName the alternative name
-     * @return the combined complex field name
+     * @param fieldName the base field name, or null to leave this part out
+     * @param propName the property name (required)
+     * @param sensitivityName the sensitivity name, or null to leave this part out
+     * @return the (partial) Lucene field name
      */
-    public static String propertyField(String fieldName, String propName, String altName) {
+    public static String propertyField(String fieldName, String propName, String sensitivityName) {
         String fieldPropName;
         boolean propGiven = propName != null && propName.length() > 0;
         if (!propGiven) {
@@ -236,18 +235,20 @@ public final class ComplexFieldUtil {
             fieldPropName = fieldName + PROP_SEP + propName;
         }
 
-        if (altName == null || altName.length() == 0) {
+        if (sensitivityName == null || sensitivityName.length() == 0) {
             return fieldPropName;
         }
-        return fieldPropName + ALT_SEP + altName;
+        return fieldPropName + ALT_SEP + sensitivityName;
     }
 
     /**
-     * Construct a complex field property name.
+     * Construct partial Lucene field name for annotation on annotated field.
+     * 
+     * Sensitivity part is not included.
      *
-     * @param fieldName the base field name
-     * @param propName the property name
-     * @return the combined complex field name
+     * @param fieldName the base field name, or null to leave this part out
+     * @param propName the property name (required)
+     * @return the partial Lucene field name
      */
     public static String propertyField(String fieldName, String propName) {
         return propertyField(fieldName, propName, null);

@@ -18,7 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -32,7 +32,7 @@ public class DocPropertyComplexFieldLength extends DocProperty {
     private String fieldName;
 
     public DocPropertyComplexFieldLength(String fieldName, String friendlyName) {
-        this.fieldName = ComplexFieldUtil.lengthTokensField(fieldName);
+        this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         this.friendlyName = friendlyName;
     }
 

@@ -50,7 +50,6 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -60,6 +59,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;
@@ -1093,13 +1093,13 @@ public class HitsImpl extends Hits {
             ForwardIndex forwardIndex = null;
             String concWordFI = settings().concWordProp();
             if (concWordFI != null)
-                forwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName,
+                forwardIndex = searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName,
                         concWordFI));
 
             ForwardIndex punctForwardIndex = null;
             String concPunctFI = settings().concPunctProp();
             if (concPunctFI != null)
-                punctForwardIndex = searcher.getForwardIndex(ComplexFieldUtil.propertyField(
+                punctForwardIndex = searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(
                         fieldName, concPunctFI));
 
             Map<String, ForwardIndex> attrForwardIndices = new HashMap<>();
@@ -1107,7 +1107,7 @@ public class HitsImpl extends Hits {
             if (concAttrFI == null) {
                 // All other FIs are attributes
                 for (String p : searcher.getForwardIndices().keySet()) {
-                    String[] components = ComplexFieldUtil.getNameComponents(p);
+                    String[] components = AnnotatedFieldNameUtil.getNameComponents(p);
                     String propName = components[1];
                     if (propName.equals(concWordFI)
                             || propName.equals(concPunctFI))
@@ -1118,7 +1118,7 @@ public class HitsImpl extends Hits {
                 // Specific list of attribute FIs
                 for (String p : concAttrFI) {
                     attrForwardIndices.put(p,
-                            searcher.getForwardIndex(ComplexFieldUtil.propertyField(fieldName, p)));
+                            searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName, p)));
                 }
             }
 

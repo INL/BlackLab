@@ -25,11 +25,11 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.index.complex.ComplexField;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
@@ -47,13 +47,13 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
      * Complex field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    ComplexField contentsField;
+    AnnotatedFieldWriter contentsField;
 
     /** The main property (usually "word") */
-    ComplexFieldProperty propMain;
+    AnnotationWriter propMain;
 
     /** The punctuation property */
-    ComplexFieldProperty propPunct;
+    AnnotationWriter propPunct;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the
@@ -66,11 +66,11 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         super(indexer, fileName, reader);
 
         // Define the properties that make up our complex field
-        String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
-        contentsField = new ComplexField(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        contentsField = new AnnotatedFieldWriter(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainProperty();
-        String propName = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+        String propName = AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME;
         propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
         IndexMetadataWriter indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
         AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField.getName(), propMain.getName());
@@ -103,15 +103,15 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         return metadataFetcher;
     }
 
-    public ComplexFieldProperty getPropPunct() {
+    public AnnotationWriter getPropPunct() {
         return propPunct;
     }
 
-    public ComplexFieldProperty getMainProperty() {
+    public AnnotationWriter getMainProperty() {
         return propMain;
     }
 
-    public ComplexField getContentsField() {
+    public AnnotatedFieldWriter getContentsField() {
         return contentsField;
     }
 
@@ -126,7 +126,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         return propMain.lastValuePosition() + 1;
     }
 
-    public ComplexFieldProperty addProperty(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
         return contentsField.addProperty(propName, sensitivity);
     }
 
@@ -181,7 +181,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -193,7 +193,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -212,23 +212,23 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // positions for the dummy token still make (some) sense)
             int contentId = storeCapturedContent();
             currentLuceneDoc
-                    .add(new IntField(ComplexFieldUtil.contentIdField(contentsField.getName()), contentId, Store.YES));
+                    .add(new IntField(AnnotatedFieldNameUtil.contentIdField(contentsField.getName()), contentId, Store.YES));
 
             // Store the different properties of the complex contents field that
             // were gathered in lists while parsing.
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (ComplexFieldProperty prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop : contentsField.getProperties()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
                 // Add property (case-sensitive tokens) to forward index and add
                 // id to Lucene doc
                 String propName = prop.getName();
-                String fieldName = ComplexFieldUtil.propertyField(contentsField.getName(), propName);
+                String fieldName = AnnotatedFieldNameUtil.propertyField(contentsField.getName(), propName);
                 int fiid = indexer.addToForwardIndex(fieldName, prop);
-                currentLuceneDoc.add(new IntField(ComplexFieldUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
+                currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
             }
 
             // If there's an external metadata fetcher, call it now so it can

@@ -38,9 +38,9 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.BLRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadataWriter;
@@ -342,7 +342,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     public void addMetadataField(String name, String value) {
-        if (!ComplexFieldUtil.isValidXmlElementName(name))
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/property names should be valid XML element names)");
 
@@ -426,17 +426,17 @@ public abstract class DocIndexer implements AutoCloseable {
 
         // Not in parameter (or unrecognized value), use default based on
         // propName
-        if (propName.equals(ComplexFieldUtil.getDefaultMainPropName())
-                || propName.equals(ComplexFieldUtil.LEMMA_PROP_NAME)) {
+        if (propName.equals(AnnotatedFieldNameUtil.getDefaultMainPropName())
+                || propName.equals(AnnotatedFieldNameUtil.LEMMA_PROP_NAME)) {
             // Word: default to sensitive/insensitive
             return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
         }
-        if (propName.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME)) {
+        if (propName.equals(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME)) {
             // Punctuation: default to only insensitive
             return SensitivitySetting.ONLY_INSENSITIVE;
         }
-        if (propName.equals(ComplexFieldUtil.START_TAG_PROP_NAME)
-                || propName.equals(ComplexFieldUtil.END_TAG_PROP_NAME)) {
+        if (propName.equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME)
+                || propName.equals(AnnotatedFieldNameUtil.END_TAG_PROP_NAME)) {
             // XML tag properties: default to only sensitive
             return SensitivitySetting.ONLY_SENSITIVE;
         }

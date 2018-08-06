@@ -15,8 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
@@ -158,7 +157,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     @Override
     public String tokenLengthField() {
-        return lengthInTokens ? ComplexFieldUtil.lengthTokensField(fieldName) : null;
+        return lengthInTokens ? AnnotatedFieldNameUtil.lengthTokensField(fieldName) : null;
     }
 
     @Override
@@ -175,7 +174,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     @Override
     public boolean hasPunctuationForwardIndex() {
-        AnnotationImpl pd = props.get(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
+        AnnotationImpl pd = props.get(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
         return pd != null && pd.hasForwardIndex();
     }
 
@@ -208,7 +207,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
         if (propPart == null && parts.length >= 3) {
             // Bookkeeping field
-            BookkeepFieldType bookkeepingFieldIndex = ComplexFieldUtil
+            BookkeepFieldType bookkeepingFieldIndex = AnnotatedFieldNameUtil
                     .whichBookkeepingSubfield(parts[3]);
             switch (bookkeepingFieldIndex) {
             case CONTENT_ID:
@@ -229,7 +228,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
         // Not a bookkeeping field; must be a property (alternative).
         AnnotationImpl pd = getOrCreateProperty(propPart);
-        if (pd.name().equals(ComplexFieldUtil.START_TAG_PROP_NAME))
+        if (pd.name().equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME))
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
@@ -237,7 +236,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 pd.addAlternative(MatchSensitivity.fromLuceneFieldCode(parts[2]));
             } else {
                 // Property bookkeeping field
-                if (parts[3].equals(ComplexFieldUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
+                if (parts[3].equals(AnnotatedFieldNameUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
                     pd.setForwardIndex(true);
                 } else
                     throw new IllegalArgumentException("Unknown property bookkeeping field " + parts[3]);

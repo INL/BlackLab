@@ -29,9 +29,9 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
-import nl.inl.blacklab.index.complex.ComplexField;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.complex.AnnotationWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
@@ -59,25 +59,25 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     /** Complex fields we're indexing. */
-    private Map<String, ComplexField> complexFields = new LinkedHashMap<>();
+    private Map<String, AnnotatedFieldWriter> complexFields = new LinkedHashMap<>();
 
     /**
      * A field named "contents", or, if that doesn't exist, the first complex field
      * added.
      */
-    private ComplexField mainComplexField;
+    private AnnotatedFieldWriter mainComplexField;
 
     /** The indexing object for the complex field we're currently processing. */
-    private ComplexField currentComplexField;
+    private AnnotatedFieldWriter currentComplexField;
 
     /** The tag property for the complex field we're currently processing. */
-    private ComplexFieldProperty propStartTag;
+    private AnnotationWriter propStartTag;
 
     /** The main property for the complex field we're currently processing. */
-    private ComplexFieldProperty propMain;
+    private AnnotationWriter propMain;
 
     /** The main property for the complex field we're currently processing. */
-    private ComplexFieldProperty propPunct;
+    private AnnotationWriter propPunct;
 
     /**
      * If no punctuation expression is defined, add a space between each word by
@@ -145,18 +145,18 @@ public abstract class DocIndexerBase extends DocIndexer {
         return contentStoreName;
     }
 
-    protected void addComplexField(ComplexField complexField) {
+    protected void addComplexField(AnnotatedFieldWriter complexField) {
         complexFields.put(complexField.getName(), complexField);
     }
 
-    protected ComplexField getMainComplexField() {
+    protected AnnotatedFieldWriter getMainComplexField() {
         if (mainComplexField == null) {
             // The "main complex field" is the field that stores the document content id for now.
             // (We will change this eventually so the document content id is not stored with a complex field
             // but as a metadata field instead.)
             // The main complex field is a field named "contents" or, if that does not exist, the first
             // complex field
-            for (ComplexField complexField : complexFields.values()) {
+            for (AnnotatedFieldWriter complexField : complexFields.values()) {
                 if (mainComplexField == null)
                     mainComplexField = complexField;
                 else if (complexField.getName().equals("contents"))
@@ -166,11 +166,11 @@ public abstract class DocIndexerBase extends DocIndexer {
         return mainComplexField;
     }
 
-    protected ComplexField getComplexField(String name) {
+    protected AnnotatedFieldWriter getComplexField(String name) {
         return complexFields.get(name);
     }
 
-    protected Map<String, ComplexField> getComplexFields() {
+    protected Map<String, AnnotatedFieldWriter> getComplexFields() {
         return Collections.unmodifiableMap(complexFields);
     }
 
@@ -192,7 +192,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         currentComplexField.addEndChar(pos);
     }
 
-    protected ComplexFieldProperty getProperty(String name) {
+    protected AnnotationWriter getProperty(String name) {
         return currentComplexField.getProperty(name);
     }
 
@@ -200,15 +200,15 @@ public abstract class DocIndexerBase extends DocIndexer {
         return propMain.lastValuePosition() + 1;
     }
 
-    protected ComplexFieldProperty propTags() {
+    protected AnnotationWriter propTags() {
         return propStartTag;
     }
 
-    protected ComplexFieldProperty propMain() {
+    protected AnnotationWriter propMain() {
         return propMain;
     }
 
-    protected ComplexFieldProperty propPunct() {
+    protected AnnotationWriter propPunct() {
         return propPunct;
     }
 
@@ -363,15 +363,15 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void endDocument() {
         traceln("END DOCUMENT");
 
-        for (ComplexField complexField : getComplexFields().values()) {
-            ComplexFieldProperty propMain = complexField.getMainProperty();
+        for (AnnotatedFieldWriter complexField : getComplexFields().values()) {
+            AnnotationWriter propMain = complexField.getMainProperty();
 
             // Make sure all the properties have an equal number of values.
             // See what property has the highest position
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (ComplexFieldProperty prop : complexField.getProperties()) {
+            for (AnnotationWriter prop : complexField.getProperties()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -383,7 +383,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (ComplexFieldProperty prop : complexField.getProperties()) {
+            for (AnnotationWriter prop : complexField.getProperties()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -401,18 +401,18 @@ public abstract class DocIndexerBase extends DocIndexer {
             complexField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (ComplexFieldProperty prop : complexField.getProperties()) {
+            for (AnnotationWriter prop : complexField.getProperties()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
                 // Add property (case-sensitive tokens) to forward index and add
                 // id to Lucene doc
                 String propName = prop.getName();
-                String fieldName = ComplexFieldUtil.propertyField(
+                String fieldName = AnnotatedFieldNameUtil.propertyField(
                         complexField.getName(), propName);
                 if (indexer != null) {
                     int fiid = indexer.addToForwardIndex(fieldName, prop);
-                    currentLuceneDoc.add(new IntField(ComplexFieldUtil
+                    currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                             .forwardIndexIdField(fieldName), fiid, Store.YES));
                 }
             }
@@ -473,7 +473,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             throw ExUtil.wrapRuntimeException(e);
         }
 
-        for (ComplexField complexField : getComplexFields().values()) {
+        for (AnnotatedFieldWriter complexField : getComplexFields().values()) {
             // Reset complex field for next document
             // don't reuse buffers, they're still referenced by the lucene doc.
             complexField.clear(!indexingIntoExistingLuceneDoc);
@@ -514,13 +514,13 @@ public abstract class DocIndexerBase extends DocIndexer {
         String contentIdFieldName;
         String contentStoreName = getContentStoreName();
         if (contentStoreName == null) {
-            ComplexField main = getMainComplexField();
+            AnnotatedFieldWriter main = getMainComplexField();
             if (main == null) {
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
             } else {
                 contentStoreName = main.getName();
-                contentIdFieldName = ComplexFieldUtil.contentIdField(main.getName());
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.getName());
             }
         } else {
             contentIdFieldName = contentStoreName + "Cid";
@@ -646,7 +646,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      *            index at these positions
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
-        ComplexFieldProperty property = getProperty(name);
+        AnnotationWriter property = getProperty(name);
         if (indexAtPositions == null) {
             if (name.equals("word"))
                 trace(value + " ");
@@ -679,7 +679,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      *            index at these positions
      */
     protected void subAnnotation(String mainName, String subName, String value, List<Integer> indexAtPositions) {
-        String sep = ComplexFieldUtil.SUBPROPERTY_SEPARATOR;
+        String sep = AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR;
         String newVal = sep + subName + sep + value;
         annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next token yet
     }

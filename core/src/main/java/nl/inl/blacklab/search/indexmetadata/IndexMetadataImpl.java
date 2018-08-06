@@ -35,7 +35,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
@@ -341,7 +340,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Fr
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
-                ComplexFieldUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
+                AnnotatedFieldNameUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         if (metadataFields.titleField() != null)
             fieldInfo.put("titleField", metadataFields.titleField().name());
@@ -894,7 +893,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Fr
                     // (TODO: this should probably be changed or removed)
                     parts = new String[] { name };
                 } else {
-                    parts = ComplexFieldUtil.getNameComponents(name);
+                    parts = AnnotatedFieldNameUtil.getNameComponents(name);
                 }
                 if (parts.length == 1 && !annotatedFields.exists(parts[0])) {
                     if (!metadataFields.exists(name)) {

@@ -24,7 +24,7 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.core.WhitespaceTokenizer;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Simple whitespace analyzer.
@@ -38,11 +38,11 @@ public final class BLWhitespaceAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new WhitespaceTokenizer();
         TokenStream filter = source;
-        boolean caseSensitive = ComplexFieldUtil.isCaseSensitive(fieldName);
+        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(fieldName);
         if (!caseSensitive) {
             filter = new LowerCaseFilter(filter);// lowercase all
         }
-        boolean diacSensitive = ComplexFieldUtil.isDiacriticsSensitive(fieldName);
+        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(fieldName);
         if (!diacSensitive) {
             filter = new RemoveAllAccentsFilter(filter); // remove accents
         }

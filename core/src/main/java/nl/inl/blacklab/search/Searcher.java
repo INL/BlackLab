@@ -43,9 +43,9 @@ import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadataWriter;
@@ -89,9 +89,9 @@ public abstract class Searcher {
 
     public static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
 
-    public static final String DEFAULT_CONC_WORD_PROP = ComplexFieldUtil.WORD_PROP_NAME;
+    public static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_PROP_NAME;
 
-    public static final String DEFAULT_CONC_PUNCT_PROP = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
+    public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME;
 
     public static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
 
@@ -1240,7 +1240,7 @@ public abstract class Searcher {
      *             hence no Terms object.
      */
     public Terms getTerms() {
-        return getTerms(ComplexFieldUtil.mainPropertyField(getIndexMetadata(), getMainContentsFieldName()));
+        return getTerms(AnnotatedFieldNameUtil.mainPropertyField(getIndexMetadata(), getMainContentsFieldName()));
     }
 
     public boolean isDefaultSearchCaseSensitive() {
@@ -1338,7 +1338,7 @@ public abstract class Searcher {
         for (Map.Entry<String, ForwardIndex> e : forwardIndices.entrySet()) {
             String fieldName = e.getKey();
             ForwardIndex fi = e.getValue();
-            int fiid = Integer.parseInt(d.get(ComplexFieldUtil
+            int fiid = Integer.parseInt(d.get(AnnotatedFieldNameUtil
                     .forwardIndexIdField(fieldName)));
             fi.deleteDocument(fiid);
         }

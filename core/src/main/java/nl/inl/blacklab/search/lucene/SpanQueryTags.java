@@ -27,7 +27,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -51,7 +51,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
     public SpanQueryTags(String startTagFieldName, String tagName, Map<String, String> attr) {
         this.tagName = tagName;
-        baseFieldName = ComplexFieldUtil.getBaseName(startTagFieldName);
+        baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
         this.startTagFieldName = startTagFieldName;
         this.clause = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
         this.attr = attr != null && attr.isEmpty() ? null : attr;

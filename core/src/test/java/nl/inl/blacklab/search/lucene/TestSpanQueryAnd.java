@@ -15,11 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-
 import org.apache.lucene.index.Term;
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public class TestSpanQueryAnd {
 
@@ -34,9 +34,9 @@ public class TestSpanQueryAnd {
 
     @Test
     public void testComplexFieldDifferentProperties() {
-        BLSpanTermQuery first = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+        BLSpanTermQuery first = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.propertyField("contents",
                 "prop1"), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(new Term(ComplexFieldUtil.propertyField("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.propertyField("contents",
                 "prop2"), "bla"));
 
         // No exception here because both are properties of complex field "field"

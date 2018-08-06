@@ -29,9 +29,10 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
@@ -54,9 +55,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     private void checkBaseFieldName() {
         if (!include.isEmpty()) {
-            String baseFieldName = ComplexFieldUtil.getBaseName(include.get(0).getField());
+            String baseFieldName = AnnotatedFieldNameUtil.getBaseName(include.get(0).getField());
             for (BLSpanQuery clause : include) {
-                String f = ComplexFieldUtil.getBaseName(clause.getField());
+                String f = AnnotatedFieldNameUtil.getBaseName(clause.getField());
                 if (!baseFieldName.equals(f))
                     throw new RuntimeException("Mix of incompatible fields in query ("
                             + baseFieldName + " and " + f + ")");
