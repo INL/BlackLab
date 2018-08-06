@@ -41,7 +41,7 @@ public interface Annotation {
 	 * What sensitivity alternatives were indexed for this property?
 	 * @return the sensitivity setting
 	 */
-	Collection<MatchSensitivity> sensitivities();
+	Collection<AnnotationSensitivity> sensitivities();
 
 	/**
 	 * Was this annotation indexed with the sensitivity specified?

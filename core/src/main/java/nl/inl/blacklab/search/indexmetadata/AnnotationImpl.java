@@ -37,14 +37,17 @@ class AnnotationImpl implements Annotation, Freezable {
      */
     private String uiType = "";
 
-    /** Any alternatives this property may have */
-    private Set<MatchSensitivity> alternatives = new HashSet<>();
+    /** Reference to match sensitivities this annotation has */
+    private Set<AnnotationSensitivity> alternatives = new HashSet<>();
 
+    /** Match sensitivity values this annotation has */
+    private Set<MatchSensitivity> matchSensitivities = new HashSet<>();
+    
     /**
      * What sensitivity alternatives (sensitive/insensitive for case & diacritics)
      * are present
      */
-    private SensitivitySetting sensitivity = SensitivitySetting.ONLY_SENSITIVE;
+    private SensitivitySetting sensitivitySetting = SensitivitySetting.ONLY_SENSITIVE;
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -53,7 +56,7 @@ class AnnotationImpl implements Annotation, Freezable {
      * Which of the alternatives is the main one (containing the offset info, if
      * present)
      */
-    private MatchSensitivity offsetsAlternative;
+    private AnnotationSensitivity offsetsAlternative;
 
     private boolean frozen;
 
@@ -75,7 +78,7 @@ class AnnotationImpl implements Annotation, Freezable {
     @Override
     public String toString() {
         String sensitivityDesc;
-        switch (sensitivity) {
+        switch (sensitivitySetting) {
         case ONLY_SENSITIVE:
             sensitivityDesc = "sensitive only";
             break;
@@ -89,7 +92,7 @@ class AnnotationImpl implements Annotation, Freezable {
             sensitivityDesc = "case/diacritics sensitivity separate";
             break;
         default:
-            throw new IllegalArgumentException("Unknown sensitivity " + sensitivity.toString());
+            throw new IllegalArgumentException("Unknown sensitivity " + sensitivitySetting.toString());
         }
         return (name.length() == 0 ? "(default)" : name)
                 + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
@@ -112,17 +115,17 @@ class AnnotationImpl implements Annotation, Freezable {
 
     @Override
     public String sensitivitySettingDesc() {
-        return sensitivity.toString();
+        return sensitivitySetting.toString();
     }
 
     @Override
-    public Collection<MatchSensitivity> sensitivities() {
+    public Collection<AnnotationSensitivity> sensitivities() {
         return Collections.unmodifiableSet(alternatives);
     }
     
     @Override
     public boolean hasSensitivity(MatchSensitivity sensitivity) {
-        return alternatives.contains(sensitivity);
+        return matchSensitivities.contains(sensitivity);
     }
 
     @Override
@@ -151,17 +154,7 @@ class AnnotationImpl implements Annotation, Freezable {
      */
     @Override
     public AnnotationSensitivity offsetsSensitivity() {
-        return offsetsAlternative == null ? null : new AnnotationSensitivity() {
-            @Override
-            public Annotation annotation() {
-                return AnnotationImpl.this;
-            }
-
-            @Override
-            public MatchSensitivity sensitivity() {
-                return offsetsAlternative;
-            }
-        };
+        return offsetsAlternative;
     }
 
     @Override
@@ -207,9 +200,8 @@ class AnnotationImpl implements Annotation, Freezable {
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main property.
         // If not, keep searching.
-        for (MatchSensitivity sensitivity: alternatives) {
-            String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name, sensitivity.luceneFieldSuffix());
-            if (IndexMetadataImpl.hasOffsets(reader, luceneAltName)) {
+        for (AnnotationSensitivity sensitivity: alternatives) {
+            if (IndexMetadataImpl.hasOffsets(reader, sensitivity.luceneField())) {
                 offsetsAlternative = sensitivity;
                 return true;
             }
@@ -225,21 +217,22 @@ class AnnotationImpl implements Annotation, Freezable {
 
     void addAlternative(MatchSensitivity matchSensitivity) {
         ensureNotFrozen();
-        alternatives.add(matchSensitivity);
+        alternatives.add(new AnnotationSensitivityImpl(this, matchSensitivity));
+        matchSensitivities.add(matchSensitivity);
     
         // Update the sensitivity settings based on the alternatives we've seen so far.
-        if (alternatives.contains(MatchSensitivity.SENSITIVE)) {
-            if (alternatives.contains(MatchSensitivity.INSENSITIVE)) {
-                if (alternatives.contains(MatchSensitivity.CASE_INSENSITIVE)) {
-                    sensitivity = SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+        if (matchSensitivities.contains(MatchSensitivity.SENSITIVE)) {
+            if (matchSensitivities.contains(MatchSensitivity.INSENSITIVE)) {
+                if (matchSensitivities.contains(MatchSensitivity.CASE_INSENSITIVE)) {
+                    sensitivitySetting = SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
                 } else {
-                    sensitivity = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+                    sensitivitySetting = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
                 }
             } else {
-                sensitivity = SensitivitySetting.ONLY_SENSITIVE;
+                sensitivitySetting = SensitivitySetting.ONLY_SENSITIVE;
             }
         } else {
-            sensitivity = SensitivitySetting.ONLY_INSENSITIVE;
+            sensitivitySetting = SensitivitySetting.ONLY_INSENSITIVE;
         }
     }
 
