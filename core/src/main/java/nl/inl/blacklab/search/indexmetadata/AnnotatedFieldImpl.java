@@ -16,11 +16,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
-import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
-import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
-import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /** Description of a complex field */

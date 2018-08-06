@@ -10,9 +10,9 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
 

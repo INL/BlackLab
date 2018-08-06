@@ -9,9 +9,9 @@ import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.

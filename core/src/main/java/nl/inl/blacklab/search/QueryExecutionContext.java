@@ -3,10 +3,10 @@ package nl.inl.blacklab.search;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
-import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /**

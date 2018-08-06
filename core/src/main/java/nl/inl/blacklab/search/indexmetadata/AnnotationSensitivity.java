@@ -1,6 +1,4 @@
-package nl.inl.blacklab.search.indexmetadata.nint;
-
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+package nl.inl.blacklab.search.indexmetadata;
 
 /**
  * An annotation on a field with a specific sensitivity.

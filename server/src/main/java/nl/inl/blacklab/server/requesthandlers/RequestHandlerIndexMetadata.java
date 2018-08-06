@@ -8,12 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroups;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;

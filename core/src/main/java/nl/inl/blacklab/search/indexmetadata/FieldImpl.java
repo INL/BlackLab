@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.indexmetadata.nint.Field;
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {

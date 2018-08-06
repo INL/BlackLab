@@ -5,10 +5,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
-
 /**
  * A named, ordered list of metadata fields.
  * 

@@ -22,9 +22,9 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocCount;
 import nl.inl.blacklab.search.results.DocCounts;
 import nl.inl.blacklab.search.results.DocOrHitGroups;

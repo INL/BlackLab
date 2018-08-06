@@ -19,10 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
-
 /**
  * Some utility functions for dealing with annotated field names.
  */

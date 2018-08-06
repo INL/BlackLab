@@ -9,11 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
-import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable {

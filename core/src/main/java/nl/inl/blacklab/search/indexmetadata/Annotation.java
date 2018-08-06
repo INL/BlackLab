@@ -1,8 +1,6 @@
-package nl.inl.blacklab.search.indexmetadata.nint;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
-
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /** An annotation on an annotated field. */
 public interface Annotation {

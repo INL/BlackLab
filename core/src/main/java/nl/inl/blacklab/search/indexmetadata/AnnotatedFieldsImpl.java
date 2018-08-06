@@ -5,9 +5,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedFields;
-
 final class AnnotatedFieldsImpl implements AnnotatedFields {
     /** The complex fields in our index */
     private Map<String, AnnotatedFieldImpl> complexFields;

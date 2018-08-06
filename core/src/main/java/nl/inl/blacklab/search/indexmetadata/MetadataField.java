@@ -1,11 +1,7 @@
-package nl.inl.blacklab.search.indexmetadata.nint;
+package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.List;
 import java.util.Map;
-
-import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 
 /** A metadata field. */
 public interface MetadataField extends Field {

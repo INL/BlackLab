@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexmetadata.nint;
+package nl.inl.blacklab.search.indexmetadata;
 
 /**
  * An object that can be frozen.

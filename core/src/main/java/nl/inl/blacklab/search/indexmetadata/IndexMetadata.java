@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexmetadata.nint;
+package nl.inl.blacklab.search.indexmetadata;
 
 import nl.inl.blacklab.indexers.config.TextDirection;
 

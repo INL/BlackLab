@@ -1,9 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
-
 public class AnnotationSensitivityImpl implements AnnotationSensitivity {
     
     Annotation annotation;

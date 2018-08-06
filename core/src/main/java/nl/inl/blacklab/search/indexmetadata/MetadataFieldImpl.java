@@ -10,9 +10,6 @@ import java.util.Map.Entry;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-
 /**
  * A metadata field in an index.
  */

@@ -29,9 +29,9 @@ import org.apache.lucene.document.IntField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 
 /**
  * A complex field is like a Lucene field, but in addition to its "normal"

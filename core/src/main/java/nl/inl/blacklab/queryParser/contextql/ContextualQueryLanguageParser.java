@@ -4,7 +4,7 @@ package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 
 @SuppressWarnings("all")
 

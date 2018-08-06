@@ -9,7 +9,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Searcher.LuceneDocTask;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.util.LogUtil;
 
 /**

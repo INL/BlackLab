@@ -46,11 +46,11 @@ import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 

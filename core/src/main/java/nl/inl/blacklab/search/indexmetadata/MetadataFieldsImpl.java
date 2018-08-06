@@ -9,12 +9,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroups;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
-
 /**
  * The metadata fields in an index.
  */

@@ -42,8 +42,8 @@ import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.BLRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
-import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadataWriter;
 import nl.inl.util.UnicodeStream;
 
 /**
