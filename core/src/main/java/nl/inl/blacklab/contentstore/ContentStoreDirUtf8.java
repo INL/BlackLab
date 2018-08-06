@@ -302,7 +302,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                 throw new RuntimeException("Could not delete file: " + versionFile);
             File[] dataFiles = dir.listFiles(new FilenameFilter() {
                 @Override
-                public boolean accept(File dir_, String name) {
+                public boolean accept(File dir1, String name) {
                     return name.matches("data\\d+.dat");
                 }
             });

@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.indexmetadata.nint;
 
 import java.util.Collection;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 

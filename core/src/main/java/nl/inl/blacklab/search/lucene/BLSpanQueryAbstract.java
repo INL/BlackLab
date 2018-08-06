@@ -60,8 +60,8 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         determineBaseFieldName();
     }
 
-    public BLSpanQueryAbstract(BLSpanQuery[] _clauses) {
-        clauses = Arrays.asList(_clauses);
+    public BLSpanQueryAbstract(BLSpanQuery[] clauses) {
+        this.clauses = Arrays.asList(clauses);
         determineBaseFieldName();
     }
 

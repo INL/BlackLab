@@ -120,6 +120,9 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     /** How many available characters will trigger a block write. */
     private static final int WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE = (int) (BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
 
+    /** Size of the (de)compressor and zipbuf pools */
+    private static final int POOL_SIZE = 10;
+    
     /** Table of contents entry */
     static class TocEntry {
 
@@ -324,7 +327,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             // Also delete old content store format files if present
             File[] dataFiles = dir.listFiles(new FilenameFilter() {
                 @Override
-                public boolean accept(File dir_, String name) {
+                public boolean accept(File dir1, String name) {
                     return name.matches("data\\d+.dat");
                 }
             });
@@ -348,7 +351,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         blockIndicesWhileStoring = new IntArrayList();
         blockCharOffsetsWhileStoring = new IntArrayList();
 
-        final int POOL_SIZE = 10;
         compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE) {
             @Override
             public Deflater createResource() {

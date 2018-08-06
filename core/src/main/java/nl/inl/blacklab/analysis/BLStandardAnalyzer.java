@@ -18,8 +18,6 @@
  */
 package nl.inl.blacklab.analysis;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Collections;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -27,7 +25,6 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
-import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 
@@ -58,23 +55,5 @@ public class BLStandardAnalyzer extends Analyzer {
             filter = new RemovePunctuationFilter(filter); // remove punctuation
         }
         return new TokenStreamComponents(source, filter);
-    }
-
-    public static void main(String[] args) throws IOException {
-        String TEST_STR = "Hé jij И!  раскази и повѣсти. Ст]' Дѣдо  	Нисторъ. Ива";
-
-        try (Analyzer a = new BLStandardAnalyzer()) {
-            TokenStream ts = a.tokenStream("test", new StringReader(TEST_STR));
-            CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
-            while (ts.incrementToken()) {
-                System.out.println(new String(ta.buffer(), 0, ta.length()));
-            }
-            TokenStream ts2 = a.tokenStream(ComplexFieldUtil.propertyField("test", null, "s"),
-                    new StringReader(TEST_STR));
-            ta = ts2.addAttribute(CharTermAttribute.class);
-            while (ts2.incrementToken()) {
-                System.out.println(new String(ta.buffer(), 0, ta.length()));
-            }
-        }
     }
 }

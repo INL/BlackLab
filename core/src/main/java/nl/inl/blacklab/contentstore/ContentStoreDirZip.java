@@ -29,11 +29,14 @@ import nl.inl.util.SimpleResourcePool;
  */
 public class ContentStoreDirZip extends ContentStoreDirUtf8 {
 
-    SimpleResourcePool<Deflater> compresserPool;
+    /** Size of the (de)compressor and zipbuf pools */
+    private static final int POOL_SIZE = 10;
+    
+    private SimpleResourcePool<Deflater> compresserPool;
 
-    SimpleResourcePool<Inflater> decompresserPool;
+    private SimpleResourcePool<Inflater> decompresserPool;
 
-    SimpleResourcePool<byte[]> zipbufPool;
+    private SimpleResourcePool<byte[]> zipbufPool;
 
     /**
      * @param dir content store dir
@@ -48,7 +51,6 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
      */
     public ContentStoreDirZip(File dir, boolean create) {
         super(dir, create);
-        int POOL_SIZE = 10;
         compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE) {
             @Override
             public Deflater createResource() {

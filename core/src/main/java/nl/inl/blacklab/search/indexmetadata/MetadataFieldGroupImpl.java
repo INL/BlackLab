@@ -31,6 +31,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         this.addRemainingFields = addRemainingFields;
     }
 
+    @Override
     public String name() {
         return name;
     }
@@ -39,6 +40,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         return fieldNamesInGroup;
     }
 
+    @Override
     public boolean addRemainingFields() {
         return addRemainingFields;
     }

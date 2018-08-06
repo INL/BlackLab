@@ -33,6 +33,7 @@ public abstract class FieldImpl implements Field {
      * 
      * @return this field's name
      */
+    @Override
     public String name() {
         return fieldName;
     }
@@ -46,6 +47,7 @@ public abstract class FieldImpl implements Field {
      * 
      * @return this field's display name
      */
+    @Override
     public String displayName() {
         return displayName;
     }
@@ -59,10 +61,12 @@ public abstract class FieldImpl implements Field {
      * 
      * @return this field's display name
      */
+    @Override
     public String description() {
         return description;
     }
 
+    @Override
     public boolean hasContentStore() {
         return contentStore;
     }

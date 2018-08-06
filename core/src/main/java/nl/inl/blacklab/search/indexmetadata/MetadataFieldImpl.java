@@ -80,42 +80,52 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         this.type = type;
     }
 
+    @Override
     public FieldType type() {
         return type;
     }
 
+    @Override
     public List<String> displayOrder() {
         return Collections.unmodifiableList(displayOrder);
     }
 
+    @Override
     public String analyzerName() {
         return analyzer;
     }
 
+    @Override
     public String unknownValue() {
         return unknownValue;
     }
 
+    @Override
     public UnknownCondition unknownCondition() {
         return unknownCondition;
     }
 
+    @Override
     public Map<String, Integer> valueDistribution() {
         return Collections.unmodifiableMap(values);
     }
 
+    @Override
     public ValueListComplete isValueListComplete() {
         return valueListComplete;
     }
 
+    @Override
     public Map<String, String> displayValues() {
         return Collections.unmodifiableMap(displayValues);
     }
 
+    @Override
     public String group() {
         return group;
     }
 
+    @Override
     public String uiType() {
         return uiType;
     }
@@ -125,10 +135,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     
 
 
+    @Override
     public synchronized void freeze() {
         this.frozen = true;
     }
     
+    @Override
     public synchronized boolean isFrozen() {
         return this.frozen;
     }

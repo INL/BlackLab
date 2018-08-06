@@ -274,6 +274,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
         this.defaultAnalyzerName = name;
     }
 
+    @Override
     public synchronized void freeze() {
         this.frozen = true;
         for (MetadataFieldImpl field: metadataFieldInfos.values()) {
@@ -281,6 +282,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
         }
     }
     
+    @Override
     public synchronized boolean isFrozen() {
         return this.frozen;
     }

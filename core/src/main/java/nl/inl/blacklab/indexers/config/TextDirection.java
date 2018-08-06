@@ -9,7 +9,7 @@ public enum TextDirection {
 
     private String[] codes;
 
-    private TextDirection(String... codes) {
+    TextDirection(String... codes) {
         this.codes = codes;
     }
 

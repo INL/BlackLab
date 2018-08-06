@@ -65,8 +65,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         super(clauscol);
     }
 
-    public SpanQuerySequence(BLSpanQuery[] _clauses) {
-        super(_clauses);
+    public SpanQuerySequence(BLSpanQuery[] clauses) {
+        super(clauses);
     }
 
     /**

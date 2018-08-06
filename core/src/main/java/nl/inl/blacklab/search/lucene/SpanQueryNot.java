@@ -53,8 +53,8 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         super(clauscol);
     }
 
-    public SpanQueryNot(BLSpanQuery[] _clauses) {
-        super(_clauses);
+    public SpanQueryNot(BLSpanQuery[] clauses) {
+        super(clauses);
     }
 
     @Override

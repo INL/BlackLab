@@ -32,6 +32,9 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirFixedBlock {
 
+    /** How many test operations to perform */
+    private static final int OPERATIONS = 500;
+    
     private ContentStore store;
 
     private File dir;
@@ -121,7 +124,6 @@ public class TestContentStoreDirFixedBlock {
 
         // Perform some random delete/add operations
         Random random = new Random(23456);
-        final int OPERATIONS = 500;
         boolean testedClear = false;
         for (int i = 0; i < 500; i++) {
 

@@ -66,6 +66,7 @@ class AnnotationImpl implements Annotation, Freezable {
         forwardIndex = false;
     }
     
+    @Override
     public ComplexFieldDesc field() {
         return field;
     }
@@ -93,6 +94,7 @@ class AnnotationImpl implements Annotation, Freezable {
                 + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
     }
 
+    @Override
     public boolean hasForwardIndex() {
         return forwardIndex;
     }
@@ -102,6 +104,7 @@ class AnnotationImpl implements Annotation, Freezable {
      * 
      * @return the name
      */
+    @Override
     public String name() {
         return name;
     }
@@ -111,10 +114,12 @@ class AnnotationImpl implements Annotation, Freezable {
         return sensitivity.toString();
     }
 
+    @Override
     public Collection<MatchSensitivity> sensitivities() {
         return Collections.unmodifiableSet(alternatives);
     }
     
+    @Override
     public boolean hasSensitivity(MatchSensitivity sensitivity) {
         return alternatives.contains(sensitivity);
     }
@@ -143,6 +148,7 @@ class AnnotationImpl implements Annotation, Freezable {
      *
      * @return the alternative, or null if there is none.
      */
+    @Override
     public AnnotationSensitivity offsetsSensitivity() {
         return offsetsAlternative == null ? null : new AnnotationSensitivity() {
             @Override
@@ -157,6 +163,7 @@ class AnnotationImpl implements Annotation, Freezable {
         };
     }
 
+    @Override
     public String displayName() {
         if (displayName != null)
             return displayName;
@@ -165,16 +172,19 @@ class AnnotationImpl implements Annotation, Freezable {
         return StringUtils.capitalize(name);
     }
 
+    @Override
     public boolean isInternal() {
         return name.equals(ComplexFieldUtil.START_TAG_PROP_NAME) ||
                 name.equals(ComplexFieldUtil.END_TAG_PROP_NAME) ||
                 name.equals(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
     }
 
+    @Override
     public String uiType() {
         return uiType;
     }
 
+    @Override
     public String description() {
         return description;
     }

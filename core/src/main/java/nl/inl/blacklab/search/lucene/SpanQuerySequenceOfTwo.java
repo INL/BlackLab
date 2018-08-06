@@ -61,9 +61,9 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("Can only handle two clauses!");
     }
 
-    public SpanQuerySequenceOfTwo(BLSpanQuery[] _clauses) {
-        super(_clauses);
-        if (clauses.size() != 2)
+    public SpanQuerySequenceOfTwo(BLSpanQuery[] clauses) {
+        super(clauses);
+        if (this.clauses.size() != 2)
             throw new IllegalArgumentException("Can only handle two clauses!");
     }
 

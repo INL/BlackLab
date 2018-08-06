@@ -1,10 +1,8 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
@@ -79,8 +77,8 @@ public class QueryExecutionContext {
         return new QueryExecutionContext(searcher, fieldName, newPropName, caseSensitive, diacriticsSensitive);
     }
 
-    public QueryExecutionContext withSensitive(boolean caseSensitive_, boolean diacriticsSensitive_) {
-        return new QueryExecutionContext(searcher, fieldName, propName, caseSensitive_, diacriticsSensitive_);
+    public QueryExecutionContext withSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
+        return new QueryExecutionContext(searcher, fieldName, propName, caseSensitive, diacriticsSensitive);
     }
 
     public String optDesensitize(String value) {
@@ -113,7 +111,7 @@ public class QueryExecutionContext {
         // Unknown alternative; don't change value
         return value;
     }
-
+    
     /**
      * Return alternatives for the current field/prop that exist and are appropriate
      * for our current settings.
@@ -125,14 +123,9 @@ public class QueryExecutionContext {
         if (searcher.getClass().getName().endsWith("MockSearcher")) {
             // TODO: give MockSearcher an index structure so we don't need this hack
             if (caseSensitive)
-                return new String[] { "s", "i" };
-            return new String[] { "i", "s" };
+                return new String[] { ComplexFieldUtil.SENSITIVE_ALT_NAME, ComplexFieldUtil.INSENSITIVE_ALT_NAME };
+            return new String[] { ComplexFieldUtil.INSENSITIVE_ALT_NAME, ComplexFieldUtil.SENSITIVE_ALT_NAME };
         }
-
-        final String s = ComplexFieldUtil.SENSITIVE_ALT_NAME;
-        final String i = ComplexFieldUtil.INSENSITIVE_ALT_NAME;
-        final String ci = ComplexFieldUtil.CASE_INSENSITIVE_ALT_NAME;
-        final String di = ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME;
 
         ComplexFieldDesc cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
         if (cfd == null)
@@ -146,31 +139,31 @@ public class QueryExecutionContext {
         if (!caseSensitive && !diacriticsSensitive) {
             // search insensitive if available
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(i);
+                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(s);
+                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
         } else if (caseSensitive && diacriticsSensitive) {
             // search fully-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(s);
+                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(i);
+                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
         } else if (!diacriticsSensitive) {
             // search case-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
-                validAlternatives.add(di);
+                validAlternatives.add(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(s);
+                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(i);
+                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
         } else {
             // search diacritics-sensitive if available
             if (pd.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
-                validAlternatives.add(di);
+                validAlternatives.add(ComplexFieldUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(s);
+                validAlternatives.add(ComplexFieldUtil.SENSITIVE_ALT_NAME);
             if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(i);
+                validAlternatives.add(ComplexFieldUtil.INSENSITIVE_ALT_NAME);
         }
         return validAlternatives.toArray(new String[] {});
     }

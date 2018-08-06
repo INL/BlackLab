@@ -77,20 +77,20 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
         }
     }
 
-    private void performImpl(InputStream _in, Charset inputCharset, String inputFormat, OutputStream out)
+    private void performImpl(InputStream in, Charset inputCharset, String inputFormat, OutputStream out)
             throws PluginException {
-        try (PushbackInputStream in = new PushbackInputStream(_in, 251)) {
+        try (PushbackInputStream pbIn = new PushbackInputStream(in, 251)) {
             // important to let openconvert know what we want to do
-            inputFormat = getActualFormat(in, inputFormat);
-            if (!canConvert(in, inputCharset, inputFormat))
+            inputFormat = getActualFormat(pbIn, inputFormat);
+            if (!canConvert(pbIn, inputCharset, inputFormat))
                 throw new PluginException("The OpenConvert plugin does not support conversion from '" + inputFormat
                         + "' to '" + getOutputFormat() + "'");
 
-            Object OpenConvertInstance = OpenConvert.getConstructor().newInstance();
-            Object SimpleInputOutputProcessInstance = OpenConvert_GetConverter.invoke(OpenConvertInstance,
+            Object openConvertInstance = OpenConvert.getConstructor().newInstance();
+            Object simpleInputOutputProcessInstance = OpenConvert_GetConverter.invoke(openConvertInstance,
                     getOutputFormat(), inputFormat);
 
-            SimpleInputOutputProcess_handleStream.invoke(SimpleInputOutputProcessInstance, in, inputCharset, out);
+            SimpleInputOutputProcess_handleStream.invoke(simpleInputOutputProcessInstance, pbIn, inputCharset, out);
         } catch (ReflectiveOperationException | IllegalArgumentException | IOException | SecurityException e) {
             throw new PluginException("Exception while running OpenConvert: " + e.getMessage(), e);
         }

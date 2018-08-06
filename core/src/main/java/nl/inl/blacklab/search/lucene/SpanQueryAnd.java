@@ -32,8 +32,8 @@ public class SpanQueryAnd extends SpanQueryAndNot {
         super(clauscol, null);
     }
 
-    public SpanQueryAnd(BLSpanQuery[] _clauses) {
-        super(Arrays.asList(_clauses), null);
+    public SpanQueryAnd(BLSpanQuery[] clauses) {
+        super(Arrays.asList(clauses), null);
     }
 
 }
