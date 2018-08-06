@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -44,10 +44,10 @@ public class RequestHandlerServerInfo extends RequestHandler {
             ds.startMap();
 
             synchronized (index) {
-                IndexMetadataImpl indexMetadata = index.getIndexMetadata();
+                IndexMetadata indexMetadata = index.getIndexMetadata();
                 IndexStatus status = index.getStatus();
 
-                ds.entry("displayName", indexMetadata.getDisplayName());
+                ds.entry("displayName", indexMetadata.displayName());
                 ds.entry("status", status);
 
                 if (status.equals(IndexStatus.INDEXING)) {
@@ -61,12 +61,12 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     }
                 }
 
-                String formatIdentifier = indexMetadata.getDocumentFormat();
+                String formatIdentifier = indexMetadata.documentFormat();
                 if (formatIdentifier != null && formatIdentifier.length() > 0)
                     ds.entry("documentFormat", formatIdentifier);
-                ds.entry("timeModified", indexMetadata.getTimeModified());
-                if (indexMetadata.getTokenCount() > 0)
-                    ds.entry("tokenCount", indexMetadata.getTokenCount());
+                ds.entry("timeModified", indexMetadata.timeModified());
+                if (indexMetadata.tokenCount() > 0)
+                    ds.entry("tokenCount", indexMetadata.tokenCount());
 
             }
 

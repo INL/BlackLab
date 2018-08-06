@@ -22,7 +22,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocCount;
@@ -448,17 +448,17 @@ public abstract class RequestHandler {
      */
     public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
         ds.startMap();
-        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String value = document.get(f.name());
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
                 ds.entry(f.name(), value);
         }
-        int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
-        String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
+        int subtractClosingToken = 1;
+        String tokenLengthField = indexMetadata.annotatedFields().main().tokenLengthField();
 
         if (tokenLengthField != null)
-            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);
+            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractClosingToken);
         ds.entry("mayView", mayView(indexMetadata, document))
                 .endMap();
     }
@@ -471,7 +471,7 @@ public abstract class RequestHandler {
      * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
      */
-    protected boolean mayView(IndexMetadataImpl indexMetadata, Document document) {
+    protected boolean mayView(IndexMetadata indexMetadata, Document document) {
         if (indexMetadata.metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
         return indexMetadata.contentViewable();
@@ -516,7 +516,7 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    public static void dataStreamDocFields(DataStream ds, IndexMetadataImpl indexMetadata) {
+    public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
         MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
         if (pidField != null)

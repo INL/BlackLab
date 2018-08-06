@@ -27,10 +27,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -58,16 +58,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     int max;
-
-    /**
-     * if true, we assume the last token is always a special closing token and
-     * ignore it
-     */
-    boolean ignoreLastToken = false;
-
-    public boolean isIgnoreLastToken() {
-        return ignoreLastToken;
-    }
 
     public SpanQueryExpansion(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
         super(clause);
@@ -98,10 +88,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return this;
         if (min == 0 && max == 0)
             return rewritten.get(0); // not really an expansion
-        SpanQueryExpansion result = new SpanQueryExpansion(rewritten.get(0), expandToLeft, min, max);
-        if (ignoreLastToken)
-            result.setIgnoreLastToken(true);
-        return result;
+        return new SpanQueryExpansion(rewritten.get(0), expandToLeft, min, max);
     }
 
     @Override
@@ -114,9 +101,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         if (!matchesEmptySequence())
             return this;
         int newMin = min == 0 ? 1 : min;
-        SpanQueryExpansion result = new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
-        result.setIgnoreLastToken(ignoreLastToken);
-        return result;
+        return new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
     }
 
     @Override
@@ -150,7 +135,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            return new SpansExpansionRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(),
+            return new SpansExpansionRaw(context.reader(), clauses.get(0).getField(),
                     spansSource, expandToLeft, min, max);
         }
 
@@ -169,16 +154,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "EXPAND(" + clauses.get(0) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + inf(max) + ")";
-    }
-
-    /**
-     * Set whether to ignore the last token.
-     *
-     * @param ignoreLastToken if true, we assume the last token is always a special
-     *            closing token and ignore it
-     */
-    public void setIgnoreLastToken(boolean ignoreLastToken) {
-        this.ignoreLastToken = ignoreLastToken;
     }
 
     public boolean isExpandToLeft() {
@@ -280,9 +255,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     public BLSpanQuery addExpand(int addMin, int addMax) {
         int nMin = min + addMin;
         int nMax = addMaxValues(max, addMax);
-        SpanQueryExpansion result = new SpanQueryExpansion(clauses.get(0), expandToLeft, nMin, nMax);
-        result.setIgnoreLastToken(isIgnoreLastToken());
-        return result;
+        return new SpanQueryExpansion(clauses.get(0), expandToLeft, nMin, nMax);
     }
 
     @Override
@@ -305,9 +278,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             // "Gobble up" a clause into the clause we're expanding.
             // If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
             SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
-            SpanQueryExpansion result = new SpanQueryExpansion(seq, expandToLeft, min, max);
-            result.setIgnoreLastToken(ignoreLastToken);
-            return result;
+            return new SpanQueryExpansion(seq, expandToLeft, min, max);
         }
         // Add any token to our expansion.
         return addExpand(clause.hitsLengthMin(), clause.hitsLengthMax());

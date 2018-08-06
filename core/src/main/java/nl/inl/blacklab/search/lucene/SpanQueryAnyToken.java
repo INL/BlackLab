@@ -42,18 +42,12 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     /** The maximum number of tokens in this stretch. */
     protected int max;
 
-    boolean alwaysHasClosingToken = true;
-
     String luceneField;
 
     public SpanQueryAnyToken(int min, int max, String luceneField) {
         this.min = min;
         this.max = max;
         this.luceneField = luceneField;
-    }
-
-    public void setAlwaysHasClosingToken(boolean alwaysHasClosingToken) {
-        this.alwaysHasClosingToken = alwaysHasClosingToken;
     }
 
     @Override
@@ -65,10 +59,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public BLSpanQuery noEmpty() {
         if (min > 0)
             return this;
-        SpanQueryAnyToken result = new SpanQueryAnyToken(1, max, luceneField);
-        if (!alwaysHasClosingToken)
-            result.setAlwaysHasClosingToken(false);
-        return result;
+        return new SpanQueryAnyToken(1, max, luceneField);
     }
 
     @Override
@@ -96,7 +87,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
             @Override
             public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-                return new SpansNGrams(alwaysHasClosingToken, context.reader(), luceneField, realMin, max);
+                return new SpansNGrams(context.reader(), luceneField, realMin, max);
             }
         };
     }
@@ -113,11 +104,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     @Override
     public int hashCode() {
-        return min + 31 * max + luceneField.hashCode() + (alwaysHasClosingToken ? 37 : 0);
-    }
-
-    public boolean isAlwaysHasClosingToken() {
-        return alwaysHasClosingToken;
+        return min + 31 * max + luceneField.hashCode();
     }
 
     @Override
@@ -207,10 +194,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public BLSpanQuery addRep(int addMin, int addMax) {
         int nMin = min + addMin;
         int nMax = BLSpanQuery.addMaxValues(max, addMax);
-        SpanQueryAnyToken q = new SpanQueryAnyToken(nMin, nMax, luceneField);
-        if (!alwaysHasClosingToken)
-            q.setAlwaysHasClosingToken(false);
-        return q;
+        return new SpanQueryAnyToken(nMin, nMax, luceneField);
     }
 
     @Override

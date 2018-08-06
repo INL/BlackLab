@@ -2,13 +2,11 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -18,6 +16,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,8 +50,10 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
@@ -63,8 +64,48 @@ import nl.inl.util.StringUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements Freezable {
+public class IndexMetadataImpl implements IndexMetadata, Freezable {
     
+    private final class AnnotatedFieldsImpl implements AnnotatedFields {
+        @Override
+        public AnnotatedField main() {
+            return mainContentsField;
+        }
+
+        @Override
+        public Iterator<AnnotatedField> iterator() {
+            Iterator<AnnotatedFieldImpl> it = complexFields.values().iterator();
+            return new Iterator<AnnotatedField>() {
+                @Override
+                public boolean hasNext() {
+                    return it.hasNext();
+                }
+
+                @Override
+                public AnnotatedField next() {
+                    return it.next();
+                }
+            };
+        }
+
+        @Override
+        public Stream<AnnotatedField> stream() {
+            return complexFields.values().stream().map(f -> (AnnotatedField)f);
+        }
+
+        @Override
+        public AnnotatedField field(String fieldName) {
+            if (!complexFields.containsKey(fieldName))
+                throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
+            return complexFields.get(fieldName);
+        }
+
+        @Override
+        public boolean exists(String fieldName) {
+            return complexFields.containsKey(fieldName);
+        }
+    }
+
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataImpl.class);
@@ -144,19 +185,6 @@ public class IndexMetadataImpl implements Freezable {
     private String timeModified;
 
     /**
-     * Do we always have words+1 tokens (before we sometimes did, if an XML tag
-     * occurred after the last word; now we always make sure we have it, so we can
-     * always skip the last token when matching)
-     */
-    private boolean alwaysHasClosingToken = false;
-
-    /**
-     * Do we store tag length in the payload (v3.1) or do we store tag ends in a
-     * separate property (v3)?
-     */
-    private boolean tagLengthInPayload = true;
-
-    /**
      * May all users freely retrieve the full content of documents, or is that
      * restricted?
      */
@@ -185,17 +213,7 @@ public class IndexMetadataImpl implements Freezable {
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
 
-    /**
-     * Construct an IndexMetadata object, querying the index for the available
-     * fields and their types.
-     * 
-     * @param reader the index of which we want to know the structure
-     * @param indexDir where the index (and the metadata file) is stored
-     * @param createNewIndex whether we're creating a new index
-     */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex) {
-        this(reader, indexDir, createNewIndex, (File) null);
-    }
+    private AnnotatedFieldsImpl annotatedFieldsImpl;
 
     /**
      * Construct an IndexMetadata object, querying the index for the available
@@ -212,6 +230,7 @@ public class IndexMetadataImpl implements Freezable {
 
         metadataFields = new MetadataFieldsImpl();
         complexFields = new TreeMap<>();
+        annotatedFieldsImpl = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
@@ -275,6 +294,7 @@ public class IndexMetadataImpl implements Freezable {
 
         metadataFields = new MetadataFieldsImpl();
         complexFields = new TreeMap<>();
+        annotatedFieldsImpl = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
@@ -450,15 +470,10 @@ public class IndexMetadataImpl implements Freezable {
         return jsonRoot;
 
     }
-
-    /**
-     * The main contents field in our index. This is either the complex field with
-     * the name "contents", or if that doesn't exist, the first complex field found.
-     * 
-     * @return the main contents field
-     */
-    public AnnotatedField getMainContentsField() {
-        return mainContentsField;
+    
+    @Override
+    public AnnotatedFields annotatedFields() {
+        return annotatedFieldsImpl;
     }
 
     /**
@@ -529,72 +544,9 @@ public class IndexMetadataImpl implements Freezable {
         return false;
     }
 
-    /**
-     * Get the names of all the complex fields in our index
-     * 
-     * @return the complex field names
-     */
-    public Collection<String> getComplexFields() {
-        return complexFields.keySet();
-    }
-
-    /**
-     * Does the specified complex field exist?
-     * 
-     * @param fieldName complex field name
-     * @return true iff it exists
-     */
-    public boolean hasComplexField(String fieldName) {
-        return complexFields.containsKey(fieldName);
-    }
-
-    /**
-     * Get the description of one complex field
-     * 
-     * @param fieldName name of the field
-     * @return the field description
-     */
-    public AnnotatedField getComplexFieldDesc(String fieldName) {
-        if (!complexFields.containsKey(fieldName))
-            throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
-        return complexFields.get(fieldName);
-    }
-    
+    @Override
     public MetadataFields metadataFields() {
         return metadataFields;
-    }
-
-    /**
-     * Print the index structure.
-     * 
-     * @param out where to print it
-     */
-    public void print(PrintWriter out) {
-        out.println("COMPLEX FIELDS");
-        for (AnnotatedFieldImpl cf : complexFields.values()) {
-            out.println("- " + cf.name());
-            cf.print(out);
-        }
-
-        out.println("\nMETADATA FIELDS");
-        for (MetadataField field: metadataFields) {
-            if (field.name().endsWith("Numeric"))
-                continue; // special case, will probably be removed later
-            String special = "";
-            if (field.equals(metadataFields.titleField()))
-                special = "TITLEFIELD";
-            else if (field.equals(metadataFields.authorField()))
-                special = "AUTHORFIELD";
-            else if (field.equals(metadataFields.dateField()))
-                special = "DATEFIELD";
-            else if (field.equals(metadataFields.pidField()))
-                special = "PIDFIELD";
-            if (special.length() > 0)
-                special = " (" + special + ")";
-            FieldType type = field.type();
-            out.println("- " + field.name() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
-                    + special);
-        }
     }
 
     /**
@@ -604,7 +556,8 @@ public class IndexMetadataImpl implements Freezable {
      *
      * @return the display name
      */
-    public String getDisplayName() {
+    @Override
+    public String displayName() {
         String dispName = "index";
         if (displayName != null && displayName.length() != 0)
             dispName = displayName;
@@ -620,7 +573,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return the description
      */
-    public String getDescription() {
+    @Override
+    public String description() {
         return description;
     }
 
@@ -629,6 +583,7 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return true if the full content may be retrieved by anyone
      */
+    @Override
     public boolean contentViewable() {
         return contentViewable;
     }
@@ -638,7 +593,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return text direction
      */
-    public TextDirection getTextDirection() {
+    @Override
+    public TextDirection textDirection() {
         return textDirection;
     }
 
@@ -650,7 +606,8 @@ public class IndexMetadataImpl implements Freezable {
      *
      * @return the document format(s)
      */
-    public String getDocumentFormat() {
+    @Override
+    public String documentFormat() {
         return documentFormat;
     }
 
@@ -659,7 +616,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return the index format version
      */
-    public String getIndexFormat() {
+    @Override
+    public String indexFormat() {
         return indexFormat;
     }
 
@@ -668,7 +626,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return date/time stamp
      */
-    public String getTimeCreated() {
+    @Override
+    public String timeCreated() {
         return timeCreated;
     }
 
@@ -677,7 +636,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return date/time stamp
      */
-    public String getTimeModified() {
+    @Override
+    public String timeModified() {
         return timeCreated;
     }
 
@@ -686,7 +646,8 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return date/time stamp
      */
-    public String getIndexBlackLabBuildTime() {
+    @Override
+    public String indexBlackLabBuildTime() {
         return blackLabBuildTime;
     }
 
@@ -695,29 +656,9 @@ public class IndexMetadataImpl implements Freezable {
      * 
      * @return date/time stamp
      */
-    public String getIndexBlackLabVersion() {
+    @Override
+    public String indexBlackLabVersion() {
         return blackLabVersion;
-    }
-
-    /**
-     * Do we always have words+1 tokens (before we sometimes did, if an XML tag
-     * occurred after the last word; now we always make sure we have it, so we can
-     * always skip the last token when matching)
-     *
-     * @return true if we do, false if we don't
-     */
-    public boolean alwaysHasClosingToken() {
-        return alwaysHasClosingToken;
-    }
-
-    /**
-     * Are tag lengths stored in the start tag payload (index v3.1 and higher) or
-     * are tag ends stored in a separate property (up until index v3)?
-     *
-     * @return true if tag lengths are stored in the start tag payload
-     */
-    public boolean tagLengthInPayload() {
-        return tagLengthInPayload;
     }
 
     /**
@@ -728,11 +669,13 @@ public class IndexMetadataImpl implements Freezable {
      *
      * @return true if it is, false if not.
      */
+    @Override
     public boolean isNewIndex() {
         return mainContentsField == null || tokenCount == 0;
     }
 
-    public long getTokenCount() {
+    @Override
+    public long tokenCount() {
         return tokenCount;
     }
 
@@ -741,7 +684,7 @@ public class IndexMetadataImpl implements Freezable {
      *
      * @return a string representation, e.g. "1980-02-01 00:00:00"
      */
-    static String getTimestamp() {
+    static String timestamp() {
         // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
         DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateTimeFormat.format(new Date());
@@ -788,15 +731,19 @@ public class IndexMetadataImpl implements Freezable {
         if (initTimestamps) {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
-            timeModified = timeCreated = IndexMetadataImpl.getTimestamp();
+            timeModified = timeCreated = IndexMetadataImpl.timestamp();
         } else {
             blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
             blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
             timeCreated = Json.getString(versionInfo, "timeCreated", "");
             timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
         }
-        alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
-        tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
+        boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
+        if (!alwaysHasClosingToken)
+            throw new RuntimeException("Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+        boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
+        if (!tagLengthInPayload)
+            throw new RuntimeException("Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
     
         // Specified in index metadata file?
         String namingScheme;
@@ -1042,7 +989,7 @@ public class IndexMetadataImpl implements Freezable {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
-            timeModified = timeCreated = IndexMetadataImpl.getTimestamp();
+            timeModified = timeCreated = IndexMetadataImpl.timestamp();
     
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
@@ -1095,7 +1042,7 @@ public class IndexMetadataImpl implements Freezable {
         ensureNotFrozen();
         AnnotatedFieldImpl cfd = null;
         if (complexFields.containsKey(name))
-            cfd = ((AnnotatedFieldImpl)getComplexFieldDesc(name));
+            cfd = ((AnnotatedFieldImpl)annotatedFields().field(name));
         if (cfd == null) {
             cfd = new AnnotatedFieldImpl(name);
             complexFields.put(name, cfd);
@@ -1108,8 +1055,9 @@ public class IndexMetadataImpl implements Freezable {
      * metadata file.
      */
     public void setModified() {
+        // TODO: make sure this method is called when adding documents to index!
         ensureNotFrozen();
-        timeModified = IndexMetadataImpl.getTimestamp();
+        timeModified = IndexMetadataImpl.timestamp();
     }
 
     /**
@@ -1220,11 +1168,11 @@ public class IndexMetadataImpl implements Freezable {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
         versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
-        versionInfo.put("timeCreated", IndexMetadataImpl.getTimestamp());
-        versionInfo.put("timeModified", IndexMetadataImpl.getTimestamp());
+        versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
+        versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
         versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);
-        versionInfo.put("alwaysAddClosingToken", true);
-        versionInfo.put("tagLengthInPayload", true);
+        versionInfo.put("alwaysAddClosingToken", true); // always true, but BL check for it, so required
+        versionInfo.put("tagLengthInPayload", true);    // always true, but BL check for it, so required
     }
 
     private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups,

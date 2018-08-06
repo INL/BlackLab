@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -178,15 +177,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     public boolean hasPunctuationForwardIndex() {
         AnnotationImpl pd = props.get(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
         return pd != null && pd.hasForwardIndex();
-    }
-
-    void print(PrintWriter out) {
-        for (Annotation pr : props.values()) {
-            out.println("  * Property: " + pr.toString());
-        }
-        out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
-        out.println("  * " + (xmlTags ? "Includes" : "No") + " XML tag index");
-        out.println("  * " + (lengthInTokens ? "Includes" : "No") + " document length field");
     }
 
     // (public because used in ComplexField while indexing) 

@@ -1,15 +1,13 @@
 package nl.inl.blacklab.search.indexmetadata.nint;
 
-import java.util.Date;
-
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
 public interface IndexMetadata {
 	
-	AnnotatedFields annotated();
+	AnnotatedFields annotatedFields();
 	
-	MetadataFields metadata();
+	MetadataFields metadataFields();
 
 	/**
 	 * Get the display name for the index.
@@ -59,19 +57,19 @@ public interface IndexMetadata {
 	 * When was this index created?
 	 * @return date/time
 	 */
-	Date timeCreated();
+	String timeCreated();
 
 	/**
 	 * When was this index last modified?
 	 * @return date/time
 	 */
-	Date timeModified();
+	String timeModified();
 
 	/**
 	 * When was the BlackLab.jar used for indexing built?
 	 * @return date/time
 	 */
-	Date indexBlackLabBuildTime();
+	String indexBlackLabBuildTime();
 
 	/**
 	 * When was the BlackLab.jar used for indexing built?

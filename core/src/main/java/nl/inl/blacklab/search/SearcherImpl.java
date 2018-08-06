@@ -248,7 +248,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (!createNewIndex) {
             if (traceIndexOpening)
                 logger.debug("  Determining main contents field name...");
-            AnnotatedField mainContentsField = indexMetadata.getMainContentsField();
+            AnnotatedField mainContentsField = indexMetadata.annotatedFields().main();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
@@ -271,16 +271,13 @@ public class SearcherImpl extends Searcher implements Closeable {
             // Register content stores
             if (traceIndexOpening)
                 logger.debug("  Opening content stores...");
-            for (String cfn : indexMetadata.getComplexFields()) {
-                if (indexMetadata.getComplexFieldDesc(cfn).hasContentStore()) {
-                    File dir = new File(indexDir, "cs_" + cfn);
-                    if (!dir.exists()) {
-                        dir = new File(indexDir, "xml"); // OLD, should eventually be removed
-                    }
+            for (AnnotatedField field: indexMetadata.annotatedFields()) {
+                if (field.hasContentStore()) {
+                    File dir = new File(indexDir, "cs_" + field.name());
                     if (dir.exists()) {
                         if (traceIndexOpening)
                             logger.debug("    " + dir + "...");
-                        registerContentStore(cfn, openContentStore(dir, false));
+                        registerContentStore(field.name(), openContentStore(dir, false));
                     }
                 }
             }
@@ -522,12 +519,11 @@ public class SearcherImpl extends Searcher implements Closeable {
      * constructing the Searcher.
      */
     private void openForwardIndices() {
-        for (String field : indexMetadata.getComplexFields()) {
-            AnnotatedField fieldDesc = indexMetadata.getComplexFieldDesc(field);
-            for (Annotation property : fieldDesc.annotations()) {
-                if (property.hasForwardIndex()) {
+        for (AnnotatedField field: indexMetadata.annotatedFields()) {
+            for (Annotation annotation: field.annotations()) {
+                if (annotation.hasForwardIndex()) {
                     // This property has a forward index. Make sure it is open.
-                    String fieldProp = property.luceneFieldPrefix();
+                    String fieldProp = annotation.luceneFieldPrefix();
                     if (traceIndexOpening)
                         logger.debug("    " + fieldProp + "...");
                     getForwardIndex(fieldProp);
@@ -564,7 +560,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        AnnotatedField complexFieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
+        AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().field(fieldName);
         if (complexFieldDesc == null)
             throw new IllegalArgumentException("Unknown complex field " + fieldName);
         Annotation mainProperty = complexFieldDesc.annotations().main();

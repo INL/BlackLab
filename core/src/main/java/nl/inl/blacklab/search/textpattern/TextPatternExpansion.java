@@ -35,7 +35,6 @@ public class TextPatternExpansion extends TextPattern {
     public BLSpanQuery translate(QueryExecutionContext context) {
         SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause.translate(context), expandToLeft, min,
                 max);
-        spanQueryExpansion.setIgnoreLastToken(context.alwaysHasClosingToken());
         return spanQueryExpansion;
     }
 

@@ -15,7 +15,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -157,9 +157,9 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
-            IndexMetadataImpl indexMetadata = this.getSearcher().getIndexMetadata();
+            IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
-            String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
+            String tokenLengthField = indexMetadata.annotatedFields().main().tokenLengthField();
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();
@@ -181,7 +181,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             addSummaryCommonFieldsCSV(format, printer, searchParam);
             row.clear();
 
-            int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
+            int subtractClosingToken = 1;
             for (DocResult docResult : docs) {
                 Document doc = docResult.getDocument();
                 row.clear();
@@ -196,7 +196,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                 // Length field, if applicable
                 if (tokenLengthField != null)
-                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - subtractFromLength)); // lengthInTokens
+                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - subtractClosingToken)); // lengthInTokens
 
                 // other fields in order of appearance
                 for (String fieldId : metadataFieldIds) {

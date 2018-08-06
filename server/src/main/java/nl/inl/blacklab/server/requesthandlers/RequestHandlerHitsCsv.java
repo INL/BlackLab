@@ -180,7 +180,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final Annotation mainTokenProperty = getSearcher().getIndexMetadata().getMainContentsField().annotations().main();
+        final Annotation mainTokenProperty = getSearcher().getIndexMetadata().annotatedFields().main().annotations().main();
         List<String> otherTokenProperties = new ArrayList<>();
 
         try {
@@ -190,9 +190,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
             // Retrieve the additional columns
-            for (String complexFieldName : getSearcher().getIndexMetadata().getComplexFields()) {
-                AnnotatedField complexField = getSearcher().getIndexMetadata().getComplexFieldDesc(complexFieldName);
-                for (Annotation annotation: complexField.annotations()) {
+            for (AnnotatedField annotatedField: getSearcher().getIndexMetadata().annotatedFields()) {
+                for (Annotation annotation: annotatedField.annotations()) {
                     if (annotation.equals(mainTokenProperty) || annotation.isInternal())
                         continue;
 

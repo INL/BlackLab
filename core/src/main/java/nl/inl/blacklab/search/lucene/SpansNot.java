@@ -59,7 +59,7 @@ class SpansNot extends BLSpans {
     DocFieldLengthGetter lengthGetter;
 
     /** How much to subtract from length (for ignoring closing token) */
-    private int subtractFromLength;
+    private int subtractClosingToken;
 
     /** Highest document id plus one */
     private int maxDoc;
@@ -90,16 +90,14 @@ class SpansNot extends BLSpans {
      *
      * Clause must be start-point sorted.
      *
-     * @param ignoreLastToken if true, we assume the last token is always a special
-     *            closing token and ignore it
      * @param reader the index reader, for getting field lengths
      * @param fieldName the field name, for getting field lengths
      * @param clause the clause to invert, or null if we want all tokens
      */
-    public SpansNot(boolean ignoreLastToken, LeafReader reader, String fieldName, BLSpans clause) {
+    public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
-        subtractFromLength = ignoreLastToken ? 1 : 0;
+        subtractClosingToken = 1;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         this.clause = clause == null ? null : clause; //Sort(clause);
     }
@@ -148,7 +146,7 @@ class SpansNot extends BLSpans {
             else if (clauseDoc < currentDoc)
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractFromLength;
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractClosingToken;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

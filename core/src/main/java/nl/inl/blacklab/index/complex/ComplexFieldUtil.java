@@ -19,9 +19,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 
 /**
  * Some utility functions for dealing with complex field names.
@@ -161,8 +161,8 @@ public final class ComplexFieldUtil {
         return bookkeepingField(propFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
     }
 
-    public static String forwardIndexIdField(IndexMetadataImpl structure, String fieldName) {
-        String propName = structure.getComplexFieldDesc(fieldName).annotations().main().name();
+    public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
+        String propName = structure.annotatedFields().field(fieldName).annotations().main().name();
         return forwardIndexIdField(propertyField(fieldName, propName));
     }
 
@@ -397,14 +397,14 @@ public final class ComplexFieldUtil {
         return fieldPropAltName.endsWith(altSuffix);
     }
 
-    public static String mainPropertyField(IndexMetadataImpl structure, String fieldName) {
-        AnnotatedField cf = structure.getComplexFieldDesc(fieldName);
+    public static String mainPropertyField(IndexMetadata structure, String fieldName) {
+        AnnotatedField cf = structure.annotatedFields().field(fieldName);
         Annotation pr = cf.annotations().main();
         return propertyField(fieldName, pr.name());
     }
 
-    public static String mainPropertyOffsetsField(IndexMetadataImpl structure, String fieldName) {
-        AnnotatedField cf = structure.getComplexFieldDesc(fieldName);
+    public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
+        AnnotatedField cf = structure.annotatedFields().field(fieldName);
         Annotation pr = cf.annotations().main();
         return pr.offsetsSensitivity().luceneField();
     }

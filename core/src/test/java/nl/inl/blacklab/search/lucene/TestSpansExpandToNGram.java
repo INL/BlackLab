@@ -32,7 +32,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 1, 2 },
                 new int[] { 2, 3 });
 
-        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a,
+        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.CONTAINING, 2, 3);
         spans.setTest(true); // for test, all documents are 5 long
 
@@ -50,7 +50,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 1, 2 },
                 new int[] { 2, 3 });
 
-        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a,
+        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.CONTAINING_AT_END, 2, 3);
         spans.setTest(true); // for test, all documents are 5 long
 
@@ -68,7 +68,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 1, 2 },
                 new int[] { 2, 3 });
 
-        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a,
+        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.CONTAINING_AT_START, 2, 3);
         spans.setTest(true); // for test, all documents are 5 long
 
@@ -86,7 +86,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 1, 2 },
                 new int[] { 5, 5 });
 
-        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a,
+        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.WITHIN, 2, 3);
         spans.setTest(true); // for test, all documents are 5 long
 
@@ -104,7 +104,7 @@ public class TestSpansExpandToNGram {
                 new int[] { 1, 1, 2, 2 },
                 new int[] { 2, 4, 4, 6 });
 
-        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(false, null, "test", a,
+        SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.MATCHES, 2, 3);
         spans.setTest(true); // for test, all documents are 5 long
 

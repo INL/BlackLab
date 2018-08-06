@@ -127,7 +127,7 @@ public class QueryExecutionContext {
             return new String[] { ComplexFieldUtil.INSENSITIVE_ALT_NAME, ComplexFieldUtil.SENSITIVE_ALT_NAME };
         }
 
-        AnnotatedField cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().field(fieldName);
         if (cfd == null)
             return null;
 
@@ -203,7 +203,7 @@ public class QueryExecutionContext {
         }
 
         // Find the field and the property.
-        AnnotatedField cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().field(fieldName);
         if (cfd == null)
             return null;
 
@@ -250,29 +250,6 @@ public class QueryExecutionContext {
     public static QueryExecutionContext getSimple(Searcher searcher, String fieldName) {
         String mainPropName = ComplexFieldUtil.getDefaultMainPropName();
         return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
-    }
-
-    /**
-     * Do property fields in the index always have an extra "closing token" at the
-     * end, to account for punctuation after the last word.
-     *
-     * The closing token is ignored while searching.
-     *
-     * @return true if there are closing tokens
-     */
-    public boolean alwaysHasClosingToken() {
-        return searcher.getIndexMetadata().alwaysHasClosingToken();
-    }
-
-    /**
-     * Does the index store the length of XML tags in the payload?
-     *
-     * Older indices instead store a tag end token separately.
-     *
-     * @return true if tag lengths are in payload
-     */
-    public boolean tagLengthInPayload() {
-        return searcher.getIndexMetadata().tagLengthInPayload();
     }
 
     /**

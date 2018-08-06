@@ -322,15 +322,15 @@ public class Indexer {
 
                 // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
                 // has written it might be null
-                final String defaultFormatIdentifier = searcher.getIndexMetadata().getDocumentFormat();
+                final String defaultFormatIdentifier = searcher.getIndexMetadataWriter().documentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
                     this.formatIdentifier = formatIdentifier;
                     if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                         // indexTemplateFile didn't provide a default formatIdentifier,
                         // overwrite it with our provided formatIdentifier
-                        searcher.getIndexMetadata().setDocumentFormat(formatIdentifier);
-                        searcher.getIndexMetadata().writeMetadata();
+                        searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
+                        searcher.getIndexMetadataWriter().writeMetadata();
                     }
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
@@ -358,12 +358,12 @@ public class Indexer {
                 // template might still be null, in that case a default will be created
                 searcher = Searcher.openForWriting(directory, true, format);
 
-                String defaultFormatIdentifier = searcher.getIndexMetadata().getDocumentFormat();
+                String defaultFormatIdentifier = searcher.getIndexMetadata().documentFormat();
                 if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                     // ConfigInputFormat didn't provide a default formatIdentifier,
                     // overwrite it with our provided formatIdentifier
-                    searcher.getIndexMetadata().setDocumentFormat(formatIdentifier);
-                    searcher.getIndexMetadata().writeMetadata();
+                    searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
+                    searcher.getIndexMetadataWriter().writeMetadata();
                 }
             } else {
                 throw new DocumentFormatException("Input format config '" + formatIdentifier
@@ -372,7 +372,7 @@ public class Indexer {
         } else { // opening an existing index
 
             this.searcher = Searcher.openForWriting(directory, false);
-            String defaultFormatIdentifier = this.searcher.getIndexMetadata().getDocumentFormat();
+            String defaultFormatIdentifier = this.searcher.getIndexMetadata().documentFormat();
 
             if (DocumentFormats.isSupported(formatIdentifier))
                 this.formatIdentifier = formatIdentifier;
@@ -489,8 +489,8 @@ public class Indexer {
         getListener().closeStart();
 
         if (!hasRollback) {
-            searcher.getIndexMetadata().addToTokenCount(getListener().getTokensProcessed());
-            searcher.getIndexMetadata().writeMetadata();
+            searcher.getIndexMetadataWriter().addToTokenCount(getListener().getTokensProcessed());
+            searcher.getIndexMetadataWriter().writeMetadata();
         }
         searcher.close();
 

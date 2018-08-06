@@ -39,12 +39,6 @@ import nl.inl.util.LuceneUtil;
  */
 public class SpanQueryNot extends BLSpanQueryAbstract {
 
-    /**
-     * if true, we assume the last token is always a special closing token and
-     * ignore it
-     */
-    boolean ignoreLastToken = false;
-
     public SpanQueryNot(BLSpanQuery query) {
         super(query);
     }
@@ -69,10 +63,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         if (rewritten == clauses.get(0)) {
             return this;
         }
-        SpanQueryNot result = new SpanQueryNot(rewritten);
-        if (ignoreLastToken)
-            result.setIgnoreLastToken(true);
-        return result;
+        return new SpanQueryNot(rewritten);
     }
 
     @Override
@@ -133,7 +124,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
             BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
             if (!clauses.get(0).hitsStartPointSorted())
                 spans = BLSpans.optSortUniq(spans, true, false);
-            return new SpansNot(ignoreLastToken, context.reader(), baseFieldName, spans);
+            return new SpansNot(context.reader(), baseFieldName, spans);
         }
 
     }
@@ -141,16 +132,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
-    }
-
-    /**
-     * Set whether to ignore the last token.
-     *
-     * @param ignoreLastToken if true, we assume the last token is always a special
-     *            closing token and ignore it
-     */
-    public void setIgnoreLastToken(boolean ignoreLastToken) {
-        this.ignoreLastToken = ignoreLastToken;
     }
 
     @Override

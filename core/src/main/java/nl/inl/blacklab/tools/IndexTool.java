@@ -276,7 +276,7 @@ public class IndexTool {
             return;
         }
         if (createNewIndex)
-            indexer.getSearcher().getIndexMetadata().setDocumentFormat(docFormat);
+            indexer.getSearcher().getIndexMetadataWriter().setDocumentFormat(docFormat);
         indexer.setIndexerParam(indexerParam);
         if (maxDocsToIndex > 0)
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);

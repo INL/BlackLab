@@ -31,7 +31,7 @@ public class TestSpansExpansion {
         int[] aEnd = { 2, 3 };
         BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-        SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, 2);
+        SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, false, 1, 2);
         spans.setTest(true); // for test, all documents are 5 long
 
         int[] expDoc = { 1, 1, 2, 2 };
@@ -48,7 +48,7 @@ public class TestSpansExpansion {
         int[] aEnd = { 1, 4, 5 };
         BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-        SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, false, 1, BLSpanQuery.MAX_UNLIMITED);
+        SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, false, 1, BLSpanQuery.MAX_UNLIMITED);
         spans.setTest(true); // for test, all documents are 5 long
 
         int[] expDoc = { 1, 1, 1, 1, 1 };
@@ -65,7 +65,7 @@ public class TestSpansExpansion {
         int[] aEnd = { 2, 3 };
         BLSpans a = new MockSpans(aDoc, aStart, aEnd);
 
-        SpansExpansionRaw spans = new SpansExpansionRaw(false, null, "test", a, true, 2, 3);
+        SpansExpansionRaw spans = new SpansExpansionRaw(null, "test", a, true, 2, 3);
 
         // NOTE: first hit cannot be expanded at all (minimum expansion would set start to -1),
         // second hit can only be expanded once.

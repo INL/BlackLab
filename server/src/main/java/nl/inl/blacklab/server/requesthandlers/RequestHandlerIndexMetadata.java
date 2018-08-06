@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroups;
@@ -46,17 +46,17 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
             Searcher searcher = index.getSearcher();
-            IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
+            IndexMetadata indexMetadata = searcher.getIndexMetadata();
 
             // Assemble response
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.getDisplayName())
-                    .entry("description", indexMetadata.getDescription())
+                    .entry("displayName", indexMetadata.displayName())
+                    .entry("description", indexMetadata.description())
                     .entry("status", status)
                     .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.getTextDirection().getCode());
+                    .entry("textDirection", indexMetadata.textDirection().getCode());
 
             if (status.equals(IndexStatus.INDEXING)) {
                 IndexListener indexProgress = index.getIndexerListener();
@@ -69,18 +69,18 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 }
             }
 
-            String formatIdentifier = indexMetadata.getDocumentFormat();
+            String formatIdentifier = indexMetadata.documentFormat();
             if (formatIdentifier != null && formatIdentifier.length() > 0)
                 ds.entry("documentFormat", formatIdentifier);
-            if (indexMetadata.getTokenCount() > 0)
-                ds.entry("tokenCount", indexMetadata.getTokenCount());
+            if (indexMetadata.tokenCount() > 0)
+                ds.entry("tokenCount", indexMetadata.tokenCount());
 
             ds.startEntry("versionInfo").startMap()
-                    .entry("blackLabBuildTime", indexMetadata.getIndexBlackLabBuildTime())
-                    .entry("blackLabVersion", indexMetadata.getIndexBlackLabVersion())
-                    .entry("indexFormat", indexMetadata.getIndexFormat())
-                    .entry("timeCreated", indexMetadata.getTimeCreated())
-                    .entry("timeModified", indexMetadata.getTimeModified())
+                    .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
+                    .entry("blackLabVersion", indexMetadata.indexBlackLabVersion())
+                    .entry("indexFormat", indexMetadata.indexFormat())
+                    .entry("timeCreated", indexMetadata.timeCreated())
+                    .entry("timeModified", indexMetadata.timeModified())
                     .endMap().endEntry();
 
             MetadataFields fields = indexMetadata.metadataFields();
@@ -94,13 +94,12 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             ds.startEntry("complexFields").startMap();
             // Complex fields
             //DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
-            for (String name : indexMetadata.getComplexFields()) {
-                ds.startAttrEntry("complexField", "name", name);
+            for (AnnotatedField field: indexMetadata.annotatedFields()) {
+                ds.startAttrEntry("complexField", "name", field.name());
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();
                 Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-                AnnotatedField fieldDesc = indexMetadata.getComplexFieldDesc(name);
-                RequestHandlerFieldInfo.describeComplexField(ds, null, name, fieldDesc, searcher, setShowValuesFor,
+                RequestHandlerFieldInfo.describeComplexField(ds, null, field, searcher, setShowValuesFor,
                         setShowSubpropsFor);
 
                 ds.endAttrEntry();
@@ -112,10 +111,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
             for (MetadataField f: fields) {
                 ds.startAttrEntry("metadataField", "name", f.name());
-
-                MetadataField fd = fields.get(f.name());
-                RequestHandlerFieldInfo.describeMetadataField(ds, null, f.name(), fd, true);
-
+                RequestHandlerFieldInfo.describeMetadataField(ds, null, f, true);
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();

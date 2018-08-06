@@ -40,12 +40,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     int max;
 
-    /**
-     * if true, we assume the last token is always a special closing token and
-     * ignore it
-     */
-    boolean ignoreLastToken = false;
-
     public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max) {
         super(clause);
         this.op = op;
@@ -73,10 +67,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
         if (rewritten == null)
             return this;
-        SpanQueryFilterNGrams result = new SpanQueryFilterNGrams(rewritten.get(0), op, min, max);
-        if (ignoreLastToken)
-            result.setIgnoreLastToken(true);
-        return result;
+        return new SpanQueryFilterNGrams(rewritten.get(0), op, min, max);
     }
 
     @Override
@@ -123,7 +114,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            BLSpans spans = new SpansFilterNGramsRaw(ignoreLastToken, context.reader(), clauses.get(0).getField(),
+            BLSpans spans = new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
                     spansSource, op, min, max);
             return spans;
         }
@@ -144,16 +135,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     public String toString(String field) {
         return "FILTERNGRAMS(" + clauses.get(0) + ", " + op + ", " + min + ", " + inf(max)
                 + ")";
-    }
-
-    /**
-     * Set whether to ignore the last token.
-     *
-     * @param ignoreLastToken if true, we assume the last token is always a special
-     *            closing token and ignore it
-     */
-    public void setIgnoreLastToken(boolean ignoreLastToken) {
-        this.ignoreLastToken = ignoreLastToken;
     }
 
     @Override

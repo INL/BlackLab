@@ -128,7 +128,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (includeTokenCount) {
                 // Determine total number of tokens in result set
                 //TODO: use background job?
-                String fieldName = searcher.getIndexMetadata().getMainContentsField().name();
+                String fieldName = searcher.getIndexMetadata().annotatedFields().main().name();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = window.getOriginalDocs().intSum(propTokens);
             }

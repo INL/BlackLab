@@ -71,7 +71,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         propMain = contentsField.getMainProperty();
         String propName = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
         propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
-        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
+        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
         AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
         contentsField.setAnnotatedField(f);
     }
@@ -241,7 +241,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());

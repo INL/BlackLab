@@ -52,9 +52,7 @@ public class TextPatternAnyToken extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        SpanQueryAnyToken result = new SpanQueryAnyToken(min, max, context.luceneField());
-        result.setAlwaysHasClosingToken(context.alwaysHasClosingToken());
-        return result;
+        return new SpanQueryAnyToken(min, max, context.luceneField());
     }
 
     @Override

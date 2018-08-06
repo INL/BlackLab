@@ -126,7 +126,7 @@ class DocFieldLengthGetter implements Closeable {
     public int getFieldLength(int doc) {
 
         if (useTestValues)
-            return 5; // while testing, all documents have same length
+            return 6; // while testing, all documents have same length
 
         if (cachedFieldLengths != null) {
             return (int) cachedFieldLengths.get(doc);

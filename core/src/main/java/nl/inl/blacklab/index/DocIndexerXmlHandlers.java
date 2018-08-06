@@ -174,7 +174,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());
@@ -460,7 +460,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propStartTag = addProperty(ComplexFieldUtil.START_TAG_PROP_NAME, true); // start tag
                                                                                 // positions
         propStartTag.setForwardIndex(false);
-        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
         AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
         contentsField.setAnnotatedField(f);
     }

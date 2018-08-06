@@ -17,13 +17,13 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.TestUtil;
-
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.TestUtil;
 
 public class TestSpansNot {
 
@@ -33,7 +33,7 @@ public class TestSpansNot {
                 new int[] { 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3, 3, 5 },
                 new int[] { 0, 1, 2, 3, 1, 2, 3, 4, 1, 3, 0, 1, 2, 3, 4, 0 },
                 new int[] { 1, 2, 3, 4, 2, 3, 4, 5, 2, 4, 1, 2, 3, 4, 5, 5 });
-        SpansNot spans = new SpansNot(false, null, "test", a);
+        SpansNot spans = new SpansNot(null, "test", a);
         spans.setTest(true, 6); // no IndexReader available
         return spans;
     }

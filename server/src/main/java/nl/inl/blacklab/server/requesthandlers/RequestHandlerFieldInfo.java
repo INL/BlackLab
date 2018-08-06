@@ -16,11 +16,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -82,16 +82,16 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
 
         Searcher searcher = getSearcher();
-        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
 
-        if (indexMetadata.getComplexFields().contains(fieldName)) {
+        if (indexMetadata.annotatedFields().exists(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-            AnnotatedField fieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
-            describeComplexField(ds, indexName, fieldName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
+            AnnotatedField fieldDesc = indexMetadata.annotatedFields().field(fieldName);
+            describeComplexField(ds, indexName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
             MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);
-            describeMetadataField(ds, indexName, fieldName, fieldDesc, true);
+            describeMetadataField(ds, indexName, fieldDesc, true);
         }
 
         // Remove any empty settings
@@ -100,15 +100,15 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         return HTTP_OK;
     }
 
-    public static void describeMetadataField(DataStream ds, String indexName, String fieldName, MetadataField fd,
-            boolean listValues) {
+    public static void describeMetadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues) {
         ds.startMap();
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); // report false for UNKNOWN - this usually means there's no values either way
+        // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
+        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); 
 
         // Assemble response
         if (indexName != null)
             ds.entry("indexName", indexName);
-        ds.entry("fieldName", fieldName)
+        ds.entry("fieldName", fd.name())
                 .entry("isComplexField", "false")
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
@@ -159,13 +159,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.endMap();
     }
 
-    public static void describeComplexField(DataStream ds, String indexName, String fieldName,
+    public static void describeComplexField(DataStream ds, String indexName, 
             AnnotatedField fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
         Annotations annotations = fieldDesc.annotations();
-        ds.entry("fieldName", fieldName)
+        ds.entry("fieldName", fieldDesc.name())
                 .entry("isComplexField", "true")
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
@@ -184,7 +184,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", annotation.sensitivitySettingDesc())
                     .entry("offsetsAlternative", StringUtil.nullToEmpty(annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
                     .entry("isInternal", annotation.isInternal());
-            String luceneField = ComplexFieldUtil.propertyField(fieldName, annotation.name(), ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+            String luceneField = ComplexFieldUtil.propertyField(fieldDesc.name(), annotation.name(), ComplexFieldUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
                 Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField,
                         MAX_FIELD_VALUES + 1);

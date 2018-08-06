@@ -60,11 +60,6 @@ public class TextPatternTags extends TextPattern {
         // Return the proper SpanQuery depending on index version
         QueryExecutionContext startTagContext = context.withProperty(ComplexFieldUtil.START_TAG_PROP_NAME);
         String startTagFieldName = startTagContext.luceneField();
-        if (!context.tagLengthInPayload()) {
-            throw new UnsupportedOperationException(
-                    "This index is too old for this version of BlackLab. Please re-index your data or use version 1.7.1.");
-        }
-        // Modern index, with tag length in payload
         return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
     }
 

@@ -7,10 +7,10 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -54,8 +54,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
                     "Bad URL. Specify a field name and optionally a property to autocomplete.");
         }
         Searcher searcher = getSearcher();
-        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
-        if (complexFieldName == null && indexMetadata.getComplexFields().contains(fieldName))
+        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        if (complexFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Also specify a property to autocomplete for complexfield: " + fieldName);
 
@@ -78,9 +78,9 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          */
         boolean sensitiveMatching = true;
         if (complexFieldName != null && !complexFieldName.isEmpty()) {
-            if (!indexMetadata.hasComplexField(complexFieldName))
+            if (!indexMetadata.annotatedFields().exists(complexFieldName))
                 throw new BadRequest("UNKNOWN_FIELD", "Complex field '" + complexFieldName + "' does not exist.");
-            AnnotatedField complexFieldDesc = indexMetadata.getComplexFieldDesc(complexFieldName);
+            AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().field(complexFieldName);
             Annotations annotations = complexFieldDesc.annotations();
             if (!annotations.exists(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",

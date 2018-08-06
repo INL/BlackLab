@@ -44,13 +44,11 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
             // Expand to left
             any = (SpanQueryAnyToken) left;
             result = new SpanQueryExpansion(right, true, any.hitsLengthMin(), any.hitsLengthMax());
-            result.setIgnoreLastToken(any.isAlwaysHasClosingToken());
             return result;
         case RIGHT_ANY:
             // Expand to right
             any = (SpanQueryAnyToken) right;
             result = new SpanQueryExpansion(left, false, any.hitsLengthMin(), any.hitsLengthMax());
-            result.setIgnoreLastToken(any.isAlwaysHasClosingToken());
             return result;
         case BOTH_ANY:
             // Combine two anytoken clauses

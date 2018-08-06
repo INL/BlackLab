@@ -351,7 +351,7 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
+        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
         indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);

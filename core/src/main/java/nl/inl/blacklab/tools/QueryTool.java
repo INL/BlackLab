@@ -60,8 +60,10 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -945,9 +947,39 @@ public class QueryTool {
     }
 
     private void showIndexMetadata() {
-        IndexMetadataImpl s = searcher.getIndexMetadata();
+        IndexMetadata s = searcher.getIndexMetadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
-        s.print(out);
+        out.println("COMPLEX FIELDS");
+        for (AnnotatedField cf: s.annotatedFields()) {
+            out.println("- " + cf.name());
+            for (Annotation pr: cf.annotations()) {
+                out.println("  * Property: " + pr.toString());
+            }
+            out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
+            out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
+            out.println("  * " + (cf.hasLengthTokens() ? "Includes" : "No") + " document length field");
+        }
+        
+        out.println("\nMETADATA FIELDS");
+        MetadataFields mf = s.metadataFields();
+        for (MetadataField field: mf) {
+            if (field.name().endsWith("Numeric"))
+                continue; // special case, will probably be removed later
+            String special = "";
+            if (field.equals(mf.special(MetadataFields.TITLE)))
+                special = "TITLEFIELD";
+            else if (field.equals(mf.special(MetadataFields.AUTHOR)))
+                special = "AUTHORFIELD";
+            else if (field.equals(mf.special(MetadataFields.DATE)))
+                special = "DATEFIELD";
+            else if (field.equals(mf.special(MetadataFields.PID)))
+                special = "PIDFIELD";
+            if (special.length() > 0)
+                special = " (" + special + ")";
+            FieldType type = field.type();
+            out.println("- " + field.name() + (type == FieldType.TOKENIZED ? "" : " (" + type + ")")
+                    + special);
+        }
     }
 
     /** If JLine is available, this holds the ConsoleReader object */
@@ -1410,7 +1442,7 @@ public class QueryTool {
             // Case-sensitive collocations..?
             String fieldName = hits.settings().concordanceField();
             if (collocProperty == null) {
-                AnnotatedField cf = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+                AnnotatedField cf = searcher.getIndexMetadata().annotatedFields().field(fieldName);
                 collocProperty = cf.annotations().main().name();
             }
 

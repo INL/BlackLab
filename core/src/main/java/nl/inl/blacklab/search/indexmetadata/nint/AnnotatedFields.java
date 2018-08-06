@@ -12,7 +12,7 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
      * 
      * @return the main contents field
      */
-    AnnotatedField mainField();
+    AnnotatedField main();
 
     /**
      * Iterate over the annotated fields in our index.
@@ -36,5 +36,13 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
      * @return the field description, or null if it doesn't exist
      */
     AnnotatedField field(String fieldName);
+
+    /**
+     * Does the specified field exist?
+     * 
+     * @param fieldName field name
+     * @return true if it exists, false if not
+     */
+    boolean exists(String fieldName);
 
 }

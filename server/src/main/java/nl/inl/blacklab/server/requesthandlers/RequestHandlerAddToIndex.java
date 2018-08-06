@@ -19,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -50,7 +50,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         debug(logger, "REQ add data: " + indexName);
 
         Index index = indexMan.getIndex(indexName);
-        IndexMetadataImpl indexMetadata = index.getIndexMetadata();
+        IndexMetadata indexMetadata = index.getIndexMetadata();
 
         // Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
@@ -83,7 +83,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
-        if (indexMetadata.getTokenCount() > MAX_TOKEN_COUNT) {
+        if (indexMetadata.tokenCount() > MAX_TOKEN_COUNT) {
             throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT
                     + " tokens. Cannot add any more data to it.");
         }

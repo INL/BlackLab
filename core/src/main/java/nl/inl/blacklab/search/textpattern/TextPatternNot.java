@@ -31,9 +31,7 @@ public class TextPatternNot extends TextPatternCombiner {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        SpanQueryNot spanQueryNot = new SpanQueryNot(clauses.get(0).translate(context));
-        spanQueryNot.setIgnoreLastToken(context.alwaysHasClosingToken());
-        return spanQueryNot;
+        return new SpanQueryNot(clauses.get(0).translate(context));
     }
 
     @Override
