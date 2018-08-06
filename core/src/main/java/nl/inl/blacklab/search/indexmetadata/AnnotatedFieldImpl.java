@@ -3,13 +3,14 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,17 +18,62 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /** Description of a complex field */
-public class ComplexFieldDesc extends FieldImpl implements Freezable {
-    protected static final Logger logger = LogManager.getLogger(ComplexFieldDesc.class);
+public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
+    
+    private final class AnnotationsImpl implements Annotations {
+        @Override
+        public Annotation main() {
+            return mainProperty;
+        }
 
-    /** This complex field's properties */
+        @Override
+        public Iterator<Annotation> iterator() {
+            Iterator<AnnotationImpl> it = annotationsDisplayOrder.iterator();
+            return new Iterator<Annotation>() {
+                @Override
+                public boolean hasNext() {
+                    return it.hasNext();
+                }
+
+                @Override
+                public Annotation next() {
+                    return it.next();
+                }
+                
+            };
+        }
+
+        @Override
+        public Stream<Annotation> stream() {
+            return annotationsDisplayOrder.stream().map(a -> (Annotation)a);
+        }
+
+        @Override
+        public Annotation get(String name) {
+            return props.get(name);
+        }
+
+        @Override
+        public boolean exists(String name) {
+            return props.containsKey(name);
+        }
+    }
+
+    protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
+
+    /** This complex field's properties, sorted by name */
     private Map<String, AnnotationImpl> props;
+    
+    /** This field's annotations, in desired display order */
+    private List<AnnotationImpl> annotationsDisplayOrder;
 
     /** The field's main property */
     private AnnotationImpl mainProperty;
@@ -47,62 +93,48 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
     /** These properties should not get a forward index. */
     private Set<String> noForwardIndexProps = Collections.emptySet();
 
-    private List<String> displayOrder = new ArrayList<>();
+    /** Annotation display order. If not specified, use reasonable defaults. */
+    private List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
+
+    /** Compares annotation names by displayOrder. */
+    private Comparator<AnnotationImpl> annotationOrderComparator;
 
     private boolean frozen;
 
-    ComplexFieldDesc(String name) {
+    private AnnotationsImpl annotationsImpl;
+
+    AnnotatedFieldImpl(String name) {
         super(name);
-        props = new TreeMap<>();
+        props = new TreeMap<String, AnnotationImpl>();
+        annotationsDisplayOrder = new ArrayList<>();
+        annotationOrderComparator = new Comparator<AnnotationImpl>() {
+            @Override
+            public int compare(AnnotationImpl a, AnnotationImpl b) {
+                int ai = displayOrder.indexOf(a.name());
+                if (ai < 0)
+                    ai = Integer.MAX_VALUE;
+                int bi = displayOrder.indexOf(b.name());
+                if (bi < 0)
+                    bi = Integer.MAX_VALUE;
+                return ai == bi ? 0 : (ai > bi ? 1 : -1);
+            }
+        };
+        
         contentStore = false;
         lengthInTokens = false;
         xmlTags = false;
         mainProperty = null;
+        annotationsImpl = new AnnotationsImpl();
     }
 
     @Override
     public String toString() {
         return fieldName + " [" + StringUtil.join(props.values(), ", ") + "]";
     }
-
-    /**
-     * Get the set of property names for this complex field.
-     *
-     * Properties are returned sorted according to the displayOrder defined in the
-     * index metadata, if any.
-     *
-     * @return the set of properties
-     */
-    public Collection<String> getProperties() {
-        List<String> sorted = new ArrayList<>(props.keySet());
-        List<String> order = displayOrder;
-        if (order == null || order.isEmpty())
-            order = Arrays.asList("word", "lemma", "pos"); // default ordering
-        sortProperties(sorted, order);
-        return sorted;
-    }
-
-    private static void sortProperties(List<String> properties, final List<String> displayOrder) {
-        Collections.sort(properties, new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int s1 = -1, s2 = -1;
-                if (displayOrder != null) {
-                    s1 = displayOrder.indexOf(o1.toLowerCase());
-                    s2 = displayOrder.indexOf(o2.toLowerCase());
-                }
-                if (s1 == -1 && s2 == -1) {
-                    // Not defined in displayOrder; just sort alphabetically
-                    return o1.compareTo(o2);
-                }
-                // One or both were defined in the displayOrder
-                if (s1 == -1)
-                    return 1;
-                if (s2 == -1)
-                    return -1;
-                return s1 - s2;
-            }
-        });
+    
+    @Override
+    public Annotations annotations() {
+        return annotationsImpl;
     }
 
     /**
@@ -117,6 +149,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         return props.get(name);
     }
 
+    @Override
     public boolean hasLengthTokens() {
         return lengthInTokens;
     }
@@ -127,10 +160,12 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
      *
      * @return the field name or null if lengths weren't stored
      */
-    public String getTokenLengthField() {
+    @Override
+    public String tokenLengthField() {
         return lengthInTokens ? ComplexFieldUtil.lengthTokensField(fieldName) : null;
     }
 
+    @Override
     public boolean hasXmlTags() {
         return xmlTags;
     }
@@ -142,7 +177,8 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
      * 
      * @return true iff there's a punctuation forward index.
      */
-    public boolean hasPunctuation() {
+    @Override
+    public boolean hasPunctuationForwardIndex() {
         AnnotationImpl pd = props.get(ComplexFieldUtil.PUNCTUATION_PROP_NAME);
         return pd != null && pd.hasForwardIndex();
     }
@@ -178,7 +214,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
     }
 
     public List<String> getDisplayOrder() {
-        return displayOrder;
+        return Collections.unmodifiableList(displayOrder);
     }
     
     // Methods that mutate data
@@ -243,7 +279,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         AnnotationImpl pd = props.get(name);
         if (pd == null) {
             pd = new AnnotationImpl(this, name);
-            props.put(name, pd);
+            putProperty(pd);
         }
         return pd;
     }
@@ -251,6 +287,8 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
     void putProperty(AnnotationImpl propDesc) {
         ensureNotFrozen();
         props.put(propDesc.name(), propDesc);
+        annotationsDisplayOrder.add(propDesc);
+        annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
     public void detectMainProperty(IndexReader reader) {
@@ -311,6 +349,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         ensureNotFrozen();
         this.displayOrder.clear();
         this.displayOrder.addAll(displayOrder);
+        this.annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
     @Override

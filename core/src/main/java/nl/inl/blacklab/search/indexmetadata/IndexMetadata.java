@@ -50,6 +50,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
@@ -110,13 +111,13 @@ public class IndexMetadata implements Freezable {
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** The complex fields in our index */
-    protected Map<String, ComplexFieldDesc> complexFields;
+    protected Map<String, AnnotatedFieldImpl> complexFields;
 
     /**
      * The main contents field in our index. This is either the complex field with
      * the name "contents", or if that doesn't exist, the first complex field found.
      */
-    protected ComplexFieldDesc mainContentsField;
+    protected AnnotatedFieldImpl mainContentsField;
 
     /** Where to save indexmetadata.json */
     protected File indexDir;
@@ -429,7 +430,7 @@ public class IndexMetadata implements Freezable {
         }
 
         // Add complex field info
-        for (ComplexFieldDesc f : complexFields.values()) {
+        for (AnnotatedFieldImpl f : complexFields.values()) {
             ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
@@ -437,13 +438,12 @@ public class IndexMetadata implements Freezable {
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, f.getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
-            for (String propName : f.getProperties()) {
-                Annotation propDesc = f.getPropertyDesc(propName);
+            for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
-                annot.put("name", propDesc.name());
-                annot.put("displayName", propDesc.displayName());
-                annot.put("description", propDesc.description());
-                annot.put("uiType", propDesc.uiType());
+                annot.put("name", annotation.name());
+                annot.put("displayName", annotation.displayName());
+                annot.put("description", annotation.description());
+                annot.put("uiType", annotation.uiType());
             }
         }
 
@@ -457,7 +457,7 @@ public class IndexMetadata implements Freezable {
      * 
      * @return the main contents field
      */
-    public ComplexFieldDesc getMainContentsField() {
+    public AnnotatedField getMainContentsField() {
         return mainContentsField;
     }
 
@@ -555,7 +555,7 @@ public class IndexMetadata implements Freezable {
      * @param fieldName name of the field
      * @return the field description
      */
-    public ComplexFieldDesc getComplexFieldDesc(String fieldName) {
+    public AnnotatedField getComplexFieldDesc(String fieldName) {
         if (!complexFields.containsKey(fieldName))
             throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
         return complexFields.get(fieldName);
@@ -572,7 +572,7 @@ public class IndexMetadata implements Freezable {
      */
     public void print(PrintWriter out) {
         out.println("COMPLEX FIELDS");
-        for (ComplexFieldDesc cf : complexFields.values()) {
+        for (AnnotatedFieldImpl cf : complexFields.values()) {
             out.println("- " + cf.name());
             cf.print(out);
         }
@@ -900,7 +900,7 @@ public class IndexMetadata implements Freezable {
                 JsonNode fieldConfig = entry.getValue();
                 warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig,
                         KEYS_COMPLEX_FIELD_CONFIG);
-                ComplexFieldDesc fieldDesc = new ComplexFieldDesc(fieldName);
+                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
@@ -1010,7 +1010,7 @@ public class IndexMetadata implements Freezable {
                     }
     
                     // Get or create descriptor object.
-                    ComplexFieldDesc cfd = getOrCreateComplexField(parts[0]);
+                    AnnotatedFieldImpl cfd = getOrCreateComplexField(parts[0]);
                     cfd.processIndexField(parts);
                 }
             } // even if we have metadata, we still have to detect props/alts
@@ -1083,7 +1083,7 @@ public class IndexMetadata implements Freezable {
             // Detect the main properties for all complex fields
             // (looks for fields with char offset information stored)
             mainContentsField = null;
-            for (ComplexFieldDesc d : complexFields.values()) {
+            for (AnnotatedFieldImpl d : complexFields.values()) {
                 if (mainContentsField == null || d.name().equals("contents"))
                     mainContentsField = d;
                 if (tokenCount > 0) // no use trying this on an empty index
@@ -1092,13 +1092,13 @@ public class IndexMetadata implements Freezable {
         }
     }
 
-    private ComplexFieldDesc getOrCreateComplexField(String name) {
+    private AnnotatedFieldImpl getOrCreateComplexField(String name) {
         ensureNotFrozen();
-        ComplexFieldDesc cfd = null;
+        AnnotatedFieldImpl cfd = null;
         if (complexFields.containsKey(name))
-            cfd = getComplexFieldDesc(name);
+            cfd = ((AnnotatedFieldImpl)getComplexFieldDesc(name));
         if (cfd == null) {
-            cfd = new ComplexFieldDesc(name);
+            cfd = new AnnotatedFieldImpl(name);
             complexFields.put(name, cfd);
         }
         return cfd;
@@ -1127,7 +1127,7 @@ public class IndexMetadata implements Freezable {
         // Not registered yet; do so now. Note that we only add the main property,
         // not the other properties, but that's okay; they're not needed at index
         // time and will be detected at search time.
-        ComplexFieldDesc cf = getOrCreateComplexField(fieldName);
+        AnnotatedFieldImpl cf = getOrCreateComplexField(fieldName);
         cf.getOrCreateProperty(mainPropName); // create main property
         cf.setMainPropertyName(mainPropName); // set main property
     }

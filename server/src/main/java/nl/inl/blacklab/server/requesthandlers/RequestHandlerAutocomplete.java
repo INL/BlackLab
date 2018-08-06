@@ -7,9 +7,10 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -79,11 +80,12 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         if (complexFieldName != null && !complexFieldName.isEmpty()) {
             if (!indexMetadata.hasComplexField(complexFieldName))
                 throw new BadRequest("UNKNOWN_FIELD", "Complex field '" + complexFieldName + "' does not exist.");
-            ComplexFieldDesc complexFieldDesc = indexMetadata.getComplexFieldDesc(complexFieldName);
-            if (!complexFieldDesc.hasProperty(fieldName))
+            AnnotatedField complexFieldDesc = indexMetadata.getComplexFieldDesc(complexFieldName);
+            Annotations annotations = complexFieldDesc.annotations();
+            if (!annotations.exists(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",
                         "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
-            Annotation prop = complexFieldDesc.getPropertyDesc(fieldName);
+            Annotation prop = annotations.get(fieldName);
             if (prop.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
                 fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);

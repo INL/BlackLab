@@ -58,9 +58,9 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
@@ -248,7 +248,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (!createNewIndex) {
             if (traceIndexOpening)
                 logger.debug("  Determining main contents field name...");
-            ComplexFieldDesc mainContentsField = indexMetadata.getMainContentsField();
+            AnnotatedField mainContentsField = indexMetadata.getMainContentsField();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
@@ -263,7 +263,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
                 // See if we have a punctuation forward index. If we do,
                 // default to creating concordances using that.
-                if (mainContentsField.hasPunctuation()) {
+                if (mainContentsField.hasPunctuationForwardIndex()) {
                     hitsSettings.setConcordanceType(ConcordanceType.FORWARD_INDEX);
                 }
             }
@@ -523,12 +523,11 @@ public class SearcherImpl extends Searcher implements Closeable {
      */
     private void openForwardIndices() {
         for (String field : indexMetadata.getComplexFields()) {
-            ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(field);
-            for (String property : fieldDesc.getProperties()) {
-                Annotation propDesc = fieldDesc.getPropertyDesc(property);
-                if (propDesc.hasForwardIndex()) {
+            AnnotatedField fieldDesc = indexMetadata.getComplexFieldDesc(field);
+            for (Annotation property : fieldDesc.annotations()) {
+                if (property.hasForwardIndex()) {
                     // This property has a forward index. Make sure it is open.
-                    String fieldProp = ComplexFieldUtil.propertyField(field, property);
+                    String fieldProp = property.luceneFieldPrefix();
                     if (traceIndexOpening)
                         logger.debug("    " + fieldProp + "...");
                     getForwardIndex(fieldProp);
@@ -565,10 +564,10 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        ComplexFieldDesc complexFieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
+        AnnotatedField complexFieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
         if (complexFieldDesc == null)
             throw new IllegalArgumentException("Unknown complex field " + fieldName);
-        Annotation mainProperty = complexFieldDesc.getMainProperty();
+        Annotation mainProperty = complexFieldDesc.annotations().main();
         if (mainProperty == null)
             throw new IllegalArgumentException("Main property not found for " + fieldName);
         String mainPropName = mainProperty.name();

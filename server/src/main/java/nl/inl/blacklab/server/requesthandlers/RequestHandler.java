@@ -455,7 +455,7 @@ public abstract class RequestHandler {
                 ds.entry(f.name(), value);
         }
         int subtractFromLength = indexMetadata.alwaysHasClosingToken() ? 1 : 0;
-        String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
+        String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
 
         if (tokenLengthField != null)
             ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractFromLength);

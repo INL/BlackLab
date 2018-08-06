@@ -10,6 +10,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
@@ -19,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 class AnnotationImpl implements Annotation, Freezable {
     
     /** The field this is an annotation for. */
-    private ComplexFieldDesc field;
+    private AnnotatedField field;
     
     /** The property name */
     private String name;
@@ -56,18 +57,18 @@ class AnnotationImpl implements Annotation, Freezable {
 
     private boolean frozen;
 
-    AnnotationImpl(ComplexFieldDesc field) {
+    AnnotationImpl(AnnotatedField field) {
         this(field, null);
     }
 
-    AnnotationImpl(ComplexFieldDesc field, String name) {
+    AnnotationImpl(AnnotatedField field, String name) {
         this.field = field;
         this.name = name;
         forwardIndex = false;
     }
     
     @Override
-    public ComplexFieldDesc field() {
+    public AnnotatedField field() {
         return field;
     }
 

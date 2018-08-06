@@ -3,13 +3,12 @@ package nl.inl.blacklab.search.indexmetadata.nint;
 import java.util.Collection;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 
 /** An annotation on an annotated field. */
 public interface Annotation {
 	
 	/** @return field for which this is an annotation */
-	ComplexFieldDesc field();
+	AnnotatedField field();
 
 	/** @return this annotation's name */
 	String name();

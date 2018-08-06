@@ -60,8 +60,8 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -1410,8 +1410,8 @@ public class QueryTool {
             // Case-sensitive collocations..?
             String fieldName = hits.settings().concordanceField();
             if (collocProperty == null) {
-                ComplexFieldDesc cf = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
-                collocProperty = cf.getMainProperty().name();
+                AnnotatedField cf = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+                collocProperty = cf.annotations().main().name();
             }
 
             collocations = hits.getCollocations(collocProperty,

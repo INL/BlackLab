@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
@@ -127,12 +127,12 @@ public class QueryExecutionContext {
             return new String[] { ComplexFieldUtil.INSENSITIVE_ALT_NAME, ComplexFieldUtil.SENSITIVE_ALT_NAME };
         }
 
-        ComplexFieldDesc cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
         if (cfd == null)
             return null;
 
         // Find the property
-        Annotation pd = cfd.getPropertyDesc(propName);
+        Annotation pd = cfd.annotations().get(propName);
 
         // New alternative naming scheme (every alternative has a name)
         List<String> validAlternatives = new ArrayList<>();
@@ -203,7 +203,7 @@ public class QueryExecutionContext {
         }
 
         // Find the field and the property.
-        ComplexFieldDesc cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().getComplexFieldDesc(fieldName);
         if (cfd == null)
             return null;
 
@@ -214,7 +214,7 @@ public class QueryExecutionContext {
         }
 
         // Find the property
-        Annotation pd = cfd.getPropertyDesc(propName);
+        Annotation pd = cfd.annotations().get(propName);
         if (pd == null)
             return ComplexFieldUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
 

@@ -16,10 +16,11 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -86,7 +87,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexMetadata.getComplexFields().contains(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-            ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
+            AnnotatedField fieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
             describeComplexField(ds, indexName, fieldName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
             MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);
@@ -159,10 +160,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     }
 
     public static void describeComplexField(DataStream ds, String indexName, String fieldName,
-            ComplexFieldDesc fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+            AnnotatedField fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
+        Annotations annotations = fieldDesc.annotations();
         ds.entry("fieldName", fieldName)
                 .entry("isComplexField", "true")
                 .entry("displayName", fieldDesc.displayName())
@@ -170,23 +172,20 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
-                .entry("mainProperty", fieldDesc.getMainProperty().name());
+                .entry("mainProperty", annotations.main().name());
         ds.startEntry("properties").startMap();
-        List<String> properties = new ArrayList<>(fieldDesc.getProperties());
-        for (String propName : properties) {
-            Annotation propDesc = fieldDesc.getPropertyDesc(propName);
-            ds.startAttrEntry("property", "name", propName).startMap();
+        for (Annotation annotation: annotations) {
+            ds.startAttrEntry("property", "name", annotation.name()).startMap();
             ds
-                    .entry("displayName", propDesc.displayName())
-                    .entry("description", propDesc.description())
-                    .entry("uiType", propDesc.uiType())
-                    .entry("hasForwardIndex", propDesc.hasForwardIndex())
-                    .entry("sensitivity", propDesc.sensitivitySettingDesc())
-                    .entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
-                    .entry("isInternal", propDesc.isInternal());
-            String luceneField = ComplexFieldUtil.propertyField(fieldName, propName,
-                    ComplexFieldUtil.INSENSITIVE_ALT_NAME);
-            if (showValuesFor.contains(propName)) {
+                    .entry("displayName", annotation.displayName())
+                    .entry("description", annotation.description())
+                    .entry("uiType", annotation.uiType())
+                    .entry("hasForwardIndex", annotation.hasForwardIndex())
+                    .entry("sensitivity", annotation.sensitivitySettingDesc())
+                    .entry("offsetsAlternative", StringUtil.nullToEmpty(annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
+                    .entry("isInternal", annotation.isInternal());
+            String luceneField = ComplexFieldUtil.propertyField(fieldName, annotation.name(), ComplexFieldUtil.INSENSITIVE_ALT_NAME);
+            if (showValuesFor.contains(annotation.name())) {
                 Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
@@ -201,7 +200,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 ds.endList().endEntry();
                 ds.entry("valueListComplete", values.size() <= MAX_FIELD_VALUES);
             }
-            if (showSubpropsFor.contains(propName)) {
+            if (showSubpropsFor.contains(annotation.name())) {
                 Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
                 ds.startEntry("subproperties").startMap();
                 for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {

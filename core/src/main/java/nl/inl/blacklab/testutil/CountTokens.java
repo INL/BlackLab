@@ -80,7 +80,7 @@ public class CountTokens {
         final IndexReader reader = searcher.getIndexReader();
 
         IndexMetadata indexMetadata = searcher.getIndexMetadata();
-        final String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
+        final String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
 
         System.out.println("Calling forEachDocument()...");
         CountTask task = new CountTask(reader, tokenLengthField);

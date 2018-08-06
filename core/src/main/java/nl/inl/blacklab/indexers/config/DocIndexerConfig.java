@@ -11,6 +11,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 
 /**
@@ -107,7 +108,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
                 // If the indexmetadata file specified a list of properties that shouldn't get a forward
                 // index, make the new complex field aware of this.
-                Set<String> noForwardIndexProps = indexMetadata.getComplexFieldDesc(complexField.getName())
+                Set<String> noForwardIndexProps = ((AnnotatedFieldImpl)indexMetadata.getComplexFieldDesc(complexField.getName()))
                         .getNoForwardIndexProps();
                 complexField.setNoForwardIndexProps(noForwardIndexProps);
             }

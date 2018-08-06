@@ -44,7 +44,7 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
     private String defaultProperty = "contents.word";
 
     public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = indexMetadata.getComplexFieldDesc(fieldName).getMainProperty().name();
+        defaultProperty = indexMetadata.getComplexFieldDesc(fieldName).annotations().main().name();
     }
 
     public void setDefaultProperty(String property) {

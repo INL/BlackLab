@@ -18,7 +18,7 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.Hit;
@@ -180,8 +180,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final String mainTokenProperty = getSearcher().getIndexMetadata().getMainContentsField().getMainProperty()
-                .name();
+        final Annotation mainTokenProperty = getSearcher().getIndexMetadata().getMainContentsField().annotations().main();
         List<String> otherTokenProperties = new ArrayList<>();
 
         try {
@@ -192,14 +191,13 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
             // Retrieve the additional columns
             for (String complexFieldName : getSearcher().getIndexMetadata().getComplexFields()) {
-                ComplexFieldDesc complexField = getSearcher().getIndexMetadata().getComplexFieldDesc(complexFieldName);
-                for (String tokenProperty : complexField.getProperties()) {
-                    Annotation desc = complexField.getPropertyDesc(tokenProperty);
-                    if (tokenProperty.equals(mainTokenProperty) || desc.isInternal())
+                AnnotatedField complexField = getSearcher().getIndexMetadata().getComplexFieldDesc(complexFieldName);
+                for (Annotation annotation: complexField.annotations()) {
+                    if (annotation.equals(mainTokenProperty) || annotation.isInternal())
                         continue;
 
-                    row.add(tokenProperty);
-                    otherTokenProperties.add(tokenProperty);
+                    row.add(annotation.name());
+                    otherTokenProperties.add(annotation.name());
                 }
             }
 
@@ -233,7 +231,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     title = p.getRight();
                 }
 
-                writeHit(hits.getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
+                writeHit(hits.getKwic(hit), mainTokenProperty.name(), otherTokenProperties, pid, title, row);
                 printer.printRecord(row);
             }
             printer.flush();

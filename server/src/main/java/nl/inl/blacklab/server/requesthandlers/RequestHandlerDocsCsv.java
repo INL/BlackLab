@@ -159,7 +159,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         try {
             IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
-            String tokenLengthField = indexMetadata.getMainContentsField().getTokenLengthField();
+            String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field
             List<String> row = new ArrayList<>();
