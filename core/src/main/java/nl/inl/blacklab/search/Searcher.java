@@ -45,9 +45,11 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
@@ -409,7 +411,9 @@ public abstract class Searcher {
     protected Analyzer analyzer = new BLStandardAnalyzer();
 
     /** Structure of our index */
-    protected IndexMetadataImpl indexMetadata;
+    protected IndexMetadata indexMetadata;
+    
+    protected IndexMetadataWriter indexMetadataWriter;
 
     protected ContentStoresManager contentStores = new ContentStoresManager();
 
@@ -420,7 +424,7 @@ public abstract class Searcher {
      *
      * Indexed by property name.
      */
-    protected Map<String, ForwardIndex> forwardIndices = new HashMap<>();
+    protected Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
 
     protected HitsSettings hitsSettings;
 
@@ -578,7 +582,7 @@ public abstract class Searcher {
      * @return the structure object
      */
     public IndexMetadataWriter getIndexMetadataWriter() {
-        return indexMetadata;
+        return indexMetadataWriter;
     }
 
     /**
@@ -635,10 +639,10 @@ public abstract class Searcher {
      */
     public abstract int maxDoc();
 
-    public BLSpanQuery createSpanQuery(TextPattern pattern, String fieldName, Query filter) {
+    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
-        BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(fieldName));
+        BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(field.name()));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
@@ -648,16 +652,16 @@ public abstract class Searcher {
      * Find hits for a pattern in a field.
      *
      * @param query the pattern to find
-     * @param fieldNameConc field to use for concordances
+     * @param field field to use for concordances
      * @return the hits found
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    public Hits find(SpanQuery query, String fieldNameConc) throws BooleanQuery.TooManyClauses {
+    public Hits find(SpanQuery query, AnnotatedField field) throws BooleanQuery.TooManyClauses {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         Hits hits = Hits.fromSpanQuery(this, query);
-        hits.settings().setConcordanceField(fieldNameConc);
+        hits.settings().setConcordanceField(field.name());
         return hits;
     }
 
@@ -677,36 +681,36 @@ public abstract class Searcher {
      * Find hits for a pattern in a field.
      *
      * @param pattern the pattern to find
-     * @param fieldName field to find pattern in
+     * @param field field to find pattern in
      * @param filter determines which documents to search
      *
      * @return the hits found
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    public Hits find(TextPattern pattern, String fieldName, Query filter)
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter)
             throws BooleanQuery.TooManyClauses {
-        Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, fieldName, filter));
-        hits.settings().setConcordanceField(fieldName);
+        Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter));
+        hits.settings().setConcordanceField(field.name());
         return hits;
     }
 
     public Hits find(TextPattern pattern, Query filter) {
-        return find(pattern, getMainContentsFieldName(), filter);
+        return find(pattern, mainAnnotatedField(), filter);
     }
 
     /**
      * Find hits for a pattern in a field.
      *
      * @param pattern the pattern to find
-     * @param fieldName which field to find the pattern in
+     * @param field which field to find the pattern in
      *
      * @return the hits found
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    public Hits find(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
-        return find(pattern, fieldName, null);
+    public Hits find(TextPattern pattern, AnnotatedField field) throws BooleanQuery.TooManyClauses {
+        return find(pattern, field, null);
     }
 
     /**
@@ -719,11 +723,11 @@ public abstract class Searcher {
      *             is overly broad
      */
     public Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-        return find(pattern, getMainContentsFieldName(), null);
+        return find(pattern, mainAnnotatedField(), null);
     }
 
     public QueryExplanation explain(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-        return explain(pattern, getMainContentsFieldName());
+        return explain(pattern, mainAnnotatedField());
     }
 
     /**
@@ -731,13 +735,13 @@ public abstract class Searcher {
      * optimized version to be executed by Lucene.
      *
      * @param pattern the pattern to explain
-     * @param fieldName which field to find the pattern in
+     * @param field which field to find the pattern in
      * @return the explanation
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    public QueryExplanation explain(TextPattern pattern, String fieldName) throws BooleanQuery.TooManyClauses {
-        return explain(createSpanQuery(pattern, fieldName, null), fieldName);
+    public QueryExplanation explain(TextPattern pattern, AnnotatedField field) throws BooleanQuery.TooManyClauses {
+        return explain(createSpanQuery(pattern, field, null));
     }
 
     /**
@@ -745,12 +749,11 @@ public abstract class Searcher {
      * by Lucene.
      *
      * @param query the query to explain
-     * @param fieldName which field to find the pattern in
      * @return the explanation
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    public QueryExplanation explain(BLSpanQuery query, String fieldName) throws BooleanQuery.TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query) throws BooleanQuery.TooManyClauses {
         try {
             IndexReader indexReader = getIndexReader();
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
@@ -842,11 +845,11 @@ public abstract class Searcher {
         return new int[] { starts[0], ends[0] };
     }
 
-    public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, String fieldName, int startAtWord,
+    public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, AnnotatedField field, int startAtWord,
             int endAtWord) {
         Hit hit = new Hit(docId, startAtWord, endAtWord);
         Hits hits = Hits.fromList(this, Arrays.asList(hit));
-        hits.settings().setConcordanceField(fieldName);
+        hits.settings().setConcordanceField(field.name());
         Kwic kwic = hits.getKwic(hit, 0);
         return kwic.getDocContents();
     }
@@ -1088,26 +1091,26 @@ public abstract class Searcher {
      * we're in "create index" mode, may create a new forward index. Otherwise,
      * looks for an existing forward index and opens that.
      *
-     * @param fieldPropName the field for which we want the forward index
+     * @param annotation the annotation for which we want the forward index
      * @return the ForwardIndex if found/created, or null otherwise
      */
-    public ForwardIndex getForwardIndex(String fieldPropName) {
+    public ForwardIndex getForwardIndex(Annotation annotation) {
         synchronized (forwardIndices) {
-            ForwardIndex forwardIndex = forwardIndices.get(fieldPropName);
+            ForwardIndex forwardIndex = forwardIndices.get(annotation);
             if (forwardIndex == null) {
-                forwardIndex = openForwardIndex(fieldPropName);
+                forwardIndex = openForwardIndex(annotation);
                 if (forwardIndex != null)
-                    addForwardIndex(fieldPropName, forwardIndex);
+                    addForwardIndex(annotation, forwardIndex);
             }
             return forwardIndex;
         }
     }
 
-    protected void addForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
-        forwardIndices.put(fieldPropName, forwardIndex);
+    protected void addForwardIndex(Annotation annotation, ForwardIndex forwardIndex) {
+        forwardIndices.put(annotation, forwardIndex);
     }
 
-    protected abstract ForwardIndex openForwardIndex(String fieldPropName);
+    protected abstract ForwardIndex openForwardIndex(Annotation annotation);
 
     /**
      * Get a number of substrings from a certain field in a certain document.
@@ -1213,15 +1216,15 @@ public abstract class Searcher {
      * term sort position ids), and later used to display the group name (by mapping
      * the sort position ids back to Strings)
      *
-     * @param fieldPropName the field for which we want the Terms object
+     * @param annotation the annotation for which we want the Terms object
      * @return the Terms object
      * @throws RuntimeException if this field does not have a forward index, and
      *             hence no Terms object.
      */
-    public Terms getTerms(String fieldPropName) {
-        ForwardIndex forwardIndex = getForwardIndex(fieldPropName);
+    public Terms getTerms(Annotation annotation) {
+        ForwardIndex forwardIndex = getForwardIndex(annotation);
         if (forwardIndex == null) {
-            throw new IllegalArgumentException("Field " + fieldPropName + " has no forward index!");
+            throw new IllegalArgumentException("Annotation " + annotation + " has no forward index!");
         }
         return forwardIndex.getTerms();
     }
@@ -1240,7 +1243,7 @@ public abstract class Searcher {
      *             hence no Terms object.
      */
     public Terms getTerms() {
-        return getTerms(AnnotatedFieldNameUtil.mainPropertyField(getIndexMetadata(), getMainContentsFieldName()));
+        return getTerms(mainAnnotatedField().annotations().main());
     }
 
     public boolean isDefaultSearchCaseSensitive() {
@@ -1335,16 +1338,15 @@ public abstract class Searcher {
 
     protected void deleteFromForwardIndices(Document d) {
         // Delete this document in all forward indices
-        for (Map.Entry<String, ForwardIndex> e : forwardIndices.entrySet()) {
-            String fieldName = e.getKey();
+        for (Map.Entry<Annotation, ForwardIndex> e : forwardIndices.entrySet()) {
+            Annotation annotation = e.getKey();
             ForwardIndex fi = e.getValue();
-            int fiid = Integer.parseInt(d.get(AnnotatedFieldNameUtil
-                    .forwardIndexIdField(fieldName)));
+            int fiid = Integer.parseInt(d.get(annotation.forwardIndexIdField()));
             fi.deleteDocument(fiid);
         }
     }
 
-    public Map<String, ForwardIndex> getForwardIndices() {
+    public Map<Annotation, ForwardIndex> getForwardIndices() {
         return forwardIndices;
     }
 
@@ -1357,6 +1359,21 @@ public abstract class Searcher {
 
     public static boolean isTraceQueryExecution() {
         return traceQueryExecution;
+    }
+
+    public AnnotatedField annotatedField(String fieldName) {
+        return getIndexMetadata().annotatedFields().get(fieldName);
+    }
+
+    public AnnotatedField mainAnnotatedField() {
+        return getIndexMetadata().annotatedFields().main();
+    }
+    
+    public Annotation getOrCreate(AnnotatedField field, String propName) {
+        if (field.annotations().exists(propName))
+            return field.annotations().get(propName);
+        AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
+        return fld.getOrCreateProperty(propName);
     }
 
 }

@@ -10,7 +10,6 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -32,8 +31,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         //TODO: use background job?
 
         Searcher searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
-        Field cfd = indexMetadata.annotatedFields().main();
+        Field cfd = searcher.mainAnnotatedField();
         String propName = searchParam.getString("property");
         boolean sensitive = searchParam.getBoolean("sensitive");
 

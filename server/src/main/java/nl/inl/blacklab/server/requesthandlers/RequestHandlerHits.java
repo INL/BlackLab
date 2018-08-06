@@ -19,7 +19,6 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
@@ -150,11 +149,10 @@ public class RequestHandlerHits extends RequestHandler {
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
-            IndexMetadata indexMetadata = searcher.getIndexMetadata();
             if (includeTokenCount) {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set
-                String fieldName = indexMetadata.annotatedFields().main().name();
+                String fieldName = searcher.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
                 totalTokens = perDocResults.intSum(propTokens);
             }

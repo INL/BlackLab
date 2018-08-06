@@ -7,6 +7,7 @@ import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 
 /**
@@ -34,9 +35,9 @@ public abstract class ForwardIndex {
      * Caches the forward index id field.
      *
      * @param reader the index
-     * @param lucenePropFieldName the forward index if field
+     * @param annotation annotaion for which this is the forward index
      */
-    public abstract void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName);
+    public abstract void setIdTranslateInfo(IndexReader reader, Annotation annotation);
 
     /**
      * Convert a Lucene document id to the corresponding forward index id.
@@ -229,7 +230,7 @@ public abstract class ForwardIndex {
      * @param task the task to perform
      */
     public void forEachDocument(ForwardIndexDocTask task) {
-        for (Integer fiid : idSet()) {
+        for (Integer fiid: idSet()) {
             int[] tokenIds = retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
             task.perform(fiid, tokenIds);
         }
@@ -241,4 +242,11 @@ public abstract class ForwardIndex {
     }
 
     public abstract boolean canDoNfaMatching();
+
+    /**
+     * The annotation for which this is the forward index
+     * 
+     * @return annotation
+     */
+    public abstract Annotation annotation();
 }

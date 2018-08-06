@@ -29,6 +29,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CollUtil;
 
@@ -100,6 +101,8 @@ public class AnnotationWriter {
         }
     }
 
+    private AnnotatedFieldWriter fieldWriter;
+
     protected boolean includeOffsets;
 
     /**
@@ -154,9 +157,10 @@ public class AnnotationWriter {
      *            alternative
      * @param includePayloads will this property include payloads?
      */
-    public AnnotationWriter(String name, SensitivitySetting sensitivity,
+    public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, SensitivitySetting sensitivity,
             boolean includeOffsets, boolean includePayloads) {
         super();
+        this.fieldWriter = fieldWriter;
         propName = name;
 
         mainAlternative = null;
@@ -371,4 +375,9 @@ public class AnnotationWriter {
     public boolean hasPayload() {
         return payloads != null;
     }
+    
+    public AnnotatedField field() {
+        return fieldWriter.field();
+    }
+    
 }

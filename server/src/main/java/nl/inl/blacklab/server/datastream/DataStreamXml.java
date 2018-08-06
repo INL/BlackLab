@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * Class to stream out XML data.
  *
@@ -219,9 +221,9 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream contextList(List<String> names, List<String> values) {
+    public DataStream contextList(List<Annotation> annotations, List<String> values) {
         upindent();
-        int valuesPerWord = names.size();
+        int valuesPerWord = annotations.size();
         int numberOfWords = values.size() / valuesPerWord;
         for (int i = 0; i < numberOfWords; i++) {
             int vIndex = i * valuesPerWord;
@@ -229,11 +231,11 @@ public class DataStreamXml extends DataStream {
             indent();
             print(StringEscapeUtils.escapeXml10(values.get(vIndex)));
             print("<w");
-            for (int k = 1; k < names.size() - 1; k++) {
-                String name = names.get(k);
+            for (int k = 1; k < annotations.size() - 1; k++) {
+                Annotation annotation = annotations.get(k);
                 String value = values.get(vIndex + 1 + j);
                 if (!omitEmptyProperties || !value.isEmpty())
-                    print(" ").print(name).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
+                    print(" ").print(annotation.name()).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
                 j++;
             }
             print(">");

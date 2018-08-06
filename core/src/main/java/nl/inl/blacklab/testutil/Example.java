@@ -159,8 +159,7 @@ public class Example {
     static void findPattern(TextPattern tp) {
         // Execute the search
         Hits hits = searcher.find(tp);
-
-        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, "contents"));
+        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, searcher.mainAnnotatedField()));
 
         // Display the concordances
         displayConcordances(sortedHits);

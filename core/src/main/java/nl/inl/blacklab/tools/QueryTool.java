@@ -121,7 +121,7 @@ public class QueryTool {
     private TermFrequencyList collocations = null;
 
     /** What property to use for collocations */
-    private String collocProperty = null;
+    private Annotation collocProperty = null;
 
     /** The first hit or group to show on the current results page. */
     private int firstResult;
@@ -345,7 +345,7 @@ public class QueryTool {
     /** Strip XML tags when displaying concordances? */
     private boolean stripXML = true;
 
-    private String contentsField;
+    private AnnotatedField contentsField;
 
     /**
      * The main program.
@@ -534,7 +534,7 @@ public class QueryTool {
     public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out, PrintWriter err)
             throws CorruptIndexException {
         this.searcher = searcher;
-        this.contentsField = searcher.getMainContentsFieldName();
+        this.contentsField = searcher.mainAnnotatedField();
         shouldCloseSearcher = false; // caller is responsible
 
         this.in = in;
@@ -579,7 +579,7 @@ public class QueryTool {
         // Create the BlackLab searcher object
         try {
             searcher = Searcher.open(indexDir);
-            contentsField = searcher.getMainContentsFieldName();
+            contentsField = searcher.mainAnnotatedField();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -615,7 +615,7 @@ public class QueryTool {
         if (shouldCloseSearcher)
             searcher.close();
         this.searcher = searcher;
-        contentsField = searcher.getMainContentsFieldName();
+        contentsField = searcher.mainAnnotatedField();
         shouldCloseSearcher = false; // caller is responsible
 
         // Reset results
@@ -1128,7 +1128,7 @@ public class QueryTool {
             // Execute search
             BLSpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
             if (verbose)
-                outprintln("SpanQuery: " + spanQuery.toString(contentsField));
+                outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
             hits = searcher.find(spanQuery);
             docs = null;
             groups = null;
@@ -1251,19 +1251,20 @@ public class QueryTool {
 
         Hits hitsToSort = getCurrentHitSet();
 
+        Annotation annotation = contentsField.annotations().get(property);
         HitProperty crit = null;
         if (sortBy.equalsIgnoreCase("doc"))
             crit = new HitPropertyDocumentId(hitsToSort);
         else {
             if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
-                crit = new HitPropertyHitText(hitsToSort, contentsField, property);
+                crit = new HitPropertyHitText(hitsToSort, annotation);
             else if (sortBy.equalsIgnoreCase("left"))
-                crit = new HitPropertyLeftContext(hitsToSort, contentsField, property);
+                crit = new HitPropertyLeftContext(hitsToSort, annotation);
             else if (sortBy.equalsIgnoreCase("right"))
-                crit = new HitPropertyRightContext(hitsToSort, contentsField, property);
+                crit = new HitPropertyRightContext(hitsToSort, annotation);
             else if (sortBy.equalsIgnoreCase("lempos")) {
-                HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField, "lemma");
-                HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField, "pos");
+                HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("lemma"));
+                HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
             } else if (searcher.getIndexMetadata().metadataFields().exists(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
@@ -1329,15 +1330,16 @@ public class QueryTool {
         // Group results
         HitProperty crit = null;
         try {
+            Annotation annotation = contentsField.annotations().get(property);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
-                crit = new HitPropertyHitText(hits, contentsField, property);
+                crit = new HitPropertyHitText(hits, annotation);
             else if (groupBy.startsWith("left"))
-                crit = new HitPropertyWordLeft(hits, contentsField, property);
+                crit = new HitPropertyWordLeft(hits, annotation);
             else if (groupBy.startsWith("right"))
-                crit = new HitPropertyWordRight(hits, contentsField, property);
+                crit = new HitPropertyWordRight(hits, annotation);
             else if (groupBy.equals("test")) {
-                HitProperty p1 = new HitPropertyHitText(hits, contentsField, "lemma");
-                HitProperty p2 = new HitPropertyHitText(hits, contentsField, "type");
+                HitProperty p1 = new HitPropertyHitText(hits, contentsField.annotations().get("lemma"));
+                HitProperty p2 = new HitPropertyHitText(hits, contentsField.annotations().get("type"));
                 crit = new HitPropertyMultiple(p1, p2);
             }
         } catch (Exception e) {
@@ -1372,8 +1374,8 @@ public class QueryTool {
             showSetting = ShowSetting.COLLOC;
             if (showWhat.length() >= 7) {
                 String newCollocProp = showWhat.substring(7);
-                if (!newCollocProp.equals(collocProperty)) {
-                    collocProperty = newCollocProp;
+                if (!newCollocProp.equals(collocProperty.name())) {
+                    collocProperty = contentsField.annotations().get(newCollocProp);
                     collocations = null;
                 }
             }
@@ -1440,14 +1442,12 @@ public class QueryTool {
     private void showCollocations() {
         if (collocations == null) {
             // Case-sensitive collocations..?
-            String fieldName = hits.settings().concordanceField();
             if (collocProperty == null) {
-                AnnotatedField cf = searcher.getIndexMetadata().annotatedFields().get(fieldName);
-                collocProperty = cf.annotations().main().name();
+                AnnotatedField field = searcher.annotatedField(hits.settings().concordanceField());
+                collocProperty = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocProperty,
-                    searcher.getDefaultExecutionContext(fieldName));
+            collocations = hits.getCollocations(collocProperty, searcher.getDefaultExecutionContext(collocProperty.field().name()));
             collocations.sort();
         }
 

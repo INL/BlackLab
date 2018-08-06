@@ -156,7 +156,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         }
     }
 
-    private static void writeHit(Kwic kwic, String mainTokenProperty, List<String> otherTokenProperties, String docPid,
+    private static void writeHit(Kwic kwic, Annotation mainTokenProperty, List<Annotation> otherTokenProperties, String docPid,
             String docTitle, ArrayList<String> row) {
         row.clear();
 
@@ -170,18 +170,19 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         row.add(docTitle);
 
         // Only kwic supported, original document output not supported in csv currently.
-        row.add(StringUtils.join(interleave(kwic.getLeft("punct"), kwic.getLeft(mainTokenProperty)).toArray()));
+        Annotation punct = mainTokenProperty.field().annotations().punct();
+        row.add(StringUtils.join(interleave(kwic.getLeft(punct), kwic.getLeft(mainTokenProperty)).toArray()));
         row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
-        row.add(StringUtils.join(interleave(kwic.getRight("punct"), kwic.getRight(mainTokenProperty)).toArray()));
+        row.add(StringUtils.join(interleave(kwic.getRight(punct), kwic.getRight(mainTokenProperty)).toArray()));
 
         // Add all other properties in this word
-        for (String otherProp : otherTokenProperties)
+        for (Annotation otherProp : otherTokenProperties)
             row.add(StringUtils.join(kwic.getMatch(otherProp), " "));
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final Annotation mainTokenProperty = getSearcher().getIndexMetadata().annotatedFields().main().annotations().main();
-        List<String> otherTokenProperties = new ArrayList<>();
+        final Annotation mainTokenProperty = getSearcher().mainAnnotatedField().annotations().main();
+        List<Annotation> otherTokenProperties = new ArrayList<>();
 
         try {
             // Build the table headers
@@ -196,7 +197,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                         continue;
 
                     row.add(annotation.name());
-                    otherTokenProperties.add(annotation.name());
+                    otherTokenProperties.add(annotation);
                 }
             }
 
@@ -230,7 +231,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     title = p.getRight();
                 }
 
-                writeHit(hits.getKwic(hit), mainTokenProperty.name(), otherTokenProperties, pid, title, row);
+                writeHit(hits.getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
                 printer.printRecord(row);
             }
             printer.flush();

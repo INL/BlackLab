@@ -17,6 +17,8 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -86,9 +88,9 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param source where to retrieve the Hit objects from
      * @return hits found
      */
-    public static Hits fromSpans(Searcher searcher, String concordanceFieldPropName, BLSpans source) {
+    public static Hits fromSpans(Searcher searcher, AnnotatedField concordanceFieldPropName, BLSpans source) {
         Hits hits = new HitsImpl(searcher, source);
-        hits.settings.setConcordanceField(concordanceFieldPropName);
+        hits.settings.setConcordanceField(concordanceFieldPropName.name());
         return hits;
     }
 
@@ -228,7 +230,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return filtered hits
      */
     public Hits filteredBy(HitProperty property, HitPropValue value) {
-        List<String> requiredContext = property.needsContext();
+        List<Annotation> requiredContext = property.needsContext();
         findContext(requiredContext);
 
         List<Hit> filtered = new ArrayList<>();
@@ -416,12 +418,12 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * HitsWindow and call getConcordance() on that; it will fetch all concordances
      * in the window in a batch, which is more efficient.
      *
-     * @param fieldName field to use for building the concordance
+     * @param field field to use for building the concordance
      * @param hit the hit for which we want a concordance
      * @param contextSize the desired number of words around the hit
      * @return the concordance
      */
-    public abstract Concordance getConcordance(String fieldName, Hit hit, int contextSize);
+    public abstract Concordance getConcordance(AnnotatedField field, Hit hit, int contextSize);
 
     /**
      * Get a concordance with a custom context size.
@@ -461,12 +463,12 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * instantiate a HitsWindow and call getKwic() on that; it will fetch all KWICs
      * in the window in a batch, which is more efficient.
      *
-     * @param fieldName field to use for building the KWIC
+     * @param field field to use for building the KWIC
      * @param hit the hit for which we want a KWIC
      * @param contextSize the desired number of words around the hit
      * @return the KWIC
      */
-    public abstract Kwic getKwic(String fieldName, Hit hit, int contextSize);
+    public abstract Kwic getKwic(AnnotatedField field, Hit hit, int contextSize);
 
     /**
      * Get a KWIC with a custom context size.
@@ -490,7 +492,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      *
      * @param fieldProps the field and properties to use for the context
      */
-    public abstract void findContext(List<String> fieldProps);
+    public abstract void findContext(List<Annotation> fieldProps);
 
     /**
      * Count occurrences of context words around hit.
@@ -507,12 +509,12 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
     /**
      * Count occurrences of context words around hit.
      *
-     * @param propName the property to use for the collocations, or null if default
+     * @param annotation the annotation to use for the collocations, or null if default
      * @param ctx query execution context, containing the sensitivity settings
      *
      * @return the frequency of each occurring token
      */
-    public abstract TermFrequencyList getCollocations(String propName, QueryExecutionContext ctx);
+    public abstract TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx);
 
     public abstract boolean hasCapturedGroups();
 
@@ -563,7 +565,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      *
      * @return the field name
      */
-    public abstract List<String> getContextFieldPropName();
+    public abstract List<Annotation> getContextFieldPropName();
 
     /**
      * Get a window into this list of hits.
@@ -588,7 +590,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * 
      * @param contextField the field properties
      */
-    public abstract void setContextField(List<String> contextField);
+    public abstract void setContextField(List<Annotation> contextField);
 
     public HitsSettings settings() {
         return settings;

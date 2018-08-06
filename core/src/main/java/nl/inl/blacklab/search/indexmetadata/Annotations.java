@@ -44,4 +44,16 @@ public interface Annotations extends Iterable<Annotation> {
      */
     Annotation get(String name);
 
+    /**
+     * Get the punctuation annotation.
+     * 
+     * This contains the space between words, as well as any
+     * punctuation. 
+     * 
+     * @return punctuation annotation
+     */
+    default Annotation punct() {
+        return get(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+    }
+
 }

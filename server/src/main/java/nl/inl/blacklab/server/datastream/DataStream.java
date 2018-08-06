@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
@@ -292,7 +293,7 @@ public abstract class DataStream {
 
     public abstract DataStream endAttrEntry();
 
-    public abstract DataStream contextList(List<String> names, List<String> values);
+    public abstract DataStream contextList(List<Annotation> annotations, List<String> values);
 
     public abstract DataStream value(String value);
 

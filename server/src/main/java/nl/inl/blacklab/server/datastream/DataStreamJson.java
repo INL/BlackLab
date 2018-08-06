@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * Class to stream out JSON data.
  *
@@ -116,15 +118,15 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream contextList(List<String> names, List<String> values) {
+    public DataStream contextList(List<Annotation> annotations, List<String> values) {
         openbl("{");
-        int valuesPerWord = names.size();
+        int valuesPerWord = annotations.size();
         int numberOfWords = values.size() / valuesPerWord;
-        for (int k = 0; k < names.size(); k++) {
+        for (int k = 0; k < annotations.size(); k++) {
             optSep();
             newlineIndent();
-            String name = names.get(k);
-            print("\"").print(StringEscapeUtils.escapeJson(name)).print("\":[");
+            Annotation annotation = annotations.get(k);
+            print("\"").print(StringEscapeUtils.escapeJson(annotation.name())).print("\":[");
             for (int i = 0; i < numberOfWords; i++) {
                 if (i > 0)
                     print(",");

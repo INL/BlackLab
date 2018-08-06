@@ -21,6 +21,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.DocResults;
 
 public class MockSearcher extends Searcher {
@@ -82,7 +83,7 @@ public class MockSearcher extends Searcher {
     }
 
     @Override
-    public ForwardIndex openForwardIndex(String fieldPropName) {
+    public ForwardIndex openForwardIndex(Annotation fieldPropName) {
         throw new UnsupportedOperationException();
     }
 
@@ -139,8 +140,8 @@ public class MockSearcher extends Searcher {
         return searcher;
     }
 
-    public void setForwardIndex(String fieldPropName, ForwardIndex forwardIndex) {
-        addForwardIndex(fieldPropName, forwardIndex);
+    public void setForwardIndex(Annotation annotation, ForwardIndex forwardIndex) {
+        addForwardIndex(annotation, forwardIndex);
     }
 
     @Override

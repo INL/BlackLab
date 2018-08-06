@@ -6,6 +6,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * (Part of) the contents of a document, in separate properties read from the
  * forward indices.
@@ -32,7 +34,7 @@ public class DocContentsFromForwardIndex extends DocContents {
      * What properties are stored in what order for this Kwic (e.g. word, lemma,
      * pos)
      */
-    List<String> properties;
+    List<Annotation> properties;
 
     /**
      * Word properties for context left of match (properties.size() values per word;
@@ -46,12 +48,12 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param properties the order of properties in the tokens list
      * @param tokens the tokens
      */
-    public DocContentsFromForwardIndex(List<String> properties, List<String> tokens) {
+    public DocContentsFromForwardIndex(List<Annotation> properties, List<String> tokens) {
         this.properties = properties;
         this.tokens = tokens;
     }
 
-    public List<String> getProperties() {
+    public List<Annotation> getProperties() {
         return Collections.unmodifiableList(properties);
     }
 
@@ -65,7 +67,7 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param property the property to get the tokens for
      * @return the tokens
      */
-    public List<String> getTokens(String property) {
+    public List<String> getTokens(Annotation property) {
         return getSinglePropertyContext(property);
     }
 
@@ -81,7 +83,7 @@ public class DocContentsFromForwardIndex extends DocContents {
                 b.append(StringEscapeUtils.escapeXml10(tokens.get(vIndex)));
             b.append("<w");
             for (int k = 1; k < properties.size() - 1; k++) {
-                String name = properties.get(k);
+                String name = properties.get(k).name();
                 String value = tokens.get(vIndex + 1 + j);
                 b.append(' ').append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append('"');
                 j++;
@@ -99,7 +101,7 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param property the property to get the context for
      * @return the context for this property
      */
-    private List<String> getSinglePropertyContext(String property) {
+    private List<String> getSinglePropertyContext(Annotation property) {
         final int nProp = properties.size();
         final int size = tokens.size() / nProp;
         final int propIndex = properties.indexOf(property);

@@ -71,6 +71,8 @@ public class AnnotatedFieldWriter {
 
     private Set<String> noForwardIndexProps = new HashSet<>();
 
+    private AnnotatedField field;
+
     public void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
         this.noForwardIndexProps.clear();
         this.noForwardIndexProps.addAll(noForwardIndexProps);
@@ -97,7 +99,7 @@ public class AnnotatedFieldWriter {
         fieldName = name;
         if (mainPropertyName == null)
             mainPropertyName = AnnotatedFieldNameUtil.getDefaultMainPropName();
-        mainProperty = new AnnotationWriter(mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
+        mainProperty = new AnnotationWriter(this, mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
         properties.put(mainPropertyName, mainProperty);
     }
 
@@ -109,7 +111,7 @@ public class AnnotatedFieldWriter {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Property name '" + name
                     + "' is discouraged (field/property names should be valid XML element names)");
-        AnnotationWriter p = new AnnotationWriter(name, sensitivity, false, includePayloads);
+        AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
         if (noForwardIndexProps.contains(name)) {
             p.setForwardIndex(false);
         }
@@ -200,9 +202,15 @@ public class AnnotatedFieldWriter {
     }
 
     public void setAnnotatedField(AnnotatedField field) {
+        this.field = field;
         // If the indexmetadata file specified a list of properties that shouldn't get a forward
         // index, we need to know.
         AnnotatedFieldImpl fieldImpl = (AnnotatedFieldImpl)field;
         setNoForwardIndexProps(fieldImpl.getNoForwardIndexProps());
     }
+
+    public AnnotatedField field() {
+        return field;
+    }
+    
 }

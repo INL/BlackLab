@@ -21,7 +21,9 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -113,9 +115,7 @@ public class HitPropertyContextWords extends HitProperty {
         }
     }
 
-    private String luceneFieldName;
-
-    private String propName;
+    private Annotation annotation;
 
     private boolean sensitive;
 
@@ -125,20 +125,18 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive, String wordSpec) {
-        this(hits, field, property, sensitive, parseContextWordSpec(wordSpec));
+    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive, String wordSpec) {
+        this(hits, annotation, sensitive, parseContextWordSpec(wordSpec));
     }
 
-    public HitPropertyContextWords(Hits hits, String field, String property, boolean sensitive,
+    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
             List<ContextPart> words) {
         super(hits);
         this.searcher = hits.getSearcher();
-        if (property == null || property.length() == 0) {
-            this.luceneFieldName = AnnotatedFieldNameUtil.mainPropertyField(searcher.getIndexMetadata(), field);
-            this.propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        if (annotation == null) {
+            this.annotation = searcher.mainAnnotatedField().annotations().main();
         } else {
-            this.luceneFieldName = AnnotatedFieldNameUtil.propertyField(field, property);
-            this.propName = property;
+            this.annotation = annotation;
         }
         this.sensitive = sensitive;
         this.words = words;
@@ -245,14 +243,14 @@ public class HitPropertyContextWords extends HitProperty {
                 destIndex++;
             }
         }
-        return new HitPropValueContextWords(hits, propName, dest, sensitive);
+        return new HitPropValueContextWords(hits, annotation, dest, sensitive);
     }
 
     // OPT: provide specific compare() method that compares contexts in-place
 
     @Override
-    public List<String> needsContext() {
-        return Arrays.asList(luceneFieldName);
+    public List<Annotation> needsContext() {
+        return Arrays.asList(annotation);
     }
 
     @Override
@@ -262,12 +260,12 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public List<String> getPropNames() {
-        return Arrays.asList("left context: " + propName);
+        return Arrays.asList("left context: " + annotation.name());
     }
 
     @Override
     public String serialize() {
-        String[] parts = AnnotatedFieldNameUtil.getNameComponents(luceneFieldName);
+        String[] parts = AnnotatedFieldNameUtil.getNameComponents(annotation.luceneFieldPrefix());
         String thePropName = parts.length > 1 ? parts[1] : "";
         String contextWordSpec = serializeContextWordSpec();
         return serializeReverse()
@@ -292,7 +290,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     public static HitPropertyContextWords deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        String fieldName = hits.settings().concordanceField();
+        AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
@@ -300,10 +298,8 @@ public class HitPropertyContextWords extends HitProperty {
         List<ContextPart> whichWords = null;
         if (parts.length > 2)
             whichWords = parseContextWordSpec(parts[2]);
-        if (fieldName == null || fieldName.length() == 0)
-            return new HitPropertyContextWords(hits, hits.getSearcher().getMainContentsFieldName(), null, sensitive,
-                    whichWords);
-        return new HitPropertyContextWords(hits, fieldName, propName, sensitive, whichWords);
+        Annotation annotation = field.annotations().get(propName);
+        return new HitPropertyContextWords(hits, annotation, sensitive, whichWords);
     }
 
     /**

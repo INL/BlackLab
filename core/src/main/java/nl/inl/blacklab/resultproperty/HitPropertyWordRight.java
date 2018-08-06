@@ -20,7 +20,9 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -31,7 +33,7 @@ public class HitPropertyWordRight extends HitProperty {
 
     private String luceneFieldName;
 
-    private String propName;
+    private Annotation annotation;
 
     private Terms terms;
 
@@ -39,38 +41,33 @@ public class HitPropertyWordRight extends HitProperty {
 
     private Searcher searcher;
 
-    public HitPropertyWordRight(Hits hits, String field, String property) {
-        this(hits, field, property, hits.getSearcher().isDefaultSearchCaseSensitive());
+    public HitPropertyWordRight(Hits hits, Annotation annotation) {
+        this(hits, annotation, hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
-    public HitPropertyWordRight(Hits hits, String field) {
-        this(hits, field, null, hits.getSearcher().isDefaultSearchCaseSensitive());
+    public HitPropertyWordRight(Hits hits, AnnotatedField field) {
+        this(hits, field.annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
     public HitPropertyWordRight(Hits hits) {
-        this(hits, hits.getSearcher().getMainContentsFieldName(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, hits.getSearcher().mainAnnotatedField(), hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
-    public HitPropertyWordRight(Hits hits, String field, String property, boolean sensitive) {
+    public HitPropertyWordRight(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
         this.searcher = hits.getSearcher();
-        if (property == null || property.length() == 0) {
-            this.luceneFieldName = AnnotatedFieldNameUtil.mainPropertyField(searcher.getIndexMetadata(), field);
-            this.propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
-        } else {
-            this.luceneFieldName = AnnotatedFieldNameUtil.propertyField(field, property);
-            this.propName = property;
-        }
-        this.terms = searcher.getTerms(luceneFieldName);
+        this.luceneFieldName = annotation.luceneFieldPrefix();
+        this.annotation = annotation;
+        this.terms = searcher.getTerms(annotation);
         this.sensitive = sensitive;
     }
 
-    public HitPropertyWordRight(Hits hits, String field, boolean sensitive) {
-        this(hits, field, null, sensitive);
+    public HitPropertyWordRight(Hits hits, AnnotatedField field, boolean sensitive) {
+        this(hits, field.annotations().main(), sensitive);
     }
 
     public HitPropertyWordRight(Hits hits, boolean sensitive) {
-        this(hits, hits.getSearcher().getMainContentsFieldName(), sensitive);
+        this(hits, hits.getSearcher().mainAnnotatedField(), sensitive);
     }
 
     @Override
@@ -80,9 +77,9 @@ public class HitPropertyWordRight extends HitProperty {
         int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
 
         if (contextLength <= contextRightStart)
-            return new HitPropValueContextWord(hits, propName, -1, sensitive);
+            return new HitPropValueContextWord(hits, annotation, -1, sensitive);
         int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-        return new HitPropValueContextWord(hits, propName, context[contextStart + contextRightStart], sensitive);
+        return new HitPropValueContextWord(hits, annotation, context[contextStart + contextRightStart], sensitive);
     }
 
     @Override
@@ -108,8 +105,8 @@ public class HitPropertyWordRight extends HitProperty {
     }
 
     @Override
-    public List<String> needsContext() {
-        return Arrays.asList(luceneFieldName);
+    public List<Annotation> needsContext() {
+        return Arrays.asList(annotation);
     }
 
     @Override
@@ -119,7 +116,7 @@ public class HitPropertyWordRight extends HitProperty {
 
     @Override
     public List<String> getPropNames() {
-        return Arrays.asList("word right: " + propName);
+        return Arrays.asList("word right: " + annotation.name());
     }
 
     @Override
@@ -131,14 +128,13 @@ public class HitPropertyWordRight extends HitProperty {
 
     public static HitPropertyWordRight deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        String fieldName = hits.settings().concordanceField();
+        AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
         boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
-        if (fieldName == null || fieldName.length() == 0)
-            return new HitPropertyWordRight(hits, sensitive);
-        return new HitPropertyWordRight(hits, fieldName, propName, sensitive);
+        Annotation annotation = field.annotations().get(propName);
+        return new HitPropertyWordRight(hits, annotation, sensitive);
     }
 
 }

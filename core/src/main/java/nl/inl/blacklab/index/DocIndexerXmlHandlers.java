@@ -108,7 +108,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getProperties()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -120,7 +120,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getProperties()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -148,7 +148,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (AnnotationWriter prop : contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getProperties()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
@@ -157,9 +157,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 String propName = prop.getName();
                 String fieldName = AnnotatedFieldNameUtil.propertyField(
                         contentsField.getName(), propName);
-                int fiid = indexer.addToForwardIndex(fieldName, prop);
-                currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
-                        .forwardIndexIdField(fieldName), fiid, Store.YES));
+                int fiid = indexer.addToForwardIndex(prop);
+                currentLuceneDoc
+                        .add(new IntField(AnnotatedFieldNameUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
             }
 
             // If there's an external metadata fetcher, call it now so it can
@@ -174,7 +174,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.getSearcher().getIndexMetadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());
@@ -458,10 +458,10 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propMain = contentsField.getMainProperty();
         propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
         propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME, true); // start tag
-                                                                                // positions
+        // positions
         propStartTag.setForwardIndex(false);
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField.getName(), propMain.getName());
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.getSearcher().getIndexMetadataWriter();
+        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
         contentsField.setAnnotatedField(f);
     }
 
@@ -484,7 +484,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
         // Append any namespace mapping not yet outputted
         if (!outputPrefixMapping.isEmpty()) {
-            for (Map.Entry<String, String> e : outputPrefixMapping.entrySet()) {
+            for (Map.Entry<String, String> e: outputPrefixMapping.entrySet()) {
                 if (e.getKey().length() == 0)
                     elementBuilder.append(" xmlns=\"").append(e.getValue())
                             .append("\"");

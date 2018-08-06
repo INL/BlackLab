@@ -26,6 +26,8 @@ import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Groups results on the basis of a list of criteria, and provide random access
@@ -50,12 +52,12 @@ public class ResultsGrouper extends HitGroups {
     /**
      * Default field to make concordances from.
      */
-    private String defaultConcField;
+    private AnnotatedField defaultConcField;
 
     /**
      * Field our current concordances came from.
      */
-    private List<String> contextField;
+    private List<Annotation> contextField;
 
     /**
      * Total number of hits.
@@ -93,8 +95,8 @@ public class ResultsGrouper extends HitGroups {
     }
 
     private void init(Hits hits, HitProperty criteria) {
-        defaultConcField = hits.settings().concordanceField();
-        List<String> requiredContext = criteria.needsContext();
+        defaultConcField = searcher.annotatedField(hits.settings().concordanceField());
+        List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
             hits.findContext(requiredContext);
         }

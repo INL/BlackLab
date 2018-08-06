@@ -19,6 +19,8 @@ import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -27,10 +29,10 @@ import nl.inl.blacklab.search.Searcher;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField) {
+    HitGroup(Searcher searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField) {
         super(groupIdentity);
         results = Hits.emptyList(searcher);
-        results.settings().setConcordanceField(defaultConcField);
+        results.settings().setConcordanceField(defaultConcField.name());
     }
 
     /**
@@ -43,10 +45,10 @@ public class HitGroup extends Group {
      * @param defaultConcField concordance field
      * @param hits the hits
      */
-    HitGroup(Searcher searcher, HitPropValue groupIdentity, String defaultConcField, List<Hit> hits) {
+    HitGroup(Searcher searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField, List<Hit> hits) {
         super(groupIdentity);
         results = Hits.fromList(searcher, hits);
-        results.settings().setConcordanceField(defaultConcField);
+        results.settings().setConcordanceField(defaultConcField.name());
     }
 
     public Hits getHits() {
@@ -62,7 +64,7 @@ public class HitGroup extends Group {
         return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
     }
 
-    public void setContextField(List<String> contextField) {
+    public void setContextField(List<Annotation> contextField) {
         results.setContextField(contextField);
     }
 }

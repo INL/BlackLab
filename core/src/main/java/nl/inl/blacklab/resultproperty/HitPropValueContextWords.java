@@ -4,7 +4,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.ArrayUtil;
 
@@ -15,8 +16,8 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     boolean sensitive;
 
-    public HitPropValueContextWords(Hits hits, String propName, int[] value, boolean sensitive) {
-        super(hits, propName);
+    public HitPropValueContextWords(Hits hits, Annotation annotation, int[] value, boolean sensitive) {
+        super(hits, annotation);
         this.valueTokenId = value;
         this.sensitive = sensitive;
         valueSortOrder = new int[value.length];
@@ -44,16 +45,16 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     public static HitPropValue deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        String fieldName = hits.settings().concordanceField();
+        AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
         String propName = parts[0];
+        Annotation annotation = field.annotations().get(propName);
         boolean sensitive = parts[1].equalsIgnoreCase("s");
         int[] ids = new int[parts.length - 2];
-        Terms termsObj = hits.getSearcher().getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName, propName))
-                .getTerms();
+        Terms termsObj = hits.getSearcher().getForwardIndex(annotation).getTerms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }
-        return new HitPropValueContextWords(hits, propName, ids, sensitive);
+        return new HitPropValueContextWords(hits, annotation, ids, sensitive);
     }
 
     @Override
@@ -74,7 +75,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
     public String serialize() {
         String[] parts = new String[valueTokenId.length + 3];
         parts[0] = "cws";
-        parts[1] = propName;
+        parts[1] = annotation.name();
         parts[2] = (sensitive ? "s" : "i");
         for (int i = 0; i < valueTokenId.length; i++) {
             parts[i + 3] = terms.serializeTerm(valueTokenId[i]);

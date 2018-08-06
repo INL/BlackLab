@@ -24,6 +24,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -74,7 +75,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * 
      * @return null if no context is required, the fieldnames otherwise
      */
-    public List<String> needsContext() {
+    public List<Annotation> needsContext() {
         return null;
     }
 

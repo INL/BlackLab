@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * A "keyword in context" for a hit (left context, hit text, right context).
  *
@@ -46,7 +48,7 @@ public class Kwic {
      * @param matchStart where the match starts, in word positions
      * @param matchEnd where the match ends, in word positions
      */
-    public Kwic(List<String> properties, List<String> tokens, int matchStart, int matchEnd) {
+    public Kwic(List<Annotation> properties, List<String> tokens, int matchStart, int matchEnd) {
         fragment = new DocContentsFromForwardIndex(properties, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
@@ -75,7 +77,7 @@ public class Kwic {
      * @param property the property to get the context for
      * @return the context
      */
-    public List<String> getLeft(String property) {
+    public List<String> getLeft(Annotation property) {
         return getSinglePropertyContext(property, 0, hitStart);
     }
 
@@ -90,7 +92,7 @@ public class Kwic {
      * @param property the property to get the context for
      * @return the context
      */
-    public List<String> getMatch(String property) {
+    public List<String> getMatch(Annotation property) {
         return getSinglePropertyContext(property, hitStart, hitEnd);
     }
 
@@ -105,7 +107,7 @@ public class Kwic {
      * @param property the property to get the context for
      * @return the context
      */
-    public List<String> getRight(String property) {
+    public List<String> getRight(Annotation property) {
         return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
     }
 
@@ -125,7 +127,7 @@ public class Kwic {
      * @param property the property to get
      * @return the values of this property for all tokens
      */
-    public List<String> getTokens(String property) {
+    public List<String> getTokens(Annotation property) {
         return fragment.getTokens(property);
     }
 
@@ -137,7 +139,7 @@ public class Kwic {
      * @param end word position after the last to get the property context for
      * @return the context for this property
      */
-    private List<String> getSinglePropertyContext(String property, int start, int end) {
+    private List<String> getSinglePropertyContext(Annotation property, int start, int end) {
         final int nProp = fragment.properties.size();
         final int size = end - start;
         final int propIndex = fragment.properties.indexOf(property);
@@ -220,7 +222,7 @@ public class Kwic {
             if (produceXml) {
                 b.append("<w");
                 for (int k = 1; k < valuesPerWord - 1; k++) {
-                    String name = fragment.properties.get(k);
+                    String name = fragment.properties.get(k).name();
                     String value = context.get(vIndex + 1 + j);
                     b.append(" ").append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append("\"");
                     j++;
@@ -242,11 +244,11 @@ public class Kwic {
     }
 
     /**
-     * Get the names of the properties in the order they occur in the context array.
+     * Get the properties in the order they occur in the context array.
      * 
-     * @return the property names
+     * @return the properties
      */
-    public List<String> getProperties() {
+    public List<Annotation> getProperties() {
         return fragment.getProperties();
     }
 

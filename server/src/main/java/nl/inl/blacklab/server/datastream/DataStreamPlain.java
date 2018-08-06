@@ -3,6 +3,8 @@ package nl.inl.blacklab.server.datastream;
 import java.io.PrintWriter;
 import java.util.List;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * Disables all functions except for {@link DataStream#plain(String)} Not ideal,
  * but required for certain outputs from requesthandlers. Since the main
@@ -81,7 +83,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream contextList(List<String> names, List<String> values) {
+    public DataStream contextList(List<Annotation> annotations, List<String> values) {
         return this;
     }
 

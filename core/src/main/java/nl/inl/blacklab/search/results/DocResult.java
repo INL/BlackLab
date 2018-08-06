@@ -20,6 +20,8 @@ import java.util.List;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A document result, containing a Lucene document from the index and a
@@ -32,11 +34,11 @@ public class DocResult {
 
     private float score;
 
-    public DocResult(Searcher searcher, String concField, int docId, float score) {
+    public DocResult(Searcher searcher, AnnotatedField concField, int docId, float score) {
         this.docId = docId;
         this.score = score;
         hits = Hits.emptyList(searcher);
-        hits.settings().setConcordanceField(concField);
+        hits.settings().setConcordanceField(concField.name());
     }
 
     /**
@@ -88,7 +90,7 @@ public class DocResult {
         return score;
     }
 
-    public void setContextField(List<String> contextField) {
+    public void setContextField(List<Annotation> contextField) {
         hits.setContextField(contextField);
     }
 

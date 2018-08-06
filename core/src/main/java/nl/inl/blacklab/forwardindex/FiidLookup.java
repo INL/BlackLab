@@ -11,7 +11,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class for looking up forward index id, using DocValues or stored fields.
@@ -33,8 +33,8 @@ class FiidLookup {
     /** The DocValues per segment (keyed by docBase) */
     private Map<Integer, NumericDocValues> cachedFiids;
 
-    public FiidLookup(IndexReader reader, String lucenePropFieldName) {
-        this.fiidFieldName = AnnotatedFieldNameUtil.forwardIndexIdField(lucenePropFieldName);
+    public FiidLookup(IndexReader reader, Annotation annotation) {
+        this.fiidFieldName = annotation.forwardIndexIdField();
         this.reader = reader;
         Map<String, UninvertingReader.Type> fields = new TreeMap<>();
         fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);

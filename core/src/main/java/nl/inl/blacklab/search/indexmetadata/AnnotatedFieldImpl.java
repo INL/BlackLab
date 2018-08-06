@@ -21,7 +21,7 @@ import nl.inl.util.StringUtil;
 /** Description of a complex field */
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
     
-    private final class AnnotationsImpl implements Annotations {
+    public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
             if (mainProperty == null && mainPropertyName != null) {
@@ -30,7 +30,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 // it on startup).
                 // Just create a property with the correct name, or retrieve it if it
                 // was defined in the indexmetadata.
-                mainProperty = getOrCreateProperty(mainPropertyName);
+                mainProperty = props.get(mainPropertyName);
                 mainPropertyName = null;
             }
             return mainProperty;
@@ -239,7 +239,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         }
     }
 
-    AnnotationImpl getOrCreateProperty(String name) {
+    public AnnotationImpl getOrCreateProperty(String name) {
         ensureNotFrozen();
         AnnotationImpl pd = props.get(name);
         if (pd == null) {

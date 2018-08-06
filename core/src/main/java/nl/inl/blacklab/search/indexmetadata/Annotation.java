@@ -77,4 +77,9 @@ public interface Annotation {
 		return AnnotatedFieldNameUtil.propertyField(field().name(), name());
 	}
 
+    default String forwardIndexIdField() {
+        return AnnotatedFieldNameUtil.forwardIndexIdField(luceneFieldPrefix());
+    }
+
+    
 }

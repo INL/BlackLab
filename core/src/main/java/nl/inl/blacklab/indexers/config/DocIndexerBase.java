@@ -411,7 +411,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 String fieldName = AnnotatedFieldNameUtil.propertyField(
                         complexField.getName(), propName);
                 if (indexer != null) {
-                    int fiid = indexer.addToForwardIndex(fieldName, prop);
+                    int fiid = indexer.addToForwardIndex(prop);
                     currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                             .forwardIndexIdField(fieldName), fiid, Store.YES));
                 }

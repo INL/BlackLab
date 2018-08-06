@@ -47,6 +47,8 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeStream;
@@ -527,15 +529,14 @@ public class Indexer {
     /**
      * Add a list of tokens to a forward index
      *
-     * @param fieldName what forward index to add this to
      * @param prop the property to get values and position increments from
      * @return the id assigned to the content
      */
-    public int addToForwardIndex(String fieldName, AnnotationWriter prop) {
-        ForwardIndex forwardIndex = searcher.getForwardIndex(fieldName);
+    public int addToForwardIndex(AnnotationWriter prop) {
+        Annotation annotation = searcher.getOrCreate(prop.field(), prop.getName());
+        ForwardIndex forwardIndex = searcher.getForwardIndex(annotation);
         if (forwardIndex == null)
-            throw new IllegalArgumentException("No forward index for field " + fieldName);
-
+            throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.propertyField(prop.field().name(), prop.getName()));
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
     }
 

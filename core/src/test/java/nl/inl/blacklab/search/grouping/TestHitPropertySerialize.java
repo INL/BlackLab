@@ -20,22 +20,26 @@ import nl.inl.blacklab.resultproperty.HitPropValueMultiple;
 import nl.inl.blacklab.resultproperty.HitPropValueString;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
-import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 
-    MockSearcher mockSearcher = new MockSearcher();
+    private MockSearcher mockSearcher = new MockSearcher();
 
-    Hits hits = new MockHits(mockSearcher);
+    private Hits hits = new MockHits(mockSearcher);
+
+    private Annotation lemmaAnnotation;
 
     @Before
     public void setUp() {
-        mockSearcher.setForwardIndex("contents%lemma", new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
+        lemmaAnnotation = mockSearcher.mainAnnotatedField().annotations().get("lemma");
+        mockSearcher.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
     }
 
     @Test
@@ -51,7 +55,7 @@ public class TestHitPropertySerialize {
         Assert.assertEquals(exp, prop.serialize());
         Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
 
-        prop = new HitPropertyHitText(hits, "contents", "lemma", true);
+        prop = new HitPropertyHitText(hits, lemmaAnnotation, true);
         Assert.assertEquals("hit:lemma:s", prop.serialize());
 
         List<ContextPart> contextParts = Arrays.asList(
@@ -59,7 +63,7 @@ public class TestHitPropertySerialize {
                 new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
                 new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
         );
-        prop = new HitPropertyContextWords(hits, "contents", "lemma", true, contextParts);
+        prop = new HitPropertyContextWords(hits, lemmaAnnotation, true, contextParts);
         Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
     }
 
@@ -78,7 +82,7 @@ public class TestHitPropertySerialize {
     public void testHitPropValueSerialize() {
         HitPropValue val, val1;
 
-        val1 = new HitPropValueContextWord(hits, "lemma", 2, true);
+        val1 = new HitPropValueContextWord(hits, lemmaAnnotation, 2, true);
         String exp = "cwo:lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());

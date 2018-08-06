@@ -73,7 +73,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME;
         propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
         IndexMetadataWriter indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
-        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField.getName(), propMain.getName());
+        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
         contentsField.setAnnotatedField(f);
     }
 
@@ -227,7 +227,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 // id to Lucene doc
                 String propName = prop.getName();
                 String fieldName = AnnotatedFieldNameUtil.propertyField(contentsField.getName(), propName);
-                int fiid = indexer.addToForwardIndex(fieldName, prop);
+                int fiid = indexer.addToForwardIndex(prop);
                 currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
             }
 

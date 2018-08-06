@@ -59,7 +59,8 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;
@@ -130,7 +131,7 @@ public class HitsImpl extends Hits {
      * If we have context information, this specifies the property (i.e. word,
      * lemma, pos) the context came from. Otherwise, it is null.
      */
-    protected List<String> contextFieldsPropName;
+    protected List<Annotation> contextFieldsPropName;
 
     /**
      * Our SpanQuery.
@@ -275,9 +276,9 @@ public class HitsImpl extends Hits {
      * @param concordanceFieldName field to use by default when finding concordances
      * @param hits the list of hits to wrap
      */
-    private HitsImpl(Searcher searcher, String concordanceFieldName, List<Hit> hits) {
+    private HitsImpl(Searcher searcher, AnnotatedField concordanceFieldName, List<Hit> hits) {
         this(searcher, hits);
-        settings.setConcordanceField(concordanceFieldName);
+        settings.setConcordanceField(concordanceFieldName.name());
     }
 
     /**
@@ -563,7 +564,7 @@ public class HitsImpl extends Hits {
             sortOrder[i] = i;
 
         // If we need context, make sure we have it.
-        List<String> requiredContext = sortProp.needsContext();
+        List<Annotation> requiredContext = sortProp.needsContext();
         if (requiredContext != null)
             findContext(requiredContext);
 
@@ -882,11 +883,11 @@ public class HitsImpl extends Hits {
      * @return the KWIC
      */
     @Override
-    public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
+    public Kwic getKwic(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
+        HitsImpl h = new HitsImpl(searcher, searcher.mainAnnotatedField(), oneHit);
         h.copySettingsFrom(this); // concordance type, etc.
-        Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, fieldName);
+        Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, field);
         return oneConc.get(hit);
     }
 
@@ -912,7 +913,7 @@ public class HitsImpl extends Hits {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getKwic(settings().concordanceField(), h, contextSize);
+            return getKwic(getSearcher().annotatedField(settings().concordanceField()), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -948,15 +949,15 @@ public class HitsImpl extends Hits {
      * @return the concordance
      */
     @Override
-    public synchronized Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+    public synchronized Concordance getConcordance(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        HitsImpl h = new HitsImpl(searcher, searcher.getMainContentsFieldName(), oneHit);
+        HitsImpl h = new HitsImpl(searcher, searcher.mainAnnotatedField(), oneHit);
         h.copySettingsFrom(this); // concordance type, etc.
         if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
-            Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, fieldName);
+            Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, field);
             return oneKwic.get(hit).toConcordance();
         }
-        Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, fieldName);
+        Map<Hit, Concordance> oneConc = h.retrieveConcordancesFromContentStore(contextSize, field);
         return oneConc.get(hit);
     }
 
@@ -985,7 +986,7 @@ public class HitsImpl extends Hits {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getConcordance(settings().concordanceField(), h, contextSize);
+            return getConcordance(getSearcher().annotatedField(settings().concordanceField()), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -1034,7 +1035,7 @@ public class HitsImpl extends Hits {
         }
 
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), settings().concordanceField());
+        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), getSearcher().annotatedField(settings().concordanceField()));
     }
 
     /**
@@ -1058,7 +1059,7 @@ public class HitsImpl extends Hits {
         }
 
         // Get the concordances
-        kwics = retrieveKwics(settings().contextSize(), settings().concordanceField());
+        kwics = retrieveKwics(settings().contextSize(), getSearcher().annotatedField(settings().concordanceField()));
     }
 
     /**
@@ -1075,7 +1076,7 @@ public class HitsImpl extends Hits {
      *
      * @return the KWICs
      */
-    private Map<Hit, Kwic> retrieveKwics(int contextSize, String fieldName) {
+    private Map<Hit, Kwic> retrieveKwics(int contextSize, AnnotatedField field) {
 
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
@@ -1093,38 +1094,34 @@ public class HitsImpl extends Hits {
             ForwardIndex forwardIndex = null;
             String concWordFI = settings().concWordProp();
             if (concWordFI != null)
-                forwardIndex = searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName,
-                        concWordFI));
+                forwardIndex = searcher.getForwardIndex(field.annotations().get(concWordFI));
 
             ForwardIndex punctForwardIndex = null;
             String concPunctFI = settings().concPunctProp();
             if (concPunctFI != null)
-                punctForwardIndex = searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(
-                        fieldName, concPunctFI));
+                punctForwardIndex = searcher.getForwardIndex(field.annotations().get(concPunctFI));
 
-            Map<String, ForwardIndex> attrForwardIndices = new HashMap<>();
+            Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
             Collection<String> concAttrFI = settings().concAttrProps();
             if (concAttrFI == null) {
                 // All other FIs are attributes
-                for (String p : searcher.getForwardIndices().keySet()) {
-                    String[] components = AnnotatedFieldNameUtil.getNameComponents(p);
-                    String propName = components[1];
-                    if (propName.equals(concWordFI)
-                            || propName.equals(concPunctFI))
+                for (ForwardIndex fi: searcher.getForwardIndices().values()) {
+                    Annotation annotation = fi.annotation();
+                    if (annotation.name().equals(concWordFI) || annotation.name().equals(concPunctFI))
                         continue;
-                    attrForwardIndices.put(propName, searcher.getForwardIndex(p));
+                    attrForwardIndices.put(annotation, fi);
                 }
             } else {
                 // Specific list of attribute FIs
-                for (String p : concAttrFI) {
-                    attrForwardIndices.put(p,
-                            searcher.getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName, p)));
+                for (String annotationName: concAttrFI) {
+                    Annotation annotation = field.annotations().get(annotationName);
+                    attrForwardIndices.put(annotation, searcher.getForwardIndex(annotation));
                 }
             }
 
             Map<Hit, Kwic> conc1 = new HashMap<>();
             for (List<Hit> l : hitsPerDocument.values()) {
-                HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.getMainContentsFieldName(), l);
+                HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.mainAnnotatedField(), l);
                 hitsInThisDoc.copySettingsFrom(this);
                 hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
                         attrForwardIndices, contextSize, conc1);
@@ -1144,7 +1141,7 @@ public class HitsImpl extends Hits {
      * @param fieldProps the field and properties to use for the context
      */
     @Override
-    public synchronized void findContext(List<String> fieldProps) {
+    public synchronized void findContext(List<Annotation> fieldProps) {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -1159,7 +1156,7 @@ public class HitsImpl extends Hits {
         }
 
         List<ForwardIndex> fis = new ArrayList<>();
-        for (String fieldPropName : fieldProps) {
+        for (Annotation fieldPropName : fieldProps) {
             fis.add(searcher.getForwardIndex(fieldPropName));
         }
 
@@ -1209,7 +1206,7 @@ public class HitsImpl extends Hits {
      */
     private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
         // Find context for the hits in the current document
-        HitsImpl hitsObj = new HitsImpl(searcher, searcher.getMainContentsFieldName(), hitsInSameDoc);
+        HitsImpl hitsObj = new HitsImpl(searcher, searcher.mainAnnotatedField(), hitsInSameDoc);
         hitsObj.copySettingsFrom(this);
         hitsObj.getContextWords(settings().contextSize(), fis);
 
@@ -1228,14 +1225,13 @@ public class HitsImpl extends Hits {
      * @return the frequency of each occurring token
      */
     @Override
-    public synchronized TermFrequencyList getCollocations(String propName,
-            QueryExecutionContext ctx) {
-        if (propName == null)
-            propName = searcher.getIndexMetadata().annotatedFields().main().annotations().main().name();
+    public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx) {
+        if (annotation == null)
+            annotation = searcher.mainAnnotatedField().annotations().main();
         if (ctx == null)
             ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
-        ctx = ctx.withProperty(propName);
-        findContext(Arrays.asList(ctx.luceneField(false)));
+        ctx = ctx.withProperty(annotation.name());
+        findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < hits.size(); j++) {
             int[] context = contexts[j];
@@ -1340,7 +1336,7 @@ public class HitsImpl extends Hits {
      * @return the field name
      */
     @Override
-    public synchronized List<String> getContextFieldPropName() {
+    public synchronized List<Annotation> getContextFieldPropName() {
         return contextFieldsPropName;
     }
 
@@ -1350,7 +1346,7 @@ public class HitsImpl extends Hits {
      * @param contextField the field properties
      */
     @Override
-    public synchronized void setContextField(List<String> contextField) {
+    public synchronized void setContextField(List<Annotation> contextField) {
         this.contextFieldsPropName = contextField == null ? null
                 : new ArrayList<>(
                         contextField);
@@ -1367,7 +1363,7 @@ public class HitsImpl extends Hits {
      * @param theKwics where to add the KWICs
      */
     synchronized void makeKwicsSingleDocForwardIndex(ForwardIndex forwardIndex,
-            ForwardIndex punctForwardIndex, Map<String, ForwardIndex> attrForwardIndices,
+            ForwardIndex punctForwardIndex, Map<Annotation, ForwardIndex> attrForwardIndices,
             int wordsAroundHit, Map<Hit, Kwic> theKwics) {
         if (hits.isEmpty())
             return;
@@ -1388,17 +1384,17 @@ public class HitsImpl extends Hits {
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
 
         // Get attributes context
-        String[] attrName = null;
+        Annotation[] attrName = null;
         Terms[] attrTerms = null;
         int[][][] attrContext = null;
         if (attrForwardIndices != null) {
             int n = attrForwardIndices.size();
-            attrName = new String[n];
+            attrName = new Annotation[n];
             ForwardIndex[] attrFI = new ForwardIndex[n];
             attrTerms = new Terms[n];
             attrContext = new int[n][][];
             int i = 0;
-            for (Map.Entry<String, ForwardIndex> e : attrForwardIndices.entrySet()) {
+            for (Map.Entry<Annotation, ForwardIndex> e : attrForwardIndices.entrySet()) {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].getTerms();
@@ -1407,15 +1403,16 @@ public class HitsImpl extends Hits {
                 i++;
             }
         }
-
+        
         // Get word context
         if (forwardIndex != null)
             getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
         Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
 
         // Make the concordances from the context
-        String concPunctFI = settings().concPunctProp();
-        String concWordFI = settings().concWordProp();
+        AnnotatedField field = forwardIndex.annotation().field();
+        Annotation concPunctFI = field.annotations().get(settings().concPunctProp());
+        Annotation concWordFI = field.annotations().get(settings().concWordProp());
         for (int i = 0; i < hits.size(); i++) {
             Hit h = hits.get(i);
             List<String> tokens = new ArrayList<>();
@@ -1449,7 +1446,7 @@ public class HitsImpl extends Hits {
                     tokens.add(""); // weird, but make sure the numbers add up at the end
 
             }
-            List<String> properties = new ArrayList<>();
+            List<Annotation> properties = new ArrayList<>();
             properties.add(concPunctFI);
             if (attrContext != null) {
                 properties.addAll(Arrays.asList(attrName));
@@ -1666,7 +1663,7 @@ public class HitsImpl extends Hits {
      * @param fieldName field to use for building concordances
      * @return the concordances
      */
-    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, String fieldName) {
+    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         hl.setUnbalancedTagsStrategy(searcher.getDefaultUnbalancedTagsStrategy());
         // Group hits per document
@@ -1683,7 +1680,7 @@ public class HitsImpl extends Hits {
         for (List<Hit> l : hitsPerDocument.values()) {
             HitsImpl hitsInThisDoc = new HitsImpl(searcher, l);
             hitsInThisDoc.copySettingsFrom(this);
-            hitsInThisDoc.makeConcordancesSingleDocContentStore(fieldName, contextSize, conc, hl);
+            hitsInThisDoc.makeConcordancesSingleDocContentStore(field.name(), contextSize, conc, hl);
         }
         return conc;
     }

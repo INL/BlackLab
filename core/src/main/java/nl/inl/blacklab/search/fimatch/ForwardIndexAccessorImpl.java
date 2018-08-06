@@ -58,8 +58,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             n = propertyNumbers.size();
             propertyNumbers.put(propertyName, n);
             propertyNames.add(propertyName);
-            ForwardIndex fi = searcher
-                    .getForwardIndex(AnnotatedFieldNameUtil.propertyField(complexFieldBaseName, propertyName));
+            ForwardIndex fi = searcher.getForwardIndex(searcher.annotatedField(complexFieldBaseName).annotations().get(propertyName));
             fis.add(fi);
             terms.add(fi.getTerms());
         }

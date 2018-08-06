@@ -20,7 +20,9 @@ import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -31,7 +33,7 @@ public class HitPropertyLeftContext extends HitProperty {
 
     private String luceneFieldName;
 
-    private String propName;
+    private Annotation annotation;
 
     private Terms terms;
 
@@ -39,38 +41,33 @@ public class HitPropertyLeftContext extends HitProperty {
 
     private Searcher searcher;
 
-    public HitPropertyLeftContext(Hits hits, String field, String property) {
-        this(hits, field, property, hits.getSearcher().isDefaultSearchCaseSensitive());
+    public HitPropertyLeftContext(Hits hits, Annotation annotation) {
+        this(hits, annotation, hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
-    public HitPropertyLeftContext(Hits hits, String field) {
-        this(hits, field, null, hits.getSearcher().isDefaultSearchCaseSensitive());
+    public HitPropertyLeftContext(Hits hits, AnnotatedField field) {
+        this(hits, field.annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits) {
-        this(hits, hits.getSearcher().getMainContentsFieldName(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, hits.getSearcher().mainAnnotatedField().annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
     }
 
-    public HitPropertyLeftContext(Hits hits, String field, String property, boolean sensitive) {
+    public HitPropertyLeftContext(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
         this.searcher = hits.getSearcher();
-        if (property == null || property.length() == 0) {
-            this.luceneFieldName = AnnotatedFieldNameUtil.mainPropertyField(searcher.getIndexMetadata(), field);
-            this.propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
-        } else {
-            this.luceneFieldName = AnnotatedFieldNameUtil.propertyField(field, property);
-            this.propName = property;
-        }
-        this.terms = searcher.getTerms(luceneFieldName);
+        this.luceneFieldName = annotation.luceneFieldPrefix();
+        this.annotation = annotation;
+        this.terms = searcher.getTerms(annotation);
         this.sensitive = sensitive;
     }
 
-    public HitPropertyLeftContext(Hits hits, String field, boolean sensitive) {
-        this(hits, field, null, sensitive);
+    public HitPropertyLeftContext(Hits hits, AnnotatedField field, boolean sensitive) {
+        this(hits, field.annotations().main(), sensitive);
     }
 
     public HitPropertyLeftContext(Hits hits, boolean sensitive) {
-        this(hits, hits.getSearcher().getMainContentsFieldName(), sensitive);
+        this(hits, hits.getSearcher().mainAnnotatedField(), sensitive);
     }
 
     @Override
@@ -83,7 +80,7 @@ public class HitPropertyLeftContext extends HitProperty {
         // Copy the desired part of the context
         int n = contextHitStart;
         if (n <= 0)
-            return new HitPropValueContextWords(hits, propName, new int[0], sensitive);
+            return new HitPropValueContextWords(hits, annotation, new int[0], sensitive);
         int[] dest = new int[n];
         int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
         System.arraycopy(context, contextStart, dest, 0, n);
@@ -96,7 +93,7 @@ public class HitPropertyLeftContext extends HitProperty {
             dest[i] = dest[o];
             dest[o] = t;
         }
-        return new HitPropValueContextWords(hits, propName, dest, sensitive);
+        return new HitPropValueContextWords(hits, annotation, dest, sensitive);
     }
 
     @Override
@@ -135,8 +132,8 @@ public class HitPropertyLeftContext extends HitProperty {
     }
 
     @Override
-    public List<String> needsContext() {
-        return Arrays.asList(luceneFieldName);
+    public List<Annotation> needsContext() {
+        return Arrays.asList(annotation);
     }
 
     @Override
@@ -146,7 +143,7 @@ public class HitPropertyLeftContext extends HitProperty {
 
     @Override
     public List<String> getPropNames() {
-        return Arrays.asList("left context: " + propName);
+        return Arrays.asList("left context: " + annotation.name());
     }
 
     @Override
@@ -158,14 +155,13 @@ public class HitPropertyLeftContext extends HitProperty {
 
     public static HitPropertyLeftContext deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        String fieldName = hits.settings().concordanceField();
+        AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
         boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
-        if (fieldName == null || fieldName.length() == 0)
-            return new HitPropertyLeftContext(hits, sensitive);
-        return new HitPropertyLeftContext(hits, fieldName, propName, sensitive);
+        Annotation annotation = field.annotations().get(propName);
+        return new HitPropertyLeftContext(hits, annotation, sensitive);
     }
 
 }

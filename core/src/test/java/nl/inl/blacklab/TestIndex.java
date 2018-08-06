@@ -15,6 +15,7 @@ import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -87,6 +88,8 @@ public class TestIndex {
 
     private File indexDir;
 
+    private Annotation word;
+
     public TestIndex() throws Exception {
 
         // Get a temporary directory for our test index
@@ -116,6 +119,7 @@ public class TestIndex {
         // Create the BlackLab searcher object
         searcher = Searcher.open(indexDir);
         searcher.hitsSettings().setContextSize(1);
+        word = searcher.mainAnnotatedField().annotations().get("word");
     }
 
     public Searcher getSearcher() {
@@ -147,7 +151,7 @@ public class TestIndex {
      */
     public List<String> findConc(String query) throws ParseException {
         Hits hits = find(query, null);
-        return getConcordances(hits);
+        return getConcordances(hits, word);
     }
 
     /**
@@ -159,7 +163,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public List<String> findConc(String pattern, Query filter) throws ParseException {
-        return getConcordances(find(pattern, filter));
+        return getConcordances(find(pattern, filter), word);
     }
 
     /**
@@ -193,7 +197,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public List<String> findConc(BLSpanQuery query) throws ParseException {
-        return getConcordances(searcher.find(query));
+        return getConcordances(searcher.find(query), word);
     }
 
     /**
@@ -202,13 +206,13 @@ public class TestIndex {
      * @param hits the hits to display
      * @return the left, match and right values for the "word" property
      */
-    static List<String> getConcordances(Hits hits) {
+    static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         for (Hit hit : hits) {
             Kwic kwic = hits.getKwic(hit);
-            String left = StringUtil.join(kwic.getLeft("word"), " ");
-            String match = StringUtil.join(kwic.getMatch("word"), " ");
-            String right = StringUtil.join(kwic.getRight("word"), " ");
+            String left = StringUtil.join(kwic.getLeft(word), " ");
+            String match = StringUtil.join(kwic.getMatch(word), " ");
+            String right = StringUtil.join(kwic.getRight(word), " ");
             String conc = left + " [" + match + "] " + right;
             results.add(conc.trim());
         }

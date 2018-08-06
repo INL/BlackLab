@@ -7,6 +7,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public class MockForwardIndex extends ForwardIndex {
 
@@ -17,7 +18,7 @@ public class MockForwardIndex extends ForwardIndex {
     }
 
     @Override
-    public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
+    public void setIdTranslateInfo(IndexReader reader, Annotation annotation) {
         //
 
     }
@@ -102,6 +103,11 @@ public class MockForwardIndex extends ForwardIndex {
     @Override
     public boolean canDoNfaMatching() {
         return false;
+    }
+
+    @Override
+    public Annotation annotation() {
+        return null;
     }
 
 }

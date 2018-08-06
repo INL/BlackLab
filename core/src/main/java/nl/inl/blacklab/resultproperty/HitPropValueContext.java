@@ -1,20 +1,17 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 public abstract class HitPropValueContext extends HitPropValue {
 
-    protected String fieldName;
-
     protected Terms terms;
 
-    protected String propName;
+    protected Annotation annotation;
 
-    public HitPropValueContext(Hits hits, String propName) {
-        this.fieldName = hits.settings().concordanceField();
-        this.propName = propName;
-        this.terms = hits.getSearcher().getForwardIndex(AnnotatedFieldNameUtil.propertyField(fieldName, propName)).getTerms();
+    public HitPropValueContext(Hits hits, Annotation annotation) {
+        this.annotation = annotation;
+        this.terms = hits.getSearcher().getForwardIndex(annotation).getTerms();
     }
 }

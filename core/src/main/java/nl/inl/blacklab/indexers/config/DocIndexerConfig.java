@@ -9,7 +9,6 @@ import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 
@@ -103,8 +102,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             IndexMetadataImpl indexMetadata;
             if (indexer != null) {
                 indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-                AnnotatedField f = indexMetadata.registerAnnotatedField(complexField.getName(), complexField.getMainProperty().getName());
-                complexField.setAnnotatedField(f);
+                indexMetadata.registerAnnotatedField(complexField);
             }
 
             AnnotationWriter propStartTag = complexField.addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME,

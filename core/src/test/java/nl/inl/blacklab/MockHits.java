@@ -11,6 +11,8 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -135,7 +137,7 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public Kwic getKwic(String fieldName, Hit hit, int contextSize) {
+    public Kwic getKwic(AnnotatedField fieldName, Hit hit, int contextSize) {
         throw new UnsupportedOperationException();
     }
 
@@ -145,7 +147,7 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public Concordance getConcordance(String fieldName, Hit hit, int contextSize) {
+    public Concordance getConcordance(AnnotatedField fieldName, Hit hit, int contextSize) {
         throw new UnsupportedOperationException();
     }
 
@@ -155,12 +157,12 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public void findContext(List<String> fieldProps) {
+    public void findContext(List<Annotation> fieldProps) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TermFrequencyList getCollocations(String propName, QueryExecutionContext ctx) {
+    public TermFrequencyList getCollocations(Annotation propName, QueryExecutionContext ctx) {
         throw new UnsupportedOperationException();
     }
 
@@ -180,12 +182,12 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public List<String> getContextFieldPropName() {
+    public List<Annotation> getContextFieldPropName() {
         return null;
     }
 
     @Override
-    public void setContextField(List<String> contextField) {
+    public void setContextField(List<Annotation> contextField) {
         // NOP
     }
 

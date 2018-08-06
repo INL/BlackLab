@@ -424,6 +424,7 @@ public class FileProcessor implements AutoCloseable {
             try {
                 c.call();
             } catch (Exception e) {
+                e.printStackTrace(); // FIXME: Exception will be eaten otherwise...
                 rethrowUnchecked(e);
             }
         };

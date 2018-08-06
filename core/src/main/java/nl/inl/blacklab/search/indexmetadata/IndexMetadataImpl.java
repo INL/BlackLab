@@ -35,6 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
@@ -53,7 +54,7 @@ import nl.inl.util.StringUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Freezable {
+public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
@@ -1022,8 +1023,12 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Fr
      * @return the annotated field
      */
     @Override
-    public AnnotatedField registerAnnotatedField(String fieldName, String mainPropName) {
+    public AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         ensureNotFrozen();
+        
+        String fieldName = fieldWriter.getName();
+        String mainPropName = fieldWriter.getMainProperty().getName();
+        
         if (annotatedFields.exists(fieldName))
             return annotatedFields.get(fieldName);
         // Not registered yet; do so now. Note that we only add the main property,
@@ -1032,6 +1037,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Fr
         AnnotatedFieldImpl cf = getOrCreateComplexField(fieldName);
         cf.getOrCreateProperty(mainPropName); // create main property
         cf.setMainPropertyName(mainPropName); // set main property
+        fieldWriter.setAnnotatedField(cf);
         return cf;
     }
 

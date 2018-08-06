@@ -38,6 +38,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ExUtil;
 
 /**
@@ -153,9 +154,13 @@ class ForwardIndexImplV3 extends ForwardIndex {
      */
     private boolean canDoNfaMatching;
 
+    /** The annotation for which we're the forward index */
+    private Annotation annotation;
+
     @Override
-    public void setIdTranslateInfo(IndexReader reader, String lucenePropFieldName) {
-        fiidLookup = new FiidLookup(reader, lucenePropFieldName);
+    public void setIdTranslateInfo(IndexReader reader, Annotation annotation) {
+        this.annotation = annotation;
+        fiidLookup = new FiidLookup(reader, annotation);
     }
 
     @Override
@@ -832,5 +837,10 @@ class ForwardIndexImplV3 extends ForwardIndex {
     @Override
     public boolean canDoNfaMatching() {
         return canDoNfaMatching;
+    }
+
+    @Override
+    public Annotation annotation() {
+        return annotation;
     }
 }

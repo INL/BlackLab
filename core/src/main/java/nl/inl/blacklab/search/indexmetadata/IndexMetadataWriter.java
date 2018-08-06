@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Used to write information about a BlackLab index, including its fields structure. */
@@ -81,11 +82,10 @@ public interface IndexMetadataWriter {
     /**
      * Register an annotated field.
      * 
-     * @param name field name
-     * @param mainAnnotationName name of the main annotation
-     * @return
+     * @param field the field
+     * @return the field descriptor
      */
-    AnnotatedField registerAnnotatedField(String name, String mainAnnotationName);
+    AnnotatedField registerAnnotatedField(AnnotatedFieldWriter field);
 
     /**
      * Get the document format.

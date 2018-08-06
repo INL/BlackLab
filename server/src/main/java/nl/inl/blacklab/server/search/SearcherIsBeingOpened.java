@@ -15,6 +15,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /** A dummy Searcher placeholder while Searcher is being opened. */
 public class SearcherIsBeingOpened extends Searcher {
@@ -76,7 +77,7 @@ public class SearcherIsBeingOpened extends Searcher {
     }
 
     @Override
-    protected ForwardIndex openForwardIndex(String fieldPropName) {
+    protected ForwardIndex openForwardIndex(Annotation fieldPropName) {
         throw new UnsupportedOperationException();
     }
 

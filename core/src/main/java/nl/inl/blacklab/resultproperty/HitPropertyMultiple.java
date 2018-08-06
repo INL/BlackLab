@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -28,7 +29,7 @@ import nl.inl.blacklab.search.results.Hits;
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
     List<HitProperty> criteria;
 
-    List<String> contextNeeded;
+    List<Annotation> contextNeeded;
 
     /**
      * Quick way to create group criteria. Just call this method with the
@@ -51,11 +52,11 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
      */
     private void determineContextNeeded() {
         // Figure out what context(s) we need
-        List<String> result = new ArrayList<>();
-        for (HitProperty prop : criteria) {
-            List<String> requiredContext = prop.needsContext();
+        List<Annotation> result = new ArrayList<>();
+        for (HitProperty prop: criteria) {
+            List<Annotation> requiredContext = prop.needsContext();
             if (requiredContext != null) {
-                for (String c : requiredContext) {
+                for (Annotation c: requiredContext) {
                     if (!result.contains(c))
                         result.add(c);
                 }
@@ -64,11 +65,11 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         contextNeeded = result.isEmpty() ? null : result;
 
         // Let criteria know what context number(s) they need
-        for (HitProperty prop : criteria) {
-            List<String> requiredContext = prop.needsContext();
+        for (HitProperty prop: criteria) {
+            List<Annotation> requiredContext = prop.needsContext();
             if (requiredContext != null) {
                 List<Integer> contextNumbers = new ArrayList<>();
-                for (String c : requiredContext) {
+                for (Annotation c: requiredContext) {
                     contextNumbers.add(contextNeeded.indexOf(c));
                 }
                 prop.setContextIndices(contextNumbers);
@@ -96,7 +97,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     public String toString() {
         StringBuilder str = new StringBuilder();
         int i = 0;
-        for (HitProperty prop : criteria) {
+        for (HitProperty prop: criteria) {
             if (i > 0)
                 str.append(",");
             str.append(prop.toString());
@@ -111,7 +112,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public List<String> needsContext() {
+    public List<Annotation> needsContext() {
         return contextNeeded;
     }
 
@@ -119,7 +120,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     public HitPropValueMultiple get(int hitNumber) {
         HitPropValue[] rv = new HitPropValue[criteria.size()];
         int i = 0;
-        for (HitProperty crit : criteria) {
+        for (HitProperty crit: criteria) {
             rv[i] = crit.get(hitNumber);
             i++;
         }
@@ -128,7 +129,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public int compare(Object i, Object j) {
-        for (HitProperty crit : criteria) {
+        for (HitProperty crit: criteria) {
             int cmp = reverse ? crit.compare(j, i) : crit.compare(i, j);
             if (cmp != 0)
                 return cmp;
@@ -139,7 +140,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public String getName() {
         StringBuilder b = new StringBuilder();
-        for (HitProperty crit : criteria) {
+        for (HitProperty crit: criteria) {
             if (b.length() > 0)
                 b.append(", ");
             b.append(crit.getName());
@@ -150,7 +151,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public List<String> getPropNames() {
         List<String> names = new ArrayList<>();
-        for (HitProperty prop : criteria)
+        for (HitProperty prop: criteria)
             names.addAll(prop.getPropNames());
         return names;
     }
@@ -168,7 +169,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         String[] strValues = PropValSerializeUtil.splitMultiple(info);
         HitProperty[] values = new HitProperty[strValues.length];
         int i = 0;
-        for (String strValue : strValues) {
+        for (String strValue: strValues) {
             values[i] = HitProperty.deserialize(hits, strValue);
             i++;
         }

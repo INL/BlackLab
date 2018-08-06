@@ -135,8 +135,11 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
-        if (!indexMode)
+        IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
+        indexMetadata = indexMetadataImpl;
+        if (indexMode)
+            indexMetadataWriter = indexMetadataImpl;
+        else
             indexMetadata.freeze();
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
@@ -163,8 +166,11 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
-        if (!indexMode)
+        IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
+        indexMetadata = indexMetadataImpl;
+        if (indexMode)
+            indexMetadataWriter = indexMetadataImpl;
+        else
             indexMetadata.freeze();
 
         finishOpeningIndex(indexDir, indexMode, createNewIndex);
@@ -523,36 +529,25 @@ public class SearcherImpl extends Searcher implements Closeable {
             for (Annotation annotation: field.annotations()) {
                 if (annotation.hasForwardIndex()) {
                     // This property has a forward index. Make sure it is open.
-                    String fieldProp = annotation.luceneFieldPrefix();
                     if (traceIndexOpening)
-                        logger.debug("    " + fieldProp + "...");
-                    getForwardIndex(fieldProp);
+                        logger.debug("    " + annotation.luceneFieldPrefix() + "...");
+                    getForwardIndex(annotation);
                 }
             }
         }
     }
 
     @Override
-    protected ForwardIndex openForwardIndex(String fieldPropName) {
+    protected ForwardIndex openForwardIndex(Annotation annotation) {
         ForwardIndex forwardIndex;
-        File dir = new File(indexLocation, "fi_" + fieldPropName);
-
-        // Special case for old BL index with "forward" as the name of the single forward index
-        // (this should be removed eventually)
-        if (!isEmptyIndex && fieldPropName.equals(mainContentsFieldName) && !dir.exists()) {
-            // Default forward index used to be called "forward". Look for that instead.
-            File alt = new File(indexLocation, "forward");
-            if (alt.exists())
-                dir = alt;
-        }
-
+        File dir = new File(indexLocation, "fi_" + annotation.luceneFieldPrefix());
         if (!isEmptyIndex && !dir.exists()) {
             // Forward index doesn't exist
             return null;
         }
         // Open forward index
         forwardIndex = ForwardIndex.open(dir, indexMode, getCollator(), isEmptyIndex);
-        forwardIndex.setIdTranslateInfo(reader, fieldPropName); // how to translate from
+        forwardIndex.setIdTranslateInfo(reader, annotation); // how to translate from
                                                                 // Lucene
                                                                 // doc to fiid
         return forwardIndex;
