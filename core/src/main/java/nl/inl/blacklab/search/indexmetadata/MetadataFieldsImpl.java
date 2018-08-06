@@ -196,19 +196,23 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
     // Methods that mutate data
     // ------------------------------------
 
-    public void register(String fieldName) {
+    public MetadataField register(String fieldName) {
         ensureNotFrozen();
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
         // Synchronized because we might be using the map in another indexing thread
         synchronized (metadataFieldInfos) {
+            MetadataFieldImpl mf;
             if (metadataFieldInfos.containsKey(fieldName))
-                return;
-            // Not registered yet; do so now.
-            MetadataFieldImpl mf = new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
-            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-            mf.setUnknownValue(defaultUnknownValue);
-            metadataFieldInfos.put(fieldName, mf);
+                mf = metadataFieldInfos.get(fieldName);
+            else {
+                // Not registered yet; do so now.
+                mf = new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
+                mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
+                mf.setUnknownValue(defaultUnknownValue);
+                metadataFieldInfos.put(fieldName, mf);
+            }
+            return mf;
         }
     }
 

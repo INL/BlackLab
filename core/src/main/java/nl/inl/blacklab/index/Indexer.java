@@ -330,7 +330,7 @@ public class Indexer {
                         // indexTemplateFile didn't provide a default formatIdentifier,
                         // overwrite it with our provided formatIdentifier
                         searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
-                        searcher.getIndexMetadataWriter().writeMetadata();
+                        searcher.getIndexMetadataWriter().save();
                     }
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
@@ -363,7 +363,7 @@ public class Indexer {
                     // ConfigInputFormat didn't provide a default formatIdentifier,
                     // overwrite it with our provided formatIdentifier
                     searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
-                    searcher.getIndexMetadataWriter().writeMetadata();
+                    searcher.getIndexMetadataWriter().save();
                 }
             } else {
                 throw new DocumentFormatException("Input format config '" + formatIdentifier
@@ -490,7 +490,7 @@ public class Indexer {
 
         if (!hasRollback) {
             searcher.getIndexMetadataWriter().addToTokenCount(getListener().getTokensProcessed());
-            searcher.getIndexMetadataWriter().writeMetadata();
+            searcher.getIndexMetadataWriter().save();
         }
         searcher.close();
 

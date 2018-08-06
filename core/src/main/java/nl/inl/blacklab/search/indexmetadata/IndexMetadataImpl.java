@@ -52,6 +52,7 @@ import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
@@ -62,7 +63,7 @@ import nl.inl.util.StringUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements IndexMetadata, Freezable {
+public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter, Freezable {
 
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
@@ -220,7 +221,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
 
             addFieldInfoFromConfig(metadata, complex, metaGroups, config);
             extractFromJson(jsonRoot, null, true, false);
-            writeMetadata();
+            save();
         } else {
             // Read existing metadata or create empty new one
             readOrCreateMetadata(reader, createNewIndex, metadataFile, false);
@@ -300,7 +301,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         return name;
     }
 
-    public void writeMetadata() {
+    @Override
+    public void save() {
         String ext = saveAsJson ? ".json" : ".yaml";
         File metadataFile = new File(indexDir, METADATA_FILE_NAME + ext);
         try {
@@ -1014,7 +1016,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      * Indicate that the index was modified, so that fact will be recorded in the
      * metadata file.
      */
-    public void setModified() {
+    @Override
+    public void updateLastModified() {
         // TODO: make sure this method is called when adding documents to index!
         ensureNotFrozen();
         timeModified = IndexMetadataImpl.timestamp();
@@ -1028,7 +1031,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      * @param mainPropName main property name
      * @return the annotated field
      */
-    public AnnotatedField registerComplexField(String fieldName, String mainPropName) {
+    @Override
+    public AnnotatedField registerAnnotatedField(String fieldName, String mainPropName) {
         ensureNotFrozen();
         if (annotatedFields.exists(fieldName))
             return annotatedFields.get(fieldName);
@@ -1041,9 +1045,10 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         return cf;
     }
 
-    public void registerMetadataField(String fieldName) {
+    @Override
+    public MetadataField registerMetadataField(String fieldName) {
         ensureNotFrozen();
-        metadataFields.register(fieldName);
+        return metadataFields.register(fieldName);
     }
 
     /**
@@ -1052,6 +1057,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      *
      * @param displayName the display name to set.
      */
+    @Override
     public void setDisplayName(String displayName) {
         ensureNotFrozen();
         if (displayName.length() > 80)
@@ -1070,11 +1076,13 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      *
      * @param documentFormat the document format to store
      */
+    @Override
     public void setDocumentFormat(String documentFormat) {
         ensureNotFrozen();
         this.documentFormat = documentFormat;
     }
 
+    @Override
     public void addToTokenCount(long tokensProcessed) {
         ensureNotFrozen();
         tokenCount += tokensProcessed;
@@ -1089,6 +1097,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      *
      * @param contentViewable whether content may be freely viewed
      */
+    @Override
     public void setContentViewable(boolean contentViewable) {
         ensureNotFrozen();
         this.contentViewable = contentViewable;
@@ -1100,6 +1109,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      *
      * @param textDirection text direction
      */
+    @Override
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
         this.textDirection = textDirection;

@@ -5,12 +5,6 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 /** Used to write information about a BlackLab index, including its fields structure. */
 public interface IndexMetadataWriter {
     
-    /**
-     * Return the accompanying reading interface
-     * @return metadata reader
-     */
-    IndexMetadata reader();
-    
 	/**
 	 * Save the index structure file.
 	 */
@@ -68,4 +62,34 @@ public interface IndexMetadataWriter {
      * @param textDirection text direction
      */
     void setTextDirection(TextDirection textDirection);
+
+    /**
+     * Register a metadata field.
+     * 
+     * @param name name of the field
+     * @return the field descriptor
+     */
+    MetadataField registerMetadataField(String name);
+
+    /**
+     * Get the metadata fields.
+     * 
+     * @return the metadata fields
+     */
+    MetadataFields metadataFields();
+
+    /**
+     * Register an annotated field.
+     * 
+     * @param name field name
+     * @param mainAnnotationName name of the main annotation
+     * @return
+     */
+    AnnotatedField registerAnnotatedField(String name, String mainAnnotationName);
+
+    /**
+     * Get the document format.
+     * @return document format
+     */
+    String documentFormat();
 }

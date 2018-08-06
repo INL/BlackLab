@@ -33,6 +33,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.nint.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 
@@ -71,8 +72,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         propMain = contentsField.getMainProperty();
         String propName = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
         propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
-        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
-        AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
+        IndexMetadataWriter indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
+        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField.getName(), propMain.getName());
         contentsField.setAnnotatedField(f);
     }
 

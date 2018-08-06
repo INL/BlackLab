@@ -103,7 +103,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             IndexMetadataImpl indexMetadata;
             if (indexer != null) {
                 indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-                AnnotatedField f = indexMetadata.registerComplexField(complexField.getName(), complexField.getMainProperty().getName());
+                AnnotatedField f = indexMetadata.registerAnnotatedField(complexField.getName(), complexField.getMainProperty().getName());
                 complexField.setAnnotatedField(f);
             }
 

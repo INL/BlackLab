@@ -461,7 +461,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                                                                                 // positions
         propStartTag.setForwardIndex(false);
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-        AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
+        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField.getName(), propMain.getName());
         contentsField.setAnnotatedField(f);
     }
 
