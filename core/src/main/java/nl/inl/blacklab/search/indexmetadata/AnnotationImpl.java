@@ -48,11 +48,11 @@ public class AnnotationImpl implements Freezable {
 
     private boolean frozen;
 
-    public AnnotationImpl() {
+    AnnotationImpl() {
         this(null);
     }
 
-    public AnnotationImpl(String name) {
+    AnnotationImpl(String name) {
         this.name = name;
         forwardIndex = false;
     }

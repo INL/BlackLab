@@ -50,7 +50,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
 
     private boolean frozen;
 
-    public ComplexFieldDesc(String name) {
+    ComplexFieldDesc(String name) {
         super(name);
         props = new TreeMap<>();
         contentStore = false;

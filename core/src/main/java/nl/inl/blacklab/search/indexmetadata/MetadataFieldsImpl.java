@@ -55,7 +55,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
     /** Is the object frozen, not allowing any modifications? */
     private boolean frozen = false;
     
-    public MetadataFieldsImpl() {
+    MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
     }
     

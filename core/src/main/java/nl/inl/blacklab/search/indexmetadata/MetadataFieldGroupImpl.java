@@ -24,7 +24,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     boolean addRemainingFields = false;
 
-    public MetadataFieldGroupImpl(MetadataFields metadataFieldsAccessor, String name, List<String> fieldNames, boolean addRemainingFields) {
+    MetadataFieldGroupImpl(MetadataFields metadataFieldsAccessor, String name, List<String> fieldNames, boolean addRemainingFields) {
         this.metadataFieldsAccessor = metadataFieldsAccessor;
         this.name = name;
         this.fieldNamesInGroup = new ArrayList<>(fieldNames);

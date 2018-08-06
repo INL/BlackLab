@@ -16,11 +16,11 @@ public abstract class FieldImpl implements Field {
     /** Does the field have an associated content store? */
     protected boolean contentStore;
 
-    public FieldImpl(String fieldName) {
+    FieldImpl(String fieldName) {
         this(fieldName, null);
     }
 
-    public FieldImpl(String fieldName, String displayName) {
+    FieldImpl(String fieldName, String displayName) {
         this.fieldName = fieldName;
         if (displayName == null)
             this.displayName = StringUtil.camelCaseToDisplayable(fieldName, true);

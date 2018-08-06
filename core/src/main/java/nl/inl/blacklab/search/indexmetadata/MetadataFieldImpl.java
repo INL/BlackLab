@@ -75,7 +75,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     private boolean frozen;
 
-    public MetadataFieldImpl(String fieldName, FieldType type) {
+    MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
         this.type = type;
     }
