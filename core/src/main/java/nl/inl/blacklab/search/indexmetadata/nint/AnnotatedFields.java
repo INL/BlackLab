@@ -35,7 +35,7 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
      * @param fieldName name of the field
      * @return the field description, or null if it doesn't exist
      */
-    AnnotatedField field(String fieldName);
+    AnnotatedField get(String fieldName);
 
     /**
      * Does the specified field exist?

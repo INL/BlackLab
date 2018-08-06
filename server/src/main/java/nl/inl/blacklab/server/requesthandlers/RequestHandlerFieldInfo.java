@@ -87,7 +87,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-            AnnotatedField fieldDesc = indexMetadata.annotatedFields().field(fieldName);
+            AnnotatedField fieldDesc = indexMetadata.annotatedFields().get(fieldName);
             describeComplexField(ds, indexName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
             MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);

@@ -95,7 +95,7 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
     private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
 
     public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = indexMetadata.annotatedFields().field(fieldName).annotations().main().name();
+        defaultProperty = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
     }
 
     public void setDefaultProperty(String property) {

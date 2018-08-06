@@ -560,7 +560,7 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().field(fieldName);
+        AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().get(fieldName);
         if (complexFieldDesc == null)
             throw new IllegalArgumentException("Unknown complex field " + fieldName);
         Annotation mainProperty = complexFieldDesc.annotations().main();

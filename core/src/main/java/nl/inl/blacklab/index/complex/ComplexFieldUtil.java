@@ -162,7 +162,7 @@ public final class ComplexFieldUtil {
     }
 
     public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
-        String propName = structure.annotatedFields().field(fieldName).annotations().main().name();
+        String propName = structure.annotatedFields().get(fieldName).annotations().main().name();
         return forwardIndexIdField(propertyField(fieldName, propName));
     }
 
@@ -398,13 +398,13 @@ public final class ComplexFieldUtil {
     }
 
     public static String mainPropertyField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedFields().field(fieldName);
+        AnnotatedField cf = structure.annotatedFields().get(fieldName);
         Annotation pr = cf.annotations().main();
         return propertyField(fieldName, pr.name());
     }
 
     public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedFields().field(fieldName);
+        AnnotatedField cf = structure.annotatedFields().get(fieldName);
         Annotation pr = cf.annotations().main();
         return pr.offsetsSensitivity().luceneField();
     }

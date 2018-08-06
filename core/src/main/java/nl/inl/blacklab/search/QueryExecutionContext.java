@@ -127,7 +127,7 @@ public class QueryExecutionContext {
             return new String[] { ComplexFieldUtil.INSENSITIVE_ALT_NAME, ComplexFieldUtil.SENSITIVE_ALT_NAME };
         }
 
-        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().field(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
         if (cfd == null)
             return null;
 
@@ -203,7 +203,7 @@ public class QueryExecutionContext {
         }
 
         // Find the field and the property.
-        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().field(fieldName);
+        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
         if (cfd == null)
             return null;
 

@@ -14,9 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -65,46 +63,6 @@ import nl.inl.util.StringUtil;
  * Determines the structure of a BlackLab index.
  */
 public class IndexMetadataImpl implements IndexMetadata, Freezable {
-    
-    private final class AnnotatedFieldsImpl implements AnnotatedFields {
-        @Override
-        public AnnotatedField main() {
-            return mainContentsField;
-        }
-
-        @Override
-        public Iterator<AnnotatedField> iterator() {
-            Iterator<AnnotatedFieldImpl> it = complexFields.values().iterator();
-            return new Iterator<AnnotatedField>() {
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
-
-                @Override
-                public AnnotatedField next() {
-                    return it.next();
-                }
-            };
-        }
-
-        @Override
-        public Stream<AnnotatedField> stream() {
-            return complexFields.values().stream().map(f -> (AnnotatedField)f);
-        }
-
-        @Override
-        public AnnotatedField field(String fieldName) {
-            if (!complexFields.containsKey(fieldName))
-                throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
-            return complexFields.get(fieldName);
-        }
-
-        @Override
-        public boolean exists(String fieldName) {
-            return complexFields.containsKey(fieldName);
-        }
-    }
 
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
@@ -151,15 +109,6 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
-    /** The complex fields in our index */
-    private Map<String, AnnotatedFieldImpl> complexFields;
-
-    /**
-     * The main contents field in our index. This is either the complex field with
-     * the name "contents", or if that doesn't exist, the first complex field found.
-     */
-    private AnnotatedFieldImpl mainContentsField;
-
     /** Where to save indexmetadata.json */
     private File indexDir;
 
@@ -203,17 +152,17 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
 
     private long tokenCount = 0;
 
-    /**
-     * When we save this file, should we write it as json or yaml?
-     */
+    /** When we save this file, should we write it as json or yaml? */
     private boolean saveAsJson = true;
 
+    /** Our metadata fields */
     private MetadataFieldsImpl metadataFields;
+
+    /** Our annotated fields */
+    private AnnotatedFieldsImpl annotatedFields;
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
-
-    private AnnotatedFieldsImpl annotatedFieldsImpl;
 
     /**
      * Construct an IndexMetadata object, querying the index for the available
@@ -229,8 +178,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
-        complexFields = new TreeMap<>();
-        annotatedFieldsImpl = new AnnotatedFieldsImpl();
+        annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
@@ -263,7 +211,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             addVersionInfo(jsonRoot);
             ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
             fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-            for (Entry<String, String> e : corpusConfig.getSpecialFields().entrySet()) {
+            for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
                 fieldInfo.put(e.getKey(), e.getValue());
             }
             ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -293,8 +241,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
-        complexFields = new TreeMap<>();
-        annotatedFieldsImpl = new AnnotatedFieldsImpl();
+        annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
         File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
@@ -305,7 +252,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 throw new RuntimeException("Could not delete file: " + metadataFile);
         }
 
-        // If none found, or creating new index: metadata file should be same format as template.
+        // If none found, or creating new index: metadata file should be same format as
+        // template.
         if (createNewIndex || metadataFile == null) {
             // No metadata file yet, or creating a new index;
             // use same metadata format as the template
@@ -384,8 +332,10 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         versionInfo.put("indexFormat", indexFormat);
         versionInfo.put("timeCreated", timeCreated);
         versionInfo.put("timeModified", timeModified);
-        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is for XML tags after the last word)
-        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths, and there is no end tag property
+        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is
+                                                        // for XML tags after the last word)
+        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths,
+                                                     // and there is no end tag property
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
@@ -429,34 +379,34 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             Map<String, Integer> values = f.valueDistribution();
             if (values != null) {
                 ObjectNode jsonValues = fi.putObject("values");
-                for (Map.Entry<String, Integer> e : values.entrySet()) {
+                for (Map.Entry<String, Integer> e: values.entrySet()) {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
             Map<String, String> displayValues = f.displayValues();
             if (displayValues != null) {
                 ObjectNode jsonDisplayValues = fi.putObject("displayValues");
-                for (Map.Entry<String, String> e : displayValues.entrySet()) {
+                for (Map.Entry<String, String> e: displayValues.entrySet()) {
                     jsonDisplayValues.put(e.getKey(), e.getValue());
                 }
             }
             List<String> displayOrder = f.displayOrder();
             if (displayOrder != null) {
                 ArrayNode jsonDisplayValues = fi.putArray("displayOrder");
-                for (String value : displayOrder) {
+                for (String value: displayOrder) {
                     jsonDisplayValues.add(value);
                 }
             }
         }
 
         // Add complex field info
-        for (AnnotatedFieldImpl f : complexFields.values()) {
+        for (AnnotatedField f: annotatedFields) {
             ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
             fieldInfo2.put("mainProperty", f.annotations().main().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
-            Json.arrayOfStrings(arr, f.getDisplayOrder());
+            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
             for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
@@ -470,10 +420,10 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         return jsonRoot;
 
     }
-    
+
     @Override
     public AnnotatedFields annotatedFields() {
-        return annotatedFieldsImpl;
+        return annotatedFields;
     }
 
     /**
@@ -671,7 +621,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      */
     @Override
     public boolean isNewIndex() {
-        return mainContentsField == null || tokenCount == 0;
+        return annotatedFields.main() == null || tokenCount == 0;
     }
 
     @Override
@@ -689,7 +639,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return dateTimeFormat.format(new Date());
     }
-    
+
     // Methods that mutate data
     // ------------------------------------
 
@@ -715,7 +665,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
     private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate,
             boolean initTimestamps) {
         ensureNotFrozen();
-        
+
         // Read and interpret index metadata file
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
         displayName = Json.getString(jsonRoot, "displayName", "");
@@ -724,7 +674,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         textDirection = TextDirection.fromCode(Json.getString(jsonRoot, "textDirection", "ltr"));
         documentFormat = Json.getString(jsonRoot, "documentFormat", "");
         tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
-    
+
         ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
@@ -740,11 +690,13 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         }
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
-            throw new RuntimeException("Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+            throw new RuntimeException(
+                    "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
         if (!tagLengthInPayload)
-            throw new RuntimeException("Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
-    
+            throw new RuntimeException(
+                    "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+
         // Specified in index metadata file?
         String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
@@ -787,13 +739,13 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         }
         metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
         metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
-    
+
         ObjectNode metaFieldConfigs = Json.getObject(fieldInfo, "metadataFields");
         boolean hasMetaFields = metaFieldConfigs.size() > 0;
         ObjectNode complexFieldConfigs = Json.getObject(fieldInfo, "complexFields");
         boolean hasComplexFields = complexFieldConfigs.size() > 0;
         boolean hasFieldInfo = hasMetaFields || hasComplexFields;
-    
+
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
             metadataFields.clearMetadataGroups();
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
@@ -803,7 +755,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
-                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields, addRemainingFields);
+                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
+                        addRemainingFields);
                 metadataFields.putMetadataGroup(name, metadataGroup);
             }
         }
@@ -823,9 +776,11 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.setUnknownValue(Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
+                fieldDesc.setUnknownValue(
+                        Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
                 UnknownCondition unk = UnknownCondition
-                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition", metadataFields.defaultUnknownCondition()));
+                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition",
+                                metadataFields.defaultUnknownCondition()));
                 fieldDesc.setUnknownCondition(unk);
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
@@ -837,7 +792,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFields.put(fieldName, fieldDesc);
             }
-    
+
             // Complex fields
             it = complexFieldConfigs.fields();
             while (it.hasNext()) {
@@ -852,7 +807,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
                 if (mainPropertyName.length() > 0)
                     fieldDesc.setMainPropertyName(mainPropertyName);
-    
+
                 // Process information about annotations (displayName, uiType, etc.
                 ArrayList<String> annotationOrder = new ArrayList<>();
                 if (fieldConfig.has("annotations")) {
@@ -891,9 +846,10 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                             fieldDesc.putProperty(propDesc);
                     }
                 }
-    
+
                 // These properties should get no forward index
-                // TODO: refactor this so this information is stored with each property instead, deprecating this setting
+                // TODO: refactor this so this information is stored with each property instead,
+                // deprecating this setting
                 JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
                 if (nodeNoForwardIndexProps instanceof ArrayNode) {
                     Iterator<JsonNode> itNFIP = nodeNoForwardIndexProps.elements();
@@ -909,16 +865,17 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                         fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
                     }
                 }
-    
+
                 // This is the "natural order" of our annotations
-                // (probably not needed anymore - if not specified, the order of the annotations will be used)
+                // (probably not needed anymore - if not specified, the order of the annotations
+                // will be used)
                 List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
                 if (displayOrder.isEmpty()) {
                     displayOrder.addAll(annotationOrder);
                 }
                 fieldDesc.setDisplayOrder(displayOrder);
-    
-                complexFields.put(fieldName, fieldDesc);
+
+                annotatedFields.put(fieldName, fieldDesc);
             }
         }
         if (fis != null) {
@@ -926,7 +883,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             for (int i = 0; i < fis.size(); i++) {
                 FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
-    
+
                 // Parse the name to see if it is a metadata field or part of a complex field.
                 String[] parts;
                 if (name.endsWith("Numeric")) {
@@ -937,13 +894,14 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 } else {
                     parts = ComplexFieldUtil.getNameComponents(name);
                 }
-                if (parts.length == 1 && !complexFields.containsKey(parts[0])) {
+                if (parts.length == 1 && !annotatedFields.exists(parts[0])) {
                     if (!metadataFields.exists(name)) {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
                         MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type);
                         metadataFieldDesc
-                                .setUnknownCondition(UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
+                                .setUnknownCondition(
+                                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
                         metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
                         metadataFields.put(name, metadataFieldDesc);
                     }
@@ -954,16 +912,16 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                                 "Complex field and metadata field with same name, error! ("
                                         + parts[0] + ")");
                     }
-    
+
                     // Get or create descriptor object.
                     AnnotatedFieldImpl cfd = getOrCreateComplexField(parts[0]);
                     cfd.processIndexField(parts);
                 }
             } // even if we have metadata, we still have to detect props/alts
         }
-    
+
         metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
-    
+
         metadataFields.clearSpecialFields();
         if (fieldInfo.has("titleField"))
             metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
@@ -980,17 +938,18 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
             metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
-    
+
         if (usedTemplate) {
             // Update / clear possible old values that were in the template file
-            // (template file may simply be the metadata file copied from a previous version)
-    
+            // (template file may simply be the metadata file copied from a previous
+            // version)
+
             // Reset version info
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
-    
+
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
         }
@@ -999,7 +958,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
     private void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
             boolean usedTemplate) {
         ensureNotFrozen();
-        
+
         // Read and interpret index metadata file
         if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
             // No metadata file yet; start with a blank one
@@ -1023,29 +982,30 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 throw new RuntimeException(e);
             }
         }
-    
+
         // Detect main contents field and main properties of complex fields
         if (!createNewIndex) { // new index doesn't have this information yet
             // Detect the main properties for all complex fields
             // (looks for fields with char offset information stored)
-            mainContentsField = null;
-            for (AnnotatedFieldImpl d : complexFields.values()) {
+            AnnotatedFieldImpl mainContentsField = null;
+            for (AnnotatedField d: annotatedFields) {
                 if (mainContentsField == null || d.name().equals("contents"))
-                    mainContentsField = d;
+                    mainContentsField = (AnnotatedFieldImpl) d;
                 if (tokenCount > 0) // no use trying this on an empty index
-                    d.detectMainProperty(reader);
+                    ((AnnotatedFieldImpl) d).detectMainProperty(reader);
             }
+            annotatedFields.setMainContentsField(mainContentsField);
         }
     }
 
     private AnnotatedFieldImpl getOrCreateComplexField(String name) {
         ensureNotFrozen();
         AnnotatedFieldImpl cfd = null;
-        if (complexFields.containsKey(name))
-            cfd = ((AnnotatedFieldImpl)annotatedFields().field(name));
+        if (annotatedFields.exists(name))
+            cfd = ((AnnotatedFieldImpl) annotatedFields().get(name));
         if (cfd == null) {
             cfd = new AnnotatedFieldImpl(name);
-            complexFields.put(name, cfd);
+            annotatedFields.put(name, cfd);
         }
         return cfd;
     }
@@ -1070,8 +1030,8 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
      */
     public AnnotatedField registerComplexField(String fieldName, String mainPropName) {
         ensureNotFrozen();
-        if (complexFields.containsKey(fieldName))
-            return complexFields.get(fieldName);
+        if (annotatedFields.exists(fieldName))
+            return annotatedFields.get(fieldName);
         // Not registered yet; do so now. Note that we only add the main property,
         // not the other properties, but that's okay; they're not needed at index
         // time and will be detected at search time.
@@ -1172,32 +1132,32 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
         versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
         versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);
         versionInfo.put("alwaysAddClosingToken", true); // always true, but BL check for it, so required
-        versionInfo.put("tagLengthInPayload", true);    // always true, but BL check for it, so required
+        versionInfo.put("tagLengthInPayload", true); // always true, but BL check for it, so required
     }
 
     private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups,
             ConfigInputFormat config) {
         ensureNotFrozen();
-    
+
         // Add metadata field groups info
         ConfigCorpus corpusConfig = config.getCorpusConfig();
-        for (ConfigMetadataFieldGroup g : corpusConfig.getMetadataFieldGroups().values()) {
+        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
             ObjectNode h = metaGroups.addObject();
             h.put("name", g.getName());
             if (g.getFields().size() > 0) {
                 ArrayNode i = h.putArray("fields");
-                for (String f : g.getFields()) {
+                for (String f: g.getFields()) {
                     i.add(f);
                 }
             }
             if (g.isAddRemainingFields())
                 h.put("addRemainingFields", true);
         }
-    
+
         // Add metadata info
         String defaultAnalyzer = config.getMetadataDefaultAnalyzer();
-        for (ConfigMetadataBlock b : config.getMetadataBlocks()) {
-            for (ConfigMetadataField f : b.getFields()) {
+        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+            for (ConfigMetadataField f: b.getFields()) {
                 if (f.isForEach())
                     continue;
                 ObjectNode g = metadata.putObject(f.getName());
@@ -1210,18 +1170,18 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 g.put("unknownCondition", f.getUnknownCondition().stringValue());
                 g.put("unknownValue", f.getUnknownValue());
                 ObjectNode h = g.putObject("displayValues");
-                for (Entry<String, String> e : f.getDisplayValues().entrySet()) {
+                for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
                     h.put(e.getKey(), e.getValue());
                 }
                 ArrayNode i = g.putArray("displayOrder");
-                for (String v : f.getDisplayOrder()) {
+                for (String v: f.getDisplayOrder()) {
                     i.add(v);
                 }
             }
         }
-    
+
         // Add complex field info
-        for (ConfigAnnotatedField f : config.getAnnotatedFields().values()) {
+        for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
             ObjectNode g = complex.putObject(f.getName());
             g.put("displayName", f.getDisplayName());
             g.put("description", f.getDescription());
@@ -1229,7 +1189,7 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
             ArrayNode displayOrder = g.putArray("displayOrder");
             ArrayNode noForwardIndexProps = g.putArray("noForwardIndexProps");
             ArrayNode annotations = g.putArray("annotations");
-            for (ConfigAnnotation a : f.getAnnotations().values()) {
+            for (ConfigAnnotation a: f.getAnnotations().values()) {
                 displayOrder.add(a.getName());
                 if (!a.createForwardIndex())
                     noForwardIndexProps.add(a.getName());
@@ -1239,17 +1199,18 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
                 annotation.put("description", a.getDescription());
                 annotation.put("uiType", a.getUiType());
             }
-            for (ConfigStandoffAnnotations standoff : f.getStandoffAnnotations()) {
-                for (ConfigAnnotation a : standoff.getAnnotations().values()) {
+            for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
+                for (ConfigAnnotation a: standoff.getAnnotations().values()) {
                     displayOrder.add(a.getName());
                     if (!a.createForwardIndex())
                         noForwardIndexProps.add(a.getName());
                 }
             }
         }
-    
-        // Also (recursively) add metadata and complex field config from any linked documents
-        for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
+
+        // Also (recursively) add metadata and complex field config from any linked
+        // documents
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
             if (format.isConfigurationBased())
                 addFieldInfoFromConfig(metadata, complex, metaGroups, format.getConfig());
@@ -1259,9 +1220,9 @@ public class IndexMetadataImpl implements IndexMetadata, Freezable {
     @Override
     public void freeze() {
         this.frozen = true;
-        complexFields.values().forEach(f -> f.freeze());
+        annotatedFields.freeze();
         metadataFields.freeze();
-        // TODO: freeze other objects we own         
+        // TODO: freeze other objects we own
     }
 
     @Override
