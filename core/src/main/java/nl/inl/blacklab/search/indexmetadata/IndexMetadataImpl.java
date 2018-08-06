@@ -63,11 +63,11 @@ import nl.inl.util.StringUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadata implements Freezable {
+public class IndexMetadataImpl implements Freezable {
     
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 
-    protected static final Logger logger = LogManager.getLogger(IndexMetadata.class);
+    private static final Logger logger = LogManager.getLogger(IndexMetadataImpl.class);
 
     private static final String METADATA_FILE_NAME = "indexmetadata";
 
@@ -76,94 +76,94 @@ public class IndexMetadata implements Freezable {
      *
      * 3: first version to include index metadata file 3.1: tag length in payload
      */
-    static final String LATEST_INDEX_FORMAT = "3.1";
+    private static final String LATEST_INDEX_FORMAT = "3.1";
 
     /** What keys may occur at top level? */
-    static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
             "displayName", "description", "contentViewable", "textDirection",
             "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
 
     /** What keys may occur under versionInfo? */
-    static final Set<String> KEYS_VERSION_INFO = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_VERSION_INFO = new HashSet<>(Arrays.asList(
             "indexFormat", "blackLabBuildTime", "blackLabVersion", "timeCreated",
             "timeModified", "alwaysAddClosingToken", "tagLengthInPayload"));
 
     /** What keys may occur under fieldInfo? */
-    static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
             "namingScheme", "unknownCondition", "unknownValue",
             "metadataFields", "complexFields", "metadataFieldGroups",
             "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
 
     /** What keys may occur under metadataFieldGroups group? */
-    static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
             "name", "fields", "addRemainingFields"));
 
     /** What keys may occur under metadata field config? */
-    static final Set<String> KEYS_META_FIELD_CONFIG = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_META_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "type", "displayName", "uiType",
             "description", "group", "analyzer",
             "unknownValue", "unknownCondition", "values",
             "displayValues", "displayOrder", "valueListComplete"));
 
     /** What keys may occur under complex field config? */
-    static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
+    private static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** The complex fields in our index */
-    protected Map<String, AnnotatedFieldImpl> complexFields;
+    private Map<String, AnnotatedFieldImpl> complexFields;
 
     /**
      * The main contents field in our index. This is either the complex field with
      * the name "contents", or if that doesn't exist, the first complex field found.
      */
-    protected AnnotatedFieldImpl mainContentsField;
+    private AnnotatedFieldImpl mainContentsField;
 
     /** Where to save indexmetadata.json */
-    protected File indexDir;
+    private File indexDir;
 
     /** Index display name */
-    protected String displayName;
+    private String displayName;
 
     /** Index description */
-    protected String description;
+    private String description;
 
     /** When BlackLab.jar was built */
-    protected String blackLabBuildTime;
+    private String blackLabBuildTime;
 
     /** BlackLab version used to (initially) create index */
-    protected String blackLabVersion;
+    private String blackLabVersion;
 
     /** Format the index uses */
-    protected String indexFormat;
+    private String indexFormat;
 
     /** Time at which index was created */
-    protected String timeCreated;
+    private String timeCreated;
 
     /** Time at which index was created */
-    protected String timeModified;
+    private String timeModified;
 
     /**
      * Do we always have words+1 tokens (before we sometimes did, if an XML tag
      * occurred after the last word; now we always make sure we have it, so we can
      * always skip the last token when matching)
      */
-    protected boolean alwaysHasClosingToken = false;
+    private boolean alwaysHasClosingToken = false;
 
     /**
      * Do we store tag length in the payload (v3.1) or do we store tag ends in a
      * separate property (v3)?
      */
-    protected boolean tagLengthInPayload = true;
+    private boolean tagLengthInPayload = true;
 
     /**
      * May all users freely retrieve the full content of documents, or is that
      * restricted?
      */
-    protected boolean contentViewable = false;
+    private boolean contentViewable = false;
 
     /** Text direction for this corpus */
-    protected TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
+    private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
     /**
      * Indication of the document format(s) in this index.
@@ -171,14 +171,14 @@ public class IndexMetadata implements Freezable {
      * This is in the form of a format identifier as understood by the
      * DocumentFormats class (either an abbreviation or a (qualified) class name).
      */
-    protected String documentFormat;
+    private String documentFormat;
 
-    protected long tokenCount = 0;
+    private long tokenCount = 0;
 
     /**
      * When we save this file, should we write it as json or yaml?
      */
-    protected boolean saveAsJson = true;
+    private boolean saveAsJson = true;
 
     private MetadataFieldsImpl metadataFields;
 
@@ -193,7 +193,7 @@ public class IndexMetadata implements Freezable {
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
      */
-    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex) {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex) {
         this(reader, indexDir, createNewIndex, (File) null);
     }
 
@@ -207,7 +207,7 @@ public class IndexMetadata implements Freezable {
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      */
-    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -270,7 +270,7 @@ public class IndexMetadata implements Freezable {
      * @param indexTemplateFile JSON file to use as template for index structure /
      *            metadata (if creating new index)
      */
-    public IndexMetadata(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -325,7 +325,7 @@ public class IndexMetadata implements Freezable {
     // Methods that read data
     // ------------------------------------------------------------------------------
 
-    protected String determineIndexName() {
+    private String determineIndexName() {
         String name = indexDir.getName();
         if (name.equals("index"))
             name = indexDir.getAbsoluteFile().getParentFile().getName();
@@ -469,7 +469,6 @@ public class IndexMetadata implements Freezable {
      * @param fieldName the field name to determine the type for
      * @return type of the field (text or numeric)
      */
-    @SuppressWarnings("static-method") // might not be static in the future
     private FieldType getFieldType(String fieldName) {
 
         /* NOTE: detecting the field type does not work well.
@@ -789,7 +788,7 @@ public class IndexMetadata implements Freezable {
         if (initTimestamps) {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
-            timeModified = timeCreated = IndexMetadata.getTimestamp();
+            timeModified = timeCreated = IndexMetadataImpl.getTimestamp();
         } else {
             blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
             blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
@@ -1043,7 +1042,7 @@ public class IndexMetadata implements Freezable {
             blackLabBuildTime = Searcher.getBlackLabBuildTime();
             blackLabVersion = Searcher.getBlackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
-            timeModified = timeCreated = IndexMetadata.getTimestamp();
+            timeModified = timeCreated = IndexMetadataImpl.getTimestamp();
     
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
@@ -1110,7 +1109,7 @@ public class IndexMetadata implements Freezable {
      */
     public void setModified() {
         ensureNotFrozen();
-        timeModified = IndexMetadata.getTimestamp();
+        timeModified = IndexMetadataImpl.getTimestamp();
     }
 
     /**
@@ -1221,9 +1220,9 @@ public class IndexMetadata implements Freezable {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
         versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
-        versionInfo.put("timeCreated", IndexMetadata.getTimestamp());
-        versionInfo.put("timeModified", IndexMetadata.getTimestamp());
-        versionInfo.put("indexFormat", IndexMetadata.LATEST_INDEX_FORMAT);
+        versionInfo.put("timeCreated", IndexMetadataImpl.getTimestamp());
+        versionInfo.put("timeModified", IndexMetadataImpl.getTimestamp());
+        versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);
         versionInfo.put("alwaysAddClosingToken", true);
         versionInfo.put("tagLengthInPayload", true);
     }

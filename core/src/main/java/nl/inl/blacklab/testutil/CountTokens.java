@@ -9,7 +9,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Searcher.LuceneDocTask;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.util.LogUtil;
 
 /**
@@ -79,7 +79,7 @@ public class CountTokens {
         System.out.println("Getting IndexReader...");
         final IndexReader reader = searcher.getIndexReader();
 
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
         final String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
 
         System.out.println("Calling forEachDocument()...");

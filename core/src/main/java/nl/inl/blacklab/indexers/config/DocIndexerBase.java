@@ -32,7 +32,7 @@ import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.complex.ComplexField;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
@@ -436,7 +436,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+            IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());

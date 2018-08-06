@@ -30,7 +30,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
@@ -71,7 +71,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         propMain = contentsField.getMainProperty();
         String propName = ComplexFieldUtil.PUNCTUATION_PROP_NAME;
         propPunct = contentsField.addProperty(propName, getSensitivitySetting(propName), false);
-        IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
         AnnotatedField f = indexMetadata.registerComplexField(contentsField.getName(), propMain.getName());
         contentsField.setAnnotatedField(f);
     }
@@ -241,7 +241,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+            IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());

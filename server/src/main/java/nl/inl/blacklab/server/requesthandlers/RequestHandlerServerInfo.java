@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -44,7 +44,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
             ds.startMap();
 
             synchronized (index) {
-                IndexMetadata indexMetadata = index.getIndexMetadata();
+                IndexMetadataImpl indexMetadata = index.getIndexMetadata();
                 IndexStatus status = index.getStatus();
 
                 ds.entry("displayName", indexMetadata.getDisplayName());

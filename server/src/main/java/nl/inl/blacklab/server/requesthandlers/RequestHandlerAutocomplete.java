@@ -7,7 +7,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotations;
@@ -54,7 +54,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
                     "Bad URL. Specify a field name and optionally a property to autocomplete.");
         }
         Searcher searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
         if (complexFieldName == null && indexMetadata.getComplexFields().contains(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Also specify a property to autocomplete for complexfield: " + fieldName);

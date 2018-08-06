@@ -15,7 +15,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -157,7 +157,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
-            IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
+            IndexMetadataImpl indexMetadata = this.getSearcher().getIndexMetadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
             String tokenLengthField = indexMetadata.getMainContentsField().tokenLengthField();
 

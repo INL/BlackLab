@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
@@ -82,7 +82,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
 
         Searcher searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        IndexMetadataImpl indexMetadata = searcher.getIndexMetadata();
 
         if (indexMetadata.getComplexFields().contains(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();

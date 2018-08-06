@@ -42,7 +42,7 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.BLRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.util.UnicodeStream;
 
@@ -351,7 +351,7 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        IndexMetadata indexMetadata = indexer.getSearcher().getIndexMetadata();
+        IndexMetadataImpl indexMetadata = indexer.getSearcher().getIndexMetadata();
         indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);

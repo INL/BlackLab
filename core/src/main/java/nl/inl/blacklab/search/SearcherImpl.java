@@ -59,7 +59,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
@@ -135,7 +135,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, config);
+        indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
         if (!indexMode)
             indexMetadata.freeze();
 
@@ -163,7 +163,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         // Determine the index structure
         if (traceIndexOpening)
             logger.debug("  Determining index structure...");
-        indexMetadata = new IndexMetadata(reader, indexDir, createNewIndex, indexTemplateFile);
+        indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
         if (!indexMode)
             indexMetadata.freeze();
 

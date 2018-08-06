@@ -209,7 +209,7 @@ class AnnotationImpl implements Annotation, Freezable {
         // If not, keep searching.
         for (MatchSensitivity sensitivity: alternatives) {
             String luceneAltName = ComplexFieldUtil.propertyField(fieldName, name, sensitivity.luceneFieldSuffix());
-            if (IndexMetadata.hasOffsets(reader, luceneAltName)) {
+            if (IndexMetadataImpl.hasOffsets(reader, luceneAltName)) {
                 offsetsAlternative = sensitivity;
                 return true;
             }

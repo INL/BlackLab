@@ -60,7 +60,7 @@ import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.nint.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFields;
@@ -945,7 +945,7 @@ public class QueryTool {
     }
 
     private void showIndexMetadata() {
-        IndexMetadata s = searcher.getIndexMetadata();
+        IndexMetadataImpl s = searcher.getIndexMetadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
         s.print(out);
     }

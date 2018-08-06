@@ -46,7 +46,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResults;
@@ -219,7 +219,7 @@ public abstract class Searcher {
     public static Searcher createIndex(File indexDir, ConfigInputFormat config, String displayName,
             String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
         Searcher rv = openForWriting(indexDir, true, config);
-        IndexMetadata indexMetadata = rv.getIndexMetadata();
+        IndexMetadataImpl indexMetadata = rv.getIndexMetadata();
         if (!StringUtils.isEmpty(displayName))
             indexMetadata.setDisplayName(displayName);
         if (config != null && config.getName() != null)
@@ -407,7 +407,7 @@ public abstract class Searcher {
     protected Analyzer analyzer = new BLStandardAnalyzer();
 
     /** Structure of our index */
-    protected IndexMetadata indexMetadata;
+    protected IndexMetadataImpl indexMetadata;
 
     protected ContentStoresManager contentStores = new ContentStoresManager();
 
@@ -566,7 +566,7 @@ public abstract class Searcher {
      *
      * @return the structure object
      */
-    public IndexMetadata getIndexMetadata() {
+    public IndexMetadataImpl getIndexMetadata() {
         return indexMetadata;
     }
 

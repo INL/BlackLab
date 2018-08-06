@@ -1,8 +1,8 @@
-package nl.inl.blacklab.interfaces.struct;
+package nl.inl.blacklab.search.indexmetadata.nint;
 
 import java.util.Date;
 
-import nl.inl.blacklab.index.config.ConfigCorpus.TextDirection;
+import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
 public interface IndexMetadata {
