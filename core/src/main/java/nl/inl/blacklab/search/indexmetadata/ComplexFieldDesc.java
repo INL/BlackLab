@@ -17,6 +17,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil.BookkeepFieldType;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
@@ -150,7 +151,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         return props.containsKey(fieldName);
     }
 
-    public AnnotationImpl getMainProperty() {
+    public Annotation getMainProperty() {
         if (mainProperty == null && mainPropertyName != null) {
             // Set during indexing, when we don't actually have property information
             // available (because the index is being built up, so we couldn't detect
@@ -164,7 +165,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
     }
 
     public void print(PrintWriter out) {
-        for (AnnotationImpl pr : props.values()) {
+        for (Annotation pr : props.values()) {
             out.println("  * Property: " + pr.toString());
         }
         out.println("  * " + (contentStore ? "Includes" : "No") + " content store");
@@ -241,7 +242,7 @@ public class ComplexFieldDesc extends FieldImpl implements Freezable {
         ensureNotFrozen();
         AnnotationImpl pd = props.get(name);
         if (pd == null) {
-            pd = new AnnotationImpl(name);
+            pd = new AnnotationImpl(this, name);
             props.put(name, pd);
         }
         return pd;

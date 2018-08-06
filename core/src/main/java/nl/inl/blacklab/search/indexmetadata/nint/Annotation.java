@@ -2,13 +2,15 @@ package nl.inl.blacklab.search.indexmetadata.nint;
 
 import java.util.Collection;
 
+import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 
 /** An annotation on an annotated field. */
-interface Annotation {
+public interface Annotation {
 	
 	/** @return field for which this is an annotation */
-	AnnotatedField field();
+	ComplexFieldDesc field();
 
 	/** @return this annotation's name */
 	String name();
@@ -26,7 +28,10 @@ interface Annotation {
 	 *
 	 * @return the alternative, or null if there is none.
 	 */
-	AnnotationSensitivity offsetsField();
+	AnnotationSensitivity offsetsSensitivity();
+
+	@Deprecated
+    SensitivitySetting sensitivitySetting();
 
 	/**
 	 * What sensitivity alternatives were indexed for this property?

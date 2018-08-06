@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 
 /**
  * Some utility functions for dealing with complex field names.
@@ -399,14 +399,14 @@ public final class ComplexFieldUtil {
 
     public static String mainPropertyField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
-        AnnotationImpl pr = cf.getMainProperty();
+        Annotation pr = cf.getMainProperty();
         return propertyField(fieldName, pr.name());
     }
 
     public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
         ComplexFieldDesc cf = structure.getComplexFieldDesc(fieldName);
-        AnnotationImpl pr = cf.getMainProperty();
-        return propertyField(fieldName, pr.name(), pr.offsetsAlternative().luceneFieldSuffix());
+        Annotation pr = cf.getMainProperty();
+        return pr.offsetsSensitivity().luceneField();
     }
 
     public static String getDefaultMainPropName() {

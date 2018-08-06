@@ -18,9 +18,9 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -174,15 +174,15 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.startEntry("properties").startMap();
         List<String> properties = new ArrayList<>(fieldDesc.getProperties());
         for (String propName : properties) {
-            AnnotationImpl propDesc = fieldDesc.getPropertyDesc(propName);
+            Annotation propDesc = fieldDesc.getPropertyDesc(propName);
             ds.startAttrEntry("property", "name", propName).startMap();
             ds
                     .entry("displayName", propDesc.displayName())
                     .entry("description", propDesc.description())
                     .entry("uiType", propDesc.uiType())
                     .entry("hasForwardIndex", propDesc.hasForwardIndex())
-                    .entry("sensitivity", propDesc.sensitivities().toString())
-                    .entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsAlternative().luceneFieldSuffix()))
+                    .entry("sensitivity", propDesc.sensitivitySetting().toString())
+                    .entry("offsetsAlternative", StringUtil.nullToEmpty(propDesc.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
                     .entry("isInternal", propDesc.isInternal());
             String luceneField = ComplexFieldUtil.propertyField(fieldName, propName,
                     ComplexFieldUtil.INSENSITIVE_ALT_NAME);

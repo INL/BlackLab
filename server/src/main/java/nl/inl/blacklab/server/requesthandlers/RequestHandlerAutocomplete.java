@@ -9,8 +9,8 @@ import nl.inl.blacklab.index.complex.ComplexFieldUtil;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -83,13 +83,13 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             if (!complexFieldDesc.hasProperty(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",
                         "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
-            AnnotationImpl prop = complexFieldDesc.getPropertyDesc(fieldName);
-            if (prop.hasAlternative(MatchSensitivity.INSENSITIVE)) {
+            Annotation prop = complexFieldDesc.getPropertyDesc(fieldName);
+            if (prop.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
                 fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, ComplexFieldUtil.INSENSITIVE_ALT_NAME);
             } else {
                 sensitiveMatching = true;
-                fieldName = ComplexFieldUtil.propertyField(complexFieldName, fieldName, prop.offsetsAlternative().luceneFieldSuffix());
+                fieldName = prop.offsetsSensitivity().luceneField();
             }
         }
 

@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
-import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
-import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /**
@@ -138,8 +138,8 @@ public class QueryExecutionContext {
             return null;
 
         // Find the property
-        AnnotationImpl pd = cfd.getPropertyDesc(propName);
-        SensitivitySetting sensitivity = pd.sensitivities();
+        Annotation pd = cfd.getPropertyDesc(propName);
+        SensitivitySetting sensitivity = pd.sensitivitySetting();
 //		Collection<String> availableAlternatives = Collections.emptyList();
 //		if (pd != null) {
 //			availableAlternatives = pd.getAlternatives();
@@ -225,7 +225,7 @@ public class QueryExecutionContext {
         }
 
         // Find the property
-        AnnotationImpl pd = cfd.getPropertyDesc(propName);
+        Annotation pd = cfd.getPropertyDesc(propName);
         if (pd == null)
             return ComplexFieldUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
 
@@ -236,7 +236,7 @@ public class QueryExecutionContext {
 
         // Find the first available alternative to use
         for (String alt : alternatives) {
-            if (pd.hasAlternative(MatchSensitivity.fromLuceneFieldCode(alt))) {
+            if (pd.hasSensitivity(MatchSensitivity.fromLuceneFieldCode(alt))) {
                 // NOTE: is this loop necessary at all? getAlternatives() only
                 //  returns available alternatives, so the first one should always
                 //  be okay, right?

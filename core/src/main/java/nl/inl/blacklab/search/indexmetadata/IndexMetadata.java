@@ -50,6 +50,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataFieldGroup;
@@ -437,7 +438,7 @@ public class IndexMetadata implements Freezable {
             Json.arrayOfStrings(arr, f.getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
             for (String propName : f.getProperties()) {
-                AnnotationImpl propDesc = f.getPropertyDesc(propName);
+                Annotation propDesc = f.getPropertyDesc(propName);
                 ObjectNode annot = annots.addObject();
                 annot.put("name", propDesc.name());
                 annot.put("displayName", propDesc.displayName());
@@ -914,7 +915,7 @@ public class IndexMetadata implements Freezable {
                     while (itAnnot.hasNext()) {
                         JsonNode annotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = annotation.fields();
-                        AnnotationImpl propDesc = new AnnotationImpl();
+                        AnnotationImpl propDesc = new AnnotationImpl(fieldDesc);
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {

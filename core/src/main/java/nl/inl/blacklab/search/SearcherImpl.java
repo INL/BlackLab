@@ -61,7 +61,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.ComplexFieldDesc;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.AnnotationImpl;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
 import nl.inl.blacklab.search.indexmetadata.nint.MetadataField;
 import nl.inl.util.ExUtil;
 import nl.inl.util.LuceneUtil;
@@ -525,7 +525,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         for (String field : indexMetadata.getComplexFields()) {
             ComplexFieldDesc fieldDesc = indexMetadata.getComplexFieldDesc(field);
             for (String property : fieldDesc.getProperties()) {
-                AnnotationImpl propDesc = fieldDesc.getPropertyDesc(property);
+                Annotation propDesc = fieldDesc.getPropertyDesc(property);
                 if (propDesc.hasForwardIndex()) {
                     // This property has a forward index. Make sure it is open.
                     String fieldProp = ComplexFieldUtil.propertyField(field, property);
@@ -568,7 +568,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         ComplexFieldDesc complexFieldDesc = indexMetadata.getComplexFieldDesc(fieldName);
         if (complexFieldDesc == null)
             throw new IllegalArgumentException("Unknown complex field " + fieldName);
-        AnnotationImpl mainProperty = complexFieldDesc.getMainProperty();
+        Annotation mainProperty = complexFieldDesc.getMainProperty();
         if (mainProperty == null)
             throw new IllegalArgumentException("Main property not found for " + fieldName);
         String mainPropName = mainProperty.name();

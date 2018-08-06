@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,11 +10,17 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.index.complex.ComplexFieldProperty.SensitivitySetting;
 import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.search.indexmetadata.nint.Annotation;
+import nl.inl.blacklab.search.indexmetadata.nint.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.nint.Freezable;
 import nl.inl.blacklab.search.indexmetadata.nint.MatchSensitivity;
 
 /** Annotation on a field. */
-public class AnnotationImpl implements Freezable {
+class AnnotationImpl implements Annotation, Freezable {
+    
+    /** The field this is an annotation for. */
+    private ComplexFieldDesc field;
+    
     /** The property name */
     private String name;
 
@@ -48,13 +56,18 @@ public class AnnotationImpl implements Freezable {
 
     private boolean frozen;
 
-    AnnotationImpl() {
-        this(null);
+    AnnotationImpl(ComplexFieldDesc field) {
+        this(field, null);
     }
 
-    AnnotationImpl(String name) {
+    AnnotationImpl(ComplexFieldDesc field, String name) {
+        this.field = field;
         this.name = name;
         forwardIndex = false;
+    }
+    
+    public ComplexFieldDesc field() {
+        return field;
     }
 
     @Override
@@ -98,8 +111,33 @@ public class AnnotationImpl implements Freezable {
      * 
      * @return the sensitivity setting
      */
-    public SensitivitySetting sensitivities() {
+    public SensitivitySetting sensitivitySetting() {
         return sensitivity;
+    }
+    
+    public Collection<MatchSensitivity> sensitivities() {
+        return Collections.unmodifiableSet(alternatives);
+    }
+    
+    public boolean hasSensitivity(MatchSensitivity sensitivity) {
+        return alternatives.contains(sensitivity);
+    }
+
+    @Override
+    public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
+        if (!hasSensitivity(sensitivity))
+            throw new UnsupportedOperationException("Specified sensitivity not present for field " + luceneFieldPrefix());
+        return new AnnotationSensitivity() {
+            @Override
+            public Annotation annotation() {
+                return AnnotationImpl.this;
+            }
+
+            @Override
+            public MatchSensitivity sensitivity() {
+                return sensitivity;
+            }
+        };
     }
 
     /**
@@ -109,18 +147,18 @@ public class AnnotationImpl implements Freezable {
      *
      * @return the alternative, or null if there is none.
      */
-    public MatchSensitivity offsetsAlternative() {
-        return offsetsAlternative == null ? null : offsetsAlternative;
-    }
+    public AnnotationSensitivity offsetsSensitivity() {
+        return offsetsAlternative == null ? null : new AnnotationSensitivity() {
+            @Override
+            public Annotation annotation() {
+                return AnnotationImpl.this;
+            }
 
-    /**
-     * Does this property have the sensitivity alternative specified?
-     * 
-     * @param sensitivity sensitivity alternative
-     * @return true if it exists, false if not
-     */
-    public boolean hasAlternative(MatchSensitivity sensitivity) {
-        return alternatives.contains(sensitivity);
+            @Override
+            public MatchSensitivity sensitivity() {
+                return offsetsAlternative;
+            }
+        };
     }
 
     public String displayName() {
