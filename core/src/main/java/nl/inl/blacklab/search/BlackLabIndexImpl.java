@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.text.Collator;
 import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -84,7 +83,7 @@ import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
-public class BlackLabIndexImpl implements BlackLabIndex {
+public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     
     // Class variables
     //---------------------------------------------------------------
@@ -134,7 +133,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @return the searcher in index mode
      * @throws IOException
      */
-    public static BlackLabIndex openForWriting(File indexDir, boolean createNewIndex) throws IOException {
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws IOException {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, (File) null);
     }
 
@@ -151,7 +150,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @return the searcher in index mode
      * @throws IOException
      */
-    public static BlackLabIndex openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
             throws IOException {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, indexTemplateFile);
     }
@@ -170,7 +169,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @return the searcher in index mode
      * @throws IOException
      */
-    public static BlackLabIndex openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws IOException {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, config);
     }
@@ -182,7 +181,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @return a Searcher for the new index, in index mode
      * @throws IOException
      */
-    public static BlackLabIndex createIndex(File indexDir) throws IOException {
+    public static BlackLabIndexWriter createIndex(File indexDir) throws IOException {
         return createIndex(indexDir, null, null, null, false, TextDirection.LEFT_TO_RIGHT);
     }
 
@@ -214,9 +213,9 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @return a Searcher for the new index, in index mode
      * @throws IOException
      */
-    public static BlackLabIndex createIndex(File indexDir, ConfigInputFormat config, String displayName,
+    public static BlackLabIndexWriter createIndex(File indexDir, ConfigInputFormat config, String displayName,
             String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
-        BlackLabIndex rv = openForWriting(indexDir, true, config);
+        BlackLabIndexWriter rv = openForWriting(indexDir, true, config);
         IndexMetadataWriter indexMetadata = rv.metadataWriter();
         if (!StringUtils.isEmpty(displayName))
             indexMetadata.setDisplayName(displayName);
@@ -682,16 +681,6 @@ public class BlackLabIndexImpl implements BlackLabIndex {
         if (endAtEndOfDoc)
             ends[0] = -1;
         return new int[] { starts[0], ends[0] };
-    }
-
-    @Override
-    public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, AnnotatedField field, int startAtWord,
-            int endAtWord) {
-        Hit hit = new Hit(docId, startAtWord, endAtWord);
-        Hits hits = Hits.fromList(this, Arrays.asList(hit));
-        hits.settings().setConcordanceField(field);
-        Kwic kwic = hits.getKwic(hit, 0);
-        return kwic.getDocContents();
     }
 
     @Override

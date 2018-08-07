@@ -47,8 +47,8 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabException;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
@@ -180,7 +180,7 @@ public class Indexer {
     protected DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
     /** Our index */
-    protected BlackLabIndex searcher;
+    protected BlackLabIndexWriter searcher;
 
     /** Stop after indexing this number of docs. -1 if we shouldn't stop. */
     protected int maxNumberOfDocsToIndex = -1;
@@ -719,7 +719,7 @@ public class Indexer {
         return searcher.writer();
     }
 
-    public BlackLabIndex getSearcher() {
+    public BlackLabIndexWriter getSearcher() {
         return searcher;
     }
 

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.List;
@@ -10,15 +9,12 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.store.LockObtainFailedException;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
@@ -28,7 +24,6 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.DocContentsFromForwardIndex;
 import nl.inl.blacklab.search.LuceneDocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -36,7 +31,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResults;
@@ -79,11 +73,6 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public void rollback() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Document document(int doc) {
         throw new UnsupportedOperationException();
     }
@@ -120,23 +109,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
-            throws IOException, CorruptIndexException, LockObtainFailedException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public IndexWriter writer() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public File indexDirectory() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void delete(Query q) {
         throw new UnsupportedOperationException();
     }
 
@@ -192,11 +165,6 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public IndexMetadataWriter metadataWriter() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void forEachDocument(LuceneDocTask task) {
         throw new UnsupportedOperationException();
     }
@@ -223,12 +191,6 @@ public class MockSearcher implements BlackLabIndex {
 
     @Override
     public QueryExplanation explain(BLSpanQuery query) throws TooManyClauses {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public DocContentsFromForwardIndex getContentFromForwardIndex(int docId, AnnotatedField field, int startAtWord,
-            int endAtWord) {
         throw new UnsupportedOperationException();
     }
 
@@ -291,11 +253,6 @@ public class MockSearcher implements BlackLabIndex {
     @Override
     public boolean canDoNfaMatching() {
         return false;
-    }
-
-    @Override
-    public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
-        throw new UnsupportedOperationException();
     }
 
 }
