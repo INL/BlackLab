@@ -62,13 +62,13 @@ public class DocContentsFromForwardIndex extends DocContents {
     }
 
     /**
-     * Get the tokens of a specific property
+     * Get the tokens of a specific annotation
      * 
-     * @param property the property to get the tokens for
+     * @param annotation annotation to get the tokens for
      * @return the tokens
      */
-    public List<String> getTokens(Annotation property) {
-        return getSinglePropertyContext(property);
+    public List<String> getTokens(Annotation annotation) {
+        return getSinglePropertyContext(annotation);
     }
 
     @Override
@@ -96,15 +96,15 @@ public class DocContentsFromForwardIndex extends DocContents {
     }
 
     /**
-     * Get the context of a specific property from the complete context list.
+     * Get the context of a specific annotation from the complete context list.
      *
-     * @param property the property to get the context for
-     * @return the context for this property
+     * @param annotation the annotation to get the context for
+     * @return the context for this annotation
      */
-    private List<String> getSinglePropertyContext(Annotation property) {
+    private List<String> getSinglePropertyContext(Annotation annotation) {
         final int nProp = properties.size();
         final int size = tokens.size() / nProp;
-        final int propIndex = properties.indexOf(property);
+        final int propIndex = properties.indexOf(annotation);
         if (propIndex == -1)
             return null;
         return new AbstractList<String>() {

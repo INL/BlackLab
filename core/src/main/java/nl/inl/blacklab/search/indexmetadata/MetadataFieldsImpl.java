@@ -19,7 +19,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
      */
     private Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
 
-    /** All non-complex fields in our index (metadata fields) and their types. */
+    /** All non-annotated fields in our index (metadata fields) and their types. */
     private Map<String, MetadataFieldImpl> metadataFieldInfos;
 
     /**

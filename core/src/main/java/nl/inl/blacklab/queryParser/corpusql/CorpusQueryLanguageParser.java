@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
@@ -25,7 +26,6 @@ import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternProperty;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
@@ -92,25 +92,25 @@ public class CorpusQueryLanguageParser implements CorpusQueryLanguageParserConst
         return allowSingleQuotes;
     }
 
-    private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+    private String defaultAnnotation = "word";
 
-    public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
+    public void setDefaultAnnotation(IndexMetadata indexMetadata, String fieldName) {
+        defaultAnnotation = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
     }
 
-    public void setDefaultProperty(String property) {
-        defaultProperty = property;
+    public void setDefaultAnnotation(String annotation) {
+        defaultAnnotation = annotation;
     }
 
-    public String getDefaultProperty() {
-        return defaultProperty;
+    public String getDefaultAnnotation() {
+        return defaultAnnotation;
     }
 
-    private TextPattern propertyClause(String prop, TextPattern value) {
-        // Main property has a name. Use that.
+    private TextPattern annotationClause(String prop, TextPattern value) {
+        // Main annotation has a name. Use that.
         if (prop == null || prop.length() == 0)
-            prop = defaultProperty;
-        return new TextPatternProperty(prop, value);
+            prop = defaultAnnotation;
+        return new TextPatternAnnotation(prop, value);
     }
 
 // --- Grammar rules start here --- 
@@ -735,7 +735,7 @@ if (b == null)
         jj_la1[25] = jj_gen;
         ;
       }
-{if ("" != null) return propertyClause(prop, v);}
+{if ("" != null) return annotationClause(prop, v);}
     } else {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case NAME:{
@@ -751,7 +751,7 @@ if (b == null)
           jj_la1[26] = jj_gen;
           ;
         }
-{if ("" != null) return new TextPatternNot(propertyClause(prop, v));}
+{if ("" != null) return new TextPatternNot(annotationClause(prop, v));}
         break;
         }
       case QUOTED_STRING:

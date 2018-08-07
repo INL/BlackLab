@@ -40,7 +40,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
- * (the complex field name instead of the full Lucene field name) in order to be
+ * (the annotated field name instead of the full Lucene field name) in order to be
  * able to combine queries in different Lucene fields using AND and OR. Also
  * makes sure the SpanWeight returned by createWeight() produces a BLSpans, not
  * a regular Spans.
@@ -194,7 +194,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
     @Override
     public boolean canMakeNfa() {
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR);
+        return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
     }
 
     @Override

@@ -6,17 +6,17 @@ import java.util.TreeMap;
 import java.util.stream.Stream;
 
 final class AnnotatedFieldsImpl implements AnnotatedFields {
-    /** The complex fields in our index */
-    private Map<String, AnnotatedFieldImpl> complexFields;
+    /** The annotated fields in our index */
+    private Map<String, AnnotatedFieldImpl> annotatedFields;
     
     /**
-     * The main contents field in our index. This is either the complex field with
-     * the name "contents", or if that doesn't exist, the first complex field found.
+     * The main contents field in our index. This is either the annotated field with
+     * the name "contents", or if that doesn't exist, the first annotated field found.
      */
     private AnnotatedFieldImpl mainContentsField;
 
     public AnnotatedFieldsImpl() {
-        complexFields = new TreeMap<>();
+        annotatedFields = new TreeMap<>();
     }
 
     @Override
@@ -26,7 +26,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @Override
     public Iterator<AnnotatedField> iterator() {
-        Iterator<AnnotatedFieldImpl> it = complexFields.values().iterator();
+        Iterator<AnnotatedFieldImpl> it = annotatedFields.values().iterator();
         return new Iterator<AnnotatedField>() {
             @Override
             public boolean hasNext() {
@@ -42,27 +42,27 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @Override
     public Stream<AnnotatedField> stream() {
-        return complexFields.values().stream().map(f -> (AnnotatedField)f);
+        return annotatedFields.values().stream().map(f -> (AnnotatedField)f);
     }
 
     @Override
     public AnnotatedField get(String fieldName) {
-        if (!complexFields.containsKey(fieldName))
-            throw new IllegalArgumentException("Complex field '" + fieldName + "' not found!");
-        return complexFields.get(fieldName);
+        if (!annotatedFields.containsKey(fieldName))
+            throw new IllegalArgumentException("Annotated field '" + fieldName + "' not found!");
+        return annotatedFields.get(fieldName);
     }
 
     @Override
     public boolean exists(String fieldName) {
-        return complexFields.containsKey(fieldName);
+        return annotatedFields.containsKey(fieldName);
     }
 
     public void freeze() {
-        complexFields.values().forEach(f -> f.freeze());
+        annotatedFields.values().forEach(f -> f.freeze());
     }
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {
-        complexFields.put(fieldName, fieldDesc);
+        annotatedFields.put(fieldName, fieldDesc);
     }
 
     public void setMainContentsField(AnnotatedFieldImpl mainContentsField) {

@@ -675,11 +675,11 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
                 BLSpanTermQuery blcl = (BLSpanTermQuery) cl;
                 if (!clausesAreSimpleTermsInSameProperty) {
-                    // We don't know if all our clauses are in the same property. Check.
+                    // We don't know if all our clauses are in the same annotation. Check.
                     if (luceneField == null) {
                         luceneField = blcl.getRealField();
                     } else if (!luceneField.equals(blcl.getRealField())) {
-                        // Not all in the same property. Can't rewrite to token state.
+                        // Not all in the same annotation. Can't rewrite to token state.
                         canBeTokenState = false;
                         break;
                     }

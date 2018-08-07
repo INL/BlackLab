@@ -42,7 +42,7 @@ public class TextPatternTerm extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         return new BLSpanTermQuery(new Term(context.luceneField(),
-                context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value))));
+                context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value))));
     }
 
     @Override

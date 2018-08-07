@@ -34,11 +34,11 @@ public abstract class MatchFilter {
     public abstract ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups);
 
     /**
-     * Let token property nodes look up the index of their property
+     * Let token annotation nodes look up the index of their annotation
      * 
      * @param fiAccessor forward index accessor
      */
-    public abstract void lookupPropertyIndices(ForwardIndexAccessor fiAccessor);
+    public abstract void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor);
 
     /**
      * Try to rewrite this filter into a more efficient version

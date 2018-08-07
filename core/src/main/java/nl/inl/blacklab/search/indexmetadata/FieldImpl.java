@@ -3,13 +3,13 @@ package nl.inl.blacklab.search.indexmetadata;
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
-    /** Complex field's name */
+    /** Field's name */
     protected String fieldName;
 
-    /** Complex field's name */
+    /** Field's name */
     protected String displayName;
 
-    /** Complex field's name */
+    /** Field's name */
     protected String description = "";
 
     /** Does the field have an associated content store? */
@@ -28,7 +28,7 @@ public abstract class FieldImpl implements Field {
     }
 
     /**
-     * Get this complex field's name
+     * Get this field's name
      * 
      * @return this field's name
      */
@@ -42,7 +42,7 @@ public abstract class FieldImpl implements Field {
     }
 
     /**
-     * Get this complex field's display name
+     * Get this field's display name
      * 
      * @return this field's display name
      */
@@ -56,9 +56,9 @@ public abstract class FieldImpl implements Field {
     }
 
     /**
-     * Get this complex field's display name
+     * Get this field's description
      * 
-     * @return this field's display name
+     * @return this field's description
      */
     @Override
     public String description() {

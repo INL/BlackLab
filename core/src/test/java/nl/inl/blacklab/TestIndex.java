@@ -204,7 +204,7 @@ public class TestIndex {
      * Return a list of concordance strings.
      *
      * @param hits the hits to display
-     * @return the left, match and right values for the "word" property
+     * @return the left, match and right values for the "word" annotation
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();

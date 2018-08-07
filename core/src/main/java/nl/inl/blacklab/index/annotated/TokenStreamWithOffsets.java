@@ -16,34 +16,26 @@
 /**
  *
  */
-package nl.inl.blacklab.index.complex;
+package nl.inl.blacklab.index.annotated;
 
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.PayloadAttribute;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.util.BytesRef;
-import org.eclipse.collections.api.IntIterable;
 import org.eclipse.collections.api.iterator.IntIterator;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 /**
- * Takes an {@code Iterable<String>} and iterates through it as a TokenStream.
+ * Takes a List&lt;String&gt; plus two List&lt;Integer&gt;'s and iterates
+ * through them as a TokenStream.
  *
- * The Strings are taken as terms, and the position increment is always 1.
+ * The Strings are taken as terms. The two integer-lists are taken as start
+ * chars and end chars. Token position increment is always 1.
  */
-class TokenStreamFromList extends TokenStream {
-
-    /** Iterator over the terms */
-    protected Iterator<String> iterator;
-
-    /** Iterator over the position increments */
-    private IntIterator incrementIt;
-
-    /** Iterator over the payloads, if any */
-    private Iterator<BytesRef> payloadIt = null;
-
+class TokenStreamWithOffsets extends TokenStream {
     /**
      * Term text of the current token
      */
@@ -55,34 +47,40 @@ class TokenStreamFromList extends TokenStream {
     protected PositionIncrementAttribute positionIncrementAttr;
 
     /**
-     * Payload of the current token
+     * Character offsets of the current token
      */
-    protected PayloadAttribute payloadAttr = null;
+    private OffsetAttribute offsetAttr;
 
-    public TokenStreamFromList(Iterable<String> tokens, IntIterable increments, Iterable<BytesRef> payload) {
+    protected Iterator<String> iterator;
+
+    protected IntIterator incrementIt;
+
+    private IntIterator startCharIt;
+
+    private IntIterator endCharIt;
+
+    public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
+            IntArrayList endChar) {
         clearAttributes();
         termAttr = addAttribute(CharTermAttribute.class);
+        offsetAttr = addAttribute(OffsetAttribute.class);
         positionIncrementAttr = addAttribute(PositionIncrementAttribute.class);
         positionIncrementAttr.setPositionIncrement(1);
 
         iterator = tokens.iterator();
         incrementIt = increments.intIterator();
-        if (payload != null) {
-            payloadAttr = addAttribute(PayloadAttribute.class);
-            payloadIt = payload.iterator();
-        }
+        startCharIt = startChar.intIterator();
+        endCharIt = endChar.intIterator();
     }
 
     @Override
     final public boolean incrementToken() {
         // Capture token contents
         if (iterator.hasNext()) {
-            String word = iterator.next();
-            termAttr.copyBuffer(word.toCharArray(), 0, word.length());
+            String term = iterator.next();
+            termAttr.copyBuffer(term.toCharArray(), 0, term.length());
             positionIncrementAttr.setPositionIncrement(incrementIt.next());
-            if (payloadAttr != null) {
-                payloadAttr.setPayload(payloadIt.next());
-            }
+            offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
             return true;
         }
         return false;
@@ -92,11 +90,12 @@ class TokenStreamFromList extends TokenStream {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
+        result = prime * result + ((endCharIt == null) ? 0 : endCharIt.hashCode());
         result = prime * result + ((incrementIt == null) ? 0 : incrementIt.hashCode());
         result = prime * result + ((iterator == null) ? 0 : iterator.hashCode());
-        result = prime * result + ((payloadAttr == null) ? 0 : payloadAttr.hashCode());
-        result = prime * result + ((payloadIt == null) ? 0 : payloadIt.hashCode());
+        result = prime * result + ((offsetAttr == null) ? 0 : offsetAttr.hashCode());
         result = prime * result + ((positionIncrementAttr == null) ? 0 : positionIncrementAttr.hashCode());
+        result = prime * result + ((startCharIt == null) ? 0 : startCharIt.hashCode());
         result = prime * result + ((termAttr == null) ? 0 : termAttr.hashCode());
         return result;
     }
@@ -109,7 +108,12 @@ class TokenStreamFromList extends TokenStream {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        TokenStreamFromList other = (TokenStreamFromList) obj;
+        TokenStreamWithOffsets other = (TokenStreamWithOffsets) obj;
+        if (endCharIt == null) {
+            if (other.endCharIt != null)
+                return false;
+        } else if (!endCharIt.equals(other.endCharIt))
+            return false;
         if (incrementIt == null) {
             if (other.incrementIt != null)
                 return false;
@@ -120,20 +124,20 @@ class TokenStreamFromList extends TokenStream {
                 return false;
         } else if (!iterator.equals(other.iterator))
             return false;
-        if (payloadAttr == null) {
-            if (other.payloadAttr != null)
+        if (offsetAttr == null) {
+            if (other.offsetAttr != null)
                 return false;
-        } else if (!payloadAttr.equals(other.payloadAttr))
-            return false;
-        if (payloadIt == null) {
-            if (other.payloadIt != null)
-                return false;
-        } else if (!payloadIt.equals(other.payloadIt))
+        } else if (!offsetAttr.equals(other.offsetAttr))
             return false;
         if (positionIncrementAttr == null) {
             if (other.positionIncrementAttr != null)
                 return false;
         } else if (!positionIncrementAttr.equals(other.positionIncrementAttr))
+            return false;
+        if (startCharIt == null) {
+            if (other.startCharIt != null)
+                return false;
+        } else if (!startCharIt.equals(other.startCharIt))
             return false;
         if (termAttr == null) {
             if (other.termAttr != null)

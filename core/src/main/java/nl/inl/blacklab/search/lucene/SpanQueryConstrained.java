@@ -46,7 +46,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
         BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
         Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight) : null;
-        constraint.lookupPropertyIndices(fiAccessor);
+        constraint.lookupAnnotationIndices(fiAccessor);
         return new SpanWeightConstrained(prodWeight, constraint, searcher, contexts);
     }
 

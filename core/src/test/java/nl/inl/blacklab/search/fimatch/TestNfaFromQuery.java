@@ -45,30 +45,30 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getPropertyNumber(String propertyName) {
-            if (propertyName.equals("word"))
+        public int getAnnotationNumber(String annotationName) {
+            if (annotationName.equals("word"))
                 return 0;
-            throw new IllegalArgumentException("Unknown property " + propertyName);
+            throw new IllegalArgumentException("Unknown annotation " + annotationName);
         }
 
         @Override
-        public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue,
+        public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
                 boolean caseSensitive, boolean diacSensitive) {
-            if (propertyNumber != 0)
-                throw new IllegalArgumentException("Unknown property " + propertyNumber);
+            if (annotNumber != 0)
+                throw new IllegalArgumentException("Unknown annotation " + annotNumber);
             if (caseSensitive) {
-                results.add(terms.get(propertyValue));
+                results.add(terms.get(annotValue));
                 return;
             }
             for (Entry<String, Integer> e : terms.entrySet()) {
-                if (e.getKey().equalsIgnoreCase(propertyValue)) {
+                if (e.getKey().equalsIgnoreCase(annotValue)) {
                     results.add(e.getValue());
                 }
             }
         }
 
         @Override
-        public int numberOfProperties() {
+        public int numberOfAnnotations() {
             return 1;
         }
 
@@ -91,16 +91,16 @@ public class TestNfaFromQuery {
                 }
 
                 @Override
-                public int[] getChunk(int propIndex, int docId, int start, int end) {
-                    if (propIndex != 0)
-                        throw new IllegalArgumentException("Unknown property " + propIndex);
+                public int[] getChunk(int annotIndex, int docId, int start, int end) {
+                    if (annotIndex != 0)
+                        throw new IllegalArgumentException("Unknown annotation " + annotIndex);
                     if (docId != 0)
                         throw new IllegalArgumentException("Unknown document " + docId);
                     return Arrays.copyOfRange(termIds, start, end);
                 }
 
                 @Override
-                public int getFiid(int propIndex, int docId) {
+                public int getFiid(int annotIndex, int docId) {
                     return 0;
                 }
 
@@ -108,7 +108,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public String getTermString(int propIndex, int termId) {
+        public String getTermString(int annotIndex, int termId) {
             for (Entry<String, Integer> e : terms.entrySet()) {
                 if (e.getValue() == termId) {
                     return e.getKey();
@@ -118,7 +118,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
             throw new UnsupportedOperationException();
         }
 
@@ -133,7 +133,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getToken(int propIndex, int pos) {
+        public int getToken(int annotIndex, int pos) {
             if (!validPos(pos))
                 return -1;
             return input[pos];
@@ -145,12 +145,12 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public String getTermString(int propIndex, int termId) {
+        public String getTermString(int annotIndex, int termId) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
             throw new UnsupportedOperationException();
         }
     }
@@ -162,7 +162,7 @@ public class TestNfaFromQuery {
         // The NFA
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
-        frag.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
+        frag.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
         //System.err.println(frag);
         NfaState start = frag.getStartingState(); //finish();
 

@@ -8,8 +8,8 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
+import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 
 public class SpansConstrained extends BLSpans {
@@ -26,7 +26,7 @@ public class SpansConstrained extends BLSpans {
     /** The current captured groups */
     private Span[] capturedGroups;
 
-    /** Maps from term strings to term indices for each property. */
+    /** Maps from term strings to term indices for each annotation. */
     private ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Where to get forward index tokens for the current doc */

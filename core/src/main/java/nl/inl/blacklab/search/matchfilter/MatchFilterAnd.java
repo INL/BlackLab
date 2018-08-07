@@ -66,9 +66,9 @@ public class MatchFilterAnd extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
-        a.lookupPropertyIndices(fiAccessor);
-        b.lookupPropertyIndices(fiAccessor);
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        a.lookupAnnotationIndices(fiAccessor);
+        b.lookupAnnotationIndices(fiAccessor);
     }
 
     @Override

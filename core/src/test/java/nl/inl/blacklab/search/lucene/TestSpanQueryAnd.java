@@ -33,16 +33,16 @@ public class TestSpanQueryAnd {
     }
 
     @Test
-    public void testComplexFieldDifferentProperties() {
-        BLSpanTermQuery first = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.propertyField("contents",
+    public void testAnnotatedFieldDifferentProperties() {
+        BLSpanTermQuery first = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop1"), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.propertyField("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop2"), "bla"));
 
-        // No exception here because both are properties of complex field "field"
+        // No exception here because both are properties of annotated field "field"
         SpanQueryAnd q = new SpanQueryAnd(first, second);
 
-        // getField() will produce "base field name" of complex field
+        // getField() will produce "base field name" of annotated field
         Assert.assertEquals("contents", q.getField());
     }
 

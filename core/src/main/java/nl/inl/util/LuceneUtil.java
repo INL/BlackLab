@@ -350,7 +350,7 @@ public final class LuceneUtil {
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
             String fieldName, String propName, String altName) {
         try {
-            String luceneField = AnnotatedFieldNameUtil.propertyField(fieldName, propName, altName);
+            String luceneField = AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName);
             Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();
@@ -432,9 +432,9 @@ public final class LuceneUtil {
                     if (term == null)
                         break;
                     String termText = term.utf8ToString();
-                    if (termText.contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR)) {
+                    if (termText.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR)) {
                         termText = StringUtil.stripAccents(termText).toLowerCase();
-                        String[] parts = termText.split(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR);
+                        String[] parts = termText.split(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
                         String subpropName = parts[1];
                         Set<String> resultList = results.get(subpropName);
                         if (resultList == null) {

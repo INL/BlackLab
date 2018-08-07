@@ -6,11 +6,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
 /**
- * Configuration for a single annotation ("property") of an annotated field
- * ("complex field").
+ * Configuration for a single annotation (formerly "property") of an annotated field
+ * (formerly "complex field").
  */
 public class ConfigAnnotation {
 
@@ -33,8 +33,7 @@ public class ConfigAnnotation {
      * If null: regular annotation definition. Otherwise, find all nodes matching
      * this XPath, then evaluate name and valuePath as XPaths for each matching
      * node, adding a subannotation value for each. NOTE: forEach is only supported
-     * for subannotations, because all main annotations (complex field properties)
-     * need to be known from the start.
+     * for subannotations, because all main annotations need to be known from the start.
      */
     private String forEachPath;
 

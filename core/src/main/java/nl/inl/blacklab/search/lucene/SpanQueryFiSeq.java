@@ -60,7 +60,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
      * @param direction the direction to match in (-1 = right-to-left, 1 =
      *            left-to-right)
      * @param fiAccessor maps between term strings and term indices for each
-     *            property
+     *            annotation
      */
     public SpanQueryFiSeq(BLSpanQuery anchor, boolean startOfAnchor, NfaTwoWay nfa, BLSpanQuery nfaQuery, int direction,
             ForwardIndexAccessor fiAccessor) {
@@ -84,7 +84,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
 
-        // Finalize our NFA, so it looks up property numbers for its property names.
+        // Finalize our NFA, so it looks up annotation numbers for its annotation names.
         nfa.finish();
         nfa.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
 

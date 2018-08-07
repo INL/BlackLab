@@ -12,6 +12,6 @@ public interface AnnotationSensitivity {
 	MatchSensitivity sensitivity();
 	
 	default String luceneField() {
-		return AnnotatedFieldNameUtil.propertyAlternative(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
+		return AnnotatedFieldNameUtil.annotationSensitivity(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
 	}
 }

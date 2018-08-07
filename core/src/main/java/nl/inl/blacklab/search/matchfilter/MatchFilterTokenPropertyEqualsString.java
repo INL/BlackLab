@@ -98,9 +98,9 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         if (propertyName != null) {
-            propIndex = fiAccessor.getPropertyNumber(propertyName);
+            propIndex = fiAccessor.getAnnotationNumber(propertyName);
             compareToTermIds = new IntHashSet();
             compareToTermId = -1;
             fiAccessor.getTermNumbers(compareToTermIds, propIndex, compareToTermString, caseSensitive, diacSensitive);

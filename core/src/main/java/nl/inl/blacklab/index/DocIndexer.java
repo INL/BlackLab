@@ -38,7 +38,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.BLRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -344,7 +344,7 @@ public abstract class DocIndexer implements AutoCloseable {
     public void addMetadataField(String name, String value) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
-                    + "' is discouraged (field/property names should be valid XML element names)");
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
 
         if (name == null || value == null) {
             warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
@@ -410,9 +410,9 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     @Deprecated
-    public SensitivitySetting getSensitivitySetting(String propName) {
+    public SensitivitySetting getSensitivitySetting(String annotationName) {
         // See if it's specified in a parameter
-        String strSensitivity = getParameter(propName + "_sensitivity");
+        String strSensitivity = getParameter(annotationName + "_sensitivity");
         if (strSensitivity != null) {
             if (strSensitivity.equals("i"))
                 return SensitivitySetting.ONLY_INSENSITIVE;
@@ -425,18 +425,18 @@ public abstract class DocIndexer implements AutoCloseable {
         }
 
         // Not in parameter (or unrecognized value), use default based on
-        // propName
-        if (propName.equals(AnnotatedFieldNameUtil.getDefaultMainPropName())
-                || propName.equals(AnnotatedFieldNameUtil.LEMMA_PROP_NAME)) {
+        // annotationName
+        if (annotationName.equals(AnnotatedFieldNameUtil.getDefaultMainAnnotationName())
+                || annotationName.equals(AnnotatedFieldNameUtil.LEMMA_ANNOT_NAME)) {
             // Word: default to sensitive/insensitive
             return SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
         }
-        if (propName.equals(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME)) {
+        if (annotationName.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
             // Punctuation: default to only insensitive
             return SensitivitySetting.ONLY_INSENSITIVE;
         }
-        if (propName.equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME)
-                || propName.equals(AnnotatedFieldNameUtil.END_TAG_PROP_NAME)) {
+        if (annotationName.equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME)
+                || annotationName.equals(AnnotatedFieldNameUtil.END_TAG_ANNOT_NAME)) {
             // XML tag properties: default to only sensitive
             return SensitivitySetting.ONLY_SENSITIVE;
         }

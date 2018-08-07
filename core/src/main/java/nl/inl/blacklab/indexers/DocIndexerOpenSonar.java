@@ -25,8 +25,8 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -117,7 +117,7 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
                     propPartOfSpeech.addValue(pos);
                     for (Entry<String, String> e : posFeatures.entrySet()) {
                         // Add the separate PoS features as extra values at this position.
-                        String sep = AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR;
+                        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
                         propPartOfSpeech.addValue(sep + e.getKey() + sep + e.getValue(), 0);
                     }
                     propLemma.addValue(lemma);

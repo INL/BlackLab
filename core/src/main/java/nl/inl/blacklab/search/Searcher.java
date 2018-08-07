@@ -86,14 +86,14 @@ public abstract class Searcher {
 
     public static final int DEFAULT_MAX_COUNT = Searcher.UNLIMITED_HITS;
 
-    /** Complex field name for default contents field */
+    /** Annotated field name for default contents field */
     public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
 
     public static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
 
-    public static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_PROP_NAME;
+    public static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
 
-    public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME;
+    public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 
     public static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
 
@@ -420,9 +420,9 @@ public abstract class Searcher {
     /**
      * ForwardIndices allow us to quickly find what token occurs at a specific
      * position. This speeds up grouping and sorting. There may be several indices
-     * on a complex field, e.g.: word form, lemma, part of speech.
+     * on a annotated field, e.g.: word form, lemma, part of speech.
      *
-     * Indexed by property name.
+     * Indexed by annotation.
      */
     protected Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
 
@@ -1129,8 +1129,8 @@ public abstract class Searcher {
             int[] ends) {
         if (!contentStores.exists(fieldName)) {
             String[] content;
-            // No special content accessor set; assume a non-complex stored field
-            String luceneName = fieldName; // <- non-complex, so this works
+            // No special content accessor set; assume a non-annotated stored field
+            String luceneName = fieldName; // <- non-annotated, so this works
             String fieldContent = d.get(luceneName);
             content = new String[starts.length];
             for (int i = 0; i < starts.length; i++) {
@@ -1369,11 +1369,11 @@ public abstract class Searcher {
         return getIndexMetadata().annotatedFields().main();
     }
     
-    public Annotation getOrCreate(AnnotatedField field, String propName) {
-        if (field.annotations().exists(propName))
-            return field.annotations().get(propName);
+    public Annotation getOrCreate(AnnotatedField field, String annotName) {
+        if (field.annotations().exists(annotName))
+            return field.annotations().get(annotName);
         AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
-        return fld.getOrCreateProperty(propName);
+        return fld.getOrCreateAnnotation(annotName);
     }
 
 }

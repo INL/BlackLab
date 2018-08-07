@@ -161,7 +161,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     @Override
     public boolean canMakeNfa() {
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        return !term.text().contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR);
+        return !term.text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
     }
 
     @Override

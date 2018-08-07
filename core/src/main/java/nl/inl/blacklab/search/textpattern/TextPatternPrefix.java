@@ -35,7 +35,7 @@ public class TextPatternPrefix extends TextPatternTerm {
     public BLSpanQuery translate(QueryExecutionContext context) {
         try {
             return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
-                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+                    context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));
         } catch (StackOverflowError e) {
             // If we pass in a prefix expression matching a lot of words,
             // stack overflow may occur inside Lucene's automaton building

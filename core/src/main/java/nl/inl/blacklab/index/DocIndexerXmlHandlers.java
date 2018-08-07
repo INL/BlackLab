@@ -42,9 +42,9 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -104,11 +104,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         @Override
         public void endElement(String uri, String localName, String qName) {
             // Make sure all the properties have an equal number of values.
-            // See what property has the highest position
+            // See what annotation has the highest position
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop: contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getAnnotations()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -120,7 +120,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop: contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getAnnotations()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -142,20 +142,20 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                     .contentIdField(contentsField.getName()), contentId,
                     Store.YES));
 
-            // Store the different properties of the complex contents field that
+            // Store the different properties of the annotated contents field that
             // were gathered in
             // lists while parsing.
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (AnnotationWriter prop: contentsField.getProperties()) {
+            for (AnnotationWriter prop: contentsField.getAnnotations()) {
                 if (!prop.hasForwardIndex())
                     continue;
 
-                // Add property (case-sensitive tokens) to forward index and add
+                // Add annotation (case-sensitive tokens) to forward index and add
                 // id to Lucene doc
                 String propName = prop.getName();
-                String fieldName = AnnotatedFieldNameUtil.propertyField(
+                String fieldName = AnnotatedFieldNameUtil.annotationField(
                         contentsField.getName(), propName);
                 int fiid = indexer.addToForwardIndex(prop);
                 currentLuceneDoc
@@ -321,7 +321,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         public void endElement(String uri, String localName, String qName) {
             int currentPos = propMain.lastValuePosition() + 1;
 
-            // Add payload to start tag property indicating end position
+            // Add payload to start tag annotation indicating end position
             Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
             propStartTag.setPayloadAtIndex(openTagIndex, new BytesRef(payload));
@@ -440,7 +440,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
     @SuppressWarnings("deprecation")
     protected AnnotationWriter addProperty(String propName, boolean includePayloads) {
-        return contentsField.addProperty(propName, getSensitivitySetting(propName), includePayloads);
+        return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads);
     }
 
     public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
@@ -451,13 +451,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
-        // Define the properties that make up our complex field
-        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        // Define the properties that make up our annotated field
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         contentsField = new AnnotatedFieldWriter(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
-        propMain = contentsField.getMainProperty();
-        propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
-        propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME, true); // start tag
+        propMain = contentsField.getMainAnnotation();
+        propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
         // positions
         propStartTag.setForwardIndex(false);
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.getSearcher().getIndexMetadataWriter();
@@ -530,18 +530,18 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     /**
-     * Complex field where different aspects (word form, named entity status, etc.)
+     * Annotated field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
     AnnotatedFieldWriter contentsField;
 
-    /** The main property (usually "word") */
+    /** The main annotation (usually "word") */
     AnnotationWriter propMain;
 
-    /** The punctuation property */
+    /** The punctuation annotation */
     AnnotationWriter propPunct;
 
-    /** The start tag property. Also contains tag length in payload. */
+    /** The start tag annotation. Also contains tag length in payload. */
     AnnotationWriter propStartTag;
 
     /**

@@ -148,12 +148,12 @@ public class SpanQueryTags extends BLSpanQuery {
     }
 
     /**
-     * Returns the name of the search field. In the case of a complex field, the
-     * clauses may actually query different properties of the same complex field
+     * Returns the name of the search field. In the case of a annotated field, the
+     * clauses may actually query different properties of the same annotated field
      * (e.g. "description" and "description__pos"). That's why only the prefix is
      * returned.
      *
-     * @return name of the search field. In the case of a complex
+     * @return name of the search field
      */
     @Override
     public String getField() {

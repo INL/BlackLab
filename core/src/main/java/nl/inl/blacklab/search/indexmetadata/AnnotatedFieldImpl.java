@@ -18,22 +18,22 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
-/** Description of a complex field */
+/** An annotated field */
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
     
     public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
-            if (mainProperty == null && mainPropertyName != null) {
-                // Set during indexing, when we don't actually have property information
+            if (mainAnnotation == null && mainAnnotationName != null) {
+                // Set during indexing, when we don't actually have annotation information
                 // available (because the index is being built up, so we couldn't detect
                 // it on startup).
-                // Just create a property with the correct name, or retrieve it if it
+                // Just create an annotation with the correct name, or retrieve it if it
                 // was defined in the indexmetadata.
-                mainProperty = props.get(mainPropertyName);
-                mainPropertyName = null;
+                mainAnnotation = annots.get(mainAnnotationName);
+                mainAnnotationName = null;
             }
-            return mainProperty;
+            return mainAnnotation;
         }
 
         @Override
@@ -60,31 +60,31 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
         @Override
         public Annotation get(String name) {
-            return props.get(name);
+            return annots.get(name);
         }
 
         @Override
         public boolean exists(String name) {
-            return props.containsKey(name);
+            return annots.containsKey(name);
         }
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
-    /** This complex field's properties, sorted by name */
-    private Map<String, AnnotationImpl> props;
+    /** This complex field's annotations, sorted by name */
+    private Map<String, AnnotationImpl> annots;
     
     /** This field's annotations, in desired display order */
     private List<AnnotationImpl> annotationsDisplayOrder;
 
-    /** The field's main property */
-    private AnnotationImpl mainProperty;
+    /** The field's main annotation */
+    private AnnotationImpl mainAnnotation;
 
     /**
-     * The field's main property name (for storing the main prop name before we have
-     * the prop. descriptions)
+     * The field's main annotation name (for storing the main annot name before we have
+     * the annot. descriptions)
      */
-    private String mainPropertyName;
+    private String mainAnnotationName;
 
     /** Is the field length in tokens stored? */
     private boolean lengthInTokens;
@@ -92,8 +92,8 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     /** Are there XML tag locations stored for this field? */
     private boolean xmlTags;
 
-    /** These properties should not get a forward index. */
-    private Set<String> noForwardIndexProps = Collections.emptySet();
+    /** These annotations should not get a forward index. */
+    private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
     /** Annotation display order. If not specified, use reasonable defaults. */
     private List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
@@ -107,7 +107,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     AnnotatedFieldImpl(String name) {
         super(name);
-        props = new TreeMap<String, AnnotationImpl>();
+        annots = new TreeMap<String, AnnotationImpl>();
         annotationsDisplayOrder = new ArrayList<>();
         annotationOrderComparator = new Comparator<AnnotationImpl>() {
             @Override
@@ -125,13 +125,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         contentStore = false;
         lengthInTokens = false;
         xmlTags = false;
-        mainProperty = null;
+        mainAnnotation = null;
         annotationsImpl = new AnnotationsImpl();
     }
 
     @Override
     public String toString() {
-        return fieldName + " [" + StringUtil.join(props.values(), ", ") + "]";
+        return fieldName + " [" + StringUtil.join(annots.values(), ", ") + "]";
     }
     
     @Override
@@ -169,13 +169,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     @Override
     public boolean hasPunctuationForwardIndex() {
-        AnnotationImpl pd = props.get(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+        AnnotationImpl pd = annots.get(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         return pd != null && pd.hasForwardIndex();
     }
 
-    // (public because used in ComplexField while indexing) 
-    public Set<String> getNoForwardIndexProps() {
-        return noForwardIndexProps;
+    // (public because used in AnnotatedFieldWriter while indexing) 
+    public Set<String> getNoForwardIndexAnnotations() {
+        return noForwardIndexAnnotations;
     }
 
     List<String> getDisplayOrder() {
@@ -186,7 +186,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     // ------------------------------------------------------
     
     /**
-     * An index field was found and split into parts, and belongs to this complex
+     * An index field was found and split into parts, and belongs to this annotated
      * field. See what type it is and update our fields accordingly.
      * 
      * @param parts parts of the Lucene index field name
@@ -194,122 +194,119 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     void processIndexField(String[] parts) {
         ensureNotFrozen();
     
-        // See if this is a builtin bookkeeping field or a property.
+        // See if this is a builtin bookkeeping field or a annotation.
         if (parts.length == 1)
-            throw new IllegalArgumentException("Complex field with just basename given, error!");
+            throw new IllegalArgumentException("Annotated field with just basename given, error!");
     
-        String propPart = parts[1];
+        String annotPart = parts[1];
     
-        if (propPart == null && parts.length >= 3) {
+        if (annotPart == null && parts.length >= 3) {
             // Bookkeeping field
             BookkeepFieldType bookkeepingFieldIndex = AnnotatedFieldNameUtil
                     .whichBookkeepingSubfield(parts[3]);
             switch (bookkeepingFieldIndex) {
             case CONTENT_ID:
-                // Complex field has content store
+                // Annotated field has content store
                 contentStore = true;
                 return;
             case FORWARD_INDEX_ID:
-                // Main property has forward index
-                getOrCreateProperty("").setForwardIndex(true);
+                // Main annotation has forward index
+                getOrCreateAnnotation("").setForwardIndex(true);
                 return;
             case LENGTH_TOKENS:
-                // Complex field has length in tokens
+                // Annotated field has length in tokens
                 lengthInTokens = true;
                 return;
             }
             throw new RuntimeException();
         }
     
-        // Not a bookkeeping field; must be a property (alternative).
-        AnnotationImpl pd = getOrCreateProperty(propPart);
-        if (pd.name().equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME))
+        // Not a bookkeeping field; must be a annotation (alternative).
+        AnnotationImpl pd = getOrCreateAnnotation(annotPart);
+        if (pd.name().equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME))
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
                 // Alternative
                 pd.addAlternative(MatchSensitivity.fromLuceneFieldCode(parts[2]));
             } else {
-                // Property bookkeeping field
+                // Annotation bookkeeping field
                 if (parts[3].equals(AnnotatedFieldNameUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
                     pd.setForwardIndex(true);
                 } else
-                    throw new IllegalArgumentException("Unknown property bookkeeping field " + parts[3]);
+                    throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
             }
         }
     }
 
-    public AnnotationImpl getOrCreateProperty(String name) {
+    public AnnotationImpl getOrCreateAnnotation(String name) {
         ensureNotFrozen();
-        AnnotationImpl pd = props.get(name);
+        AnnotationImpl pd = annots.get(name);
         if (pd == null) {
             pd = new AnnotationImpl(this, name);
-            putProperty(pd);
+            putAnnotation(pd);
         }
         return pd;
     }
 
-    void putProperty(AnnotationImpl propDesc) {
+    void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
-        props.put(propDesc.name(), propDesc);
-        annotationsDisplayOrder.add(propDesc);
+        annots.put(annotDesc.name(), annotDesc);
+        annotationsDisplayOrder.add(annotDesc);
         annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
-    void detectMainProperty(IndexReader reader) {
+    void detectMainAnnotation(IndexReader reader) {
         ensureNotFrozen();
-        if (mainPropertyName != null && mainPropertyName.length() > 0) {
-            // Main property name was set from index metadata before we
-            // had the property desc. available; use that now and don't do
+        if (mainAnnotationName != null && mainAnnotationName.length() > 0) {
+            // Main annotation name was set from index metadata before we
+            // had the annotation desc. available; use that now and don't do
             // any actual detecting.
-            if (!props.containsKey(mainPropertyName))
-                throw new IllegalArgumentException("Main property '" + mainPropertyName + "' (from index metadata) not found!");
-            mainProperty = props.get(mainPropertyName);
-            mainPropertyName = null;
+            if (!annots.containsKey(mainAnnotationName))
+                throw new IllegalArgumentException("Main annotation '" + mainAnnotationName + "' (from index metadata) not found!");
+            mainAnnotation = annots.get(mainAnnotationName);
+            mainAnnotationName = null;
             //return;
         }
     
-        AnnotationImpl firstProperty = null;
-        for (AnnotationImpl pr : props.values()) {
-            if (firstProperty == null)
-                firstProperty = pr;
-            if (pr.detectOffsetsAlternative(reader, fieldName)) {
-                // This field has offsets stored. Must be the main prop field.
-                if (mainProperty == null) {
-                    mainProperty = pr;
+        AnnotationImpl firstAnnotation = null;
+        for (AnnotationImpl pr : annots.values()) {
+            if (firstAnnotation == null)
+                firstAnnotation = pr;
+            if (pr.detectOffsetsSensitivity(reader, fieldName)) {
+                // This field has offsets stored. Must be the main annotation field.
+                if (mainAnnotation == null) {
+                    mainAnnotation = pr;
                 } else {
                     // Was already set from metadata file; same..?
-                    if (mainProperty != pr) {
-                        logger.warn("Metadata says main property for field " + name() + " is "
-                                + mainProperty.name() + ", but offsets are stored in " + pr.name());
+                    if (mainAnnotation != pr) {
+                        logger.warn("Metadata says main annotation for field " + name() + " is "
+                                + mainAnnotation.name() + ", but offsets are stored in " + pr.name());
                     }
                 }
                 return;
             }
         }
     
-        // None have offsets; just assume the first property is the main one
+        // None have offsets; just assume the first annotation is the main one
         // (note that not having any offsets makes it impossible to highlight the
         // original content, but this may not be an issue. We probably need
-        // a better way to keep track of the main property)
-        logger.warn("No property with offsets found; assume first property (" + firstProperty.name()
-                + ") is main property");
-        mainProperty = firstProperty;
-    
-        // throw new RuntimeException(
-        // "No main property (with char. offsets) detected for complex field " + fieldName);
+        // a better way to keep track of the main annotation)
+        logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
+                + ") is main annotation");
+        mainAnnotation = firstAnnotation;
     }
 
-    void setMainPropertyName(String mainPropertyName) {
+    void setMainAnnotationName(String mainAnnotationName) {
         ensureNotFrozen();
-        this.mainPropertyName = mainPropertyName;
-        if (props.containsKey(mainPropertyName))
-            mainProperty = props.get(mainPropertyName);
+        this.mainAnnotationName = mainAnnotationName;
+        if (annots.containsKey(mainAnnotationName))
+            mainAnnotation = annots.get(mainAnnotationName);
     }
 
-    void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
+    void setNoForwardIndexAnnotations(Set<String> noForwardIndexAnnotations) {
         ensureNotFrozen();
-        this.noForwardIndexProps = noForwardIndexProps;
+        this.noForwardIndexAnnotations = noForwardIndexAnnotations;
     }
 
     void setDisplayOrder(List<String> displayOrder) {
@@ -322,7 +319,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     @Override
     public void freeze() {
         this.frozen = true;
-        this.props.values().forEach(annotation -> annotation.freeze());
+        this.annots.values().forEach(annotation -> annotation.freeze());
     }
     
     @Override

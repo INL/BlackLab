@@ -1131,7 +1131,7 @@ public class HitsImpl extends Hits {
 
         throw new UnsupportedOperationException(
                 "Concordance type is set to CONTENT_STORE, but you can only make KWICs from the forward index. " +
-                        "NOTE: if your index has no 'punct' property, concordance type will default to CONTENT_STORE " +
+                        "NOTE: if your index has no 'punct' annotation, concordance type will default to CONTENT_STORE " +
                         "instead of FORWARD_INDEX.");
     }
 
@@ -1219,7 +1219,7 @@ public class HitsImpl extends Hits {
     /**
      * Count occurrences of context words around hit.
      *
-     * @param propName the property to use for the collocations, or null if default
+     * @param annotation annotation to use for the collocations, or null if default
      * @param ctx query execution context, containing the sensitivity settings
      *
      * @return the frequency of each occurring token

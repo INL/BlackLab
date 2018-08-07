@@ -22,21 +22,21 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
- * Retrieves the length of a complex field (i.e. the main "contents" field) in
+ * Retrieves the length of an annotated field (i.e. the main "contents" field) in
  * tokens.
  */
-public class DocPropertyComplexFieldLength extends DocProperty {
+public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     private String friendlyName;
 
     private String fieldName;
 
-    public DocPropertyComplexFieldLength(String fieldName, String friendlyName) {
+    public DocPropertyAnnotatedFieldLength(String fieldName, String friendlyName) {
         this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         this.friendlyName = friendlyName;
     }
 
-    public DocPropertyComplexFieldLength(String fieldName) {
+    public DocPropertyAnnotatedFieldLength(String fieldName) {
         this(fieldName, fieldName + " length");
     }
 
@@ -74,8 +74,8 @@ public class DocPropertyComplexFieldLength extends DocProperty {
         return friendlyName;
     }
 
-    public static DocPropertyComplexFieldLength deserialize(String info) {
-        return new DocPropertyComplexFieldLength(info);
+    public static DocPropertyAnnotatedFieldLength deserialize(String info) {
+        return new DocPropertyAnnotatedFieldLength(info);
     }
 
     @Override

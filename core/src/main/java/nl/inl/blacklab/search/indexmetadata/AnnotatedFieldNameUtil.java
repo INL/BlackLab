@@ -30,7 +30,7 @@ public final class AnnotatedFieldNameUtil {
 
     private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
 
-    private static final String DEFAULT_MAIN_PROP_NAME = "word";
+    private static final String DEFAULT_MAIN_ANNOT_NAME = "word";
 
     public static final String SENSITIVE_ALT_NAME = "s";
 
@@ -42,75 +42,75 @@ public final class AnnotatedFieldNameUtil {
 
     public static final String DIACRITICS_INSENSITIVE_ALT_NAME = "di";
 
-    public static final String START_TAG_PROP_NAME = "starttag";
+    public static final String START_TAG_ANNOT_NAME = "starttag";
 
-    public static final String END_TAG_PROP_NAME = "endtag";
+    public static final String END_TAG_ANNOT_NAME = "endtag";
 
-    public static final String WORD_PROP_NAME = "word";
+    public static final String WORD_ANNOT_NAME = "word";
 
-    /** Property name for the spaces and punctuation between words */
-    public static final String PUNCTUATION_PROP_NAME = "punct";
+    /** Annotation name for the spaces and punctuation between words */
+    public static final String PUNCTUATION_ANNOT_NAME = "punct";
 
     /**
-     * Property name for lemma/headword (optional, not every input format will have
+     * Annotation name for lemma/headword (optional, not every input format will have
      * this)
      */
-    public static final String LEMMA_PROP_NAME = "lemma";
+    public static final String LEMMA_ANNOT_NAME = "lemma";
 
     /**
-     * Property name for part of speech (optional, not every input format will have
+     * Annotation name for part of speech (optional, not every input format will have
      * this)
      */
-    public static final String PART_OF_SPEECH_PROP_NAME = "pos";
+    public static final String PART_OF_SPEECH_ANNOT_NAME = "pos";
 
     /**
-     * For properties combined in a single Lucene field, this is the separator
+     * For annotations combined in a single Lucene field, this is the separator
      * between the name prefix of an indexed value and the actual value of the
-     * property
+     * annotation
      */
-    public static final String SUBPROPERTY_SEPARATOR = "\u001F";
+    public static final String SUBANNOTATION_SEPARATOR = "\u001F";
 
     /**
-     * Valid XML element names. Field and property names should generally conform to
+     * Valid XML element names. Field and annotation names should generally conform to
      * this.
      */
     static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_\\.]*");
 
     /**
      * String used to separate the base field name (say, contents) and the field
-     * property (pos, lemma, etc.)
+     * annotation (pos, lemma, etc.)
      */
-    static final String PROP_SEP;
+    static final String ANNOT_SEP;
 
     /**
-     * String used to separate the field/property name (say, contents_lemma) and the
+     * String used to separate the field/annotation name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
-    static final String ALT_SEP;
+    static final String SENSITIVITY_SEP;
 
     /**
-     * String used to separate the field/property name (say, contents_lemma) and the
+     * String used to separate the field/annotation name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
     static final String BOOKKEEPING_SEP;
 
-    /** Length of the ALT separator */
-    static final int ALT_SEP_LEN;
+    /** Length of SENSITIVITY_SEP */
+    static final int SENSITIVITY_SEP_LEN;
 
-    /** Length of the PROP separator */
-    static final int PROP_SEP_LEN;
+    /** Length of ANNOT_SEP */
+    static final int ANNOT_SEP_LEN;
 
-    /** Length of the BOOKKEEPING separator */
+    /** Length of BOOKKEEPING_SEP */
     static final int BOOKKEEPING_SEP_LEN;
 
     static {
         // Lucene doesn't have any restrictions on characters in field names;
         // use the short, symbolic ones.
-        PROP_SEP = "%";
-        ALT_SEP = "@";
+        ANNOT_SEP = "%";
+        SENSITIVITY_SEP = "@";
         BOOKKEEPING_SEP = "#";
-        ALT_SEP_LEN = ALT_SEP.length();
-        PROP_SEP_LEN = PROP_SEP.length();
+        SENSITIVITY_SEP_LEN = SENSITIVITY_SEP.length();
+        ANNOT_SEP_LEN = ANNOT_SEP.length();
         BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
     }
 
@@ -153,25 +153,25 @@ public final class AnnotatedFieldNameUtil {
         return bookkeepingField(fieldName, CONTENT_ID_BOOKKEEP_NAME);
     }
 
-    public static String forwardIndexIdField(String propFieldName) {
-        return bookkeepingField(propFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
+    public static String forwardIndexIdField(String annotFieldName) {
+        return bookkeepingField(annotFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
     }
 
     public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
-        String propName = structure.annotatedFields().get(fieldName).annotations().main().name();
-        return forwardIndexIdField(propertyField(fieldName, propName));
+        String annotName = structure.annotatedFields().get(fieldName).annotations().main().name();
+        return forwardIndexIdField(annotationField(fieldName, annotName));
     }
 
     public static String lengthTokensField(String fieldName) {
         return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
     }
 
-    public static String startTagPropertyField(String fieldName) {
-        return propertyField(fieldName, START_TAG_PROP_NAME);
+    public static String startTagAnnotationField(String fieldName) {
+        return annotationField(fieldName, START_TAG_ANNOT_NAME);
     }
 
-    public static String endTagPropertyField(String fieldName) {
-        return propertyField(fieldName, END_TAG_PROP_NAME);
+    public static String endTagAnnotationField(String fieldName) {
+        return annotationField(fieldName, END_TAG_ANNOT_NAME);
     }
 
     /**
@@ -183,21 +183,21 @@ public final class AnnotatedFieldNameUtil {
      * @return the Lucene field name
      */
     public static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
-        String fieldPropName;
-        boolean propGiven = annotName != null && annotName.length() > 0;
+        String fieldAnnotName;
+        boolean annotGiven = annotName != null && annotName.length() > 0;
         if (fieldName == null || fieldName.length() == 0) {
-            if (propGiven) {
-                fieldPropName = annotName;
+            if (annotGiven) {
+                fieldAnnotName = annotName;
             } else
-                throw new IllegalArgumentException("Must specify a base name, a property name or both: " + fieldName
+                throw new IllegalArgumentException("Must specify a base name, a annotation name or both: " + fieldName
                         + ", " + annotName + ", " + bookkeepName);
         } else {
-            fieldPropName = fieldName + (propGiven ? PROP_SEP + annotName : "");
+            fieldAnnotName = fieldName + (annotGiven ? ANNOT_SEP + annotName : "");
         }
 
         if (bookkeepName == null || bookkeepName.length() == 0)
-            return fieldPropName;
-        return fieldPropName + BOOKKEEPING_SEP + bookkeepName;
+            return fieldAnnotName;
+        return fieldAnnotName + BOOKKEEPING_SEP + bookkeepName;
     }
 
     /**
@@ -215,26 +215,26 @@ public final class AnnotatedFieldNameUtil {
      * Construct (partial) Lucene field name for annotation on annotated field. 
      *
      * @param fieldName the base field name, or null to leave this part out
-     * @param propName the property name (required)
+     * @param annotName the annotation name (required)
      * @param sensitivityName the sensitivity name, or null to leave this part out
      * @return the (partial) Lucene field name
      */
-    public static String propertyField(String fieldName, String propName, String sensitivityName) {
-        String fieldPropName;
-        boolean propGiven = propName != null && propName.length() > 0;
-        if (!propGiven) {
-            throw new IllegalArgumentException("Must specify a property name");
+    public static String annotationField(String fieldName, String annotName, String sensitivityName) {
+        String fieldAnnotName;
+        boolean annotGiven = annotName != null && annotName.length() > 0;
+        if (!annotGiven) {
+            throw new IllegalArgumentException("Must specify a annotation name");
         }
         if (fieldName == null || fieldName.length() == 0) {
-            fieldPropName = propName;
+            fieldAnnotName = annotName;
         } else {
-            fieldPropName = fieldName + PROP_SEP + propName;
+            fieldAnnotName = fieldName + ANNOT_SEP + annotName;
         }
 
         if (sensitivityName == null || sensitivityName.length() == 0) {
-            return fieldPropName;
+            return fieldAnnotName;
         }
-        return fieldPropName + ALT_SEP + sensitivityName;
+        return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;
     }
 
     /**
@@ -243,93 +243,86 @@ public final class AnnotatedFieldNameUtil {
      * Sensitivity part is not included.
      *
      * @param fieldName the base field name, or null to leave this part out
-     * @param propName the property name (required)
+     * @param annotName the annotation name (required)
      * @return the partial Lucene field name
      */
-    public static String propertyField(String fieldName, String propName) {
-        return propertyField(fieldName, propName, null);
+    public static String annotationField(String fieldName, String annotName) {
+        return annotationField(fieldName, annotName, null);
     }
 
     /**
-     * Construct a property alternative name from a field property name
+     * Construct a annotation alternative name from a field annotation name
      * 
-     * @param fieldPropName the field property name
-     * @param altName the alternative name
-     * @return the field property alternative name
+     * @param fieldAnnotName the field annotation name
+     * @param sensitivityName the alternative name
+     * @return the field annotation alternative name
      */
-    public static String propertyAlternative(String fieldPropName, String altName) {
-        if (altName == null || altName.length() == 0) {
-            throw new IllegalArgumentException("Must specify an alternative name");
+    public static String annotationSensitivity(String fieldAnnotName, String sensitivityName) {
+        if (sensitivityName == null || sensitivityName.length() == 0) {
+            throw new IllegalArgumentException("Must specify an sensitivity name");
         }
-        return fieldPropName + ALT_SEP + altName;
+        return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;
     }
 
     /**
-     * Gets the different components of a complex field property (alternative) name.
+     * Gets the different components of a annotated field annotation (alternative) name.
      *
-     * @param luceneFieldName the Lucene index field name, with possibly a property
+     * @param luceneFieldName the Lucene index field name, with possibly a annotation
      *            and/or alternative added
      * @return an array of size 1-4, containing the field name, and optionally the
-     *         property name, alternative name and bookkeeping field name.
+     *         annotation name, alternative name and bookkeeping field name.
      *
-     *         Property name may be null if this is a main bookkeeping field.
+     *         Annotation name may be null if this is a main bookkeeping field.
      *         Alternative name may be null if this is a bookkeeping field or if it
-     *         indicates the main property (not an alternative).
+     *         indicates the main annotation (not an alternative).
      */
     public static String[] getNameComponents(String luceneFieldName) {
 
         /*
+        
         Field names can be one of the following:
         
-        (1) Property:              base%prop (e.g. word, lemma, pos)
-        (2) Main bookkeeping:      base#cid
-        (3) Property bookkeeping:  base%prop#fiid
-        (4) Property alternative:  base%prop@alt
+        (1) Annotation:              base%annot (e.g. word, lemma, pos)
+        (2) Main bookkeeping:        base#cid
+        (3) Annotation bookkeeping:  base%annot#fiid
+        (4) Annotation alternative:  base%annot@alt
         
-        (Old style, now unsupported:)
-        
-        (A) Main property:          base       (implicitly, "word")
-        (1) Additional property:    base__prop (e.g. lemma, pos)
-        (B) Main bookkeeping:       base__fiid
-        (3) Property bookkeeping:   base__prop__fiid
-        (4) Property alternative:   base__prop_ALT_alt
-        (C) Main prop alternative:  base_ALT_alt
         */
 
-        String baseName, propName, altName, bookkeepingName;
+        String baseName, annotName, altName, bookkeepingName;
 
-        int propSepPos = luceneFieldName.indexOf(PROP_SEP);
-        int altSepPos = luceneFieldName.indexOf(ALT_SEP);
+        int annotSepPos = luceneFieldName.indexOf(ANNOT_SEP);
+        int altSepPos = luceneFieldName.indexOf(SENSITIVITY_SEP);
         int bookkeepingSepPos;
         bookkeepingSepPos = luceneFieldName.indexOf(BOOKKEEPING_SEP);
 
-        // Strip off property and possible alternative
-        if (propSepPos >= 0) {
-            // Property given (1/3/4)
-            baseName = luceneFieldName.substring(0, propSepPos);
-            int afterPropSepPos = propSepPos + PROP_SEP_LEN;
+        // Strip off annotation and possible alternative
+        if (annotSepPos >= 0) {
+            // Annotation given (1/3/4)
+            baseName = luceneFieldName.substring(0, annotSepPos);
+            int afterAnnotSepPos = annotSepPos + ANNOT_SEP_LEN;
 
             if (altSepPos >= 0) {
-                // Property and alternative given (4)
-                propName = luceneFieldName.substring(afterPropSepPos, altSepPos);
-                altName = luceneFieldName.substring(altSepPos + ALT_SEP_LEN);
-                return new String[] { baseName, propName, altName };
+                // Annotation and alternative given (4)
+                annotName = luceneFieldName.substring(afterAnnotSepPos, altSepPos);
+                altName = luceneFieldName.substring(altSepPos + SENSITIVITY_SEP_LEN);
+                return new String[] { baseName, annotName, altName };
             }
 
             // Maybe it's a bookkeeping field?
-            if (bookkeepingSepPos >= 0 && bookkeepingSepPos > propSepPos) {
-                // Property plus bookkeeping subfield given. (3)
-                propName = luceneFieldName.substring(afterPropSepPos, bookkeepingSepPos);
+            if (bookkeepingSepPos >= 0 && bookkeepingSepPos > annotSepPos) {
+                // Annotation plus bookkeeping subfield given. (3)
+                annotName = luceneFieldName.substring(afterAnnotSepPos, bookkeepingSepPos);
                 bookkeepingName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP_LEN);
-                return new String[] { baseName, propName, null, bookkeepingName };
+                return new String[] { baseName, annotName, null, bookkeepingName };
             }
 
-            // Plain property, no alternative or bookkeeping (1)
-            propName = luceneFieldName.substring(afterPropSepPos);
-            return new String[] { baseName, propName };
+            // Plain annotation, no alternative or bookkeeping (1)
+            annotName = luceneFieldName.substring(afterAnnotSepPos);
+            return new String[] { baseName, annotName };
         }
 
-        // No property given. Alternative?
+        // No annotation given. Alternative?
         if (altSepPos >= 0) {
             throw new IllegalArgumentException("Basename+altname is not a valid field name! (" + luceneFieldName + ")");
         }
@@ -347,16 +340,16 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
-     * Gets the base complex field name from a Lucene index field name. So
+     * Gets the base annotated field name from a Lucene index field name. So
      * "contents" and "contents%pos" would both yield "contents".
      *
-     * @param luceneFieldName the Lucene index field name, with possibly a property
+     * @param luceneFieldName the Lucene index field name, with possibly a annotation
      *            added
-     * @return the base complex field name
+     * @return the base annotated field name
      */
     public static String getBaseName(String luceneFieldName) {
-        // Strip off property and possible alternative
-        int pos = luceneFieldName.indexOf(PROP_SEP);
+        // Strip off annotation and possible alternative
+        int pos = luceneFieldName.indexOf(ANNOT_SEP);
         if (pos >= 0) {
             return luceneFieldName.substring(0, pos);
         }
@@ -364,7 +357,7 @@ public final class AnnotatedFieldNameUtil {
         if (pos >= 0) {
             return luceneFieldName.substring(0, pos);
         }
-        pos = luceneFieldName.indexOf(ALT_SEP);
+        pos = luceneFieldName.indexOf(SENSITIVITY_SEP);
         if (pos >= 0) {
             throw new IllegalArgumentException("Illegal field name: " + luceneFieldName);
         }
@@ -372,42 +365,42 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
-     * Checks if the given fieldName actually points to an alternative property (for
-     * example, a case-sensitive version of a property).
+     * Checks if the given fieldName actually points to an alternative annotation (for
+     * example, a case-sensitive version of a annotation).
      *
      * Example: the fieldName "contents%lemma@s" indicates the "s" alternative of
-     * the "lemma" property of the "contents" complex field.
+     * the "lemma" annotation of the "contents" annotated field.
      *
-     * @param fieldPropAltName the full fieldname, possibly including a property
+     * @param fieldAnnotSensitivityName the full fieldname, possibly including a annotation
      *            and/or alternative
-     * @param altName the alternative to test for
+     * @param sensitivityName the alternative to test for
      * @return true if the fieldName indicates the specified alternative
      */
-    public static boolean isAlternative(String fieldPropAltName, String altName) {
-        if (altName.length() == 0) {
+    public static boolean isSensitivity(String fieldAnnotSensitivityName, String sensitivityName) {
+        if (sensitivityName.length() == 0) {
             // No alternative, therefore no alternative separator
-            return fieldPropAltName.indexOf(ALT_SEP) < 0;
+            return fieldAnnotSensitivityName.indexOf(SENSITIVITY_SEP) < 0;
         }
 
         // We're looking for an alternative
-        String altSuffix = ALT_SEP + altName;
-        return fieldPropAltName.endsWith(altSuffix);
+        String altSuffix = SENSITIVITY_SEP + sensitivityName;
+        return fieldAnnotSensitivityName.endsWith(altSuffix);
     }
 
-    public static String mainPropertyField(IndexMetadata structure, String fieldName) {
+    public static String mainAnnotationField(IndexMetadata structure, String fieldName) {
         AnnotatedField cf = structure.annotatedFields().get(fieldName);
         Annotation pr = cf.annotations().main();
-        return propertyField(fieldName, pr.name());
+        return annotationField(fieldName, pr.name());
     }
 
-    public static String mainPropertyOffsetsField(IndexMetadata structure, String fieldName) {
+    public static String mainAnnotationOffsetsField(IndexMetadata structure, String fieldName) {
         AnnotatedField cf = structure.annotatedFields().get(fieldName);
         Annotation pr = cf.annotations().main();
         return pr.offsetsSensitivity().luceneField();
     }
 
-    public static String getDefaultMainPropName() {
-        return DEFAULT_MAIN_PROP_NAME;
+    public static String getDefaultMainAnnotationName() {
+        return DEFAULT_MAIN_ANNOT_NAME;
     }
 
     public static String getDefaultMainAlternativeName() {
@@ -421,7 +414,7 @@ public final class AnnotatedFieldNameUtil {
      * @return true if we are, false if not
      */
     public static boolean avoidSpecialCharsInFieldNames() {
-        return PROP_SEP_LEN > 1;
+        return ANNOT_SEP_LEN > 1;
     }
 
     /**
@@ -430,12 +423,12 @@ public final class AnnotatedFieldNameUtil {
      * Case-sensitive alternatives are "s" (case- and diacritics-sensitive) and "di"
      * (diacritics-insensitive but case-sensitive).
      *
-     * @param fieldPropAltName Lucene field name including property and alt name
+     * @param fieldAnnotSensitivityName Lucene field name including annotation and alt name
      * @return true if the field name refers to a case-sensitive alternative
      */
-    public static boolean isCaseSensitive(String fieldPropAltName) {
+    public static boolean isCaseSensitive(String fieldAnnotSensitivityName) {
         // both-sensitive or diacritics-insensitive
-        return fieldPropAltName.endsWith(ALT_SEP + "s") || fieldPropAltName.endsWith(ALT_SEP + "di");
+        return fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "s") || fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "di");
     }
 
     /**
@@ -444,18 +437,18 @@ public final class AnnotatedFieldNameUtil {
      * Diacritics-sensitive alternatives are "s" (case- and diacritics-sensitive)
      * and "ci" (case-insensitive but diacritics-sensitive).
      *
-     * @param fieldPropAltName Lucene field name including property and alt name
+     * @param fieldAnnotSensitivityName Lucene field name including annotation and alt name
      * @return true if the field name refers to a diacritics-sensitive alternative
      */
-    public static boolean isDiacriticsSensitive(String fieldPropAltName) {
+    public static boolean isDiacriticsSensitive(String fieldAnnotSensitivityName) {
         // both-sensitive or case-insensitive
-        return fieldPropAltName.endsWith(ALT_SEP + "s") || fieldPropAltName.endsWith(ALT_SEP + "ci");
+        return fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "s") || fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "ci");
     }
 
     /**
      * Is the specified name a valid XML element name?
      * 
-     * Generally, field and property names should be valid XML element names, so we
+     * Generally, field and annotation names should be valid XML element names, so we
      * don't have to sanitize them when generating output XML.
      * 
      * @param name name to check

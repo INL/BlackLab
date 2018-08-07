@@ -74,9 +74,9 @@ public class MatchFilterTokenProperty extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         if (propertyName != null)
-            propIndex = fiAccessor.getPropertyNumber(propertyName);
+            propIndex = fiAccessor.getAnnotationNumber(propertyName);
     }
 
     @Override

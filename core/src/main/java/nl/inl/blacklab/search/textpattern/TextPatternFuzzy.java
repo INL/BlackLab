@@ -48,7 +48,7 @@ public class TextPatternFuzzy extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         int prefixLength1 = prefixLength;
-        String valuePrefix = context.subpropPrefix(); // for searching in "subproperties" (e.g. PoS features)
+        String valuePrefix = context.subannotPrefix(); // for searching in "subproperties" (e.g. PoS features)
         prefixLength1 += valuePrefix.length();
         return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)),
                 maxEdits, prefixLength1);

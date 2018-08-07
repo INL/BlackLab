@@ -3,15 +3,15 @@ package nl.inl.blacklab.search.indexmetadata;
 /** Shared base interface between metadata and annotated fields */
 public interface Field {
 	
-	/** Get this complex field's name
+	/** Get this field's name
 	 * @return this field's name */
 	String name();
 
-	/** Get this complex field's display name
+	/** Get this field's display name
 	 * @return this field's display name */
 	String displayName();
 
-	/** Get this complex field's display name
+	/** Get this field's display name
 	 * @return this field's display name */
 	String description();
 	

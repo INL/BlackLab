@@ -148,7 +148,7 @@ public class Nfa {
         return startingState.toString();
     }
 
-    public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    public void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         startingState.lookupPropertyNumbers(fiAccessor, statesVisited);
     }
 

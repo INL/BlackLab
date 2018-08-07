@@ -10,7 +10,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Concordance;
@@ -153,7 +153,7 @@ public class RequestHandlerHits extends RequestHandler {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set
                 String fieldName = searcher.mainAnnotatedField().name();
-                DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
+                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
                 totalTokens = perDocResults.intSum(propTokens);
             }
 

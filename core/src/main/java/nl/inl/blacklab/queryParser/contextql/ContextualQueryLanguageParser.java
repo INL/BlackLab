@@ -47,8 +47,8 @@ public class ContextualQueryLanguageParser implements ContextualQueryLanguagePar
         defaultProperty = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
     }
 
-    public void setDefaultProperty(String property) {
-        defaultProperty = property;
+    public void setDefaultProperty(String annotation) {
+        defaultProperty = annotation;
     }
 
     public String getDefaultProperty() {

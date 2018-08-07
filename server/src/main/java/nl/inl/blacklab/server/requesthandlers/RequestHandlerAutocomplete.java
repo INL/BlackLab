@@ -20,8 +20,8 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
 
 /**
- * Autocompletion for metadata and property fields. Property fields must be
- * prefixed by the complexField in which they exist.
+ * Autocompletion for metadata and annotated fields. Annotations must be
+ * prefixed by the annotated field in which they exist.
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
@@ -43,33 +43,33 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         String[] pathParts = StringUtils.split(urlPathInfo, '/');
         if (pathParts.length == 0)
             throw new BadRequest("UNKNOWN_OPERATION",
-                    "Bad URL. Specify a field name and optionally a property to autocomplete.");
+                    "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
 
-        String complexFieldName = pathParts.length > 1 ? pathParts[0] : null;
+        String annotatedFieldName = pathParts.length > 1 ? pathParts[0] : null;
         String fieldName = pathParts.length > 1 ? pathParts[1] : pathParts[0];
         String term = searchParam.getString("term");
 
         if (fieldName.isEmpty()) {
             throw new BadRequest("UNKNOWN_OPERATION",
-                    "Bad URL. Specify a field name and optionally a property to autocomplete.");
+                    "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
         }
         Searcher searcher = getSearcher();
         IndexMetadata indexMetadata = searcher.getIndexMetadata();
-        if (complexFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
+        if (annotatedFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
-                    "Bad URL. Also specify a property to autocomplete for complexfield: " + fieldName);
+                    "Bad URL. Also specify a annotation to autocomplete for annotated field: " + fieldName);
 
         if (term == null || term.isEmpty())
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
         /*
          * Rather specific code:
-         * We require the exact name of the property in the lucene index in order to find autocompletion results
+         * We require the exact name of the annotation in the lucene index in order to find autocompletion results
          *
          * For metadata fields this is just the value as specified in the IndexMetadata,
          * but word properties have multiple internal names.
-         * the property is part of a "complexField", and (usually) has multiple variants for case/accent-sensitive/insensitive versions.
-         * The name needs to account for all of these things.
+         * The annotation is part of a "annotatedField", and (usually) has multiple variants ("sensitivities") for 
+         * case/accent-sensitive/insensitive versions. The name needs to account for all of these things.
          *
          * By default, get the insensitive variant of the field (if present), otherwise, get whatever is the default.
          *
@@ -77,21 +77,21 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
         boolean sensitiveMatching = true;
-        if (complexFieldName != null && !complexFieldName.isEmpty()) {
-            if (!indexMetadata.annotatedFields().exists(complexFieldName))
-                throw new BadRequest("UNKNOWN_FIELD", "Complex field '" + complexFieldName + "' does not exist.");
-            AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().get(complexFieldName);
-            Annotations annotations = complexFieldDesc.annotations();
+        if (annotatedFieldName != null && !annotatedFieldName.isEmpty()) {
+            if (!indexMetadata.annotatedFields().exists(annotatedFieldName))
+                throw new BadRequest("UNKNOWN_FIELD", "Annotated field '" + annotatedFieldName + "' does not exist.");
+            AnnotatedField annotatedField = indexMetadata.annotatedFields().get(annotatedFieldName);
+            Annotations annotations = annotatedField.annotations();
             if (!annotations.exists(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",
-                        "Complex field '" + complexFieldName + "' has no property '" + fieldName + "'.");
-            Annotation prop = annotations.get(fieldName);
-            if (prop.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
+                        "Annotated field '" + annotatedFieldName + "' has no annotation '" + fieldName + "'.");
+            Annotation annotation = annotations.get(fieldName);
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
-                fieldName = AnnotatedFieldNameUtil.propertyField(complexFieldName, fieldName, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+                fieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName, fieldName, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             } else {
                 sensitiveMatching = true;
-                fieldName = prop.offsetsSensitivity().luceneField();
+                fieldName = annotation.offsetsSensitivity().luceneField();
             }
         }
 

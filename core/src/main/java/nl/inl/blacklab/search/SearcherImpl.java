@@ -412,7 +412,7 @@ public class SearcherImpl extends Searcher implements Closeable {
             if (minP < 0 || maxP < 0)
                 throw new RuntimeException("Can't determine min and max positions");
 
-            String fieldPropName = AnnotatedFieldNameUtil.mainPropertyOffsetsField(indexMetadata, fieldName);
+            String fieldPropName = AnnotatedFieldNameUtil.mainAnnotationOffsetsField(indexMetadata, fieldName);
 
             org.apache.lucene.index.Terms terms = reader.getTermVector(doc, fieldPropName);
             if (terms == null)
@@ -528,7 +528,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         for (AnnotatedField field: indexMetadata.annotatedFields()) {
             for (Annotation annotation: field.annotations()) {
                 if (annotation.hasForwardIndex()) {
-                    // This property has a forward index. Make sure it is open.
+                    // This annotation has a forward index. Make sure it is open.
                     if (traceIndexOpening)
                         logger.debug("    " + annotation.luceneFieldPrefix() + "...");
                     getForwardIndex(annotation);
@@ -555,14 +555,14 @@ public class SearcherImpl extends Searcher implements Closeable {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        AnnotatedField complexFieldDesc = indexMetadata.annotatedFields().get(fieldName);
-        if (complexFieldDesc == null)
-            throw new IllegalArgumentException("Unknown complex field " + fieldName);
-        Annotation mainProperty = complexFieldDesc.annotations().main();
-        if (mainProperty == null)
-            throw new IllegalArgumentException("Main property not found for " + fieldName);
-        String mainPropName = mainProperty.name();
-        return new QueryExecutionContext(this, fieldName, mainPropName, defaultCaseSensitive,
+        AnnotatedField annotatedField = indexMetadata.annotatedFields().get(fieldName);
+        if (annotatedField == null)
+            throw new IllegalArgumentException("Unknown annotated field " + fieldName);
+        Annotation mainAnnotation = annotatedField.annotations().main();
+        if (mainAnnotation == null)
+            throw new IllegalArgumentException("Main annotation not found for " + fieldName);
+        String mainAnnotationName = mainAnnotation.name();
+        return new QueryExecutionContext(this, fieldName, mainAnnotationName, defaultCaseSensitive,
                 defaultDiacriticsSensitive);
     }
 

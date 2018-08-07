@@ -36,7 +36,7 @@ public interface Annotation {
     String sensitivitySettingDesc();
 
 	/**
-	 * What sensitivity alternatives were indexed for this property?
+	 * What sensitivity alternatives were indexed for this annotation?
 	 * @return the sensitivity setting
 	 */
 	Collection<AnnotationSensitivity> sensitivities();
@@ -74,7 +74,7 @@ public interface Annotation {
      * @return Lucene field prefix
      */
 	default String luceneFieldPrefix() {
-		return AnnotatedFieldNameUtil.propertyField(field().name(), name());
+		return AnnotatedFieldNameUtil.annotationField(field().name(), name());
 	}
 
     default String forwardIndexIdField() {

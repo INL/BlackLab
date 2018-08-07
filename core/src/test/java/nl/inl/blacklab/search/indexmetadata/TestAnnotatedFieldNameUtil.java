@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TestAnnotatedFieldNameUtil {
@@ -24,40 +23,40 @@ public class TestAnnotatedFieldNameUtil {
     //private boolean oldFieldNameSetting;
 
     @Test
-    public void testIsAlternative() {
+    public void testIsSensitivity() {
         String fieldName;
-        fieldName = AnnotatedFieldNameUtil.propertyField("field", "property");
-        Assert.assertEquals(true, AnnotatedFieldNameUtil.isAlternative(fieldName, ""));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isAlternative(fieldName, "property"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isAlternative(fieldName, "field"));
+        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation");
+        Assert.assertEquals(true, AnnotatedFieldNameUtil.isSensitivity(fieldName, ""));
+        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "annotation"));
+        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "field"));
 
-        fieldName = AnnotatedFieldNameUtil.propertyField("field", "property", "alternative");
-        Assert.assertEquals(true, AnnotatedFieldNameUtil.isAlternative(fieldName, "alternative"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isAlternative(fieldName, "property"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isAlternative(fieldName, "field"));
+        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation", "sensitivity");
+        Assert.assertEquals(true, AnnotatedFieldNameUtil.isSensitivity(fieldName, "sensitivity"));
+        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "annotation"));
+        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "field"));
     }
 
     @Test
     public void testGetBaseName() {
         String fieldName;
-        fieldName = AnnotatedFieldNameUtil.propertyField("field", "property");
+        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation");
         Assert.assertEquals("field", AnnotatedFieldNameUtil.getBaseName(fieldName));
 
-        fieldName = AnnotatedFieldNameUtil.propertyField("field", "property", "alternative");
+        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation", "sensitivity");
         Assert.assertEquals("field", AnnotatedFieldNameUtil.getBaseName(fieldName));
     }
 
     @Test
-    public void testComplexFieldName() {
-        Assert.assertEquals("field" + AnnotatedFieldNameUtil.PROP_SEP + "property",
-                AnnotatedFieldNameUtil.propertyField("field", "property"));
-        Assert.assertEquals("field" + AnnotatedFieldNameUtil.PROP_SEP + "property"
-                + AnnotatedFieldNameUtil.ALT_SEP + "alternative",
-                AnnotatedFieldNameUtil.propertyField("field", "property", "alternative"));
-        Assert.assertEquals("test" + AnnotatedFieldNameUtil.PROP_SEP + "word" + AnnotatedFieldNameUtil.ALT_SEP + "s",
-                AnnotatedFieldNameUtil.propertyField("test", "word", "s"));
-        Assert.assertEquals("hw" + AnnotatedFieldNameUtil.ALT_SEP + "s",
-                AnnotatedFieldNameUtil.propertyField(null, "hw", "s"));
+    public void testAnnotatedFieldName() {
+        Assert.assertEquals("field" + AnnotatedFieldNameUtil.ANNOT_SEP + "annotation",
+                AnnotatedFieldNameUtil.annotationField("field", "annotation"));
+        Assert.assertEquals("field" + AnnotatedFieldNameUtil.ANNOT_SEP + "annotation"
+                + AnnotatedFieldNameUtil.SENSITIVITY_SEP + "sensitivity",
+                AnnotatedFieldNameUtil.annotationField("field", "annotation", "sensitivity"));
+        Assert.assertEquals("test" + AnnotatedFieldNameUtil.ANNOT_SEP + "word" + AnnotatedFieldNameUtil.SENSITIVITY_SEP + "s",
+                AnnotatedFieldNameUtil.annotationField("test", "word", "s"));
+        Assert.assertEquals("hw" + AnnotatedFieldNameUtil.SENSITIVITY_SEP + "s",
+                AnnotatedFieldNameUtil.annotationField(null, "hw", "s"));
     }
 
     public void testArray(String[] expected, String[] actual) {
@@ -67,19 +66,12 @@ public class TestAnnotatedFieldNameUtil {
         }
     }
 
-    @Before
-    public void setUp() {
-        //oldFieldNameSetting = ComplexFieldUtil.usingOldFieldNames();
-    }
-
     @Test
     public void testGetNameComponents() {
-        //testArray(new String[] { "contents" },
-        //		ComplexFieldUtil.getNameComponents(ComplexFieldUtil.propertyField("contents", null, null)));
         testArray(new String[] { "contents", "lemma" },
-                AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.propertyField("contents", "lemma", null)));
+                AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.annotationField("contents", "lemma", null)));
         testArray(new String[] { "contents", "lemma", "s" },
-                AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.propertyField("contents", "lemma", "s")));
+                AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.annotationField("contents", "lemma", "s")));
 
         testArray(new String[] { "contents", null, null, "cid" },
                 AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.bookkeepingField("contents", null, "cid")));

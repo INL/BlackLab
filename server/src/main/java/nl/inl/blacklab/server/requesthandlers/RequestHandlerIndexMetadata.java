@@ -92,14 +92,13 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .endMap().endEntry();
 
             ds.startEntry("complexFields").startMap();
-            // Complex fields
-            //DataObjectMapAttribute doComplexFields = new DataObjectMapAttribute("complexField", "name");
+            // Annotated fields
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
                 ds.startAttrEntry("complexField", "name", field.name());
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();
                 Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-                RequestHandlerFieldInfo.describeComplexField(ds, null, field, searcher, setShowValuesFor,
+                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, searcher, setShowValuesFor,
                         setShowSubpropsFor);
 
                 ds.endAttrEntry();

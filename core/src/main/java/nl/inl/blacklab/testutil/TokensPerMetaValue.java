@@ -8,7 +8,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -28,9 +28,9 @@ public class TokensPerMetaValue {
         String indexDir = "/home/jan/blacklab/gysseling/index";
         if (args.length >= 1)
             indexDir = args[0];
-        String complexFieldName = "contents";
+        String annotatedFieldName = "contents";
         if (args.length >= 2)
-            complexFieldName = args[1];
+            annotatedFieldName = args[1];
 
         Searcher searcher = Searcher.open(new File(indexDir));
         try {
@@ -46,7 +46,7 @@ public class TokensPerMetaValue {
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
                                 new BLDutchAnalyzer(), field.name());
                         DocResults docs = searcher.queryDocuments(filter);
-                        int totalNumberOfTokens = docs.intSum(new DocPropertyComplexFieldLength(complexFieldName));
+                        int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(annotatedFieldName));
                         System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
                                 + totalNumberOfTokens);
                     }

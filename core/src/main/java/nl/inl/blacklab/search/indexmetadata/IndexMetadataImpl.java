@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
@@ -96,8 +96,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             "unknownValue", "unknownCondition", "values",
             "displayValues", "displayOrder", "valueListComplete"));
 
-    /** What keys may occur under complex field config? */
-    private static final Set<String> KEYS_COMPLEX_FIELD_CONFIG = new HashSet<>(Arrays.asList(
+    /** What keys may occur under annotated field config? */
+    private static final Set<String> KEYS_ANNOTATED_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
 
@@ -208,9 +208,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
             ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
             ObjectNode metadata = fieldInfo.putObject("metadataFields");
-            ObjectNode complex = fieldInfo.putObject("complexFields");
+            ObjectNode annotated = fieldInfo.putObject("complexFields");
 
-            addFieldInfoFromConfig(metadata, complex, metaGroups, config);
+            addFieldInfoFromConfig(metadata, annotated, metaGroups, config);
             extractFromJson(jsonRoot, null, true, false);
             save();
         } else {
@@ -327,8 +327,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         versionInfo.put("timeModified", timeModified);
         versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is
                                                         // for XML tags after the last word)
-        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag property payload contains tag lengths,
-                                                     // and there is no end tag property
+        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag annotation payload contains tag lengths,
+                                                     // and there is no end tag annotation
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme",
@@ -344,7 +344,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
-        ObjectNode jsonComplexFields = fieldInfo.putObject("complexFields");
+        ObjectNode jsonAnnotatedFields = fieldInfo.putObject("complexFields");
 
         // Add metadata field group info
         for (MetadataFieldGroup g: metadataFields().groups()) {
@@ -392,9 +392,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
         }
 
-        // Add complex field info
+        // Add annotated field info
         for (AnnotatedField f: annotatedFields) {
-            ObjectNode fieldInfo2 = jsonComplexFields.putObject(f.name());
+            ObjectNode fieldInfo2 = jsonAnnotatedFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
             fieldInfo2.put("mainProperty", f.annotations().main().name());
@@ -455,9 +455,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * @return true iff field has offsets
      */
     static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
-        // Iterate over documents in the index until we find a property
-        // for this complex field that has stored character offsets. This is
-        // our main property.
+        // Iterate over documents in the index until we find a annotation
+        // for this annotated field that has stored character offsets. This is
+        // our main annotation.
 
         // Note that we can't simply retrieve the field from a document and
         // check the FieldType to see if it has offsets or not, as that information
@@ -641,8 +641,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * index).
      *
      * Looks at the Lucene index to detect certain information (sometimes) missing
-     * from the JSON structure, such as naming scheme and available properties and
-     * alternatives for complex fields. (Should probably eventually all be recorded
+     * from the JSON structure, such as naming scheme and available annotations and
+     * alternatives for annotated fields. (Should probably eventually all be recorded
      * in the metadata.)
      *
      * @param jsonRoot JSON structure to extract
@@ -735,9 +735,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
         ObjectNode metaFieldConfigs = Json.getObject(fieldInfo, "metadataFields");
         boolean hasMetaFields = metaFieldConfigs.size() > 0;
-        ObjectNode complexFieldConfigs = Json.getObject(fieldInfo, "complexFields");
-        boolean hasComplexFields = complexFieldConfigs.size() > 0;
-        boolean hasFieldInfo = hasMetaFields || hasComplexFields;
+        ObjectNode annotatedFieldConfigs = Json.getObject(fieldInfo, "complexFields");
+        boolean hasAnnotatedFields = annotatedFieldConfigs.size() > 0;
+        boolean hasFieldInfo = hasMetaFields || hasAnnotatedFields;
 
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
             metadataFields.clearMetadataGroups();
@@ -786,20 +786,20 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 metadataFields.put(fieldName, fieldDesc);
             }
 
-            // Complex fields
-            it = complexFieldConfigs.fields();
+            // Annotated fields
+            it = annotatedFieldConfigs.fields();
             while (it.hasNext()) {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode fieldConfig = entry.getValue();
-                warnUnknownKeys("in complex field config for '" + fieldName + "'", fieldConfig,
-                        KEYS_COMPLEX_FIELD_CONFIG);
+                warnUnknownKeys("in annotated field config for '" + fieldName + "'", fieldConfig,
+                        KEYS_ANNOTATED_FIELD_CONFIG);
                 AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
-                String mainPropertyName = Json.getString(fieldConfig, "mainProperty", "");
-                if (mainPropertyName.length() > 0)
-                    fieldDesc.setMainPropertyName(mainPropertyName);
+                String mainAnnotationName = Json.getString(fieldConfig, "mainProperty", "");
+                if (mainAnnotationName.length() > 0)
+                    fieldDesc.setMainAnnotationName(mainAnnotationName);
 
                 // Process information about annotations (displayName, uiType, etc.
                 ArrayList<String> annotationOrder = new ArrayList<>();
@@ -807,24 +807,24 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                     JsonNode annotations = fieldConfig.get("annotations");
                     Iterator<JsonNode> itAnnot = annotations.elements();
                     while (itAnnot.hasNext()) {
-                        JsonNode annotation = itAnnot.next();
-                        Iterator<Entry<String, JsonNode>> itAnnotOpt = annotation.fields();
-                        AnnotationImpl propDesc = new AnnotationImpl(fieldDesc);
+                        JsonNode jsonAnnotation = itAnnot.next();
+                        Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
+                        AnnotationImpl annotation = new AnnotationImpl(fieldDesc);
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {
                             case "name":
-                                propDesc.setName(opt.getValue().textValue());
+                                annotation.setName(opt.getValue().textValue());
                                 annotationOrder.add(opt.getValue().textValue());
                                 break;
                             case "displayName":
-                                propDesc.setDisplayName(opt.getValue().textValue());
+                                annotation.setDisplayName(opt.getValue().textValue());
                                 break;
                             case "description":
-                                propDesc.setDescription(opt.getValue().textValue());
+                                annotation.setDescription(opt.getValue().textValue());
                                 break;
                             case "uiType":
-                                propDesc.setUiType(opt.getValue().textValue());
+                                annotation.setUiType(opt.getValue().textValue());
                                 break;
                             default:
                                 logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName
@@ -832,30 +832,30 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                                 break;
                             }
                         }
-                        if (StringUtils.isEmpty(propDesc.name()))
+                        if (StringUtils.isEmpty(annotation.name()))
                             logger.warn("Annotation entry without name for field '" + fieldName
                                     + "' in indexmetadata file; skipping");
                         else
-                            fieldDesc.putProperty(propDesc);
+                            fieldDesc.putAnnotation(annotation);
                     }
                 }
 
-                // These properties should get no forward index
-                // TODO: refactor this so this information is stored with each property instead,
+                // These annotations should get no forward index
+                // TODO: refactor this so this information is stored with each annotation instead,
                 // deprecating this setting
-                JsonNode nodeNoForwardIndexProps = fieldConfig.get("noForwardIndexProps");
-                if (nodeNoForwardIndexProps instanceof ArrayNode) {
-                    Iterator<JsonNode> itNFIP = nodeNoForwardIndexProps.elements();
+                JsonNode nodeNoForwardIndexAnnotations = fieldConfig.get("noForwardIndexProps");
+                if (nodeNoForwardIndexAnnotations instanceof ArrayNode) {
+                    Iterator<JsonNode> itNFIP = nodeNoForwardIndexAnnotations.elements();
                     Set<String> noForwardIndex = new HashSet<>();
                     while (itNFIP.hasNext()) {
                         noForwardIndex.add(itNFIP.next().asText());
                     }
-                    fieldDesc.setNoForwardIndexProps(noForwardIndex);
+                    fieldDesc.setNoForwardIndexAnnotations(noForwardIndex);
                 } else {
                     String noForwardIndex = Json.getString(fieldConfig, "noForwardIndexProps", "").trim();
                     if (noForwardIndex.length() > 0) {
-                        String[] noForwardIndexProps = noForwardIndex.split("\\s+");
-                        fieldDesc.setNoForwardIndexProps(new HashSet<>(Arrays.asList(noForwardIndexProps)));
+                        String[] noForwardIndexAnnotations = noForwardIndex.split("\\s+");
+                        fieldDesc.setNoForwardIndexAnnotations(new HashSet<>(Arrays.asList(noForwardIndexAnnotations)));
                     }
                 }
 
@@ -877,10 +877,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
 
-                // Parse the name to see if it is a metadata field or part of a complex field.
+                // Parse the name to see if it is a metadata field or part of an annotated field.
                 String[] parts;
                 if (name.endsWith("Numeric")) {
-                    // Special case: this is not a property alternative, but a numeric
+                    // Special case: this is not a annotation alternative, but a numeric
                     // alternative for a metadata field.
                     // (TODO: this should probably be changed or removed)
                     parts = new String[] { name };
@@ -899,18 +899,18 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                         metadataFields.put(name, metadataFieldDesc);
                     }
                 } else {
-                    // Part of complex field.
+                    // Part of annotated field.
                     if (metadataFields.exists(parts[0])) {
                         throw new RuntimeException(
-                                "Complex field and metadata field with same name, error! ("
+                                "Annotated field and metadata field with same name, error! ("
                                         + parts[0] + ")");
                     }
 
                     // Get or create descriptor object.
-                    AnnotatedFieldImpl cfd = getOrCreateComplexField(parts[0]);
+                    AnnotatedFieldImpl cfd = getOrCreateAnnotatedField(parts[0]);
                     cfd.processIndexField(parts);
                 }
-            } // even if we have metadata, we still have to detect props/alts
+            } // even if we have metadata, we still have to detect annotations/sensitivities
         }
 
         metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
@@ -976,22 +976,22 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
         }
 
-        // Detect main contents field and main properties of complex fields
+        // Detect main contents field and main annotations of annotated fields
         if (!createNewIndex) { // new index doesn't have this information yet
-            // Detect the main properties for all complex fields
+            // Detect the main annotations for all annotated fields
             // (looks for fields with char offset information stored)
             AnnotatedFieldImpl mainContentsField = null;
             for (AnnotatedField d: annotatedFields) {
                 if (mainContentsField == null || d.name().equals("contents"))
                     mainContentsField = (AnnotatedFieldImpl) d;
                 if (tokenCount > 0) // no use trying this on an empty index
-                    ((AnnotatedFieldImpl) d).detectMainProperty(reader);
+                    ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
             }
             annotatedFields.setMainContentsField(mainContentsField);
         }
     }
 
-    private AnnotatedFieldImpl getOrCreateComplexField(String name) {
+    private AnnotatedFieldImpl getOrCreateAnnotatedField(String name) {
         ensureNotFrozen();
         AnnotatedFieldImpl cfd = null;
         if (annotatedFields.exists(name))
@@ -1015,28 +1015,27 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     }
 
     /**
-     * While indexing, check if a complex field is already registered in the
+     * While indexing, check if an annotated field is already registered in the
      * metadata, and if not, add it now.
      *
-     * @param fieldName field name
-     * @param mainPropName main property name
-     * @return the annotated field
+     * @param fieldWriter field to register
+     * @return registered annotated field
      */
     @Override
     public AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         ensureNotFrozen();
         
         String fieldName = fieldWriter.getName();
-        String mainPropName = fieldWriter.getMainProperty().getName();
+        String mainAnnotName = fieldWriter.getMainAnnotation().getName();
         
         if (annotatedFields.exists(fieldName))
             return annotatedFields.get(fieldName);
-        // Not registered yet; do so now. Note that we only add the main property,
-        // not the other properties, but that's okay; they're not needed at index
+        // Not registered yet; do so now. Note that we only add the main annotation,
+        // not the other annotations, but that's okay; they're not needed at index
         // time and will be detected at search time.
-        AnnotatedFieldImpl cf = getOrCreateComplexField(fieldName);
-        cf.getOrCreateProperty(mainPropName); // create main property
-        cf.setMainPropertyName(mainPropName); // set main property
+        AnnotatedFieldImpl cf = getOrCreateAnnotatedField(fieldName);
+        cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
+        cf.setMainAnnotationName(mainAnnotName); // set main annotation
         fieldWriter.setAnnotatedField(cf);
         return cf;
     }
@@ -1115,7 +1114,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * If the object node contains any keys other than those specified, warn about
      * it
      *
-     * @param where where are we in the file (e.g. "top level", "complex field
+     * @param where where are we in the file (e.g. "top level", "annotated field
      *            'contents'", etc.)
      * @param node node to check
      * @param knownKeys keys that may occur under this node
@@ -1141,7 +1140,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         versionInfo.put("tagLengthInPayload", true); // always true, but BL check for it, so required
     }
 
-    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode complex, ArrayNode metaGroups,
+    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
             ConfigInputFormat config) {
         ensureNotFrozen();
 
@@ -1186,19 +1185,19 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
         }
 
-        // Add complex field info
+        // Add annotated field info
         for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
-            ObjectNode g = complex.putObject(f.getName());
+            ObjectNode g = annotated.putObject(f.getName());
             g.put("displayName", f.getDisplayName());
             g.put("description", f.getDescription());
             g.put("mainProperty", f.getAnnotations().values().iterator().next().getName());
             ArrayNode displayOrder = g.putArray("displayOrder");
-            ArrayNode noForwardIndexProps = g.putArray("noForwardIndexProps");
+            ArrayNode noForwardIndexAnnotations = g.putArray("noForwardIndexProps");
             ArrayNode annotations = g.putArray("annotations");
             for (ConfigAnnotation a: f.getAnnotations().values()) {
                 displayOrder.add(a.getName());
                 if (!a.createForwardIndex())
-                    noForwardIndexProps.add(a.getName());
+                    noForwardIndexAnnotations.add(a.getName());
                 ObjectNode annotation = annotations.addObject();
                 annotation.put("name", a.getName());
                 annotation.put("displayName", a.getDisplayName());
@@ -1209,17 +1208,17 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
                     displayOrder.add(a.getName());
                     if (!a.createForwardIndex())
-                        noForwardIndexProps.add(a.getName());
+                        noForwardIndexAnnotations.add(a.getName());
                 }
             }
         }
 
-        // Also (recursively) add metadata and complex field config from any linked
+        // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
             if (format.isConfigurationBased())
-                addFieldInfoFromConfig(metadata, complex, metaGroups, format.getConfig());
+                addFieldInfoFromConfig(metadata, annotated, metaGroups, format.getConfig());
         }
     }
 

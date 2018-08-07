@@ -19,11 +19,11 @@ public class NfaStateToken extends NfaState {
 
     static final String ANY_TOKEN = null;
 
-    /** What property we're trying to match */
+    /** What annotation we're trying to match */
     protected String luceneField;
 
     /**
-     * Index of the property we're trying to match. Only valid after
+     * Index of the annotation we're trying to match. Only valid after
      * lookupPropertyNumber() called.
      */
     private int propertyNumber = -1;
@@ -140,7 +140,7 @@ public class NfaStateToken extends NfaState {
     public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
         String propertyName = comp[1];
-        propertyNumber = fiAccessor.getPropertyNumber(propertyName);
+        propertyNumber = fiAccessor.getAnnotationNumber(propertyName);
         boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(luceneField);
         boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(luceneField);
         inputTokens = new IntHashSet(); //new HashSet<>();

@@ -7,8 +7,8 @@ import java.util.stream.Stream;
 public interface AnnotatedFields extends Iterable<AnnotatedField> {
 
     /**
-     * The main contents field in our index. This is either the complex field with
-     * the name "contents", or if that doesn't exist, the first complex field found.
+     * The main contents field in our index. This is either the annotated field with
+     * the name "contents", or if that doesn't exist, the first annotated field found.
      * 
      * @return the main contents field
      */
@@ -30,7 +30,7 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
     Stream<AnnotatedField> stream();
 
     /**
-     * Get the description of one complex field
+     * Get the description of one annotated field
      * 
      * @param fieldName name of the field
      * @return the field description, or null if it doesn't exist

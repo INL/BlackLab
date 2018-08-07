@@ -58,7 +58,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        QueryExecutionContext startTagContext = context.withProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME);
+        QueryExecutionContext startTagContext = context.withProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
         String startTagFieldName = startTagContext.luceneField();
         return new SpanQueryTags(startTagFieldName, elementName1, attrOptIns);
     }

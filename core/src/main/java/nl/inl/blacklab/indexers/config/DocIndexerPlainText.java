@@ -72,7 +72,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         if (config.getAnnotatedFields().size() > 1)
             throw new InputFormatConfigException("Plain text files can only have 1 annotated field");
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
-            setCurrentComplexField(annotatedField.getName());
+            setCurrentAnnotatedFieldName(annotatedField.getName());
 
             // For each line
             StringBuilder punct = new StringBuilder();

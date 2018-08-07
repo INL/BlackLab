@@ -21,8 +21,8 @@ import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.AnnotationWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
 /**
  * Example indexer. See Example for the file format.

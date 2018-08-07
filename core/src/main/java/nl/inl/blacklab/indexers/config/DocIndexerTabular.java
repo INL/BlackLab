@@ -185,7 +185,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         try (CSVPrinter p = new CSVPrinter(csvData, tabularFormat)) {
             // For the configured annotated field...
             for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
-                setCurrentComplexField(annotatedField.getName());
+                setCurrentAnnotatedFieldName(annotatedField.getName());
 
                 // For each token position
                 for (CSVRecord record : records) {

@@ -76,7 +76,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /** Fragment positions in ancestors */
     private List<FragmentPosition> fragPosStack = new ArrayList<>();
 
-    /** The config for the annotated (complex) field we're currently processing. */
+    /** The config for the annotated field we're currently processing. */
     private ConfigAnnotatedField currentAnnotatedField;
 
     @Override
@@ -821,7 +821,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected void setCurrentAnnotatedField(ConfigAnnotatedField annotatedField) {
         currentAnnotatedField = annotatedField;
-        setCurrentComplexField(currentAnnotatedField.getName());
+        setCurrentAnnotatedFieldName(currentAnnotatedField.getName());
     }
 
 }

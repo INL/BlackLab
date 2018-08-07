@@ -8,11 +8,11 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 public class MatchFilterString extends MatchFilter {
     ConstraintValueString string;
 
-    /** -1 if we don't know the property index, or the property index otherwise */
-    int propIndex = -1;
+    /** -1 if we don't know the annotation index, or the annotation index otherwise */
+    int annotIndex = -1;
 
     /**
-     * Term index if we know the property index to use for this expression (i.e.
+     * Term index if we know the annotation index to use for this expression (i.e.
      * propIndex >= 0), or -1 if not
      */
     int termIndex = -1;
@@ -66,12 +66,12 @@ public class MatchFilterString extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         // NOP
     }
 
     public int getPropIndex() {
-        return propIndex;
+        return annotIndex;
     }
 
     public int getTermIndex() {

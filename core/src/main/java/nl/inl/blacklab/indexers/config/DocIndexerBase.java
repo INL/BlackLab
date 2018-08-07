@@ -29,8 +29,8 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
-import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -43,7 +43,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     private static final boolean TRACE = false;
 
     /**
-     * Position of start tags and their index in the property arrays, so we can add
+     * Position of start tags and their index in the annotation arrays, so we can add
      * payload when we find the end tags
      */
     static final class OpenTagInfo {
@@ -58,26 +58,26 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
     }
 
-    /** Complex fields we're indexing. */
-    private Map<String, AnnotatedFieldWriter> complexFields = new LinkedHashMap<>();
+    /** Annotated fields we're indexing. */
+    private Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
-     * A field named "contents", or, if that doesn't exist, the first complex field
+     * A field named "contents", or, if that doesn't exist, the first annotated field
      * added.
      */
-    private AnnotatedFieldWriter mainComplexField;
+    private AnnotatedFieldWriter mainAnnotatedField;
 
-    /** The indexing object for the complex field we're currently processing. */
-    private AnnotatedFieldWriter currentComplexField;
+    /** The indexing object for the annotated field we're currently processing. */
+    private AnnotatedFieldWriter currentAnnotatedField;
 
-    /** The tag property for the complex field we're currently processing. */
-    private AnnotationWriter propStartTag;
+    /** The tag annotation for the annotated field we're currently processing. */
+    private AnnotationWriter annotStartTag;
 
-    /** The main property for the complex field we're currently processing. */
-    private AnnotationWriter propMain;
+    /** The main annotation for the annotated field we're currently processing. */
+    private AnnotationWriter annotMain;
 
-    /** The main property for the complex field we're currently processing. */
-    private AnnotationWriter propPunct;
+    /** The main annotation for the annotated field we're currently processing. */
+    private AnnotationWriter annotPunct;
 
     /**
      * If no punctuation expression is defined, add a space between each word by
@@ -145,71 +145,71 @@ public abstract class DocIndexerBase extends DocIndexer {
         return contentStoreName;
     }
 
-    protected void addComplexField(AnnotatedFieldWriter complexField) {
-        complexFields.put(complexField.getName(), complexField);
+    protected void addAnnotatedField(AnnotatedFieldWriter field) {
+        annotatedFields.put(field.getName(), field);
     }
 
-    protected AnnotatedFieldWriter getMainComplexField() {
-        if (mainComplexField == null) {
-            // The "main complex field" is the field that stores the document content id for now.
-            // (We will change this eventually so the document content id is not stored with a complex field
+    protected AnnotatedFieldWriter getMainAnnotatedField() {
+        if (mainAnnotatedField == null) {
+            // The "main annotated field" is the field that stores the document content id for now.
+            // (We will change this eventually so the document content id is not stored with a annotated field
             // but as a metadata field instead.)
-            // The main complex field is a field named "contents" or, if that does not exist, the first
-            // complex field
-            for (AnnotatedFieldWriter complexField : complexFields.values()) {
-                if (mainComplexField == null)
-                    mainComplexField = complexField;
-                else if (complexField.getName().equals("contents"))
-                    mainComplexField = complexField;
+            // The main annotated field is a field named "contents" or, if that does not exist, the first
+            // annotated field
+            for (AnnotatedFieldWriter field : annotatedFields.values()) {
+                if (mainAnnotatedField == null)
+                    mainAnnotatedField = field;
+                else if (field.getName().equals("contents"))
+                    mainAnnotatedField = field;
             }
         }
-        return mainComplexField;
+        return mainAnnotatedField;
     }
 
-    protected AnnotatedFieldWriter getComplexField(String name) {
-        return complexFields.get(name);
+    protected AnnotatedFieldWriter getAnnotatedField(String name) {
+        return annotatedFields.get(name);
     }
 
-    protected Map<String, AnnotatedFieldWriter> getComplexFields() {
-        return Collections.unmodifiableMap(complexFields);
+    protected Map<String, AnnotatedFieldWriter> getAnnotatedFields() {
+        return Collections.unmodifiableMap(annotatedFields);
     }
 
-    protected void setCurrentComplexField(String name) {
-        currentComplexField = getComplexField(name);
-        if (currentComplexField == null)
-            throw new InputFormatConfigException("Tried to index complex field " + name
+    protected void setCurrentAnnotatedFieldName(String name) {
+        currentAnnotatedField = getAnnotatedField(name);
+        if (currentAnnotatedField == null)
+            throw new InputFormatConfigException("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
-        propStartTag = currentComplexField.getTagProperty();
-        propMain = currentComplexField.getMainProperty();
-        propPunct = currentComplexField.getPunctProperty();
+        annotStartTag = currentAnnotatedField.getTagProperty();
+        annotMain = currentAnnotatedField.getMainAnnotation();
+        annotPunct = currentAnnotatedField.getPunctProperty();
     }
 
     protected void addStartChar(int pos) {
-        currentComplexField.addStartChar(pos);
+        currentAnnotatedField.addStartChar(pos);
     }
 
     protected void addEndChar(int pos) {
-        currentComplexField.addEndChar(pos);
+        currentAnnotatedField.addEndChar(pos);
     }
 
-    protected AnnotationWriter getProperty(String name) {
-        return currentComplexField.getProperty(name);
+    protected AnnotationWriter getAnnotation(String name) {
+        return currentAnnotatedField.getProperty(name);
     }
 
     protected int getCurrentTokenPosition() {
-        return propMain.lastValuePosition() + 1;
+        return annotMain.lastValuePosition() + 1;
     }
 
     protected AnnotationWriter propTags() {
-        return propStartTag;
+        return annotStartTag;
     }
 
     protected AnnotationWriter propMain() {
-        return propMain;
+        return annotMain;
     }
 
     protected AnnotationWriter propPunct() {
-        return propPunct;
+        return annotPunct;
     }
 
     protected void setPreventNextDefaultPunctuation() {
@@ -363,15 +363,15 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void endDocument() {
         traceln("END DOCUMENT");
 
-        for (AnnotatedFieldWriter complexField : getComplexFields().values()) {
-            AnnotationWriter propMain = complexField.getMainProperty();
+        for (AnnotatedFieldWriter field : getAnnotatedFields().values()) {
+            AnnotationWriter propMain = field.getMainAnnotation();
 
             // Make sure all the properties have an equal number of values.
-            // See what property has the highest position
+            // See what annotation has the highest position
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop : complexField.getProperties()) {
+            for (AnnotationWriter prop : field.getAnnotations()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -383,35 +383,33 @@ public abstract class DocIndexerBase extends DocIndexer {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop : complexField.getProperties()) {
+            for (AnnotationWriter prop : field.getAnnotations()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
                         prop.addPayload(null);
                     if (prop == propMain) {
-                        complexField.addStartChar(getCharacterPosition());
-                        complexField.addEndChar(getCharacterPosition());
+                        field.addStartChar(getCharacterPosition());
+                        field.addEndChar(getCharacterPosition());
                     }
                 }
             }
-            // Store the different properties of the complex field that
+            // Store the different properties of the annotated field that
             // were gathered in lists while parsing.
-//            System.out.println("Adding to lucene doc: " + complexField.getName());
-//            System.out.println("Values: " + complexField.getMainProperty().getValues());
-            complexField.addToLuceneDoc(currentLuceneDoc);
+            field.addToLuceneDoc(currentLuceneDoc);
 
             // Add all properties to forward index
-            for (AnnotationWriter prop : complexField.getProperties()) {
-                if (!prop.hasForwardIndex())
+            for (AnnotationWriter annotation : field.getAnnotations()) {
+                if (!annotation.hasForwardIndex())
                     continue;
 
-                // Add property (case-sensitive tokens) to forward index and add
+                // Add annotation (case-sensitive tokens) to forward index and add
                 // id to Lucene doc
-                String propName = prop.getName();
-                String fieldName = AnnotatedFieldNameUtil.propertyField(
-                        complexField.getName(), propName);
+                String propName = annotation.getName();
+                String fieldName = AnnotatedFieldNameUtil.annotationField(
+                        field.getName(), propName);
                 if (indexer != null) {
-                    int fiid = indexer.addToForwardIndex(prop);
+                    int fiid = indexer.addToForwardIndex(annotation);
                     currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                             .forwardIndexIdField(fieldName), fiid, Store.YES));
                 }
@@ -473,10 +471,10 @@ public abstract class DocIndexerBase extends DocIndexer {
             throw ExUtil.wrapRuntimeException(e);
         }
 
-        for (AnnotatedFieldWriter complexField : getComplexFields().values()) {
-            // Reset complex field for next document
+        for (AnnotatedFieldWriter annotatedField : getAnnotatedFields().values()) {
+            // Reset annotated field for next document
             // don't reuse buffers, they're still referenced by the lucene doc.
-            complexField.clear(!indexingIntoExistingLuceneDoc);
+            annotatedField.clear(!indexingIntoExistingLuceneDoc);
         }
 
         // Report progress
@@ -514,7 +512,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         String contentIdFieldName;
         String contentStoreName = getContentStoreName();
         if (contentStoreName == null) {
-            AnnotatedFieldWriter main = getMainComplexField();
+            AnnotatedFieldWriter main = getMainAnnotatedField();
             if (main == null) {
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
@@ -578,7 +576,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             int currentPos = getCurrentTokenPosition();
 
-            // Add payload to start tag property indicating end position
+            // Add payload to start tag annotation indicating end position
             if (openInlineTags.isEmpty())
                 throw new MalformedInputFileException("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
@@ -646,21 +644,14 @@ public abstract class DocIndexerBase extends DocIndexer {
      *            index at these positions
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
-        AnnotationWriter property = getProperty(name);
+        AnnotationWriter annotation = getAnnotation(name);
         if (indexAtPositions == null) {
             if (name.equals("word"))
                 trace(value + " ");
-//          if (name.equals("xmlid"))
-//              trace(value + " ");
-            property.addValue(value, increment);
-            //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ": added " + value + ", lastValuePos = " + property.lastValuePosition());
+            annotation.addValue(value, increment);
         } else {
-//            if (name.equals("rating"))
-//                traceln("{" + value + "}: " + indexAtPositions);
-            //System.out.println("Field " + currentComplexField.getName() + ", property " + property.getName() + ", value " + value + " (STANDOFF)");
             for (Integer position : indexAtPositions) {
-                property.addValueAtPosition(value, position);
-                //System.out.println("  added at position " + position);
+                annotation.addValueAtPosition(value, position);
             }
         }
     }
@@ -679,7 +670,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      *            index at these positions
      */
     protected void subAnnotation(String mainName, String subName, String value, List<Integer> indexAtPositions) {
-        String sep = AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR;
+        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
         String newVal = sep + subName + sep + value;
         annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next token yet
     }

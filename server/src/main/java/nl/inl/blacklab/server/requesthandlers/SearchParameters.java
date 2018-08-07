@@ -149,9 +149,9 @@ public class SearchParameters {
             "hitstart", "hitend", // doc snippets
             "wordstart", "wordend",
             "explain", // explain query rewriting?
-            "listvalues", // on field info page, show (non-sub) values for property?
+            "listvalues", // on field info page, show (non-sub) values for annotation?
             // EXPERIMENTAL, mostly for part of speech, limited to 500 values
-            "subprops", // on field info page, show all subprops and values for property
+            "subprops", // on field info page, show all subannotations and values for annotation
             // EXPERIMENTAL, mostly for part of speech
 
             // How to process results

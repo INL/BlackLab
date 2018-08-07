@@ -107,7 +107,7 @@ public abstract class DocProperty {
             result = DocPropertyStoredField.deserialize(info);
             break;
         case 3:
-            result = DocPropertyComplexFieldLength.deserialize(info);
+            result = DocPropertyAnnotatedFieldLength.deserialize(info);
             break;
         default:
             logger.debug("Unknown DocProperty '" + type + "'");

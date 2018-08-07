@@ -18,7 +18,7 @@ public class ContentStoresManager {
      * stored field can provide)</li>
      * </ol>
      *
-     * Indexed by complex field name.
+     * Indexed by annotated field name.
      */
     private Map<String, ContentAccessor> contentAccessors = new HashMap<>();
 

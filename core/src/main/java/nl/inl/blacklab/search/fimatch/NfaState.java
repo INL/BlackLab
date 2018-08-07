@@ -24,7 +24,7 @@ public abstract class NfaState {
     /**
      * Build a token state.
      *
-     * @param luceneField what property to match
+     * @param luceneField what annotation to match
      * @param inputToken what token to match
      * @param nextState what state to go to after a succesful match
      * @return the state object
@@ -36,7 +36,7 @@ public abstract class NfaState {
     /**
      * Build a token state.
      *
-     * @param luceneField what property to match
+     * @param luceneField what annotation to match
      * @param inputTokens what tokens to match
      * @param nextState what state to go to after a succesful match
      * @return the state object

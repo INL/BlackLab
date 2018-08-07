@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.index.complex;
+package nl.inl.blacklab.index.annotated;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,21 +28,21 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
- * A complex field is like a Lucene field, but in addition to its "normal"
- * value, it can have multiple properties per word (not just a single token).
- * The properties might be "headword", "pos" (part of speech), "namedentity"
+ * An annotated field is like a Lucene field, but in addition to its "normal"
+ * value, it can have multiple annnotations per word (not just a single token).
+ * The annotations might be "headword", "pos" (part of speech), "namedentity"
  * (whether or not the word is (part of) a named entity like a location or
  * place), etc.
  *
- * Complex fields are implemented by indexing a field in Lucene for each
- * property. For example, if complex field "contents" has properties "headword"
- * and "pos", there would be 3 Lucene fields for the complex field: "contents",
+ * Annotated fields are implemented by indexing a field in Lucene for each
+ * annotation. For example, if annotated field "contents" has annotations "headword"
+ * and "pos", there would be 3 Lucene fields for the annotated field: "contents",
  * "contents__headword" and "contents__pos".
  *
  * The main field ("contents" in the above example) may include offset
@@ -50,7 +50,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * include position information (for use with SpanQueries).
  *
  * N.B. It is crucial that everything stays in synch, so you should call all the
- * appropriate add*() methods for each property and each token, or use the
+ * appropriate add*() methods for each annotation and each token, or use the
  * correct position increments to keep everything synched up. The same goes for
  * addStartChar() and addEndChar() (although, if you don't want any offsets, you
  * need not call these).
@@ -79,26 +79,26 @@ public class AnnotatedFieldWriter {
     }
 
     /**
-     * Construct a ComplexField object with a main property
+     * Construct a AnnotatedFieldWriter object with a main annotation
      * 
      * @param name field name
-     * @param mainPropertyName main property name
-     * @param sensitivity ways to index main property, with respect to case- and
+     * @param mainPropertyName main annotation name (e.g. "word")
+     * @param sensitivity ways to index main annotation, with respect to case- and
      *            diacritics-sensitivity.
-     * @param mainPropHasPayloads does the main property have payloads?
+     * @param mainPropHasPayloads does the main annotation have payloads?
      */
     public AnnotatedFieldWriter(String name, String mainPropertyName, SensitivitySetting sensitivity,
             boolean mainPropHasPayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
-                    + "' is discouraged (field/property names should be valid XML element names)");
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainPropertyName))
-            logger.warn("Property name '" + mainPropertyName
-                    + "' is discouraged (field/property names should be valid XML element names)");
+            logger.warn("Annotation name '" + mainPropertyName
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
         if (mainPropertyName == null)
-            mainPropertyName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+            mainPropertyName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         mainProperty = new AnnotationWriter(this, mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
         properties.put(mainPropertyName, mainProperty);
     }
@@ -107,10 +107,10 @@ public class AnnotatedFieldWriter {
         return start.size();
     }
 
-    public AnnotationWriter addProperty(String name, SensitivitySetting sensitivity, boolean includePayloads) {
+    public AnnotationWriter addAnnotation(String name, SensitivitySetting sensitivity, boolean includePayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-            logger.warn("Property name '" + name
-                    + "' is discouraged (field/property names should be valid XML element names)");
+            logger.warn("Annotation name '" + name
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
         if (noForwardIndexProps.contains(name)) {
             p.setForwardIndex(false);
@@ -120,7 +120,7 @@ public class AnnotatedFieldWriter {
     }
 
     public AnnotationWriter addProperty(String name, SensitivitySetting sensitivity) {
-        return addProperty(name, sensitivity, false);
+        return addAnnotation(name, sensitivity, false);
     }
 
     public void addStartChar(int startChar) {
@@ -136,8 +136,8 @@ public class AnnotatedFieldWriter {
             p.addToLuceneDoc(doc, fieldName, start, end);
         }
 
-        // Add number of tokens in complex field as a stored field,
-        // because we need to be able to find this property quickly
+        // Add number of tokens in annotated field as a stored field,
+        // because we need to be able to find this annotation quickly
         // for SpanQueryNot.
         // (Also note that this is the actual number of words + 1,
         //  because we always store a dummy "closing token" at the end
@@ -173,7 +173,7 @@ public class AnnotatedFieldWriter {
     public AnnotationWriter getProperty(String name) {
         AnnotationWriter p = properties.get(name);
         if (p == null)
-            throw new IllegalArgumentException("Undefined property '" + name + "'");
+            throw new IllegalArgumentException("Undefined annotation '" + name + "'");
         return p;
     }
 
@@ -181,23 +181,23 @@ public class AnnotatedFieldWriter {
         return properties.containsKey(name);
     }
 
-    public AnnotationWriter getMainProperty() {
+    public AnnotationWriter getMainAnnotation() {
         return mainProperty;
     }
 
     public AnnotationWriter getTagProperty() {
-        return getProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME);
+        return getProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
     }
 
     public AnnotationWriter getPunctProperty() {
-        return getProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+        return getProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 
     public String getName() {
         return fieldName;
     }
 
-    public Collection<AnnotationWriter> getProperties() {
+    public Collection<AnnotationWriter> getAnnotations() {
         return properties.values();
     }
 
@@ -206,7 +206,7 @@ public class AnnotatedFieldWriter {
         // If the indexmetadata file specified a list of properties that shouldn't get a forward
         // index, we need to know.
         AnnotatedFieldImpl fieldImpl = (AnnotatedFieldImpl)field;
-        setNoForwardIndexProps(fieldImpl.getNoForwardIndexProps());
+        setNoForwardIndexProps(fieldImpl.getNoForwardIndexAnnotations());
     }
 
     public AnnotatedField field() {

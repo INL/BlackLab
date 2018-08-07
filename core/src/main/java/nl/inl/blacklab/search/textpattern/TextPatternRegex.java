@@ -47,7 +47,7 @@ public class TextPatternRegex extends TextPatternTerm {
         try {
             return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
                     new Term(context.luceneField(),
-                            context.subpropPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+                            context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
         } catch (StackOverflowError e) {
             // If we pass in a really large regular expression, like a huge
             // list of words combined with OR, stack overflow occurs inside

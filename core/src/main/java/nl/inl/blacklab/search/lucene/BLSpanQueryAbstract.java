@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 abstract class BLSpanQueryAbstract extends BLSpanQuery {
     /**
      * The field name for this query. The "base" part is only applicable when
-     * dealing with complex fields: the base field name of "contents" and
+     * dealing with annotated fields: the base field name of "contents" and
      * "contents%pos" would both be "contents".
      */
     protected String baseFieldName = "";
@@ -98,12 +98,12 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     }
 
     /**
-     * Returns the name of the search field. In the case of a complex field, the
-     * clauses may actually query different properties of the same complex field
+     * Returns the name of the search field. In the case of a annotated field, the
+     * clauses may actually query different properties of the same annotated field
      * (e.g. "description" and "description__pos"). That's why only the prefix is
      * returned.
      *
-     * @return name of the search field. In the case of a complex
+     * @return name of the search field
      */
     @Override
     public String getField() {

@@ -158,7 +158,7 @@ public class HitPropertyLeftContext extends HitProperty {
         AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
         String propName = parts[0];
         if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
         Annotation annotation = field.annotations().get(propName);
         return new HitPropertyLeftContext(hits, annotation, sensitive);

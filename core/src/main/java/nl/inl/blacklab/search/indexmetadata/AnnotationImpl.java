@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable {
@@ -16,7 +16,7 @@ class AnnotationImpl implements Annotation, Freezable {
     /** The field this is an annotation for. */
     private AnnotatedField field;
     
-    /** The property name */
+    /** The annotation name */
     private String name;
 
     /** Name to display in user interface (optional) */
@@ -26,7 +26,7 @@ class AnnotationImpl implements Annotation, Freezable {
     private String description = "";
 
     /**
-     * What UI element to use for this property (e.g. text, select); only used in
+     * What UI element to use for this annotation (e.g. text, select); only used in
      * frontend, ignored by BlackLab itself.
      */
     private String uiType = "";
@@ -98,7 +98,7 @@ class AnnotationImpl implements Annotation, Freezable {
     }
 
     /**
-     * Get this property's name
+     * Get this annotation's name
      * 
      * @return the name
      */
@@ -162,9 +162,9 @@ class AnnotationImpl implements Annotation, Freezable {
 
     @Override
     public boolean isInternal() {
-        return name.equals(AnnotatedFieldNameUtil.START_TAG_PROP_NAME) ||
-                name.equals(AnnotatedFieldNameUtil.END_TAG_PROP_NAME) ||
-                name.equals(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+        return name.equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME) ||
+                name.equals(AnnotatedFieldNameUtil.END_TAG_ANNOT_NAME) ||
+                name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 
     @Override
@@ -186,13 +186,13 @@ class AnnotationImpl implements Annotation, Freezable {
      * Note that there may not be such an alternative.
      *
      * @param reader the index reader
-     * @param fieldName the field this property belongs under
+     * @param fieldName the field this annotation belongs under
      * @return true if found, false if not
      */
-    public boolean detectOffsetsAlternative(IndexReader reader, String fieldName) {
+    public boolean detectOffsetsSensitivity(IndexReader reader, String fieldName) {
         ensureNotFrozen();
         // Iterate over the alternatives and for each alternative, find a term
-        // vector. If that has character offsets stored, it's our main property.
+        // vector. If that has character offsets stored, it's our main annotation.
         // If not, keep searching.
         for (AnnotationSensitivity sensitivity: alternatives) {
             if (IndexMetadataImpl.hasOffsets(reader, sensitivity.luceneField())) {

@@ -186,7 +186,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         try {
             // Build the table headers
-            // The first few columns are fixed, and an additional columns is appended per property of tokens in this corpus.
+            // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
             ArrayList<String> row = new ArrayList<>();
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 

@@ -76,9 +76,9 @@ public class MatchFilterEquals extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
-        a.lookupPropertyIndices(fiAccessor);
-        b.lookupPropertyIndices(fiAccessor);
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        a.lookupAnnotationIndices(fiAccessor);
+        b.lookupAnnotationIndices(fiAccessor);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class MatchFilterEquals extends MatchFilter {
 
         if (x instanceof MatchFilterTokenProperty && ((MatchFilterTokenProperty) x).hasProperty()
                 && y instanceof MatchFilterString) {
-            // Simple property to string comparison, e.g. a.word = "cow"
+            // Simple annotation to string comparison, e.g. a.word = "cow"
             // This can be done more efficiently without string comparisons
             String termString = ((MatchFilterString) y).getString();
             return ((MatchFilterTokenProperty) x).matchTokenString(termString, caseSensitive, diacSensitive);

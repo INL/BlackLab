@@ -11,7 +11,7 @@ import nl.inl.util.StringUtil;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
- * Inside a query, this context may change: a different property may be
+ * Inside a query, this context may change: a different annotation may be
  * "selected" to search in, the case sensitivity setting may change, etc. This
  * object is passed to the translation methods and keeps track of this context.
  */
@@ -19,11 +19,11 @@ public class QueryExecutionContext {
     /** The searcher object, representing the BlackLab index */
     private Searcher searcher;
 
-    /** The (complex) field to search */
+    /** The (annotated) field to search */
     private String fieldName;
 
-    /** The property to search */
-    private String propName;
+    /** The annotation to search */
+    private String annotName;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
     private String subpropPrefix;
@@ -48,37 +48,37 @@ public class QueryExecutionContext {
      * Construct a query execution context object.
      * 
      * @param searcher the searcher object
-     * @param fieldName the (complex) field to search
-     * @param propName the property to search
+     * @param fieldName the (annotated) field to search
+     * @param annotName the annotation to search
      * @param caseSensitive whether search defaults to case-sensitive
      * @param diacriticsSensitive whether search defaults to diacritics-sensitive
      */
-    public QueryExecutionContext(Searcher searcher, String fieldName, String propName, boolean caseSensitive,
+    public QueryExecutionContext(Searcher searcher, String fieldName, String annotName, boolean caseSensitive,
             boolean diacriticsSensitive) {
         this.searcher = searcher;
         this.fieldName = fieldName;
-        String[] parts = propName.split("/", -1);
+        String[] parts = annotName.split("/", -1);
         if (parts.length > 2)
             throw new IllegalArgumentException("propName contains more than one colon!");
-        this.propName = parts[0];
-        String sep = AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR;
+        this.annotName = parts[0];
+        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
         this.subpropPrefix = parts.length == 2 ? sep + parts[1] + sep : "";
         this.caseSensitive = caseSensitive;
         this.diacriticsSensitive = diacriticsSensitive;
     }
 
     /**
-     * Return a new query execution context with a different property selected.
+     * Return a new query execution context with a different annotation selected.
      * 
-     * @param newPropName the property to select
+     * @param newAnnotName the annotation to select
      * @return the new context
      */
-    public QueryExecutionContext withProperty(String newPropName) {
-        return new QueryExecutionContext(searcher, fieldName, newPropName, caseSensitive, diacriticsSensitive);
+    public QueryExecutionContext withProperty(String newAnnotName) {
+        return new QueryExecutionContext(searcher, fieldName, newAnnotName, caseSensitive, diacriticsSensitive);
     }
 
     public QueryExecutionContext withSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
-        return new QueryExecutionContext(searcher, fieldName, propName, caseSensitive, diacriticsSensitive);
+        return new QueryExecutionContext(searcher, fieldName, annotName, caseSensitive, diacriticsSensitive);
     }
 
     public String optDesensitize(String value) {
@@ -118,7 +118,7 @@ public class QueryExecutionContext {
      *
      * @return the alternatives that exist, in order of appropriateness
      */
-    private String[] getAlternatives() {
+    private String[] getSensitivities() {
 
         if (searcher.getClass().getName().endsWith("MockSearcher")) {
             // TODO: give MockSearcher an index structure so we don't need this hack
@@ -131,8 +131,8 @@ public class QueryExecutionContext {
         if (cfd == null)
             return null;
 
-        // Find the property
-        Annotation pd = cfd.annotations().get(propName);
+        // Find the annotation
+        Annotation pd = cfd.annotations().get(annotName);
 
         // New alternative naming scheme (every alternative has a name)
         List<String> validAlternatives = new ArrayList<>();
@@ -169,10 +169,10 @@ public class QueryExecutionContext {
     }
 
     /**
-     * Returns the correct current Lucene field name to use, based on the complex
-     * field name, property name and list of alternatives.
+     * Returns the correct current Lucene field name to use, based on the annotated
+     * field name, annotation name and list of alternatives.
      * 
-     * @return null if field, property or alternative not found; valid Lucene field
+     * @return null if field, annotation or alternative not found; valid Lucene field
      *         name otherwise
      */
     public String luceneField() {
@@ -180,47 +180,47 @@ public class QueryExecutionContext {
     }
 
     /**
-     * Returns the correct current Lucene field name to use, based on the complex
-     * field name, property name and list of alternatives.
+     * Returns the correct current Lucene field name to use, based on the annotated
+     * field name, annotation name and list of alternatives.
      * 
      * @param includeAlternative if true, also includes the default alternative at
      *            the end of the field name (alternatives determine stuff like
      *            case-/diacritics-sensitivity).
-     * @return null if field, property or alternative not found; valid Lucene field
+     * @return null if field, annotation or alternative not found; valid Lucene field
      *         name otherwise
      */
     public String luceneField(boolean includeAlternative) {
 
         // Determine available alternatives based on sensitivity preferences.
-        String[] alternatives = includeAlternative ? getAlternatives() : null;
+        String[] alternatives = includeAlternative ? getSensitivities() : null;
 
         if (searcher.getClass().getName().endsWith("MockSearcher")) {
             // Mostly for testing. Don't check, just combine field parts.
             // TODO: give MockSearcher an index structure so we don't need this hack
             if (alternatives == null || alternatives.length == 0)
-                return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
-            return AnnotatedFieldNameUtil.propertyField(fieldName, propName, alternatives[0]);
+                return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
+            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName, alternatives[0]);
         }
 
-        // Find the field and the property.
+        // Find the field and the annotation.
         AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
         if (cfd == null)
             return null;
 
-        if (AnnotatedFieldNameUtil.isBookkeepingSubfield(propName)) {
-            // Not a property but a bookkeeping subfield (prob. starttag/endtag); ok, return it
+        if (AnnotatedFieldNameUtil.isBookkeepingSubfield(annotName)) {
+            // Not a annotation but a bookkeeping subfield (prob. starttag/endtag); ok, return it
             // (can be removed when old field naming scheme is removed)
-            return AnnotatedFieldNameUtil.bookkeepingField(fieldName, propName);
+            return AnnotatedFieldNameUtil.bookkeepingField(fieldName, annotName);
         }
 
-        // Find the property
-        Annotation pd = cfd.annotations().get(propName);
+        // Find the annotation
+        Annotation pd = cfd.annotations().get(annotName);
         if (pd == null)
-            return AnnotatedFieldNameUtil.propertyField(fieldName, propName); // doesn't exist? use plain property name
+            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName); // doesn't exist? use plain annotation name
 
         if (alternatives == null || alternatives.length == 0) {
             // Don't use any alternatives
-            return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
+            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
         }
 
         // Find the first available alternative to use
@@ -229,14 +229,14 @@ public class QueryExecutionContext {
                 // NOTE: is this loop necessary at all? getAlternatives() only
                 //  returns available alternatives, so the first one should always
                 //  be okay, right?
-                return AnnotatedFieldNameUtil.propertyField(fieldName, propName, alt);
+                return AnnotatedFieldNameUtil.annotationField(fieldName, annotName, alt);
             }
         }
 
-        // No valid alternative found. Use plain property.
+        // No valid alternative found. Use plain annotation.
         // NOTE: should never happen, and doesn't make sense anymore as there are
         // no 'plain properties' anymore.
-        return AnnotatedFieldNameUtil.propertyField(fieldName, propName);
+        return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
     }
 
     /**
@@ -248,12 +248,12 @@ public class QueryExecutionContext {
      * @return the context
      */
     public static QueryExecutionContext getSimple(Searcher searcher, String fieldName) {
-        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainPropName();
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
     }
 
     /**
-     * The (complex) field to search
+     * The (annotated) field to search
      * 
      * @return field name
      */
@@ -262,24 +262,24 @@ public class QueryExecutionContext {
     }
 
     /**
-     * The property to search
+     * The annotation to search
      * 
-     * @return property name
+     * @return annotation name
      */
-    public String propName() {
-        return propName;
+    public String annotName() {
+        return annotName;
     }
 
     /**
-     * What to prefix values with (for "subproperties", like PoS features, etc.)
+     * What to prefix values with (for "subannotations", like PoS features, etc.)
      *
-     * Subproperties are indexed with this prefix before every value. When
+     * Subannotations are indexed with this prefix before every value. When
      * searching, we also prefix our search string with this value.
      *
      * @return prefix what to prefix search strings with to find the right
-     *         subproperty value
+     *         subannotation value
      */
-    public String subpropPrefix() {
+    public String subannotPrefix() {
         return subpropPrefix;
     }
 

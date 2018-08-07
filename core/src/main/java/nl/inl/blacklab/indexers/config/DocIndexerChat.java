@@ -131,7 +131,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         // For the configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             currentAnnotatedField = annotatedField;
-            setCurrentComplexField(annotatedField.getName());
+            setCurrentAnnotatedFieldName(annotatedField.getName());
 
             log("processing " + documentName + "...");
 

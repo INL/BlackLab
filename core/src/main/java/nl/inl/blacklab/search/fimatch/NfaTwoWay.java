@@ -34,8 +34,8 @@ public class NfaTwoWay {
     }
 
     public void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        nfa.lookupPropertyNumbers(fiAccessor, statesVisited);
-        nfaReverse.lookupPropertyNumbers(fiAccessor, statesVisited);
+        nfa.lookupAnnotationNumbers(fiAccessor, statesVisited);
+        nfaReverse.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     public void finish() {

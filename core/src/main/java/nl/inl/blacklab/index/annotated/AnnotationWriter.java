@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.index.complex;
+package nl.inl.blacklab.index.annotated;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CollUtil;
 
 /**
- * A property in a complex field. See ComplexField for details.
+ * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
  */
 public class AnnotationWriter {
 
@@ -67,7 +67,7 @@ public class AnnotationWriter {
     }
 
     /**
-     * How a property is to be indexed with respect to case and diacritics
+     * How an annotation is to be indexed with respect to case and diacritics
      * sensitivity.
      */
     public enum SensitivitySetting {
@@ -106,7 +106,7 @@ public class AnnotationWriter {
     protected boolean includeOffsets;
 
     /**
-     * Term values for this property.
+     * Term values for this annotation.
      */
     protected List<String> values = new ArrayList<>();
 
@@ -117,7 +117,7 @@ public class AnnotationWriter {
     protected IntArrayList increments = new IntArrayList();
 
     /**
-     * Payloads for this property, if any.
+     * Payloads for this annotation, if any.
      */
     protected List<BytesRef> payloads = null;
 
@@ -127,7 +127,7 @@ public class AnnotationWriter {
     protected int lastValuePosition = -1;
 
     /**
-     * A property may be indexed in different ways (alternatives). This specifies
+     * A annotation may be indexed in different ways (alternatives). This specifies
      * names and filters for each way.
      */
     private Map<String, TokenFilterAdder> alternatives = new HashMap<>();
@@ -135,10 +135,10 @@ public class AnnotationWriter {
     /** The main alternative (the one that gets character offsets if desired) */
     private String mainAlternative;
 
-    /** The property name */
+    /** The annotation name */
     private String propName;
 
-    /** Does this property get its own forward index? */
+    /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
 
     /**
@@ -148,14 +148,15 @@ public class AnnotationWriter {
     private Map<String, String> storedValues = new HashMap<>();
 
     /**
-     * Construct a ComplexFieldProperty object with the default alternative
+     * Construct a AnnotationWriter object with the default alternative
      * 
-     * @param name property name
-     * @param sensitivity ways to index this property, with respect to case- and
+     * @param fieldWriter fieldwriter for our field
+     * @param name annotation name
+     * @param sensitivity ways to index this annotation, with respect to case- and
      *            diacritics-sensitivity.
      * @param includeOffsets whether to include character offsets in the main
      *            alternative
-     * @param includePayloads will this property include payloads?
+     * @param includePayloads will this annotation include payloads?
      */
     public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, SensitivitySetting sensitivity,
             boolean includeOffsets, boolean includePayloads) {
@@ -200,8 +201,8 @@ public class AnnotationWriter {
     }
 
     FieldType getTermVectorOptionFieldType(String altName) {
-        // Main alternative of a property may get character offsets
-        // (if it's the main property of a complex field)
+        // Main alternative of a annotation may get character offsets
+        // (if it's the main annotation of an annotated field)
         if (includeOffsets && altName.equals(mainAlternative))
             return tokenStreamFieldWithOffsets;
 
@@ -212,9 +213,7 @@ public class AnnotationWriter {
     public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String altName : alternatives.keySet()) {
-            //doc.add(new Field(ComplexFieldUtil.propertyField(fieldName, propName, altName),
-            //		getTokenStream(altName, startChars, endChars), getTermVectorOption(altName)));
-            doc.add(new Field(AnnotatedFieldNameUtil.propertyField(fieldName, propName, altName),
+            doc.add(new Field(AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName),
                     getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
         }
     }
@@ -244,7 +243,7 @@ public class AnnotationWriter {
     }
 
     /**
-     * Add a value to the property.
+     * Add a value to the annotation.
      * 
      * @param value value to add
      */
@@ -253,7 +252,7 @@ public class AnnotationWriter {
     }
 
     /**
-     * Add a value to the property.
+     * Add a value to the annotation.
      *
      * @param value the value to add
      * @param increment number of tokens distance from the last token added
@@ -275,7 +274,7 @@ public class AnnotationWriter {
         // Special case: if previous value was the empty string and position increment is 0,
         // replace the previous value. This is convenient to keep all the properties synched
         // up while indexing (by adding a dummy empty string if we don't have a value for a
-        // property), while still being able to add a value to this position later (for example,
+        // annotation), while still being able to add a value to this position later (for example,
         // when we encounter an XML close tag.
         int lastIndex = values.size() - 1;
         if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && increment == 0) {
@@ -291,7 +290,7 @@ public class AnnotationWriter {
     }
 
     /**
-     * Add a value to the property at a specific position.
+     * Add a value to the annotation at a specific position.
      *
      * Please note that if you add a value beyond the current position, the next
      * call to addValue() will add from this new position! This is not an issue if

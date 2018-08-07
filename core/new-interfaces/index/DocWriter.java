@@ -50,7 +50,7 @@ interface DocWriter {
      * Add a list of tokens to a forward index
      *
      * @param field what forward index to add this to
-     * @param prop the property to get values and position increments from
+     * @param prop the a to get values and position increments from
      * @return the id assigned to the content
      */
     int addToForwardIndex(AnnotatedField field, ComplexFieldProperty prop);

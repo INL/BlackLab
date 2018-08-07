@@ -21,29 +21,29 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     private int docLengthTokens;
 
     /**
-     * Chunks of the document from the forward index, for each of the properties.
+     * Chunks of the document from the forward index, for each of the annotations.
      */
-    private List<List<int[]>> allPropChunks = new ArrayList<>();
+    private List<List<int[]>> allAnnotChunks = new ArrayList<>();
 
     public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId) {
         this.fiAccessor = fiAccessor;
         this.docId = docId;
         this.docLengthTokens = fiAccessor.getDocLength(docId);
 
-        // Create empty lists of chunks for each property
-        for (int i = 0; i < fiAccessor.getNumberOfProperties(); i++) {
-            allPropChunks.add(new ArrayList<int[]>());
+        // Create empty lists of chunks for each annotation
+        for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
+            allAnnotChunks.add(new ArrayList<int[]>());
         }
     }
 
     @Override
-    public int getToken(int propIndex, int pos) {
+    public int getToken(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
             return -1;
 
-        // Get the list of chunks for the property we're interested in,
+        // Get the list of chunks for the annotation we're interested in,
         // and the forward index object to get more.
-        List<int[]> chunks = allPropChunks.get(propIndex);
+        List<int[]> chunks = allAnnotChunks.get(annotIndex);
 
         // Where can our token be found?
         int whichChunk = pos / CHUNK_SIZE;
@@ -57,7 +57,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
         // Now, see if we have the chunk we want, and fetch it if not
         int[] chunk = chunks.get(whichChunk);
         if (chunk == null) {
-            chunk = fetchChunk(propIndex, whichChunk);
+            chunk = fetchChunk(annotIndex, whichChunk);
             chunks.set(whichChunk, chunk);
         }
 
@@ -66,29 +66,29 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     }
 
     /**
-     * Fetch a chunk from the forward index for the specified property.
+     * Fetch a chunk from the forward index for the specified annotation.
      * 
-     * @param propIndex which property we want a forward index chunk for
+     * @param annotIndex which annotation we want a forward index chunk for
      * @param number the chunk number to fetch
      * @return the chunk
      */
-    protected int[] fetchChunk(int propIndex, int number) {
+    protected int[] fetchChunk(int annotIndex, int number) {
         int start = number * CHUNK_SIZE;
         int end = start + CHUNK_SIZE;
         if (end > docLengthTokens) {
             end = docLengthTokens;
         }
-        return fiAccessor.getChunk(propIndex, docId, start, end);
+        return fiAccessor.getChunk(annotIndex, docId, start, end);
     }
 
     @Override
-    public String getTermString(int propIndex, int termId) {
-        return fiAccessor.getTermString(propIndex, termId);
+    public String getTermString(int annotIndex, int termId) {
+        return fiAccessor.getTermString(annotIndex, termId);
     }
 
     @Override
-    public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-        return fiAccessor.termsEqual(propIndex, termId, caseSensitive, diacSensitive);
+    public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        return fiAccessor.termsEqual(annotIndex, termId, caseSensitive, diacSensitive);
     }
 
     @Override

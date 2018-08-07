@@ -363,7 +363,7 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     @Override
     public String getField() {
-        // Return only base name of complex field!
+        // Return only base name of annotated field!
         return AnnotatedFieldNameUtil.getBaseName(getRealField());
     }
 

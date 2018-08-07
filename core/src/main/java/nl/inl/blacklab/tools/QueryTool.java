@@ -120,8 +120,8 @@ public class QueryTool {
     /** The collocations, or null if we're not looking at collocations. */
     private TermFrequencyList collocations = null;
 
-    /** What property to use for collocations */
-    private Annotation collocProperty = null;
+    /** What annotation to use for collocations */
+    private Annotation collocAnnotation = null;
 
     /** The first hit or group to show on the current results page. */
     private int firstResult;
@@ -949,11 +949,11 @@ public class QueryTool {
     private void showIndexMetadata() {
         IndexMetadata s = searcher.getIndexMetadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
-        out.println("COMPLEX FIELDS");
+        out.println("ANNOTATED FIELDS");
         for (AnnotatedField cf: s.annotatedFields()) {
             out.println("- " + cf.name());
             for (Annotation pr: cf.annotations()) {
-                out.println("  * Property: " + pr.toString());
+                out.println("  * Annotation: " + pr.toString());
             }
             out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
             out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
@@ -1036,8 +1036,8 @@ public class QueryTool {
         outprintln("  sw(itch)                           # Switch languages");
         outprintln("                                     # (" + langAvail + ")");
         outprintln("  p(rev) / n(ext) / page <n>         # Page through results");
-        outprintln("  sort {match|left|right} [prop]     # Sort query results  (left = left context, etc.)");
-        outprintln("  group {match|left|right} [prop]    # Group query results (prop = e.g. 'word', 'lemma', 'pos')");
+        outprintln("  sort {match|left|right} [annot]    # Sort query results  (left = left context, etc.)");
+        outprintln("  group {match|left|right} [annot]   # Group query results (annot = e.g. 'word', 'lemma', 'pos')");
         outprintln("  hits / groups / group <n> / colloc # Switch between results modes");
         outprintln("  context <n>                        # Set number of words to show around hits");
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
@@ -1241,17 +1241,17 @@ public class QueryTool {
      * Sort hits by the specified property.
      *
      * @param sortBy hit property to sort by
-     * @param property (optional) if sortBy is a context property (say, hit text),
-     *            this gives the token property to use for the context. Example: if
+     * @param annotationName (optional) if sortBy is a context property (say, hit text),
+     *            this gives the token annotation to use for the context. Example: if
      *            this is "lemma", will look at the lemma(ta) of the hit text. If
-     *            this is null, uses the "main property" (word form, usually).
+     *            this is null, uses the "main annotation" (word form, usually).
      */
-    private void sortHits(String sortBy, String property) {
+    private void sortHits(String sortBy, String annotationName) {
         Timer t = new Timer();
 
         Hits hitsToSort = getCurrentHitSet();
 
-        Annotation annotation = contentsField.annotations().get(property);
+        Annotation annotation = contentsField.annotations().get(annotationName);
         HitProperty crit = null;
         if (sortBy.equalsIgnoreCase("doc"))
             crit = new HitPropertyDocumentId(hitsToSort);
@@ -1278,8 +1278,8 @@ public class QueryTool {
             sortedHits = hitsToSort.sortedBy(crit);
             firstResult = 0;
             showResultsPage();
-            if (property == null)
-                property = "(default)";
+            if (annotationName == null)
+                annotationName = "(default)";
             reportTime(t.elapsed());
         }
     }
@@ -1309,12 +1309,12 @@ public class QueryTool {
      * Group hits by the specified property.
      *
      * @param groupBy hit property to group by
-     * @param property (optional) if groupBy is a context property (say, hit text),
-     *            this gives the token property to use for the context. Example: if
+     * @param annotationName (optional) if groupBy is a context property (say, hit text),
+     *            this gives the token annotation to use for the context. Example: if
      *            this is "lemma", will look at the lemma(ta) of the hit text. If
-     *            this is null, uses the "main property" (word form, usually).
+     *            this is null, uses the "main annotation" (word form, usually).
      */
-    private void groupBy(String groupBy, String property) {
+    private void groupBy(String groupBy, String annotationName) {
         if (hits == null)
             return;
 
@@ -1323,14 +1323,14 @@ public class QueryTool {
         if (!groupBy.equals("hit") && !groupBy.equals("word") && !groupBy.equals("match") && !groupBy.equals("left")
                 && !groupBy.equals("right")) {
             // Assume we want to group by matched text if we don't specify it explicitly.
-            property = groupBy;
+            annotationName = groupBy;
             groupBy = "match";
         }
 
         // Group results
         HitProperty crit = null;
         try {
-            Annotation annotation = contentsField.annotations().get(property);
+            Annotation annotation = contentsField.annotations().get(annotationName);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
                 crit = new HitPropertyHitText(hits, annotation);
             else if (groupBy.startsWith("left"))
@@ -1343,7 +1343,7 @@ public class QueryTool {
                 crit = new HitPropertyMultiple(p1, p2);
             }
         } catch (Exception e) {
-            errprintln("Unknown property: " + property);
+            errprintln("Unknown annotation: " + annotationName);
             return;
         }
         if (crit == null) {
@@ -1353,8 +1353,8 @@ public class QueryTool {
         groups = hits.groupedBy(crit);
         showSetting = ShowSetting.GROUPS;
         sortGroups("size");
-        if (property == null)
-            property = "(default)";
+        if (annotationName == null)
+            annotationName = "(default)";
         reportTime(t.elapsed());
     }
 
@@ -1373,9 +1373,9 @@ public class QueryTool {
         } else if (showWhat.startsWith("colloc") && hits != null) {
             showSetting = ShowSetting.COLLOC;
             if (showWhat.length() >= 7) {
-                String newCollocProp = showWhat.substring(7);
-                if (!newCollocProp.equals(collocProperty.name())) {
-                    collocProperty = contentsField.annotations().get(newCollocProp);
+                String newCollocAnnot = showWhat.substring(7);
+                if (!newCollocAnnot.equals(collocAnnotation.name())) {
+                    collocAnnotation = contentsField.annotations().get(newCollocAnnot);
                     collocations = null;
                 }
             }
@@ -1442,12 +1442,12 @@ public class QueryTool {
     private void showCollocations() {
         if (collocations == null) {
             // Case-sensitive collocations..?
-            if (collocProperty == null) {
+            if (collocAnnotation == null) {
                 AnnotatedField field = searcher.annotatedField(hits.settings().concordanceField());
-                collocProperty = field.annotations().main();
+                collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocProperty, searcher.getDefaultExecutionContext(collocProperty.field().name()));
+            collocations = hits.getCollocations(collocAnnotation, searcher.getDefaultExecutionContext(collocAnnotation.field().name()));
             collocations.sort();
         }
 

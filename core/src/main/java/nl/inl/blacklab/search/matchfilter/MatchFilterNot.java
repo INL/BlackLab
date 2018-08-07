@@ -55,8 +55,8 @@ public class MatchFilterNot extends MatchFilter {
     }
 
     @Override
-    public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
-        a.lookupPropertyIndices(fiAccessor);
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        a.lookupAnnotationIndices(fiAccessor);
     }
 
     @Override

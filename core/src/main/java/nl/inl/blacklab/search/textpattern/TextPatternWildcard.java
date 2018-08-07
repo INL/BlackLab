@@ -41,7 +41,7 @@ public class TextPatternWildcard extends TextPatternTerm {
             return result.translate(context);
         try {
             return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
-                    context.subpropPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+                    context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));
         } catch (StackOverflowError e) {
             // If we pass in a really large wildcard expression,
             // stack overflow might occurs inside Lucene's automaton building

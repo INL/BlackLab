@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * TextPattern for wrapping another TextPattern so that it applies to a certain
- * word property.
+ * word annotation.
  *
  * For example, to find lemmas starting with "bla": <code>
  * TextPattern tp = new TextPatternProperty("lemma", new TextPatternWildcard("bla*"));

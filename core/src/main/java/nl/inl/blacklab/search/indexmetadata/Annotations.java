@@ -37,7 +37,7 @@ public interface Annotations extends Iterable<Annotation> {
     boolean exists(String name);
 
     /**
-     * Get the description of one complex field.
+     * Get the description of one annotated field.
      * 
      * @param name name of the annotation
      * @return the annotation, or null if it doesn't exist
@@ -53,7 +53,7 @@ public interface Annotations extends Iterable<Annotation> {
      * @return punctuation annotation
      */
     default Annotation punct() {
-        return get(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME);
+        return get(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 
 }

@@ -72,13 +72,13 @@ public class Kwic {
     }
 
     /**
-     * Get the left context of a specific property
+     * Get the left context of a specific annotation
      * 
-     * @param property the property to get the context for
+     * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getLeft(Annotation property) {
-        return getSinglePropertyContext(property, 0, hitStart);
+    public List<String> getLeft(Annotation annotation) {
+        return getSinglePropertyContext(annotation, 0, hitStart);
     }
 
     public List<String> getMatch() {
@@ -87,13 +87,13 @@ public class Kwic {
     }
 
     /**
-     * Get the match context of a specific property
+     * Get the match context of a specific annotation
      * 
-     * @param property the property to get the context for
+     * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getMatch(Annotation property) {
-        return getSinglePropertyContext(property, hitStart, hitEnd);
+    public List<String> getMatch(Annotation annotation) {
+        return getSinglePropertyContext(annotation, hitStart, hitEnd);
     }
 
     public List<String> getRight() {
@@ -102,13 +102,13 @@ public class Kwic {
     }
 
     /**
-     * Get the right context of a specific property
+     * Get the right context of a specific annotation
      * 
-     * @param property the property to get the context for
+     * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getRight(Annotation property) {
-        return getSinglePropertyContext(property, hitEnd, fragment.tokens.size() / fragment.properties.size());
+    public List<String> getRight(Annotation annotation) {
+        return getSinglePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.properties.size());
     }
 
     /**
@@ -121,28 +121,28 @@ public class Kwic {
     }
 
     /**
-     * Get all values for a single property for all the tokens in the hit's context
+     * Get all values for a single annotation for all the tokens in the hit's context
      * fragment.
      *
-     * @param property the property to get
-     * @return the values of this property for all tokens
+     * @param annotation the annotation to get
+     * @return the values of this annotation for all tokens
      */
-    public List<String> getTokens(Annotation property) {
-        return fragment.getTokens(property);
+    public List<String> getTokens(Annotation annotation) {
+        return fragment.getTokens(annotation);
     }
 
     /**
-     * Get the context of a specific property from the complete context list.
+     * Get the context of a specific annotation from the complete context list.
      *
-     * @param property the property to get the context for
-     * @param start first word position to get the property context for
-     * @param end word position after the last to get the property context for
-     * @return the context for this property
+     * @param annotation the annotation to get the context for
+     * @param start first word position to get the annotation context for
+     * @param end word position after the last to get the annotation context for
+     * @return the context for this annotation
      */
-    private List<String> getSinglePropertyContext(Annotation property, int start, int end) {
+    private List<String> getSinglePropertyContext(Annotation annotation, int start, int end) {
         final int nProp = fragment.properties.size();
         final int size = end - start;
-        final int propIndex = fragment.properties.indexOf(property);
+        final int propIndex = fragment.properties.indexOf(annotation);
         final int startIndex = start * nProp + propIndex;
         if (propIndex == -1)
             return null;

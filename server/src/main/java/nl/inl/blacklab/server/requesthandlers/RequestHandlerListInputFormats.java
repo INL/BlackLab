@@ -13,11 +13,11 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigInlineTag;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -294,8 +294,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
             // Since the annotation can be named anything there is no guarantee there is a "word" annotation
             // (it's just a reasonable default guess), so just attempt to display whatever is first in the list otherwise
-            // This ought to be correct - see DocIndexerConfig::init(), it sets the main property as the first annotation in the list
-            // As for the "lemma" property that's used to generate hover tooltips, it's just a reasonable guess
+            // This ought to be correct - see DocIndexerConfig::init(), it sets the main annotation as the first annotation in the list
+            // As for the "lemma" annotation that's used to generate hover tooltips, it's just a reasonable guess
             if (wordAnnot == null)
                 wordAnnot = f.getAnnotations().values().iterator().next();
 

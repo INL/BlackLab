@@ -6,7 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Configuration for annotated ("complex") fields in our XML */
+/** Configuration for annotated (formerly "complex") fields in our XML */
 public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     private String name;

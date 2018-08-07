@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
-import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter;
-import nl.inl.blacklab.index.complex.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -90,39 +90,39 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         setStoreDocuments(config.shouldStore());
         for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
 
-            // Define the properties that make up our complex field
+            // Define the properties that make up our annotated field
             List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
             if (annotations.isEmpty())
                 throw new InputFormatConfigException("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
-            AnnotatedFieldWriter complexField = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
+            AnnotatedFieldWriter annotatedField = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
                     getSensitivitySetting(mainAnnotation), false);
-            addComplexField(complexField);
+            addAnnotatedField(annotatedField);
 
             IndexMetadataImpl indexMetadata;
             if (indexer != null) {
                 indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-                indexMetadata.registerAnnotatedField(complexField);
+                indexMetadata.registerAnnotatedField(annotatedField);
             }
 
-            AnnotationWriter propStartTag = complexField.addProperty(AnnotatedFieldNameUtil.START_TAG_PROP_NAME,
-                    getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_PROP_NAME), true);
-            propStartTag.setForwardIndex(false);
+            AnnotationWriter annotStartTag = annotatedField.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
+                    getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME), true);
+            annotStartTag.setForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
-                complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
+                annotatedField.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
-                    complexField.addProperty(annot.getName(), getSensitivitySetting(annot), false);
+                    annotatedField.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
-            if (!complexField.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME)) {
+            if (!annotatedField.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
-                complexField.addProperty(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME,
-                        getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_PROP_NAME), false);
+                annotatedField.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+                        getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
         }
     }

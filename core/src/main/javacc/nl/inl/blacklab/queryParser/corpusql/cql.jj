@@ -55,7 +55,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternProperty;
+import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
@@ -122,25 +122,25 @@ public class CorpusQueryLanguageParser {
         return allowSingleQuotes;
     }
 
-    private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
+    private String defaultAnnotation = "word";
     
-    public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = indexMetadata.getComplexFieldDesc(fieldName).getMainProperty().name();
+    public void setDefaultAnnotation(IndexMetadata indexMetadata, String fieldName) {
+        defaultAnnotation = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
     }
 
-    public void setDefaultProperty(String property) {
-        defaultProperty = property;
+    public void setDefaultAnnotation(String annotation) {
+        defaultAnnotation = annotation;
     }
 
-    public String getDefaultProperty() {
-        return defaultProperty;
+    public String getDefaultAnnotation() {
+        return defaultAnnotation;
     }
 
-    private TextPattern propertyClause(String prop, TextPattern value) {
-        // Main property has a name. Use that.
-        if (prop == null || prop.length() == 0)
-            prop = defaultProperty;
-        return new TextPatternProperty(prop, value);
+    private TextPattern annotationClause(String annot, TextPattern value) {
+        // Main annotation has a name. Use that.
+        if (annot == null || annot.length() == 0)
+            annot = defaultAnnotation;
+        return new TextPatternAnnotation(annot, value);
     }
     
 }
@@ -535,27 +535,27 @@ TextPattern positionLongPart():
 TextPattern attValuePair():
 {
 	TextPattern v = null;
-	String prop;
+	String annot;
 	String f = null;
 }
 {
 	LOOKAHEAD(2)
-	prop=propName() "=" v=valuePart() [f=flags()]  { return propertyClause(prop, v); }
-|	prop=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(propertyClause(prop, v)); }
+	annot=propName() "=" v=valuePart() [f=flags()]  { return annotationClause(annot, v); }
+|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(annotationClause(annot, v)); }
 |	v=valuePart() [f=flags()]                      { return v; }
 }
 
 String propName():
 {
-	Token t = null, subProp = null;
+	Token t = null, subAnnot = null;
 }
 {
-	t=<NAME> [ "/" subProp=<NAME> ]
+	t=<NAME> [ "/" subAnnot=<NAME> ]
 	{
 		String propName = t.toString(); 
-		if (subProp == null)
+		if (subAnnot == null)
 			return propName;
-		return propName + "/" + subProp.toString();
+		return propName + "/" + subAnnot.toString();
 	}
 }
 

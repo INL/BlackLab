@@ -23,12 +23,12 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
 
 /**
- * AND (NOT) query for combining different properties from a complex field.
+ * AND (NOT) query for combining different properties from an annotated field.
  *
  * Note that when generating a SpanQuery, the Span start and end are also
  * matched! Therefore only two hits in the same document at the same start and
  * end position will produce a match. This is useful for e.g. selecting
- * adjectives that start with a 'b' (queries on different property (sub)fields
+ * adjectives that start with a 'b' (queries on different annotation (sub)fields
  * that should apply to the same word).
  */
 public class TextPatternAndNot extends TextPattern {

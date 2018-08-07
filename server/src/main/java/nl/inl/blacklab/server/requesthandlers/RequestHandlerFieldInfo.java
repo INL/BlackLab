@@ -88,7 +88,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedFields().get(fieldName);
-            describeComplexField(ds, indexName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
+            describeAnnotatedField(ds, indexName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
         } else {
             MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);
             describeMetadataField(ds, indexName, fieldDesc, true);
@@ -159,7 +159,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.endMap();
     }
 
-    public static void describeComplexField(DataStream ds, String indexName, 
+    public static void describeAnnotatedField(DataStream ds, String indexName, 
             AnnotatedField fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
@@ -184,14 +184,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", annotation.sensitivitySettingDesc())
                     .entry("offsetsAlternative", StringUtil.nullToEmpty(annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
                     .entry("isInternal", annotation.isInternal());
-            String luceneField = AnnotatedFieldNameUtil.propertyField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+            String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
                 Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
                 int n = 0;
                 for (String value : values) {
-                    if (!value.contains(AnnotatedFieldNameUtil.SUBPROPERTY_SEPARATOR))
+                    if (!value.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR))
                         ds.item("value", value);
                     n++;
                     if (n == MAX_FIELD_VALUES)

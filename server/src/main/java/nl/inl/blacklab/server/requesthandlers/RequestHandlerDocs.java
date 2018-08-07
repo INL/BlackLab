@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyComplexFieldLength;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
@@ -129,7 +129,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 // Determine total number of tokens in result set
                 //TODO: use background job?
                 String fieldName = searcher.mainAnnotatedField().name();
-                DocProperty propTokens = new DocPropertyComplexFieldLength(fieldName);
+                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
                 totalTokens = window.getOriginalDocs().intSum(propTokens);
             }
 

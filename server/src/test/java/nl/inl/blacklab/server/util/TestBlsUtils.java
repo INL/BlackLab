@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternProperty;
+import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -45,7 +45,7 @@ public class TestBlsUtils {
 
     @Test
     public void testParsePattContextQL() throws BlsException {
-        TextPattern pattThe = new TextPatternProperty("word", new TextPatternWildcard("the"));
+        TextPattern pattThe = new TextPatternAnnotation("word", new TextPatternWildcard("the"));
         Assert.assertEquals(pattThe, BlsUtils.parsePatt(searcher, "\"the\"", "contextql"));
     }
 

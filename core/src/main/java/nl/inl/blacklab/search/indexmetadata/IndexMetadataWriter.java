@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.index.complex.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Used to write information about a BlackLab index, including its fields structure. */

@@ -13,25 +13,25 @@ public class TestNfa {
 
     final class MockFiAccessor extends ForwardIndexAccessor {
         @Override
-        public int numberOfProperties() {
+        public int numberOfAnnotations() {
             return 1;
         }
 
         @Override
-        public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue,
+        public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
                 boolean caseSensitive,
                 boolean diacSensitive) {
-            if (propertyNumber != 0)
-                throw new RuntimeException("only 0 is valid property");
-            if (propertyValue.length() > 1)
+            if (annotNumber != 0)
+                throw new RuntimeException("only 0 is valid annotation");
+            if (annotValue.length() > 1)
                 throw new RuntimeException("only words of length 1 are valid");
-            results.add(propertyValue.charAt(0));
+            results.add(annotValue.charAt(0));
         }
 
         @Override
-        public int getPropertyNumber(String propertyName) {
-            if (!propertyName.equals("word"))
-                throw new RuntimeException("only 'word' is valid property");
+        public int getAnnotationNumber(String annotName) {
+            if (!annotName.equals("word"))
+                throw new RuntimeException("only 'word' is valid annotation");
             return 0;
         }
 
@@ -41,16 +41,16 @@ public class TestNfa {
         }
 
         @Override
-        public String getTermString(int propIndex, int termId) {
-            if (propIndex != 0)
-                throw new RuntimeException("only 0 is valid property");
+        public String getTermString(int annotIndex, int termId) {
+            if (annotIndex != 0)
+                throw new RuntimeException("only 0 is valid annotation");
             return Character.toString((char) termId);
         }
 
         @Override
-        public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-            if (propIndex != 0)
-                throw new RuntimeException("only 0 is valid property");
+        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+            if (annotIndex != 0)
+                throw new RuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {
                 if (termId[i] != termId[0])
                     return false;
@@ -68,9 +68,9 @@ public class TestNfa {
         }
 
         @Override
-        public int getToken(int propIndex, int pos) {
-            if (propIndex != 0)
-                throw new RuntimeException("only 0 is valid property");
+        public int getToken(int annotIndex, int pos) {
+            if (annotIndex != 0)
+                throw new RuntimeException("only 0 is valid annotation");
             if (!validPos(pos))
                 return -1;
             return input.charAt(pos);
@@ -82,16 +82,16 @@ public class TestNfa {
         }
 
         @Override
-        public String getTermString(int propIndex, int termId) {
-            if (propIndex != 0)
-                throw new RuntimeException("only 0 is valid property");
+        public String getTermString(int annotIndex, int termId) {
+            if (annotIndex != 0)
+                throw new RuntimeException("only 0 is valid annotation");
             return Character.toString((char) termId);
         }
 
         @Override
-        public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-            if (propIndex != 0)
-                throw new RuntimeException("only 0 is valid property");
+        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+            if (annotIndex != 0)
+                throw new RuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {
                 if (termId[i] != termId[0])
                     return false;
