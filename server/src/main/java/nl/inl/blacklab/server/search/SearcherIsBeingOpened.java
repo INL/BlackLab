@@ -73,7 +73,7 @@ public class SearcherIsBeingOpened extends BlackLabIndexImpl {
     }
 
     @Override
-    protected ContentStore openContentStore(String fieldName) {
+    protected ContentStore openContentStore(Field field) {
         throw new UnsupportedOperationException();
     }
 

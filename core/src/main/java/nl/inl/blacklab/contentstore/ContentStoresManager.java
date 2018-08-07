@@ -21,7 +21,7 @@ public class ContentStoresManager {
      *
      * Indexed by annotated field name.
      */
-    private Map<String, ContentAccessor> contentAccessors = new HashMap<>();
+    private Map<Field, ContentAccessor> contentAccessors = new HashMap<>();
 
     public void close() {
         // Close the content accessor(s)
@@ -33,12 +33,12 @@ public class ContentStoresManager {
 
     }
 
-    public void put(String field, ContentStore store) {
-        contentAccessors.put(field, new ContentAccessor(field, store));
+    public void put(Field field, ContentStore store) {
+        contentAccessors.put(field, new ContentAccessor(field.name(), store));
     }
 
-    public ContentStore get(String fieldName) {
-        ContentAccessor ca = contentAccessors.get(fieldName);
+    public ContentStore get(Field field) {
+        ContentAccessor ca = contentAccessors.get(field);
         if (ca == null)
             return null;
         return ca.getContentStore();
@@ -50,19 +50,19 @@ public class ContentStoresManager {
         }
     }
 
-    public boolean exists(String fieldName) {
-        return contentAccessors.containsKey(fieldName);
+    public boolean exists(Field field) {
+        return contentAccessors.containsKey(field);
     }
 
     public String[] getSubstrings(Field field, Document d, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(field.name());
+        ContentAccessor contentAccessor = contentAccessors.get(field);
         if (contentAccessor == null)
             return null;
         return contentAccessor.getSubstringsFromDocument(d, start, end);
     }
 
     public String[] getSubstrings(Field field, int contentId, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(field.name());
+        ContentAccessor contentAccessor = contentAccessors.get(field);
         if (contentAccessor == null)
             return null;
         return contentAccessor.getSubstringsFromDocument(contentId, start, end);

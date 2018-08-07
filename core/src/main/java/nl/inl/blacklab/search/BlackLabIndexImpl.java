@@ -762,10 +762,10 @@ public class BlackLabIndexImpl implements BlackLabIndex {
     @Override
     public ContentStore contentStore(Field field) {
         synchronized (contentStores) {
-            ContentStore cs = contentStores.get(field.name());
+            ContentStore cs = contentStores.get(field);
             if (indexMode && cs == null) {
                 // Index mode. Create new content store or open existing one.
-                return openContentStore(field.name());
+                return openContentStore(field);
             }
             return cs;
         }
@@ -785,8 +785,8 @@ public class BlackLabIndexImpl implements BlackLabIndex {
      * @param contentStore the ContentStore object by which to access the content
      *
      */
-    protected void registerContentStore(String fieldName, ContentStore contentStore) {
-        contentStores.put(fieldName, contentStore);
+    protected void registerContentStore(Field field, ContentStore contentStore) {
+        contentStores.put(field, contentStore);
     }
 
     @Override
@@ -1025,7 +1025,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
                     if (dir.exists()) {
                         if (traceIndexOpening)
                             logger.debug("    " + dir + "...");
-                        registerContentStore(field.name(), ContentStore.open(dir, false));
+                        registerContentStore(field, ContentStore.open(dir, false));
                     }
                 }
             }
@@ -1247,10 +1247,10 @@ public class BlackLabIndexImpl implements BlackLabIndex {
         return reader;
     }
 
-    protected ContentStore openContentStore(String fieldName) {
-        File contentStoreDir = new File(indexLocation, "cs_" + fieldName);
+    protected ContentStore openContentStore(Field field) {
+        File contentStoreDir = new File(indexLocation, "cs_" + field.name());
         ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
-        registerContentStore(fieldName, contentStore);
+        registerContentStore(field, contentStore);
         return contentStore;
     }
 
