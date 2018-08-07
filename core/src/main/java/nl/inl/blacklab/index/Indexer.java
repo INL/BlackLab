@@ -47,7 +47,6 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabException;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -322,7 +321,7 @@ public class Indexer {
 
         if (create) {
             if (indexTemplateFile != null) {
-                searcher = BlackLabIndexImpl.openForWriting(directory, true, indexTemplateFile);
+                searcher = BlackLabIndexWriter.openForWriting(directory, true, indexTemplateFile);
 
                 // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
                 // has written it might be null
@@ -360,7 +359,7 @@ public class Indexer {
                 }
 
                 // template might still be null, in that case a default will be created
-                searcher = BlackLabIndexImpl.openForWriting(directory, true, format);
+                searcher = BlackLabIndexWriter.openForWriting(directory, true, format);
 
                 String defaultFormatIdentifier = searcher.metadata().documentFormat();
                 if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
@@ -375,7 +374,7 @@ public class Indexer {
             }
         } else { // opening an existing index
 
-            this.searcher = BlackLabIndexImpl.openForWriting(directory, false);
+            this.searcher = BlackLabIndexWriter.openForWriting(directory, false);
             String defaultFormatIdentifier = this.searcher.metadata().documentFormat();
 
             if (DocumentFormats.isSupported(formatIdentifier))

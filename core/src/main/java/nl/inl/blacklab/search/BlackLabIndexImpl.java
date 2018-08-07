@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -22,7 +21,6 @@ import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
@@ -56,9 +54,7 @@ import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -122,148 +118,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //---------------------------------------------------------------
     
     /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
-     *
-     * @param indexDir the index directory
-     * @param createNewIndex if true, create a new index even if one existed there
-     * @return the searcher in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws IOException {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, (File) null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
-     *
-     * @param indexDir the index directory
-     * @param createNewIndex if true, create a new index even if one existed there
-     * @param indexTemplateFile JSON template to use for index structure / metadata
-     * @return the searcher in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
-            throws IOException {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, indexTemplateFile);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
-     *
-     * @param indexDir the index directory
-     * @param createNewIndex if true, create a new index even if one existed there
-     * @param config input format config to use as template for index structure /
-     *            metadata (if creating new index)
-     * @return the searcher in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
-            throws IOException {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, config);
-    }
-
-    /**
-     * Create an empty index.
-     *
-     * @param indexDir where to create the index
-     * @return a Searcher for the new index, in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndexWriter createIndex(File indexDir) throws IOException {
-        return createIndex(indexDir, null, null, null, false, TextDirection.LEFT_TO_RIGHT);
-    }
-
-    /**
-     * Create an empty index.
-     *
-     * @param indexDir where to create the index
-     * @param displayName the display name for the new index, or null to assign one
-     *            automatically (based on the directory name)
-     * @return a Searcher for the new index, in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndex createIndex(File indexDir, String displayName) throws IOException {
-        return createIndex(indexDir, null, displayName, null, false, TextDirection.LEFT_TO_RIGHT);
-    }
-
-    /**
-     * Create an empty index.
-     *
-     * @param indexDir where to create the index
-     * @param config format configuration for this index; used to base the index
-     *            metadata on
-     * @param displayName the display name for the new index, or null to assign one
-     *            automatically (based on the directory name)
-     * @param contentViewable is viewing of the document contents allowed?
-     * @param textDirection text direction for this corpus
-     * @param formatIdentifier a format identifier to store as the document format,
-     *            or null for none. See {@link DocumentFormats} class.
-     * @return a Searcher for the new index, in index mode
-     * @throws IOException
-     */
-    public static BlackLabIndexWriter createIndex(File indexDir, ConfigInputFormat config, String displayName,
-            String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
-        BlackLabIndexWriter rv = openForWriting(indexDir, true, config);
-        IndexMetadataWriter indexMetadata = rv.metadataWriter();
-        if (!StringUtils.isEmpty(displayName))
-            indexMetadata.setDisplayName(displayName);
-        if (config != null && config.getName() != null)
-            indexMetadata.setDocumentFormat(config.getName());
-        else if (!StringUtils.isEmpty(formatIdentifier)) {
-            indexMetadata.setDocumentFormat(formatIdentifier);
-        }
-        indexMetadata.setContentViewable(contentViewable);
-        if (textDirection != null)
-            indexMetadata.setTextDirection(textDirection);
-        indexMetadata.save();
-        return rv;
-    }
-
-    /**
-     * Open an index for reading ("search mode").
-     *
-     * @param indexDir the index directory
-     * @return the searcher
-     * @throws CorruptIndexException
-     * @throws IOException
-     */
-    public static BlackLabIndex open(File indexDir) throws CorruptIndexException, IOException {
-        return new BlackLabIndexImpl(indexDir, false, false, (File) null);
-    }
-
-    /**
-     * Does the specified directory contain a BlackLab index?
-     * 
-     * @param indexDir the directory
-     * @return true if it's a BlackLab index, false if not.
-     */
-    public static boolean isIndex(File indexDir) {
-        try {
-            if (VersionFile.exists(indexDir)) {
-                VersionFile vf = VersionFile.read(indexDir);
-                String version = vf.getVersion();
-                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
-                    return true;
-            }
-            return false;
-        } catch (FileNotFoundException e) {
-            throw new BlackLabException(e);
-        }
-    }
-
-    /**
      * Cut a few words from a string.
      *
      * Note, this just splits on whitespace and glues words back with space. Might
@@ -275,7 +129,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param endAtWord first word not to include
      * @return the cut string
      */
-    protected static String getWordsFromString(String content, int startAtWord,
+    private static String getWordsFromString(String content, int startAtWord,
             int endAtWord) {
         if (startAtWord == -1 && endAtWord == -1)
             return content;
@@ -919,7 +773,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
         if (!createNewIndex) {
             if (!indexMode || VersionFile.exists(indexDir)) {
-                if (!isIndex(indexDir)) {
+                if (!BlackLabIndex.isIndex(indexDir)) {
                     throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
                             + VersionFile.report(indexDir));
                 }
@@ -1393,7 +1247,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         if (create)
             VersionFile.write(indexDir, "blacklab", "2");
         else {
-            if (!isIndex(indexDir)) {
+            if (!BlackLabIndex.isIndex(indexDir)) {
                 throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
                         + VersionFile.report(indexDir));
             }

@@ -10,7 +10,6 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
@@ -33,7 +32,7 @@ public class TokensPerMetaValue {
         if (args.length >= 2)
             annotatedFieldName = args[1];
 
-        BlackLabIndex searcher = BlackLabIndexImpl.open(new File(indexDir));
+        BlackLabIndex searcher = BlackLabIndex.open(new File(indexDir));
         try {
             // Loop over all metadata fields
             IndexMetadata indexMetadata = searcher.metadata();

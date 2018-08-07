@@ -55,7 +55,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -580,7 +579,7 @@ public class QueryTool {
 
         // Create the BlackLab searcher object
         try {
-            searcher = BlackLabIndexImpl.open(indexDir);
+            searcher = BlackLabIndex.open(indexDir);
             contentsField = searcher.mainAnnotatedField();
         } catch (IOException e) {
             throw new BlackLabException(e);

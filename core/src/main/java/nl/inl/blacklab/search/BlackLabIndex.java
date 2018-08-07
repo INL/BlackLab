@@ -2,6 +2,8 @@ package nl.inl.blacklab.search;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +11,7 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -28,11 +31,44 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends Closeable {
 
+    /**
+     * Open an index for reading ("search mode").
+     *
+     * @param indexDir the index directory
+     * @return the searcher
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    static BlackLabIndex open(File indexDir) throws CorruptIndexException, IOException {
+        return new BlackLabIndexImpl(indexDir, false, false, (File) null);
+    }
+
+    /**
+     * Does the specified directory contain a BlackLab index?
+     * 
+     * @param indexDir the directory
+     * @return true if it's a BlackLab index, false if not.
+     */
+    static boolean isIndex(File indexDir) {
+        try {
+            if (VersionFile.exists(indexDir)) {
+                VersionFile vf = VersionFile.read(indexDir);
+                String version = vf.getVersion();
+                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
+                    return true;
+            }
+            return false;
+        } catch (FileNotFoundException e) {
+            throw new BlackLabException(e);
+        }
+    }
+    
     /**
      * The default settings for all new Hits objects.
      *

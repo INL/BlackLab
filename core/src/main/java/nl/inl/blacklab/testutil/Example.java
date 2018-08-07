@@ -27,7 +27,6 @@ import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -107,7 +106,7 @@ public class Example {
         }
 
         // Create the BlackLab searcher object
-        searcher = BlackLabIndexImpl.open(indexDir);
+        searcher = BlackLabIndex.open(indexDir);
         try {
 
             // Find the word "the"

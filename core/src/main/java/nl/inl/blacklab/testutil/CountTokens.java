@@ -8,7 +8,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.LuceneDocTask;
 import nl.inl.util.LogUtil;
 
@@ -53,7 +52,7 @@ public class CountTokens {
             System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
             System.exit(1);
         }
-        if (!BlackLabIndexImpl.isIndex(indexDir)) {
+        if (!BlackLabIndex.isIndex(indexDir)) {
             System.out.println("Not a BlackLab index: " + indexDir);
             System.exit(1);
         }
@@ -67,7 +66,7 @@ public class CountTokens {
 
     public CountTokens(File indexDir) throws IOException {
         System.out.println("Open index " + indexDir + "...");
-        searcher = BlackLabIndexImpl.open(indexDir);
+        searcher = BlackLabIndex.open(indexDir);
         System.out.println("Done.");
     }
 

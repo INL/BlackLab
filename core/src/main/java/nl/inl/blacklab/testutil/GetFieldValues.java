@@ -14,7 +14,6 @@ import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 
 public class GetFieldValues {
     public static void main(String[] args) throws Exception {
@@ -31,7 +30,7 @@ public class GetFieldValues {
         }
 
         Map<String, Set<String>> fieldValues = new HashMap<>();
-        BlackLabIndex searcher = BlackLabIndexImpl.open(indexDir);
+        BlackLabIndex searcher = BlackLabIndex.open(indexDir);
         try {
             IndexReader r = searcher.reader();
 

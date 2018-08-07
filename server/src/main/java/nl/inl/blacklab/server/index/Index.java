@@ -139,7 +139,7 @@ public class Index {
             throw new IllegalIndexName(indexId);
         if (dir == null || !dir.exists() || !dir.isDirectory())
             throw new FileNotFoundException("Cannot find index directory " + dir + ".");
-        if (!dir.canRead() || !BlackLabIndexImpl.isIndex(dir))
+        if (!dir.canRead() || !BlackLabIndex.isIndex(dir))
             throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
 
         this.id = indexId;
@@ -275,7 +275,7 @@ public class Index {
 
         try {
             logger.debug("Opening index '" + id + "', dir = " + dir);
-            searcher = BlackLabIndexImpl.open(this.dir);
+            searcher = BlackLabIndex.open(this.dir);
         } catch (Exception e) {
             this.searcher = null;
 
