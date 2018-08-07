@@ -253,7 +253,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public ContentStore contentStore(String fieldName) {
+    public ContentStore contentStore(Field field) {
         throw new UnsupportedOperationException();
     }
 

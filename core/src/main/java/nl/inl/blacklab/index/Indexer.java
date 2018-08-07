@@ -675,7 +675,7 @@ public class Indexer {
      */
 
     public ContentStore getContentStore(String fieldName) {
-        return searcher.contentStore(fieldName);
+        return searcher.contentStore(searcher.field(fieldName));
     }
 
     /**

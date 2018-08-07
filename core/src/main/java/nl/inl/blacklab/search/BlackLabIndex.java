@@ -437,13 +437,13 @@ public interface BlackLabIndex extends Closeable {
     }
 
     /**
-     * Get the content store for a field name.
+     * Get the content store for a field.
      *
-     * @param fieldName the field name
+     * @param field the field
      * @return the content store, or null if there is no content store for this
      *         field
      */
-    ContentStore contentStore(String fieldName);
+    ContentStore contentStore(Field field);
 
     /**
      * Tries to get the ForwardIndex object for the specified fieldname.
@@ -566,6 +566,19 @@ public interface BlackLabIndex extends Closeable {
     Map<Annotation, ForwardIndex> forwardIndices();
 
     boolean canDoNfaMatching();
+
+    /**
+     * Get a field (either an annotated or a metadata field).
+     * 
+     * @param fieldName name of the field
+     * @return the field
+     */
+    default Field field(String fieldName) {
+        Field field = annotatedField(fieldName);
+        if (field == null)
+            field = metadata().metadataFields().get(fieldName);
+        return field;
+    }
 
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedFields().get(fieldName);

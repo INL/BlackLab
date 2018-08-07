@@ -760,12 +760,12 @@ public class BlackLabIndexImpl implements BlackLabIndex {
     }
 
     @Override
-    public ContentStore contentStore(String fieldName) {
+    public ContentStore contentStore(Field field) {
         synchronized (contentStores) {
-            ContentStore cs = contentStores.get(fieldName);
+            ContentStore cs = contentStores.get(field.name());
             if (indexMode && cs == null) {
                 // Index mode. Create new content store or open existing one.
-                return openContentStore(fieldName);
+                return openContentStore(field.name());
             }
             return cs;
         }
