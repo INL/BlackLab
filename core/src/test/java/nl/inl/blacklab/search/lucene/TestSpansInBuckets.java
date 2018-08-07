@@ -22,9 +22,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.MockSpansInBuckets;
 import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.mocks.MockSpans;
+import nl.inl.blacklab.mocks.MockSpansInBuckets;
 
 public class TestSpansInBuckets {
     private SpansInBuckets hpd;

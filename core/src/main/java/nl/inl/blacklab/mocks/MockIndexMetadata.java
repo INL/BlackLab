@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.indexmetadata;
+package nl.inl.blacklab.mocks;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 public class MockIndexMetadata implements IndexMetadata {
     

@@ -104,7 +104,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(luceneDocId);
-        content = searcher.highlightContent(luceneDocId, searcher.mainAnnotatedField().name(), hitsInDoc, startAtWord,
+        content = searcher.highlightContent(luceneDocId, searcher.mainAnnotatedField(), hitsInDoc, startAtWord,
                 endAtWord);
 
         boolean outputXmlDeclaration = true;

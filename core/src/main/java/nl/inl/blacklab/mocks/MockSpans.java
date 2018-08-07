@@ -16,7 +16,7 @@
 /**
  *
  */
-package nl.inl.blacklab;
+package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -26,6 +26,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.MyTermSpans;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;

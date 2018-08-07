@@ -1,6 +1,11 @@
-package nl.inl.blacklab.search.indexmetadata;
+package nl.inl.blacklab.mocks;
 
 import java.util.Collection;
+
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockAnnotation implements Annotation {
     

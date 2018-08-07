@@ -7,10 +7,10 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockAnnotatedField;
+import nl.inl.blacklab.mocks.MockAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MockAnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.MockAnnotation;
 
 public class TestKwic {
 

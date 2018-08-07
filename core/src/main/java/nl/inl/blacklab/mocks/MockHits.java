@@ -1,4 +1,4 @@
-package nl.inl.blacklab;
+package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
 import java.util.List;

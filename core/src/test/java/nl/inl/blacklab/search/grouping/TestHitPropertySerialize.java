@@ -7,10 +7,10 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockForwardIndex;
-import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.MockTerms;
+import nl.inl.blacklab.mocks.MockForwardIndex;
+import nl.inl.blacklab.mocks.MockHits;
+import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
 import nl.inl.blacklab.resultproperty.HitPropValue;

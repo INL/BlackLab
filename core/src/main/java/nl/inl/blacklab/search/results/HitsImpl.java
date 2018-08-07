@@ -51,17 +51,18 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -1569,12 +1570,12 @@ public class HitsImpl extends Hits {
      * NOTE1: it is assumed that all hits in this Hits object are in the same
      * document!
      * 
-     * @param fieldName Lucene index field to make conc for
+     * @param field field to make conc for
      * @param wordsAroundHit number of words left and right of hit to fetch
      * @param conc where to add the concordances
      * @param hl
      */
-    private synchronized void makeConcordancesSingleDocContentStore(String fieldName, int wordsAroundHit,
+    private synchronized void makeConcordancesSingleDocContentStore(Field field, int wordsAroundHit,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.isEmpty())
@@ -1606,10 +1607,10 @@ public class HitsImpl extends Hits {
 
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
-        searcher.getCharacterOffsets(doc, fieldName, startsOfWords, endsOfWords, true);
+        searcher.getCharacterOffsets(doc, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = searcher.makeConcordancesFromContentStore(doc, fieldName, startsOfWords,
+        List<Concordance> newConcs = searcher.makeConcordancesFromContentStore(doc, field, startsOfWords,
                 endsOfWords, hl);
         for (int i = 0; i < hits.size(); i++) {
             conc.put(hits.get(i), newConcs.get(i));
@@ -1681,7 +1682,7 @@ public class HitsImpl extends Hits {
         for (List<Hit> l : hitsPerDocument.values()) {
             HitsImpl hitsInThisDoc = new HitsImpl(searcher, l);
             hitsInThisDoc.copySettingsFrom(this);
-            hitsInThisDoc.makeConcordancesSingleDocContentStore(field.name(), contextSize, conc, hl);
+            hitsInThisDoc.makeConcordancesSingleDocContentStore(field, contextSize, conc, hl);
         }
         return conc;
     }

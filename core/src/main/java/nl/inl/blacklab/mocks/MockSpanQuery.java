@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.search.lucene;
+package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -26,7 +26,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
 
 /**
  * Stub SpanQuery class for testing. Takes arrays and iterates through 'hits'

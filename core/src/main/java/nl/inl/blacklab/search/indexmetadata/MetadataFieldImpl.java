@@ -246,4 +246,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         this.uiType = uiType;
     }
 
+    @Override
+    public String offsetsField() {
+        return name();
+    }
+
 }

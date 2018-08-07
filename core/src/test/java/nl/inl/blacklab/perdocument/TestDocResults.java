@@ -18,8 +18,8 @@ package nl.inl.blacklab.perdocument;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.MockSearcher;
+import nl.inl.blacklab.mocks.MockHits;
+import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;

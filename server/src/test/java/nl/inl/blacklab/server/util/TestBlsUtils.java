@@ -7,6 +7,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;

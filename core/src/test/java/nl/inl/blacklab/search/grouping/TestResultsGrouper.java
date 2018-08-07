@@ -20,13 +20,13 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockSearcher;
+import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockSpanQuery;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.MockSpanQuery;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;

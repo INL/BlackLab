@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.ContentAccessor;
+import nl.inl.blacklab.search.indexmetadata.Field;
 
 public class ContentStoresManager {
     /**
@@ -53,15 +54,15 @@ public class ContentStoresManager {
         return contentAccessors.containsKey(fieldName);
     }
 
-    public String[] getSubstrings(String fieldName, Document d, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(fieldName);
+    public String[] getSubstrings(Field field, Document d, int[] start, int[] end) {
+        ContentAccessor contentAccessor = contentAccessors.get(field.name());
         if (contentAccessor == null)
             return null;
         return contentAccessor.getSubstringsFromDocument(d, start, end);
     }
 
-    public String[] getSubstrings(String fieldName, int contentId, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(fieldName);
+    public String[] getSubstrings(Field field, int contentId, int[] start, int[] end) {
+        ContentAccessor contentAccessor = contentAccessors.get(field.name());
         if (contentAccessor == null)
             return null;
         return contentAccessor.getSubstringsFromDocument(contentId, start, end);

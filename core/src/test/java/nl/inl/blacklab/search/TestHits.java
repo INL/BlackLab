@@ -22,9 +22,9 @@ import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.MockSpans;
+import nl.inl.blacklab.mocks.MockHits;
+import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 

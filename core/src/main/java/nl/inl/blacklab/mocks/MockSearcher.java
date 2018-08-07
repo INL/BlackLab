@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.util;
+package nl.inl.blacklab.mocks;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +25,6 @@ import org.mockito.Mockito;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.indexmetadata.MockIndexMetadata;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.Concordance;
@@ -35,6 +34,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -99,7 +99,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
+    public void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound) {
         throw new UnsupportedOperationException();
     }
@@ -233,22 +233,22 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar) {
+    public String getContentByCharPos(int docId, Field field, int startAtChar, int endAtChar) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getContent(int docId, String fieldName, int startAtWord, int endAtWord) {
+    public String getContent(int docId, Field field, int startAtWord, int endAtWord) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getContent(Document d, String fieldName) {
+    public String getContent(Document d, Field field) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord) {
+    public String highlightContent(int docId, Field field, Hits hits, int startAtWord, int endAtWord) {
         throw new UnsupportedOperationException();
     }
 
@@ -263,7 +263,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
+    public List<Concordance> makeConcordancesFromContentStore(int doc, Field field, int[] startsOfWords,
             int[] endsOfWords, XmlHighlighter hl) {
         throw new UnsupportedOperationException();
     }

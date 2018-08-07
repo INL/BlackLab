@@ -5,9 +5,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockTerms;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;

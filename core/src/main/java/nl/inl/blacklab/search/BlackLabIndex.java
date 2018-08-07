@@ -26,6 +26,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -291,7 +292,7 @@ public interface BlackLabIndex extends Closeable {
      * specified in.
      *
      * @param doc the document from which to find character positions
-     * @param fieldName the field from which to find character positions
+     * @param field the field from which to find character positions
      * @param startsOfWords word positions for which we want starting character
      *            positions (i.e. the position of the first letter of that word)
      * @param endsOfWords word positions for which we want ending character
@@ -301,7 +302,7 @@ public interface BlackLabIndex extends Closeable {
      *            value is chosen (in this case, the last character of the last word
      *            found). Otherwise, throws an exception.
      */
-    void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
+    void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound);
 
     DocContentsFromForwardIndex getContentFromForwardIndex(int docId, AnnotatedField field, int startAtWord,
@@ -314,13 +315,13 @@ public interface BlackLabIndex extends Closeable {
      * stores instead of in the Lucene index.
      *
      * @param docId the Lucene Document id
-     * @param fieldName the name of the field
+     * @param field the field
      * @param startAtChar where to start getting the content (-1 for start of
      *            document, 0 for first char)
      * @param endAtChar where to end getting the content (-1 for end of document)
      * @return the field content
      */
-    String getContentByCharPos(int docId, String fieldName, int startAtChar, int endAtChar);
+    String getContentByCharPos(int docId, Field field, int startAtChar, int endAtChar);
 
     /**
      * Get part of the contents of a field from a Lucene Document.
@@ -329,14 +330,14 @@ public interface BlackLabIndex extends Closeable {
      * stores instead of in the Lucene index.
      *
      * @param docId the Lucene Document id
-     * @param fieldName the name of the field
+     * @param field the field
      * @param startAtWord where to start getting the content (first word returned;
      *            -1 for start of document, 0 for first word)
      * @param endAtWord where to end getting the content (last word returned; -1 for
      *            end of document)
      * @return the field content
      */
-    String getContent(int docId, String fieldName, int startAtWord, int endAtWord);
+    String getContent(int docId, Field field, int startAtWord, int endAtWord);
 
     /**
      * Get the contents of a field from a Lucene Document.
@@ -345,10 +346,10 @@ public interface BlackLabIndex extends Closeable {
      * stores instead of in the Lucene index.
      *
      * @param d the Document
-     * @param fieldName the name of the field
+     * @param field the field
      * @return the field content
      */
-    String getContent(Document d, String fieldName);
+    String getContent(Document d, Field field);
 
     /**
      * Get the document contents (original XML).
@@ -357,7 +358,7 @@ public interface BlackLabIndex extends Closeable {
      * @return the field content
      */
     default String getContent(Document d) {
-        return getContent(d, mainAnnotatedField().name());
+        return getContent(d, mainAnnotatedField());
     }
 
     /**
@@ -367,11 +368,11 @@ public interface BlackLabIndex extends Closeable {
      * stores instead of in the Lucene index.
      *
      * @param docId the Document id
-     * @param fieldName the name of the field
+     * @param field the field
      * @return the field content
      */
-    default String getContent(int docId, String fieldName) {
-        return getContent(docId, fieldName, -1, -1);
+    default String getContent(int docId, Field field) {
+        return getContent(docId, field, -1, -1);
     }
 
     /**
@@ -381,7 +382,7 @@ public interface BlackLabIndex extends Closeable {
      * @return the field content
      */
     default String getContent(int docId) {
-        return getContent(docId, mainAnnotatedField().name(), -1, -1);
+        return getContent(docId, mainAnnotatedField(), -1, -1);
     }
 
     /**
@@ -398,7 +399,7 @@ public interface BlackLabIndex extends Closeable {
      * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
      *
      * @param docId document to highlight a field from
-     * @param fieldName field to highlight
+     * @param field field to highlight
      * @param hits the hits
      * @param startAtWord where to start highlighting (first word returned), or -1
      *            for start of document
@@ -406,7 +407,7 @@ public interface BlackLabIndex extends Closeable {
      *            for end of document
      * @return the highlighted content
      */
-    String highlightContent(int docId, String fieldName, Hits hits, int startAtWord, int endAtWord);
+    String highlightContent(int docId, Field field, Hits hits, int startAtWord, int endAtWord);
 
     /**
      * Highlight field content with the specified hits.
@@ -414,12 +415,12 @@ public interface BlackLabIndex extends Closeable {
      * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
      *
      * @param docId document to highlight a field from
-     * @param fieldName field to highlight
+     * @param field field to highlight
      * @param hits the hits
      * @return the highlighted content
      */
-    default String highlightContent(int docId, String fieldName, Hits hits) {
-        return highlightContent(docId, fieldName, hits, -1, -1);
+    default String highlightContent(int docId, Field field, Hits hits) {
+        return highlightContent(docId, field, hits, -1, -1);
     }
 
     /**
@@ -432,7 +433,7 @@ public interface BlackLabIndex extends Closeable {
      * @return the highlighted content
      */
     default String highlightContent(int docId, Hits hits) {
-        return highlightContent(docId, mainAnnotatedField().name(), hits, -1, -1);
+        return highlightContent(docId, mainAnnotatedField(), hits, -1, -1);
     }
 
     /**
@@ -470,13 +471,13 @@ public interface BlackLabIndex extends Closeable {
      * each concordance.
      *
      * @param doc the Lucene document number
-     * @param fieldName name of the field
+     * @param field the field
      * @param startsOfWords the array of starts of words ([A] and [B] positions)
      * @param endsOfWords the array of ends of words ([C] and [D] positions)
      * @param hl
      * @return the list of concordances
      */
-    List<Concordance> makeConcordancesFromContentStore(int doc, String fieldName, int[] startsOfWords,
+    List<Concordance> makeConcordancesFromContentStore(int doc, Field field, int[] startsOfWords,
             int[] endsOfWords, XmlHighlighter hl);
 
     /**

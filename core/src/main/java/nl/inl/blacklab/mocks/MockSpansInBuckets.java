@@ -16,7 +16,7 @@
 /**
  *
  */
-package nl.inl.blacklab;
+package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
 import org.apache.lucene.search.DocIdSetIterator;

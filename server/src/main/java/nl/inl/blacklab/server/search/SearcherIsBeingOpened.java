@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 
 /** A dummy Searcher placeholder while Searcher is being opened. */
 public class SearcherIsBeingOpened extends BlackLabIndexImpl {
@@ -61,7 +62,7 @@ public class SearcherIsBeingOpened extends BlackLabIndexImpl {
     }
 
     @Override
-    public void getCharacterOffsets(int doc, String fieldName, int[] startsOfWords, int[] endsOfWords,
+    public void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound) {
         throw new UnsupportedOperationException();
     }

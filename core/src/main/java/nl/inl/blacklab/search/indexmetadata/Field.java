@@ -19,4 +19,8 @@ public interface Field {
 	 * @return true if it does, false if not */
     boolean hasContentStore();
 
+    /** Get the Lucene field that contains character offsets (if any) 
+     * @return lucene field containing offsets, or null if there is none */
+    String offsetsField();
+
 }
