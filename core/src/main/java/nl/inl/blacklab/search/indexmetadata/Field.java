@@ -31,4 +31,14 @@ public interface Field {
         return AnnotatedFieldNameUtil.contentIdField(name());
     }
 
+    /**
+     * Get the Lucene field that contains our main contents.
+     * 
+     * This is either the field itself (for metadata) or the main sensitivity of the 
+     * main property.
+     * 
+     * @return Lucene field containing contents
+     */
+    String contentsFieldName();
+
 }

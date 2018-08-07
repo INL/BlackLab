@@ -699,7 +699,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
         Document d = document(docId);
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
-            return d.get(field.name()).substring(startAtChar, endAtChar);
+            return d.get(field.contentsFieldName()).substring(startAtChar, endAtChar);
         }
         return contentStores.getSubstrings(field, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
     }
@@ -709,7 +709,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
         Document d = document(docId);
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
-            String content = d.get(field.name());
+            String content = d.get(field.contentsFieldName());
             if (content == null)
                 throw new IllegalArgumentException("Field not found: " + field.name());
             return getWordsFromString(content, startAtWord, endAtWord);
@@ -723,7 +723,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
     public String getContent(Document d, Field field) {
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
-            return d.get(field.name());
+            return d.get(field.contentsFieldName());
         }
         // Content accessor set. Use it to retrieve the content.
         return contentStores.getSubstrings(field, d, new int[] { -1 }, new int[] { -1 })[0];
@@ -826,8 +826,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
         if (!field.hasContentStore()) {
             String[] content;
             // No special content accessor set; assume a non-annotated stored field
-            String luceneName = field.name(); // <- non-annotated, so this works
-            String fieldContent = d.get(luceneName);
+            String fieldContent = d.get(field.contentsFieldName());
             content = new String[starts.length];
             for (int i = 0; i < starts.length; i++) {
                 content[i] = fieldContent.substring(starts[i], ends[i]);

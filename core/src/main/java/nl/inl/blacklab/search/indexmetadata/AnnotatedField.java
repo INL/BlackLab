@@ -21,4 +21,13 @@ public interface AnnotatedField extends Field {
 
     String tokenLengthField();
 
+    @Override
+    default String contentsFieldName() {
+        Annotation main = annotations().main();
+        AnnotationSensitivity offsetsSensitivity = main.offsetsSensitivity();
+        if (offsetsSensitivity == null)
+            offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
+        return offsetsSensitivity.luceneField();
+    }
+
 }

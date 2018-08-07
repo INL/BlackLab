@@ -26,4 +26,9 @@ public interface MetadataField extends Field {
 
 	String group();
 
+    @Override
+    default String contentsFieldName() {
+        return name();
+    }
+	
 }
