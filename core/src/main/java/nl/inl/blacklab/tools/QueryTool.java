@@ -64,6 +64,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -828,7 +829,7 @@ public class QueryTool {
                 } else if (v.equals("diac") || v.equals("diacritics")) {
                     diacSensitive = true;
                 }
-                searcher.setDefaultSearchSensitive(caseSensitive, diacSensitive);
+                searcher.setDefaultMatchSensitivity(MatchSensitivity.get(caseSensitive, diacSensitive));
                 outprintln("Search defaults to "
                         + (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
                         + (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));

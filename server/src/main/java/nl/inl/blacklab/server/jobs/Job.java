@@ -149,8 +149,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         this.user = user;
         this.jobDesc = par;
         searcher = searchMan.getIndexManager().getIndex(par.getIndexName()).getSearcher();
-        searcher.setDefaultSearchSensitive(searchMan.config().isDefaultCaseSensitive(),
-                searchMan.config().isDefaultDiacriticsSensitive());
+        searcher.setDefaultMatchSensitivity(searchMan.config().defaultMatchSensitivity());
         resetLastAccessed();
         startedAt = -1;
         finishedAt = -1;

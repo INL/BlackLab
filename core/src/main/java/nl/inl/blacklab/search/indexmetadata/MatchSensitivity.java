@@ -7,15 +7,12 @@ package nl.inl.blacklab.search.indexmetadata;
  * and "case/diacritics-sensitivity" when talking about matching, but
  * those are the same thing)
  */
-public final class MatchSensitivity {
+public enum MatchSensitivity {
     
-    public static final MatchSensitivity SENSITIVE = new MatchSensitivity(true, true, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
-    
-    public static final MatchSensitivity INSENSITIVE = new MatchSensitivity(false, false, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
-    
-    public static final MatchSensitivity CASE_INSENSITIVE = new MatchSensitivity(false, true, AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME);
-    
-    public static final MatchSensitivity DIACRITICS_INSENSITIVE = new MatchSensitivity(true, false, AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
+    SENSITIVE(true, true, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME),
+    INSENSITIVE(false, false, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME),
+    CASE_INSENSITIVE(false, true, AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME),
+    DIACRITICS_INSENSITIVE(true, false, AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
     
     public static MatchSensitivity get(boolean caseSensitive, boolean diacriticsSensitive) {
         if (caseSensitive)
@@ -44,8 +41,7 @@ public final class MatchSensitivity {
     
     private String luceneFieldCode;
 	
-    private MatchSensitivity(boolean caseSensitive, boolean diacriticsSensitive, String luceneFieldCode) {
-        super();
+    MatchSensitivity(boolean caseSensitive, boolean diacriticsSensitive, String luceneFieldCode) {
         this.caseSensitive = caseSensitive;
         this.diacriticsSensitive = diacriticsSensitive;
         this.luceneFieldCode = luceneFieldCode;
@@ -62,6 +58,11 @@ public final class MatchSensitivity {
 	/** @return Suffix used for corresponding Lucene field */
 	public String luceneFieldSuffix() {
 	    return luceneFieldCode;
+	}
+	
+	@Override
+	public String toString() {
+	    return luceneFieldSuffix();
 	}
 
 }

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -50,8 +51,7 @@ public class SearchManager {
         SearchParameters.setDefault("wordsaroundhit", "" + config.getDefaultContextSize());
         SearchParameters.setDefault("maxretrieve", "" + config.getDefaultMaxHitsToRetrieve());
         SearchParameters.setDefault("maxcount", "" + config.getDefaultMaxHitsToCount());
-        SearchParameters.setDefault("sensitive",
-                config.isDefaultCaseSensitive() && config.isDefaultDiacriticsSensitive() ? "yes" : "no");
+        SearchParameters.setDefault("sensitive", config.defaultMatchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
 
     /**

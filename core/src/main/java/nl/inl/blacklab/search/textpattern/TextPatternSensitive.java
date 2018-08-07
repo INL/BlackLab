@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
@@ -27,11 +28,10 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * </code>
  */
 public class TextPatternSensitive extends TextPattern {
-    private boolean caseSensitive;
-
-    private boolean diacriticsSensitive;
 
     private TextPattern input;
+
+    private MatchSensitivity sensitivity;
 
     /**
      * Indicate that we want to use a different list of alternatives for this part
@@ -42,21 +42,32 @@ public class TextPatternSensitive extends TextPattern {
      * @param input
      */
     public TextPatternSensitive(boolean caseSensitive, boolean diacriticsSensitive, TextPattern input) {
-        this.caseSensitive = caseSensitive;
-        this.diacriticsSensitive = diacriticsSensitive;
+        this.sensitivity = MatchSensitivity.get(caseSensitive, diacriticsSensitive);
+        this.input = input;
+    }
+
+    /**
+     * Indicate that we want to use a different list of alternatives for this part
+     * of the query.
+     * 
+     * @param sensitivity search case-/diacritics-sensitively?
+     * @param input
+     */
+    public TextPatternSensitive(MatchSensitivity sensitivity, TextPattern input) {
+        this.sensitivity = sensitivity;
         this.input = input;
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        return input.translate(context.withSensitive(caseSensitive, diacriticsSensitive));
+        return input.translate(context.withSensitive(sensitivity));
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof TextPatternSensitive) {
             TextPatternSensitive tp = ((TextPatternSensitive) obj);
-            return caseSensitive == tp.caseSensitive && diacriticsSensitive == tp.diacriticsSensitive &&
+            return sensitivity == tp.sensitivity &&
                     input.equals(tp.input);
         }
         return false;
@@ -64,12 +75,12 @@ public class TextPatternSensitive extends TextPattern {
 
     @Override
     public int hashCode() {
-        return (caseSensitive ? 13 : 0) + (diacriticsSensitive ? 31 : 0) + input.hashCode();
+        return sensitivity.hashCode() + input.hashCode();
     }
 
     @Override
     public String toString() {
-        String sett = caseSensitive ? (diacriticsSensitive ? "s" : "c") : (diacriticsSensitive ? "d" : "i");
+        String sett = sensitivity.toString();
         return "SENSITIVE(" + sett + ", " + input.toString() + ")";
     }
 }

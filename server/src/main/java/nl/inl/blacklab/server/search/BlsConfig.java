@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -41,12 +42,6 @@ public class BlsConfig extends YamlJsonReader {
      * Maximum value allowed for number parameters in CSV exports [default 100_000]
      */
     private int maxExportPageSize;
-
-    /** Default case-sensitivity to use. [insensitive] */
-    private boolean defaultCaseSensitive;
-
-    /** Default diacritics-sensitivity to use. [insensitive] */
-    private boolean defaultDiacriticsSensitive;
 
     /** Default number of words around hit. [5] */
     private int defaultContextSize;
@@ -88,6 +83,8 @@ public class BlsConfig extends YamlJsonReader {
     private String authClass;
 
     Map<String, Object> authParam;
+
+    private MatchSensitivity defaultMatchSensitivity;
 
     /** Log detailed debug messages about search cache management? */
     public static boolean traceCache = false;
@@ -168,18 +165,16 @@ public class BlsConfig extends YamlJsonReader {
                     "defaultSearchSensitivity", "insensitive");
             switch (defaultSearchSensitivity) {
             case "sensitive":
-                defaultCaseSensitive = defaultDiacriticsSensitive = true;
+                defaultMatchSensitivity = MatchSensitivity.SENSITIVE;
                 break;
             case "case":
-                defaultCaseSensitive = true;
-                defaultDiacriticsSensitive = false;
+                defaultMatchSensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
                 break;
             case "diacritics":
-                defaultDiacriticsSensitive = true;
-                defaultCaseSensitive = false;
+                defaultMatchSensitivity = MatchSensitivity.CASE_INSENSITIVE;
                 break;
             default:
-                defaultCaseSensitive = defaultDiacriticsSensitive = false;
+                defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
                 break;
             }
             defaultContextSize = JsonUtil.getIntProp(reqProp, "defaultContextSize", 5);
@@ -205,7 +200,7 @@ public class BlsConfig extends YamlJsonReader {
             defaultPageSize = 20;
             maxPageSize = 1000;
             maxExportPageSize = 100_000;
-            defaultCaseSensitive = defaultDiacriticsSensitive = false;
+            defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
             defaultContextSize = 5;
             maxContextSize = 20;
             maxSnippetSize = 120;
@@ -265,12 +260,8 @@ public class BlsConfig extends YamlJsonReader {
         return maxExportPageSize;
     }
 
-    public boolean isDefaultCaseSensitive() {
-        return defaultCaseSensitive;
-    }
-
-    public boolean isDefaultDiacriticsSensitive() {
-        return defaultDiacriticsSensitive;
+    public MatchSensitivity defaultMatchSensitivity() {
+        return defaultMatchSensitivity;
     }
 
     public int getDefaultContextSize() {

@@ -42,7 +42,7 @@ public class HitPropertyLeftContext extends HitProperty {
     private Searcher searcher;
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, annotation, hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits, AnnotatedField field) {

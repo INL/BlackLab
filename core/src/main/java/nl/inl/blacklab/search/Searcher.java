@@ -51,6 +51,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResults;
@@ -485,12 +486,9 @@ public abstract class Searcher {
 //
 //	/** Default number of words around a hit */
 //	protected int defaultContextSize = DEFAULT_CONTEXT_SIZE;
-
-    /** Should we default to case-sensitive searching? [false] */
-    protected boolean defaultCaseSensitive = false;
-
-    /** Should we default to diacritics-sensitive searching? [false] */
-    protected boolean defaultDiacriticsSensitive = false;
+    
+    /** Should we default to case-/diacritics-sensitive searching? [default: both insensitive] */
+    protected MatchSensitivity defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
 
     /**
      * How we fix well-formedness for snippets of XML: by adding or removing
@@ -1245,22 +1243,13 @@ public abstract class Searcher {
     public Terms getTerms() {
         return getTerms(mainAnnotatedField().annotations().main());
     }
-
-    public boolean isDefaultSearchCaseSensitive() {
-        return defaultCaseSensitive;
+    
+    public MatchSensitivity defaultMatchSensitivity() {
+        return defaultMatchSensitivity;
     }
 
-    public boolean isDefaultSearchDiacriticsSensitive() {
-        return defaultDiacriticsSensitive;
-    }
-
-    public void setDefaultSearchSensitive(boolean b) {
-        defaultCaseSensitive = defaultDiacriticsSensitive = b;
-    }
-
-    public void setDefaultSearchSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
-        defaultCaseSensitive = caseSensitive;
-        defaultDiacriticsSensitive = diacriticsSensitive;
+    public void setDefaultMatchSensitivity(MatchSensitivity m) {
+        defaultMatchSensitivity = m;
     }
 
     /**
@@ -1374,6 +1363,10 @@ public abstract class Searcher {
             return field.annotations().get(annotName);
         AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
         return fld.getOrCreateAnnotation(annotName);
+    }
+
+    public boolean isDefaultSearchCaseSensitive() {
+        return defaultMatchSensitivity.isCaseSensitive();
     }
 
 }

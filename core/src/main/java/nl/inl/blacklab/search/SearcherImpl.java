@@ -561,8 +561,7 @@ public class SearcherImpl extends Searcher implements Closeable {
         if (mainAnnotation == null)
             throw new IllegalArgumentException("Main annotation not found for " + annotatedField.name());
         String mainAnnotationName = mainAnnotation.name();
-        return new QueryExecutionContext(this, annotatedField, mainAnnotationName, defaultCaseSensitive,
-                defaultDiacriticsSensitive);
+        return new QueryExecutionContext(this, annotatedField, mainAnnotationName, defaultMatchSensitivity);
     }
 
     @Override

@@ -61,6 +61,7 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.util.StringUtil;
@@ -1255,8 +1256,7 @@ public class HitsImpl extends Hits {
         }
 
         // Get the actual words from the sort positions
-        boolean caseSensitive = searcher.isDefaultSearchCaseSensitive();
-        boolean diacSensitive = searcher.isDefaultSearchDiacriticsSensitive();
+        MatchSensitivity sensitivity = searcher.defaultMatchSensitivity();
         TermFrequencyList collocations = new TermFrequencyList(coll.size());
         Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
         Map<String, Integer> wordFreq = new HashMap<>();
@@ -1264,10 +1264,10 @@ public class HitsImpl extends Hits {
             int key = e.getOne();
             int value = e.getTwo();
             String word = terms.get(key);
-            if (!diacSensitive) {
+            if (!sensitivity.isDiacriticsSensitive()) {
                 word = StringUtil.stripAccents(word);
             }
-            if (!caseSensitive) {
+            if (!sensitivity.isCaseSensitive()) {
                 word = word.toLowerCase();
             }
             // Note that multiple ids may map to the same word (because of sensitivity settings)

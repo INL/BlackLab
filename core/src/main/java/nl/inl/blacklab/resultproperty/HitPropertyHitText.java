@@ -40,15 +40,15 @@ public class HitPropertyHitText extends HitProperty {
     private Annotation annotation;
 
     public HitPropertyHitText(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, annotation, hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, field.annotations().main(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits) {
-        this(hits, hits.getSearcher().mainAnnotatedField(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, hits.getSearcher().mainAnnotatedField(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
