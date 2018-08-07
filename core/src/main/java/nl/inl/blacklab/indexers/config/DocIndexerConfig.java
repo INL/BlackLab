@@ -9,6 +9,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 
@@ -95,33 +96,34 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (annotations.isEmpty())
                 throw new InputFormatConfigException("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
-            AnnotatedFieldWriter annotatedField = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
+            AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
                     getSensitivitySetting(mainAnnotation), false);
-            addAnnotatedField(annotatedField);
+            addAnnotatedField(fieldWriter);
 
             IndexMetadataImpl indexMetadata;
             if (indexer != null) {
                 indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
-                indexMetadata.registerAnnotatedField(annotatedField);
+                AnnotatedField fieldDesc = indexMetadata.registerAnnotatedField(fieldWriter);
+                fieldWriter.setAnnotatedField(fieldDesc);
             }
 
-            AnnotationWriter annotStartTag = annotatedField.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
+            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
                     getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME), true);
             annotStartTag.setForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
-                annotatedField.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
+                fieldWriter.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
-                    annotatedField.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
+                    fieldWriter.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
-            if (!annotatedField.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
+            if (!fieldWriter.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
-                annotatedField.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+                fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
         }

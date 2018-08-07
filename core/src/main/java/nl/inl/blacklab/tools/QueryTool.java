@@ -497,7 +497,6 @@ public class QueryTool {
             QueryTool c = new QueryTool(indexDir, in, out, err);
             c.commandProcessor();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             throw new RuntimeException(e);
         }
     }
@@ -1251,7 +1250,7 @@ public class QueryTool {
 
         Hits hitsToSort = getCurrentHitSet();
 
-        Annotation annotation = contentsField.annotations().get(annotationName);
+        Annotation annotation = annotationName == null ? contentsField.annotations().main() : contentsField.annotations().get(annotationName);
         HitProperty crit = null;
         if (sortBy.equalsIgnoreCase("doc"))
             crit = new HitPropertyDocumentId(hitsToSort);
@@ -1330,7 +1329,7 @@ public class QueryTool {
         // Group results
         HitProperty crit = null;
         try {
-            Annotation annotation = contentsField.annotations().get(annotationName);
+            Annotation annotation = annotationName == null ? contentsField.annotations().main() : contentsField.annotations().get(annotationName);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
                 crit = new HitPropertyHitText(hits, annotation);
             else if (groupBy.startsWith("left"))
