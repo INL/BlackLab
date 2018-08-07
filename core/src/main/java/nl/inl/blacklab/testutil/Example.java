@@ -25,9 +25,10 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -76,7 +77,7 @@ public class Example {
                 @Override
                 public void process(File f) {
                     if (!f.delete())
-                        throw new RuntimeException("Could not delete file: " + f);
+                        throw new BlackLabException("Could not delete file: " + f);
                 }
             });
         }

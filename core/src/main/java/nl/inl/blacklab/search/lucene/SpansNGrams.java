@@ -22,6 +22,7 @@ import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -129,7 +130,7 @@ class SpansNGrams extends BLSpans {
                 currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
-                throw new RuntimeException("currentDoc > maxDoc!!");
+                throw new BlackLabException("currentDoc > maxDoc!!");
             if (currentDoc == maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = NO_MORE_POSITIONS;

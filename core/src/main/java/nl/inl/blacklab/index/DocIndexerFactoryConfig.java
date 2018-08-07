@@ -25,6 +25,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatConfigException;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
@@ -97,7 +98,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     addFormat(format);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
 

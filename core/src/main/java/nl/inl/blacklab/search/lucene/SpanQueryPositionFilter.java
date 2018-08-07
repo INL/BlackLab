@@ -25,6 +25,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.BlackLabException;
+
 /**
  * Filters hits from a producer query based on the hit positions of a filter
  * query. This allows us to do several things, such as: * find hits from the
@@ -292,7 +294,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
         if (!clause.hitsAllSameLength())
-            throw new RuntimeException("Trying to internalize non-constant-length clause: " + clause);
+            throw new BlackLabException("Trying to internalize non-constant-length clause: " + clause);
         // Create a new position filter query with a constant-length clause added to our producer.
         // leftAdjust and rightAdjust are updated according to the clause's length, so it is not
         // actually filtered.

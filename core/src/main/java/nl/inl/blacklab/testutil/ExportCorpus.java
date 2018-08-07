@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.LuceneDocTask;
@@ -89,7 +90,7 @@ public class ExportCorpus {
                     File dir = file.getAbsoluteFile().getParentFile();
                     if (!dir.exists()) {
                         if (!dir.mkdirs()) // create any subdirectories required
-                            throw new RuntimeException("Could not create dir(s): " + dir);
+                            throw new BlackLabException("Could not create dir(s): " + dir);
                     }
                     try (PrintWriter pw = FileUtil.openForWriting(file)) {
                         pw.write(xml);

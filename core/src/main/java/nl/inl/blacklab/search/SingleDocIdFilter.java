@@ -77,7 +77,7 @@ public class SingleDocIdFilter extends Query {
                         try {
                             return DocIdSet.EMPTY.iterator();
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            throw new BlackLabException(e);
                         }
                     }
                 };

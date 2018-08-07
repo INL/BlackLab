@@ -25,6 +25,7 @@ import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
@@ -157,7 +158,7 @@ public class RunTermQuery {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

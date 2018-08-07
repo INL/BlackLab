@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 

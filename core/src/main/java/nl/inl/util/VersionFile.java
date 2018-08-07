@@ -21,6 +21,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+import nl.inl.blacklab.search.BlackLabException;
+
 /**
  * Reads/writes a type/version file for a directory, to indicate the version of
  * the directory's contents.
@@ -142,18 +144,18 @@ public class VersionFile {
     public void read() {
         try {
             if (!file.exists())
-                throw new RuntimeException("Version file not found: " + file);
+                throw new BlackLabException("Version file not found: " + file);
             try (BufferedReader r = FileUtil.openForReading(file)) {
                 String line = r.readLine();
                 if (line == null)
-                    throw new RuntimeException("Version file appears to be empty: " + file);
+                    throw new BlackLabException("Version file appears to be empty: " + file);
                 String[] info = line.trim().split("\\|\\|", -1);
                 type = info[0];
                 if (info.length > 1)
                     version = info[1];
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

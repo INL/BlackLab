@@ -21,6 +21,7 @@ import java.util.List;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -56,7 +57,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
                 value = "";
             return new HitPropValueString(value);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -80,7 +81,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
             return reverse ? HitPropValue.collator.compare(vb, va) : HitPropValue.collator.compare(va, vb);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

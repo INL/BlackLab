@@ -7,6 +7,7 @@ import java.util.List;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreDirZip;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
 
@@ -127,7 +128,7 @@ public class BatchContentStore {
                 int id, length;
             do {
                 if (docPos >= docIds.size())
-                    throw new RuntimeException("Performance test went beyond end of content store ("
+                    throw new BlackLabException("Performance test went beyond end of content store ("
                             + docIds.size() + " docs)");
                 id = docIds.get(docPos);
 

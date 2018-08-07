@@ -26,6 +26,7 @@ import org.junit.Test;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -59,7 +60,7 @@ public class TestQueryRewriteNfa {
                     cqlQuery));
             return parser.query();
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

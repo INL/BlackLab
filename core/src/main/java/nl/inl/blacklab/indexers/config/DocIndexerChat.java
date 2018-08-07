@@ -31,6 +31,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
@@ -89,7 +90,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try (BufferedReader thefile = FileUtil.openForReading(file, "utf8")) {
             charEncodingLine = thefile.readLine();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
         if (charEncoding == null) {
@@ -418,7 +419,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
-                throw new RuntimeException(e1);
+                throw new BlackLabException(e1);
             }
         }
         return date;

@@ -46,6 +46,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -155,7 +156,7 @@ public class Indexer {
                 proc.setFileHandler(fileCapturer);
                 proc.processFile(f);
             } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
 
             // FileProcessor must have completed/be closed before result is available
@@ -169,7 +170,7 @@ public class Indexer {
                     return IOUtils.toByteArray(is);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         } else {
             throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
@@ -631,7 +632,7 @@ public class Indexer {
             proc.setErrorHandler(listener);
             proc.processFile(file);
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -664,7 +665,7 @@ public class Indexer {
             int docsDone = searcher.writer().numDocs();
             return Math.max(0, maxNumberOfDocsToIndex - docsDone);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

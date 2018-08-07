@@ -28,6 +28,7 @@ import org.apache.lucene.document.IntField;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -96,7 +97,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new BlackLabException(e);
                 }
             }
         }

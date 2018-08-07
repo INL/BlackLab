@@ -38,6 +38,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ExUtil;
 
@@ -180,7 +181,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
             if (!create)
                 throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
             if (!dir.mkdir())
-                throw new RuntimeException("Could not create dir: " + dir);
+                throw new BlackLabException("Could not create dir: " + dir);
         }
 
         this.indexMode = indexMode;
@@ -190,11 +191,11 @@ class ForwardIndexImplV3 extends ForwardIndex {
         tokensFile = new File(dir, "tokens.dat");
         if (create) {
             if (tokensFile.exists() && !tokensFile.delete())
-                throw new RuntimeException("Could not delete file: " + tokensFile);
+                throw new BlackLabException("Could not delete file: " + tokensFile);
             if (tocFile.exists() && !tocFile.delete())
-                throw new RuntimeException("Could not delete file: " + tocFile);
+                throw new BlackLabException("Could not delete file: " + tocFile);
             if (termsFile.exists() && !termsFile.delete())
-                throw new RuntimeException("Could not delete file: " + termsFile);
+                throw new BlackLabException("Could not delete file: " + termsFile);
         }
         toc = new ArrayList<>();
         deletedTocEntries = new ArrayList<>();
@@ -210,7 +211,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 }
                 terms = Terms.open(indexMode, collators, null, true);
                 if (!tokensFile.createNewFile())
-                    throw new RuntimeException("Could not create file: " + tokensFile);
+                    throw new BlackLabException("Could not create file: " + tokensFile);
                 tokensFileChunks = null;
                 tocModified = true;
                 terms.setBlockBasedFile(useBlockBasedTermsFile);
@@ -224,7 +225,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 openTokensFileForReading();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
 
         if (create) {
@@ -302,7 +303,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
      */
     private void clear() {
         if (!indexMode)
-            throw new RuntimeException("Cannot clear, not in index mode");
+            throw new BlackLabException("Cannot clear, not in index mode");
 
         // delete data files and empty TOC
         try {
@@ -314,12 +315,12 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 writeTokensFp.setLength(0);
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         if (termsFile.exists() && !termsFile.delete())
-            throw new RuntimeException("Could not delete file: " + termsFile);
+            throw new BlackLabException("Could not delete file: " + termsFile);
         if (tocFile.exists() && !tocFile.delete())
-            throw new RuntimeException("Could not delete file: " + tocFile);
+            throw new BlackLabException("Could not delete file: " + tocFile);
         toc.clear();
         deletedTocEntries.clear();
         tokenFileEndPosition = 0;
@@ -381,7 +382,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
     private void writeToc() {
 
         if (!indexMode)
-            throw new RuntimeException("Cannot write ToC, not in index mode");
+            throw new BlackLabException("Cannot write ToC, not in index mode");
 
         try {
             int n = toc.size();
@@ -469,7 +470,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
     @Override
     public synchronized int addDocument(List<String> content, List<Integer> posIncr) {
         if (!indexMode)
-            throw new RuntimeException("Cannot add document, not in index mode");
+            throw new BlackLabException("Cannot add document, not in index mode");
 
         // Calculate the total number of tokens we need to store, based on the number
         // of positions (we store 1 token per position, regardless of whether we have
@@ -579,13 +580,13 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 tokenIdsIndex++;
             }
             if (tokenIdsIndex != numberOfTokens)
-                throw new RuntimeException(
+                throw new BlackLabException(
                         "tokenIdsIndex != numberOfTokens (" + tokenIdsIndex + " != " + numberOfTokens + ")");
             writeBuffer.put(tokenIds);
 
             return newDocumentFiid;
         } catch (IOException e1) {
-            throw new RuntimeException(e1);
+            throw new BlackLabException(e1);
         }
     }
 
@@ -649,7 +650,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                     }
 
                     if (whichChunk == null) {
-                        throw new RuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+                        throw new BlackLabException("Tokens file chunk containing document not found. fiid = " + fiid);
                     }
                     whichChunk.position((int) (e.offset * SIZEOF_INT - chunkOffsetBytes));
                     ib = whichChunk.asIntBuffer();
@@ -670,7 +671,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                     ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
                     int bytesRead = writeTokensFileChannel.read(buffer, offset * SIZEOF_INT);
                     if (bytesRead < bytesToRead) {
-                        throw new RuntimeException("Not enough bytes read: " + bytesRead
+                        throw new BlackLabException("Not enough bytes read: " + bytesRead
                                 + " < " + bytesToRead);
                     }
                     buffer.position(0);
@@ -704,7 +705,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
     @Override
     public void deleteDocument(int fiid) {
         if (!indexMode)
-            throw new RuntimeException("Cannot delete document, not in index mode");
+            throw new BlackLabException("Cannot delete document, not in index mode");
         TocEntry tocEntry = toc.get(fiid);
         tocEntry.deleted = true;
         deletedTocEntries.add(tocEntry); // NOTE: mergeAdjacentDeletedEntries takes care of re-sorting

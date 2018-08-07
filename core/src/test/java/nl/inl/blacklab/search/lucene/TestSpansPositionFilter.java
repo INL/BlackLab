@@ -17,11 +17,11 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.mocks.MockSpans;
-
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
+
+import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.mocks.MockSpans;
 
 public class TestSpansPositionFilter {
 

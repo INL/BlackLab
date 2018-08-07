@@ -45,6 +45,7 @@ import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -569,7 +570,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new BlackLabException(e);
                 }
             }
         }
@@ -638,7 +639,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             parser = factory.newSAXParser();
         } catch (Exception e1) {
             // Unrecoverable error, throw runtime exception
-            throw new RuntimeException(e1);
+            throw new BlackLabException(e1);
         }
         try {
             InputSource is = new InputSource(reader);

@@ -26,6 +26,7 @@ import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
 import nl.inl.blacklab.indexers.DocIndexerTeiText;
 import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -148,7 +149,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -177,7 +178,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -208,7 +209,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException | IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -238,7 +239,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 }

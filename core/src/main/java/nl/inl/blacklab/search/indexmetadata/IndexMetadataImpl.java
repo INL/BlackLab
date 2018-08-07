@@ -46,6 +46,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -178,7 +179,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
             if (metadataFile.exists() && !metadataFile.delete())
-                throw new RuntimeException("Could not delete file: " + metadataFile);
+                throw new BlackLabException("Could not delete file: " + metadataFile);
         }
 
         // If none found, or creating new index: write a .yaml file.
@@ -241,7 +242,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
             if (!metadataFile.delete())
-                throw new RuntimeException("Could not delete file: " + metadataFile);
+                throw new BlackLabException("Could not delete file: " + metadataFile);
         }
 
         // If none found, or creating new index: metadata file should be same format as
@@ -261,7 +262,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 if (existingIsJson != templateIsJson) {
                     // Delete the existing, different-format file to avoid confusion.
                     if (!metadataFile.delete())
-                        throw new RuntimeException("Could not delete file: " + metadataFile);
+                        throw new BlackLabException("Could not delete file: " + metadataFile);
                 }
             }
             metadataFile = new File(indexDir, METADATA_FILE_NAME + "." + templateExt);
@@ -274,7 +275,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
                 FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
             usedTemplate = true;
         }
@@ -301,7 +302,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             mapper.writeValue(metadataFile, encodeToJson());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -480,7 +481,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                     // documents, go to the next alternative.
                     break;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new BlackLabException(e);
                 }
             }
         }
@@ -683,11 +684,11 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         }
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
-            throw new RuntimeException(
+            throw new BlackLabException(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
         if (!tagLengthInPayload)
-            throw new RuntimeException(
+            throw new BlackLabException(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
 
         // Specified in index metadata file?
@@ -699,7 +700,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             // Yes.
             namingScheme = fieldInfo.get("namingScheme").textValue();
             if (!namingScheme.equals("DEFAULT") && !namingScheme.equals("NO_SPECIAL_CHARS")) {
-                throw new RuntimeException("Unknown value for namingScheme: " + namingScheme);
+                throw new BlackLabException("Unknown value for namingScheme: " + namingScheme);
             }
             if (!namingScheme.equals("DEFAULT"))
                 logger.error("non-default namingScheme setting found, but this is no longer supported");
@@ -721,10 +722,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 }
             }
             if (usingCharacterCodesAsSeparators)
-                throw new RuntimeException(
+                throw new BlackLabException(
                         "Your index uses _PR_, _AL_, _BK_ as separators (namingScheme). This is no longer supported. Use version 1.7.1 or re-index your data..");
             if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
-                throw new RuntimeException(
+                throw new BlackLabException(
                         "Could not detect index naming scheme. If your index was created with an old version of " +
                                 "BlackLab, it may use the old naming scheme and cannot be opened with this version. " +
                                 "Please re-index your data, or use a BlackLab version from before August 2014.");
@@ -901,7 +902,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 } else {
                     // Part of annotated field.
                     if (metadataFields.exists(parts[0])) {
-                        throw new RuntimeException(
+                        throw new BlackLabException(
                                 "Annotated field and metadata field with same name, error! ("
                                         + parts[0] + ")");
                     }
@@ -972,7 +973,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
                 extractFromJson(jsonRoot, reader, usedTemplate, false);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
 

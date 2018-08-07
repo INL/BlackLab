@@ -58,7 +58,7 @@ public class TestQueryRewrite {
                     cqlQuery));
             return parser.query();
         } catch (ParseException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

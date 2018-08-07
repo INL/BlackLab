@@ -3,6 +3,7 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.Timer;
@@ -111,7 +112,7 @@ public class BatchForwardIndex {
             int length;
             do {
                 if (docPos >= fi.getNumDocs())
-                    throw new RuntimeException("Performance test went beyond end of forward index ("
+                    throw new BlackLabException("Performance test went beyond end of forward index ("
                             + fi.getNumDocs() + " docs)");
 
                 // Choose random snippets

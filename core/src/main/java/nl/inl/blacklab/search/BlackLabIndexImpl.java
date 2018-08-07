@@ -260,7 +260,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             }
             return false;
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -352,7 +352,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             }
             return value == null ? defaultValue : value;
         } catch (IOException e) {
-            throw new RuntimeException("Could not read '" + key + "' from manifest", e);
+            throw new BlackLabException("Could not read '" + key + "' from manifest", e);
         }
     }
 
@@ -618,7 +618,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             IndexReader indexReader = reader();
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -927,7 +927,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
             throws IOException, CorruptIndexException, LockObtainFailedException {
         if (!indexMode && createNewIndex)
-            throw new RuntimeException("Cannot create new index, not in index mode");
+            throw new BlackLabException("Cannot create new index, not in index mode");
 
         if (!createNewIndex) {
             if (!indexMode || VersionFile.exists(indexDir)) {
@@ -1006,7 +1006,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new RuntimeException("Could not detect main contents field");
+                        throw new BlackLabException("Could not detect main contents field");
                 }
             } else {
                 // See if we have a punctuation forward index. If we do,
@@ -1147,7 +1147,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
                     maxP = endsOfWords[i];
             }
             if (minP < 0 || maxP < 0)
-                throw new RuntimeException("Can't determine min and max positions");
+                throw new BlackLabException("Can't determine min and max positions");
 
             String fieldPropName = field.offsetsField();
 
@@ -1222,10 +1222,10 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             }
             if (found < total) {
                 if (!fillInDefaultsIfNotFound)
-                    throw new RuntimeException("Could not find all character offsets!");
+                    throw new BlackLabException("Could not find all character offsets!");
 
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
-                    throw new RuntimeException("Could not find default char positions!");
+                    throw new BlackLabException("Could not find default char positions!");
 
                 for (int m = 0; m < numStarts; m++) {
                     if (!done[m])
@@ -1389,7 +1389,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             CorruptIndexException, LockObtainFailedException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
-                throw new RuntimeException("Could not create dir: " + indexDir);
+                throw new BlackLabException("Could not create dir: " + indexDir);
         }
         Path indexPath = indexDir.toPath();
         while (Files.isSymbolicLink(indexPath)) {
@@ -1455,7 +1455,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
     @Override
     public void delete(Query q) {
         if (!indexMode)
-            throw new RuntimeException("Cannot delete documents, not in index mode");
+            throw new BlackLabException("Cannot delete documents, not in index mode");
         try {
             // Open a fresh reader to execute the query
             try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
@@ -1474,7 +1474,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
                         try {
                             docId = it.nextDoc() + leafContext.docBase;
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            throw new BlackLabException(e);
                         }
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
@@ -1494,7 +1494,7 @@ public class BlackLabIndexImpl implements BlackLabIndex {
             indexWriter.deleteDocuments(q);
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

@@ -14,6 +14,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
+import nl.inl.blacklab.search.BlackLabException;
 
 public class TestHookableSaxParser {
 
@@ -40,7 +41,7 @@ public class TestHookableSaxParser {
         try {
             parser = factory.newSAXParser();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
 
         hookHandler = new StringConcatenateHandler();

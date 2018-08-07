@@ -31,6 +31,7 @@ import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.XmlUtil;
 
 /**
@@ -150,7 +151,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 xpathAuthor = xpath.compile("//dc:creator");
                 xpathDate = xpath.compile("//dc:date");
             } catch (XPathExpressionException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
 
             try {
@@ -176,7 +177,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 defaultHttpClient = clsDefaultHttpClient.getConstructor().newInstance();
 
             } catch (Exception e) {
-                throw new RuntimeException("Error finding (some of the) Apache HTTP libraries."
+                throw new BlackLabException("Error finding (some of the) Apache HTTP libraries."
                         + "Make sure Apache commons-codec, commons-logging, httpclient, httpcore (4.1.2 or higher) are on the classpath.",
                         e);
             }
@@ -310,9 +311,9 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 return metadata;
 
             } catch (XPathExpressionException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             } catch (DOMException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
 

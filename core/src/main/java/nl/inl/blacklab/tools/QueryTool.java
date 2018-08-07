@@ -53,11 +53,12 @@ import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
+import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -430,7 +431,7 @@ public class QueryTool {
         try {
             run(indexDir, commandFile, Charset.defaultCharset().name());
         } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -457,7 +458,7 @@ public class QueryTool {
         try {
             run(indexDir, null, Charset.defaultCharset().name());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -499,7 +500,7 @@ public class QueryTool {
             QueryTool c = new QueryTool(indexDir, in, out, err);
             c.commandProcessor();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -573,7 +574,7 @@ public class QueryTool {
             try {
                 outprintln("Opening index " + indexDir.getCanonicalPath() + "...");
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
 
@@ -582,7 +583,7 @@ public class QueryTool {
             searcher = BlackLabIndexImpl.open(indexDir);
             contentsField = searcher.mainAnnotatedField();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
 
         if (in == null) {
@@ -639,7 +640,7 @@ public class QueryTool {
             try {
                 cmd = readCommand(prompt);
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new BlackLabException(e1);
             }
             if (cmd == null || cmd.trim().equals("exit")) {
                 break;
@@ -676,7 +677,7 @@ public class QueryTool {
             try {
                 Thread.sleep(100); // Give Eclipse console time to show stderr output
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
         cleanup();
@@ -1010,7 +1011,7 @@ public class QueryTool {
                 // Can't init JLine; too bad, fall back to stdin
                 outprintln("Command line editing not available; to enable, place jline jar in classpath.");
             } catch (Exception e) {
-                throw new RuntimeException("Could not init JLine console reader", e);
+                throw new BlackLabException("Could not init JLine console reader", e);
             }
         }
 
@@ -1018,7 +1019,7 @@ public class QueryTool {
             try {
                 return (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
             } catch (Exception e) {
-                throw new RuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+                throw new BlackLabException("Could not invoke JLine ConsoleReader.readLine()", e);
             }
         }
 

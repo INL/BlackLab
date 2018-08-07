@@ -25,8 +25,8 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**

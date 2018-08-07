@@ -12,6 +12,7 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.uninverting.UninvertingReader;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -83,7 +84,7 @@ class DocFieldLengthGetter implements Closeable {
                     cachedFieldLengths = null;
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
     }
@@ -94,7 +95,7 @@ class DocFieldLengthGetter implements Closeable {
             try {
                 uninv.close();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
     }
@@ -148,7 +149,7 @@ class DocFieldLengthGetter implements Closeable {
                 // No, length field is not stored in the index. Always use term vector from now on.
                 lengthFieldIsStored = false;
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
 
@@ -164,7 +165,7 @@ class DocFieldLengthGetter implements Closeable {
             return termFreq;
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 }

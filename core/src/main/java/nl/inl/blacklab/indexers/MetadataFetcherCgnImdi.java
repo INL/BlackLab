@@ -28,6 +28,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
+import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata from an
@@ -51,14 +52,14 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
         if (zipFilePath == null) {
             zipFilePath = docIndexer.getParameter("metadataDir");
             if (zipFilePath == null)
-                throw new RuntimeException(
+                throw new BlackLabException(
                         "For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
             metadataDir = new File(zipFilePath);
         } else {
             try {
                 metadataZipFile = new ZipFile(new File(zipFilePath));
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
     }
@@ -114,8 +115,6 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
             if (metadataZipFile != null) {
                 ZipEntry e = metadataZipFile.getEntry(metadataPathInZip + metadataFile);
                 if (e == null) {
-                    // throw new RuntimeException("Entry in zip not found: " +
-                    // metadataPathInZip + metadataFile);
                     System.err.println("*** ERROR, metadata entry not found: " + metadataPathInZip + metadataFile);
                     return;
                 }
@@ -145,7 +144,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
             if (metadataZipFile == null)
                 is.close();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

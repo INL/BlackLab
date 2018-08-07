@@ -30,10 +30,11 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 
+import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 
 /**
  * A SpanQuery for an AND NOT query. Produces all spans matching all the
@@ -49,7 +50,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
-            throw new RuntimeException("ANDNOT query without clauses");
+            throw new BlackLabException("ANDNOT query without clauses");
         checkBaseFieldName();
     }
 
@@ -59,7 +60,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             for (BLSpanQuery clause : include) {
                 String f = AnnotatedFieldNameUtil.getBaseName(clause.getField());
                 if (!baseFieldName.equals(f))
-                    throw new RuntimeException("Mix of incompatible fields in query ("
+                    throw new BlackLabException("Mix of incompatible fields in query ("
                             + baseFieldName + " and " + f + ")");
             }
         }
@@ -216,7 +217,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
         if (!exclude.isEmpty())
-            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new BlackLabException("Query should've been rewritten! (exclude clauses left)");
 
         List<BLSpanWeight> weights = new ArrayList<>();
         for (BLSpanQuery clause : include) {
@@ -282,7 +283,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getField();
         if (!exclude.isEmpty())
             return exclude.get(0).getField();
-        throw new RuntimeException("Query has no clauses");
+        throw new BlackLabException("Query has no clauses");
     }
 
     @Override
@@ -291,7 +292,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getRealField();
         if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
-        throw new RuntimeException("Query has no clauses");
+        throw new BlackLabException("Query has no clauses");
     }
 
     public List<BLSpanQuery> getIncludeClauses() {
@@ -383,7 +384,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         if (!exclude.isEmpty())
-            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new BlackLabException("Query should've been rewritten! (exclude clauses left)");
         List<NfaState> nfaClauses = new ArrayList<>();
 //		List<NfaState> dangling = new ArrayList<>();
         for (BLSpanQuery clause : include) {

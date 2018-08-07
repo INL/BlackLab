@@ -5,7 +5,7 @@ package nl.inl.blacklab.search;
  *
  * A message is included that can be shown to the user.
  */
-public class InvalidQueryException extends BLRuntimeException {
+public class InvalidQueryException extends BlackLabException {
 
     public InvalidQueryException(String message) {
         super(message);

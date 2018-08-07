@@ -35,6 +35,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Keeps a first-come-first-serve list of unique terms. Each term gets a unique
@@ -359,7 +360,7 @@ class TermsImplV3 extends Terms {
     @Override
     public synchronized void clear() {
         if (!indexMode)
-            throw new RuntimeException("Cannot clear, not in index mode");
+            throw new BlackLabException("Cannot clear, not in index mode");
         termIndex.clear();
         if (termIndexInsensitive != null)
             termIndexInsensitive.clear();
@@ -485,14 +486,14 @@ class TermsImplV3 extends Terms {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
     @Override
     public synchronized void write(File termsFile) {
         if (!indexMode)
-            throw new RuntimeException("Term.write(): not in index mode!");
+            throw new BlackLabException("Term.write(): not in index mode!");
 
         try {
             // Open the terms file
@@ -644,7 +645,7 @@ class TermsImplV3 extends Terms {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -699,7 +700,7 @@ class TermsImplV3 extends Terms {
 
     public void setMaxBlockSize(int maxBlockSize) {
         if ((long) maxBlockSize > ((long) DEFAULT_MAX_MAP_SIZE))
-            throw new RuntimeException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE);
+            throw new BlackLabException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE);
         this.maxBlockSize = maxBlockSize;
     }
 

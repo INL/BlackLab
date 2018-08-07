@@ -51,6 +51,7 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Concordance;
@@ -326,7 +327,7 @@ public class HitsImpl extends Hits {
                     // Not a very graceful way to do it... but at least it won't
                     // be stuck forever.
                     Thread.currentThread().interrupt(); // client can check this
-                    throw new RuntimeException("Query matches too many terms; aborted.");
+                    throw new BlackLabException("Query matches too many terms; aborted.");
                 }
                 termContexts.put(term, TermContext.build(reader.getContext(), term));
             }
@@ -335,7 +336,7 @@ public class HitsImpl extends Hits {
             atomicReaderContexts = reader == null ? null : reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
 
         sourceSpansFullyRead = false;
@@ -362,7 +363,7 @@ public class HitsImpl extends Hits {
         try {
             sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -530,7 +531,7 @@ public class HitsImpl extends Hits {
             maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         } finally {
             ensureHitsReadLock.unlock();
         }
@@ -936,7 +937,7 @@ public class HitsImpl extends Hits {
         }
         Kwic kwic = kwics.get(h);
         if (kwic == null)
-            throw new RuntimeException("KWIC for hit not found: " + h);
+            throw new BlackLabException("KWIC for hit not found: " + h);
         return kwic;
     }
 
@@ -1009,7 +1010,7 @@ public class HitsImpl extends Hits {
         }
         Concordance conc = concordances.get(h);
         if (conc == null)
-            throw new RuntimeException("Concordance for hit not found: " + h);
+            throw new BlackLabException("Concordance for hit not found: " + h);
         return conc;
     }
 
@@ -1495,7 +1496,7 @@ public class HitsImpl extends Hits {
                 int fiid = forwardIndex.luceneDocIdToFiid(doc);
                 words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
             } else {
-                throw new RuntimeException("Cannot get context without a forward index");
+                throw new BlackLabException("Cannot get context without a forward index");
             }
 
             // Build the actual concordances

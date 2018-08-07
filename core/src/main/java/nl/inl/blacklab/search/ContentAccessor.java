@@ -50,7 +50,7 @@ public class ContentAccessor {
     private int getContentId(Document d) {
         String contentIdStr = d.get(contentIdField);
         if (contentIdStr == null)
-            throw new RuntimeException("Lucene document has no content id: " + d);
+            throw new BlackLabException("Lucene document has no content id: " + d);
         return Integer.parseInt(contentIdStr);
     }
 

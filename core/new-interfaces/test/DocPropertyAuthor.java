@@ -24,7 +24,7 @@ public final class DocPropertyAuthor implements ResultProperty<HitGroup> {
         try {
             return ((ResultPropertyValueBlDoc)result.identity()).doc().luceneDoc().get("author");
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new BLRuntimeException(e);
         }
     }
     

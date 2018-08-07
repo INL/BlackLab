@@ -12,6 +12,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.search.BlackLabException;
+
 /**
  * Process (trees of) files, which may include archives that we want to
  * recursively process as well. This class is thread-safe as long as no
@@ -398,7 +400,7 @@ public class FileProcessor implements AutoCloseable {
             // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted while waiting for processing threads to finish", e);
+            throw new BlackLabException("Interrupted while waiting for processing threads to finish", e);
         }
     }
 

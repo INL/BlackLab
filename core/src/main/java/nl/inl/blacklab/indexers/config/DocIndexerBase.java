@@ -31,6 +31,7 @@ import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -247,11 +248,11 @@ public abstract class DocIndexerBase extends DocIndexer {
             try (InputStream is = new FileInputStream(f)) {
                 data = IOUtils.toByteArray(is);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
         }
         if (data == null) {
-            throw new RuntimeException("Error reading linked document");
+            throw new BlackLabException("Error reading linked document");
         }
 
         // Index the data
@@ -268,11 +269,11 @@ public abstract class DocIndexerBase extends DocIndexer {
                 }
                 ldi.indexSpecificDocument(documentPath);
             } else {
-                throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
+                throw new BlackLabException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
             }
         } catch (Exception e1) {
-            throw new RuntimeException(e1);
+            throw new BlackLabException(e1);
         }
 
     }
@@ -729,7 +730,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new BlackLabException(e);
                 }
             }
         }

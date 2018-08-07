@@ -29,6 +29,7 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
 
@@ -165,7 +166,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
             try {
                 l = r.readLine();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
             if (l == null)
                 break;

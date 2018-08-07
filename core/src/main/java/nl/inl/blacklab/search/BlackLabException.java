@@ -6,26 +6,26 @@ package nl.inl.blacklab.search;
  * This will be the base class of all BlackLab-thrown RuntimeExceptions. More
  * specific subclasses can be caught to handle specific situations.
  */
-public class BLRuntimeException extends RuntimeException {
+public class BlackLabException extends RuntimeException {
 
-    public BLRuntimeException() {
+    public BlackLabException() {
         super();
     }
 
-    public BLRuntimeException(String message, Throwable cause,
+    public BlackLabException(String message, Throwable cause,
             boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public BLRuntimeException(String message, Throwable cause) {
+    public BlackLabException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public BLRuntimeException(String message) {
+    public BlackLabException(String message) {
         super(message);
     }
 
-    public BLRuntimeException(Throwable cause) {
+    public BlackLabException(Throwable cause) {
         super(cause);
     }
 

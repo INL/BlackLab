@@ -16,6 +16,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -43,7 +44,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             fldTerm.setAccessible(true);
             this.term = (Term) fldTerm.get(query);
         } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
     }
@@ -67,7 +68,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
                 or.setClausesAreSimpleTermsInSameProperty(true);
                 or.setField(getRealField());
             } else {
-                throw new RuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +
+                throw new BlackLabException("BLSpanMultiTermQueryWrapper rewritten to " +
                         result.getClass().getSimpleName() + ", getField() == null");
             }
         }
@@ -184,7 +185,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         try {
             n = reader.getSumTotalTermFreq(term.field()); // total terms in field
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         // Make a very rough estimate of the number of terms that could match
         // this. We tend to guess on the high side, because clauses matching lots

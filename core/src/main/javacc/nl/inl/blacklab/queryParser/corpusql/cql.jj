@@ -86,7 +86,7 @@ public class CorpusQueryLanguageParser {
     {
     	if (input.length() >= 2)
     		return input.substring(1, input.length() - 1);
-    	throw new RuntimeException();
+    	throw new BLRuntimeException();
     }
     
     private String getStringBetweenQuotes(String input) throws SingleQuotesException

@@ -21,6 +21,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.SimpleResourcePool;
 
 /**
@@ -115,10 +116,10 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
             compresser.finish();
             int compressedDataLength = compresser.deflate(zipbuf);
             if (compressedDataLength <= 0) {
-                throw new RuntimeException("Error, deflate returned " + compressedDataLength);
+                throw new BlackLabException("Error, deflate returned " + compressedDataLength);
             }
             if (compressedDataLength == zipbuf.length) {
-                throw new RuntimeException("Error, deflate returned size of zipbuf, this indicates insufficient space");
+                throw new BlackLabException("Error, deflate returned size of zipbuf, this indicates insufficient space");
             }
             return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
         } finally {
@@ -138,11 +139,11 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
                 decompresser.setInput(buf, offset, length);
                 int resultLength = decompresser.inflate(zipbuf);
                 if (resultLength <= 0) {
-                    throw new RuntimeException("Error, inflate returned " + resultLength);
+                    throw new BlackLabException("Error, inflate returned " + resultLength);
                 }
                 if (!decompresser.finished()) {
                     // This shouldn't happen because our max block size prevents it
-                    throw new RuntimeException("Unzip buffer size insufficient");
+                    throw new BlackLabException("Unzip buffer size insufficient");
                 }
                 return super.decodeBlock(zipbuf, 0, resultLength);
             } finally {
@@ -150,7 +151,7 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
                 zipbufPool.release(zipbuf);
             }
         } catch (DataFormatException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

@@ -33,6 +33,7 @@ import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
@@ -89,7 +90,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         try {
             setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -110,7 +111,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             setDocument(IOUtils.toByteArray(is), defaultCharset);
             is.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -121,7 +122,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     Indexer.DEFAULT_INPUT_ENCODING);
             reader.close();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -154,7 +155,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             try {
                 ap.selectXPath(xpathExpr);
             } catch (XPathParseException e) {
-                throw new RuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
+                throw new BlackLabException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
             }
         } else {
             ap.resetXPath();
@@ -477,7 +478,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 .warning("Link path " + valuePath + " not found in document " + documentName);
                         break;
                     case FAIL:
-                        throw new RuntimeException("Link path " + valuePath + " not found in document " + documentName);
+                        throw new BlackLabException("Link path " + valuePath + " not found in document " + documentName);
                     }
                 }
                 releaseAutoPilot(apLinkPath);
@@ -512,7 +513,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         + ": " + e.getMessage());
                 break;
             case FAIL:
-                throw new RuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+                throw new BlackLabException("Could not find or parse linked document for " + documentName + moreInfo, e);
             }
         }
     }
@@ -652,7 +653,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 AutoPilot documents = acquireAutoPilot(documentXPath);
                 while (documents.evalXPath() != -1) {
                     if (docDone)
-                        throw new RuntimeException(
+                        throw new BlackLabException(
                                 "Document link " + documentXPath + " matched multiple documents in " + documentName);
                     indexDocument();
                     docDone = true;
@@ -663,7 +664,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
                 while (documents.evalXPath() != -1) {
                     if (docDone)
-                        throw new RuntimeException(
+                        throw new BlackLabException(
                                 "Linked file contains multiple documents (and no document path given) in "
                                         + documentName);
                     indexDocument();
@@ -750,7 +751,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 attr.put(name, value);
             }
         } catch (NavException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         navpop();
         return attr;
@@ -765,7 +766,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             documentByteOffset = (int) fragment;
             documentLengthBytes = (int) (fragment >> 32);
         } catch (NavException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
 
         lastCharPosition = 0;
@@ -796,7 +797,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
             return lastCharPosition;
         } catch (NavException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

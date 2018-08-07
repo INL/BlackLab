@@ -39,7 +39,7 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.BLRuntimeException;
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -84,7 +84,7 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Thrown when the maximum number of documents has been reached
      */
-    public static class MaxDocsReachedException extends BLRuntimeException {
+    public static class MaxDocsReachedException extends BlackLabException {
         //
     }
 
@@ -146,7 +146,7 @@ public abstract class DocIndexer implements AutoCloseable {
             Charset detectedCharset = unicodeStream.getEncoding();
             setDocument(new InputStreamReader(unicodeStream, detectedCharset));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

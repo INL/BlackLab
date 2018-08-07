@@ -32,6 +32,7 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.StringUtil;
 
 /**
@@ -176,7 +177,6 @@ public class HookableSaxHandler extends DefaultHandler {
                     throw new IllegalArgumentException("Double slash in simple-xpath expression");
                 }
                 if (parts[i].charAt(0) == '@') {
-                    //throw new RuntimeException("Attribute can only be last path part");
                     throw new IllegalArgumentException("Cannot match on attribute");
                 }
                 elementNames.add(parts[i]);
@@ -507,7 +507,7 @@ public class HookableSaxHandler extends DefaultHandler {
             SAXParser parser = factory.newSAXParser();
             parser.parse(new InputSource(new StringReader(xml)), hookableHandler);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 

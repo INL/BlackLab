@@ -39,6 +39,7 @@ import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public final class LuceneUtil {
@@ -73,7 +74,7 @@ public final class LuceneUtil {
                         result.add(term);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new BlackLabException(e);
             }
             return result;
         }
@@ -96,7 +97,7 @@ public final class LuceneUtil {
             }
             return terms;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -177,11 +178,11 @@ public final class LuceneUtil {
                 while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                     // NOTE: .docId() will always return 0 in this case
                     //if (docPosEnum.docID() != doc)
-                    //	throw new RuntimeException("Wrong doc id: " + docPosEnum.docID() + " (expected " + doc + ")");
+                    //	throw new BLRuntimeException("Wrong doc id: " + docPosEnum.docID() + " (expected " + doc + ")");
                     for (int i = 0; i < docPosEnum.freq(); i++) {
                         int position = docPosEnum.nextPosition();
                         if (position == -1)
-                            throw new RuntimeException("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
+                            throw new BlackLabException("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
                                     + docPosEnum.freq() + ")");
                         if (position >= start && position <= end) {
                             if (concordanceWords[position - start] == null)
@@ -203,7 +204,7 @@ public final class LuceneUtil {
                 System.arraycopy(concordanceWords, 0, partial, 0, numFound);
                 for (int i = 0; i < numFound; i++) {
                     if (partial[i] == null) {
-                        throw new RuntimeException("Not all words found (" + numFound + " out of "
+                        throw new BlackLabException("Not all words found (" + numFound + " out of "
                                 + concordanceWords.length
                                 + "); missing words in the middle of concordance!");
                     }
@@ -343,7 +344,7 @@ public final class LuceneUtil {
             }
             return new ArrayList<>(results);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -356,11 +357,11 @@ public final class LuceneUtil {
             IndexReader indexReader = indexSearcher.getIndexReader();
             for (LeafReaderContext arc : indexReader.leaves()) {
                 if (weight == null)
-                    throw new RuntimeException("weight == null");
+                    throw new BlackLabException("weight == null");
                 if (arc == null)
-                    throw new RuntimeException("arc == null");
+                    throw new BlackLabException("arc == null");
                 if (arc.reader() == null)
-                    throw new RuntimeException("arc.reader() == null");
+                    throw new BlackLabException("arc.reader() == null");
                 Scorer scorer = weight.scorer(arc);
                 if (scorer != null) {
                     DocIdSetIterator it = scorer.iterator();
@@ -399,12 +400,12 @@ public final class LuceneUtil {
                     continue;
                 }
 //				if (terms == null)
-//					throw new RuntimeException("Field " + luceneField + " does not exist!");
+//					throw new BLRuntimeException("Field " + luceneField + " does not exist!");
                 totalTerms += terms.getSumTotalTermFreq();
             }
             return totalTerms;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -448,7 +449,7 @@ public final class LuceneUtil {
             }
             return results;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 }

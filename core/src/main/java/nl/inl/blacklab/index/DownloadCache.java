@@ -15,6 +15,8 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 
+import nl.inl.blacklab.search.BlackLabException;
+
 /**
  * Manages downloaded files.
  *
@@ -108,7 +110,7 @@ public class DownloadCache {
 
         public void delete() {
             if (file.exists() && !file.delete())
-                throw new RuntimeException("Unable to delete downloaded file: " + file);
+                throw new BlackLabException("Unable to delete downloaded file: " + file);
         }
 
         public long size() {
@@ -219,7 +221,7 @@ public class DownloadCache {
         }
         if (!downloadTempDir.exists()) {
             if (!downloadTempDir.mkdir())
-                throw new RuntimeException("Could not create dir: " + downloadTempDir);
+                throw new BlackLabException("Could not create dir: " + downloadTempDir);
             downloadTempDir.deleteOnExit();
         }
         return downloadTempDir;

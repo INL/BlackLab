@@ -33,6 +33,8 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
+import nl.inl.blacklab.search.BlackLabException;
+
 /**
  * Utilities for working with XML.
  */
@@ -63,9 +65,9 @@ public class XmlUtil {
             domBuilder.setErrorHandler(new SimpleErrorHandler());
             return domBuilder.parse(new InputSource(reader));
         } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
     }
 
@@ -241,11 +243,11 @@ public class XmlUtil {
             domBuilder.setErrorHandler(new SimpleErrorHandler());
             document = domBuilder.parse(new InputSource(reader));
         } catch (ParserConfigurationException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         } catch (SAXException e) {
-            throw new RuntimeException(e);
+            throw new BlackLabException(e);
         }
         DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
         LSSerializer lsSerializer = domImplementation.createLSSerializer();
