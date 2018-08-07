@@ -28,7 +28,7 @@ options
 	//USER_CHAR_STREAM=true;
 }
 
-PARSER_BEGIN(CorpusQueryLanguageParser)
+PARSER_BEGIN(GeneratedCorpusQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.corpusql;
 
@@ -63,89 +63,13 @@ import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 @SuppressWarnings("all")
 
-public class CorpusQueryLanguageParser {
+public class GeneratedCorpusQueryLanguageParser {
 
-    public static void main(String[] args) throws nl.inl.blacklab.queryParser.corpusql.ParseException 
-    {
-		CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(args[0]));
-		parser.query();
-    }
-    
-    public static TextPattern parse(String query) throws nl.inl.blacklab.queryParser.corpusql.ParseException 
-    {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(query));
-        return parser.query();
-    }
-    
-    private int num(Token t)
-    {
-    	return Integer.parseInt(t.toString());
-    }
-    
-    private String chopEnds(String input)
-    {
-    	if (input.length() >= 2)
-    		return input.substring(1, input.length() - 1);
-    	throw new BLRuntimeException();
-    }
-    
-    private String getStringBetweenQuotes(String input) throws SingleQuotesException
-    {
-        if (!allowSingleQuotes && input.charAt(0) == '\'')
-            throw new SingleQuotesException();
-        return chopEnds(input);
-    }
-    
-    private TextPattern simplePattern(String str)
-    {
-        if (str.length() > 0) {
-            if (str.charAt(0) != '^')
-                str = "^" + str;
-            if (str.charAt(str.length() - 1) != '$')
-                str += "$";
-        }
-        
-        // Treat everything like regex now; will be simplified later if possible
-        return new TextPatternRegex(str); 
-    }
-
-    /** Allow strings to be quoted using single quotes? */
-    private boolean allowSingleQuotes = true;
-    
-    /** Allow strings to be quoted using single quotes? [default: yes] */
-    public void setAllowSingleQuotes(boolean b) {
-        allowSingleQuotes = b;
-    }
-
-    /** Allow strings to be quoted using single quotes? */
-    public boolean getAllowSingleQuotes() {
-        return allowSingleQuotes;
-    }
-
-    private String defaultAnnotation = "word";
-    
-    public void setDefaultAnnotation(IndexMetadata indexMetadata, String fieldName) {
-        defaultAnnotation = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
-    }
-
-    public void setDefaultAnnotation(String annotation) {
-        defaultAnnotation = annotation;
-    }
-
-    public String getDefaultAnnotation() {
-        return defaultAnnotation;
-    }
-
-    private TextPattern annotationClause(String annot, TextPattern value) {
-        // Main annotation has a name. Use that.
-        if (annot == null || annot.length() == 0)
-            annot = defaultAnnotation;
-        return new TextPatternAnnotation(annot, value);
-    }
+    CorpusQueryLanguageParser wrapper;
     
 }
 
-PARSER_END(CorpusQueryLanguageParser)
+PARSER_END(GeneratedCorpusQueryLanguageParser)
 
 // Skip whitespace and comment
 SKIP:  
@@ -367,7 +291,7 @@ String quotedString():
 {
     (a=<QUOTED_STRING> | a=<SINGLE_QUOTED_STRING>)
     {
-    	return getStringBetweenQuotes(a.toString());
+    	return wrapper.getStringBetweenQuotes(a.toString());
     }
 }
 
@@ -408,14 +332,14 @@ Integer[] repetitionAmount():
 	"*"                                 { minMax[0] = 0; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
 |	"+"                                 { minMax[0] = 1; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
 |	"?"                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
-|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = num(t); return minMax; }
+|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = wrapper.num(t); return minMax; }
 |	"{" t=<NUMBER> "," [ t2=<NUMBER> ] "}"
 	{
-		minMax[0] = num(t);
+		minMax[0] = wrapper.num(t);
 		if (t2 == null)
 			minMax[1] = BLSpanQuery.MAX_UNLIMITED;
 		else
-			minMax[1] = num(t2);
+			minMax[1] = wrapper.num(t2);
 		return minMax; 
 	}
 }
@@ -496,7 +420,7 @@ TextPattern positionWord():
 	String t = null;
 }
 {
-	t=quotedString()      { return simplePattern(t); }
+	t=quotedString()      { return wrapper.simplePattern(t); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple 
@@ -540,8 +464,8 @@ TextPattern attValuePair():
 }
 {
 	LOOKAHEAD(2)
-	annot=propName() "=" v=valuePart() [f=flags()]  { return annotationClause(annot, v); }
-|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(annotationClause(annot, v)); }
+	annot=propName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
+|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
 |	v=valuePart() [f=flags()]                      { return v; }
 }
 
@@ -584,7 +508,7 @@ TextPattern valuePart():
 	String t = null;
 }
 {
-	t=quotedString()              { return simplePattern(t); }
+	t=quotedString()              { return wrapper.simplePattern(t); }
 |	"(" m=value() ")"              { return m; }
 
 }

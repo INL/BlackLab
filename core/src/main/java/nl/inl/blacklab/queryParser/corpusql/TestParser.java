@@ -18,7 +18,8 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
+
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestParser {
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -33,9 +34,8 @@ public class TestParser {
                 break;
             }
             try {
-                CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
-                        expr));
-                System.out.println("Result: " + parser.query() + "\n");
+                TextPattern result = CorpusQueryLanguageParser.parse(expr);
+                System.out.println("Result: " + result + "\n");
             } catch (TokenMgrError e) {
                 e.printStackTrace(System.err);
             } catch (ParseException e) {

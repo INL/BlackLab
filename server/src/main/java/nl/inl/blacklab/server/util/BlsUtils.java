@@ -14,8 +14,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
@@ -62,8 +62,7 @@ public class BlsUtils {
             }
         } else if (filterLang.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
-                        filter);
+                CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, filter);
                 return q.getFilterQuery();
             } catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",

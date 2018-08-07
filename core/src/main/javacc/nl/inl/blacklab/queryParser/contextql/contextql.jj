@@ -30,68 +30,20 @@ options
 	//USER_CHAR_STREAM=true;
 }
 
-PARSER_BEGIN(ContextualQueryLanguageParser)
+PARSER_BEGIN(GeneratedContextualQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.contextql;
 
 import nl.inl.blacklab.search.CompleteQuery;
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 
 @SuppressWarnings("all")
+class GeneratedContextualQueryLanguageParser {
 
-public class ContextualQueryLanguageParser {
-
-    public static void main(String[] args) throws nl.inl.blacklab.queryParser.contextql.ParseException 
-    {
-		ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(args[0]));
-		parser.query();
-    }
-    
-    /**
-     * Parse a Contextual Query Language query.
-     
-     * @param searcher our index
-     * @param query our query
-     * @return the parsed query
-     */
-    public static CompleteQuery parse(Searcher searcher, String query) throws nl.inl.blacklab.queryParser.contextql.ParseException 
-    {
-        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(new java.io.StringReader(query));
-        parser.setSearcher(searcher);
-        return parser.query();
-    }
-    
-    private String chopEnds(String input)
-    {
-    	if (input.length() >= 2)
-    		return input.substring(1, input.length() - 1);
-    	throw new BLRuntimeException();
-    }
-    
-    private Searcher searcher;
-    
-    public void setSearcher(Searcher searcher) {
-    	this.searcher = searcher;
-    }
-    
-    private String defaultProperty = "contents.word";
-    
-    public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
-    }
-
-    public void setDefaultProperty(String property) {
-        defaultProperty = property;
-    }
-
-    public String getDefaultProperty() {
-        return defaultProperty;
-    }
+    ContextualQueryLanguageParser wrapper;
 
 }
 
-PARSER_END(ContextualQueryLanguageParser)
+PARSER_END(GeneratedContextualQueryLanguageParser)
 
 // Skip whitespace and comment
 SKIP:  
@@ -183,7 +135,7 @@ CompleteQuery scopedClause():
     {
         if (op == null)
             return a;
-        return ContextQlParseUtils.combineClauses(a, op, b);
+        return wrapper.combineClauses(a, op, b);
     }
 }
 
@@ -213,7 +165,7 @@ CompleteQuery searchClause():
 }
 {
     "(" tp=queryInternal() ")"                  { return tp; }
-|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return ContextQlParseUtils.clause(searcher, i, r, t, defaultProperty); }
+|   [ LOOKAHEAD(2) i=index() r=relation() ] t=searchTerm()  { return wrapper.searchClause(i, r, t); }
 }
 
 String index():
@@ -325,6 +277,6 @@ String identifier():
 }
 {
     a=<IDENTIFIER>   {return a.toString();}
-|   a=<STRING>       {return chopEnds(a.toString());}
+|   a=<STRING>       {return wrapper.chopEnds(a.toString());}
 }
 

@@ -15,8 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.fimatch;
 
-import java.io.StringReader;
-
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -56,9 +54,7 @@ public class TestQueryRewriteNfa {
     static TextPattern getPatternFromCql(String cqlQuery) {
         try {
             cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
-            CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new StringReader(
-                    cqlQuery));
-            return parser.query();
+            return CorpusQueryLanguageParser.parse(cqlQuery);
         } catch (ParseException e) {
             throw new BlackLabException(e);
         }
