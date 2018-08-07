@@ -5,8 +5,29 @@ import java.util.Collection;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public class HitsSettings {
+
+    /** When setting how many hits to retrieve/count, this means "no limit". */
+    private static final int UNLIMITED_HITS = -1;
+    
+    public static final int DEFAULT_MAX_RETRIEVE = 1000000;
+    
+    public static final int DEFAULT_MAX_COUNT = UNLIMITED_HITS;
+    
+    /** Annotated field name for default contents field */
+    public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
+    
+    private static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
+    
+    private static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
+    
+    private static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
+    
+    private static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
+    
+    private static final int DEFAULT_CONTEXT_SIZE = 5;
 
     /**
      * Stop retrieving hits after this number. (NO_LIMIT = -1 = don't stop
@@ -65,13 +86,13 @@ public class HitsSettings {
     public HitsSettings(BlackLabIndex searcher) {
         this.searcher = searcher;
         this.concordanceField = null; // later on we'll ask for the main contents field (when the index knows that)
-        maxHitsToRetrieve = BlackLabIndex.DEFAULT_MAX_RETRIEVE;
-        maxHitsToCount = BlackLabIndex.DEFAULT_MAX_COUNT;
-        concsType = BlackLabIndex.DEFAULT_CONC_TYPE;
-        concWordProps = BlackLabIndex.DEFAULT_CONC_WORD_PROP;
-        concPunctProps = BlackLabIndex.DEFAULT_CONC_PUNCT_PROP;
-        concAttrProps = BlackLabIndex.DEFAULT_CONC_ATTR_PROP;
-        desiredContextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        maxHitsToRetrieve = DEFAULT_MAX_RETRIEVE;
+        maxHitsToCount = DEFAULT_MAX_COUNT;
+        concsType = DEFAULT_CONC_TYPE;
+        concWordProps = DEFAULT_CONC_WORD_PROP;
+        concPunctProps = DEFAULT_CONC_PUNCT_PROP;
+        concAttrProps = DEFAULT_CONC_ATTR_PROP;
+        desiredContextSize = DEFAULT_CONTEXT_SIZE;
     }
 
     /** @return the maximum number of hits to retrieve. */

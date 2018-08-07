@@ -29,13 +29,13 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.BlackLabException;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.util.ExUtil;
 
 /**
@@ -68,7 +68,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        contentsField = new AnnotatedFieldWriter(BlackLabIndex.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        contentsField = new AnnotatedFieldWriter(HitsSettings.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;

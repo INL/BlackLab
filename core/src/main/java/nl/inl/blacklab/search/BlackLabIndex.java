@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,7 +23,6 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -39,26 +37,6 @@ import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends Closeable {
-
-    /** When setting how many hits to retrieve/count, this means "no limit". */
-    int UNLIMITED_HITS = -1;
-    
-    int DEFAULT_MAX_RETRIEVE = 1000000;
-    
-    int DEFAULT_MAX_COUNT = BlackLabIndex.UNLIMITED_HITS;
-    
-    /** Annotated field name for default contents field */
-    String DEFAULT_CONTENTS_FIELD_NAME = "contents";
-    
-    ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
-    
-    String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
-    
-    String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
-    
-    Collection<String> DEFAULT_CONC_ATTR_PROP = null;
-    
-    int DEFAULT_CONTEXT_SIZE = 5;
 
     /**
      * The default settings for all new Hits objects.
