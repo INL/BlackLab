@@ -59,9 +59,9 @@ public class TestResultsGrouper {
         HitGroup group1 = groups.get(one);
         Assert.assertEquals(one, group1.getIdentity());
         Assert.assertEquals(3, group1.size());
-        Assert.assertEquals(1, group1.getHits().get(0).doc);
-        Assert.assertEquals(1, group1.getHits().get(1).doc);
-        Assert.assertEquals(1, group1.getHits().get(2).doc);
+        Assert.assertEquals(1, group1.getHits().get(0).doc());
+        Assert.assertEquals(1, group1.getHits().get(1).doc());
+        Assert.assertEquals(1, group1.getHits().get(2).doc());
         HitPropValueInt two = new HitPropValueInt(2);
         Assert.assertEquals(2, groups.get(two).size());
         HitPropValueInt three = new HitPropValueInt(3);

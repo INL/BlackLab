@@ -21,6 +21,7 @@ import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitStored;
 
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
@@ -50,7 +51,7 @@ public abstract class BLSpans extends Spans {
      * @return the Hit object for the current hit
      */
     public Hit getHit() {
-        return new Hit(docID(), startPosition(), endPosition());
+        return HitStored.create(docID(), startPosition(), endPosition());
     }
 
     /**

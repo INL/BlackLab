@@ -46,9 +46,9 @@ import nl.inl.blacklab.search.results.Hit;
 class SpanComparatorEndPoint implements Comparator<Hit> {
     @Override
     public int compare(Hit o1, Hit o2) {
-        if (o2.end != o1.end)
-            return o1.end - o2.end;
+        if (o2.end() != o1.end())
+            return o1.end() - o2.end();
 
-        return o1.start - o2.start;
+        return o1.start() - o2.start();
     }
 }

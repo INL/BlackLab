@@ -35,9 +35,9 @@ public class TestHitsSample {
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[expected[i]], hit.doc);
-            Assert.assertEquals(aStart[expected[i]], hit.start);
-            Assert.assertEquals(aEnd[expected[i]], hit.end);
+            Assert.assertEquals(aDoc[expected[i]], hit.doc());
+            Assert.assertEquals(aStart[expected[i]], hit.start());
+            Assert.assertEquals(aEnd[expected[i]], hit.end());
             i++;
         }
     }
@@ -47,9 +47,9 @@ public class TestHitsSample {
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[expected[i]], hit.doc);
-            Assert.assertEquals(aStart[expected[i]], hit.start);
-            Assert.assertEquals(aEnd[expected[i]], hit.end);
+            Assert.assertEquals(aDoc[expected[i]], hit.doc());
+            Assert.assertEquals(aStart[expected[i]], hit.start());
+            Assert.assertEquals(aEnd[expected[i]], hit.end());
             i++;
         }
     }

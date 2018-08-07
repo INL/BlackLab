@@ -98,12 +98,12 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
     @Override
     public int startPosition(int indexInBucket) {
-        return bucket.get(indexInBucket).start;
+        return bucket.get(indexInBucket).start();
     }
 
     @Override
     public int endPosition(int indexInBucket) {
-        return bucket.get(indexInBucket).end;
+        return bucket.get(indexInBucket).end();
     }
 
     @Override

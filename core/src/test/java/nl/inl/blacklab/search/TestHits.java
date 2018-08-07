@@ -39,9 +39,9 @@ public class TestHits {
 
         int i = 0;
         for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[i], hit.doc);
-            Assert.assertEquals(aStart[i], hit.start);
-            Assert.assertEquals(aEnd[i], hit.end);
+            Assert.assertEquals(aDoc[i], hit.doc());
+            Assert.assertEquals(aStart[i], hit.start());
+            Assert.assertEquals(aEnd[i], hit.end());
             i++;
         }
     }

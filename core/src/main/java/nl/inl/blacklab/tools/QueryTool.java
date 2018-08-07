@@ -779,7 +779,7 @@ public class QueryTool {
                 if (currentHitSet == null || hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
-                    int docid = currentHitSet.get(hitId).doc;
+                    int docid = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docid);
                     outprintln(StringUtil.wrapToString(searcher.highlightContent(docid, hitsInDoc), 80));
                 }
@@ -1588,7 +1588,7 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            toShow.add(new HitToShow(hit.doc, left, hitText, right, window.getCapturedGroupMap(hit)));
+            toShow.add(new HitToShow(hit.doc(), left, hitText, right, window.getCapturedGroupMap(hit)));
             if (leftContextMaxSize < left.length())
                 leftContextMaxSize = left.length();
         }

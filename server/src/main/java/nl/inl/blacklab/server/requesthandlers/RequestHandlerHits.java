@@ -191,11 +191,11 @@ public class RequestHandlerHits extends RequestHandler {
                 ds.startItem("hit").startMap();
 
                 // Find pid
-                String pid = pids.get(hit.doc);
+                String pid = pids.get(hit.doc());
                 if (pid == null) {
-                    Document document = searcher.document(hit.doc);
-                    pid = getDocumentPid(searcher, hit.doc, document);
-                    pids.put(hit.doc, pid);
+                    Document document = searcher.document(hit.doc());
+                    pid = getDocumentPid(searcher, hit.doc(), document);
+                    pids.put(hit.doc(), pid);
                 }
 
                 boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
@@ -204,8 +204,8 @@ public class RequestHandlerHits extends RequestHandler {
 
                 // Add basic hit info
                 ds.entry("docPid", pid);
-                ds.entry("start", hit.start);
-                ds.entry("end", hit.end);
+                ds.entry("start", hit.start());
+                ds.entry("end", hit.end());
 
                 if (useOrigContent) {
                     // Add concordance from original XML
@@ -230,14 +230,14 @@ public class RequestHandlerHits extends RequestHandler {
             Document doc = null;
             String lastPid = "";
             for (Hit hit : window) {
-                String pid = pids.get(hit.doc);
+                String pid = pids.get(hit.doc());
 
                 // Add document info if we didn't already
-                if (!docsDone.contains(hit.doc)) {
-                    docsDone.add(hit.doc);
+                if (!docsDone.contains(hit.doc())) {
+                    docsDone.add(hit.doc());
                     ds.startAttrEntry("docInfo", "pid", pid);
                     if (!pid.equals(lastPid)) {
-                        doc = searcher.document(hit.doc);
+                        doc = searcher.document(hit.doc());
                         lastPid = pid;
                     }
                     dataStreamDocumentInfo(ds, searcher, doc);

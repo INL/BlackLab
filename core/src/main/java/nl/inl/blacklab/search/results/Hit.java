@@ -1,89 +1,60 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
 /**
- * Class for a hit. Normally, hits are iterated over in a Lucene Spans object,
+ * Interface for a hit. Normally, hits are iterated over in a Lucene Spans object,
  * but in some places, it makes sense to place hits in separate objects: when
  * caching or sorting hits, or just for convenience in client code.
- *
- * This class has public members for the sake of efficiency; this makes a
- * non-trivial difference when iterating over hundreds of thousands of hits.
  */
-public class Hit implements Comparable<Hit> {
-
-    @Override
-    public boolean equals(Object with) {
-        if (this == with)
-            return true;
-        if (with instanceof Hit) {
-            Hit o = (Hit) with;
-            return doc == o.doc && start == o.start && end == o.end;
-        }
-        return false;
+public interface Hit extends Comparable<Hit> {
+    
+    static Hit create(int doc, int start, int end) {
+        return HitStored.create(doc, start, end);
     }
+    
+    boolean isImmutable();
 
-    @Override
-    public int compareTo(Hit o) {
+    /**
+     * Returns an immutable copy of this hit.
+     * 
+     * If you want to store a hit, you must call this method first
+     * to acquire an immutable copy of it.
+     * 
+     * The reason is that all Hit objects supplied by BlackLab should be 
+     * assumed to be ephemeral (see above).
+     * 
+     * (already-immutable Hit instances will not create a copy, but simply 
+     *  return themselves)
+     * 
+     * @return an immutable copy of this hit
+     */
+    default Hit save() {
+        if (isImmutable())
+            return this;
+        return HitStored.create(doc(), start(), end());
+    }
+    
+    boolean equals(Object with);
+
+    default int compareTo(Hit o) {
         if (this == o)
             return 0;
-        if (doc == o.doc) {
-            if (start == o.start) {
-                return end - o.end;
+        if (doc() == o.doc()) {
+            if (start() == o.start()) {
+                return end() - o.end();
             }
-            return start - o.start;
+            return start() - o.start();
         }
-        return doc - o.doc;
+        return doc() - o.doc();
     }
 
-    /** The Lucene doc this hits occurs in */
-    public int doc;
+    String toString();
 
-    /**
-     * End of this hit's span (in word positions).
-     *
-     * Note that this actually points to the first word not in the hit (just like
-     * Spans).
-     */
-    public int end;
+    int hashCode();
 
-    /** Start of this hit's span (in word positions) */
-    public int start;
+    int doc();
 
-    /**
-     * Construct a hit object
-     *
-     * @param doc the document
-     * @param start start of the hit (word positions)
-     * @param end end of the hit (word positions)
-     */
-    public Hit(int doc, int start, int end) {
-        this.doc = doc;
-        this.start = start;
-        this.end = end;
-    }
+    int end();
 
-    @Override
-    public String toString() {
-        return String.format("doc %d, words %d-%d", doc, start, end);
-    }
-
-    @Override
-    public int hashCode() {
-        return (doc * 17 + start) * 31 + end;
-    }
+    int start();
 
 }

@@ -34,7 +34,7 @@ public class HitPropertyHitPosition extends HitProperty {
     @Override
     public HitPropValueInt get(int hitNumber) {
         Hit result = hits.getByOriginalOrder(hitNumber);
-        return new HitPropValueInt(result.start);
+        return new HitPropValueInt(result.start());
     }
 
     @Override
@@ -51,9 +51,9 @@ public class HitPropertyHitPosition extends HitProperty {
     public int compare(Object i, Object j) {
         Hit a = hits.getByOriginalOrder((Integer) i);
         Hit b = hits.getByOriginalOrder((Integer) j);
-        if (a.start == b.start)
-            return reverse ? b.end - a.end : a.end - b.end;
-        return reverse ? b.start - a.start : a.start - b.start;
+        if (a.start() == b.start())
+            return reverse ? b.end() - a.end() : a.end() - b.end();
+        return reverse ? b.start() - a.start() : a.start() - b.start();
     }
 
     @Override

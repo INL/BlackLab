@@ -215,18 +215,18 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 String pid;
                 String title;
 
-                if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
-                    Document doc = getSearcher().document(hit.doc);
-                    pid = getDocumentPid(getSearcher(), hit.doc, doc);
+                if (!luceneIdToPidAndTitle.containsKey(hit.doc())) {
+                    Document doc = getSearcher().document(hit.doc());
+                    pid = getDocumentPid(getSearcher(), hit.doc(), doc);
                     String titleField = getSearcher().metadata().metadataFields().special(MetadataFields.TITLE).name();
                     title = doc.get(titleField);
 
                     if (title == null || title.isEmpty())
                         title = "unknown (pid: " + pid + ")";
 
-                    luceneIdToPidAndTitle.put(hit.doc, Pair.of(pid, title));
+                    luceneIdToPidAndTitle.put(hit.doc(), Pair.of(pid, title));
                 } else {
-                    Pair<String, String> p = luceneIdToPidAndTitle.get(hit.doc);
+                    Pair<String, String> p = luceneIdToPidAndTitle.get(hit.doc());
                     pid = p.getLeft();
                     title = p.getRight();
                 }

@@ -33,7 +33,7 @@ public class HitPropertyDocumentId extends HitProperty {
     @Override
     public HitPropValueInt get(int hitNumber) {
         Hit result = hits.getByOriginalOrder(hitNumber);
-        return new HitPropValueInt(result.doc);
+        return new HitPropValueInt(result.doc());
     }
 
     @Override
@@ -50,7 +50,7 @@ public class HitPropertyDocumentId extends HitProperty {
     public int compare(Object i, Object j) {
         Hit a = hits.getByOriginalOrder((Integer) i);
         Hit b = hits.getByOriginalOrder((Integer) j);
-        return reverse ? b.doc - a.doc : a.doc - b.doc;
+        return reverse ? b.doc() - a.doc() : a.doc() - b.doc();
     }
 
     @Override

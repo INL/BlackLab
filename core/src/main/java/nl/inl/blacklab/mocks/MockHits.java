@@ -133,7 +133,7 @@ public class MockHits extends Hits {
 
     @Override
     public Hit get(int i) {
-        return new Hit(doc[i], start[i], end[i]);
+        return Hit.create(doc[i], start[i], end[i]);
     }
 
     @Override
@@ -230,7 +230,7 @@ public class MockHits extends Hits {
             @Override
             public Hit next() {
                 current++;
-                return new Hit(doc[current], start[current], end[current]);
+                return Hit.create(doc[current], start[current], end[current]);
             }
 
         };

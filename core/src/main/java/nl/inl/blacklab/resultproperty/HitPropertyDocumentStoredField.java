@@ -51,7 +51,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public HitPropValueString get(int hitNumber) {
         try {
             Hit result = hits.getByOriginalOrder(hitNumber);
-            Document d = reader.document(result.doc);
+            Document d = reader.document(result.doc());
             String value = d.get(fieldName);
             if (value == null)
                 value = "";
@@ -66,11 +66,11 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         try {
             Hit a = hits.getByOriginalOrder((Integer) i);
             Hit b = hits.getByOriginalOrder((Integer) j);
-            Document d = reader.document(a.doc);
+            Document d = reader.document(a.doc());
             String va = d.get(fieldName);
             if (va == null)
                 va = "";
-            d = reader.document(b.doc);
+            d = reader.document(b.doc());
             String vb = d.get(fieldName);
             if (vb == null)
                 vb = "";

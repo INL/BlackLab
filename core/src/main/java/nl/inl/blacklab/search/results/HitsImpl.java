@@ -262,10 +262,10 @@ public class HitsImpl extends Hits {
         int prevDoc = -1;
         docsRetrieved = docsCounted = 0;
         for (Hit h : this.hits) {
-            if (h.doc != prevDoc) {
+            if (h.doc() != prevDoc) {
                 docsRetrieved++;
                 docsCounted++;
-                prevDoc = h.doc;
+                prevDoc = h.doc();
             }
         }
         etiquette = new ThreadPriority();
@@ -517,7 +517,7 @@ public class HitsImpl extends Hits {
                 }
                 if (!maxHitsRetrieved) {
                     Hit hit = currentSourceSpans.getHit();
-                    Hit offsetHit = new Hit(hit.doc + currentDocBase, hit.start, hit.end);
+                    Hit offsetHit = HitStored.create(hit.doc() + currentDocBase, hit.start(), hit.end());
                     if (capturedGroups != null) {
                         Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                         hitQueryContext.getCapturedGroups(groups);
@@ -1085,10 +1085,10 @@ public class HitsImpl extends Hits {
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key : this) {
-            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = new ArrayList<>();
-                hitsPerDocument.put(key.doc, hitsInDoc);
+                hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
@@ -1173,7 +1173,7 @@ public class HitsImpl extends Hits {
             contexts = new int[hits.size()][];
         }
         for (Hit hit : hits) {
-            if (hit.doc != currentDoc) {
+            if (hit.doc() != currentDoc) {
                 if (currentDoc >= 0) {
                     try {
                         etiquette.behave();
@@ -1188,7 +1188,7 @@ public class HitsImpl extends Hits {
                     // Reset hits list for next doc
                     hitsInSameDoc.clear();
                 }
-                currentDoc = hit.doc; // start a new document
+                currentDoc = hit.doc(); // start a new document
             }
             hitsInSameDoc.add(hit);
             index++;
@@ -1483,13 +1483,13 @@ public class HitsImpl extends Hits {
         int[] endsOfSnippets = new int[n];
         int i = 0;
         for (Hit h : hits) {
-            startsOfSnippets[i] = wordsAroundHit >= h.start ? 0 : h.start - wordsAroundHit;
-            endsOfSnippets[i] = h.end + wordsAroundHit;
+            startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
+            endsOfSnippets[i] = h.end() + wordsAroundHit;
             i++;
         }
 
         int fiNumber = 0;
-        int doc = hits.get(0).doc;
+        int doc = hits.get(0).doc();
         for (ForwardIndex forwardIndex : contextSources) {
             // Get all the words from the forward index
             List<int[]> words;
@@ -1517,8 +1517,8 @@ public class HitsImpl extends Hits {
                     // Allocate context array and set hit and right start and context length
                     contexts[hitNum] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS
                             + theseWords.length * contextSources.size()];
-                    contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start - firstWordIndex;
-                    contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end - firstWordIndex;
+                    contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start() - firstWordIndex;
+                    contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end() - firstWordIndex;
                     contexts[hitNum][CONTEXTS_LENGTH_INDEX] = theseWords.length;
                 }
                 // Copy the context we just retrieved into the context array
@@ -1583,7 +1583,7 @@ public class HitsImpl extends Hits {
             XmlHighlighter hl) {
         if (hits.isEmpty())
             return;
-        int doc = hits.get(0).doc;
+        int doc = hits.get(0).doc();
         int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
@@ -1592,8 +1592,8 @@ public class HitsImpl extends Hits {
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
         for (Hit hit : hits) {
-            int hitStart = hit.start;
-            int hitEnd = hit.end - 1;
+            int hitStart = hit.start();
+            int hitEnd = hit.end() - 1;
 
             int start = hitStart - wordsAroundHit;
             if (start < 0)
@@ -1642,7 +1642,7 @@ public class HitsImpl extends Hits {
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
-            if (hit.doc == docid)
+            if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
         Hits result = Hits.fromList(searcher, hitsInDoc);
@@ -1674,10 +1674,10 @@ public class HitsImpl extends Hits {
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key : hits) {
-            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc);
+            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = new ArrayList<>();
-                hitsPerDocument.put(key.doc, hitsInDoc);
+                hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }

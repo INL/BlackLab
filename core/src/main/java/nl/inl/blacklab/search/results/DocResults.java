@@ -363,13 +363,13 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
             while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
                 Hit hit = sourceHitsIterator.next();
-                if (hit.doc != doc) {
+                if (hit.doc() != doc) {
                     if (docHits != null) {
                         Hits hits = Hits.fromList(searcher, docHits);
                         hits.copySettingsFrom(sourceHits); // concordance type, etc.
                         addDocResultToList(doc, hits);
                     }
-                    doc = hit.doc;
+                    doc = hit.doc();
                     docHits = new ArrayList<>();
                 }
                 docHits.add(hit);

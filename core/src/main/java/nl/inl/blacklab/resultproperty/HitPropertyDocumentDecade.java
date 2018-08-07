@@ -49,7 +49,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     public HitPropValueDecade get(int hitNumber) {
         try {
             Hit result = hits.getByOriginalOrder(hitNumber);
-            Document d = reader.document(result.doc);
+            Document d = reader.document(result.doc());
             String strYear = d.get(fieldName);
             int year;
             try {
@@ -69,11 +69,11 @@ public class HitPropertyDocumentDecade extends HitProperty {
         try {
             Hit a = hits.getByOriginalOrder((Integer) i);
             Hit b = hits.getByOriginalOrder((Integer) j);
-            Document d = reader.document(a.doc);
+            Document d = reader.document(a.doc());
             String strYearA = d.get(fieldName);
             if (strYearA == null)
                 strYearA = "";
-            d = reader.document(b.doc);
+            d = reader.document(b.doc());
             String strYearB = d.get(fieldName);
             if (strYearB == null)
                 strYearB = "";

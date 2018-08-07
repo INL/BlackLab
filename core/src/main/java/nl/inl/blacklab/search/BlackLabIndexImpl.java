@@ -490,8 +490,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         Iterator<Hit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {
             Hit hit = hitsIt.next(); // hits.get(i);
-            starts[i] = hit.start;
-            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
+            starts[i] = hit.start();
+            ends[i] = hit.end() - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
 
