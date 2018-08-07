@@ -14,6 +14,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -49,6 +50,11 @@ public class TestNfaFromQuery {
             if (annotationName.equals("word"))
                 return 0;
             throw new IllegalArgumentException("Unknown annotation " + annotationName);
+        }
+
+        @Override
+        public int getAnnotationNumber(Annotation annotation) {
+            return getAnnotationNumber(annotation.name());
         }
 
         @Override

@@ -4,6 +4,7 @@ import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -13,8 +14,17 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public abstract class ForwardIndexAccessor {
 
     public static ForwardIndexAccessor fromSearcher(BlackLabIndex searcher, String searchField) {
-        return new ForwardIndexAccessorImpl(searcher, searchField);
+        return new ForwardIndexAccessorImpl(searcher, searcher.annotatedField(searchField));
     }
+    
+    /**
+     * Get the index number corresponding to the given annotation name.
+     *
+     * @param annotation annotation to get the index for
+     * @return index for this annotation
+     */
+    public abstract int getAnnotationNumber(Annotation annotation);
+
     /**
      * Get the index number corresponding to the given annotation name.
      *
@@ -22,7 +32,7 @@ public abstract class ForwardIndexAccessor {
      * @return index for this annotation
      */
     public abstract int getAnnotationNumber(String annotationName);
-
+    
     /**
      * Get the term number for a given term string.
      *
@@ -121,5 +131,4 @@ public abstract class ForwardIndexAccessor {
     public abstract String getTermString(int annotIndex, int termId);
 
     public abstract boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
-
 }

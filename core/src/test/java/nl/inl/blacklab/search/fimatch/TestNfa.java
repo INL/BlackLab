@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public class TestNfa {
 
@@ -35,6 +36,11 @@ public class TestNfa {
             if (!annotName.equals("word"))
                 throw new BlackLabException("only 'word' is valid annotation");
             return 0;
+        }
+
+        @Override
+        public int getAnnotationNumber(Annotation annotation) {
+            return getAnnotationNumber(annotation.name());
         }
 
         @Override

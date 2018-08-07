@@ -11,7 +11,8 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
@@ -25,13 +26,13 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     private BlackLabIndex searcher;
 
     /** Field name, e.g. "contents" */
-    String annotatedFieldBaseName;
+    AnnotatedField annotatedField;
 
     /** The annotation index for each annotation name */
-    private Map<String, Integer> annotationNumbers = new HashMap<>();
+    private Map<Annotation, Integer> annotationNumbers = new HashMap<>();
 
     /** The annotation names for each annotation */
-    List<String> annotationNames = new ArrayList<>();
+    List<Annotation> annotationNames = new ArrayList<>();
 
     /** The forward index for each annotation */
     List<ForwardIndex> fis = new ArrayList<>();
@@ -39,30 +40,35 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     /** The terms object for each annotation */
     private List<Terms> terms = new ArrayList<>();
 
-    ForwardIndexAccessorImpl(BlackLabIndex searcher, String searchField) {
+    ForwardIndexAccessorImpl(BlackLabIndex searcher, AnnotatedField searchField) {
         this.searcher = searcher;
-        this.annotatedFieldBaseName = searchField;
+        this.annotatedField = searchField;
     }
 
     /**
      * Get the index number corresponding to the given annotation name.
      *
-     * @param annotationName annotation to get the index for
+     * @param annotation annotation to get the index for
      * @return index for this annotation
      */
     @Override
-    public int getAnnotationNumber(String annotationName) {
-        Integer n = annotationNumbers.get(annotationName);
+    public int getAnnotationNumber(Annotation annotation) {
+        Integer n = annotationNumbers.get(annotation);
         if (n == null) {
             // Assign number and store reference to forward index
             n = annotationNumbers.size();
-            annotationNumbers.put(annotationName, n);
-            annotationNames.add(annotationName);
-            ForwardIndex fi = searcher.forwardIndex(searcher.annotatedField(annotatedFieldBaseName).annotations().get(annotationName));
+            annotationNumbers.put(annotation, n);
+            annotationNames.add(annotation);
+            ForwardIndex fi = searcher.forwardIndex(annotation);
             fis.add(fi);
             terms.add(fi.getTerms());
         }
         return n;
+    }
+
+    @Override
+    public int getAnnotationNumber(String annotationName) {
+        return getAnnotationNumber(annotatedField.annotations().get(annotationName));
     }
 
     @Override
@@ -109,10 +115,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         DocIntFieldGetter fiidGetter(int annotIndex) {
             DocIntFieldGetter g = fiidGetters.get(annotIndex);
             if (g == null) {
-                String annotationName = annotationNames.get(annotIndex);
-                String annotFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldBaseName, annotationName);
-                String fiidFieldName = AnnotatedFieldNameUtil.forwardIndexIdField(annotFieldName);
-                g = new DocIntFieldGetter(reader, fiidFieldName);
+                Annotation annotation = annotationNames.get(annotIndex);
+                g = new DocIntFieldGetter(reader, annotation.forwardIndexIdField());
                 fiidGetters.set(annotIndex, g);
             }
             return g;

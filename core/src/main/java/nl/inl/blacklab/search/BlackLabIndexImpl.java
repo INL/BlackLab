@@ -479,7 +479,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * Get character positions from a list of hits.
      *
      * @param doc the document from which to find character positions
-     * @param fieldName the field from which to find character positions
+     * @param field the field from which to find character positions
      * @param hits the hits for which we wish to find character positions
      * @return a list of HitSpan objects containing the character positions for the
      *         hits.
@@ -624,7 +624,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *
      * A ContentStore is a filesystem-based way to access the contents.
      *
-     * @param fieldName the field for which this is the content accessor
+     * @param field the field for which this is the content accessor
      * @param contentStore the ContentStore object by which to access the content
      *
      */
