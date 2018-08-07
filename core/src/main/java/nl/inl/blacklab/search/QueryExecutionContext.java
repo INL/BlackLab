@@ -20,7 +20,7 @@ public class QueryExecutionContext {
     private Searcher searcher;
 
     /** The (annotated) field to search */
-    private String fieldName;
+    private AnnotatedField field;
 
     /** The annotation to search */
     private String annotName;
@@ -48,15 +48,15 @@ public class QueryExecutionContext {
      * Construct a query execution context object.
      * 
      * @param searcher the searcher object
-     * @param fieldName the (annotated) field to search
+     * @param field annotated field to search
      * @param annotName the annotation to search
      * @param caseSensitive whether search defaults to case-sensitive
      * @param diacriticsSensitive whether search defaults to diacritics-sensitive
      */
-    public QueryExecutionContext(Searcher searcher, String fieldName, String annotName, boolean caseSensitive,
+    public QueryExecutionContext(Searcher searcher, AnnotatedField field, String annotName, boolean caseSensitive,
             boolean diacriticsSensitive) {
         this.searcher = searcher;
-        this.fieldName = fieldName;
+        this.field = field;
         String[] parts = annotName.split("/", -1);
         if (parts.length > 2)
             throw new IllegalArgumentException("propName contains more than one colon!");
@@ -74,11 +74,11 @@ public class QueryExecutionContext {
      * @return the new context
      */
     public QueryExecutionContext withProperty(String newAnnotName) {
-        return new QueryExecutionContext(searcher, fieldName, newAnnotName, caseSensitive, diacriticsSensitive);
+        return new QueryExecutionContext(searcher, field, newAnnotName, caseSensitive, diacriticsSensitive);
     }
 
     public QueryExecutionContext withSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
-        return new QueryExecutionContext(searcher, fieldName, annotName, caseSensitive, diacriticsSensitive);
+        return new QueryExecutionContext(searcher, field, annotName, caseSensitive, diacriticsSensitive);
     }
 
     public String optDesensitize(String value) {
@@ -127,12 +127,11 @@ public class QueryExecutionContext {
             return new String[] { AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME };
         }
 
-        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
-        if (cfd == null)
+        if (field == null) // possible..?
             return null;
 
         // Find the annotation
-        Annotation pd = cfd.annotations().get(annotName);
+        Annotation pd = field.annotations().get(annotName);
 
         // New alternative naming scheme (every alternative has a name)
         List<String> validAlternatives = new ArrayList<>();
@@ -198,29 +197,28 @@ public class QueryExecutionContext {
             // Mostly for testing. Don't check, just combine field parts.
             // TODO: give MockSearcher an index structure so we don't need this hack
             if (alternatives == null || alternatives.length == 0)
-                return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
-            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName, alternatives[0]);
+                return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
+            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName, alternatives[0]);
         }
 
         // Find the field and the annotation.
-        AnnotatedField cfd = searcher.getIndexMetadata().annotatedFields().get(fieldName);
-        if (cfd == null)
+        if (field == null)
             return null;
 
         if (AnnotatedFieldNameUtil.isBookkeepingSubfield(annotName)) {
             // Not a annotation but a bookkeeping subfield (prob. starttag/endtag); ok, return it
             // (can be removed when old field naming scheme is removed)
-            return AnnotatedFieldNameUtil.bookkeepingField(fieldName, annotName);
+            return AnnotatedFieldNameUtil.bookkeepingField(field.name(), annotName);
         }
 
         // Find the annotation
-        Annotation pd = cfd.annotations().get(annotName);
+        Annotation pd = field.annotations().get(annotName);
         if (pd == null)
-            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName); // doesn't exist? use plain annotation name
+            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName); // doesn't exist? use plain annotation name
 
         if (alternatives == null || alternatives.length == 0) {
             // Don't use any alternatives
-            return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
+            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
         }
 
         // Find the first available alternative to use
@@ -229,14 +227,14 @@ public class QueryExecutionContext {
                 // NOTE: is this loop necessary at all? getAlternatives() only
                 //  returns available alternatives, so the first one should always
                 //  be okay, right?
-                return AnnotatedFieldNameUtil.annotationField(fieldName, annotName, alt);
+                return AnnotatedFieldNameUtil.annotationField(field.name(), annotName, alt);
             }
         }
 
         // No valid alternative found. Use plain annotation.
         // NOTE: should never happen, and doesn't make sense anymore as there are
         // no 'plain properties' anymore.
-        return AnnotatedFieldNameUtil.annotationField(fieldName, annotName);
+        return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
     }
 
     /**
@@ -244,12 +242,12 @@ public class QueryExecutionContext {
      * purposes.
      *
      * @param searcher the searcher
-     * @param fieldName field to get an execution context for
+     * @param field field to get an execution context for
      * @return the context
      */
-    public static QueryExecutionContext getSimple(Searcher searcher, String fieldName) {
+    public static QueryExecutionContext getSimple(Searcher searcher, AnnotatedField field) {
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        return new QueryExecutionContext(searcher, fieldName, mainPropName, false, false);
+        return new QueryExecutionContext(searcher, field, mainPropName, false, false);
     }
 
     /**
@@ -258,7 +256,7 @@ public class QueryExecutionContext {
      * @return field name
      */
     public String fieldName() {
-        return fieldName;
+        return field.name();
     }
 
     /**

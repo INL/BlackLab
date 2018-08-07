@@ -21,6 +21,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.DocResults;
 
@@ -93,8 +94,8 @@ public class MockSearcher extends Searcher {
     }
 
     @Override
-    public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        return QueryExecutionContext.getSimple(this, fieldName);
+    public QueryExecutionContext getDefaultExecutionContext(AnnotatedField field) {
+        return QueryExecutionContext.getSimple(this, field);
     }
 
     @Override

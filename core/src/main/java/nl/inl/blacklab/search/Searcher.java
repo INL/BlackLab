@@ -642,7 +642,7 @@ public abstract class Searcher {
     public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
-        BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(field.name()));
+        BLSpanQuery spanQuery = pattern.translate(getDefaultExecutionContext(field));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
@@ -1266,10 +1266,10 @@ public abstract class Searcher {
     /**
      * Get the default initial query execution context.
      *
-     * @param fieldName the field to search
-     * @return the query execution context
+     * @param field field to search
+     * @return query execution context
      */
-    public abstract QueryExecutionContext getDefaultExecutionContext(String fieldName);
+    public abstract QueryExecutionContext getDefaultExecutionContext(AnnotatedField field);
 
     /**
      * Get the default initial query execution context.
@@ -1279,7 +1279,7 @@ public abstract class Searcher {
      * @return the query execution context
      */
     public QueryExecutionContext getDefaultExecutionContext() {
-        return getDefaultExecutionContext(getMainContentsFieldName());
+        return getDefaultExecutionContext(mainAnnotatedField());
     }
 
     public abstract String getIndexName();

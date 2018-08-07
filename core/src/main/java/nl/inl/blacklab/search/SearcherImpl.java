@@ -554,15 +554,14 @@ public class SearcherImpl extends Searcher implements Closeable {
     }
 
     @Override
-    public QueryExecutionContext getDefaultExecutionContext(String fieldName) {
-        AnnotatedField annotatedField = indexMetadata.annotatedFields().get(fieldName);
+    public QueryExecutionContext getDefaultExecutionContext(AnnotatedField annotatedField) {
         if (annotatedField == null)
-            throw new IllegalArgumentException("Unknown annotated field " + fieldName);
+            throw new IllegalArgumentException("Unknown annotated field: null");
         Annotation mainAnnotation = annotatedField.annotations().main();
         if (mainAnnotation == null)
-            throw new IllegalArgumentException("Main annotation not found for " + fieldName);
+            throw new IllegalArgumentException("Main annotation not found for " + annotatedField.name());
         String mainAnnotationName = mainAnnotation.name();
-        return new QueryExecutionContext(this, fieldName, mainAnnotationName, defaultCaseSensitive,
+        return new QueryExecutionContext(this, annotatedField, mainAnnotationName, defaultCaseSensitive,
                 defaultDiacriticsSensitive);
     }
 
