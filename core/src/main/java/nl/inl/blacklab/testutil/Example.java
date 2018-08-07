@@ -26,7 +26,8 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -41,7 +42,7 @@ public class Example {
     /**
      * The BlackLab searcher object.
      */
-    static Searcher searcher;
+    static BlackLabIndex searcher;
 
     /**
      * Some test XML data to index.
@@ -105,7 +106,7 @@ public class Example {
         }
 
         // Create the BlackLab searcher object
-        searcher = Searcher.open(indexDir);
+        searcher = BlackLabIndexImpl.open(indexDir);
         try {
 
             // Find the word "the"

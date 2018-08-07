@@ -22,7 +22,8 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -30,7 +31,7 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchCache;
 
 /**
- * A wrapper of sorts around {@link Searcher}, which is the main blacklab-core
+ * A wrapper of sorts around {@link BlackLabIndexImpl}, which is the main blacklab-core
  * interface to an index.
  *
  * This is the main class used to interface with a corpus/index in
@@ -113,7 +114,7 @@ public class Index {
      * the Indexer has finished indexing (meaning close() has been called on it). In
      * addition, while an index is still running, no new Indexers can be created.
      */
-    private Searcher searcher;
+    private BlackLabIndex searcher;
     private IndexerWithCloseRegistration indexer;
 
     /** List of users who may access this index (read-only). */
@@ -138,7 +139,7 @@ public class Index {
             throw new IllegalIndexName(indexId);
         if (dir == null || !dir.exists() || !dir.isDirectory())
             throw new FileNotFoundException("Cannot find index directory " + dir + ".");
-        if (!dir.canRead() || !Searcher.isIndex(dir))
+        if (!dir.canRead() || !BlackLabIndexImpl.isIndex(dir))
             throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
 
         this.id = indexId;
@@ -213,7 +214,7 @@ public class Index {
     // TODO searcher should not have references to it held for longer times outside of this class
     // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
     // (this is a large job)
-    public synchronized Searcher getSearcher() throws InternalServerError, ServiceUnavailable {
+    public synchronized BlackLabIndex getSearcher() throws InternalServerError, ServiceUnavailable {
         openForSearching();
         return searcher;
     }
@@ -239,9 +240,9 @@ public class Index {
         }
 
         if (this.searcher != null)
-            return this.searcher.getIndexMetadata();
+            return this.searcher.metadata();
         else if (this.indexer != null)
-            return this.indexer.getSearcher().getIndexMetadata();
+            return this.indexer.getSearcher().metadata();
 
         // This should literally never happen, after openForSearching either searcher or indexer must be set
         throw new RuntimeException(
@@ -274,7 +275,7 @@ public class Index {
 
         try {
             logger.debug("Opening index '" + id + "', dir = " + dir);
-            searcher = Searcher.open(this.dir);
+            searcher = BlackLabIndexImpl.open(this.dir);
         } catch (Exception e) {
             this.searcher = null;
 

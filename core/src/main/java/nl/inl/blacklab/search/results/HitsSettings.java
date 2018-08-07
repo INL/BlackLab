@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.results;
 
 import java.util.Collection;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 public class HitsSettings {
@@ -49,7 +49,7 @@ public class HitsSettings {
     private int desiredContextSize;
 
     /** Index object, so we can ask for the default contents field if none was set yet */
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     public HitsSettings(HitsSettings defaults) {
         concordanceField = defaults.concordanceField();
@@ -62,16 +62,16 @@ public class HitsSettings {
         desiredContextSize = defaults.contextSize();
     }
 
-    public HitsSettings(Searcher searcher) {
+    public HitsSettings(BlackLabIndex searcher) {
         this.searcher = searcher;
         this.concordanceField = null; // later on we'll ask for the main contents field (when the index knows that)
-        maxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
-        maxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
-        concsType = Searcher.DEFAULT_CONC_TYPE;
-        concWordProps = Searcher.DEFAULT_CONC_WORD_PROP;
-        concPunctProps = Searcher.DEFAULT_CONC_PUNCT_PROP;
-        concAttrProps = Searcher.DEFAULT_CONC_ATTR_PROP;
-        desiredContextSize = Searcher.DEFAULT_CONTEXT_SIZE;
+        maxHitsToRetrieve = BlackLabIndex.DEFAULT_MAX_RETRIEVE;
+        maxHitsToCount = BlackLabIndex.DEFAULT_MAX_COUNT;
+        concsType = BlackLabIndex.DEFAULT_CONC_TYPE;
+        concWordProps = BlackLabIndex.DEFAULT_CONC_WORD_PROP;
+        concPunctProps = BlackLabIndex.DEFAULT_CONC_PUNCT_PROP;
+        concAttrProps = BlackLabIndex.DEFAULT_CONC_ATTR_PROP;
+        desiredContextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
     }
 
     /** @return the maximum number of hits to retrieve. */
@@ -134,7 +134,7 @@ public class HitsSettings {
     public AnnotatedField concordanceField() {
         // If not set yet, ask the index for the default field
         if (concordanceField == null)
-            concordanceField = searcher.getIndexMetadata().annotatedFields().main();
+            concordanceField = searcher.metadata().annotatedFields().main();
         return concordanceField;
     }
 

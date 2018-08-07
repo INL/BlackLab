@@ -28,7 +28,7 @@ import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Counts the number of documents that have a certain property.
@@ -42,7 +42,7 @@ public class DocCounts implements Iterable<DocCount> {
 
     List<DocCount> orderedGroups = new ArrayList<>();
 
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     private int largestGroupSize = 0;
 

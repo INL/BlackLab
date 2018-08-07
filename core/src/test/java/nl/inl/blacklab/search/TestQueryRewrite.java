@@ -33,7 +33,7 @@ public class TestQueryRewrite {
 
     static TestIndex testIndex;
 
-    private static Searcher searcher;
+    private static BlackLabIndex searcher;
 
     @BeforeClass
     public static void setUp() throws Exception {

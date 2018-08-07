@@ -191,7 +191,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
             // Retrieve the additional columns
-            for (AnnotatedField annotatedField: getSearcher().getIndexMetadata().annotatedFields()) {
+            for (AnnotatedField annotatedField: getSearcher().metadata().annotatedFields()) {
                 for (Annotation annotation: annotatedField.annotations()) {
                     if (annotation.equals(mainTokenProperty) || annotation.isInternal())
                         continue;
@@ -218,7 +218,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 if (!luceneIdToPidAndTitle.containsKey(hit.doc)) {
                     Document doc = getSearcher().document(hit.doc);
                     pid = getDocumentPid(getSearcher(), hit.doc, doc);
-                    String titleField = getSearcher().getIndexMetadata().metadataFields().special(MetadataFields.TITLE).name();
+                    String titleField = getSearcher().metadata().metadataFields().special(MetadataFields.TITLE).name();
                     title = doc.get(titleField);
 
                     if (title == null || title.isEmpty())

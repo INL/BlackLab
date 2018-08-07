@@ -26,8 +26,8 @@ import org.junit.Test;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -36,7 +36,7 @@ public class TestQueryRewriteNfa {
 
     static TestIndex testIndex;
 
-    private static Searcher searcher;
+    private static BlackLabIndex searcher;
 
     @BeforeClass
     public static void setUp() throws Exception {

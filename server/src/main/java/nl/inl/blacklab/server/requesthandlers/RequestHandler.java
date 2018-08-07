@@ -21,7 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -446,9 +446,9 @@ public abstract class RequestHandler {
      * @param searcher our index
      * @param document Lucene document
      */
-    public void dataStreamDocumentInfo(DataStream ds, Searcher searcher, Document document) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex searcher, Document document) {
         ds.startMap();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        IndexMetadata indexMetadata = searcher.metadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String value = document.get(f.name());
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
@@ -533,7 +533,7 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    protected Searcher getSearcher() throws BlsException {
+    protected BlackLabIndex getSearcher() throws BlsException {
         return indexMan.getIndex(indexName).getSearcher();
     }
 
@@ -556,9 +556,9 @@ public abstract class RequestHandler {
      * @return the pid string (or Lucene doc id in string form if index has no pid
      *         field)
      */
-    public static String getDocumentPid(Searcher searcher, int luceneDocId,
+    public static String getDocumentPid(BlackLabIndex searcher, int luceneDocId,
             Document document) {
-        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
+        MetadataField pidField = searcher.metadata().metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
         if (pidField == null)
             return Integer.toString(luceneDocId);
         return document.get(pidField.name());

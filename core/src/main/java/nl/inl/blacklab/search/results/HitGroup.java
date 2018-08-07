@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(Searcher searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField) {
+    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField) {
         super(groupIdentity);
         results = Hits.emptyList(searcher);
         results.settings().setConcordanceField(defaultConcField);
@@ -45,7 +45,7 @@ public class HitGroup extends Group {
      * @param defaultConcField concordance field
      * @param hits the hits
      */
-    HitGroup(Searcher searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField, List<Hit> hits) {
+    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField defaultConcField, List<Hit> hits) {
         super(groupIdentity);
         results = Hits.fromList(searcher, hits);
         results.settings().setConcordanceField(defaultConcField);

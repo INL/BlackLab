@@ -16,7 +16,7 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * A value plus a count for a certain group of documents that have some property
@@ -26,12 +26,12 @@ public class DocCount extends DocGroup {
 
     private Integer count;
 
-    public DocCount(Searcher searcher, HitPropValue groupIdentity) {
+    public DocCount(BlackLabIndex searcher, HitPropValue groupIdentity) {
         super(searcher, groupIdentity);
         count = 0;
     }
 
-    public DocCount(Searcher searcher, HitPropValue groupIdentity, int count) {
+    public DocCount(BlackLabIndex searcher, HitPropValue groupIdentity, int count) {
         super(searcher, groupIdentity);
         this.count = count;
     }

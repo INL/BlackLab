@@ -8,8 +8,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.Searcher;
-import nl.inl.blacklab.search.Searcher.LuceneDocTask;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.LuceneDocTask;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 
@@ -29,7 +30,7 @@ public class ExportCorpus {
             System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
             System.exit(1);
         }
-        if (!Searcher.isIndex(indexDir)) {
+        if (!BlackLabIndexImpl.isIndex(indexDir)) {
             System.out.println("Not a BlackLab index: " + indexDir);
             System.exit(1);
         }
@@ -45,11 +46,11 @@ public class ExportCorpus {
         exportCorpus.export(exportDir);
     }
 
-    Searcher searcher;
+    BlackLabIndex searcher;
 
     public ExportCorpus(File indexDir) throws IOException {
         System.out.println("Open index " + indexDir + "...");
-        searcher = Searcher.open(indexDir);
+        searcher = BlackLabIndexImpl.open(indexDir);
         System.out.println("Done.");
     }
 
@@ -61,7 +62,7 @@ public class ExportCorpus {
     private void export(final File exportDir) {
 
         System.out.println("Getting IndexReader...");
-        final IndexReader reader = searcher.getIndexReader();
+        final IndexReader reader = searcher.reader();
 
         System.out.println("Calling forEachDocument()...");
         searcher.forEachDocument(new LuceneDocTask() {

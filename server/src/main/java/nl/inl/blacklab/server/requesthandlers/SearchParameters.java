@@ -27,8 +27,8 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.GroupPropertySize;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.HitsSample;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -268,7 +268,7 @@ public class SearchParameters {
         return getString("indexname");
     }
 
-    private Searcher getSearcher() {
+    private BlackLabIndex getSearcher() {
         try {
             return searchManager.getIndexManager().getIndex(getIndexName()).getSearcher();
         } catch (Exception e) {

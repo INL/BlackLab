@@ -434,7 +434,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().metadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());

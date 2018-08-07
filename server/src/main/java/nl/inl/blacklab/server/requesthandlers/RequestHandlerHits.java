@@ -13,10 +13,10 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
@@ -145,7 +145,7 @@ public class RequestHandlerHits extends RequestHandler {
 
             DocResults perDocResults = null;
 
-            Searcher searcher = total.getSearcher();
+            BlackLabIndex searcher = total.getSearcher();
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
@@ -173,7 +173,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
+            RequestHandler.dataStreamDocFields(ds, searcher.metadata());
             ds.endEntry();
             if (searchParam.getBoolean("explain")) {
                 TextPattern tp = searchParam.getPattern();

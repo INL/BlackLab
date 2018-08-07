@@ -19,7 +19,7 @@ import java.util.List;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -34,7 +34,7 @@ public class DocResult {
 
     private float score;
 
-    public DocResult(Searcher searcher, AnnotatedField concField, int docId, float score) {
+    public DocResult(BlackLabIndex searcher, AnnotatedField concField, int docId, float score) {
         this.docId = docId;
         this.score = score;
         hits = Hits.emptyList(searcher);

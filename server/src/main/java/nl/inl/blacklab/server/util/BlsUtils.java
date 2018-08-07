@@ -17,8 +17,8 @@ import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocResults;
@@ -30,12 +30,12 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
 
-    public static Query parseFilter(Searcher searcher, String filter,
+    public static Query parseFilter(BlackLabIndex searcher, String filter,
             String filterLang) throws BlsException {
         return BlsUtils.parseFilter(searcher, filter, filterLang, false);
     }
 
-    public static Query parseFilter(Searcher searcher, String filter,
+    public static Query parseFilter(BlackLabIndex searcher, String filter,
             String filterLang, boolean required) throws BlsException {
         if (filter == null || filter.length() == 0) {
             if (required)
@@ -44,7 +44,7 @@ public class BlsUtils {
             return null; // not required
         }
 
-        Analyzer analyzer = searcher.getAnalyzer();
+        Analyzer analyzer = searcher.analyzer();
         if (filterLang.equals("luceneql")) {
             try {
                 QueryParser parser = new QueryParser("", analyzer);
@@ -81,7 +81,7 @@ public class BlsUtils {
                         + "'. Supported: luceneql, contextql.");
     }
 
-    public static TextPattern parsePatt(Searcher searcher, String pattern,
+    public static TextPattern parsePatt(BlackLabIndex searcher, String pattern,
             String language, boolean required) throws BlsException {
         if (pattern == null || pattern.length() == 0) {
             if (required)
@@ -119,7 +119,7 @@ public class BlsUtils {
                         + "'. Supported: corpusql, contextql, luceneql.");
     }
 
-    public static TextPattern parsePatt(Searcher searcher, String pattern,
+    public static TextPattern parsePatt(BlackLabIndex searcher, String pattern,
             String language) throws BlsException {
         return parsePatt(searcher, pattern, language, true);
     }
@@ -131,8 +131,8 @@ public class BlsUtils {
      * @param pid the pid string (or Lucene doc id if we don't use a pid)
      * @return the document id, or -1 if it doesn't exist
      */
-    public static int getLuceneDocIdFromPid(Searcher searcher, String pid) {
-        MetadataField pidField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.PID);
+    public static int getLuceneDocIdFromPid(BlackLabIndex searcher, String pid) {
+        MetadataField pidField = searcher.metadata().metadataFields().special(MetadataFields.PID);
         if (pidField == null) {
             int luceneDocId;
             try {

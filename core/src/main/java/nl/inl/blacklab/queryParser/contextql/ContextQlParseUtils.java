@@ -8,8 +8,8 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
@@ -20,7 +20,7 @@ public final class ContextQlParseUtils {
     private ContextQlParseUtils() {
     }
 
-    public static CompleteQuery clause(Searcher searcher, String index, String relation, String term,
+    public static CompleteQuery clause(BlackLabIndex searcher, String index, String relation, String term,
             String defaultProperty) {
         if (relation == null)
             relation = "=";
@@ -70,7 +70,7 @@ public final class ContextQlParseUtils {
      * @param value the value, optionally with wildcards, to search for
      * @return the query
      */
-    public static CompleteQuery contains(Searcher searcher, String field, String value) {
+    public static CompleteQuery contains(BlackLabIndex searcher, String field, String value) {
 
         boolean isContentsSearch = false;
         String prop = "word";

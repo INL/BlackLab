@@ -34,8 +34,8 @@ import org.apache.lucene.search.SimpleCollector;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPriority.Level;
 
@@ -51,7 +51,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Our searcher object
      */
-    Searcher searcher;
+    BlackLabIndex searcher;
 
     /**
      * Our source hits object
@@ -83,7 +83,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param hits hits to get per-doc result for
      * @return the per-document results.
      */
-    public static DocResults fromHits(Searcher searcher, Hits hits) {
+    public static DocResults fromHits(BlackLabIndex searcher, Hits hits) {
         return new DocResults(searcher, hits);
     }
 
@@ -100,7 +100,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher search object
      * @param hits the hits to view per-document
      */
-    DocResults(Searcher searcher, Hits hits) {
+    DocResults(BlackLabIndex searcher, Hits hits) {
         this.searcher = searcher;
         this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
@@ -116,7 +116,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher the searcher that generated the results
      * @param results the list of results
      */
-    DocResults(Searcher searcher, List<DocResult> results) {
+    DocResults(BlackLabIndex searcher, List<DocResult> results) {
         this.searcher = searcher;
         this.results = results;
     }
@@ -127,7 +127,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher the searcher that generated the results
      * @param scorer the scorer to read document results from
      */
-    DocResults(Searcher searcher, Scorer scorer) {
+    DocResults(BlackLabIndex searcher, Scorer scorer) {
         this.searcher = searcher;
         if (scorer == null)
             return; // no matches, empty result set
@@ -158,7 +158,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param query query to execute
      * @return per-document results
      */
-    public static DocResults fromQuery(Searcher searcher, Query query) {
+    public static DocResults fromQuery(BlackLabIndex searcher, Query query) {
         return new DocResults(searcher, query);
     }
 
@@ -168,7 +168,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher searcher object
      * @param query metadata query, or null to match all documents
      */
-    DocResults(Searcher searcher, Query query) {
+    DocResults(BlackLabIndex searcher, Query query) {
 
         this.searcher = searcher;
 
@@ -176,7 +176,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
 
         try {
-            searcher.getIndexSearcher().search(query, new SimpleCollector() {
+            searcher.searcher().search(query, new SimpleCollector() {
 
                 private int docBase;
 
@@ -210,7 +210,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
     }
 
-    DocResults(Searcher searcher) {
+    DocResults(BlackLabIndex searcher) {
         this.searcher = searcher;
     }
 
@@ -476,7 +476,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return results.get(i);
     }
 
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 

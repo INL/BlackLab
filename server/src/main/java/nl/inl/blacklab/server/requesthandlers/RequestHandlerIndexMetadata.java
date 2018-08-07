@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -45,8 +45,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
-            Searcher searcher = index.getSearcher();
-            IndexMetadata indexMetadata = searcher.getIndexMetadata();
+            BlackLabIndex searcher = index.getSearcher();
+            IndexMetadata indexMetadata = searcher.metadata();
 
             // Assemble response
             IndexStatus status = indexMan.getIndex(indexName).getStatus();

@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -30,7 +30,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         //TODO: use background job?
 
-        Searcher searcher = getSearcher();
+        BlackLabIndex searcher = getSearcher();
         Field cfd = searcher.mainAnnotatedField();
         String propName = searchParam.getString("property");
         boolean sensitive = searchParam.getBoolean("sensitive");
@@ -39,7 +39,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         if (q == null)
             return Response.badRequest(ds, "NO_FILTER_GIVEN",
                     "Document filter required. Please specify 'filter' parameter.");
-        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher.getIndexSearcher(), q, cfd.name(), propName,
+        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher.searcher(), q, cfd.name(), propName,
                 sensitive ? "s" : "i");
 
         TermFrequencyList tfl = new TermFrequencyList(freq.size());

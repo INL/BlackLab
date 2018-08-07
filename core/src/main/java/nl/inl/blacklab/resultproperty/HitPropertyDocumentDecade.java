@@ -40,7 +40,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     public HitPropertyDocumentDecade(Hits hits, String fieldName) {
         super(hits);
-        this.reader = hits.getSearcher().getIndexReader();
+        this.reader = hits.getSearcher().reader();
         this.fieldName = fieldName;
     }
 

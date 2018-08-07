@@ -4,7 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -91,7 +92,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         boolean forwardPossible = rightNfa && !leftEmpty;
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
-        if (Searcher.isTraceOptimization()) {
+        if (BlackLabIndexImpl.isTraceOptimization()) {
             logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
                     forwardPossible ? 1 : 0,
                     backwardPossible ? 1 : 0,
@@ -124,19 +125,19 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     @Override
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         if (nfaThreshold == NO_NFA_MATCHING) {
-            if (Searcher.isTraceOptimization())
+            if (BlackLabIndexImpl.isTraceOptimization())
                 logger.debug("   nfa matching switched off");
             return CANNOT_COMBINE;
         }
         long factor = getFactor(left, right, reader);
         if (factor == 0) {
-            if (Searcher.isTraceOptimization())
+            if (BlackLabIndexImpl.isTraceOptimization())
                 logger.debug("   factor == 0");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
-            if (Searcher.isTraceOptimization())
+            if (BlackLabIndexImpl.isTraceOptimization())
                 logger.debug("   factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + ")");
             return CANNOT_COMBINE;
         }
@@ -157,7 +158,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader),
+            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(BlackLabIndexRegistry.fromIndexReader(reader),
                     right.getField());
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, 1);
             return new SpanQueryFiSeq(left, false, nfaTwoWay, right, 1, fiAccessor);
@@ -169,7 +170,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(Searcher.fromIndexReader(reader),
+        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(BlackLabIndexRegistry.fromIndexReader(reader),
                 left.getField());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, -1);
         return new SpanQueryFiSeq(right, true, nfaTwoWay, left, -1, fiAccessor);

@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -35,7 +35,7 @@ public class HitPropertyHitText extends HitProperty {
 
     private boolean sensitive;
 
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     private Annotation annotation;
 
@@ -55,7 +55,7 @@ public class HitPropertyHitText extends HitProperty {
         super(hits);
         this.searcher = hits.getSearcher();
         this.annotation = annotation;
-        this.terms = searcher.getTerms(annotation);
+        this.terms = searcher.terms(annotation);
         this.sensitive = sensitive;
     }
 

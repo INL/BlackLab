@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -32,7 +32,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        Searcher searcher = getSearcher();
+        BlackLabIndex searcher = getSearcher();
         int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
@@ -51,7 +51,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         ds.endEntry();
 
         ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
+        RequestHandler.dataStreamDocFields(ds, searcher.metadata());
         ds.endEntry();
 
         ds.endMap();

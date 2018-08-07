@@ -6,10 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -37,7 +37,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        Searcher searcher = getSearcher();
+        BlackLabIndex searcher = getSearcher();
         int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");

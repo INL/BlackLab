@@ -37,7 +37,8 @@ import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -276,7 +277,7 @@ public class IndexTool {
             return;
         }
         if (createNewIndex)
-            indexer.getSearcher().getIndexMetadataWriter().setDocumentFormat(docFormat);
+            indexer.getSearcher().metadataWriter().setDocumentFormat(docFormat);
         indexer.setIndexerParam(indexerParam);
         if (maxDocsToIndex > 0)
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -314,10 +315,10 @@ public class IndexTool {
             usage();
             return;
         }
-        Searcher searcher = Searcher.openForWriting(indexDir, false);
+        BlackLabIndex searcher = BlackLabIndexImpl.openForWriting(indexDir, false);
         try {
             System.out.println("Doing delete: " + deleteQuery);
-            searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.getAnalyzer(), null));
+            searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.analyzer(), null));
         } finally {
             searcher.close();
         }

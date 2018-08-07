@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -24,7 +24,7 @@ public class MockHits extends Hits {
 
     private int numberOfDocs;
 
-    public MockHits(Searcher searcher, int[] doc, int[] start, int[] end) {
+    public MockHits(BlackLabIndex searcher, int[] doc, int[] start, int[] end) {
         super(searcher);
         this.doc = doc;
         this.start = start;
@@ -43,7 +43,7 @@ public class MockHits extends Hits {
         }
     }
 
-    public MockHits(Searcher searcher) {
+    public MockHits(BlackLabIndex searcher) {
         this(searcher, new int[0], new int[0], new int[0]);
     }
 

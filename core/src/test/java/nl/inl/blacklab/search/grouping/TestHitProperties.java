@@ -32,7 +32,7 @@ public class TestHitProperties {
     public static void setUp() throws Exception {
         testIndex = new TestIndex();
         wordAnnotation = testIndex.getSearcher().mainAnnotatedField().annotations().get("word");
-        terms = testIndex.getSearcher().getForwardIndex(wordAnnotation).getTerms();
+        terms = testIndex.getSearcher().forwardIndex(wordAnnotation).getTerms();
     }
 
     private static int term(String word) {

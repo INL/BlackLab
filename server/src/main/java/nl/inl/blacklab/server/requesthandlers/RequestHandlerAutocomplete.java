@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -53,8 +53,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
         }
-        Searcher searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        BlackLabIndex searcher = getSearcher();
+        IndexMetadata indexMetadata = searcher.metadata();
         if (annotatedFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Also specify a annotation to autocomplete for annotated field: " + fieldName);
@@ -95,7 +95,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             }
         }
 
-        autoComplete(ds, fieldName, term, searcher.getIndexReader(), sensitiveMatching);
+        autoComplete(ds, fieldName, term, searcher.reader(), sensitiveMatching);
         return HTTP_OK;
     }
 

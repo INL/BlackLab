@@ -50,7 +50,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
         Annotation annotation = field.annotations().get(propName);
         boolean sensitive = parts[1].equalsIgnoreCase("s");
         int[] ids = new int[parts.length - 2];
-        Terms termsObj = hits.getSearcher().getForwardIndex(annotation).getTerms();
+        Terms termsObj = hits.getSearcher().forwardIndex(annotation).getTerms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }

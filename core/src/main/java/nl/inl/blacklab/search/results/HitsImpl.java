@@ -55,7 +55,8 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -251,7 +252,7 @@ public class HitsImpl extends Hits {
      * @param searcher the searcher object
      * @param hits the list of hits to wrap
      */
-    HitsImpl(Searcher searcher, List<Hit> hits) {
+    HitsImpl(BlackLabIndex searcher, List<Hit> hits) {
         super(searcher);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
@@ -277,7 +278,7 @@ public class HitsImpl extends Hits {
      * @param concordanceFieldName field to use by default when finding concordances
      * @param hits the list of hits to wrap
      */
-    private HitsImpl(Searcher searcher, AnnotatedField concordanceFieldName, List<Hit> hits) {
+    private HitsImpl(BlackLabIndex searcher, AnnotatedField concordanceFieldName, List<Hit> hits) {
         this(searcher, hits);
         settings.setConcordanceField(concordanceFieldName);
     }
@@ -290,18 +291,18 @@ public class HitsImpl extends Hits {
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    HitsImpl(Searcher searcher, SpanQuery sourceQuery) throws TooManyClauses {
+    HitsImpl(BlackLabIndex searcher, SpanQuery sourceQuery) throws TooManyClauses {
         this(searcher, (List<Hit>) null);
         try {
-            IndexReader reader = searcher.getIndexReader();
+            IndexReader reader = searcher.reader();
             if (!(sourceQuery instanceof BLSpanQuery))
                 throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
 
-            if (Searcher.isTraceQueryExecution())
+            if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("HitsImpl(): optimize");
             BLSpanQuery optimize = ((BLSpanQuery) sourceQuery).optimize(reader);
 
-            if (Searcher.isTraceQueryExecution())
+            if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("HitsImpl(): rewrite");
             spanQuery = optimize.rewrite(reader);
 
@@ -309,12 +310,12 @@ public class HitsImpl extends Hits {
             termContexts = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-            if (Searcher.isTraceQueryExecution())
+            if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("HitsImpl(): createWeight");
-            weight = spanQuery.createWeight(searcher.getIndexSearcher(), false);
+            weight = spanQuery.createWeight(searcher.searcher(), false);
             weight.extractTerms(terms);
             etiquette = new ThreadPriority();
-            if (Searcher.isTraceQueryExecution())
+            if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("HitsImpl(): extract terms");
             for (Term term : terms) {
                 try {
@@ -337,7 +338,7 @@ public class HitsImpl extends Hits {
         }
 
         sourceSpansFullyRead = false;
-        if (Searcher.isTraceQueryExecution())
+        if (BlackLabIndexImpl.isTraceQueryExecution())
             logger.debug("HitsImpl(): done");
     }
 
@@ -353,7 +354,7 @@ public class HitsImpl extends Hits {
      * @param searcher the searcher object
      * @param source where to retrieve the Hit objects from
      */
-    HitsImpl(Searcher searcher, BLSpans source) {
+    HitsImpl(BlackLabIndex searcher, BLSpans source) {
         this(searcher, (List<Hit>) null);
 
         currentSourceSpans = source;
@@ -1095,18 +1096,18 @@ public class HitsImpl extends Hits {
             ForwardIndex forwardIndex = null;
             String concWordFI = settings().concWordProp();
             if (concWordFI != null)
-                forwardIndex = searcher.getForwardIndex(field.annotations().get(concWordFI));
+                forwardIndex = searcher.forwardIndex(field.annotations().get(concWordFI));
 
             ForwardIndex punctForwardIndex = null;
             String concPunctFI = settings().concPunctProp();
             if (concPunctFI != null)
-                punctForwardIndex = searcher.getForwardIndex(field.annotations().get(concPunctFI));
+                punctForwardIndex = searcher.forwardIndex(field.annotations().get(concPunctFI));
 
             Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
             Collection<String> concAttrFI = settings().concAttrProps();
             if (concAttrFI == null) {
                 // All other FIs are attributes
-                for (ForwardIndex fi: searcher.getForwardIndices().values()) {
+                for (ForwardIndex fi: searcher.forwardIndices().values()) {
                     Annotation annotation = fi.annotation();
                     if (annotation.name().equals(concWordFI) || annotation.name().equals(concPunctFI))
                         continue;
@@ -1116,7 +1117,7 @@ public class HitsImpl extends Hits {
                 // Specific list of attribute FIs
                 for (String annotationName: concAttrFI) {
                     Annotation annotation = field.annotations().get(annotationName);
-                    attrForwardIndices.put(annotation, searcher.getForwardIndex(annotation));
+                    attrForwardIndices.put(annotation, searcher.forwardIndex(annotation));
                 }
             }
 
@@ -1158,7 +1159,7 @@ public class HitsImpl extends Hits {
 
         List<ForwardIndex> fis = new ArrayList<>();
         for (Annotation fieldPropName : fieldProps) {
-            fis.add(searcher.getForwardIndex(fieldPropName));
+            fis.add(searcher.forwardIndex(fieldPropName));
         }
 
         // Get the context
@@ -1230,7 +1231,7 @@ public class HitsImpl extends Hits {
         if (annotation == null)
             annotation = searcher.mainAnnotatedField().annotations().main();
         if (ctx == null)
-            ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
+            ctx = searcher.defaultExecutionContext(settings().concordanceField());
         ctx = ctx.withAnnotation(annotation);
         findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
@@ -1258,7 +1259,7 @@ public class HitsImpl extends Hits {
         // Get the actual words from the sort positions
         MatchSensitivity sensitivity = searcher.defaultMatchSensitivity();
         TermFrequencyList collocations = new TermFrequencyList(coll.size());
-        Terms terms = searcher.getTerms(contextFieldsPropName.get(0));
+        Terms terms = searcher.terms(contextFieldsPropName.get(0));
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();
@@ -1665,7 +1666,7 @@ public class HitsImpl extends Hits {
      */
     private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(searcher.getDefaultUnbalancedTagsStrategy());
+        hl.setUnbalancedTagsStrategy(searcher.defaultUnbalancedTagsStrategy());
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key : hits) {

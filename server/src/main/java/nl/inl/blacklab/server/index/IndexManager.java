@@ -26,7 +26,8 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -247,7 +248,7 @@ public class IndexManager {
         boolean contentViewable = true; // user may view his own private corpus documents
         Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
-        Searcher searcher = Searcher.createIndex(indexDir, config, displayName, formatIdentifier, contentViewable,
+        BlackLabIndex searcher = BlackLabIndexImpl.createIndex(indexDir, config, displayName, formatIdentifier, contentViewable,
                 TextDirection.LEFT_TO_RIGHT);
         searcher.close();
 
@@ -289,7 +290,7 @@ public class IndexManager {
             throw new InternalServerError("Could not delete index. Check file permissions.", 18);
         if (!indexDir.getAbsoluteFile().getParentFile().equals(userDir)) // Yes, we're paranoid..
             throw new InternalServerError("Could not delete index. Not found in user dir.", 19);
-        if (!Searcher.isIndex(indexDir)) { // ..but are we paranoid enough?
+        if (!BlackLabIndexImpl.isIndex(indexDir)) { // ..but are we paranoid enough?
             throw new InternalServerError("Could not delete index. Not a BlackLab index.", 20);
         }
 
@@ -446,7 +447,7 @@ public class IndexManager {
                 };
                 for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE,
                         notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
-                    if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !Searcher.isIndex(subDir)) {
+                    if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !BlackLabIndexImpl.isIndex(subDir)) {
                         if (subDir.getParentFile().equals(collection)) {
                             logger.debug("  Direct subdir of collection dir is not an index or cannot read: " + subDir);
                         }
@@ -509,7 +510,7 @@ public class IndexManager {
                 continue;
             }
 
-            if (!f.canRead() || !Searcher.isIndex(f))
+            if (!f.canRead() || !BlackLabIndexImpl.isIndex(f))
                 continue;
 
             try {

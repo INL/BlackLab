@@ -28,7 +28,7 @@ import org.apache.lucene.document.IntField;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -67,12 +67,12 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        contentsField = new AnnotatedFieldWriter(Searcher.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        contentsField = new AnnotatedFieldWriter(BlackLabIndex.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
         propPunct = contentsField.addAnnotation(propName, getSensitivitySetting(propName), false);
-        IndexMetadataWriter indexMetadata = indexer.getSearcher().getIndexMetadataWriter();
+        IndexMetadataWriter indexMetadata = indexer.getSearcher().metadataWriter();
         AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
         contentsField.setAnnotatedField(f);
     }
@@ -242,7 +242,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().getIndexMetadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().metadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());

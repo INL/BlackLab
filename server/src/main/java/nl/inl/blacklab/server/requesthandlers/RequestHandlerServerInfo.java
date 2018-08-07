@@ -5,7 +5,7 @@ import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.index.IndexListener;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -34,8 +34,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
         Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
 
         ds.startMap()
-                .entry("blacklabBuildTime", Searcher.getBlackLabBuildTime())
-                .entry("blacklabVersion", Searcher.getBlackLabVersion());
+                .entry("blacklabBuildTime", BlackLabIndexImpl.getBlackLabBuildTime())
+                .entry("blacklabVersion", BlackLabIndexImpl.getBlackLabVersion());
 
         ds.startEntry("indices").startMap();
 

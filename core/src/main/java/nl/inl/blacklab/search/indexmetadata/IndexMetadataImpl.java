@@ -46,7 +46,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 import nl.inl.util.StringUtil;
@@ -672,8 +672,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
         if (initTimestamps) {
-            blackLabBuildTime = Searcher.getBlackLabBuildTime();
-            blackLabVersion = Searcher.getBlackLabVersion();
+            blackLabBuildTime = BlackLabIndexImpl.getBlackLabBuildTime();
+            blackLabVersion = BlackLabIndexImpl.getBlackLabVersion();
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
         } else {
             blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
@@ -938,8 +938,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             // version)
 
             // Reset version info
-            blackLabBuildTime = Searcher.getBlackLabBuildTime();
-            blackLabVersion = Searcher.getBlackLabVersion();
+            blackLabBuildTime = BlackLabIndexImpl.getBlackLabBuildTime();
+            blackLabVersion = BlackLabIndexImpl.getBlackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
 
@@ -1131,8 +1131,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     private static void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
-        versionInfo.put("blackLabBuildTime", Searcher.getBlackLabBuildTime());
-        versionInfo.put("blackLabVersion", Searcher.getBlackLabVersion());
+        versionInfo.put("blackLabBuildTime", BlackLabIndexImpl.getBlackLabBuildTime());
+        versionInfo.put("blackLabVersion", BlackLabIndexImpl.getBlackLabVersion());
         versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
         versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
         versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);

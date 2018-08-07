@@ -6,8 +6,8 @@ import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -30,7 +30,7 @@ public class RequestHandlerExplain extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Searcher searcher = getSearcher();
+        BlackLabIndex searcher = getSearcher();
         String patt = searchParam.getString("patt");
         try {
             QueryExplanation explanation = searcher.explain(CorpusQueryLanguageParser.parse(patt));

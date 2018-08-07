@@ -22,7 +22,7 @@ import java.util.Map;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -32,9 +32,9 @@ import nl.inl.blacklab.search.Searcher;
  * retrieved, which may be unfeasible for large results sets.
  */
 public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup>, DocOrHitGroups {
-    Searcher searcher;
+    BlackLabIndex searcher;
 
-    public HitGroups(Searcher searcher, HitProperty groupCriteria) {
+    public HitGroups(BlackLabIndex searcher, HitProperty groupCriteria) {
         super(groupCriteria);
 
         this.searcher = searcher;

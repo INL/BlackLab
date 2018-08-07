@@ -7,7 +7,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
@@ -18,7 +18,7 @@ import nl.inl.blacklab.server.index.Index;
 
 public class TestBlsUtils {
 
-    Searcher searcher = new MockSearcher();
+    BlackLabIndex searcher = new MockSearcher();
 
     @Test
     public void testIsValidIndexName() {

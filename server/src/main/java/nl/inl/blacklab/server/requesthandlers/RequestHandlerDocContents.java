@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -69,14 +69,14 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        Searcher searcher = getSearcher();
+        BlackLabIndex searcher = getSearcher();
         int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
         if (luceneDocId < 0 || luceneDocId >= searcher.maxDoc())
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
         Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 9);
-        if (!mayView(searcher.getIndexMetadata(), document)) {
+        if (!mayView(searcher.metadata(), document)) {
             return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
         }
 
@@ -104,7 +104,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(luceneDocId);
-        content = searcher.highlightContent(luceneDocId, searcher.getMainContentsFieldName(), hitsInDoc, startAtWord,
+        content = searcher.highlightContent(luceneDocId, searcher.mainAnnotatedField().name(), hitsInDoc, startAtWord,
                 endAtWord);
 
         boolean outputXmlDeclaration = true;

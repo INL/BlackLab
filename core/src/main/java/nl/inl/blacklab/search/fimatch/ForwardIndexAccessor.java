@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.Searcher;
  */
 public abstract class ForwardIndexAccessor {
 
-    public static ForwardIndexAccessor fromSearcher(Searcher searcher, String searchField) {
+    public static ForwardIndexAccessor fromSearcher(BlackLabIndex searcher, String searchField) {
         return new ForwardIndexAccessorImpl(searcher, searchField);
     }
     /**

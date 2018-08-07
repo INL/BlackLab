@@ -14,7 +14,8 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
@@ -84,7 +85,7 @@ public class TestIndex {
     /**
      * The BlackLab searcher object.
      */
-    Searcher searcher;
+    BlackLabIndex searcher;
 
     private File indexDir;
 
@@ -117,12 +118,12 @@ public class TestIndex {
         }
 
         // Create the BlackLab searcher object
-        searcher = Searcher.open(indexDir);
+        searcher = BlackLabIndexImpl.open(indexDir);
         searcher.hitsSettings().setContextSize(1);
         word = searcher.mainAnnotatedField().annotations().get("word");
     }
 
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 

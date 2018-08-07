@@ -22,12 +22,12 @@ public class QueryExecutionContext {
      * @param field field to get an execution context for
      * @return the context
      */
-    public static QueryExecutionContext simple(Searcher searcher, AnnotatedField field) {
+    public static QueryExecutionContext simple(BlackLabIndex searcher, AnnotatedField field) {
         return new QueryExecutionContext(searcher, field.annotations().main(), MatchSensitivity.INSENSITIVE);
     }
 
     /** The searcher object, representing the BlackLab index */
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
     private String subpropPrefix;
@@ -48,7 +48,7 @@ public class QueryExecutionContext {
      * @param annotation the annotation to search
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      */
-    public QueryExecutionContext(Searcher searcher, Annotation annotation, MatchSensitivity matchSensitivity) {
+    public QueryExecutionContext(BlackLabIndex searcher, Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
         this.searcher = searcher;
@@ -149,7 +149,7 @@ public class QueryExecutionContext {
         return subpropPrefix;
     }
 
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 

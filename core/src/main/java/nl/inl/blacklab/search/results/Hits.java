@@ -10,11 +10,11 @@ import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -46,7 +46,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param searcher the searcher object
      * @return hits found
      */
-    public static Hits emptyList(Searcher searcher) {
+    public static Hits emptyList(BlackLabIndex searcher) {
         return fromList(searcher, (List<Hit>) null);
     }
 
@@ -59,7 +59,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param docHits the list of hits to wrap
      * @return hits found
      */
-    public static Hits fromList(Searcher searcher, List<Hit> docHits) {
+    public static Hits fromList(BlackLabIndex searcher, List<Hit> docHits) {
         return new HitsImpl(searcher, docHits);
     }
 
@@ -70,7 +70,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param query the query to execute to get the hits
      * @return hits found
      */
-    public static Hits fromSpanQuery(Searcher searcher, SpanQuery query) {
+    public static Hits fromSpanQuery(BlackLabIndex searcher, SpanQuery query) {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         return new HitsImpl(searcher, query);
@@ -88,7 +88,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param source where to retrieve the Hit objects from
      * @return hits found
      */
-    public static Hits fromSpans(Searcher searcher, AnnotatedField concordanceField, BLSpans source) {
+    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField concordanceField, BLSpans source) {
         Hits hits = new HitsImpl(searcher, source);
         hits.settings.setConcordanceField(concordanceField);
         return hits;
@@ -106,7 +106,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
     /** Unique id of this Hits instance */
     protected final int hitsObjId = getNextHitsObjId();
 
-    protected Searcher searcher;
+    protected BlackLabIndex searcher;
 
     /**
      * Settings for retrieving hits, sorting/grouping on context and making
@@ -123,7 +123,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      */
     protected ThreadPriority etiquette;
 
-    public Hits(Searcher searcher) {
+    public Hits(BlackLabIndex searcher) {
         this.searcher = searcher;
         settings = new HitsSettings(searcher.hitsSettings()); // , concordanceFieldName);
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
@@ -556,7 +556,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      *
      * @return the searcher object.
      */
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 

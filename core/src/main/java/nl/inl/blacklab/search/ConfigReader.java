@@ -69,7 +69,7 @@ public class ConfigReader extends YamlJsonReader {
 
     /**
      * Load the global blacklab configuration. This file configures several global
-     * settings, as well as providing default settings for any new {@link Searcher}
+     * settings, as well as providing default settings for any new {@link BlackLabIndexImpl}
      * constructed hereafter.
      *
      * If no explicit config file has been set by the time when the first Searcher
@@ -165,7 +165,7 @@ public class ConfigReader extends YamlJsonReader {
      * @param searcher
      * @throws IOException
      */
-    public synchronized static void applyConfig(Searcher searcher) throws IOException {
+    public synchronized static void applyConfig(BlackLabIndex searcher) throws IOException {
         if (blacklabConfig == null)
             loadDefaultConfig();
 
@@ -174,7 +174,7 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readSearcherSettings(JsonNode root, Searcher searcher) {
+    private static void readSearcherSettings(JsonNode root, BlackLabIndex searcher) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
 
@@ -194,7 +194,7 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readSearch(ObjectNode obj, Searcher searcher) {
+    private static void readSearch(ObjectNode obj, BlackLabIndex searcher) {
         HitsSettings hitsSett = searcher.hitsSettings();
         Iterator<Entry<String, JsonNode>> it = obj.fields();
         while (it.hasNext()) {
@@ -218,7 +218,7 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readCollator(Entry<String, JsonNode> e, Searcher searcher) {
+    private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex searcher) {
         Collator collator;
         if (e.getValue() instanceof ObjectNode) {
             Iterator<Entry<String, JsonNode>> it = obj(e).fields();
@@ -298,13 +298,13 @@ public class ConfigReader extends YamlJsonReader {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "indexOpening":
-                Searcher.setTraceIndexOpening(bool(e));
+                BlackLabIndexImpl.setTraceIndexOpening(bool(e));
                 break;
             case "optimization":
-                Searcher.setTraceOptimization(bool(e));
+                BlackLabIndexImpl.setTraceOptimization(bool(e));
                 break;
             case "queryExecution":
-                Searcher.setTraceQueryExecution(bool(e));
+                BlackLabIndexImpl.setTraceQueryExecution(bool(e));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown key " + e.getKey() + " in trace section");

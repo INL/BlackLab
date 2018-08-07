@@ -14,7 +14,8 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -46,7 +47,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
      */
     static Collator getValueSortCollator() {
         if (valueSortCollator == null) {
-            valueSortCollator = (RuleBasedCollator) Searcher.getDefaultCollator();
+            valueSortCollator = (RuleBasedCollator) BlackLabIndexImpl.getDefaultCollator();
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();
@@ -81,8 +82,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
         }
 
-        Searcher searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.getIndexMetadata();
+        BlackLabIndex searcher = getSearcher();
+        IndexMetadata indexMetadata = searcher.metadata();
 
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
@@ -160,7 +161,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     }
 
     public static void describeAnnotatedField(DataStream ds, String indexName, 
-            AnnotatedField fieldDesc, Searcher searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+            AnnotatedField fieldDesc, BlackLabIndex searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
@@ -186,7 +187,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("isInternal", annotation.isInternal());
             String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
-                Collection<String> values = LuceneUtil.getFieldTerms(searcher.getIndexReader(), luceneField,
+                Collection<String> values = LuceneUtil.getFieldTerms(searcher.reader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
                 int n = 0;
@@ -201,7 +202,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 ds.entry("valueListComplete", values.size() <= MAX_FIELD_VALUES);
             }
             if (showSubpropsFor.contains(annotation.name())) {
-                Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.getIndexReader(), luceneField);
+                Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.reader(), luceneField);
                 ds.startEntry("subproperties").startMap();
                 for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
                     String name = subprop.getKey();

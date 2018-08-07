@@ -46,7 +46,8 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
@@ -103,12 +104,12 @@ public class Indexer {
             // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
             // meantime
             getListener().fileStarted(documentName);
-            int docsDoneBefore = searcher.getWriter().numDocs();
+            int docsDoneBefore = searcher.writer().numDocs();
             long tokensDoneBefore = getListener().getTokensProcessed();
 
             indexer.index();
             getListener().fileDone(documentName);
-            int docsDoneAfter = searcher.getWriter().numDocs();
+            int docsDoneAfter = searcher.writer().numDocs();
             if (docsDoneAfter == docsDoneBefore) {
                 logger.warn("No docs found in " + documentName + "; wrong format?");
             }
@@ -178,7 +179,7 @@ public class Indexer {
     protected DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
     /** Our index */
-    protected Searcher searcher;
+    protected BlackLabIndex searcher;
 
     /** Stop after indexing this number of docs. -1 if we shouldn't stop. */
     protected int maxNumberOfDocsToIndex = -1;
@@ -320,19 +321,19 @@ public class Indexer {
 
         if (create) {
             if (indexTemplateFile != null) {
-                searcher = Searcher.openForWriting(directory, true, indexTemplateFile);
+                searcher = BlackLabIndexImpl.openForWriting(directory, true, indexTemplateFile);
 
                 // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
                 // has written it might be null
-                final String defaultFormatIdentifier = searcher.getIndexMetadataWriter().documentFormat();
+                final String defaultFormatIdentifier = searcher.metadataWriter().documentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
                     this.formatIdentifier = formatIdentifier;
                     if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                         // indexTemplateFile didn't provide a default formatIdentifier,
                         // overwrite it with our provided formatIdentifier
-                        searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
-                        searcher.getIndexMetadataWriter().save();
+                        searcher.metadataWriter().setDocumentFormat(formatIdentifier);
+                        searcher.metadataWriter().save();
                     }
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
@@ -358,14 +359,14 @@ public class Indexer {
                 }
 
                 // template might still be null, in that case a default will be created
-                searcher = Searcher.openForWriting(directory, true, format);
+                searcher = BlackLabIndexImpl.openForWriting(directory, true, format);
 
-                String defaultFormatIdentifier = searcher.getIndexMetadata().documentFormat();
+                String defaultFormatIdentifier = searcher.metadata().documentFormat();
                 if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                     // ConfigInputFormat didn't provide a default formatIdentifier,
                     // overwrite it with our provided formatIdentifier
-                    searcher.getIndexMetadataWriter().setDocumentFormat(formatIdentifier);
-                    searcher.getIndexMetadataWriter().save();
+                    searcher.metadataWriter().setDocumentFormat(formatIdentifier);
+                    searcher.metadataWriter().save();
                 }
             } else {
                 throw new DocumentFormatException("Input format config '" + formatIdentifier
@@ -373,8 +374,8 @@ public class Indexer {
             }
         } else { // opening an existing index
 
-            this.searcher = Searcher.openForWriting(directory, false);
-            String defaultFormatIdentifier = this.searcher.getIndexMetadata().documentFormat();
+            this.searcher = BlackLabIndexImpl.openForWriting(directory, false);
+            String defaultFormatIdentifier = this.searcher.metadata().documentFormat();
 
             if (DocumentFormats.isSupported(formatIdentifier))
                 this.formatIdentifier = formatIdentifier;
@@ -412,7 +413,7 @@ public class Indexer {
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new DocumentFormatException("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
-                    + this.searcher.getIndexName() + "; unknown identifier");
+                    + this.searcher.name() + "; unknown identifier");
 
         this.formatIdentifier = formatIdentifier;
     }
@@ -491,8 +492,8 @@ public class Indexer {
         getListener().closeStart();
 
         if (!hasRollback) {
-            searcher.getIndexMetadataWriter().addToTokenCount(getListener().getTokensProcessed());
-            searcher.getIndexMetadataWriter().save();
+            searcher.metadataWriter().addToTokenCount(getListener().getTokensProcessed());
+            searcher.metadataWriter().save();
         }
         searcher.close();
 
@@ -509,7 +510,7 @@ public class Indexer {
      * @throws IOException
      */
     public void add(Document document) throws CorruptIndexException, IOException {
-        searcher.getWriter().addDocument(document);
+        searcher.writer().addDocument(document);
         getListener().luceneDocumentAdded();
     }
 
@@ -522,7 +523,7 @@ public class Indexer {
      * @throws IOException
      */
     public void update(Term term, Document document) throws CorruptIndexException, IOException {
-        searcher.getWriter().updateDocument(term, document);
+        searcher.writer().updateDocument(term, document);
         getListener().luceneDocumentAdded();
     }
 
@@ -533,8 +534,8 @@ public class Indexer {
      * @return the id assigned to the content
      */
     public int addToForwardIndex(AnnotationWriter prop) {
-        Annotation annotation = searcher.getOrCreate(prop.field(), prop.getName());
-        ForwardIndex forwardIndex = searcher.getForwardIndex(annotation);
+        Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
+        ForwardIndex forwardIndex = searcher.forwardIndex(annotation);
         if (forwardIndex == null)
             throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.getName()));
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
@@ -660,7 +661,7 @@ public class Indexer {
         try {
             if (maxNumberOfDocsToIndex < 0)
                 return maxNumberOfDocsToIndex;
-            int docsDone = searcher.getWriter().numDocs();
+            int docsDone = searcher.writer().numDocs();
             return Math.max(0, maxNumberOfDocsToIndex - docsDone);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -674,7 +675,7 @@ public class Indexer {
      */
 
     public ContentStore getContentStore(String fieldName) {
-        return searcher.getContentStore(fieldName);
+        return searcher.contentStore(fieldName);
     }
 
     /**
@@ -683,7 +684,7 @@ public class Indexer {
      * @return the index directory
      */
     public File getIndexLocation() {
-        return searcher.getIndexDirectory();
+        return searcher.indexDirectory();
     }
 
     /**
@@ -714,10 +715,10 @@ public class Indexer {
      * @return the IndexWriter
      */
     protected IndexWriter getWriter() {
-        return searcher.getWriter();
+        return searcher.writer();
     }
 
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 

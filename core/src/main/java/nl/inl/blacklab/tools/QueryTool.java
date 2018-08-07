@@ -56,7 +56,8 @@ import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -101,7 +102,7 @@ public class QueryTool {
     static boolean batchMode = false;
 
     /** Our BlackLab Searcher object. */
-    Searcher searcher;
+    BlackLabIndex searcher;
 
     /** The hits that are the result of our query. */
     private Hits hits = null;
@@ -531,7 +532,7 @@ public class QueryTool {
      * @param err where to write errors to
      * @throws CorruptIndexException
      */
-    public QueryTool(Searcher searcher, BufferedReader in, PrintWriter out, PrintWriter err)
+    public QueryTool(BlackLabIndex searcher, BufferedReader in, PrintWriter out, PrintWriter err)
             throws CorruptIndexException {
         this.searcher = searcher;
         this.contentsField = searcher.mainAnnotatedField();
@@ -578,7 +579,7 @@ public class QueryTool {
 
         // Create the BlackLab searcher object
         try {
-            searcher = Searcher.open(indexDir);
+            searcher = BlackLabIndexImpl.open(indexDir);
             contentsField = searcher.mainAnnotatedField();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -611,7 +612,7 @@ public class QueryTool {
      * 
      * @param searcher the new Searcher to use
      */
-    public void setSearcher(Searcher searcher) {
+    public void setSearcher(BlackLabIndex searcher) {
         if (shouldCloseSearcher)
             searcher.close();
         this.searcher = searcher;
@@ -795,7 +796,7 @@ public class QueryTool {
                 } else {
                     String filterExpr = cmd.substring(7);
                     try {
-                        filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.getAnalyzer(), "title");
+                        filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.analyzer(), "title");
                         outprintln("Filter created: " + filterQuery);
                         if (verbose)
                             outprintln(filterQuery.getClass().getName());
@@ -947,8 +948,8 @@ public class QueryTool {
     }
 
     private void showIndexMetadata() {
-        IndexMetadata s = searcher.getIndexMetadata();
-        outprintln("INDEX STRUCTURE FOR INDEX " + searcher.getIndexName() + "\n");
+        IndexMetadata s = searcher.metadata();
+        outprintln("INDEX STRUCTURE FOR INDEX " + searcher.name() + "\n");
         out.println("ANNOTATED FIELDS");
         for (AnnotatedField cf: s.annotatedFields()) {
             out.println("- " + cf.name());
@@ -1266,7 +1267,7 @@ public class QueryTool {
                 HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("lemma"));
                 HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
-            } else if (searcher.getIndexMetadata().metadataFields().exists(sortBy)) {
+            } else if (searcher.metadata().metadataFields().exists(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
             }
 
@@ -1447,7 +1448,7 @@ public class QueryTool {
                 collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocAnnotation, searcher.getDefaultExecutionContext(collocAnnotation.field()));
+            collocations = hits.getCollocations(collocAnnotation, searcher.defaultExecutionContext(collocAnnotation.field()));
             collocations.sort();
         }
 
@@ -1500,7 +1501,7 @@ public class QueryTool {
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.TITLE);
+        MetadataField titleField = searcher.metadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
@@ -1597,7 +1598,7 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        MetadataField titleField = searcher.getIndexMetadata().metadataFields().special(MetadataFields.TITLE);
+        MetadataField titleField = searcher.metadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {

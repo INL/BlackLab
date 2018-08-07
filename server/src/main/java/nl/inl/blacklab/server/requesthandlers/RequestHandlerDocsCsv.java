@@ -157,7 +157,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
         try {
-            IndexMetadata indexMetadata = this.getSearcher().getIndexMetadata();
+            IndexMetadata indexMetadata = this.getSearcher().metadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
             String tokenLengthField = this.getSearcher().mainAnnotatedField().tokenLengthField();
 

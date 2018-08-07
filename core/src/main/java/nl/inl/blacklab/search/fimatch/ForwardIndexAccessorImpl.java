@@ -10,7 +10,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
     /** Our Searcher object */
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     /** Field name, e.g. "contents" */
     String annotatedFieldBaseName;
@@ -39,7 +39,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     /** The terms object for each annotation */
     private List<Terms> terms = new ArrayList<>();
 
-    ForwardIndexAccessorImpl(Searcher searcher, String searchField) {
+    ForwardIndexAccessorImpl(BlackLabIndex searcher, String searchField) {
         this.searcher = searcher;
         this.annotatedFieldBaseName = searchField;
     }
@@ -58,7 +58,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             n = annotationNumbers.size();
             annotationNumbers.put(annotationName, n);
             annotationNames.add(annotationName);
-            ForwardIndex fi = searcher.getForwardIndex(searcher.annotatedField(annotatedFieldBaseName).annotations().get(annotationName));
+            ForwardIndex fi = searcher.forwardIndex(searcher.annotatedField(annotatedFieldBaseName).annotations().get(annotationName));
             fis.add(fi);
             terms.add(fi.getTerms());
         }

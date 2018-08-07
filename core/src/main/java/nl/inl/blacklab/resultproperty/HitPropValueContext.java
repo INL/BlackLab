@@ -12,6 +12,6 @@ public abstract class HitPropValueContext extends HitPropValue {
 
     public HitPropValueContext(Hits hits, Annotation annotation) {
         this.annotation = annotation;
-        this.terms = hits.getSearcher().getForwardIndex(annotation).getTerms();
+        this.terms = hits.getSearcher().forwardIndex(annotation).getTerms();
     }
 }

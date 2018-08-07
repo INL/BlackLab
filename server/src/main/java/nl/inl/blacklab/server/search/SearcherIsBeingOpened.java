@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.search;
 
 import java.io.File;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -13,13 +12,13 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /** A dummy Searcher placeholder while Searcher is being opened. */
-public class SearcherIsBeingOpened extends Searcher {
+public class SearcherIsBeingOpened extends BlackLabIndexImpl {
 
     private String indexName;
 
@@ -68,7 +67,7 @@ public class SearcherIsBeingOpened extends Searcher {
     }
 
     @Override
-    public IndexReader getIndexReader() {
+    public IndexReader reader() {
         throw new UnsupportedOperationException();
     }
 
@@ -83,12 +82,12 @@ public class SearcherIsBeingOpened extends Searcher {
     }
 
     @Override
-    public QueryExecutionContext getDefaultExecutionContext(AnnotatedField fieldName) {
+    public QueryExecutionContext defaultExecutionContext(AnnotatedField fieldName) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getIndexName() {
+    public String name() {
         return indexName;
     }
 
@@ -98,12 +97,12 @@ public class SearcherIsBeingOpened extends Searcher {
     }
 
     @Override
-    public IndexWriter getWriter() {
+    public IndexWriter writer() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public File getIndexDirectory() {
+    public File indexDirectory() {
         return indexDir;
     }
 
@@ -113,12 +112,7 @@ public class SearcherIsBeingOpened extends Searcher {
     }
 
     @Override
-    public List<String> getFieldTerms(String fieldName, int maxResults) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public IndexSearcher getIndexSearcher() {
+    public IndexSearcher searcher() {
         throw new UnsupportedOperationException();
     }
 

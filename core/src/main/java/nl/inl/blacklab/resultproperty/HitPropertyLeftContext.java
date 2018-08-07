@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -39,18 +39,18 @@ public class HitPropertyLeftContext extends HitProperty {
 
     private boolean sensitive;
 
-    private Searcher searcher;
+    private BlackLabIndex searcher;
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, field.annotations().main(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits) {
-        this(hits, hits.getSearcher().mainAnnotatedField().annotations().main(), hits.getSearcher().isDefaultSearchCaseSensitive());
+        this(hits, hits.getSearcher().mainAnnotatedField().annotations().main(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation, boolean sensitive) {
@@ -58,7 +58,7 @@ public class HitPropertyLeftContext extends HitProperty {
         this.searcher = hits.getSearcher();
         this.luceneFieldName = annotation.luceneFieldPrefix();
         this.annotation = annotation;
-        this.terms = searcher.getTerms(annotation);
+        this.terms = searcher.terms(annotation);
         this.sensitive = sensitive;
     }
 

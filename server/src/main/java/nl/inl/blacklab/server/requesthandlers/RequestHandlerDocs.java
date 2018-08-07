@@ -7,9 +7,9 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
@@ -121,7 +121,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 window = searchWindow.getDocResults();
             }
 
-            Searcher searcher = search.getSearcher();
+            BlackLabIndex searcher = search.getSearcher();
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
@@ -147,7 +147,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.getIndexMetadata());
+            RequestHandler.dataStreamDocFields(ds, searcher.metadata());
             ds.endEntry();
             ds.endMap().endEntry();
 

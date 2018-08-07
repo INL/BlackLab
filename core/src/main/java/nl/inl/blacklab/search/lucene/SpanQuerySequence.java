@@ -33,7 +33,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
@@ -209,7 +210,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         boolean anyRewrittenThisCycle = true;
         int pass = 0;
         while (anyRewrittenThisCycle) {
-            if (Searcher.isTraceOptimization())
+            if (BlackLabIndexImpl.isTraceOptimization())
                 logger.debug("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
             pass++;
 
@@ -225,7 +226,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 right = cl.get(i);
                 for (ClauseCombiner combiner : combiners) {
                     int prio = combiner.priority(left, right, reader);
-                    if (Searcher.isTraceOptimization())
+                    if (BlackLabIndexImpl.isTraceOptimization())
                         logger.debug("  i=" + i + ", combiner=" + combiner + ", prio=" + prio);
                     if (prio < highestPrio) {
                         highestPrio = prio;
@@ -237,7 +238,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Any combiners found?
             if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
                 // Yes, execute the highest-prio combiner
-                if (Searcher.isTraceOptimization())
+                if (BlackLabIndexImpl.isTraceOptimization())
                     logger.debug("  Execute combiner: " + highestPrioCombiner + ", index=" + highestPrioIndex);
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
@@ -257,7 +258,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        boolean canDoNfaMatching = Searcher.fromIndexReader(reader).canDoNfaMatching();
+        boolean canDoNfaMatching = BlackLabIndexRegistry.fromIndexReader(reader).canDoNfaMatching();
         boolean anyRewritten = false;
 
         // Make a copy, because our methods rewrite things in-place.
@@ -296,7 +297,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        boolean canDoNfaMatching = Searcher.fromIndexReader(reader).canDoNfaMatching();
+        boolean canDoNfaMatching = BlackLabIndexRegistry.fromIndexReader(reader).canDoNfaMatching();
         boolean anyRewritten = false;
 
         // Make a copy, because our methods rewrite things in-place.

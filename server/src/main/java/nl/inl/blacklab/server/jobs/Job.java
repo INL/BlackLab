@@ -8,8 +8,8 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
-import nl.inl.blacklab.search.Searcher;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -115,7 +115,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
     private long setLevelRunningAt;
 
     /** The index searcher */
-    protected Searcher searcher;
+    protected BlackLabIndex searcher;
 
     /** Has perform() been called or not? Don't call it twice! */
     private boolean performCalled = false;
@@ -160,7 +160,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         return jobDesc;
     }
 
-    public Searcher getSearcher() {
+    public BlackLabIndex getSearcher() {
         return searcher;
     }
 
