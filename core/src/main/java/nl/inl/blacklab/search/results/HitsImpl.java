@@ -1231,7 +1231,7 @@ public class HitsImpl extends Hits {
             annotation = searcher.mainAnnotatedField().annotations().main();
         if (ctx == null)
             ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
-        ctx = ctx.withProperty(annotation.name());
+        ctx = ctx.withAnnotation(annotation);
         findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < hits.size(); j++) {

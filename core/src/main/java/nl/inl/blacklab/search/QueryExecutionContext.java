@@ -23,21 +23,23 @@ public class QueryExecutionContext {
      * @return the context
      */
     public static QueryExecutionContext simple(Searcher searcher, AnnotatedField field) {
-        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        return new QueryExecutionContext(searcher, field, mainPropName, MatchSensitivity.INSENSITIVE);
+        return new QueryExecutionContext(searcher, field.annotations().main(), MatchSensitivity.INSENSITIVE);
     }
 
     /** The searcher object, representing the BlackLab index */
     private Searcher searcher;
-    
-    /** Annotation and optional subannotation to search */
-    private String annotName;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
     private String subpropPrefix;
 
     /** The sensitivity variant of our annotation we'll search. */
     private AnnotationSensitivity sensitivity;
+    
+    /** The originally requested match sensitivity.
+     * 
+     *  This might be different from the AnnotationSensitivity we search, because not all 
+     *  fields support all sensitivities. */
+    private MatchSensitivity requestedSensitivity;
 
     /**
      * Construct a query execution context object.
@@ -49,49 +51,24 @@ public class QueryExecutionContext {
     public QueryExecutionContext(Searcher searcher, Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
-        init(searcher, annotation, matchSensitivity);
-    }
-
-    /**
-     * Construct a query execution context object.
-     * 
-     * @param searcher the searcher object
-     * @param field annotated field to search
-     * @param annotName the annotation to search
-     * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
-     */
-    public QueryExecutionContext(Searcher searcher, AnnotatedField field, String annotName, MatchSensitivity matchSensitivity) {
-        String[] parts = annotName.split("/", -1);
-        if (parts.length > 2)
-            throw new IllegalArgumentException("Annotation name contains more than one colon: " + annotName);
-        Annotation annotation = field.annotations().get(parts[0]);
-        if (annotation == null)
-            throw new IllegalArgumentException("Annotation doesn't exist: " + annotName);
-        if (parts.length > 1)
-            annotation = annotation.subannotation(parts[1]);
-        init(searcher, annotation, matchSensitivity);
-    }
-
-    private void init(Searcher searcher, Annotation annotation, MatchSensitivity matchSensitivity) {
         this.searcher = searcher;
-        this.annotName = annotation.name();
         String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
         this.subpropPrefix = annotation.isSubannotation() ? sep + annotation.subName() + sep : "";
+        this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
     }
-
-    /**
-     * Return a new query execution context with a different annotation selected.
-     * 
-     * @param newAnnotName the (sub)annotation to select
-     * @return the new context
-     */
-    public QueryExecutionContext withProperty(String newAnnotName) {
-        return new QueryExecutionContext(searcher, sensitivity.annotation().field(), newAnnotName, sensitivity.sensitivity());
+    
+    public QueryExecutionContext withAnnotation(Annotation annotation) {
+        return new QueryExecutionContext(searcher, annotation, requestedSensitivity);
     }
 
     public QueryExecutionContext withSensitive(MatchSensitivity matchSensitivity) {
-        return new QueryExecutionContext(searcher, sensitivity.annotation().field(), annotName, matchSensitivity);
+        return new QueryExecutionContext(searcher, sensitivity.annotation(), matchSensitivity);
+    }
+
+    public QueryExecutionContext withXmlTagsAnnotation() {
+        Annotation annotation = sensitivity.annotation().field().annotations().get(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
+        return new QueryExecutionContext(searcher, annotation, requestedSensitivity);
     }
 
     public String optDesensitize(String value) {
@@ -174,6 +151,15 @@ public class QueryExecutionContext {
 
     public Searcher getSearcher() {
         return searcher;
+    }
+
+    /**
+     * Return the annotated field we're searching.
+     * 
+     * @return annotated field
+     */
+    public AnnotatedField field() {
+        return sensitivity.annotation().field();
     }
 
 }

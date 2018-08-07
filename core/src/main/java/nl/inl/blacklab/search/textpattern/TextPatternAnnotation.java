@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
@@ -38,7 +39,15 @@ public class TextPatternAnnotation extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        return input.translate(context.withProperty(annotationName));
+        String[] parts = annotationName.split("/", -1);
+        if (parts.length > 2)
+            throw new IllegalArgumentException("Annotation name contains more than one colon: " + annotationName);
+        Annotation annotation = context.field().annotations().get(parts[0]);
+        if (annotation == null)
+            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName);
+        if (parts.length > 1)
+            annotation = annotation.subannotation(parts[1]);
+        return input.translate(context.withAnnotation(annotation));
     }
 
     @Override
