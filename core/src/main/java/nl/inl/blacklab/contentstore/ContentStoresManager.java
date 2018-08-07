@@ -34,7 +34,7 @@ public class ContentStoresManager {
     }
 
     public void put(Field field, ContentStore store) {
-        contentAccessors.put(field, new ContentAccessor(field.name(), store));
+        contentAccessors.put(field, new ContentAccessor(field, store));
     }
 
     public ContentStore get(Field field) {

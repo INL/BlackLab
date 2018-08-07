@@ -23,4 +23,12 @@ public interface Field {
      * @return lucene field containing offsets, or null if there is none */
     String offsetsField();
 
+    /**
+     * Get the Lucene field that contains the content id (if this has a content store)
+     * @return lucene field containing content id (cid)
+     */
+    default String contentIdField() {
+        return AnnotatedFieldNameUtil.contentIdField(name());
+    }
+
 }
