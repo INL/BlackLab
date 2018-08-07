@@ -13,10 +13,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.spans.SpanQuery;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -49,6 +46,8 @@ public class MockSearcher implements BlackLabIndex {
     private Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
 
     private Analyzer analyzer;
+
+    private IndexSearcher searcher;
 
     public MockSearcher() {
         super();
@@ -120,9 +119,11 @@ public class MockSearcher implements BlackLabIndex {
 
     @Override
     public IndexSearcher searcher() {
-        IndexSearcher searcher = Mockito.mock(IndexSearcher.class);
-        Mockito.when(searcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
         return searcher;
+    }
+    
+    public void setIndexSearcher(IndexSearcher searcher) {
+        this.searcher = searcher;
     }
 
     public void setForwardIndex(Annotation fieldPropName, ForwardIndex forwardIndex) {

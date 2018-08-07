@@ -26,7 +26,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.MyTermSpans;
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;

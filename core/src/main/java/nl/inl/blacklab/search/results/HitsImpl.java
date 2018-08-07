@@ -881,7 +881,7 @@ public class HitsImpl extends Hits {
      * instantiate a HitsWindow and call getKwic() on that; it will fetch all KWICs
      * in the window in a batch, which is more efficient.
      *
-     * @param fieldName field to use for building the KWIC
+     * @param field field to use for building the KWIC
      * @param hit the hit for which we want a KWIC
      * @param contextSize the desired number of words around the hit
      * @return the KWIC
@@ -947,7 +947,7 @@ public class HitsImpl extends Hits {
      * HitsWindow and call getConcordance() on that; it will fetch all concordances
      * in the window in a batch, which is more efficient.
      *
-     * @param fieldName field to use for building the concordance
+     * @param field field to use for building the concordance
      * @param hit the hit for which we want a concordance
      * @param contextSize the desired number of words around the hit
      * @return the concordance
@@ -1232,9 +1232,12 @@ public class HitsImpl extends Hits {
     public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx) {
         if (annotation == null)
             annotation = searcher.mainAnnotatedField().annotations().main();
-        if (ctx == null)
-            ctx = searcher.defaultExecutionContext(settings().concordanceField());
-        ctx = ctx.withAnnotation(annotation);
+        
+        // TODO: use sensitivity settings
+//        if (ctx == null)
+//            ctx = searcher.defaultExecutionContext(settings().concordanceField());
+//        ctx = ctx.withAnnotation(annotation);
+        
         findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < hits.size(); j++) {
@@ -1408,9 +1411,8 @@ public class HitsImpl extends Hits {
         }
         
         // Get word context
-        if (forwardIndex != null)
-            getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
-        Terms terms = forwardIndex == null ? null : forwardIndex.getTerms();
+        getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
+        Terms terms = forwardIndex.getTerms();
 
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();

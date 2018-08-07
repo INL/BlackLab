@@ -17,8 +17,12 @@ package nl.inl.blacklab.search.grouping;
 
 import java.util.Map;
 
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.similarities.BM25Similarity;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
+import org.mockito.Mockito;
 
 import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.mocks.MockSpanQuery;
@@ -39,7 +43,13 @@ public class TestResultsGrouper {
     @Test
     public void testGrouper() {
         BLSpanQuery query = new MockSpanQuery(doc, start, end);
-        Hits hits = Hits.fromSpanQuery(new MockSearcher(), query);
+        MockSearcher searcher = new MockSearcher();
+        
+        IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
+        Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
+
+        searcher.setIndexSearcher(indexSearcher);
+        Hits hits = Hits.fromSpanQuery(searcher, query);
         HitProperty crit = new HitPropertyDocumentId(hits);
         HitGroups grouper = hits.groupedBy(crit);
         Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();

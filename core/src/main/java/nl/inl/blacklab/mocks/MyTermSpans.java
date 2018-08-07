@@ -1,4 +1,4 @@
-package nl.inl.blacklab;
+package nl.inl.blacklab.mocks;
 
 /*
  * Copyright 2005 The Apache Software Foundation

@@ -265,7 +265,7 @@ public class QueryTool {
     /** Parser for Contextual Query Language */
     class ParserContextQl extends Parser {
 
-        Query includedFilterQuery = null;
+        Query includedFilterQuery;
 
         @Override
         public String getPrompt() {
