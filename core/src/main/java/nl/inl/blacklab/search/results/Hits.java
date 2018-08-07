@@ -83,14 +83,14 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * from a SpanQuery, as it's more efficient.
      *
      * @param searcher the searcher object
-     * @param concordanceFieldPropName field to use by default when finding
+     * @param concordanceField field to use by default when finding
      *            concordances
      * @param source where to retrieve the Hit objects from
      * @return hits found
      */
-    public static Hits fromSpans(Searcher searcher, AnnotatedField concordanceFieldPropName, BLSpans source) {
+    public static Hits fromSpans(Searcher searcher, AnnotatedField concordanceField, BLSpans source) {
         Hits hits = new HitsImpl(searcher, source);
-        hits.settings.setConcordanceField(concordanceFieldPropName.name());
+        hits.settings.setConcordanceField(concordanceField);
         return hits;
     }
 

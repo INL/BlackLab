@@ -278,7 +278,7 @@ public class HitsImpl extends Hits {
      */
     private HitsImpl(Searcher searcher, AnnotatedField concordanceFieldName, List<Hit> hits) {
         this(searcher, hits);
-        settings.setConcordanceField(concordanceFieldName.name());
+        settings.setConcordanceField(concordanceFieldName);
     }
 
     /**
@@ -913,7 +913,7 @@ public class HitsImpl extends Hits {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getKwic(getSearcher().annotatedField(settings().concordanceField()), h, contextSize);
+            return getKwic(settings().concordanceField(), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -986,7 +986,7 @@ public class HitsImpl extends Hits {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getConcordance(getSearcher().annotatedField(settings().concordanceField()), h, contextSize);
+            return getConcordance(settings().concordanceField(), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -1035,7 +1035,7 @@ public class HitsImpl extends Hits {
         }
 
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), getSearcher().annotatedField(settings().concordanceField()));
+        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), settings().concordanceField());
     }
 
     /**
@@ -1059,7 +1059,7 @@ public class HitsImpl extends Hits {
         }
 
         // Get the concordances
-        kwics = retrieveKwics(settings().contextSize(), getSearcher().annotatedField(settings().concordanceField()));
+        kwics = retrieveKwics(settings().contextSize(), settings().concordanceField());
     }
 
     /**
@@ -1229,7 +1229,7 @@ public class HitsImpl extends Hits {
         if (annotation == null)
             annotation = searcher.mainAnnotatedField().annotations().main();
         if (ctx == null)
-            ctx = searcher.getDefaultExecutionContext(settings().concordanceField());
+            ctx = searcher.getDefaultExecutionContext(settings().concordanceField().name());
         ctx = ctx.withProperty(annotation.name());
         findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();

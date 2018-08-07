@@ -1442,7 +1442,7 @@ public class QueryTool {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = searcher.annotatedField(hits.settings().concordanceField());
+                AnnotatedField field = hits.settings().concordanceField();
                 collocAnnotation = field.annotations().main();
             }
 

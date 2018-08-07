@@ -44,7 +44,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
     public static HitPropValue deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.getSearcher().annotatedField(hits.settings().concordanceField());
+        AnnotatedField field = hits.settings().concordanceField();
         String propName = parts[0];
         Annotation annotation = field.annotations().get(propName);
         boolean sensitive = parts[1].equalsIgnoreCase("s");

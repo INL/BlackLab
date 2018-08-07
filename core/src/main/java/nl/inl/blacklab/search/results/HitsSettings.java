@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 public class HitsSettings {
 
@@ -24,7 +25,7 @@ public class HitsSettings {
     /**
      * The default field to use for retrieving concordance information.
      */
-    private String concordanceFieldName;
+    private AnnotatedField concordanceField;
 
     /**
      * Forward index to use as text context of &lt;w/&gt; tags in concordances
@@ -47,19 +48,23 @@ public class HitsSettings {
     /** Our desired context size */
     private int desiredContextSize;
 
+    /** Index object, so we can ask for the default contents field if none was set yet */
+    private Searcher searcher;
+
     public HitsSettings(HitsSettings defaults) {
-        concordanceFieldName = defaults.concordanceFieldName;
-        maxHitsToRetrieve = defaults.maxHitsToRetrieve;
-        maxHitsToCount = defaults.maxHitsToCount;
-        concsType = defaults.concsType;
-        concWordProps = defaults.concWordProps;
-        concPunctProps = defaults.concPunctProps;
-        concAttrProps = defaults.concAttrProps;
-        desiredContextSize = defaults.desiredContextSize;
+        concordanceField = defaults.concordanceField();
+        maxHitsToRetrieve = defaults.maxHitsToRetrieve();
+        maxHitsToCount = defaults.maxHitsToCount();
+        concsType = defaults.concordanceType();
+        concWordProps = defaults.concWordProp();
+        concPunctProps = defaults.concPunctProp();
+        concAttrProps = defaults.concAttrProps();
+        desiredContextSize = defaults.contextSize();
     }
 
-    public HitsSettings() {
-        this.concordanceFieldName = Searcher.DEFAULT_CONTENTS_FIELD_NAME;
+    public HitsSettings(Searcher searcher) {
+        this.searcher = searcher;
+        this.concordanceField = null; // later on we'll ask for the main contents field (when the index knows that)
         maxHitsToRetrieve = Searcher.DEFAULT_MAX_RETRIEVE;
         maxHitsToCount = Searcher.DEFAULT_MAX_COUNT;
         concsType = Searcher.DEFAULT_CONC_TYPE;
@@ -126,17 +131,20 @@ public class HitsSettings {
      *
      * @return the field name
      */
-    public String concordanceField() {
-        return concordanceFieldName;
+    public AnnotatedField concordanceField() {
+        // If not set yet, ask the index for the default field
+        if (concordanceField == null)
+            concordanceField = searcher.getIndexMetadata().annotatedFields().main();
+        return concordanceField;
     }
 
     /**
      * Sets the field to use for retrieving concordances.
      *
-     * @param concordanceFieldName the field name
+     * @param concordanceField the field 
      */
-    public void setConcordanceField(String concordanceFieldName) {
-        this.concordanceFieldName = concordanceFieldName;
+    public void setConcordanceField(AnnotatedField concordanceField) {
+        this.concordanceField = concordanceField;
     }
 
     /**

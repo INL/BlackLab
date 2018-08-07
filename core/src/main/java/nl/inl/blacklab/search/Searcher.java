@@ -440,7 +440,7 @@ public abstract class Searcher {
     }
 
     public Searcher() {
-        hitsSettings = new HitsSettings();
+        hitsSettings = new HitsSettings(this);
     }
 
 //	/**
@@ -661,7 +661,7 @@ public abstract class Searcher {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         Hits hits = Hits.fromSpanQuery(this, query);
-        hits.settings().setConcordanceField(field.name());
+        hits.settings().setConcordanceField(field);
         return hits;
     }
 
@@ -691,7 +691,7 @@ public abstract class Searcher {
     public Hits find(TextPattern pattern, AnnotatedField field, Query filter)
             throws BooleanQuery.TooManyClauses {
         Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter));
-        hits.settings().setConcordanceField(field.name());
+        hits.settings().setConcordanceField(field);
         return hits;
     }
 
@@ -849,7 +849,7 @@ public abstract class Searcher {
             int endAtWord) {
         Hit hit = new Hit(docId, startAtWord, endAtWord);
         Hits hits = Hits.fromList(this, Arrays.asList(hit));
-        hits.settings().setConcordanceField(field.name());
+        hits.settings().setConcordanceField(field);
         Kwic kwic = hits.getKwic(hit, 0);
         return kwic.getDocContents();
     }

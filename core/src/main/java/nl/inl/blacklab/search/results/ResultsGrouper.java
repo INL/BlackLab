@@ -95,7 +95,7 @@ public class ResultsGrouper extends HitGroups {
     }
 
     private void init(Hits hits, HitProperty criteria) {
-        defaultConcField = searcher.annotatedField(hits.settings().concordanceField());
+        defaultConcField = hits.settings().concordanceField();
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
             hits.findContext(requiredContext);
