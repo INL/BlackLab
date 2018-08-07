@@ -10,6 +10,13 @@ public interface Annotation {
 
 	/** @return this annotation's name */
 	String name();
+	
+	/** Get the subannotation name, if this is a subannotation.
+	 * @return subannotation name, or null if this is not a subannotation
+	 */
+    String subName();
+    
+    boolean isSubannotation();
 
     String uiType();
 
@@ -80,6 +87,18 @@ public interface Annotation {
     default String forwardIndexIdField() {
         return AnnotatedFieldNameUtil.forwardIndexIdField(luceneFieldPrefix());
     }
+    
+    /**
+     * Get subannotation descriptor.
+     * 
+     * Note that subannotations are not (yet) declared in index structure,
+     * so this will always succeed, even if the subannotation wasn't actually
+     * indexed. In that case, no hits will be found.
+     * 
+     * @param subName subannotation name
+     * @return subannotation descriptor
+     */
+    Annotation subannotation(String subName);
 
     
 }

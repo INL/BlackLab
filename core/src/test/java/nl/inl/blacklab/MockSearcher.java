@@ -97,7 +97,7 @@ public class MockSearcher extends Searcher {
 
     @Override
     public QueryExecutionContext getDefaultExecutionContext(AnnotatedField field) {
-        return QueryExecutionContext.getSimple(this, field);
+        return QueryExecutionContext.simple(this, field);
     }
 
     @Override

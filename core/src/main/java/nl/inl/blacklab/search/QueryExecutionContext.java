@@ -1,11 +1,9 @@
 package nl.inl.blacklab.search;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
@@ -16,14 +14,30 @@ import nl.inl.util.StringUtil;
  * object is passed to the translation methods and keeps track of this context.
  */
 public class QueryExecutionContext {
+    /**
+     * Get a simple execution context for a field. Used for testing/debugging
+     * purposes.
+     *
+     * @param searcher the searcher
+     * @param field field to get an execution context for
+     * @return the context
+     */
+    public static QueryExecutionContext simple(Searcher searcher, AnnotatedField field) {
+        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+        return new QueryExecutionContext(searcher, field, mainPropName, false, false);
+    }
+
     /** The searcher object, representing the BlackLab index */
     private Searcher searcher;
 
     /** The (annotated) field to search */
     private AnnotatedField field;
+    
+    /** Annotation and optional subannotation to search */
+    private String annotName;
 
     /** The annotation to search */
-    private String annotName;
+    private Annotation annotation;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
     private String subpropPrefix;
@@ -48,6 +62,31 @@ public class QueryExecutionContext {
      * Construct a query execution context object.
      * 
      * @param searcher the searcher object
+     * @param annotation the annotation to search
+     * @param caseSensitive whether search defaults to case-sensitive
+     * @param diacriticsSensitive whether search defaults to diacritics-sensitive
+     */
+    public QueryExecutionContext(Searcher searcher, Annotation annotation, boolean caseSensitive, boolean diacriticsSensitive) {
+        if (annotation == null)
+            throw new IllegalArgumentException("Annotation doesn't exist: null");
+        init(searcher, annotation, caseSensitive, diacriticsSensitive);
+    }
+
+    private void init(Searcher searcher, Annotation annotation, boolean caseSensitive, boolean diacriticsSensitive) {
+        this.searcher = searcher;
+        this.field = annotation.field();
+        this.annotation = annotation;
+        this.annotName = annotation.name();
+        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
+        this.subpropPrefix = annotation.isSubannotation() ? sep + annotation.subName() + sep : "";
+        this.caseSensitive = caseSensitive;
+        this.diacriticsSensitive = diacriticsSensitive;
+    }
+
+    /**
+     * Construct a query execution context object.
+     * 
+     * @param searcher the searcher object
      * @param field annotated field to search
      * @param annotName the annotation to search
      * @param caseSensitive whether search defaults to case-sensitive
@@ -55,30 +94,29 @@ public class QueryExecutionContext {
      */
     public QueryExecutionContext(Searcher searcher, AnnotatedField field, String annotName, boolean caseSensitive,
             boolean diacriticsSensitive) {
-        this.searcher = searcher;
-        this.field = field;
         String[] parts = annotName.split("/", -1);
         if (parts.length > 2)
-            throw new IllegalArgumentException("propName contains more than one colon!");
-        this.annotName = parts[0];
-        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
-        this.subpropPrefix = parts.length == 2 ? sep + parts[1] + sep : "";
-        this.caseSensitive = caseSensitive;
-        this.diacriticsSensitive = diacriticsSensitive;
+            throw new IllegalArgumentException("Annotation name contains more than one colon: " + annotName);
+        Annotation annotation = field.annotations().get(parts[0]);
+        if (annotation == null)
+            throw new IllegalArgumentException("Annotation doesn't exist: " + annotName);
+        if (parts.length > 1)
+            annotation = annotation.subannotation(parts[1]);
+        init(searcher, annotation, caseSensitive, diacriticsSensitive);
     }
 
     /**
      * Return a new query execution context with a different annotation selected.
      * 
-     * @param newAnnotName the annotation to select
+     * @param newAnnotName the (sub)annotation to select
      * @return the new context
      */
     public QueryExecutionContext withProperty(String newAnnotName) {
-        return new QueryExecutionContext(searcher, field, newAnnotName, caseSensitive, diacriticsSensitive);
+        return new QueryExecutionContext(searcher, annotation.field(), newAnnotName, caseSensitive, diacriticsSensitive);
     }
 
     public QueryExecutionContext withSensitive(boolean caseSensitive, boolean diacriticsSensitive) {
-        return new QueryExecutionContext(searcher, field, annotName, caseSensitive, diacriticsSensitive);
+        return new QueryExecutionContext(searcher, annotation.field(), annotName, caseSensitive, diacriticsSensitive);
     }
 
     public String optDesensitize(String value) {
@@ -113,58 +151,43 @@ public class QueryExecutionContext {
     }
     
     /**
-     * Return alternatives for the current field/prop that exist and are appropriate
-     * for our current settings.
+     * Return sensitivity to use
      *
-     * @return the alternatives that exist, in order of appropriateness
+     * @return sensitivity to use
      */
-    private String[] getSensitivities() {
-
-        if (searcher.getClass().getName().endsWith("MockSearcher")) {
-            // TODO: give MockSearcher an index structure so we don't need this hack
-            if (caseSensitive)
-                return new String[] { AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME };
-            return new String[] { AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME };
-        }
-
-        if (field == null) // possible..?
-            return null;
-
-        // Find the annotation
-        Annotation pd = field.annotations().get(annotName);
+    private AnnotationSensitivity getSensitivity() {
 
         // New alternative naming scheme (every alternative has a name)
-        List<String> validAlternatives = new ArrayList<>();
         if (!caseSensitive && !diacriticsSensitive) {
             // search insensitive if available
-            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
         } else if (caseSensitive && diacriticsSensitive) {
             // search fully-sensitive if available
-            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
         } else if (!diacriticsSensitive) {
             // search case-sensitive if available
-            if (pd.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+            if (annotation.hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
         } else {
             // search diacritics-sensitive if available
-            if (pd.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.SENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME);
-            if (pd.hasSensitivity(MatchSensitivity.INSENSITIVE))
-                validAlternatives.add(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+            if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.CASE_INSENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.SENSITIVE);
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE))
+                return annotation.sensitivity(MatchSensitivity.INSENSITIVE);
         }
-        return validAlternatives.toArray(new String[] {});
+        throw new RuntimeException("No suitable sensitivity found"); // should never happen
     }
 
     /**
@@ -189,65 +212,9 @@ public class QueryExecutionContext {
      *         name otherwise
      */
     public String luceneField(boolean includeAlternative) {
-
-        // Determine available alternatives based on sensitivity preferences.
-        String[] alternatives = includeAlternative ? getSensitivities() : null;
-
-        if (searcher.getClass().getName().endsWith("MockSearcher")) {
-            // Mostly for testing. Don't check, just combine field parts.
-            // TODO: give MockSearcher an index structure so we don't need this hack
-            if (alternatives == null || alternatives.length == 0)
-                return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
-            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName, alternatives[0]);
-        }
-
-        // Find the field and the annotation.
-        if (field == null)
-            return null;
-
-        if (AnnotatedFieldNameUtil.isBookkeepingSubfield(annotName)) {
-            // Not a annotation but a bookkeeping subfield (prob. starttag/endtag); ok, return it
-            // (can be removed when old field naming scheme is removed)
-            return AnnotatedFieldNameUtil.bookkeepingField(field.name(), annotName);
-        }
-
-        // Find the annotation
-        Annotation pd = field.annotations().get(annotName);
-        if (pd == null)
-            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName); // doesn't exist? use plain annotation name
-
-        if (alternatives == null || alternatives.length == 0) {
-            // Don't use any alternatives
-            return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
-        }
-
-        // Find the first available alternative to use
-        for (String alt : alternatives) {
-            if (pd.hasSensitivity(MatchSensitivity.fromLuceneFieldCode(alt))) {
-                // NOTE: is this loop necessary at all? getAlternatives() only
-                //  returns available alternatives, so the first one should always
-                //  be okay, right?
-                return AnnotatedFieldNameUtil.annotationField(field.name(), annotName, alt);
-            }
-        }
-
-        // No valid alternative found. Use plain annotation.
-        // NOTE: should never happen, and doesn't make sense anymore as there are
-        // no 'plain properties' anymore.
-        return AnnotatedFieldNameUtil.annotationField(field.name(), annotName);
-    }
-
-    /**
-     * Get a simple execution context for a field. Used for testing/debugging
-     * purposes.
-     *
-     * @param searcher the searcher
-     * @param field field to get an execution context for
-     * @return the context
-     */
-    public static QueryExecutionContext getSimple(Searcher searcher, AnnotatedField field) {
-        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        return new QueryExecutionContext(searcher, field, mainPropName, false, false);
+        if (!includeAlternative)
+            return annotation.luceneFieldPrefix();
+        return getSensitivity().luceneField();
     }
 
     /**

@@ -75,5 +75,20 @@ public class MockAnnotation implements Annotation {
     public boolean isInternal() {
         return false;
     }
+
+    @Override
+    public Annotation subannotation(String subName) {
+        return null;
+    }
+
+    @Override
+    public String subName() {
+        return null;
+    }
+
+    @Override
+    public boolean isSubannotation() {
+        return false;
+    }
     
 }

@@ -2,7 +2,9 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +22,7 @@ class AnnotationImpl implements Annotation, Freezable {
     private String name;
 
     /** Name to display in user interface (optional) */
-    private String displayName;
+    String displayName;
 
     /** Description for user interface (optional) */
     private String description = "";
@@ -54,6 +56,11 @@ class AnnotationImpl implements Annotation, Freezable {
 
     private boolean frozen;
 
+    /** Our subannotations. This is not actually considered state, just cache, because all 
+     *  subannotations are valid (we don't know which ones were indexed).
+     */
+    Map<String, Subannotation> cachedSubs = new HashMap<>();
+    
     AnnotationImpl(AnnotatedField field) {
         this(field, null);
     }
@@ -289,6 +296,26 @@ class AnnotationImpl implements Annotation, Freezable {
         } else if (!name.equals(other.name))
             return false;
         return true;
+    }
+    
+    @Override
+    public Annotation subannotation(String subName) {
+        Subannotation subAnnotation = cachedSubs.get(subName);
+        if (subAnnotation == null) {
+            subAnnotation = new Subannotation(this, subName);
+            cachedSubs.put(subName, subAnnotation);
+        }
+        return subAnnotation;
+    }
+
+    @Override
+    public String subName() {
+        return null;
+    }
+
+    @Override
+    public boolean isSubannotation() {
+        return false;
     }
 
 }
