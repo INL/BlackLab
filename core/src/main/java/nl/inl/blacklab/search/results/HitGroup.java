@@ -29,9 +29,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field) {
+    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
         super(groupIdentity);
-        results = Hits.emptyList(searcher, field);
+        results = Hits.emptyList(searcher, field, settings);
     }
 
     /**
@@ -44,9 +44,9 @@ public class HitGroup extends Group {
      * @param field concordance field
      * @param hits the hits
      */
-    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits) {
+    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         super(groupIdentity);
-        results = Hits.fromList(searcher, field, hits);
+        results = Hits.fromList(searcher, field, hits, settings);
     }
 
     public Hits getHits() {

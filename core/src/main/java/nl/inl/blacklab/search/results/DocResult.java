@@ -37,7 +37,7 @@ public class DocResult {
     public DocResult(BlackLabIndex searcher, AnnotatedField field, int docId, float score) {
         this.docId = docId;
         this.score = score;
-        hits = Hits.emptyList(searcher, field);
+        hits = Hits.emptyList(searcher, field, null);
     }
 
     /**

@@ -74,7 +74,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
         hit = Hit.create(luceneDocId, start, end);
-        Hits hits = Hits.fromList(searcher, searcher.mainAnnotatedField(), Arrays.asList(hit));
+        Hits hits = Hits.fromList(searcher, searcher.mainAnnotatedField(), Arrays.asList(hit), null);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
         hits.settings().setConcordanceType(origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX);
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);

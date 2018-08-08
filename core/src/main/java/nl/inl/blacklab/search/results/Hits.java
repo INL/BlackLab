@@ -71,10 +71,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @param searcher the searcher object
      * @param field field our hits are from
+     * @param settings search settings
      * @return hits found
      */
-    public static Hits emptyList(BlackLabIndex searcher, AnnotatedField field) {
-        return fromList(searcher, field, (List<Hit>) null);
+    public static Hits emptyList(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
+        return fromList(searcher, field, (List<Hit>) null, settings);
     }
 
     /**
@@ -84,11 +85,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @param searcher the searcher object
      * @param field field our hits are from
-     * @param docHits the list of hits to wrap
+     * @param hits the list of hits to wrap, or null for empty Hits object
+     * @param settings search settings
      * @return hits found
      */
-    public static Hits fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> docHits) {
-        return new Hits(searcher, field, docHits);
+    public static Hits fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        return new Hits(searcher, field, hits, settings);
     }
 
     /**
@@ -96,12 +98,13 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @param searcher the searcher object
      * @param query the query to execute to get the hits
+     * @param settings search settings
      * @return hits found
      */
-    public static Hits fromSpanQuery(BlackLabIndex searcher, SpanQuery query) {
+    public static Hits fromSpanQuery(BlackLabIndex searcher, SpanQuery query, HitsSettings settings) {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-        return new Hits(searcher, searcher.annotatedField(query.getField()), query);
+        return new Hits(searcher, searcher.annotatedField(query.getField()), query, settings);
     }
 
     /**
@@ -113,10 +116,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param searcher the searcher object
      * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
+     * @param settings search settings
      * @return hits found
      */
-    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source) {
-        return new Hits(searcher, field, source);
+    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
+        return new Hits(searcher, field, source, settings);
     }
 
     // Hits object ids
@@ -302,10 +306,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Constructors
     //--------------------------------------------------------------------
 
-    public Hits(BlackLabIndex searcher, AnnotatedField field) {
+    public Hits(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
         this.index = searcher;
         this.field = field;
-        settings = searcher.hitsSettings().copy(); // , concordanceFieldName);
+        this.settings = settings == null ? searcher.hitsSettings().copy() : settings;
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
     }
     
@@ -318,8 +322,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param field field our hits came from
      * @param hits the list of hits to wrap
      */
-    protected Hits(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits) {
-        this(searcher, field);
+    protected Hits(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        this(searcher, field, settings);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         currentContextSize = -1;
@@ -344,8 +348,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    private Hits(BlackLabIndex searcher, AnnotatedField field, SpanQuery sourceQuery) throws TooManyClauses {
-        this(searcher, field, (List<Hit>) null);
+    private Hits(BlackLabIndex searcher, AnnotatedField field, SpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
+        this(searcher, field, (List<Hit>) null, settings);
         try {
             IndexReader reader = searcher.reader();
             if (!(sourceQuery instanceof BLSpanQuery))
@@ -408,8 +412,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      */
-    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpans source) {
-        this(searcher, field, (List<Hit>) null);
+    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
+        this(searcher, field, (List<Hit>) null, settings);
 
         currentSourceSpans = source;
         try {
@@ -426,9 +430,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * other fields are.
      *
      * @param copyFrom the Hits object to copy
+     * @param settings settings to override, or null to copy
      */
-    private Hits(Hits copyFrom) {
-        this(copyFrom.index, copyFrom.field);
+    private Hits(Hits copyFrom, HitsSettings settings) {
+        this(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -442,7 +447,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         docsCounted = copyFrom.countSoFarDocsCounted();
         previousHitDoc = copyFrom.previousHitDoc;
         
-        copySettingsFrom(copyFrom);
+        copyMaxAndContextFrom(copyFrom);
 
         currentContextSize = -1; // context is not copied
         etiquette = new ThreadPriority();
@@ -485,11 +490,13 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * NOTE: Why not use clone()/Cloneable? See
      * http://www.artima.com/intv/bloch13.html
+     * 
+     * @param settings settings to use, or null to copy settings too
      *
      * @return a copy of this Hits object
      */
-    public Hits copy() {
-        return new Hits(this);
+    public Hits copy(HitsSettings settings) {
+        return new Hits(this, settings);
     }
 
     /**
@@ -501,6 +508,17 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     public void copySettingsFrom(Hits copyFrom) {
         settings = copyFrom.settings.copy();
+        copyMaxAndContextFrom(copyFrom);
+    }
+
+    /**
+     * Copy maxHitsRetrieved/-Counted and hitQueryContext from another Hits object.
+     *
+     * NOTE: this should be phased out, and copy() or adapters should be used.
+     *
+     * @param copyFrom where to copy stuff from
+     */
+    public void copyMaxAndContextFrom(Hits copyFrom) {
         this.maxHitsRetrieved = copyFrom.maxHitsRetrieved();
         this.maxHitsCounted = copyFrom.maxHitsCounted();
         this.hitQueryContext = copyFrom.getHitQueryContext();
@@ -537,7 +555,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @return sorted hits
      */
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        Hits hits = copy();
+        Hits hits = copy(null);
         sortProp = sortProp.copyWithHits(hits);
         
         // Sort hits
@@ -595,8 +613,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             if (property.get(i).equals(value))
                 filtered.add(get(i));
         }
-        Hits hits = new Hits(index, field, filtered);
-        hits.copySettingsFrom(this);
+        Hits hits = new Hits(index, field, filtered, settings);
+        hits.copyMaxAndContextFrom(this);
         return hits;
     }
 
@@ -715,7 +733,26 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @return the window
      */
     public HitsWindow window(int first, int windowSize) {
-        return new HitsWindow(this, first, windowSize);
+        return new HitsWindow(this, first, windowSize, settings());
+    }
+
+    /**
+     * Get a window into this list of hits.
+     *
+     * Use this if you're displaying part of the resultset, like in a paging
+     * interface. It makes sure BlackLab only works with the hits you want to
+     * display and doesn't do any unnecessary processing on the other hits.
+     *
+     * HitsWindow includes methods to assist with paging, like figuring out if there
+     * hits before or after the window.
+     *
+     * @param first first hit in the window (0-based)
+     * @param windowSize size of the window
+     * @param settings settings to use, or null to inherit
+     * @return the window
+     */
+    public HitsWindow window(int first, int windowSize, HitsSettings settings) {
+        return new HitsWindow(this, first, windowSize, settings == null ? this.settings() : settings);
     }
 
     
@@ -870,15 +907,15 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return Hits.emptyList(index, field);
+            return Hits.emptyList(index, field, settings);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        Hits result = Hits.fromList(index, field, hitsInDoc);
-        result.copySettingsFrom(this);
+        Hits result = Hits.fromList(index, field, hitsInDoc, settings);
+        result.copyMaxAndContextFrom(this);
         return result;
     }
 
@@ -984,8 +1021,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     public Kwic getKwic(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        Hits h = new Hits(index, index.mainAnnotatedField(), oneHit);
-        h.copySettingsFrom(this); // concordance type, etc.
+        Hits h = new Hits(index, index.mainAnnotatedField(), oneHit, settings);
+        h.copyMaxAndContextFrom(this); // concordance type, etc.
         Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, field);
         return oneConc.get(hit);
     }
@@ -1048,8 +1085,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     public synchronized Concordance getConcordance(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        Hits h = new Hits(index, index.mainAnnotatedField(), oneHit);
-        h.copySettingsFrom(this); // concordance type, etc.
+        Hits h = new Hits(index, index.mainAnnotatedField(), oneHit, settings);
+        h.copyMaxAndContextFrom(this); // concordance type, etc.
         if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
             Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, field);
             return oneKwic.get(hit).toConcordance();
@@ -1210,8 +1247,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = new Hits(index, field, l);
-            hitsInThisDoc.copySettingsFrom(this);
+            Hits hitsInThisDoc = new Hits(index, field, l, settings);
+            hitsInThisDoc.copyMaxAndContextFrom(this);
             hitsInThisDoc.makeConcordancesSingleDocContentStore(field, contextSize, conc, hl);
         }
         return conc;
@@ -1301,8 +1338,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
             Map<Hit, Kwic> conc1 = new HashMap<>();
             for (List<Hit> l : hitsPerDocument.values()) {
-                Hits hitsInThisDoc = new Hits(index, index.mainAnnotatedField(), l);
-                hitsInThisDoc.copySettingsFrom(this);
+                Hits hitsInThisDoc = new Hits(index, index.mainAnnotatedField(), l, settings);
+                hitsInThisDoc.copyMaxAndContextFrom(this);
                 hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
                         attrForwardIndices, contextSize, conc1);
             }
@@ -1515,8 +1552,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
         // Find context for the hits in the current document
-        Hits hitsObj = new Hits(index, index.mainAnnotatedField(), hitsInSameDoc);
-        hitsObj.copySettingsFrom(this);
+        Hits hitsObj = new Hits(index, index.mainAnnotatedField(), hitsInSameDoc, settings);
+        hitsObj.copyMaxAndContextFrom(this);
         hitsObj.getContextWords(settings().contextSize(), fis);
 
         // Copy the contexts from the temporary Hits object to this one

@@ -33,7 +33,7 @@ public class RequestHandlerExplain extends RequestHandler {
         BlackLabIndex searcher = getSearcher();
         String patt = searchParam.getString("patt");
         try {
-            QueryExplanation explanation = searcher.explain(CorpusQueryLanguageParser.parse(patt));
+            QueryExplanation explanation = searcher.explain(CorpusQueryLanguageParser.parse(patt), searcher.mainAnnotatedField());
 
             // Assemble response
             ds.startMap()

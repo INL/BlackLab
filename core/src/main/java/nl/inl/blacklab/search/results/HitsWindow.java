@@ -47,9 +47,10 @@ public class HitsWindow extends Hits implements ResultsWindow {
      * @param source the larger Hits object we would like a window into
      * @param first the first hit in our window
      * @param windowSize the size of our window
+     * @param settings settings to use
      */
-    HitsWindow(Hits source, int first, int windowSize) {
-        super(source.getSearcher(), source.field(), (List<Hit>) null);
+    HitsWindow(Hits source, int first, int windowSize, HitsSettings settings) {
+        super(source.getSearcher(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;
@@ -79,7 +80,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
             // OPT: copy context as well..?
         }
 
-        copySettingsFrom(source); // type of concordances to make, etc.
+        copyMaxAndContextFrom(source); // type of concordances to make, etc.
     }
 
     /**

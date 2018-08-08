@@ -70,7 +70,7 @@ public final class HitsSettings implements Freezable<HitsSettings> {
      * Get a (non-frozen) copy.
      * @return non-frozen copy
      */
-    HitsSettings copy() {
+    public HitsSettings copy() {
         return new HitsSettings(this);
     }
 

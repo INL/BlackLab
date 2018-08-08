@@ -11,7 +11,7 @@ public class HitsSampleImpl extends HitsSample {
     Hits source;
 
     HitsSampleImpl(Hits hits, float ratio, long seed) {
-        super(hits.getSearcher(), hits.field(), ratio, seed);
+        super(hits.getSearcher(), hits.field(), ratio, seed, hits.settings());
         if (ratio < 0 || ratio > 1)
             throw new IllegalArgumentException("ratio must be in the range 0-1");
         this.source = hits;
@@ -24,11 +24,11 @@ public class HitsSampleImpl extends HitsSample {
 
         selectHits(hits);
         
-        copySettingsFrom(source); // type of concordances to make, etc.
+        copyMaxAndContextFrom(source); // type of concordances to make, etc.
     }
 
     HitsSampleImpl(Hits hits, int number, long seed) {
-        super(hits.getSearcher(), hits.field(), number, seed);
+        super(hits.getSearcher(), hits.field(), number, seed, hits.settings());
         if (number < 0)
             throw new IllegalArgumentException("Negative sample number specified");
         if (number > hits.size())
@@ -40,7 +40,7 @@ public class HitsSampleImpl extends HitsSample {
 
         selectHits(hits);
         
-        copySettingsFrom(source); // type of concordances to make, etc.
+        copyMaxAndContextFrom(source); // type of concordances to make, etc.
     }
 
     private void selectHits(Hits selectFrom) {
@@ -68,13 +68,13 @@ public class HitsSampleImpl extends HitsSample {
         }
     }
 
-    private HitsSampleImpl(HitsSampleImpl copyFrom) {
-        super(copyFrom.index, copyFrom.field, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
+    private HitsSampleImpl(HitsSampleImpl copyFrom, HitsSettings settings) {
+        super(copyFrom.index, copyFrom.field, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed, settings == null ? copyFrom.settings : settings);
     }
 
     @Override
-    public HitsSampleImpl copy() {
-        return new HitsSampleImpl(this);
+    public HitsSampleImpl copy(HitsSettings settings) {
+        return new HitsSampleImpl(this, settings);
     }
 
     @Override

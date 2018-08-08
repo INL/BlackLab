@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 
 public class MockHits extends Hits {
 
@@ -25,7 +26,7 @@ public class MockHits extends Hits {
     private int numberOfDocs;
 
     public MockHits(BlackLabIndex searcher, AnnotatedField field, int[] doc, int[] start, int[] end) {
-        super(searcher, field);
+        super(searcher, field, null);
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -52,7 +53,7 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public Hits copy() {
+    public Hits copy(HitsSettings settings) {
         return new MockHits(index, field, doc, start, end);
     }
 

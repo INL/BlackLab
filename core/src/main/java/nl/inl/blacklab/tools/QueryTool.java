@@ -753,7 +753,7 @@ public class QueryTool {
             } else if (lcased.startsWith("context ")) {
                 contextSize = parseInt(lcased.substring(8), 0);
                 if (hits != null && hits.settings().contextSize() != contextSize) {
-                    hits.settings().setContextSize(contextSize);
+                    hits = hits.copy(hits.settings().copy().setContextSize(contextSize).freeze());
                     collocations = null;
                 }
                 showResultsPage();
@@ -1130,7 +1130,7 @@ public class QueryTool {
             BLSpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
-            hits = searcher.find(spanQuery);
+            hits = searcher.find(spanQuery, null);
             docs = null;
             groups = null;
             sortedHits = null;
@@ -1572,7 +1572,7 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
+        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, hitsToShow.settings().copy().setContextSize(contextSize).freeze());
 
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();

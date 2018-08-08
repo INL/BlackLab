@@ -52,14 +52,15 @@ public abstract class HitsSample extends Hits {
      * @param ratio ratio of hits to select, from 0 (none) to 1 (all)
      * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
      *            randomly chosen seed
+     * @param settings settings to use, or null for defaults
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, float ratio, long seed) {
+    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, float ratio, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query), ratio, seed);
+        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), ratio, seed);
     }
 
     /**
@@ -70,14 +71,15 @@ public abstract class HitsSample extends Hits {
      * @param number number of hits to select
      * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
      *            randomly chosen seed
+     * @param settings settings to use
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, int number, long seed) {
+    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, int number, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query), number, seed);
+        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), number, seed);
     }
 
     protected static long getRandomSeed() {
@@ -95,23 +97,23 @@ public abstract class HitsSample extends Hits {
 
     protected Random random;
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, float ratio, long seed) {
-        super(searcher, field, new ArrayList<Hit>());
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, float ratio, long seed, HitsSettings settings) {
+        super(searcher, field, new ArrayList<Hit>(), settings);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, int number, long seed) {
-        super(searcher, field, new ArrayList<Hit>());
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, int number, long seed, HitsSettings settings) {
+        super(searcher, field, new ArrayList<Hit>(), settings);
         this.numberOfHitsToSelect = number;
         exactNumberGiven = true;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, float ratio, long seed) {
-        super(searcher, field, hits);
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, float ratio, long seed, HitsSettings settings) {
+        super(searcher, field, hits, settings);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);

@@ -118,7 +118,7 @@ public class TestIndex {
         }
 
         // Create the BlackLab searcher object
-        HitsSettings settings = HitsSettings.defaults().setContextSize(1);
+        HitsSettings settings = HitsSettings.defaults().setContextSize(1).freeze();
         searcher = BlackLabIndex.open(indexDir, settings);
         word = searcher.mainAnnotatedField().annotations().get("word");
     }
@@ -176,7 +176,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public Hits find(String pattern, Query filter) throws ParseException {
-        return searcher.find(CorpusQueryLanguageParser.parse(pattern), filter);
+        return searcher.find(CorpusQueryLanguageParser.parse(pattern), searcher.mainAnnotatedField(), filter, null);
     }
 
     /**
@@ -198,7 +198,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public List<String> findConc(BLSpanQuery query) throws ParseException {
-        return getConcordances(searcher.find(query), word);
+        return getConcordances(searcher.find(query, null), word);
     }
 
     /**

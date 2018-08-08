@@ -192,11 +192,12 @@ public interface BlackLabIndex extends Closeable {
      * Find hits for a pattern in a field.
      *
      * @param query the pattern to find
+     * @param settings search settings, or null for default
      * @return the hits found
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query) throws BooleanQuery.TooManyClauses;
+    Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses;
 
     /**
      * Find hits for a pattern in a field.
@@ -204,71 +205,14 @@ public interface BlackLabIndex extends Closeable {
      * @param pattern the pattern to find
      * @param field field to find pattern in
      * @param filter determines which documents to search
+     * @param settings search settings, or null for default
      *
      * @return the hits found
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(TextPattern pattern, AnnotatedField field, Query filter)
+    Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
             throws BooleanQuery.TooManyClauses;
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param pattern the pattern to find
-     * @param filter determines which documents to search
-     * 
-     * Uses the main annotated field.
-     *
-     * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
-     *             is overly broad
-     */
-    default Hits find(TextPattern pattern, Query filter) {
-        return find(pattern, mainAnnotatedField(), filter);
-    }
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param pattern the pattern to find
-     * @param field which field to find the pattern in
-     *
-     * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
-     *             is overly broad
-     */
-    default Hits find(TextPattern pattern, AnnotatedField field) throws BooleanQuery.TooManyClauses {
-        return find(pattern, field, null);
-    }
-
-    /**
-     * Find hits for a pattern.
-     *
-     * @param pattern the pattern to find
-     *
-     * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
-     *             is overly broad
-     */
-    default Hits find(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-        return find(pattern, mainAnnotatedField(), null);
-    }
-
-    /**
-     * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
-     * optimized version to be executed by Lucene.
-     * 
-     * Uses the main annotation field.
-     *
-     * @param pattern the pattern to explain
-     * @return the explanation
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
-     *             is overly broad
-     */
-    default QueryExplanation explain(TextPattern pattern) throws BooleanQuery.TooManyClauses {
-        return explain(pattern, mainAnnotatedField());
-    }
 
     /**
      * Explain how a TextPattern is converted to a SpanQuery and rewritten to an

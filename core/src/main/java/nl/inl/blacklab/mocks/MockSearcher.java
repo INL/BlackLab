@@ -177,12 +177,12 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(BLSpanQuery query) throws TooManyClauses {
+    public Hits find(BLSpanQuery query, HitsSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws TooManyClauses {
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

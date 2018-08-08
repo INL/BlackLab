@@ -177,7 +177,7 @@ public class RequestHandlerHits extends RequestHandler {
             ds.endEntry();
             if (searchParam.getBoolean("explain")) {
                 TextPattern tp = searchParam.getPattern();
-                QueryExplanation explanation = searcher.explain(tp);
+                QueryExplanation explanation = searcher.explain(tp, searcher.mainAnnotatedField());
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.getOriginalQuery())
                         .entry("rewrittenQuery", explanation.getRewrittenQuery())
@@ -267,7 +267,9 @@ public class RequestHandlerHits extends RequestHandler {
     }
 
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
-        originalHits.settings().setContextSize(searchParam.getInteger("wordsaroundhit"));
+        int contextSize = searchParam.getInteger("wordsaroundhit");
+        if (originalHits.settings().contextSize() != contextSize)
+            originalHits = originalHits.copy(originalHits.settings().copy().setContextSize(contextSize).freeze());
         ds.startMap().startEntry("tokenFrequencies").startMap();
         TermFrequencyList tfl = originalHits.getCollocations();
         for (TermFrequency tf : tfl) {

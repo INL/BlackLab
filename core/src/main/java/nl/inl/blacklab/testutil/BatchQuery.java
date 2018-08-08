@@ -84,7 +84,7 @@ public class BatchQuery {
                 Timer t = new Timer();
                 System.out.print(query + "\t");
                 TextPattern tp = CorpusQueryLanguageParser.parse(query);
-                Hits hits = searcher.find(tp);
+                Hits hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
                 System.out.print(t.elapsed());
                 if (determineTotalHits) {
                     System.out.print("\t" + hits.size() + "\t" + t.elapsed());

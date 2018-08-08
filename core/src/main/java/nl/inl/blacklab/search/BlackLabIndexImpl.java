@@ -462,14 +462,14 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query) throws BooleanQuery.TooManyClauses {
-        return Hits.fromSpanQuery(this, query);
+    public Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses {
+        return Hits.fromSpanQuery(this, query, settings);
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter)
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
             throws BooleanQuery.TooManyClauses {
-        return Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter));
+        return Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter), settings);
     }
 
     @Override

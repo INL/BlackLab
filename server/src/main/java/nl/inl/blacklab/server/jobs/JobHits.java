@@ -115,7 +115,7 @@ public class JobHits extends JobWithHits {
             if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
                 ClauseCombinerNfa.setNfaThreshold(searchSett.getFiMatchNfaFactor());
 
-            hits = searcher.find(textPattern, filter);
+            hits = searcher.find(textPattern, searcher.mainAnnotatedField(), filter, null);
 
             // Set the max retrieve/count value
             MaxSettings maxSettings = jobDesc.getMaxSettings();
