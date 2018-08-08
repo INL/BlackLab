@@ -144,12 +144,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Instance variables
     //--------------------------------------------------------------------
     
-
+    // General stuff
+    
     protected BlackLabIndex index;
 
     /**
-     * Settings for retrieving hits, sorting/grouping on context and making
-     * concordances.
+     * Settings for retrieving hits.
      */
     protected HitsSettings settings;
     
@@ -166,6 +166,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * don't hog the CPU for way too long).
      */
     protected ThreadPriority etiquette;
+    
+    // Hit information
 
     /**
      * The hits.
@@ -176,54 +178,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * The captured groups, if we have any.
      */
     protected Map<Hit, Span[]> capturedGroups;
-
-    /**
-     * The hit contexts.
-     *
-     * There may be multiple contexts for each hit (see contextFieldsPropName). Each
-     * int array starts with three bookkeeping integers, followed by the contexts
-     * information. The bookkeeping integers are: * 0 = hit start, index of the hit
-     * word (and length of the left context), counted from the start the context * 1
-     * = right start, start of the right context, counted from the start the context
-     * * 2 = context length, length of 1 context. As stated above, there may be
-     * multiple contexts.
-     *
-     * The first context therefore starts at index 3.
-     *
-     */
-    private int[][] contexts;
-
-    /**
-     * The current context size (number of words around hits we now have).
-     */
-    private int currentContextSize;
-
-    /**
-     * The sort order, if we've sorted, or null if not
-     */
-    Integer[] sortOrder;
-
-    /**
-     * The KWIC data, if it has been retrieved.
-     *
-     * NOTE: this will always be null if not all the hits have been retrieved.
-     */
-    protected Map<Hit, Kwic> kwics;
-
-    /**
-     * The concordances, if they have been retrieved.
-     *
-     * NOTE: when making concordances from the forward index, this will always be
-     * null, because Kwics will be used internally. This is only used when making
-     * concordances from the content store (the old default).
-     */
-    Map<Hit, Concordance> concordances;
-
-    /**
-     * If we have context information, this specifies the property (i.e. word,
-     * lemma, pos) the context came from. Otherwise, it is null.
-     */
-    protected List<Annotation> contextFieldsPropName;
+    
+    // Low-level Lucene hit fetching
 
     /**
      * Our SpanQuery.
@@ -266,6 +222,64 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     protected boolean sourceSpansFullyRead = true;
 
+    Lock ensureHitsReadLock = new ReentrantLock();
+    
+    // Sort
+
+    /**
+     * The sort order, if we've sorted, or null if not
+     */
+    Integer[] sortOrder;
+    
+    // Display
+
+    /**
+     * The KWIC data, if it has been retrieved.
+     *
+     * NOTE: this will always be null if not all the hits have been retrieved.
+     */
+    protected Map<Hit, Kwic> kwics;
+
+    /**
+     * The concordances, if they have been retrieved.
+     *
+     * NOTE: when making concordances from the forward index, this will always be
+     * null, because Kwics will be used internally. This is only used when making
+     * concordances from the content store (the old default).
+     */
+    Map<Hit, Concordance> concordances;
+    
+    // Context
+
+    /**
+     * The hit contexts.
+     *
+     * There may be multiple contexts for each hit (see contextFieldsPropName). Each
+     * int array starts with three bookkeeping integers, followed by the contexts
+     * information. The bookkeeping integers are: * 0 = hit start, index of the hit
+     * word (and length of the left context), counted from the start the context * 1
+     * = right start, start of the right context, counted from the start the context
+     * * 2 = context length, length of 1 context. As stated above, there may be
+     * multiple contexts.
+     *
+     * The first context therefore starts at index 3.
+     *
+     */
+    private int[][] contexts;
+
+    /**
+     * The current context size (number of words around hits we now have).
+     */
+    private int currentContextSize;
+
+    /**
+     * If we have context information, this specifies the property (i.e. word,
+     * lemma, pos) the context came from. Otherwise, it is null.
+     */
+    protected List<Annotation> contextFieldsPropName;
+    
+    // Stats
+
     /**
      * If true, we've stopped retrieving hits because there are more than the
      * maximum we've set.
@@ -299,8 +313,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * Document the previous hit was in, so we can count separate documents.
      */
     protected int previousHitDoc = -1;
-
-    Lock ensureHitsReadLock = new ReentrantLock();
 
 
     // Constructors
@@ -799,7 +811,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     @Override
     public Iterator<Hit> iterator() {
-        return getIterator(false);
+        return getIterator();
     }
     
     /**
@@ -810,7 +822,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *            returns them in sorted order (if any)
      * @return the iterator
      */
-    private synchronized Iterator<Hit> getIterator(final boolean originalOrder) {
+    private synchronized Iterator<Hit> getIterator() {
         // Construct a custom iterator that iterates over the hits in the hits
         // list, but can also take into account the Spans object that may not have
         // been fully read. This ensures we don't instantiate Hit objects for all hits
@@ -838,7 +850,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
                 // Check if there is a next, taking unread hits from Spans into account
                 if (hasNext()) {
                     index++;
-                    return hits.get((originalOrder || sortOrder == null) ? index : sortOrder[index]);
+                    return hits.get(sortOrder == null ? index : sortOrder[index]);
                 }
                 throw new NoSuchElementException();
             }
