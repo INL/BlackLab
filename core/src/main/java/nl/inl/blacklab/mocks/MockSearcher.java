@@ -201,9 +201,4 @@ public class MockSearcher implements BlackLabIndex {
         return analyzer;
     }
 
-    @Override
-    public boolean canDoNfaMatching() {
-        return false;
-    }
-
 }

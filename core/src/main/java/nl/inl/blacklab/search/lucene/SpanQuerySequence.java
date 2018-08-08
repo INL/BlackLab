@@ -260,7 +260,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        boolean canDoNfaMatching = BlackLabIndexRegistry.fromIndexReader(reader).canDoNfaMatching();
+        BlackLabIndex index = BlackLabIndexRegistry.fromIndexReader(reader);
+        boolean canDoNfaMatching = false;
+        if (index instanceof BlackLabIndexImpl) {
+            canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();
+        }
         boolean anyRewritten = false;
 
         // Make a copy, because our methods rewrite things in-place.
