@@ -16,11 +16,13 @@
 package nl.inl.blacklab.search;
 
 import java.util.AbstractList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -38,6 +40,12 @@ public class Kwic {
     private int hitStart;
 
     private int hitEnd;
+
+    public static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
+
+    public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
+
+    public static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
 
     /**
      * Construct a Kwic object

@@ -216,6 +216,7 @@ public class ConfigReader extends YamlJsonReader {
                 throw new IllegalArgumentException("Unknown key " + e.getKey() + " in search section");
             }
         }
+        hitsSett.freeze();
     }
 
     private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex searcher) {

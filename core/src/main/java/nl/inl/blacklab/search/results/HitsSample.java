@@ -9,46 +9,9 @@ import org.apache.lucene.search.spans.SpanQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
-public abstract class HitsSample extends HitsImpl {
+public abstract class HitsSample extends Hits {
 
     public final static long RANDOM_SEED = Long.MIN_VALUE;
-
-    protected static long getRandomSeed() {
-        Random random = new Random();
-        return random.nextLong();
-    }
-
-    protected float ratioOfHitsToSelect;
-
-    protected int numberOfHitsToSelect;
-
-    protected boolean exactNumberGiven = false;
-
-    protected long seed;
-
-    protected Random random;
-
-    protected HitsSample(BlackLabIndex searcher, float ratio, long seed) {
-        super(searcher, new ArrayList<Hit>());
-        this.ratioOfHitsToSelect = ratio;
-        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
-        this.random = new Random(seed);
-    }
-
-    protected HitsSample(BlackLabIndex searcher, int number, long seed) {
-        super(searcher, new ArrayList<Hit>());
-        this.numberOfHitsToSelect = number;
-        exactNumberGiven = true;
-        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
-        this.random = new Random(seed);
-    }
-
-    protected HitsSample(BlackLabIndex searcher, List<Hit> hits, float ratio, long seed) {
-        super(searcher, hits);
-        this.ratioOfHitsToSelect = ratio;
-        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
-        this.random = new Random(seed);
-    }
 
     /**
      * Take a sample of hits by wrapping an existing Hits object.
@@ -114,6 +77,43 @@ public abstract class HitsSample extends HitsImpl {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query), number, seed);
+    }
+
+    protected static long getRandomSeed() {
+        Random random = new Random();
+        return random.nextLong();
+    }
+
+    protected float ratioOfHitsToSelect;
+
+    protected int numberOfHitsToSelect;
+
+    protected boolean exactNumberGiven = false;
+
+    protected long seed;
+
+    protected Random random;
+
+    protected HitsSample(BlackLabIndex searcher, float ratio, long seed) {
+        super(searcher, new ArrayList<Hit>());
+        this.ratioOfHitsToSelect = ratio;
+        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
+        this.random = new Random(seed);
+    }
+
+    protected HitsSample(BlackLabIndex searcher, int number, long seed) {
+        super(searcher, new ArrayList<Hit>());
+        this.numberOfHitsToSelect = number;
+        exactNumberGiven = true;
+        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
+        this.random = new Random(seed);
+    }
+
+    protected HitsSample(BlackLabIndex searcher, List<Hit> hits, float ratio, long seed) {
+        super(searcher, hits);
+        this.ratioOfHitsToSelect = ratio;
+        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
+        this.random = new Random(seed);
     }
 
     public float ratio() {

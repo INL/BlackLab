@@ -125,6 +125,7 @@ public class JobHits extends JobWithHits {
             ContextSettings contextSettings = jobDesc.getContextSettings();
             hitsSettings.setConcordanceType(contextSettings.concType());
             hitsSettings.setContextSize(contextSettings.size());
+            hitsSettings.freeze(); // cannot be changed after this
         } catch (RegexpTooLargeException e) {
             throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
         } catch (TooManyClauses e) {

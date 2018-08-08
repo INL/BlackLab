@@ -1,13 +1,11 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Collection;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Freezable;
 
-public class HitsSettings {
+public class HitsSettings implements Freezable {
 
     /** When setting how many hits to retrieve/count, this means "no limit". */
     private static final int UNLIMITED_HITS = -1;
@@ -20,12 +18,6 @@ public class HitsSettings {
     public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
     
     private static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
-    
-    private static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
-    
-    private static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
-    
-    private static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
     
     private static final int DEFAULT_CONTEXT_SIZE = 5;
 
@@ -48,38 +40,19 @@ public class HitsSettings {
      */
     private AnnotatedField concordanceField;
 
-    /**
-     * Forward index to use as text context of &lt;w/&gt; tags in concordances
-     * (words; null = no text content)
-     */
-    private String concWordProps;
-
-    /**
-     * Forward index to use as text context between &lt;w/&gt; tags in concordances
-     * (punctuation+whitespace; null = just a space)
-     */
-    private String concPunctProps;
-
-    /**
-     * Forward indices to use as attributes of &lt;w/&gt; tags in concordances (null
-     * = the rest)
-     */
-    private Collection<String> concAttrProps; // all other FIs are attributes
-
     /** Our desired context size */
     private int desiredContextSize;
 
     /** Index object, so we can ask for the default contents field if none was set yet */
     private BlackLabIndex searcher;
 
+    private boolean frozen;
+
     public HitsSettings(HitsSettings defaults) {
         concordanceField = defaults.concordanceField();
         maxHitsToRetrieve = defaults.maxHitsToRetrieve();
         maxHitsToCount = defaults.maxHitsToCount();
         concsType = defaults.concordanceType();
-        concWordProps = defaults.concWordProp();
-        concPunctProps = defaults.concPunctProp();
-        concAttrProps = defaults.concAttrProps();
         desiredContextSize = defaults.contextSize();
     }
 
@@ -89,9 +62,6 @@ public class HitsSettings {
         maxHitsToRetrieve = DEFAULT_MAX_RETRIEVE;
         maxHitsToCount = DEFAULT_MAX_COUNT;
         concsType = DEFAULT_CONC_TYPE;
-        concWordProps = DEFAULT_CONC_WORD_PROP;
-        concPunctProps = DEFAULT_CONC_PUNCT_PROP;
-        concAttrProps = DEFAULT_CONC_ATTR_PROP;
         desiredContextSize = DEFAULT_CONTEXT_SIZE;
     }
 
@@ -100,27 +70,9 @@ public class HitsSettings {
         return maxHitsToRetrieve;
     }
 
-    /**
-     * Set the maximum number of hits to retrieve
-     * 
-     * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-     */
-    public void setMaxHitsToRetrieve(int n) {
-        this.maxHitsToRetrieve = n;
-    }
-
     /** @return the maximum number of hits to count. */
     public int maxHitsToCount() {
         return maxHitsToCount;
-    }
-
-    /**
-     * Set the maximum number of hits to count
-     * 
-     * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
-     */
-    public void setMaxHitsToCount(int n) {
-        this.maxHitsToCount = n;
     }
 
     /**
@@ -159,52 +111,57 @@ public class HitsSettings {
         return concordanceField;
     }
 
+    public int contextSize() {
+        return desiredContextSize;
+    }
+    
+    
+    // Methods that mutate data
+    //------------------------------------------------------------------------
+
+    /**
+     * Set the maximum number of hits to retrieve
+     * 
+     * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
+     */
+    public void setMaxHitsToRetrieve(int n) {
+        ensureNotFrozen();
+        this.maxHitsToRetrieve = n;
+    }
+
+    /**
+     * Set the maximum number of hits to count
+     * 
+     * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
+     */
+    public void setMaxHitsToCount(int n) {
+        ensureNotFrozen();
+        this.maxHitsToCount = n;
+    }
+
     /**
      * Sets the field to use for retrieving concordances.
      *
      * @param concordanceField the field 
      */
     public void setConcordanceField(AnnotatedField concordanceField) {
+        ensureNotFrozen();
         this.concordanceField = concordanceField;
     }
 
-    /**
-     * Indicate what properties to use to build concordances.
-     *
-     * This configuration is only valid when using forward indices to build
-     * concordances.
-     *
-     * @param wordFI FI to use as the text content of the &lt;w/&gt; tags (default
-     *            "word"; null for no text content)
-     * @param punctFI FI to use as the text content between &lt;w/&gt; tags (default
-     *            "punct"; null for just a space)
-     * @param attrFI FIs to use as the attributes of the &lt;w/&gt; tags (null for
-     *            all other FIs)
-     */
-    public void setConcordanceProperties(String wordFI, String punctFI, Collection<String> attrFI) {
-        concWordProps = wordFI;
-        concPunctProps = punctFI;
-        concAttrProps = attrFI;
-    }
-
-    public String concWordProp() {
-        return concWordProps;
-    }
-
-    public String concPunctProp() {
-        return concPunctProps;
-    }
-
-    public Collection<String> concAttrProps() {
-        return concAttrProps;
-    }
-
-    public int contextSize() {
-        return desiredContextSize;
-    }
-
     public void setContextSize(int n) {
+        ensureNotFrozen();
         desiredContextSize = n;
+    }
+
+    @Override
+    public void freeze() {
+        this.frozen = true;
+    }
+
+    @Override
+    public boolean isFrozen() {
+        return frozen;
     }
 
 }

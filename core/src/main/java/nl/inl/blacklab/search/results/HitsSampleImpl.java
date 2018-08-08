@@ -22,11 +22,9 @@ public class HitsSampleImpl extends HitsSample {
         if (numberOfHitsToSelect == 0 && totalNumberOfHits > 0 && ratio > 0)
             numberOfHitsToSelect = 1; // always choose at least one hit, unless we specify ratio 0 (why..??)
 
-        // Copy relevant information from Hits object
-        setMaxHitsCounted(hits.maxHitsCounted());
-        setMaxHitsRetrieved(hits.maxHitsRetrieved());
-
         selectHits(hits);
+        
+        copySettingsFrom(source); // type of concordances to make, etc.
     }
 
     HitsSampleImpl(Hits hits, int number, long seed) {
@@ -41,6 +39,8 @@ public class HitsSampleImpl extends HitsSample {
         ratioOfHitsToSelect = (float) number / hits.size();
 
         selectHits(hits);
+        
+        copySettingsFrom(source); // type of concordances to make, etc.
     }
 
     private void selectHits(Hits selectFrom) {

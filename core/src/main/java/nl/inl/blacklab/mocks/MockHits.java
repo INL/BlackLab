@@ -202,16 +202,6 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public void setMaxHitsCounted(boolean maxHitsCounted) {
-        // NOP
-    }
-
-    @Override
-    protected void setMaxHitsRetrieved(boolean maxHitsRetrieved) {
-        // NOP
-    }
-
-    @Override
     public String toString() {
         return "MockHits#" + hitsObjId;
     }

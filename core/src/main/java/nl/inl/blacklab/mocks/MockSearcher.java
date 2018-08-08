@@ -94,7 +94,7 @@ public class MockSearcher implements BlackLabIndex {
 
     @Override
     public IndexReader reader() {
-        return null; // used by HitsImpl
+        return null; // used by Hits
     }
 
     @Override
