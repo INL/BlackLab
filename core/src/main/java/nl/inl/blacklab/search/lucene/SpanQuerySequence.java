@@ -34,6 +34,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -298,7 +299,11 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        boolean canDoNfaMatching = BlackLabIndexRegistry.fromIndexReader(reader).canDoNfaMatching();
+        BlackLabIndex index = BlackLabIndexRegistry.fromIndexReader(reader);
+        boolean canDoNfaMatching = false;
+        if (index instanceof BlackLabIndexImpl) {
+            canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();
+        }
         boolean anyRewritten = false;
 
         // Make a copy, because our methods rewrite things in-place.

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.Collator;
-import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
@@ -28,6 +27,29 @@ import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends Closeable {
+
+    // Static [factory] methods
+    //---------------------------------------------------------------
+    
+    /**
+     * Does the specified directory contain a BlackLab index?
+     * 
+     * @param indexDir the directory
+     * @return true if it's a BlackLab index, false if not.
+     */
+    static boolean isIndex(File indexDir) {
+        try {
+            if (VersionFile.exists(indexDir)) {
+                VersionFile vf = VersionFile.read(indexDir);
+                String version = vf.getVersion();
+                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
+                    return true;
+            }
+            return false;
+        } catch (FileNotFoundException e) {
+            throw new BlackLabException(e);
+        }
+    }
 
     /**
      * Open an index for reading ("search mode").
@@ -54,72 +76,9 @@ public interface BlackLabIndex extends Closeable {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
 
-    /**
-     * Does the specified directory contain a BlackLab index?
-     * 
-     * @param indexDir the directory
-     * @return true if it's a BlackLab index, false if not.
-     */
-    static boolean isIndex(File indexDir) {
-        try {
-            if (VersionFile.exists(indexDir)) {
-                VersionFile vf = VersionFile.read(indexDir);
-                String version = vf.getVersion();
-                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
-                    return true;
-            }
-            return false;
-        } catch (FileNotFoundException e) {
-            throw new BlackLabException(e);
-        }
-    }
+    // Basic stuff, low-level access to index
+    //---------------------------------------------------------------
     
-    /**
-     * The default settings for all new Hits objects.
-     *
-     * You may change these settings; this will affect all new Hits objects.
-     *
-     * @return settings object
-     */
-    HitsSettings hitsSettings();
-
-    /**
-     * How do we fix well-formedness for snippets of XML?
-     * 
-     * @return the setting: either adding or removing unbalanced tags
-     */
-    UnbalancedTagsStrategy defaultUnbalancedTagsStrategy();
-
-    /**
-     * Set how to fix well-formedness for snippets of XML.
-     * 
-     * @param strategy the setting: either adding or removing unbalanced tags
-     */
-    void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy);
-
-    /**
-     * Set the collator used for sorting.
-     *
-     * The default collator is for English.
-     *
-     * @param collator the collator
-     */
-    void setCollator(Collator collator);
-
-    /**
-     * Get the collator being used for sorting.
-     *
-     * @return the collator
-     */
-    Collator collator();
-
-    /**
-     * Is this a newly created, empty index?
-     * 
-     * @return true if it is, false if not
-     */
-    boolean isEmpty();
-
     /**
      * Finalize the Searcher object. This closes the IndexSearcher and (depending on
      * the constructor used) may also close the index reader.
@@ -128,11 +87,11 @@ public interface BlackLabIndex extends Closeable {
     void close();
 
     /**
-     * Get information about the structure of the BlackLab index.
-     *
-     * @return the structure object
+     * Is this a newly created, empty index?
+     * 
+     * @return true if it is, false if not
      */
-    IndexMetadata metadata();
+    boolean isEmpty();
 
     /**
      * Checks if a document has been deleted from the index
@@ -172,6 +131,10 @@ public interface BlackLabIndex extends Closeable {
     @Deprecated
     int maxDoc();
 
+
+    // Search the index
+    //---------------------------------------------------------------------------
+    
     BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter);
 
     /**
@@ -233,6 +196,10 @@ public interface BlackLabIndex extends Closeable {
      */
     QueryExplanation explain(BLSpanQuery query) throws BooleanQuery.TooManyClauses;
 
+    
+    // Access the different modules of the index
+    //---------------------------------------------------------------------------
+    
     /**
      * Get the Lucene index reader we're using.
      *
@@ -263,18 +230,10 @@ public interface BlackLabIndex extends Closeable {
      */
     ForwardIndex forwardIndex(Annotation annotation);
 
-    MatchSensitivity defaultMatchSensitivity();
-
-    void setDefaultMatchSensitivity(MatchSensitivity m);
-
-    /**
-     * Get the default initial query execution context.
-     *
-     * @param field field to search
-     * @return query execution context
-     */
-    QueryExecutionContext defaultExecutionContext(AnnotatedField field);
-
+    
+    // Information about the index
+    //---------------------------------------------------------------------------
+    
     /**
      * Get the index name.
      * 
@@ -292,15 +251,11 @@ public interface BlackLabIndex extends Closeable {
     File indexDirectory();
 
     /**
-     * Get the analyzer for indexing and searching.
-     * 
-     * @return the analyzer
+     * Get information about the structure of the BlackLab index.
+     *
+     * @return the structure object
      */
-    Analyzer analyzer();
-
-    Map<Annotation, ForwardIndex> forwardIndices();
-
-    boolean canDoNfaMatching();
+    IndexMetadata metadata();
 
     /**
      * Get a field (either an annotated or a metadata field).
@@ -322,5 +277,71 @@ public interface BlackLabIndex extends Closeable {
     default AnnotatedField mainAnnotatedField() {
         return metadata().annotatedFields().main();
     }
+
+    
+    // Get settings
+    //---------------------------------------------------------------------------
+
+    /**
+     * The default settings for all new Hits objects.
+     *
+     * You may change these settings; this will affect all new Hits objects.
+     *
+     * @return settings object
+     */
+    HitsSettings hitsSettings();
+
+    /**
+     * How do we fix well-formedness for snippets of XML?
+     * 
+     * @return the setting: either adding or removing unbalanced tags
+     */
+    UnbalancedTagsStrategy defaultUnbalancedTagsStrategy();
+
+    MatchSensitivity defaultMatchSensitivity();
+
+    /**
+     * Get the default initial query execution context.
+     *
+     * @param field field to search
+     * @return query execution context
+     */
+    QueryExecutionContext defaultExecutionContext(AnnotatedField field);
+
+    /**
+     * Get the collator being used for sorting.
+     *
+     * @return the collator
+     */
+    Collator collator();
+
+    /**
+     * Get the analyzer for indexing and searching.
+     * 
+     * @return the analyzer
+     */
+    Analyzer analyzer();
+    
+
+    // Methods that mutate settings
+    //---------------------------------------------------------------------------
+
+    /**
+     * Set how to fix well-formedness for snippets of XML.
+     * 
+     * @param strategy the setting: either adding or removing unbalanced tags
+     */
+    void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy);
+
+    /**
+     * Set the collator used for sorting.
+     *
+     * The default collator is for English.
+     *
+     * @param collator the collator
+     */
+    void setCollator(Collator collator);
+
+    void setDefaultMatchSensitivity(MatchSensitivity m);
 
 }

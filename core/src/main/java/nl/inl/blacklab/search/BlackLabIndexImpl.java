@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.util.AbstractSet;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -545,13 +544,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public DocResults queryDocuments(Query documentFilterQuery) {
         return DocResults.fromQuery(this, documentFilterQuery);
     }
-
-    @Override
-    public Map<Annotation, ForwardIndex> forwardIndices() {
-        return Collections.unmodifiableMap(forwardIndices);
-    }
     
-    @Override
     public boolean canDoNfaMatching() {
         if (forwardIndices.isEmpty())
             return false;

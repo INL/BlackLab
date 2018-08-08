@@ -1306,11 +1306,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             Collection<String> concAttrFI = Kwic.DEFAULT_CONC_ATTR_PROP;
             if (concAttrFI == null) {
                 // All other FIs are attributes
-                for (ForwardIndex fi: index.forwardIndices().values()) {
-                    Annotation annotation = fi.annotation();
-                    if (annotation.name().equals(concWordFI) || annotation.name().equals(concPunctFI))
-                        continue;
-                    attrForwardIndices.put(annotation, fi);
+                for (Annotation annotation: field.annotations()) {
+                    if (annotation.hasForwardIndex() && !annotation.name().equals(concWordFI) && !annotation.name().equals(concPunctFI)) {
+                        attrForwardIndices.put(annotation, index.forwardIndex(annotation));
+                    }
                 }
             } else {
                 // Specific list of attribute FIs

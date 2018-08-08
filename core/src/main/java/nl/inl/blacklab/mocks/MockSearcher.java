@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
@@ -198,11 +199,6 @@ public class MockSearcher implements BlackLabIndex {
     @Override
     public Analyzer analyzer() {
         return analyzer;
-    }
-
-    @Override
-    public Map<Annotation, ForwardIndex> forwardIndices() {
-        throw new UnsupportedOperationException();
     }
 
     @Override
