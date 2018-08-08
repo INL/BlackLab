@@ -20,8 +20,8 @@ import java.io.Reader;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 
 /**
@@ -51,7 +51,7 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
     /** Captures the punctuation so we can add it to the next word. */
     StringBuilder punctuation = new StringBuilder();
 
-    public DocIndexerXmlSketch(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerXmlSketch(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)

@@ -147,7 +147,7 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, Reader reader)
+    DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException;
 
     /**
@@ -163,7 +163,7 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, InputStream is, Charset cs)
+    DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs)
             throws UnsupportedOperationException;
 
     /**
@@ -180,7 +180,7 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs)
+    DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException;
 
     /**
@@ -196,6 +196,6 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, byte[] b, Charset cs)
+    DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException;
 }

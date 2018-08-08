@@ -19,7 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.DocumentFormatException;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -74,31 +73,6 @@ public class Index {
         }
     };
 
-    /**
-     * This class is an implementation detail. We need to know when an Indexer we
-     * return is closed in order to know if we are available for searching again,
-     * however the default Indexer does not record this information. We could also
-     * check through the IndexListener attached to the Indexer, but that feels like
-     * a worse solution.
-     */
-    private static class IndexerWithCloseRegistration extends Indexer {
-        private boolean closed = false;
-
-        IndexerWithCloseRegistration(File directory) throws IOException, DocumentFormatException {
-            super(directory, false, (String) null, (File) null);
-        }
-
-        @Override
-        public synchronized void close() {
-            super.close();
-            this.closed = true;
-        }
-
-        boolean isClosed() {
-            return closed;
-        }
-    }
-
     private static final Logger logger = LogManager.getLogger(Index.class);
 
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
@@ -115,7 +89,7 @@ public class Index {
      * addition, while an index is still running, no new Indexers can be created.
      */
     private BlackLabIndex searcher;
-    private IndexerWithCloseRegistration indexer;
+    private Indexer indexer;
 
     /** List of users who may access this index (read-only). */
     private List<String> shareWithUsers = new ArrayList<>();
@@ -242,7 +216,7 @@ public class Index {
         if (this.searcher != null)
             return this.searcher.metadata();
         else if (this.indexer != null)
-            return this.indexer.getSearcher().metadata();
+            return this.indexer.indexWriter().metadata();
 
         // This should literally never happen, after openForSearching either searcher or indexer must be set
         throw new RuntimeException(
@@ -301,7 +275,7 @@ public class Index {
         cleanupClosedIndexerOrThrow();
         close(); // Close any Searcher that is still in search mode
         try {
-            this.indexer = new IndexerWithCloseRegistration(this.dir);
+            this.indexer = new Indexer(this.dir, false);
             indexer.setUseThreads(true);
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", 27, e);
@@ -321,7 +295,7 @@ public class Index {
         if (this.getStatus() != IndexStatus.INDEXING)
             return null;
 
-        return this.indexer.getListener();
+        return this.indexer.listener();
     }
 
     /**

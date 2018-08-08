@@ -110,11 +110,11 @@ public class RequestHandlerAddToIndex extends RequestHandler {
             throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
         } finally {
             if (indexError == null) {
-                if (indexer.getListener().getFilesProcessed() == 0)
+                if (indexer.listener().getFilesProcessed() == 0)
                     indexError = "No files were found during indexing.";
-                else if (indexer.getListener().getDocsDone() == 0)
+                else if (indexer.listener().getDocsDone() == 0)
                     indexError = "No documents were found during indexing, are the files in the correct format?";
-                else if (indexer.getListener().getTokensProcessed() == 0)
+                else if (indexer.listener().getTokensProcessed() == 0)
                     indexError = "No tokens were found during indexing, are the files in the correct format?";
             }
 

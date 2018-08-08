@@ -23,9 +23,9 @@ import java.util.Map.Entry;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -63,7 +63,7 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
      */
     Map<String, String> posFeatures = new HashMap<>();
 
-    public DocIndexerOpenSonar(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerOpenSonar(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)

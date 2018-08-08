@@ -17,7 +17,7 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 
-import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.DocWriter;
 
 /**
  * Index a TEI P4/P5 file, using the &lt;text&gt; element instead of the
@@ -35,7 +35,7 @@ public class DocIndexerTeiText extends DocIndexerTeiBase {
         return "Main contents should be in text element, should be tokenized and PoS tags should be in the type attribute.";
     }
 
-    public DocIndexerTeiText(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerTeiText(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader, "text", true);
     }
 }

@@ -20,7 +20,7 @@ import java.io.Reader;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
-import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
@@ -28,7 +28,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
  * Example indexer. See Example for the file format.
  */
 public class DocIndexerExample extends DocIndexerXmlHandlers {
-    public DocIndexerExample(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerExample(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)

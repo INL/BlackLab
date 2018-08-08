@@ -136,14 +136,14 @@ public class DocumentFormats {
     }
 
     // Convenience
-    public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, Reader reader)
+    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, reader) : null;
     }
 
     // Convenience
-    public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, InputStream is,
+    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
@@ -151,14 +151,14 @@ public class DocumentFormats {
     }
 
     // Convenience
-    public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs)
+    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, f, cs) : null;
     }
 
     // Convenience
-    public static DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, byte[] b, Charset cs)
+    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, b, cs) : null;

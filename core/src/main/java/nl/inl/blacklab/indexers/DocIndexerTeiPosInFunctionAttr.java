@@ -17,7 +17,7 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 
-import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.DocWriter;
 
 /**
  * Index a TEI P4/P5 file with the PoS in the "function" attribute.
@@ -34,7 +34,7 @@ public class DocIndexerTeiPosInFunctionAttr extends DocIndexerTeiBase {
         return "Main contents should be in body element, should be tokenized and PoS tags should be in the function attribute.";
     }
 
-    public DocIndexerTeiPosInFunctionAttr(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerTeiPosInFunctionAttr(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader, "body", false);
     }
 }

@@ -61,7 +61,7 @@ import nl.inl.util.UnicodeStream;
  * (only when using configuration file based indexing right now)
  */
 @NotThreadSafe // in index mode
-public class Indexer {
+public class Indexer implements DocWriter {
 
     static final Logger logger = LogManager.getLogger(Indexer.class);
 
@@ -103,17 +103,17 @@ public class Indexer {
             // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
             // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
             // meantime
-            getListener().fileStarted(documentName);
+            listener().fileStarted(documentName);
             int docsDoneBefore = searcher.writer().numDocs();
-            long tokensDoneBefore = getListener().getTokensProcessed();
+            long tokensDoneBefore = listener().getTokensProcessed();
 
             indexer.index();
-            getListener().fileDone(documentName);
+            listener().fileDone(documentName);
             int docsDoneAfter = searcher.writer().numDocs();
             if (docsDoneAfter == docsDoneBefore) {
                 logger.warn("No docs found in " + documentName + "; wrong format?");
             }
-            long tokensDoneAfter = getListener().getTokensProcessed();
+            long tokensDoneAfter = listener().getTokensProcessed();
             if (tokensDoneAfter == tokensDoneBefore) {
                 logger.warn("No words indexed in " + documentName + "; wrong format?");
             }
@@ -244,34 +244,8 @@ public class Indexer {
     // the updated indexMetadata
     boolean hasRollback = false;
 
-    public FieldType getMetadataFieldType(boolean tokenized) {
-        return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
-    }
-
-    /**
-     * When we encounter a zip or tgz file, do we descend into it like it was a
-     * directory?
-     *
-     * Note that for accessing large ZIP files, you need Java 7 which supports the
-     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)"
-     * error.
-     *
-     * @param b if true, treats zipfiles like a directory and processes all the
-     *            files inside
-     */
-    public void setProcessArchivesAsDirectories(boolean b) {
-        processArchivesAsDirectories = b;
-    }
-
-    /**
-     * Should we recursively index files in subdirectories (and archives files, if
-     * that setting is on)?
-     * 
-     * @param recurseSubdirs true if we should recurse into subdirs
-     */
-    public void setRecurseSubdirs(boolean recurseSubdirs) {
-        this.defaultRecurseSubdirs = recurseSubdirs;
-    }
+    /** Was this Indexer closed? */
+    private boolean closed = false;
 
     /**
      * Construct Indexer
@@ -410,6 +384,36 @@ public class Indexer {
         metadataFieldTypeUntokenized.freeze();
     }
 
+    @Override
+    public FieldType metadataFieldType(boolean tokenized) {
+        return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
+    }
+
+    /**
+     * When we encounter a zip or tgz file, do we descend into it like it was a
+     * directory?
+     *
+     * Note that for accessing large ZIP files, you need Java 7 which supports the
+     * ZIP64 format, otherwise you'll get the "invalid CEN header (bad signature)"
+     * error.
+     *
+     * @param b if true, treats zipfiles like a directory and processes all the
+     *            files inside
+     */
+    public void setProcessArchivesAsDirectories(boolean b) {
+        processArchivesAsDirectories = b;
+    }
+
+    /**
+     * Should we recursively index files in subdirectories (and archives files, if
+     * that setting is on)?
+     * 
+     * @param recurseSubdirs true if we should recurse into subdirs
+     */
+    public void setRecurseSubdirs(boolean recurseSubdirs) {
+        this.defaultRecurseSubdirs = recurseSubdirs;
+    }
+
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new DocumentFormatException("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
@@ -425,7 +429,7 @@ public class Indexer {
      */
     public void setListener(IndexListener listener) {
         this.listener = listener;
-        getListener(); // report creation and start of indexing, if it hadn't been reported yet
+        listener(); // report creation and start of indexing, if it hadn't been reported yet
     }
 
     /**
@@ -437,7 +441,8 @@ public class Indexer {
      *
      * @return the listener
      */
-    public IndexListener getListener() {
+    @Override
+    public IndexListener listener() {
         if (listener == null) {
             listener = new IndexListenerReportConsole();
         }
@@ -474,9 +479,9 @@ public class Indexer {
      * call close(), no changes will be committed.
      */
     public void rollback() {
-        getListener().rollbackStart();
+        listener().rollbackStart();
         searcher.rollback();
-        getListener().rollbackEnd();
+        listener().rollbackEnd();
         hasRollback = true;
     }
 
@@ -484,22 +489,28 @@ public class Indexer {
      * Close the index
      */
     // TODO this should call close() on running FileProcessors
-    public void close() {
+    public synchronized void close() {
 
         // Signal to the listener that we're done indexing and closing the index (which might take a
         // while)
-        getListener().indexEnd();
-        getListener().closeStart();
+        listener().indexEnd();
+        listener().closeStart();
 
         if (!hasRollback) {
-            searcher.metadataWriter().addToTokenCount(getListener().getTokensProcessed());
+            searcher.metadataWriter().addToTokenCount(listener().getTokensProcessed());
             searcher.metadataWriter().save();
         }
         searcher.close();
 
         // Signal that we're completely done now
-        getListener().closeEnd();
-        getListener().indexerClosed();
+        listener().closeEnd();
+        listener().indexerClosed();
+        
+        closed = true;
+    }
+    
+    public boolean isClosed() {
+        return closed;
     }
 
     /**
@@ -509,9 +520,10 @@ public class Indexer {
      * @throws CorruptIndexException
      * @throws IOException
      */
+    @Override
     public void add(Document document) throws CorruptIndexException, IOException {
         searcher.writer().addDocument(document);
-        getListener().luceneDocumentAdded();
+        listener().luceneDocumentAdded();
     }
 
     /**
@@ -524,7 +536,7 @@ public class Indexer {
      */
     public void update(Term term, Document document) throws CorruptIndexException, IOException {
         searcher.writer().updateDocument(term, document);
-        getListener().luceneDocumentAdded();
+        listener().luceneDocumentAdded();
     }
 
     /**
@@ -533,6 +545,7 @@ public class Indexer {
      * @param prop the annotation to get values and position increments from
      * @return the id assigned to the content
      */
+    @Override
     public int addToForwardIndex(AnnotationWriter prop) {
         Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
         ForwardIndex forwardIndex = searcher.forwardIndex(annotation);
@@ -643,6 +656,7 @@ public class Indexer {
      *
      * @return true if we should continue, false if not
      */
+    @Override
     public synchronized boolean continueIndexing() {
         if (terminateIndexing)
             return false;
@@ -657,6 +671,7 @@ public class Indexer {
      *
      * @return the number of documents
      */
+    @Override
     public synchronized int docsToDoLeft() {
         try {
             if (maxNumberOfDocsToIndex < 0)
@@ -674,7 +689,8 @@ public class Indexer {
      * 2. Sort index added to forward index; multiple forward indexes possible
      */
 
-    public ContentStore getContentStore(String fieldName) {
+    @Override
+    public ContentStore contentStore(String fieldName) {
         return searcher.contentStore(searcher.field(fieldName));
     }
 
@@ -683,7 +699,7 @@ public class Indexer {
      * 
      * @return the index directory
      */
-    public File getIndexLocation() {
+    public File indexLocation() {
         return searcher.indexDirectory();
     }
 
@@ -703,7 +719,8 @@ public class Indexer {
      * 
      * @return the parameters
      */
-    public Map<String, String> getIndexerParameters() {
+    @Override
+    public Map<String, String> indexerParameters() {
         return indexerParam;
     }
 
@@ -714,11 +731,12 @@ public class Indexer {
      *
      * @return the IndexWriter
      */
-    protected IndexWriter getWriter() {
+    protected IndexWriter writer() {
         return searcher.writer();
     }
 
-    public BlackLabIndexWriter getSearcher() {
+    @Override
+    public BlackLabIndexWriter indexWriter() {
         return searcher;
     }
 
@@ -753,11 +771,13 @@ public class Indexer {
         this.linkedFileResolver = resolver;
     }
 
-    public Optional<Function<String, File>> getLinkedFileResolver() {
+    @Override
+    public Optional<Function<String, File>> linkedFileResolver() {
         return Optional.of(this.linkedFileResolver);
     }
 
-    public File getLinkedFile(String inputFile) {
+    @Override
+    public File linkedFile(String inputFile) {
         File f = new File(inputFile);
         if (f.exists())
             return f; // either absolute or relative to current dir

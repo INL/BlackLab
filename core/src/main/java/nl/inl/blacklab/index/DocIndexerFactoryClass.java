@@ -121,7 +121,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, Reader reader) {
+    public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");
@@ -132,18 +132,18 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
-                // NOTE: newer DocIndexers have a constructor that takes only an Indexer, not the document
+                // NOTE: newer DocIndexers have a constructor that takes only a DocWriter, not the document
                 // being indexed. This allows us more flexibility in how we supply the document to this object
                 // (e.g. as a file, a byte array, a reader, ...).
                 // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
-                constructor = docIndexerClass.getConstructor(Indexer.class);
+                constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
                 docIndexer.setIndexer(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(reader);
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
                 docIndexer = constructor.newInstance(indexer, documentName, reader);
             }
             return docIndexer;
@@ -154,7 +154,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, InputStream is, Charset cs) {
+    public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");
@@ -165,14 +165,14 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
-                constructor = docIndexerClass.getConstructor(Indexer.class);
+                constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
                 docIndexer.setIndexer(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(is, cs);
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
                 docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, cs));
             }
             return docIndexer;
@@ -183,7 +183,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs) {
+    public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");
@@ -194,14 +194,14 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
-                constructor = docIndexerClass.getConstructor(Indexer.class);
+                constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
                 docIndexer.setIndexer(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(f, cs);
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
                 UnicodeStream is = new UnicodeStream(new FileInputStream(f), Indexer.DEFAULT_INPUT_ENCODING);
                 Charset detectedCharset = is.getEncoding();
                 docIndexer = constructor.newInstance(indexer, documentName, new InputStreamReader(is, detectedCharset));
@@ -214,7 +214,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexer get(String formatIdentifier, Indexer indexer, String documentName, byte[] contents, Charset cs) {
+    public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] contents, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");
@@ -225,14 +225,14 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             Constructor<? extends DocIndexer> constructor;
             DocIndexer docIndexer;
             try {
-                constructor = docIndexerClass.getConstructor(Indexer.class);
+                constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
                 docIndexer.setIndexer(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(contents, cs);
             } catch (NoSuchMethodException e) {
                 // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(Indexer.class, String.class, Reader.class);
+                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
                 docIndexer = constructor.newInstance(indexer, documentName,
                         new InputStreamReader(new ByteArrayInputStream(contents), cs));
             }

@@ -25,9 +25,9 @@ import java.util.Map.Entry;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -90,7 +90,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
      */
     Map<String, String> posFeatures = new HashMap<>();
 
-    public DocIndexerWhiteLab2(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerWhiteLab2(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)

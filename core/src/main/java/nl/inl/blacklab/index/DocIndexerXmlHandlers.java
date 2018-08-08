@@ -96,9 +96,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 addMetadataField(attributes.getLocalName(i),
                         attributes.getValue(i));
             }
-            currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
+            currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.metadataFieldType(false)));
             addMetadataFieldsFromParameters();
-            indexer.getListener().documentStarted(documentName);
+            indexer.listener().documentStarted(documentName);
         }
 
         /** Open tag: end indexing the document */
@@ -175,7 +175,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.getSearcher().metadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.indexWriter().metadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());
@@ -214,7 +214,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed();
 
-            indexer.getListener().documentDone(documentName);
+            indexer.listener().documentDone(documentName);
 
             // Reset contents field for next document
             contentsField.clear(true);
@@ -449,7 +449,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     @SuppressWarnings("deprecation")
-    public DocIndexerXmlHandlers(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerXmlHandlers(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Define the properties that make up our annotated field
@@ -461,7 +461,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
         // positions
         propStartTag.setForwardIndex(false);
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.getSearcher().metadataWriter();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.indexWriter().metadataWriter();
         AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
         contentsField.setAnnotatedField(f);
     }

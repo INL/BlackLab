@@ -19,8 +19,8 @@ import java.io.Reader;
 import java.util.Arrays;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.StringUtil;
 
 /**
@@ -36,7 +36,7 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
         return "";
     }
 
-    public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerPageXml(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         addNumericFields(Arrays.asList("yearFrom", "yearTo"));

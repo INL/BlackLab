@@ -69,7 +69,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         captureContent = false;
         int id = -1;
         if (!skippingCurrentDocument) {
-            ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
+            ContentStore contentStore = indexer.contentStore(captureContentFieldName);
             id = contentStore.store(content.toString());
         }
         content.setLength(0);
@@ -80,7 +80,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     public void storePartCapturedContent() {
         charsContentAlreadyStored += content.length();
         if (!skippingCurrentDocument) {
-            ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
+            ContentStore contentStore = indexer.contentStore(captureContentFieldName);
             contentStore.storePart(content.toString());
         }
         content.setLength(0);
@@ -135,7 +135,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     public DocIndexerAbstract() {
     }
 
-    public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerAbstract(DocWriter indexer, String fileName, Reader reader) {
         setIndexer(indexer);
         setDocumentName(fileName);
         setDocument(reader);
@@ -159,7 +159,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     @Override
     public final void reportCharsProcessed() {
         long charsProcessed = reader.getCharsReadSinceLastCall();
-        indexer.getListener().charsDone(charsProcessed);
+        indexer.listener().charsDone(charsProcessed);
     }
 
     /**
@@ -174,7 +174,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         else
             wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
 
-        indexer.getListener().tokensDone(wordsDoneSinceLastReport);
+        indexer.listener().tokensDone(wordsDoneSinceLastReport);
         wordsDoneAtLastReport = wordsDone;
     }
 

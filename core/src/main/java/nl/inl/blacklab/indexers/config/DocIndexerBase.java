@@ -304,7 +304,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             inputFile = inputFile.substring(7);
         if (indexer == null) // TEST
             return new File(inputFile);
-        File f = indexer.getLinkedFile(inputFile);
+        File f = indexer.linkedFile(inputFile);
         if (f == null)
             throw new FileNotFoundException("Referenced file not found");
         if (!f.canRead())
@@ -352,13 +352,13 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (!indexingIntoExistingLuceneDoc) {
             currentLuceneDoc = new Document();
             if (indexer != null)
-                currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.getMetadataFieldType(false)));
+                currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.metadataFieldType(false)));
 
             // DEPRECATED for these types of indexer, but still supported for now
             addMetadataFieldsFromParameters();
         }
         if (indexer != null)
-            indexer.getListener().documentStarted(documentName);
+            indexer.listener().documentStarted(documentName);
     }
 
     protected void endDocument() {
@@ -435,7 +435,7 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.getSearcher().metadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.indexWriter().metadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());
@@ -484,7 +484,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             reportTokensProcessed();
         }
         if (indexer != null)
-            indexer.getListener().documentDone(documentName);
+            indexer.listener().documentDone(documentName);
 
         currentLuceneDoc = null;
 
@@ -526,7 +526,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         int contentId = -1;
         if (indexer != null) {
-            ContentStore contentStore = indexer.getContentStore(contentStoreName);
+            ContentStore contentStore = indexer.contentStore(contentStoreName);
             contentId = contentStore.store(document);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
@@ -692,7 +692,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             charsDoneSinceLastReport = charsDone - charsDoneAtLastReport;
 
-        indexer.getListener().charsDone(charsDoneSinceLastReport);
+        indexer.listener().charsDone(charsDoneSinceLastReport);
         charsDoneAtLastReport = charsDone;
     }
 
@@ -707,7 +707,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
 
-        indexer.getListener().tokensDone(wordsDoneSinceLastReport);
+        indexer.listener().tokensDone(wordsDoneSinceLastReport);
         wordsDoneAtLastReport = wordsDone;
     }
 

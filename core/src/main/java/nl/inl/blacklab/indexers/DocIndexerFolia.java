@@ -20,9 +20,9 @@ import java.io.Reader;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 
 /**
@@ -45,7 +45,7 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
 
     String lemma;
 
-    public DocIndexerFolia(Indexer indexer, String fileName, Reader reader) {
+    public DocIndexerFolia(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)

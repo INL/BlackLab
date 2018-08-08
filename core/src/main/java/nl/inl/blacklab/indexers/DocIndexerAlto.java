@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
@@ -54,7 +54,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
     String imageFileName = "?";
 
     @SuppressWarnings("deprecation")
-    public DocIndexerAlto(Indexer indexer, final String fileName, Reader reader) {
+    public DocIndexerAlto(DocWriter indexer, final String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
         // Document element

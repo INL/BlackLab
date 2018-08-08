@@ -15,7 +15,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
@@ -130,7 +130,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void setIndexer(Indexer indexer) {
+    public void setIndexer(DocWriter indexer) {
         outputIndexer.setIndexer(indexer);
     }
 
@@ -150,7 +150,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public Indexer getIndexer() {
+    public DocWriter getIndexer() {
         return outputIndexer.getIndexer();
     }
 

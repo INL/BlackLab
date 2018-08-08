@@ -246,7 +246,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexerConfig get(String formatIdentifier, Indexer indexer, String documentName, Reader reader) {
+    public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");
@@ -259,7 +259,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexerConfig get(String formatIdentifier, Indexer indexer, String documentName, InputStream is,
+    public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
@@ -273,7 +273,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexerConfig get(String formatIdentifier, Indexer indexer, String documentName, File f, Charset cs)
+    public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws FileNotFoundException {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
@@ -287,7 +287,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    public DocIndexerConfig get(String formatIdentifier, Indexer indexer, String documentName, byte[] b, Charset cs) {
+    public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
                     + "', call isSupported(formatIdentifier) before attempting to get()");

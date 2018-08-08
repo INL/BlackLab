@@ -21,8 +21,8 @@ import org.apache.lucene.document.Document;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.util.StringUtil;
 
@@ -55,7 +55,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
     String contentElement;
 
     @SuppressWarnings("deprecation")
-    public DocIndexerTeiBase(Indexer indexer, String fileName, Reader reader, String contentElement,
+    public DocIndexerTeiBase(DocWriter indexer, String fileName, Reader reader, String contentElement,
             boolean defaultToPosInTypeAttribute) {
         super(indexer, fileName, reader);
 
