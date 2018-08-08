@@ -37,11 +37,13 @@ public class ContentStoresManager {
         contentAccessors.put(field, new ContentAccessor(field, store));
     }
 
-    public ContentStore get(Field field) {
-        ContentAccessor ca = contentAccessors.get(field);
-        if (ca == null)
-            return null;
-        return ca.getContentStore();
+    public ContentAccessor contentAccessor(Field field) {
+        return contentAccessors.get(field);
+    }
+
+    public ContentStore contentStore(Field field) {
+        ContentAccessor contentAccessor = contentAccessor(field);
+        return contentAccessor == null ? null : contentAccessor.getContentStore();
     }
 
     public void deleteDocument(Document d) {

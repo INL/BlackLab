@@ -3,24 +3,20 @@ package nl.inl.blacklab.mocks;
 import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
-import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
-import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.LuceneDocTask;
+import nl.inl.blacklab.search.ContentAccessor;
+import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -33,7 +29,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class MockSearcher implements BlackLabIndex {
@@ -73,7 +68,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public Document document(int doc) {
+    public Doc doc(int docId) {
         throw new UnsupportedOperationException();
     }
 
@@ -84,12 +79,6 @@ public class MockSearcher implements BlackLabIndex {
 
     @Override
     public int maxDoc() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
-            boolean fillInDefaultsIfNotFound) {
         throw new UnsupportedOperationException();
     }
 
@@ -132,11 +121,6 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public Set<Integer> docIdSet() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public HitsSettings hitsSettings() {
         return hitsSettings;
     }
@@ -167,7 +151,7 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public void forEachDocument(LuceneDocTask task) {
+    public void forEachDocument(DocTask task) {
         throw new UnsupportedOperationException();
     }
 
@@ -192,39 +176,13 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public String getContentByCharPos(int docId, Field field, int startAtChar, int endAtChar) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getContent(int docId, Field field, int startAtWord, int endAtWord) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String getContent(Document d, Field field) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public String highlightContent(int docId, Field field, Hits hits, int startAtWord, int endAtWord) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ContentStore contentStore(Field field) {
+    public ContentAccessor contentAccessor(Field field) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public ForwardIndex forwardIndex(Annotation annotation) {
         return forwardIndices.get(annotation);
-    }
-
-    @Override
-    public List<Concordance> makeConcordancesFromContentStore(int doc, Field field, int[] startsOfWords,
-            int[] endsOfWords, XmlHighlighter hl) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

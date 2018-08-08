@@ -75,7 +75,7 @@ public class TestForwardIndexPosIncr {
         for (int i = 0; i < str.length; i++) {
             int[] retrieved = retrievePart(i, -1, -1);
             for (int j = 0; j < retrieved.length; j++) {
-                Assert.assertEquals(expected[i][j], fi.getTerms().get(retrieved[j]));
+                Assert.assertEquals(expected[i][j], fi.terms().get(retrieved[j]));
             }
         }
     }

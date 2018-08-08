@@ -216,7 +216,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 String title;
 
                 if (!luceneIdToPidAndTitle.containsKey(hit.doc())) {
-                    Document doc = getSearcher().document(hit.doc());
+                    Document doc = getSearcher().doc(hit.doc()).luceneDoc();
                     pid = getDocumentPid(getSearcher(), hit.doc(), doc);
                     String titleField = getSearcher().metadata().metadataFields().special(MetadataFields.TITLE).name();
                     title = doc.get(titleField);

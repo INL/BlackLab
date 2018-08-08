@@ -4,11 +4,11 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.logging.log4j.Level;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.LuceneDocTask;
+import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.LogUtil;
 
 /**
@@ -17,7 +17,7 @@ import nl.inl.util.LogUtil;
  */
 public class CountTokens {
 
-    private static final class CountTask implements LuceneDocTask {
+    private static final class CountTask implements DocTask {
         private final String tokenLengthField;
         int totalDocs;
         int docsDone = 0;
@@ -29,8 +29,8 @@ public class CountTokens {
         }
 
         @Override
-        public void perform(Document doc) {
-            totalTokens += Long.parseLong(doc.get(tokenLengthField));
+        public void perform(Doc doc) {
+            totalTokens += Long.parseLong(doc.luceneDoc().get(tokenLengthField));
             docsDone++;
             if (docsDone % 100 == 0) {
                 int perc = docsDone * 100 / totalDocs;

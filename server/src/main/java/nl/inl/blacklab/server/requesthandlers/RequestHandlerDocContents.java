@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -65,17 +66,18 @@ public class RequestHandlerDocContents extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
-        String docId = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        if (docId.length() == 0)
+        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
+        if (docPid.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
         BlackLabIndex searcher = getSearcher();
-        int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
-        if (luceneDocId < 0 || luceneDocId >= searcher.maxDoc())
-            throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = searcher.document(luceneDocId); //searchMan.getDocumentFromPid(indexName, docId);
+        int docId = BlsUtils.getDocIdFromPid(searcher, docPid);
+        if (docId < 0 || docId >= searcher.maxDoc())
+            throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
+        Doc doc = searcher.doc(docId);
+        Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);
         if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 9);
+            throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", 9);
         if (!mayView(searcher.metadata(), document)) {
             return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
         }
@@ -83,7 +85,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         Hits hits = null;
         if (searchParam.hasPattern()) {
             //@@@ TODO: filter on document!
-            searchParam.put("docpid", docId);
+            searchParam.put("docpid", docPid);
             JobWithHits search;
             search = (JobWithHits) searchMan.search(user, searchParam.hits(), true);
             try {
@@ -103,9 +105,8 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(luceneDocId);
-        content = searcher.highlightContent(luceneDocId, searcher.mainAnnotatedField(), hitsInDoc, startAtWord,
-                endAtWord);
+        Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(docId);
+        content = doc.highlightContent(hitsInDoc, startAtWord, endAtWord);
 
         boolean outputXmlDeclaration = true;
         if (surroundWithRootElement) {

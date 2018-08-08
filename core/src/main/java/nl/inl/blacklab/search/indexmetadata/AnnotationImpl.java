@@ -95,8 +95,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         default:
             throw new IllegalArgumentException("Unknown sensitivity " + sensitivitySetting.toString());
         }
-        return (name.length() == 0 ? "(default)" : name)
-                + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
+        return name + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
     }
 
     @Override

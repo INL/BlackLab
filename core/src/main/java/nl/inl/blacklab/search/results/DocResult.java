@@ -53,7 +53,7 @@ public class DocResult {
     }
 
     public Document getDocument() {
-        return hits.index().document(docId);
+        return hits.index().doc(docId).luceneDoc();
     }
 
     /**

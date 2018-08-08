@@ -1,10 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import java.io.File;
-import java.util.Set;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.IndexSearcher;
@@ -42,28 +39,12 @@ public class SearcherIsBeingOpened extends BlackLabIndexImpl {
     }
 
     @Override
-    public Document document(int doc) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Set<Integer> docIdSet() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public boolean isDeleted(int doc) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public int maxDoc() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
-            boolean fillInDefaultsIfNotFound) {
         throw new UnsupportedOperationException();
     }
 

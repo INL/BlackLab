@@ -51,10 +51,10 @@ struct
       separate versioning.
     - remove support for "index template" file; using input format configs is the future. Setting up your own IndexMetadata
       from code should be possible as well, with IndexMetadataWriter.
-- use AnnotatedField / Annotation / AnnotationSensitivity everywhere
++ use AnnotatedField / Annotation / AnnotationSensitivity everywhere
 
 index
-- separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
++ separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
 - introduce Doc; replace (most) docIds with it
 - replace separate ForwardIndexes with single ForwardIndex / AnnotationForwardIndex
   use ContentStoreDoc / ForwardIndexDoc

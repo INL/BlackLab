@@ -54,7 +54,7 @@ public class MockForwardIndex extends ForwardIndex {
     }
 
     @Override
-    public Terms getTerms() {
+    public Terms terms() {
         //
         return terms;
     }

@@ -244,7 +244,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     /**
      * Reset the information that is dependent on input data (i.e. list of values,
      * etc.) because we're going to (re-)index the data.
-     * @return 
+     * @return this field
      */
     public MetadataFieldImpl resetForIndexing() {
         ensureNotFrozen();

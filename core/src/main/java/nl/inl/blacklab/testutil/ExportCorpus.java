@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.LuceneDocTask;
+import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 
@@ -65,18 +65,18 @@ public class ExportCorpus {
         final IndexReader reader = searcher.reader();
 
         System.out.println("Calling forEachDocument()...");
-        searcher.forEachDocument(new LuceneDocTask() {
+        searcher.forEachDocument(new DocTask() {
 
             int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             int docsDone = 0;
 
             @Override
-            public void perform(Document doc) {
-                String fromInputFile = doc.get("fromInputFile");
+            public void perform(Doc doc) {
+                String fromInputFile = doc.luceneDoc().get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = searcher.getContent(doc);
+                    String xml = doc.getContent();
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {

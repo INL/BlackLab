@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.List;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -42,21 +41,6 @@ public abstract class TextPattern {
      * @return result of the translation
      */
     public abstract BLSpanQuery translate(QueryExecutionContext context);
-
-    /**
-     * Translate this TextPattern into some other representation.
-     *
-     * For example, TextPatternTranslatorSpanQuery translates it into Lucene
-     * SpanQuerys.
-     *
-     * Uses the searcher's initial query execution context.
-     *
-     * @param searcher our searcher, to get the inital query execution context from
-     * @return result of the translation
-     */
-    public BLSpanQuery translate(BlackLabIndex searcher) {
-        return translate(searcher.defaultExecutionContext());
-    }
 
     @Override
     public abstract String toString();

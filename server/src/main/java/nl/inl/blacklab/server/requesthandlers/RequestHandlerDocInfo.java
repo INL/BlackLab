@@ -33,10 +33,10 @@ public class RequestHandlerDocInfo extends RequestHandler {
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
         BlackLabIndex searcher = getSearcher();
-        int luceneDocId = BlsUtils.getLuceneDocIdFromPid(searcher, docId);
+        int luceneDocId = BlsUtils.getDocIdFromPid(searcher, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = searcher.document(luceneDocId);
+        Document document = searcher.doc(luceneDocId).luceneDoc();
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 25);
 

@@ -41,6 +41,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -688,7 +689,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
         // Get the actual words from the sort positions
         MatchSensitivity sensitivity = index.defaultMatchSensitivity();
-        Terms terms = index.terms(contextFieldsPropName.get(0));
+        Terms terms = index.forwardIndex(contextFieldsPropName.get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();
@@ -1172,7 +1173,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             XmlHighlighter hl) {
         if (hits.isEmpty())
             return;
-        int doc = hits.get(0).doc();
+        Doc doc = index.doc(hits.get(0).doc());
         int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
@@ -1199,11 +1200,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
-        index.getCharacterOffsets(doc, field, startsOfWords, endsOfWords, true);
+        doc.getCharacterOffsets(field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = index.makeConcordancesFromContentStore(doc, field, startsOfWords,
-                endsOfWords, hl);
+        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);
         for (int i = 0; i < hits.size(); i++) {
             conc.put(hits.get(i), newConcs.get(i));
         }
@@ -1365,7 +1365,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
             punctContext = saveContexts();
         }
-        Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.getTerms();
+        Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
 
         // Get attributes context
         Annotation[] attrName = null;
@@ -1381,7 +1381,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             for (Map.Entry<Annotation, ForwardIndex> e : attrForwardIndices.entrySet()) {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
-                attrTerms[i] = attrFI[i].getTerms();
+                attrTerms[i] = attrFI[i].terms();
                 getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
                 attrContext[i] = saveContexts();
                 i++;
@@ -1390,7 +1390,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         
         // Get word context
         getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
-        Terms terms = forwardIndex.getTerms();
+        Terms terms = forwardIndex.terms();
 
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();

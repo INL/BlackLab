@@ -43,6 +43,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
@@ -593,7 +594,8 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public ContentStore contentStore(String fieldName) {
-        return searcher.contentStore(searcher.field(fieldName));
+        ContentAccessor contentAccessor = searcher.contentAccessor(searcher.field(fieldName));
+        return contentAccessor == null ? null : contentAccessor.getContentStore();
     }
 
     /* (non-Javadoc)

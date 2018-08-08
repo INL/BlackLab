@@ -317,7 +317,7 @@ public class SearchParameters {
             String docId = getString("docpid");
             if (docId != null) {
                 // Only hits in 1 doc (for highlighting)
-                int luceneDocId = BlsUtils.getLuceneDocIdFromPid(getSearcher(), docId);
+                int luceneDocId = BlsUtils.getDocIdFromPid(getSearcher(), docId);
                 if (luceneDocId < 0)
                     throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
                 logger.debug("Filtering on single doc-id");

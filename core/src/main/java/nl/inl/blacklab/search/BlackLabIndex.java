@@ -5,21 +5,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.Collator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -31,7 +25,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
-import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends Closeable {
@@ -142,48 +135,41 @@ public interface BlackLabIndex extends Closeable {
     IndexMetadata metadata();
 
     /**
-     * Retrieve a Lucene Document object from the index.
-     *
-     * NOTE: you must check if the document isn't deleted using Search.isDeleted()
-     * first! Lucene 4.0+ allows you to retrieve deleted documents, making you
-     * responsible for checking whether documents are deleted or not. (This doesn't
-     * apply to search results; searches should never produce deleted documents. It
-     * does apply when you're e.g. iterating over all documents in the index)
-     *
+     * Checks if a document has been deleted from the index
+     * 
+     * NOTE: shouldn't normally be necessary, because e.g. docs returned
+     * in search results are never deleted
+     * 
      * @param doc the document id
-     * @return the Lucene Document
-     * @throws RuntimeException if the document doesn't exist (use maxDoc() and
-     *             isDeleted() to check first!)
+     * @return true iff it has been deleted
      */
-    Document document(int doc);
+    @Deprecated
+    boolean isDeleted(int doc);
 
     /**
-     * Get a set of all (non-deleted) Lucene document ids.
+     * Get a BlackLab document.
      * 
-     * @return set of ids
+     * @param docId document id
+     * @return document
      */
-    Set<Integer> docIdSet();
+    Doc doc(int docId);
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.
      * 
      * @param task task to perform
      */
-    void forEachDocument(LuceneDocTask task);
-
-    /**
-     * Checks if a document has been deleted from the index
-     * 
-     * @param doc the document id
-     * @return true iff it has been deleted
-     */
-    boolean isDeleted(int doc);
+    void forEachDocument(DocTask task);
 
     /**
      * Returns one more than the highest document id
      * 
+     * NOTE: some document id's may have been deleted, so this is not the number
+     * of documents.
+     * 
      * @return one more than the highest document id
      */
+    @Deprecated
     int maxDoc();
 
     BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter);
@@ -215,6 +201,14 @@ public interface BlackLabIndex extends Closeable {
             throws BooleanQuery.TooManyClauses;
 
     /**
+     * Perform a document query only (no hits)
+     * 
+     * @param documentFilterQuery the document-level query
+     * @return the matching documents
+     */
+    DocResults queryDocuments(Query documentFilterQuery);
+
+    /**
      * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
      * optimized version to be executed by Lucene.
      *
@@ -240,161 +234,21 @@ public interface BlackLabIndex extends Closeable {
     QueryExplanation explain(BLSpanQuery query) throws BooleanQuery.TooManyClauses;
 
     /**
-     * Get character positions from word positions.
-     *
-     * Places character positions in the same arrays as the word positions were
-     * specified in.
-     *
-     * @param doc the document from which to find character positions
-     * @param field the field from which to find character positions
-     * @param startsOfWords word positions for which we want starting character
-     *            positions (i.e. the position of the first letter of that word)
-     * @param endsOfWords word positions for which we want ending character
-     *            positions (i.e. the position of the last letter of that word)
-     * @param fillInDefaultsIfNotFound if true, if any illegal word positions are
-     *            specified (say, past the end of the document), a sane default
-     *            value is chosen (in this case, the last character of the last word
-     *            found). Otherwise, throws an exception.
-     */
-    void getCharacterOffsets(int doc, Field field, int[] startsOfWords, int[] endsOfWords,
-            boolean fillInDefaultsIfNotFound);
-
-    /**
-     * Get part of the contents of a field from a Lucene Document.
-     *
-     * This takes into account that some fields are stored externally in content
-     * stores instead of in the Lucene index.
-     *
-     * @param docId the Lucene Document id
-     * @param field the field
-     * @param startAtChar where to start getting the content (-1 for start of
-     *            document, 0 for first char)
-     * @param endAtChar where to end getting the content (-1 for end of document)
-     * @return the field content
-     */
-    String getContentByCharPos(int docId, Field field, int startAtChar, int endAtChar);
-
-    /**
-     * Get part of the contents of a field from a Lucene Document.
-     *
-     * This takes into account that some fields are stored externally in content
-     * stores instead of in the Lucene index.
-     *
-     * @param docId the Lucene Document id
-     * @param field the field
-     * @param startAtWord where to start getting the content (first word returned;
-     *            -1 for start of document, 0 for first word)
-     * @param endAtWord where to end getting the content (last word returned; -1 for
-     *            end of document)
-     * @return the field content
-     */
-    String getContent(int docId, Field field, int startAtWord, int endAtWord);
-
-    /**
-     * Get the contents of a field from a Lucene Document.
-     *
-     * This takes into account that some fields are stored externally in content
-     * stores instead of in the Lucene index.
-     *
-     * @param d the Document
-     * @param field the field
-     * @return the field content
-     */
-    String getContent(Document d, Field field);
-
-    /**
-     * Get the document contents (original XML).
-     *
-     * @param d the Document
-     * @return the field content
-     */
-    default String getContent(Document d) {
-        return getContent(d, mainAnnotatedField());
-    }
-
-    /**
-     * Get the contents of a field from a Lucene Document.
-     *
-     * This takes into account that some fields are stored externally in content
-     * stores instead of in the Lucene index.
-     *
-     * @param docId the Document id
-     * @param field the field
-     * @return the field content
-     */
-    default String getContent(int docId, Field field) {
-        return getContent(docId, field, -1, -1);
-    }
-
-    /**
-     * Get the document contents (original XML).
-     *
-     * @param docId the Document id
-     * @return the field content
-     */
-    default String getContent(int docId) {
-        return getContent(docId, mainAnnotatedField(), -1, -1);
-    }
-
-    /**
      * Get the Lucene index reader we're using.
      *
      * @return the Lucene index reader
      */
     IndexReader reader();
 
-    /**
-     * Highlight part of field content with the specified hits, and make sure it's
-     * well-formed.
-     *
-     * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
-     *
-     * @param docId document to highlight a field from
-     * @param field field to highlight
-     * @param hits the hits
-     * @param startAtWord where to start highlighting (first word returned), or -1
-     *            for start of document
-     * @param endAtWord where to end highlighting (first word not returned), or -1
-     *            for end of document
-     * @return the highlighted content
-     */
-    String highlightContent(int docId, Field field, Hits hits, int startAtWord, int endAtWord);
+    IndexSearcher searcher();
 
     /**
-     * Highlight field content with the specified hits.
-     *
-     * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
-     *
-     * @param docId document to highlight a field from
-     * @param field field to highlight
-     * @param hits the hits
-     * @return the highlighted content
-     */
-    default String highlightContent(int docId, Field field, Hits hits) {
-        return highlightContent(docId, field, hits, -1, -1);
-    }
-
-    /**
-     * Highlight field content with the specified hits.
-     *
-     * Uses &lt;hl&gt;&lt;/hl&gt; tags to highlight the content.
-     *
-     * @param docId document to highlight a field from
-     * @param hits the hits
-     * @return the highlighted content
-     */
-    default String highlightContent(int docId, Hits hits) {
-        return highlightContent(docId, mainAnnotatedField(), hits, -1, -1);
-    }
-
-    /**
-     * Get the content store for a field.
-     *
+     * Get the content accessor for a field.
+     * 
      * @param field the field
-     * @return the content store, or null if there is no content store for this
-     *         field
+     * @return the content accessor, or null if there is no content accessor for this field
      */
-    ContentStore contentStore(Field field);
+    ContentAccessor contentAccessor(Field field);
 
     /**
      * Tries to get the ForwardIndex object for the specified fieldname.
@@ -404,71 +258,10 @@ public interface BlackLabIndex extends Closeable {
      * looks for an existing forward index and opens that.
      *
      * @param annotation the annotation for which we want the forward index
-     * @return the ForwardIndex if found/created, or null otherwise
+     * @return the ForwardIndex if found/created
+     * @throws BlackLabException if the annotation has no forward index
      */
     ForwardIndex forwardIndex(Annotation annotation);
-
-    /**
-     * Determine the concordance strings for a number of concordances, given the
-     * relevant character positions.
-     *
-     * Every concordance requires four character positions: concordance start and
-     * end, and hit start and end. Visualising it ('fox' is the hit word):
-     *
-     * [A] the quick brown [B] fox [C] jumps over the [D]
-     *
-     * The startsOfWords array contains the [A] and [B] positions for each
-     * concordance. The endsOfWords array contains the [C] and [D] positions for
-     * each concordance.
-     *
-     * @param doc the Lucene document number
-     * @param field the field
-     * @param startsOfWords the array of starts of words ([A] and [B] positions)
-     * @param endsOfWords the array of ends of words ([C] and [D] positions)
-     * @param hl
-     * @return the list of concordances
-     */
-    List<Concordance> makeConcordancesFromContentStore(int doc, Field field, int[] startsOfWords,
-            int[] endsOfWords, XmlHighlighter hl);
-
-    /**
-     * Get the Terms object for the specified field.
-     *
-     * The Terms object is part of the ForwardIndex module and provides a mapping
-     * from term id to term String, and between term id and term sort position. It
-     * is used while sorting and grouping hits (by mapping the context term ids to
-     * term sort position ids), and later used to display the group name (by mapping
-     * the sort position ids back to Strings)
-     *
-     * @param annotation the annotation for which we want the Terms object
-     * @return the Terms object
-     * @throws RuntimeException if this field does not have a forward index, and
-     *             hence no Terms object.
-     */
-    default Terms terms(Annotation annotation) {
-        ForwardIndex forwardIndex = forwardIndex(annotation);
-        if (forwardIndex == null) {
-            throw new IllegalArgumentException("Annotation " + annotation + " has no forward index!");
-        }
-        return forwardIndex.getTerms();
-    }
-
-    /**
-     * Get the Terms object for the main contents field.
-     *
-     * The Terms object is part of the ForwardIndex module and provides a mapping
-     * from term id to term String, and between term id and term sort position. It
-     * is used while sorting and grouping hits (by mapping the context term ids to
-     * term sort position ids), and later used to display the group name (by mapping
-     * the sort position ids back to Strings)
-     *
-     * @return the Terms object
-     * @throws RuntimeException if this field does not have a forward index, and
-     *             hence no Terms object.
-     */
-    default Terms terms() {
-        return forwardIndex(mainAnnotatedField().annotations().main()).getTerms();
-    }
 
     MatchSensitivity defaultMatchSensitivity();
 
@@ -483,18 +276,19 @@ public interface BlackLabIndex extends Closeable {
     QueryExecutionContext defaultExecutionContext(AnnotatedField field);
 
     /**
-     * Get the default initial query execution context.
-     *
-     * Uses the default contents field.
-     *
-     * @return the query execution context
+     * Get the index name.
+     * 
+     * Usually the name of the directory the index is in.
+     * 
+     * @return index name
      */
-    default QueryExecutionContext defaultExecutionContext() {
-        return defaultExecutionContext(mainAnnotatedField());
-    }
-
     String name();
 
+    /**
+     * Get the index directory.
+     * 
+     * @return index directory
+     */
     File indexDirectory();
 
     /**
@@ -503,16 +297,6 @@ public interface BlackLabIndex extends Closeable {
      * @return the analyzer
      */
     Analyzer analyzer();
-
-    /**
-     * Perform a document query only (no hits)
-     * 
-     * @param documentFilterQuery the document-level query
-     * @return the matching documents
-     */
-    DocResults queryDocuments(Query documentFilterQuery);
-
-    IndexSearcher searcher();
 
     Map<Annotation, ForwardIndex> forwardIndices();
 
@@ -538,5 +322,5 @@ public interface BlackLabIndex extends Closeable {
     default AnnotatedField mainAnnotatedField() {
         return metadata().annotatedFields().main();
     }
-    
+
 }

@@ -114,7 +114,7 @@ public abstract class ForwardIndex {
      * 
      * @return the Terms object
      */
-    public abstract Terms getTerms();
+    public abstract Terms terms();
 
     /**
      * @return the number of documents in the forward index

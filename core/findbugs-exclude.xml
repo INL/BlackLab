@@ -3,4 +3,7 @@
     <Match>
         <Package name="~nl\.inl\.blacklab\.queryParser.*" />
     </Match>
+    <Match>
+        <Bug pattern="IL_INFINITE_RECURSIVE_LOOP " />
+    </Match>
 </FindBugsFilter>

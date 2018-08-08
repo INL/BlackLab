@@ -130,7 +130,7 @@ public class BlsUtils {
      * @param pid the pid string (or Lucene doc id if we don't use a pid)
      * @return the document id, or -1 if it doesn't exist
      */
-    public static int getLuceneDocIdFromPid(BlackLabIndex searcher, String pid) {
+    public static int getDocIdFromPid(BlackLabIndex searcher, String pid) {
         MetadataField pidField = searcher.metadata().metadataFields().special(MetadataFields.PID);
         if (pidField == null) {
             int luceneDocId;

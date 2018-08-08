@@ -58,7 +58,7 @@ public class HitPropertyRightContext extends HitProperty {
         this.searcher = hits.index();
         this.luceneFieldName = annotation.luceneFieldPrefix();
         this.annotation = annotation;
-        this.terms = searcher.terms(annotation);
+        this.terms = searcher.forwardIndex(annotation).terms();
         this.sensitive = sensitive;
     }
 

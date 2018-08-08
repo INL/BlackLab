@@ -780,9 +780,9 @@ public class QueryTool {
                 if (currentHitSet == null || hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
-                    int docid = currentHitSet.get(hitId).doc();
-                    Hits hitsInDoc = hits.getHitsInDoc(docid);
-                    outprintln(StringUtil.wrapToString(searcher.highlightContent(docid, hitsInDoc), 80));
+                    int docId = currentHitSet.get(hitId).doc();
+                    Hits hitsInDoc = hits.getHitsInDoc(docId);
+                    outprintln(StringUtil.wrapToString(searcher.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = parseInt(lcased.substring(12), 0);
@@ -929,6 +929,7 @@ public class QueryTool {
             processCommand(restCommand);
     }
 
+    @SuppressWarnings("deprecation")
     private void showMetadata(int docId) {
         if (docId >= searcher.maxDoc()) {
             outprintln("Document " + docId + " doesn't exist.");
@@ -938,7 +939,7 @@ public class QueryTool {
             outprintln("Document " + docId + " was deleted.");
             return;
         }
-        Document doc = searcher.document(docId);
+        Document doc = searcher.doc(docId).luceneDoc();
         Map<String, String> metadata = new TreeMap<>(); // sort by key
         for (IndexableField f : doc.getFields()) {
             metadata.put(f.name(), f.stringValue());
@@ -1505,7 +1506,7 @@ public class QueryTool {
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
-            Document d = searcher.document(id);
+            Document d = searcher.doc(id).luceneDoc();
             String title = d.get(titleField.name());
             if (title == null)
                 title = "(doc #" + id + ", no " + titleField.name() + " given)";
@@ -1605,7 +1606,7 @@ public class QueryTool {
                 if (currentDoc != -1)
                     outprintln("");
                 currentDoc = hit.doc;
-                Document d = searcher.document(currentDoc);
+                Document d = searcher.doc(currentDoc).luceneDoc();
                 String title = d.get(titleField.name());
                 if (title == null)
                     title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";

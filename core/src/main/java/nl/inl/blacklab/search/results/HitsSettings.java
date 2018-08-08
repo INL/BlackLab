@@ -46,7 +46,6 @@ public final class HitsSettings implements Freezable<HitsSettings> {
      * Get a (non-frozen) copy of a HitsSettings instance.
      * 
      * @param copyFrom instance to copy
-     * @return non-frozen copy
      */
     private HitsSettings(HitsSettings copyFrom) {
         maxHitsToRetrieve = copyFrom.maxHitsToRetrieve();

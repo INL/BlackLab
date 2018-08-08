@@ -61,7 +61,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             annotationNames.add(annotation);
             ForwardIndex fi = searcher.forwardIndex(annotation);
             fis.add(fi);
-            terms.add(fi.getTerms());
+            terms.add(fi.terms());
         }
         return n;
     }
@@ -83,12 +83,12 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
     @Override
     public String getTermString(int annotIndex, int termId) {
-        return fis.get(annotIndex).getTerms().get(termId);
+        return fis.get(annotIndex).terms().get(termId);
     }
 
     @Override
     public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-        return fis.get(annotIndex).getTerms().termsEqual(termId, caseSensitive, diacSensitive);
+        return fis.get(annotIndex).terms().termsEqual(termId, caseSensitive, diacSensitive);
     }
 
     @Override

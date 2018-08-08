@@ -193,7 +193,7 @@ public class RequestHandlerHits extends RequestHandler {
                 // Find pid
                 String pid = pids.get(hit.doc());
                 if (pid == null) {
-                    Document document = searcher.document(hit.doc());
+                    Document document = searcher.doc(hit.doc()).luceneDoc();
                     pid = getDocumentPid(searcher, hit.doc(), document);
                     pids.put(hit.doc(), pid);
                 }
@@ -237,7 +237,7 @@ public class RequestHandlerHits extends RequestHandler {
                     docsDone.add(hit.doc());
                     ds.startAttrEntry("docInfo", "pid", pid);
                     if (!pid.equals(lastPid)) {
-                        doc = searcher.document(hit.doc());
+                        doc = searcher.doc(hit.doc()).luceneDoc();
                         lastPid = pid;
                     }
                     dataStreamDocumentInfo(ds, searcher, doc);
