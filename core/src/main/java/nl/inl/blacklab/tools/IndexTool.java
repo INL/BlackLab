@@ -266,7 +266,7 @@ public class IndexTool {
         }
         Indexer indexer;
         try {
-            indexer = new Indexer(indexDir, createNewIndex, docFormat, indexTemplateFile);
+            indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
             if (useThreads)
                 indexer.setUseThreads(true);
         } catch (DocumentFormatException e1) {

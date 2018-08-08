@@ -3,6 +3,7 @@ package nl.inl.util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -11,7 +12,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import org.apache.commons.io.IOUtils;
+
+import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.search.BlackLabException;
 
 /**
@@ -108,6 +114,58 @@ public class FileProcessor implements AutoCloseable {
         }
     }
 
+    private interface PathCapturingFileHandler extends FileHandler {
+        byte[] getFile();
+    }
+
+    public static byte[] fetchFileFromArchive(File f, final String pathInsideArchive) {
+        if (f.getName().endsWith(".gz") || f.getName().endsWith(".tgz")) {
+            // We have to process the whole file, we can't do random access.
+            PathCapturingFileHandler fileCapturer = new PathCapturingFileHandler() {
+                byte[] file;
+
+                @Override
+                public void directory(File dir) throws Exception {
+                    //
+                }
+
+                @Override
+                public void file(String path, InputStream is, File archive) throws Exception {
+                    if (path.endsWith(pathInsideArchive))
+                        this.file = IOUtils.toByteArray(is);
+                }
+
+                @Override
+                public byte[] getFile() {
+                    return file;
+                }
+            };
+            try (FileProcessor proc = new FileProcessor(true, false, true)) {
+                proc.setFileHandler(fileCapturer);
+                proc.processFile(f);
+            } catch (FileNotFoundException e) {
+                throw new BlackLabException(e);
+            }
+
+            // FileProcessor must have completed/be closed before result is available
+            return fileCapturer.getFile();
+        } else if (f.getName().endsWith(".zip")) {
+            // We can do random access. Fetch the file we want.
+            try {
+                ZipFile z = ZipHandleManager.openZip(f);
+                ZipEntry e = z.getEntry(pathInsideArchive);
+                try (InputStream is = z.getInputStream(e)) {
+                    return IOUtils.toByteArray(is);
+                }
+            } catch (IOException e) {
+                throw new BlackLabException(e);
+            }
+        } else {
+            throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
+        }
+    }
+
+    
     /**
      * Restrict the files we handle to a file glob? Note that this pattern is not
      * applied to directories, and directories within archives. It is also not

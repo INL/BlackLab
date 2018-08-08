@@ -85,7 +85,7 @@ public class Example {
         DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
         Indexer indexer = null;
         try {
-            indexer = new Indexer(indexDir, true, "exampleformat", (File) null);
+            indexer = Indexer.createNewIndex(indexDir, "exampleformat");
             // Index each of our test "documents".
             for (int i = 0; i < testData.length; i++) {
                 indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));

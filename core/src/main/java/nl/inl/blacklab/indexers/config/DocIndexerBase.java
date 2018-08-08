@@ -37,6 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.ExUtil;
+import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerBase extends DocIndexer {
@@ -242,7 +243,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 || inputFile.endsWith(".tgz")) {
             // It's an archive. Unpack the right file from it.
             completePath += "/" + pathInsideArchive;
-            data = Indexer.fetchFileFromArchive(f, pathInsideArchive);
+            data = FileProcessor.fetchFileFromArchive(f, pathInsideArchive);
         } else {
             // Regular file.
             try (InputStream is = new FileInputStream(f)) {

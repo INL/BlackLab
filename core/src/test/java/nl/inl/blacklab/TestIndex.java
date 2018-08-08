@@ -104,7 +104,7 @@ public class TestIndex {
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
-        Indexer indexer = new Indexer(indexDir, true, testFormat, (File) null);
+        Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
         indexer.setListener(new IndexListenerDevNull()); // no output
         try {
             // Index each of our test "documents".

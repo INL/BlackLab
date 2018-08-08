@@ -275,7 +275,7 @@ public class Index {
         cleanupClosedIndexerOrThrow();
         close(); // Close any Searcher that is still in search mode
         try {
-            this.indexer = new Indexer(this.dir, false);
+            this.indexer = Indexer.openIndex(this.dir);
             indexer.setUseThreads(true);
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", 27, e);
