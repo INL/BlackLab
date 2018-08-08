@@ -1,10 +1,10 @@
 package nl.inl.blacklab.search;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A collection of tokens and their (absolute) frequencies.
@@ -13,12 +13,29 @@ import java.util.List;
  * also set the total frequency explicitly (after all entries have been added)
  * if you want to calculate relative frequencies based on a different total.
  */
-public class TermFrequencyList extends AbstractList<TermFrequency> {
+public class TermFrequencyList implements Iterable<TermFrequency> {
+    
     List<TermFrequency> list;
 
     long totalFrequency = 0;
 
-    @Override
+    public TermFrequencyList(Map<String, Integer> wordFreq, boolean sort) {
+        list = new ArrayList<>(wordFreq.size());
+        for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
+            list.add(new TermFrequency(e.getKey(), e.getValue()));
+        }
+        if (sort)
+            Collections.sort(list);
+    }
+
+    TermFrequencyList(List<TermFrequency> list) {
+        this.list = list;
+        totalFrequency = 0;
+        for (TermFrequency fr: list) {
+            totalFrequency += fr.frequency;
+        }
+    }
+
     public int size() {
         return list.size();
     }
@@ -28,19 +45,8 @@ public class TermFrequencyList extends AbstractList<TermFrequency> {
         return list.iterator();
     }
 
-    @Override
     public TermFrequency get(int index) {
         return list.get(index);
-    }
-
-    @Override
-    public boolean add(TermFrequency e) {
-        totalFrequency += e.frequency;
-        return list.add(e);
-    }
-
-    public void sort() {
-        Collections.sort(list);
     }
 
     /**
@@ -58,22 +64,12 @@ public class TermFrequencyList extends AbstractList<TermFrequency> {
         return 0;
     }
 
-    public TermFrequencyList() {
-        super();
-        list = new ArrayList<>();
-    }
-
-    public TermFrequencyList(int capacity) {
-        super();
-        list = new ArrayList<>(capacity);
-    }
-
     public long getTotalFrequency() {
         return totalFrequency;
     }
 
-    public void setTotalFrequency(long totalFrequency) {
-        this.totalFrequency = totalFrequency;
+    public TermFrequencyList subList(int fromIndex, int toIndex) {
+        return new TermFrequencyList(list.subList(fromIndex, toIndex));
     }
 
 }

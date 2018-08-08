@@ -59,7 +59,6 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -226,7 +225,7 @@ public class HitsImpl extends Hits {
      * @param copyFrom the Hits object to copy
      */
     private HitsImpl(HitsImpl copyFrom) {
-        super(copyFrom.searcher);
+        super(copyFrom.index);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -538,7 +537,7 @@ public class HitsImpl extends Hits {
     }
 
     /**
-     * Sort the list of hits.
+     * Get a sorted copy of these hits.
      *
      * Note that if the thread is interrupted during this, sort may return without
      * the hits actually being fully read and sorted. We don't want to add throws
@@ -548,14 +547,19 @@ public class HitsImpl extends Hits {
      * @param sortProp the hit property to sort on
      * @param reverseSort if true, sort in descending order
      */
-    private synchronized void sort(final HitProperty sortProp, boolean reverseSort) {
+    @Override
+    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
+        HitsImpl hits = copy();
+        sortProp = sortProp.copyWithHits(hits);
+        
+        // Sort hits
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
             // Thread was interrupted; don't complete the operation but return
             // and let the caller detect and deal with the interruption.
             Thread.currentThread().interrupt();
-            return;
+            return hits;
         }
 
         // Make sure we have a sort order array of sufficient size
@@ -584,13 +588,6 @@ public class HitsImpl extends Hits {
                 sortOrder[i] = sortOrder[n - i - 1];
             }
         }
-    }
-
-    @Override
-    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        HitsImpl hits = copy();
-        sortProp = sortProp.copyWithHits(hits);
-        hits.sort(sortProp, reverseSort);
         return hits;
     }
 
@@ -889,7 +886,7 @@ public class HitsImpl extends Hits {
     @Override
     public Kwic getKwic(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        HitsImpl h = new HitsImpl(searcher, searcher.mainAnnotatedField(), oneHit);
+        HitsImpl h = new HitsImpl(index, index.mainAnnotatedField(), oneHit);
         h.copySettingsFrom(this); // concordance type, etc.
         Map<Hit, Kwic> oneConc = h.retrieveKwics(contextSize, field);
         return oneConc.get(hit);
@@ -955,7 +952,7 @@ public class HitsImpl extends Hits {
     @Override
     public synchronized Concordance getConcordance(AnnotatedField field, Hit hit, int contextSize) {
         List<Hit> oneHit = Arrays.asList(hit);
-        HitsImpl h = new HitsImpl(searcher, searcher.mainAnnotatedField(), oneHit);
+        HitsImpl h = new HitsImpl(index, index.mainAnnotatedField(), oneHit);
         h.copySettingsFrom(this); // concordance type, etc.
         if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
             Map<Hit, Kwic> oneKwic = h.retrieveKwics(contextSize, field);
@@ -1098,18 +1095,18 @@ public class HitsImpl extends Hits {
             ForwardIndex forwardIndex = null;
             String concWordFI = settings().concWordProp();
             if (concWordFI != null)
-                forwardIndex = searcher.forwardIndex(field.annotations().get(concWordFI));
+                forwardIndex = index.forwardIndex(field.annotations().get(concWordFI));
 
             ForwardIndex punctForwardIndex = null;
             String concPunctFI = settings().concPunctProp();
             if (concPunctFI != null)
-                punctForwardIndex = searcher.forwardIndex(field.annotations().get(concPunctFI));
+                punctForwardIndex = index.forwardIndex(field.annotations().get(concPunctFI));
 
             Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
             Collection<String> concAttrFI = settings().concAttrProps();
             if (concAttrFI == null) {
                 // All other FIs are attributes
-                for (ForwardIndex fi: searcher.forwardIndices().values()) {
+                for (ForwardIndex fi: index.forwardIndices().values()) {
                     Annotation annotation = fi.annotation();
                     if (annotation.name().equals(concWordFI) || annotation.name().equals(concPunctFI))
                         continue;
@@ -1119,13 +1116,13 @@ public class HitsImpl extends Hits {
                 // Specific list of attribute FIs
                 for (String annotationName: concAttrFI) {
                     Annotation annotation = field.annotations().get(annotationName);
-                    attrForwardIndices.put(annotation, searcher.forwardIndex(annotation));
+                    attrForwardIndices.put(annotation, index.forwardIndex(annotation));
                 }
             }
 
             Map<Hit, Kwic> conc1 = new HashMap<>();
             for (List<Hit> l : hitsPerDocument.values()) {
-                HitsImpl hitsInThisDoc = new HitsImpl(searcher, searcher.mainAnnotatedField(), l);
+                HitsImpl hitsInThisDoc = new HitsImpl(index, index.mainAnnotatedField(), l);
                 hitsInThisDoc.copySettingsFrom(this);
                 hitsInThisDoc.makeKwicsSingleDocForwardIndex(forwardIndex, punctForwardIndex,
                         attrForwardIndices, contextSize, conc1);
@@ -1161,7 +1158,7 @@ public class HitsImpl extends Hits {
 
         List<ForwardIndex> fis = new ArrayList<>();
         for (Annotation fieldPropName : fieldProps) {
-            fis.add(searcher.forwardIndex(fieldPropName));
+            fis.add(index.forwardIndex(fieldPropName));
         }
 
         // Get the context
@@ -1210,7 +1207,7 @@ public class HitsImpl extends Hits {
      */
     private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
         // Find context for the hits in the current document
-        HitsImpl hitsObj = new HitsImpl(searcher, searcher.mainAnnotatedField(), hitsInSameDoc);
+        HitsImpl hitsObj = new HitsImpl(index, index.mainAnnotatedField(), hitsInSameDoc);
         hitsObj.copySettingsFrom(this);
         hitsObj.getContextWords(settings().contextSize(), fis);
 
@@ -1229,9 +1226,9 @@ public class HitsImpl extends Hits {
      * @return the frequency of each occurring token
      */
     @Override
-    public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx) {
+    public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         if (annotation == null)
-            annotation = searcher.mainAnnotatedField().annotations().main();
+            annotation = index.mainAnnotatedField().annotations().main();
         
         // TODO: use sensitivity settings
 //        if (ctx == null)
@@ -1262,9 +1259,8 @@ public class HitsImpl extends Hits {
         }
 
         // Get the actual words from the sort positions
-        MatchSensitivity sensitivity = searcher.defaultMatchSensitivity();
-        TermFrequencyList collocations = new TermFrequencyList(coll.size());
-        Terms terms = searcher.terms(contextFieldsPropName.get(0));
+        MatchSensitivity sensitivity = index.defaultMatchSensitivity();
+        Terms terms = index.terms(contextFieldsPropName.get(0));
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();
@@ -1287,10 +1283,7 @@ public class HitsImpl extends Hits {
         }
 
         // Transfer from map to list
-        for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
-            collocations.add(new TermFrequency(e.getKey(), e.getValue()));
-        }
-        return collocations;
+        return new TermFrequencyList(wordFreq, sort);
     }
 
     @Override
@@ -1610,10 +1603,10 @@ public class HitsImpl extends Hits {
 
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
-        searcher.getCharacterOffsets(doc, field, startsOfWords, endsOfWords, true);
+        index.getCharacterOffsets(doc, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = searcher.makeConcordancesFromContentStore(doc, field, startsOfWords,
+        List<Concordance> newConcs = index.makeConcordancesFromContentStore(doc, field, startsOfWords,
                 endsOfWords, hl);
         for (int i = 0; i < hits.size(); i++) {
             conc.put(hits.get(i), newConcs.get(i));
@@ -1638,14 +1631,14 @@ public class HitsImpl extends Hits {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return Hits.emptyList(searcher);
+            return Hits.emptyList(index);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        Hits result = Hits.fromList(searcher, hitsInDoc);
+        Hits result = Hits.fromList(index, hitsInDoc);
         result.copySettingsFrom(this);
         return result;
     }
@@ -1670,7 +1663,7 @@ public class HitsImpl extends Hits {
      */
     private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(searcher.defaultUnbalancedTagsStrategy());
+        hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key : hits) {
@@ -1683,7 +1676,7 @@ public class HitsImpl extends Hits {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            HitsImpl hitsInThisDoc = new HitsImpl(searcher, l);
+            HitsImpl hitsInThisDoc = new HitsImpl(index, l);
             hitsInThisDoc.copySettingsFrom(this);
             hitsInThisDoc.makeConcordancesSingleDocContentStore(field, contextSize, conc, hl);
         }

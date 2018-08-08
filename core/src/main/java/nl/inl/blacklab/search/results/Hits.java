@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -24,19 +23,22 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
-public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
+public abstract class Hits implements Iterable<Hit>, Prioritizable {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
     public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
+    
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
     public final static int CONTEXTS_HIT_START_INDEX = 0;
+    
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
     public final static int CONTEXTS_RIGHT_START_INDEX = 1;
+    
     /** In context arrays, what index indicates the length of the context? */
     public final static int CONTEXTS_LENGTH_INDEX = 2;
 
@@ -106,7 +108,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
     /** Unique id of this Hits instance */
     protected final int hitsObjId = getNextHitsObjId();
 
-    protected BlackLabIndex searcher;
+    protected BlackLabIndex index;
 
     /**
      * Settings for retrieving hits, sorting/grouping on context and making
@@ -124,7 +126,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
     protected ThreadPriority etiquette;
 
     public Hits(BlackLabIndex searcher) {
-        this.searcher = searcher;
+        this.index = searcher;
         settings = new HitsSettings(searcher.hitsSettings()); // , concordanceFieldName);
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
     }
@@ -238,7 +240,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
             if (property.get(i).equals(value))
                 filtered.add(get(i));
         }
-        Hits hits = new HitsImpl(searcher, filtered);
+        Hits hits = new HitsImpl(index, filtered);
         hits.copySettingsFrom(this);
         return hits;
     }
@@ -288,7 +290,6 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      *
      * @return the number of hits available
      */
-    @Override
     public abstract int size();
 
     /**
@@ -394,7 +395,6 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @param i index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
-    @Override
     public abstract Hit get(int i);
 
     /**
@@ -503,7 +503,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return the frequency of each occurring token
      */
     public TermFrequencyList getCollocations() {
-        return getCollocations(null, null);
+        return getCollocations(null, null, true);
     }
 
     /**
@@ -511,10 +511,11 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      *
      * @param annotation the annotation to use for the collocations, or null if default
      * @param ctx query execution context, containing the sensitivity settings
+     * @param sort should the list be sorted by descending frequency?
      *
      * @return the frequency of each occurring token
      */
-    public abstract TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx);
+    public abstract TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort);
 
     public abstract boolean hasCapturedGroups();
 
@@ -557,7 +558,7 @@ public abstract class Hits extends AbstractList<Hit> implements Prioritizable {
      * @return the searcher object.
      */
     public BlackLabIndex getSearcher() {
-        return searcher;
+        return index;
     }
 
     /**

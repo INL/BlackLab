@@ -42,11 +42,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher.searcher(), q, cfd.name(), propName,
                 sensitive ? "s" : "i");
 
-        TermFrequencyList tfl = new TermFrequencyList(freq.size());
-        for (Map.Entry<String, Integer> e : freq.entrySet()) {
-            tfl.add(new TermFrequency(e.getKey(), e.getValue()));
-        }
-        tfl.sort();
+        TermFrequencyList tfl = new TermFrequencyList(freq, true);
 
         int first = searchParam.getInteger("first");
         if (first < 0 || first >= tfl.size())

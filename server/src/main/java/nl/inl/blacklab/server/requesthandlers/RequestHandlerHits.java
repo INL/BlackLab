@@ -270,7 +270,6 @@ public class RequestHandlerHits extends RequestHandler {
         originalHits.settings().setContextSize(searchParam.getInteger("wordsaroundhit"));
         ds.startMap().startEntry("tokenFrequencies").startMap();
         TermFrequencyList tfl = originalHits.getCollocations();
-        tfl.sort();
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }

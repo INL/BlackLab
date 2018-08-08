@@ -53,7 +53,7 @@ public class MockHits extends Hits {
 
     @Override
     public Hits copy() {
-        return new MockHits(searcher, doc, start, end);
+        return new MockHits(index, doc, start, end);
     }
 
     @Override
@@ -162,7 +162,7 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public TermFrequencyList getCollocations(Annotation propName, QueryExecutionContext ctx) {
+    public TermFrequencyList getCollocations(Annotation propName, QueryExecutionContext ctx, boolean sort) {
         throw new UnsupportedOperationException();
     }
 

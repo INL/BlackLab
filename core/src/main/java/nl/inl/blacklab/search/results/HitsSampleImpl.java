@@ -69,7 +69,7 @@ public class HitsSampleImpl extends HitsSample {
     }
 
     private HitsSampleImpl(HitsSampleImpl copyFrom) {
-        super(copyFrom.searcher, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
+        super(copyFrom.index, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
     }
 
     @Override

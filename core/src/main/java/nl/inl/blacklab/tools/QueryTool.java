@@ -1448,8 +1448,7 @@ public class QueryTool {
                 collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocAnnotation, searcher.defaultExecutionContext(collocAnnotation.field()));
-            collocations.sort();
+            collocations = hits.getCollocations(collocAnnotation, searcher.defaultExecutionContext(collocAnnotation.field()), true);
         }
 
         int i = 0;
