@@ -7,6 +7,7 @@ import java.util.Random;
 import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 public abstract class HitsSample extends Hits {
@@ -94,23 +95,23 @@ public abstract class HitsSample extends Hits {
 
     protected Random random;
 
-    protected HitsSample(BlackLabIndex searcher, float ratio, long seed) {
-        super(searcher, new ArrayList<Hit>());
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, float ratio, long seed) {
+        super(searcher, field, new ArrayList<Hit>());
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, int number, long seed) {
-        super(searcher, new ArrayList<Hit>());
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, int number, long seed) {
+        super(searcher, field, new ArrayList<Hit>());
         this.numberOfHitsToSelect = number;
         exactNumberGiven = true;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, List<Hit> hits, float ratio, long seed) {
-        super(searcher, hits);
+    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, float ratio, long seed) {
+        super(searcher, field, hits);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);

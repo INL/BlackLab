@@ -13,7 +13,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -52,9 +51,11 @@ public class MockSearcher implements BlackLabIndex {
     public MockSearcher() {
         super();
         indexMetadata = new MockIndexMetadata();
-        hitsSettings = new HitsSettings(this);
         analyzer = new BLStandardAnalyzer();
-        hitsSettings().setContextSize(5);
+        hitsSettings = HitsSettings
+                .defaults()
+                .setContextSize(5)
+                .freeze();
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
@@ -172,11 +173,6 @@ public class MockSearcher implements BlackLabIndex {
 
     @Override
     public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Hits find(SpanQuery query, AnnotatedField field) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

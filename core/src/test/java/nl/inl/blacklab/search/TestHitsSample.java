@@ -31,7 +31,8 @@ public class TestHitsSample {
     private final static int[] aEnd = new int[] { 2, 5, 3, 2, 4, 7 };
 
     private static void assertSampleRatio(int[] expected, float ratio, long seed) {
-        Hits hits = HitsSample.fromHits(new MockHits(new MockSearcher(), aDoc, aStart, aEnd), ratio, seed);
+        MockSearcher mockSearcher = new MockSearcher();
+        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), ratio, seed);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {
@@ -43,7 +44,8 @@ public class TestHitsSample {
     }
 
     private static void assertSampleNumber(int[] expected, int number, long seed) {
-        Hits hits = HitsSample.fromHits(new MockHits(new MockSearcher(), aDoc, aStart, aEnd), number, seed);
+        MockSearcher mockSearcher = new MockSearcher();
+        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {

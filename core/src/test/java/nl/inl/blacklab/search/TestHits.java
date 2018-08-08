@@ -35,7 +35,8 @@ public class TestHits {
         int[] aDoc = new int[] { 1, 2 };
         int[] aStart = new int[] { 1, 2 };
         int[] aEnd = new int[] { 2, 3 };
-        Hits hits = new MockHits(new MockSearcher(), aDoc, aStart, aEnd);
+        MockSearcher mockSearcher = new MockSearcher();
+        Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd);
 
         int i = 0;
         for (Hit hit : hits) {

@@ -11,7 +11,7 @@ public class HitsSampleImpl extends HitsSample {
     Hits source;
 
     HitsSampleImpl(Hits hits, float ratio, long seed) {
-        super(hits.getSearcher(), ratio, seed);
+        super(hits.getSearcher(), hits.field(), ratio, seed);
         if (ratio < 0 || ratio > 1)
             throw new IllegalArgumentException("ratio must be in the range 0-1");
         this.source = hits;
@@ -28,7 +28,7 @@ public class HitsSampleImpl extends HitsSample {
     }
 
     HitsSampleImpl(Hits hits, int number, long seed) {
-        super(hits.getSearcher(), number, seed);
+        super(hits.getSearcher(), hits.field(), number, seed);
         if (number < 0)
             throw new IllegalArgumentException("Negative sample number specified");
         if (number > hits.size())
@@ -69,7 +69,7 @@ public class HitsSampleImpl extends HitsSample {
     }
 
     private HitsSampleImpl(HitsSampleImpl copyFrom) {
-        super(copyFrom.index, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
+        super(copyFrom.index, copyFrom.field, copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
     }
 
     @Override

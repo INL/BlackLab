@@ -49,7 +49,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
      * @param windowSize the size of our window
      */
     HitsWindow(Hits source, int first, int windowSize) {
-        super(source.getSearcher(), (List<Hit>) null);
+        super(source.getSearcher(), source.field(), (List<Hit>) null);
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;

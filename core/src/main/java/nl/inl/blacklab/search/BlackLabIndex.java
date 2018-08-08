@@ -16,7 +16,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.spans.SpanQuery;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -47,6 +46,19 @@ public interface BlackLabIndex extends Closeable {
      */
     static BlackLabIndex open(File indexDir) throws CorruptIndexException, IOException {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null);
+    }
+
+    /**
+     * Open an index for reading ("search mode").
+     *
+     * @param indexDir the index directory
+     * @param settings default search settings
+     * @return the searcher
+     * @throws CorruptIndexException
+     * @throws IOException
+     */
+    static BlackLabIndex open(File indexDir, HitsSettings settings) throws CorruptIndexException, IOException {
+        return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
 
     /**
@@ -175,17 +187,6 @@ public interface BlackLabIndex extends Closeable {
     int maxDoc();
 
     BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter);
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param query the pattern to find
-     * @param field field to use for concordances
-     * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
-     *             is overly broad
-     */
-    Hits find(SpanQuery query, AnnotatedField field) throws BooleanQuery.TooManyClauses;
 
     /**
      * Find hits for a pattern in a field.

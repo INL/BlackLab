@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
 
@@ -117,8 +118,8 @@ public class TestIndex {
         }
 
         // Create the BlackLab searcher object
-        searcher = BlackLabIndex.open(indexDir);
-        searcher.hitsSettings().setContextSize(1);
+        HitsSettings settings = HitsSettings.defaults().setContextSize(1);
+        searcher = BlackLabIndex.open(indexDir, settings);
         word = searcher.mainAnnotatedField().annotations().get("word");
     }
 

@@ -128,7 +128,7 @@ public class HitPropertyWordRight extends HitProperty {
 
     public static HitPropertyWordRight deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.settings().concordanceField();
+        AnnotatedField field = hits.field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();

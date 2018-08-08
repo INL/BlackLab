@@ -364,7 +364,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 Hit hit = sourceHitsIterator.next();
                 if (hit.doc() != doc) {
                     if (docHits != null) {
-                        Hits hits = Hits.fromList(searcher, docHits);
+                        Hits hits = Hits.fromList(searcher, sourceHits.field(), docHits);
                         hits.copySettingsFrom(sourceHits); // concordance type, etc.
                         addDocResultToList(doc, hits);
                     }
@@ -379,7 +379,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = Hits.fromList(searcher, docHits);
+                    Hits hits = Hits.fromList(searcher, sourceHits.field(), docHits);
                     hits.copySettingsFrom(sourceHits); // concordance type, etc.
                     addDocResultToList(doc, hits);
                 }

@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * A metadata field in an index.
  */
-public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable {
+public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
     private static final int MAX_METADATA_VALUES_TO_STORE = 50;
 
     /**
@@ -127,14 +127,20 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return uiType;
     }
     
+    @Override
+    public String offsetsField() {
+        return name();
+    }
+
     // Methods that mutate data
     // -------------------------------------------------
     
 
 
     @Override
-    public synchronized void freeze() {
+    public synchronized MetadataFieldImpl freeze() {
         this.frozen = true;
+        return this;
     }
     
     @Override
@@ -142,22 +148,25 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return this.frozen;
     }
     
-    public void setAnalyzer(String analyzer) {
+    public MetadataFieldImpl setAnalyzer(String analyzer) {
         ensureNotFrozen();
         this.analyzer = analyzer;
+        return this;
     }
 
-    public void setUnknownValue(String unknownValue) {
+    public MetadataFieldImpl setUnknownValue(String unknownValue) {
         ensureNotFrozen();
         this.unknownValue = unknownValue;
+        return this;
     }
 
-    public void setUnknownCondition(UnknownCondition unknownCondition) {
+    public MetadataFieldImpl setUnknownCondition(UnknownCondition unknownCondition) {
         ensureNotFrozen();
         this.unknownCondition = unknownCondition;
+        return this;
     }
 
-    public void setValues(JsonNode values) {
+    public MetadataFieldImpl setValues(JsonNode values) {
         ensureNotFrozen();
         this.values.clear();
         Iterator<Entry<String, JsonNode>> it = values.fields();
@@ -167,9 +176,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
             int count = entry.getValue().intValue();
             this.values.put(value, count);
         }
+        return this;
     }
 
-    public void setDisplayValues(JsonNode displayValues) {
+    public MetadataFieldImpl setDisplayValues(JsonNode displayValues) {
         ensureNotFrozen();
         this.displayValues.clear();
         Iterator<Entry<String, JsonNode>> it = displayValues.fields();
@@ -179,17 +189,20 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
             String displayValue = entry.getValue().textValue();
             this.displayValues.put(value, displayValue);
         }
+        return this;
     }
 
-    public void setDisplayOrder(List<String> displayOrder) {
+    public MetadataFieldImpl setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
         this.displayOrder.clear();
         this.displayOrder.addAll(displayOrder);
+        return this;
     }
 
-    public void setValueListComplete(boolean valueListComplete) {
+    public MetadataFieldImpl setValueListComplete(boolean valueListComplete) {
         ensureNotFrozen();
         this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
+        return this;
     }
 
     /**
@@ -197,8 +210,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * metadata file.
      *
      * @param value field value
+     * @return this object
      */
-    public void addValue(String value) {
+    public MetadataFieldImpl addValue(String value) {
         ensureNotFrozen();
         // If we've seen a value, assume we'll get to see all values;
         // when it turns out there's too many or they're too long,
@@ -209,7 +223,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         if (value.length() > 100) {
             // Value too long to store.
             valueListComplete = ValueListComplete.NO;
-            return;
+            return this;
         }
         if (values.containsKey(value)) {
             // Seen this value before; increment frequency
@@ -220,35 +234,35 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
                 // We can't store thousands of unique values;
                 // Stop storing now and indicate that there's more.
                 valueListComplete = ValueListComplete.NO;
-                return;
+                return this;
             }
             values.put(value, 1);
         }
+        return this;
     }
 
     /**
      * Reset the information that is dependent on input data (i.e. list of values,
      * etc.) because we're going to (re-)index the data.
+     * @return 
      */
-    public void resetForIndexing() {
+    public MetadataFieldImpl resetForIndexing() {
         ensureNotFrozen();
         this.values.clear();
         valueListComplete = ValueListComplete.UNKNOWN;
+        return this;
     }
 
-    public void setGroup(String group) {
+    public MetadataFieldImpl setGroup(String group) {
         ensureNotFrozen();
         this.group = group;
+        return this;
     }
 
-    public void setUiType(String uiType) {
+    public MetadataFieldImpl setUiType(String uiType) {
         ensureNotFrozen();
         this.uiType = uiType;
-    }
-
-    @Override
-    public String offsetsField() {
-        return name();
+        return this;
     }
 
 }

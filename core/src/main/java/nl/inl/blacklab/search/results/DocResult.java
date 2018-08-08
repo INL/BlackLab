@@ -34,11 +34,10 @@ public class DocResult {
 
     private float score;
 
-    public DocResult(BlackLabIndex searcher, AnnotatedField concField, int docId, float score) {
+    public DocResult(BlackLabIndex searcher, AnnotatedField field, int docId, float score) {
         this.docId = docId;
         this.score = score;
-        hits = Hits.emptyList(searcher);
-        hits.settings().setConcordanceField(concField);
+        hits = Hits.emptyList(searcher, field);
     }
 
     /**

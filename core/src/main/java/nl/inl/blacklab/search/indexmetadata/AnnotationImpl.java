@@ -13,7 +13,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
 /** Annotation on a field. */
-class AnnotationImpl implements Annotation, Freezable {
+class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
     /** The field this is an annotation for. */
     private AnnotatedField field;
@@ -237,29 +237,34 @@ class AnnotationImpl implements Annotation, Freezable {
         }
     }
 
-    void setForwardIndex(boolean b) {
+    AnnotationImpl setForwardIndex(boolean b) {
         ensureNotFrozen();
         forwardIndex = b;
+        return this;
     }
 
-    public void setName(String propName) {
+    public AnnotationImpl setName(String propName) {
         ensureNotFrozen();
         this.name = propName;
+        return this;
     }
 
-    public void setUiType(String uiType) {
+    public AnnotationImpl setUiType(String uiType) {
         ensureNotFrozen();
         this.uiType = uiType;
+        return this;
     }
 
-    public void setDescription(String description) {
+    public AnnotationImpl setDescription(String description) {
         ensureNotFrozen();
         this.description = description;
+        return this;
     }
     
     @Override
-    public void freeze() {
+    public AnnotationImpl freeze() {
         this.frozen = true;
+        return this;
     }
     
     @Override

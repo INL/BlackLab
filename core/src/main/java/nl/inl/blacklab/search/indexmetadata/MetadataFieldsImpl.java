@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 /**
  * The metadata fields in an index.
  */
-class MetadataFieldsImpl implements MetadataFields, Freezable {
+class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl> {
     
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
@@ -273,11 +273,12 @@ class MetadataFieldsImpl implements MetadataFields, Freezable {
     }
 
     @Override
-    public synchronized void freeze() {
+    public synchronized MetadataFieldsImpl freeze() {
         this.frozen = true;
         for (MetadataFieldImpl field: metadataFieldInfos.values()) {
             field.freeze();
         }
+        return this;
     }
     
     @Override

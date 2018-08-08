@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepField
 import nl.inl.util.StringUtil;
 
 /** An annotated field */
-public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
+public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
     
     public final class AnnotationsImpl implements Annotations {
         @Override
@@ -318,9 +318,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     @Override
-    public void freeze() {
+    public AnnotatedFieldImpl freeze() {
         this.frozen = true;
         this.annots.values().forEach(annotation -> annotation.freeze());
+        return this;
     }
     
     @Override

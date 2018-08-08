@@ -70,10 +70,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * Construct an empty Hits object.
      *
      * @param searcher the searcher object
+     * @param field field our hits are from
      * @return hits found
      */
-    public static Hits emptyList(BlackLabIndex searcher) {
-        return fromList(searcher, (List<Hit>) null);
+    public static Hits emptyList(BlackLabIndex searcher, AnnotatedField field) {
+        return fromList(searcher, field, (List<Hit>) null);
     }
 
     /**
@@ -82,11 +83,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * Does not copy the list, but reuses it.
      *
      * @param searcher the searcher object
+     * @param field field our hits are from
      * @param docHits the list of hits to wrap
      * @return hits found
      */
-    public static Hits fromList(BlackLabIndex searcher, List<Hit> docHits) {
-        return new Hits(searcher, docHits);
+    public static Hits fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> docHits) {
+        return new Hits(searcher, field, docHits);
     }
 
     /**
@@ -99,7 +101,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     public static Hits fromSpanQuery(BlackLabIndex searcher, SpanQuery query) {
         if (!(query instanceof BLSpanQuery))
             throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-        return new Hits(searcher, query);
+        return new Hits(searcher, searcher.annotatedField(query.getField()), query);
     }
 
     /**
@@ -109,15 +111,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * from a SpanQuery, as it's more efficient.
      *
      * @param searcher the searcher object
-     * @param concordanceField field to use by default when finding
-     *            concordances
+     * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      * @return hits found
      */
-    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField concordanceField, BLSpans source) {
-        Hits hits = new Hits(searcher, source);
-        hits.settings.setConcordanceField(concordanceField);
-        return hits;
+    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source) {
+        return new Hits(searcher, field, source);
     }
 
     // Hits object ids
@@ -149,6 +148,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * concordances.
      */
     protected HitsSettings settings;
+    
+    /**
+     * The field these hits came from (will also be used as concordance field)
+     */
+    protected AnnotatedField field;
 
     /** Context of our query; mostly used to keep track of captured groups. */
     protected HitQueryContext hitQueryContext;
@@ -298,9 +302,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Constructors
     //--------------------------------------------------------------------
 
-    public Hits(BlackLabIndex searcher) {
+    public Hits(BlackLabIndex searcher, AnnotatedField field) {
         this.index = searcher;
-        settings = new HitsSettings(searcher.hitsSettings()); // , concordanceFieldName);
+        this.field = field;
+        settings = searcher.hitsSettings().copy(); // , concordanceFieldName);
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
     }
     
@@ -310,10 +315,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * Does not copy the list, but reuses it.
      *
      * @param searcher the searcher object
+     * @param field field our hits came from
      * @param hits the list of hits to wrap
      */
-    Hits(BlackLabIndex searcher, List<Hit> hits) {
-        this(searcher);
+    protected Hits(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits) {
+        this(searcher, field);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         currentContextSize = -1;
@@ -333,12 +339,13 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * Construct a Hits object from a SpanQuery.
      *
      * @param searcher the searcher object
+     * @param field field our hits came from
      * @param sourceQuery the query to execute to get the hits
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    Hits(BlackLabIndex searcher, SpanQuery sourceQuery) throws TooManyClauses {
-        this(searcher, (List<Hit>) null);
+    private Hits(BlackLabIndex searcher, AnnotatedField field, SpanQuery sourceQuery) throws TooManyClauses {
+        this(searcher, field, (List<Hit>) null);
         try {
             IndexReader reader = searcher.reader();
             if (!(sourceQuery instanceof BLSpanQuery))
@@ -398,10 +405,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * hits.
      *
      * @param searcher the searcher object
+     * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      */
-    Hits(BlackLabIndex searcher, BLSpans source) {
-        this(searcher, (List<Hit>) null);
+    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpans source) {
+        this(searcher, field, (List<Hit>) null);
 
         currentSourceSpans = source;
         try {
@@ -409,20 +417,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         } catch (IOException e) {
             throw new BlackLabException(e);
         }
-    }
-
-    /**
-     * Make a wrapper Hits object for a list of Hit objects.
-     *
-     * Does not copy the list, but reuses it.
-     *
-     * @param searcher the searcher object
-     * @param concordanceFieldName field to use by default when finding concordances
-     * @param hits the list of hits to wrap
-     */
-    private Hits(BlackLabIndex searcher, AnnotatedField concordanceFieldName, List<Hit> hits) {
-        this(searcher, hits);
-        settings.setConcordanceField(concordanceFieldName);
     }
 
     /**
@@ -434,7 +428,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param copyFrom the Hits object to copy
      */
     private Hits(Hits copyFrom) {
-        this(copyFrom.index);
+        this(copyFrom.index, copyFrom.field);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -447,7 +441,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         docsRetrieved = copyFrom.countSoFarDocsRetrieved();
         docsCounted = copyFrom.countSoFarDocsCounted();
         previousHitDoc = copyFrom.previousHitDoc;
-
+        
         copySettingsFrom(copyFrom);
 
         currentContextSize = -1; // context is not copied
@@ -506,7 +500,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param copyFrom where to copy settings from
      */
     public void copySettingsFrom(Hits copyFrom) {
-        settings = new HitsSettings(copyFrom.settings);
+        settings = copyFrom.settings.copy();
         this.maxHitsRetrieved = copyFrom.maxHitsRetrieved();
         this.maxHitsCounted = copyFrom.maxHitsCounted();
         this.hitQueryContext = copyFrom.getHitQueryContext();
@@ -601,7 +595,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             if (property.get(i).equals(value))
                 filtered.add(get(i));
         }
-        Hits hits = new Hits(index, filtered);
+        Hits hits = new Hits(index, field, filtered);
         hits.copySettingsFrom(this);
         return hits;
     }
@@ -735,6 +729,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     public BlackLabIndex getSearcher() {
         return index;
+    }
+    
+    public AnnotatedField field() {
+        return field;
     }
 
     public HitsSettings settings() {
@@ -872,14 +870,14 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return Hits.emptyList(index);
+            return Hits.emptyList(index, field);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        Hits result = Hits.fromList(index, hitsInDoc);
+        Hits result = Hits.fromList(index, field, hitsInDoc);
         result.copySettingsFrom(this);
         return result;
     }
@@ -1013,7 +1011,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getKwic(settings().concordanceField(), h, contextSize);
+            return getKwic(field(), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -1084,7 +1082,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // We probably want to show a hit with a larger snippet around it
             // (say, 50 words or so). Don't clobber the context of the other
             // hits, just fetch this snippet separately.
-            return getConcordance(settings().concordanceField(), h, contextSize);
+            return getConcordance(field(), h, contextSize);
         }
 
         // Default context size. Read all hits and find concordances for all of them
@@ -1133,7 +1131,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
 
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), settings().concordanceField());
+        concordances = retrieveConcordancesFromContentStore(settings().contextSize(), field());
     }
 
     /**
@@ -1212,7 +1210,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = new Hits(index, l);
+            Hits hitsInThisDoc = new Hits(index, field, l);
             hitsInThisDoc.copySettingsFrom(this);
             hitsInThisDoc.makeConcordancesSingleDocContentStore(field, contextSize, conc, hl);
         }
@@ -1241,7 +1239,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
 
         // Get the concordances
-        kwics = retrieveKwics(settings().contextSize(), settings().concordanceField());
+        kwics = retrieveKwics(settings().contextSize(), field());
     }
 
     /**

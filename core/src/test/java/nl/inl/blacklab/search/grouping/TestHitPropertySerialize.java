@@ -32,7 +32,7 @@ public class TestHitPropertySerialize {
 
     private MockSearcher mockSearcher = new MockSearcher();
 
-    private Hits hits = new MockHits(mockSearcher);
+    private Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
 
     private Annotation lemmaAnnotation;
 

@@ -41,7 +41,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
@@ -319,8 +318,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //---------------------------------------------------------------
     
 
+    public BlackLabIndexImpl(HitsSettings settings) {
+        hitsSettings = settings == null ? HitsSettings.defaults() : settings;
+    }
+
     public BlackLabIndexImpl() {
-        hitsSettings = new HitsSettings(this);
+        this(null);
     }
 
     /**
@@ -372,7 +375,22 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      */
     BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile)
             throws IOException {
-        this();
+        this(indexDir, indexMode, createNewIndex, indexTemplateFile, null);
+    }
+
+    /**
+     * Open an index.
+     *
+     * @param indexDir the index directory
+     * @param indexMode if true, open in index mode; if false, open in search mode.
+     * @param createNewIndex if true, delete existing index in this location if it
+     *            exists.
+     * @param indexTemplateFile index template file to use to create index
+     * @param settings default search settings
+     * @throws IOException
+     */
+    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, HitsSettings settings) throws IOException {
+        this(settings);
         this.indexMode = indexMode;
 
         ConfigReader.applyConfig(this);
@@ -444,15 +462,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(SpanQuery query, AnnotatedField field) throws BooleanQuery.TooManyClauses {
-        if (!(query instanceof BLSpanQuery))
-            throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-        Hits hits = Hits.fromSpanQuery(this, query);
-        hits.settings().setConcordanceField(field);
-        return hits;
-    }
-
-    @Override
     public Hits find(BLSpanQuery query) throws BooleanQuery.TooManyClauses {
         return Hits.fromSpanQuery(this, query);
     }
@@ -460,9 +469,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public Hits find(TextPattern pattern, AnnotatedField field, Query filter)
             throws BooleanQuery.TooManyClauses {
-        Hits hits = Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter));
-        hits.settings().setConcordanceField(field);
-        return hits;
+        return Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter));
     }
 
     @Override

@@ -32,7 +32,8 @@ public class TestDocResults {
         int[] aStart = new int[] { 1, 2, 3, 4, 5 };
         int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 
-        Hits hits = new MockHits(new MockSearcher(), aDoc, aStart, aEnd);
+        MockSearcher searcher = new MockSearcher();
+        Hits hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
         DocResults drs = hits.perDocResults();
 
         int[] expDoc = new int[] { 1, 2, 3 };

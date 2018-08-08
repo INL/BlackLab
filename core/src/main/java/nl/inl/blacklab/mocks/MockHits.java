@@ -24,8 +24,8 @@ public class MockHits extends Hits {
 
     private int numberOfDocs;
 
-    public MockHits(BlackLabIndex searcher, int[] doc, int[] start, int[] end) {
-        super(searcher);
+    public MockHits(BlackLabIndex searcher, AnnotatedField field, int[] doc, int[] start, int[] end) {
+        super(searcher, field);
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -43,17 +43,17 @@ public class MockHits extends Hits {
         }
     }
 
-    public MockHits(BlackLabIndex searcher) {
-        this(searcher, new int[0], new int[0], new int[0]);
+    public MockHits(BlackLabIndex searcher, AnnotatedField field) {
+        this(searcher, field, new int[0], new int[0], new int[0]);
     }
 
     public MockHits(MockHits o) {
-        this(o.getSearcher(), o.doc.clone(), o.start.clone(), o.end.clone());
+        this(o.getSearcher(), o.field(), o.doc.clone(), o.start.clone(), o.end.clone());
     }
 
     @Override
     public Hits copy() {
-        return new MockHits(index, doc, start, end);
+        return new MockHits(index, field, doc, start, end);
     }
 
     @Override
