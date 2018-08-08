@@ -42,7 +42,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     public HitPropertyDocumentStoredField(Hits hits, String fieldName, String friendlyName) {
         super(hits);
-        reader = hits.getSearcher().reader();
+        reader = hits.index().reader();
         this.fieldName = fieldName;
         this.friendlyName = friendlyName;
     }

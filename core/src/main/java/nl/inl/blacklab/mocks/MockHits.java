@@ -49,17 +49,12 @@ public class MockHits extends Hits {
     }
 
     public MockHits(MockHits o) {
-        this(o.getSearcher(), o.field(), o.doc.clone(), o.start.clone(), o.end.clone());
+        this(o.index(), o.field(), o.doc.clone(), o.start.clone(), o.end.clone());
     }
 
     @Override
     public Hits copy(HitsSettings settings) {
-        return new MockHits(index, field, doc, start, end);
-    }
-
-    @Override
-    public void copySettingsFrom(Hits copyFrom) {
-        // NOP
+        return new MockHits(index(), field(), doc, start, end);
     }
 
     @Override
@@ -204,7 +199,7 @@ public class MockHits extends Hits {
 
     @Override
     public String toString() {
-        return "MockHits#" + hitsObjId;
+        return "MockHits#" + getHitsObjId();
     }
 
     @Override

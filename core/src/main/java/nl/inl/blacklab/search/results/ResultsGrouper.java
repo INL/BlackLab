@@ -79,7 +79,7 @@ public class ResultsGrouper extends HitGroups {
      * @param criteria the criteria to group on
      */
     ResultsGrouper(Hits hits, HitProperty criteria) {
-        super(hits.getSearcher(), criteria);
+        super(hits.index(), criteria);
         init(hits, criteria);
     }
 

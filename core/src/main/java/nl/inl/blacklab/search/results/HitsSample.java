@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.apache.lucene.search.spans.SpanQuery;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -55,11 +53,9 @@ public abstract class HitsSample extends Hits {
      * @param settings settings to use, or null for defaults
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, float ratio, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, float ratio, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        if (!(query instanceof BLSpanQuery))
-            throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), ratio, seed);
     }
 
@@ -74,11 +70,9 @@ public abstract class HitsSample extends Hits {
      * @param settings settings to use
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, SpanQuery query, int number, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, int number, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        if (!(query instanceof BLSpanQuery))
-            throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
         return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), number, seed);
     }
 
@@ -137,7 +131,7 @@ public abstract class HitsSample extends Hits {
 
     @Override
     public String toString() {
-        return "HitsSample#" + hitsObjId;
+        return "HitsSample#" + getHitsObjId();
     }
 
 }

@@ -23,7 +23,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
@@ -60,7 +59,7 @@ import nl.inl.util.XmlHighlighter;
 
 public class Hits implements Iterable<Hit>, Prioritizable {
 
-    protected static final Logger logger = LogManager.getLogger(Hits.class);
+    private static final Logger logger = LogManager.getLogger(Hits.class);
     
     
     // Factory methods
@@ -101,9 +100,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings search settings
      * @return hits found
      */
-    public static Hits fromSpanQuery(BlackLabIndex searcher, SpanQuery query, HitsSettings settings) {
-        if (!(query instanceof BLSpanQuery))
-            throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
+    public static Hits fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, HitsSettings settings) {
         return new Hits(searcher, searcher.annotatedField(query.getField()), query, settings);
     }
 
@@ -129,12 +126,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;
 
-    protected synchronized static int getNextHitsObjId() {
+    private synchronized static int getNextHitsObjId() {
         return nextHitsObjId++;
     }
 
     /** Unique id of this Hits instance */
-    protected final int hitsObjId = getNextHitsObjId();
+    private final int hitsObjId = getNextHitsObjId();
     
     public int getHitsObjId() {
         return hitsObjId;
@@ -146,26 +143,26 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     
     // General stuff
     
-    protected BlackLabIndex index;
+    private BlackLabIndex index;
 
     /**
      * Settings for retrieving hits.
      */
-    protected HitsSettings settings;
+    private HitsSettings settings;
     
     /**
      * The field these hits came from (will also be used as concordance field)
      */
-    protected AnnotatedField field;
+    private AnnotatedField field;
 
     /** Context of our query; mostly used to keep track of captured groups. */
-    protected HitQueryContext hitQueryContext;
+    private HitQueryContext hitQueryContext;
 
     /**
      * Helper object for implementing query thread priority (making sure queries
      * don't hog the CPU for way too long).
      */
-    protected ThreadPriority etiquette;
+    private ThreadPriority etiquette;
     
     // Hit information
 
@@ -184,7 +181,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     /**
      * Our SpanQuery.
      */
-    protected BLSpanQuery spanQuery;
+    private BLSpanQuery spanQuery;
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -195,12 +192,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     /**
      * The LeafReaderContexts we should query in succession.
      */
-    protected List<LeafReaderContext> atomicReaderContexts;
+    private List<LeafReaderContext> atomicReaderContexts;
 
     /**
      * What LeafReaderContext we're querying now.
      */
-    protected int atomicReaderContextIndex = -1;
+    private int atomicReaderContextIndex = -1;
 
     /**
      * Term contexts for the terms in the query.
@@ -210,26 +207,28 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     /**
      * docBase of the segment we're currently in
      */
-    protected int currentDocBase;
+    private int currentDocBase;
 
     /**
      * Our Spans object, which may not have been fully read yet.
      */
-    protected BLSpans currentSourceSpans;
+    private BLSpans currentSourceSpans;
 
     /**
      * Did we completely read our Spans object?
      */
-    protected boolean sourceSpansFullyRead = true;
+    private boolean sourceSpansFullyRead = true;
 
-    Lock ensureHitsReadLock = new ReentrantLock();
+    private Lock ensureHitsReadLock = new ReentrantLock();
     
     // Sort
 
     /**
-     * The sort order, if we've sorted, or null if not
+     * The sort order, if we've sorted, or null if not.
+     * 
+     * Note that, after initial creation of the Hits object, sortOrder is immutable.
      */
-    Integer[] sortOrder;
+    private Integer[] sortOrder;
     
     // Display
 
@@ -238,7 +237,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * NOTE: this will always be null if not all the hits have been retrieved.
      */
-    protected Map<Hit, Kwic> kwics;
+    private Map<Hit, Kwic> kwics;
 
     /**
      * The concordances, if they have been retrieved.
@@ -247,7 +246,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * null, because Kwics will be used internally. This is only used when making
      * concordances from the content store (the old default).
      */
-    Map<Hit, Concordance> concordances;
+    private Map<Hit, Concordance> concordances;
     
     // Context
 
@@ -360,13 +359,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    private Hits(BlackLabIndex searcher, AnnotatedField field, SpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
+    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
         this(searcher, field, (List<Hit>) null, settings);
         try {
             IndexReader reader = searcher.reader();
-            if (!(sourceQuery instanceof BLSpanQuery))
-                throw new IllegalArgumentException("Supplied query must be a BLSpanQuery!");
-
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
             BLSpanQuery optimize = ((BLSpanQuery) sourceQuery).optimize(reader);
@@ -512,18 +508,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     }
 
     /**
-     * Copy the settings from another Hits object.
-     *
-     * NOTE: this should be phased out, and copy() or adapters should be used.
-     *
-     * @param copyFrom where to copy settings from
-     */
-    public void copySettingsFrom(Hits copyFrom) {
-        settings = copyFrom.settings.copy();
-        copyMaxAndContextFrom(copyFrom);
-    }
-
-    /**
      * Copy maxHitsRetrieved/-Counted and hitQueryContext from another Hits object.
      *
      * NOTE: this should be phased out, and copy() or adapters should be used.
@@ -533,7 +517,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     public void copyMaxAndContextFrom(Hits copyFrom) {
         this.maxHitsRetrieved = copyFrom.maxHitsRetrieved();
         this.maxHitsCounted = copyFrom.maxHitsCounted();
-        this.hitQueryContext = copyFrom.getHitQueryContext();
+        this.hitQueryContext = copyFrom.hitQueryContext();
     }
     
 
@@ -646,7 +630,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @return the per-document view.
      */
     public DocResults perDocResults() {
-        return DocResults.fromHits(getSearcher(), this);
+        return DocResults.fromHits(index(), this);
     }
 
     /**
@@ -776,7 +760,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the searcher object.
      */
-    public BlackLabIndex getSearcher() {
+    public BlackLabIndex index() {
         return index;
     }
     
@@ -788,7 +772,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         return settings;
     }
 
-    private HitQueryContext getHitQueryContext() {
+    private HitQueryContext hitQueryContext() {
         return hitQueryContext;
     }
 
@@ -811,26 +795,14 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     @Override
     public Iterator<Hit> iterator() {
-        return getIterator();
-    }
-    
-    /**
-     * Return an iterator over these hits that produces the hits in their original
-     * order.
-     *
-     * @param originalOrder if true, returns hits in original order. If false,
-     *            returns them in sorted order (if any)
-     * @return the iterator
-     */
-    private synchronized Iterator<Hit> getIterator() {
         // Construct a custom iterator that iterates over the hits in the hits
         // list, but can also take into account the Spans object that may not have
         // been fully read. This ensures we don't instantiate Hit objects for all hits
         // if we just want to display the first few.
         return new Iterator<Hit>() {
-
+        
             int index = -1;
-
+        
             @Override
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
@@ -844,7 +816,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
                 }
                 return hits.size() >= index + 2;
             }
-
+        
             @Override
             public Hit next() {
                 // Check if there is a next, taking unread hits from Spans into account
@@ -854,15 +826,15 @@ public class Hits implements Iterable<Hit>, Prioritizable {
                 }
                 throw new NoSuchElementException();
             }
-
+        
             @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }
-
+        
         };
     }
-
+    
     /**
      * Return the specified hit number, based on the order they were originally
      * found (not the sorted order).

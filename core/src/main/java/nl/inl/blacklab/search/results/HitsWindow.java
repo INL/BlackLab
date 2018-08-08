@@ -50,7 +50,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
      * @param settings settings to use
      */
     HitsWindow(Hits source, int first, int windowSize, HitsSettings settings) {
-        super(source.getSearcher(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
+        super(source.index(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;
@@ -194,7 +194,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
 
     @Override
     public String toString() {
-        return "HitsWindow#" + hitsObjId + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
+        return "HitsWindow#" + getHitsObjId() + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
     }
 
 }

@@ -132,7 +132,7 @@ public class HitPropertyContextWords extends HitProperty {
     public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
             List<ContextPart> words) {
         super(hits);
-        this.searcher = hits.getSearcher();
+        this.searcher = hits.index();
         if (annotation == null) {
             this.annotation = searcher.mainAnnotatedField().annotations().main();
         } else {

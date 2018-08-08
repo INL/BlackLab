@@ -42,20 +42,20 @@ public class HitPropertyRightContext extends HitProperty {
     private BlackLabIndex searcher;
 
     public HitPropertyRightContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyRightContext(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, field.annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyRightContext(Hits hits) {
-        this(hits, hits.getSearcher().mainAnnotatedField(), hits.getSearcher().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, hits.index().mainAnnotatedField(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyRightContext(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
-        this.searcher = hits.getSearcher();
+        this.searcher = hits.index();
         this.luceneFieldName = annotation.luceneFieldPrefix();
         this.annotation = annotation;
         this.terms = searcher.terms(annotation);
@@ -67,7 +67,7 @@ public class HitPropertyRightContext extends HitProperty {
     }
 
     public HitPropertyRightContext(Hits hits, boolean sensitive) {
-        this(hits, hits.getSearcher().mainAnnotatedField(), sensitive);
+        this(hits, hits.index().mainAnnotatedField(), sensitive);
     }
 
     @Override
