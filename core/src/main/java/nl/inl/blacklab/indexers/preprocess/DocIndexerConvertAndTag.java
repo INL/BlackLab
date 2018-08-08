@@ -130,8 +130,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void setIndexer(DocWriter indexer) {
-        outputIndexer.setIndexer(indexer);
+    public void setDocWriter(DocWriter indexer) {
+        outputIndexer.setDocWriter(indexer);
     }
 
     @Override
@@ -150,8 +150,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public DocWriter getIndexer() {
-        return outputIndexer.getIndexer();
+    public DocWriter getDocWriter() {
+        return outputIndexer.getDocWriter();
     }
 
     @Override

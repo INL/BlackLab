@@ -53,7 +53,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
 
-    protected DocWriter indexer;
+    protected DocWriter docWriter;
 
     /** Do we want to omit norms? (Default: yes) */
     protected boolean omitNorms = true;
@@ -89,26 +89,29 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * Returns our Indexer object
+     * Returns our DocWriter object
      * 
-     * @return the Indexer object
+     * @return the DocWriter object
      */
-    public DocWriter getIndexer() {
-        return indexer;
+    public DocWriter getDocWriter() {
+        return docWriter;
     }
 
     /**
-     * Set the indexer object. Called by Indexer when the DocIndexer is
-     * instantiated.
+     * Set the DocWriter object.
+     * 
+     * We use this to add documents to the index.
+     * 
+     * Called by Indexer when the DocIndexer is instantiated.
      *
-     * @param indexer our indexer object
+     * @param docWriter our DocWriter object
      */
-    public void setIndexer(DocWriter indexer) {
-        this.indexer = indexer;
+    public void setDocWriter(DocWriter docWriter) {
+        this.docWriter = docWriter;
 
-        if (indexer != null) {
+        if (docWriter != null) {
             // Get our parameters from the indexer
-            Map<String, String> indexerParameters = indexer.indexerParameters();
+            Map<String, String> indexerParameters = docWriter.indexerParameters();
             if (indexerParameters != null)
                 setParameters(indexerParameters);
         }
@@ -309,9 +312,9 @@ public abstract class DocIndexer implements AutoCloseable {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
         case TOKENIZED:
-            return indexer.metadataFieldType(true);
+            return docWriter.metadataFieldType(true);
         case UNTOKENIZED:
-            return indexer.metadataFieldType(false);
+            return docWriter.metadataFieldType(false);
         default:
             throw new IllegalArgumentException("Unknown field type: " + type);
         }
@@ -334,11 +337,11 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     boolean continueIndexing() {
-        return indexer.continueIndexing();
+        return docWriter.continueIndexing();
     }
 
     protected void warn(String msg) {
-        indexer.listener().warning(msg);
+        docWriter.listener().warning(msg);
     }
 
     public void addMetadataField(String name, String value) {
@@ -351,7 +354,7 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        IndexMetadataWriter indexMetadata = indexer.indexWriter().metadataWriter();
+        IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
         indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);
@@ -404,7 +407,7 @@ public abstract class DocIndexer implements AutoCloseable {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
-                currentLuceneDoc.add(new Field(fieldName, fieldValue, indexer.metadataFieldType(false)));
+                currentLuceneDoc.add(new Field(fieldName, fieldValue, docWriter.metadataFieldType(false)));
             }
         }
     }

@@ -252,7 +252,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     + "', call isSupported(formatIdentifier) before attempting to get()");
 
         DocIndexerConfig d = DocIndexerConfig.fromConfig(supported.get(formatIdentifier));
-        d.setIndexer(indexer);
+        d.setDocWriter(indexer);
         d.setDocumentName(documentName);
         d.setDocument(reader);
         return d;
@@ -266,7 +266,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     + "', call isSupported(formatIdentifier) before attempting to get()");
 
         DocIndexerConfig d = DocIndexerConfig.fromConfig(supported.get(formatIdentifier));
-        d.setIndexer(indexer);
+        d.setDocWriter(indexer);
         d.setDocumentName(documentName);
         d.setDocument(is, cs);
         return d;
@@ -280,7 +280,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     + "', call isSupported(formatIdentifier) before attempting to get()");
 
         DocIndexerConfig d = DocIndexerConfig.fromConfig(supported.get(formatIdentifier));
-        d.setIndexer(indexer);
+        d.setDocWriter(indexer);
         d.setDocumentName(documentName);
         d.setDocument(f, cs);
         return d;
@@ -293,7 +293,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     + "', call isSupported(formatIdentifier) before attempting to get()");
 
         DocIndexerConfig d = DocIndexerConfig.fromConfig(supported.get(formatIdentifier));
-        d.setIndexer(indexer);
+        d.setDocWriter(indexer);
         d.setDocumentName(documentName);
         d.setDocument(b, cs);
         return d;

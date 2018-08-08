@@ -18,6 +18,10 @@ So, for example, an annotated field "contents" might have annotations "word", "l
 
 <a id="methods"></a>
 
+## Migrating DocIndexers
+
+If you have a custom implementation of DocIndexer for your own input format, please ensure that it has a default constructor. If instead if has a constructor that takes an `Indexer`, change `Indexer` to `DocWriter`. 
+
 ## Method naming
 
 For many classes, methods were renamed from getSomeThing() to simply someThing(). While this may not be the convention in Java, it makes for less noisy, more natural-sounding code, especially when chaining methods. It also saves on typing. For example, compare these two examples:

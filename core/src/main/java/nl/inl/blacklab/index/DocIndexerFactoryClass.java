@@ -138,7 +138,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
                 // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
                 constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
-                docIndexer.setIndexer(indexer);
+                docIndexer.setDocWriter(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(reader);
             } catch (NoSuchMethodException e) {
@@ -167,7 +167,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             try {
                 constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
-                docIndexer.setIndexer(indexer);
+                docIndexer.setDocWriter(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(is, cs);
             } catch (NoSuchMethodException e) {
@@ -196,7 +196,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             try {
                 constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
-                docIndexer.setIndexer(indexer);
+                docIndexer.setDocWriter(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(f, cs);
             } catch (NoSuchMethodException e) {
@@ -227,7 +227,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             try {
                 constructor = docIndexerClass.getConstructor();
                 docIndexer = constructor.newInstance();
-                docIndexer.setIndexer(indexer);
+                docIndexer.setDocWriter(indexer);
                 docIndexer.setDocumentName(documentName);
                 docIndexer.setDocument(contents, cs);
             } catch (NoSuchMethodException e) {

@@ -138,9 +138,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
         // Start a new Lucene document
         currentLuceneDoc = new Document();
-        currentLuceneDoc.add(new Field("fromInputFile", documentName, indexer.metadataFieldType(false)));
+        currentLuceneDoc.add(new Field("fromInputFile", documentName, docWriter.metadataFieldType(false)));
         addMetadataFieldsFromParameters();
-        indexer.listener().documentStarted(documentName);
+        docWriter.listener().documentStarted(documentName);
 
         while (true) {
             // For each line, split on whitespace and index each word.
@@ -228,7 +228,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 // id to Lucene doc
                 String propName = prop.getName();
                 String fieldName = AnnotatedFieldNameUtil.annotationField(contentsField.getName(), propName);
-                int fiid = indexer.addToForwardIndex(prop);
+                int fiid = docWriter.addToForwardIndex(prop);
                 currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
             }
 
@@ -243,7 +243,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             // See what metadatafields are missing or empty and add unknown value
             // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)indexer.indexWriter().metadataWriter();
+            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
             for (MetadataField fd: indexMetadata.metadataFields()) {
                 boolean missing = false, empty = false;
                 String currentValue = currentLuceneDoc.get(fd.name());
@@ -273,7 +273,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             try {
                 // Add Lucene doc to indexer
-                indexer.add(currentLuceneDoc);
+                docWriter.add(currentLuceneDoc);
             } catch (Exception e) {
                 throw ExUtil.wrapRuntimeException(e);
             }
@@ -282,14 +282,14 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed();
 
-            indexer.listener().documentDone(documentName);
+            docWriter.listener().documentDone(documentName);
 
             // Reset contents field for next document
             contentsField.clear(true);
             currentLuceneDoc = null;
 
             // Stop if required
-            if (!indexer.continueIndexing())
+            if (!docWriter.continueIndexing())
                 throw new MaxDocsReachedException();
 
         }

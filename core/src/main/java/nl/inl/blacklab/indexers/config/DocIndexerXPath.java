@@ -474,7 +474,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     case IGNORE:
                         break;
                     case WARN:
-                        indexer.listener()
+                        docWriter.listener()
                                 .warning("Link path " + valuePath + " not found in document " + documentName);
                         break;
                     case FAIL:
@@ -509,7 +509,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             switch (ld.getIfLinkPathMissing()) {
             case IGNORE:
             case WARN:
-                indexer.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
+                docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
                         + ": " + e.getMessage());
                 break;
             case FAIL:
