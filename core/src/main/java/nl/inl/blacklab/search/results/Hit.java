@@ -7,10 +7,27 @@ package nl.inl.blacklab.search.results;
  */
 public interface Hit extends Comparable<Hit> {
     
+    /**
+     * Create a hit.
+     * 
+     * @param doc Lucene document id
+     * @param start position of first word of the hit
+     * @param end first word position after the hit
+     * @return the hit
+     */
     static Hit create(int doc, int start, int end) {
         return HitStored.create(doc, start, end);
     }
     
+    /**
+     * Is this hit immutable or not?
+     * 
+     * If not, and you wish to save this hit for later use, you must
+     * call save() and store the returned hit. If it's already immutable,
+     * save() will just return itself.
+     * 
+     * @return true if this instance is immutable, false if not
+     */
     boolean isImmutable();
 
     /**
@@ -33,8 +50,10 @@ public interface Hit extends Comparable<Hit> {
         return HitStored.create(doc(), start(), end());
     }
     
+    @Override
     boolean equals(Object with);
 
+    @Override
     default int compareTo(Hit o) {
         if (this == o)
             return 0;
@@ -47,14 +66,28 @@ public interface Hit extends Comparable<Hit> {
         return doc() - o.doc();
     }
 
+    @Override
     String toString();
 
+    @Override
     int hashCode();
 
+    /**
+     * Get the document this hit occurs in.
+     * @return Lucene document id
+     */
     int doc();
 
-    int end();
-
+    /**
+     * Get the start of this hit.
+     * @return position of first word of the hit
+     */
     int start();
+
+    /**
+     * Get the end of this hit.
+     * @return position of first word after the hit
+     */
+    int end();
 
 }

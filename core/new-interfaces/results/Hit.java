@@ -35,8 +35,22 @@ public interface Hit {
 	 */
 	Hit save();
 	
-	/** @return The document this hit occurs in. */
-	Doc doc();
+	/** 
+	 * Get the document id.
+	 * 
+	 * NOTE: where performance matters, favour this method over doc().id().
+	 *  
+	 * @return id of the document this hit occurs in
+	 */
+	int doc();
+	
+	/**
+	 * Get the document.
+	 * 
+	 * NOTE: where performance matters, favour docId() over doc().id().
+	 * 
+	 * @return The document this hit occurs in. */
+	Doc docObj();
 	
 	/** @return First word of this hit in the document. */
 	int start();
