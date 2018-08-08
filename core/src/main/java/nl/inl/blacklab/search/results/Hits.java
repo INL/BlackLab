@@ -567,9 +567,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @return sorted hits
      */
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        Hits hits = copy(null);
-        sortProp = sortProp.copyWithHits(hits);
-        
         // Sort hits
         try {
             ensureAllHitsRead();
@@ -577,25 +574,28 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // Thread was interrupted; don't complete the operation but return
             // and let the caller detect and deal with the interruption.
             Thread.currentThread().interrupt();
-            return hits;
+            return this;
         }
 
+        Hits hits = copy(null);
+        sortProp = sortProp.copyWithHits(hits);
+        
         // Make sure we have a sort order array of sufficient size
-        if (sortOrder == null || sortOrder.length < hits.size()) {
-            sortOrder = new Integer[hits.size()];
+        if (hits.sortOrder == null || hits.sortOrder.length < hits.size()) {
+            hits.sortOrder = new Integer[hits.size()];
         }
         // Fill the array with the original hit order (0, 1, 2, ...)
         int n = hits.size();
         for (int i = 0; i < n; i++)
-            sortOrder[i] = i;
+            hits.sortOrder[i] = i;
 
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = sortProp.needsContext();
         if (requiredContext != null)
-            findContext(requiredContext);
+            hits.findContext(requiredContext);
 
         // Perform the actual sort.
-        Arrays.sort(sortOrder, sortProp);
+        Arrays.sort(hits.sortOrder, sortProp);
 
         if (reverseSort) {
             // Instead of creating a new Comparator that reverses the order of the
@@ -603,7 +603,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // O(n log n) comparisons), just reverse the hits now (which runs
             // in linear time).
             for (int i = 0; i < n / 2; i++) {
-                sortOrder[i] = sortOrder[n - i - 1];
+                hits.sortOrder[i] = hits.sortOrder[n - i - 1];
             }
         }
         return hits;

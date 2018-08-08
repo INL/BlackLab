@@ -76,6 +76,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
@@ -1572,11 +1573,11 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, hitsToShow.settings().copy().setContextSize(contextSize).freeze());
+        HitsSettings settings = hitsToShow.settings().copy().setContextSize(contextSize).freeze();
+        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, settings);
 
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();
-        window.settings().setContextSize(contextSize); // number of words around hit
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
         for (Hit hit : window) {
             Concordance conc = window.getConcordance(hit);
