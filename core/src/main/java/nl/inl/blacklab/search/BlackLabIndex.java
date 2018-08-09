@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.Collator;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
@@ -94,16 +95,11 @@ public interface BlackLabIndex extends Closeable {
     boolean isEmpty();
 
     /**
-     * Checks if a document has been deleted from the index
-     * 
-     * NOTE: shouldn't normally be necessary, because e.g. docs returned
-     * in search results are never deleted
-     * 
-     * @param doc the document id
-     * @return true iff it has been deleted
+     * Is the document id in range, and not a deleted document?
+     * @param docId document id to check
+     * @return true if it is an existing document
      */
-    @Deprecated
-    boolean isDeleted(int doc);
+    boolean docExists(int docId);
 
     /**
      * Get a BlackLab document.
@@ -119,17 +115,6 @@ public interface BlackLabIndex extends Closeable {
      * @param task task to perform
      */
     void forEachDocument(DocTask task);
-
-    /**
-     * Returns one more than the highest document id
-     * 
-     * NOTE: some document id's may have been deleted, so this is not the number
-     * of documents.
-     * 
-     * @return one more than the highest document id
-     */
-    @Deprecated
-    int maxDoc();
 
 
     // Search the index

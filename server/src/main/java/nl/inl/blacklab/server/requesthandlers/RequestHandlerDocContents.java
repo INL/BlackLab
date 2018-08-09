@@ -72,7 +72,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         BlackLabIndex searcher = getSearcher();
         int docId = BlsUtils.getDocIdFromPid(searcher, docPid);
-        if (docId < 0 || docId >= searcher.maxDoc())
+        if (searcher.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
         Doc doc = searcher.doc(docId);
         Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);

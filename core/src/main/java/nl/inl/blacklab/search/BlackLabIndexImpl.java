@@ -741,14 +741,11 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
     
     @Override
-    public boolean isDeleted(int doc) {
+    public boolean docExists(int docId) {
+        if (docId < 0 || docId >= reader.maxDoc())
+            return false;
         Bits liveDocs = MultiFields.getLiveDocs(reader);
-        return liveDocs != null && !liveDocs.get(doc);
-    }
-
-    @Override
-    public int maxDoc() {
-        return reader.maxDoc();
+        return liveDocs == null || liveDocs.get(docId);
     }
 
     @Override

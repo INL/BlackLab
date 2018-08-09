@@ -929,13 +929,8 @@ public class QueryTool {
             processCommand(restCommand);
     }
 
-    @SuppressWarnings("deprecation")
     private void showMetadata(int docId) {
-        if (docId >= searcher.maxDoc()) {
-            outprintln("Document " + docId + " doesn't exist.");
-            return;
-        }
-        if (searcher.isDeleted(docId)) {
+        if (searcher.docExists(docId)) {
             outprintln("Document " + docId + " was deleted.");
             return;
         }

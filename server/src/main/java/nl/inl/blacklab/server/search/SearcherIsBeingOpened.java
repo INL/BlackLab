@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import java.io.File;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -35,16 +36,6 @@ public class SearcherIsBeingOpened extends BlackLabIndexImpl {
 
     @Override
     public void rollback() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isDeleted(int doc) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int maxDoc() {
         throw new UnsupportedOperationException();
     }
 

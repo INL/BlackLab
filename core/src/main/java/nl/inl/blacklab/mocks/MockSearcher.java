@@ -73,13 +73,8 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public boolean isDeleted(int doc) {
-        return false;
-    }
-
-    @Override
-    public int maxDoc() {
-        throw new UnsupportedOperationException();
+    public boolean docExists(int doc) {
+        return true;
     }
 
     @Override
