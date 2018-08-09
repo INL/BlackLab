@@ -51,7 +51,7 @@ public class DocImpl implements Doc {
     }
     
     @Override
-    public Document luceneDoc() {
+    public synchronized Document luceneDoc() {
         if (document == null) {
             try {
                 document = index.reader().document(id);
