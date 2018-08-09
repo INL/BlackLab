@@ -720,8 +720,10 @@ public class QueryTool {
                 if (hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
+                    HitsWindow singleHit = currentHitSet.window(hitId, 1);
+                    singleHit.hitDisplay().findConcordances(snippetSize);
                     Hit h = currentHitSet.get(hitId);
-                    Concordance conc = hits.hitDisplay().getConcordance(h, snippetSize);
+                    Concordance conc = singleHit.hitDisplay().getConcordance(h);
                     String[] concParts;
                     if (stripXML)
                         concParts = conc.partsNoXml();
@@ -1531,6 +1533,7 @@ public class QueryTool {
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
+        window.hitDisplay().findConcordances(-1);
         for (Hit hit : window) {
             Concordance conc = window.hitDisplay().getConcordance(hit);
 

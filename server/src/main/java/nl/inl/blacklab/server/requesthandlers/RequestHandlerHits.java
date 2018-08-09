@@ -187,6 +187,11 @@ public class RequestHandlerHits extends RequestHandler {
 
             ds.startEntry("hits").startList();
             Map<Integer, String> pids = new HashMap<>();
+            boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
+            if (useOrigContent)
+                window.hitDisplay().findConcordances(-1);
+            else
+                window.hitDisplay().findKwics(-1);
             for (Hit hit : window) {
                 ds.startItem("hit").startMap();
 
@@ -197,8 +202,6 @@ public class RequestHandlerHits extends RequestHandler {
                     pid = getDocumentPid(searcher, hit.doc(), document);
                     pids.put(hit.doc(), pid);
                 }
-
-                boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
 
                 // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
 

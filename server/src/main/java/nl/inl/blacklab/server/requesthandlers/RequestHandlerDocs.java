@@ -175,10 +175,15 @@ public class RequestHandlerDocs extends RequestHandler {
                 Hits hits2 = result.getHits(5); // TODO: make num. snippets configurable
                 if (hits2.sizeAtLeast(1)) {
                     ds.startEntry("snippets").startList();
+                    boolean wantConcordances = searchParam.getString("usecontent").equals("orig");
+                    if (wantConcordances)
+                        hits2.hitDisplay().findConcordances(-1);
+                    else
+                        hits2.hitDisplay().findKwics(-1);
                     for (Hit hit : hits2) {
                         // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                         ds.startItem("snippet").startMap();
-                        if (searchParam.getString("usecontent").equals("orig")) {
+                        if (wantConcordances) {
                             // Add concordance from original XML
                             Concordance c = hits2.hitDisplay().getConcordance(hit);
                             ds.startEntry("left").plain(c.left()).endEntry()

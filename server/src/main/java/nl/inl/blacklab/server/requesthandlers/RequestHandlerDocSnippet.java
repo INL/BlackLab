@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -107,8 +108,10 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                     .entry("end", hit.end());
         }
 
+        HitsWindow singleHit = hits.window(hit);
         if (useOrigContent) {
-            Concordance c = hits.hitDisplay().getConcordance(hit, wordsAroundHit);
+            singleHit.hitDisplay().findConcordances(wordsAroundHit);
+            Concordance c = singleHit.hitDisplay().getConcordance(hit);
             if (!isFragment) {
                 ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
@@ -117,7 +120,8 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                 ds.plain(c.match());
             }
         } else {
-            Kwic c = hits.hitDisplay().getKwic(hit, wordsAroundHit);
+            singleHit.hitDisplay().findKwics(wordsAroundHit);
+            Kwic c = singleHit.hitDisplay().getKwic(hit);
             if (!isFragment) {
                 ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
                         .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()

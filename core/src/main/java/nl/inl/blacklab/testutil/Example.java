@@ -173,6 +173,7 @@ public class Example {
      */
     static void displayConcordances(Hits hits) {
         // Loop over the hits and display.
+        hits.hitDisplay().findConcordances(-1);
         for (Hit hit : hits) {
             Concordance conc = hits.hitDisplay().getConcordance(hit);
             // Strip out XML tags for display.

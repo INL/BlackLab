@@ -209,6 +209,7 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
+        hits.hitDisplay().findKwics(-1);
         for (Hit hit : hits) {
             Kwic kwic = hits.hitDisplay().getKwic(hit);
             String left = StringUtil.join(kwic.getLeft(word), " ");

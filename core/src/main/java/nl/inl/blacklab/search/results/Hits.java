@@ -26,36 +26,27 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Doc;
-import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
-import nl.inl.util.XmlHighlighter;
 
 public class Hits implements Iterable<Hit>, Prioritizable {
 
@@ -705,6 +696,18 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         return new HitsWindow(this, first, windowSize, settings == null ? this.settings() : settings);
     }
 
+    /**
+     * Get a window with a single hit in it.
+     * 
+     * @param hit the hit we want (must be in this Hits object)
+     * @return window
+     */
+    public HitsWindow window(Hit hit) {
+        int i = hits.indexOf(hit);
+        if (i < 0)
+            throw new BlackLabException("Hit not found in hits list!");
+        return window(i, 1);
+    }
     
     // Settings, general stuff
     //--------------------------------------------------------------------
@@ -916,375 +919,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Hits display
     //--------------------------------------------------------------------
 
-    private HitDisplay hitDisplay = new HitDisplay();
+    private HitDisplay hitDisplay = new HitDisplay(this);
     
     public HitDisplay hitDisplay() {
         return hitDisplay;
     }
-    
-    public class HitDisplay {
-        
-        /**
-         * The KWIC data, if it has been retrieved.
-         *
-         * NOTE: this will always be null if not all the hits have been retrieved.
-         */
-        private Map<Hit, Kwic> kwics;
-
-        /**
-         * The concordances, if they have been retrieved.
-         *
-         * NOTE: when making concordances from the forward index, this will always be
-         * null, because Kwics will be used internally. This is only used when making
-         * concordances from the content store (the old default).
-         */
-        private Map<Hit, Concordance> concordances;
-        
-        /**
-         * Return the concordance for the specified hit.
-         *
-         * The first call to this method will fetch the concordances for all the hits in
-         * this Hits object. So make sure to select an appropriate HitsWindow first:
-         * don't call this method on a Hits set with >1M hits unless you really want to
-         * display all of them in one go.
-         *
-         * @param h the hit
-         * @return concordance for this hit
-         */
-        public Concordance getConcordance(Hit h) {
-            return getConcordance(h, settings().contextSize());
-        }
-
-        /**
-         * Return the KWIC for the specified hit.
-         *
-         * The first call to this method will fetch the KWICs for all the hits in this
-         * Hits object. So make sure to select an appropriate HitsWindow first: don't
-         * call this method on a Hits set with >1M hits unless you really want to
-         * display all of them in one go.
-         *
-         * @param h the hit
-         * @return KWIC for this hit
-         */
-        public Kwic getKwic(Hit h) {
-            return getKwic(h, settings().contextSize());
-        }
-
-        /**
-         * Retrieve a single KWIC (KeyWord In Context). Only use if you need a larger
-         * snippet around a single hit. If you need KWICs for a set of hits, just
-         * instantiate a HitsWindow and call getKwic() on that; it will fetch all KWICs
-         * in the window in a batch, which is more efficient.
-         *
-         * @param field field to use for building the KWIC
-         * @param hit the hit for which we want a KWIC
-         * @param contextSize the desired number of words around the hit
-         * @return the KWIC
-         */
-        public Kwic getKwic(AnnotatedField field, Hit hit, int contextSize) {
-            List<Hit> oneHit = Arrays.asList(hit);
-            Hits h = new Hits(index, index.mainAnnotatedField(), oneHit, settings);
-            h.copyMaxAndContextFrom(Hits.this); // concordance type, etc.
-            Map<Hit, Kwic> oneConc = h.hitDisplay().retrieveKwics(contextSize, field);
-            return oneConc.get(hit);
-        }
-
-        /**
-         * Get a KWIC with a custom context size.
-         *
-         * Don't call this directly for displaying a list of results. In that case, just
-         * instantiate a HitsWindow, call setContextSize() on it to set a default
-         * context size and call getKwic(Hit) for each hit. That's more efficient if
-         * you're dealing with many hits.
-         *
-         * This method is mostly just for getting a larger snippet around a single hit.
-         *
-         * @param h the hit
-         * @param contextSize the context size for this KWIC (only use if you want a
-         *            different one than the preset preference)
-         * @return KWIC for this hit
-         */
-        public synchronized Kwic getKwic(Hit h, int contextSize) {
-            if (contextSize != settings().contextSize()) {
-                // Different context size than the default for the whole set;
-                // We probably want to show a hit with a larger snippet around it
-                // (say, 50 words or so). Don't clobber the context of the other
-                // hits, just fetch this snippet separately.
-                return getKwic(field(), h, contextSize);
-            }
-
-            // Default context size. Read all hits and find concordances for all of them
-            // in batch.
-            try {
-                ensureAllHitsRead();
-            } catch (InterruptedException e) {
-                // Thread was interrupted. Just go ahead with the hits we did
-                // get, so at least we can return a valid concordance object and
-                // not break the calling method. It is responsible for checking
-                // for thread interruption (only some applications use this at all,
-                // so throwing exceptions from all methods is too inconvenient)
-                Thread.currentThread().interrupt();
-            }
-            if (kwics == null) {
-                findKwics(); // just try to find the default concordances
-            }
-            Kwic kwic = kwics.get(h);
-            if (kwic == null)
-                throw new BlackLabException("KWIC for hit not found: " + h);
-            return kwic;
-        }
-
-        /**
-         * Retrieve a single concordance. Only use if you need a larger snippet around a
-         * single hit. If you need concordances for a set of hits, just instantiate a
-         * HitsWindow and call getConcordance() on that; it will fetch all concordances
-         * in the window in a batch, which is more efficient.
-         *
-         * @param field field to use for building the concordance
-         * @param hit the hit for which we want a concordance
-         * @param contextSize the desired number of words around the hit
-         * @return the concordance
-         */
-        public synchronized Concordance getConcordance(AnnotatedField field, Hit hit, int contextSize) {
-            List<Hit> oneHit = Arrays.asList(hit);
-            Hits h = new Hits(index, index.mainAnnotatedField(), oneHit, settings);
-            h.copyMaxAndContextFrom(Hits.this); // concordance type, etc.
-            if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
-                Map<Hit, Kwic> oneKwic = h.hitDisplay().retrieveKwics(contextSize, field);
-                return oneKwic.get(hit).toConcordance();
-            }
-            Map<Hit, Concordance> oneConc = h.hitDisplay().retrieveConcordancesFromContentStore(contextSize, field);
-            return oneConc.get(hit);
-        }
-
-        /**
-         * Get a concordance with a custom context size.
-         *
-         * Don't call this directly for displaying a list of results. In that case, just
-         * instantiate a HitsWindow, call setContextSize() on it to set a default
-         * context size and call getConcordance(Hit) for each hit. That's more efficient
-         * if you're dealing with many hits.
-         *
-         * This method is mostly just for getting a larger snippet around a single hit.
-         *
-         * @param h the hit
-         * @param contextSize the context size for this concordance (only use if you
-         *            want a different one than the preset preference)
-         * @return concordance for this hit
-         */
-        public synchronized Concordance getConcordance(Hit h, int contextSize) {
-            if (settings().concordanceType() == ConcordanceType.FORWARD_INDEX)
-                return getKwic(h, contextSize).toConcordance();
-
-            if (contextSize != settings().contextSize()) {
-                // Different context size than the default for the whole set;
-                // We probably want to show a hit with a larger snippet around it
-                // (say, 50 words or so). Don't clobber the context of the other
-                // hits, just fetch this snippet separately.
-                return getConcordance(field(), h, contextSize);
-            }
-
-            // Default context size. Read all hits and find concordances for all of them
-            // in batch.
-            try {
-                ensureAllHitsRead();
-            } catch (InterruptedException e) {
-                // Thread was interrupted. Just go ahead with the hits we did
-                // get, so at least we can return a valid concordance object and
-                // not break the calling method. It is responsible for checking
-                // for thread interruption (only some applications use this at all,
-                // so throwing exceptions from all methods is too inconvenient)
-                Thread.currentThread().interrupt();
-            }
-            if (concordances == null) {
-                findConcordances(); // just try to find the default concordances
-            }
-            Concordance conc = concordances.get(h);
-            if (conc == null)
-                throw new BlackLabException("Concordance for hit not found: " + h);
-            return conc;
-        }
-
-        /**
-         * Retrieve concordances for the hits.
-         *
-         * You shouldn't have to call this manually, as it's automatically called when
-         * you call getConcordance() for the first time.
-         */
-        private synchronized void findConcordances() {
-            if (settings.concordanceType() == ConcordanceType.FORWARD_INDEX) {
-                findKwics();
-                return;
-            }
-
-            try {
-                ensureAllHitsRead();
-            } catch (InterruptedException e) {
-                // Thread was interrupted. Just go ahead with the hits we did
-                // get, so at least we'll have valid concordances.
-                Thread.currentThread().interrupt();
-            }
-            // Make sure we don't have the desired concordances already
-            if (concordances != null) {
-                return;
-            }
-
-            // Get the concordances
-            concordances = retrieveConcordancesFromContentStore(settings().contextSize(), field());
-        }
-
-        /**
-         * Retrieves the concordance information (left, hit and right context) for a
-         * number of hits in the same document from the ContentStore.
-         *
-         * NOTE1: it is assumed that all hits in this Hits object are in the same
-         * document!
-         * 
-         * @param field field to make conc for
-         * @param wordsAroundHit number of words left and right of hit to fetch
-         * @param conc where to add the concordances
-         * @param hl
-         */
-        private synchronized void makeConcordancesSingleDocContentStore(Field field, int wordsAroundHit,
-                Map<Hit, Concordance> conc,
-                XmlHighlighter hl) {
-            if (hits.isEmpty())
-                return;
-            Doc doc = index.doc(hits.get(0).doc());
-            int arrayLength = hits.size() * 2;
-            int[] startsOfWords = new int[arrayLength];
-            int[] endsOfWords = new int[arrayLength];
-
-            // Determine the first and last word of the concordance, as well as the
-            // first and last word of the actual hit inside the concordance.
-            int startEndArrayIndex = 0;
-            for (Hit hit : hits) {
-                int hitStart = hit.start();
-                int hitEnd = hit.end() - 1;
-
-                int start = hitStart - wordsAroundHit;
-                if (start < 0)
-                    start = 0;
-                int end = hitEnd + wordsAroundHit;
-
-                startsOfWords[startEndArrayIndex] = start;
-                startsOfWords[startEndArrayIndex + 1] = hitStart;
-                endsOfWords[startEndArrayIndex] = hitEnd;
-                endsOfWords[startEndArrayIndex + 1] = end;
-
-                startEndArrayIndex += 2;
-            }
-
-            // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
-            // arrays)
-            doc.getCharacterOffsets(field, startsOfWords, endsOfWords, true);
-
-            // Make all the concordances
-            List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);
-            for (int i = 0; i < hits.size(); i++) {
-                conc.put(hits.get(i), newConcs.get(i));
-            }
-        }
-
-        /**
-         * Generate concordances from content store (slower).
-         *
-         * @param contextSize how many words around the hit to retrieve
-         * @param fieldName field to use for building concordances
-         * @return the concordances
-         */
-        private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, AnnotatedField field) {
-            XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-            hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
-            // Group hits per document
-            MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-            for (Hit key : hits) {
-                List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
-                if (hitsInDoc == null) {
-                    hitsInDoc = new ArrayList<>();
-                    hitsPerDocument.put(key.doc(), hitsInDoc);
-                }
-                hitsInDoc.add(key);
-            }
-            Map<Hit, Concordance> conc = new HashMap<>();
-            for (List<Hit> l : hitsPerDocument.values()) {
-                Hits hitsInThisDoc = new Hits(index, field, l, settings);
-                hitsInThisDoc.copyMaxAndContextFrom(Hits.this);
-                hitsInThisDoc.hitDisplay().makeConcordancesSingleDocContentStore(field, contextSize, conc, hl);
-            }
-            return conc;
-        }
-
-        
-        /**
-         * Retrieve KWICs for the hits.
-         *
-         * You shouldn't have to call this manually, as it's automatically called when
-         * you call getKwic() for the first time.
-         *
-         */
-        private synchronized void findKwics() {
-            try {
-                ensureAllHitsRead();
-            } catch (InterruptedException e) {
-                // Thread was interrupted. Just go ahead with the hits we did
-                // get, so at least we'll have valid concordances.
-                Thread.currentThread().interrupt();
-            }
-            // Make sure we don't have the desired concordances already
-            if (kwics != null) {
-                return;
-            }
-
-            // Get the concordances
-            kwics = retrieveKwics(settings().contextSize(), field());
-        }
-
-        /**
-         * Retrieve KWICs for a (sub)list of hits.
-         *
-         * KWICs are the hit words 'centered' with a certain number of context words
-         * around them.
-         *
-         * The size of the left and right context (in words) may be set using
-         * Searcher.setConcordanceContextSize().
-         *
-         * @param contextSize how many words around the hit to retrieve
-         * @param fieldName field to use for building KWICs
-         *
-         * @return the KWICs
-         */
-        private Map<Hit, Kwic> retrieveKwics(int contextSize, AnnotatedField field) {
-            // Group hits per document
-            MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-            for (Hit key: Hits.this) {
-                List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
-                if (hitsInDoc == null) {
-                    hitsInDoc = new ArrayList<>();
-                    hitsPerDocument.put(key.doc(), hitsInDoc);
-                }
-                hitsInDoc.add(key);
-            }
-
-            // All FIs except word and punct are attributes
-            Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
-            for (Annotation annotation: field.annotations()) {
-                if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                    attrForwardIndices.put(annotation, index.forwardIndex(annotation));
-                }
-            }
-            ForwardIndex wordForwardIndex = index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
-            ForwardIndex punctForwardIndex = index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
-            Map<Hit, Kwic> conc1 = new HashMap<>();
-            for (List<Hit> l : hitsPerDocument.values()) {
-                Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
-            }
-            return conc1;
-        }
-        
-        
-    }
-
     
     // Hits fetching
     //--------------------------------------------------------------------
