@@ -21,10 +21,37 @@ public abstract class HitsAbstract implements Hits {
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
+    /** Id the next Hits instance will get */
+    private static int nextHitsObjId = 0;
+
+    private static synchronized int getNextHitsObjId() {
+        return nextHitsObjId++;
+    }
+
+    /** Unique id of this Hits instance */
+    protected final int hitsObjId = getNextHitsObjId();
+    
+    protected BlackLabIndex index;
+
+    /**
+     * Settings for retrieving hits.
+     */
+    protected HitsSettings settings;
+    /**
+     * The field these hits came from (will also be used as concordance field)
+     */
+    protected AnnotatedField field;
+    /**
+     * Helper object for implementing query thread priority (making sure queries
+     * don't hog the CPU for way too long).
+     */
+    protected ThreadPriority threadPriority;
+
     public HitsAbstract(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
         this.index = index;
         this.field = field;
         this.settings = settings == null ? index.hitsSettings() : settings;
+        threadPriority = new ThreadPriority();
     }
 
     /* (non-Javadoc)
@@ -233,17 +260,6 @@ public abstract class HitsAbstract implements Hits {
     @Override
     public abstract HitsAbstract copy(HitsSettings settings);
 
-    /** Id the next Hits instance will get */
-    private static int nextHitsObjId = 0;
-
-    private static synchronized int getNextHitsObjId() {
-        return nextHitsObjId++;
-    }
-
-    /** Unique id of this Hits instance */
-    protected final int hitsObjId = getNextHitsObjId();
-    protected BlackLabIndex index;
-
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#getHitsObjId()
      */
@@ -251,20 +267,6 @@ public abstract class HitsAbstract implements Hits {
     public int getHitsObjId() {
         return hitsObjId;
     }
-
-    /**
-     * Settings for retrieving hits.
-     */
-    protected HitsSettings settings;
-    /**
-     * The field these hits came from (will also be used as concordance field)
-     */
-    protected AnnotatedField field;
-    /**
-     * Helper object for implementing query thread priority (making sure queries
-     * don't hog the CPU for way too long).
-     */
-    protected ThreadPriority threadPriority;
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#setPriorityLevel(nl.inl.util.ThreadPriority.Level)
