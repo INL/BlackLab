@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -175,7 +175,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 ds.endEntry();
 
                 // Snippets
-                HitsAbstract hits2 = result.getHits(5); // TODO: make num. snippets configurable
+                Hits hits2 = result.getHits(5); // TODO: make num. snippets configurable
                 if (hits2.hitsProcessedAtLeast(1)) {
                     ds.startEntry("snippets").startList();
                     boolean wantConcordances = searchParam.getString("usecontent").equals("orig");

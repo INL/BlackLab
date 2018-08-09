@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -11,13 +11,13 @@ import nl.inl.blacklab.server.search.SearchManager;
 public abstract class JobWithHits extends Job {
 
     /** The hits found */
-    protected HitsAbstract hits;
+    protected Hits hits;
 
     public JobWithHits(SearchManager searchMan, User user, JobDescription par) throws BlsException {
         super(searchMan, user, par);
     }
 
-    public HitsAbstract getHits() {
+    public Hits getHits() {
         return hits;
     }
 
@@ -39,7 +39,7 @@ public abstract class JobWithHits extends Job {
     }
 
     @Override
-    protected HitsAbstract getObjectToPrioritize() {
+    protected Hits getObjectToPrioritize() {
         return hits;
     }
 

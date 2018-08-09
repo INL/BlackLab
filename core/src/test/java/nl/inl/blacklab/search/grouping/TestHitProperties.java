@@ -16,7 +16,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitProperties {
 
@@ -47,7 +47,7 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropHitText() throws ParseException {
-        HitsAbstract hits = testIndex.find(" 'the' ");
+        Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(hits, true);
         HitGroups g = hits.groupedBy(p);
         HitGroup group = g.getGroup(new HitPropValueContextWords(hits, wordAnnotation, new int[] { term("the") }, true));
@@ -58,7 +58,7 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropContextWords() throws ParseException {
-        HitsAbstract hits = testIndex.find(" 'the' ");
+        Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyContextWords(hits, wordAnnotation, true, "L1-1;H1-2");
         HitGroups g = hits.groupedBy(p);
         Assert.assertEquals(4, g.numberOfGroups());
@@ -79,7 +79,7 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropContextWordsReverse() throws ParseException {
-        HitsAbstract hits = testIndex.find(" 'the' 'lazy' ");
+        Hits hits = testIndex.find(" 'the' 'lazy' ");
         HitProperty p = new HitPropertyContextWords(hits, wordAnnotation, true, "L1;H2-1;R1");
         HitGroups g = hits.groupedBy(p);
         Assert.assertEquals(1, g.numberOfGroups());

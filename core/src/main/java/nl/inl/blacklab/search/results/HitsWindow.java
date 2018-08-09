@@ -36,7 +36,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
     /**
      * The source hits into which this is a window
      */
-    private HitsAbstract source;
+    private Hits source;
 
     /**
      * Construct a HitsWindow object.
@@ -49,7 +49,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * @param windowSize the size of our window
      * @param settings settings to use
      */
-    HitsWindow(HitsAbstract source, int first, int windowSize, HitsSettings settings) {
+    HitsWindow(Hits source, int first, int windowSize, HitsSettings settings) {
         super(source.index(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
         this.source = source;
         this.first = first;
@@ -182,7 +182,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * 
      * @return the original Hits object
      */
-    public HitsAbstract getOriginalHits() {
+    public Hits getOriginalHits() {
         return source;
     }
 

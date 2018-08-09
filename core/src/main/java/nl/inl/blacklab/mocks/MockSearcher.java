@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -156,12 +156,12 @@ public class MockSearcher implements BlackLabIndex {
     }
 
     @Override
-    public HitsAbstract find(BLSpanQuery query, HitsSettings settings) throws TooManyClauses {
+    public Hits find(BLSpanQuery query, HitsSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public HitsAbstract find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings) throws TooManyClauses {
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

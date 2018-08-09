@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.results.HitsAbstract;
  */
 public class HitPropertyHitPosition extends HitProperty {
 
-    public HitPropertyHitPosition(HitsAbstract hits) {
+    public HitPropertyHitPosition(Hits hits) {
         super(hits);
     }
 
@@ -61,7 +61,7 @@ public class HitPropertyHitPosition extends HitProperty {
         return serializeReverse() + "hitposition";
     }
 
-    public static HitPropertyHitPosition deserialize(HitsAbstract hits) {
+    public static HitPropertyHitPosition deserialize(Hits hits) {
         return new HitPropertyHitPosition(hits);
     }
 }

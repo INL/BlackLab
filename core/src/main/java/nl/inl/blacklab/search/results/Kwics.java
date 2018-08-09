@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class Kwics {
     
     /** Our hits object */
-    private final HitsAbstract hits;
+    private final Hits hits;
 
     /**
      * The KWIC data, if it has been retrieved.
@@ -32,7 +32,7 @@ public class Kwics {
     /**
      * @param hits
      */
-    Kwics(HitsAbstract hits, int contextSize) {
+    Kwics(Hits hits, int contextSize) {
         this.hits = hits;
     
         // Get the concordances
@@ -87,11 +87,11 @@ public class Kwics {
         Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                attrForwardIndices.put(annotation, this.hits.index.forwardIndex(annotation));
+                attrForwardIndices.put(annotation, this.hits.index().forwardIndex(annotation));
             }
         }
-        ForwardIndex wordForwardIndex = this.hits.index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
-        ForwardIndex punctForwardIndex = this.hits.index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
+        ForwardIndex wordForwardIndex = this.hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
+        ForwardIndex punctForwardIndex = this.hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
         Map<Hit, Kwic> conc1 = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
             Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);

@@ -401,7 +401,7 @@ public class HitsImpl extends HitsAbstract {
      * @param copyFrom where to copy stuff from
      */
     @Override
-    public void copyMaxHitsRetrieved(HitsAbstract copyFrom) {
+    public void copyMaxHitsRetrieved(Hits copyFrom) {
         this.maxHitsRetrieved = copyFrom.hitsProcessedExceededMaximum();
         this.maxHitsCounted = copyFrom.hitsCountedExceededMaximum();
     }
@@ -421,7 +421,7 @@ public class HitsImpl extends HitsAbstract {
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public HitsAbstract sortedBy(final HitProperty sortProp) {
+    public Hits sortedBy(final HitProperty sortProp) {
         return sortedBy(sortProp, false);
     }
 
@@ -438,7 +438,7 @@ public class HitsImpl extends HitsAbstract {
      * @return sorted hits
      */
     @Override
-    public HitsAbstract sortedBy(HitProperty sortProp, boolean reverseSort) {
+    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
         // Sort hits
         try {
             ensureAllHitsRead();
@@ -489,7 +489,7 @@ public class HitsImpl extends HitsAbstract {
      * @return filtered hits
      */
     @Override
-    public HitsAbstract filteredBy(HitProperty property, HitPropValue value) {
+    public Hits filteredBy(HitProperty property, HitPropValue value) {
         List<Annotation> requiredContext = property.needsContext();
         property.setContexts(new Contexts(this, requiredContext));
 
@@ -708,7 +708,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the list of hits in this doc (if any)
      */
     @Override
-    public HitsAbstract getHitsInDoc(int docid) {
+    public Hits getHitsInDoc(int docid) {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {

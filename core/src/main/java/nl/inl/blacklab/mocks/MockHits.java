@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsSettings;
 
@@ -66,7 +66,7 @@ public class MockHits extends HitsImpl {
     }
 
     @Override
-    public HitsAbstract sortedBy(HitProperty sortProp, boolean reverseSort) {
+    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
         throw new UnsupportedOperationException();
     }
 

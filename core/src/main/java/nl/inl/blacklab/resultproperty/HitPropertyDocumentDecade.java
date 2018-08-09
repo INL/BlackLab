@@ -24,7 +24,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the
@@ -39,7 +39,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     String fieldName;
 
-    public HitPropertyDocumentDecade(HitsAbstract hits, String fieldName) {
+    public HitPropertyDocumentDecade(Hits hits, String fieldName) {
         super(hits);
         this.reader = hits.index().reader();
         this.fieldName = fieldName;
@@ -118,7 +118,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
         return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
     }
 
-    public static HitPropertyDocumentDecade deserialize(HitsAbstract hits, String info) {
+    public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {
         return new HitPropertyDocumentDecade(hits, info);
     }
 }

@@ -8,9 +8,9 @@ import java.util.TreeSet;
  */
 public class HitsSampleImpl extends HitsSample {
 
-    HitsAbstract source;
+    Hits source;
 
-    HitsSampleImpl(HitsAbstract hits, float ratio, long seed) {
+    HitsSampleImpl(Hits hits, float ratio, long seed) {
         super(hits.index(), hits.field(), ratio, seed, hits.settings());
         if (ratio < 0 || ratio > 1)
             throw new IllegalArgumentException("ratio must be in the range 0-1");
@@ -27,7 +27,7 @@ public class HitsSampleImpl extends HitsSample {
         copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
-    HitsSampleImpl(HitsAbstract hits, int number, long seed) {
+    HitsSampleImpl(Hits hits, int number, long seed) {
         super(hits.index(), hits.field(), number, seed, hits.settings());
         if (number < 0)
             throw new IllegalArgumentException("Negative sample number specified");
@@ -43,7 +43,7 @@ public class HitsSampleImpl extends HitsSample {
         copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
-    private void selectHits(HitsAbstract selectFrom) {
+    private void selectHits(Hits selectFrom) {
         // Choose the hits
         Set<Integer> chosenHitIndices = new TreeSet<>();
         for (int i = 0; i < numberOfHitsToSelect; i++) {

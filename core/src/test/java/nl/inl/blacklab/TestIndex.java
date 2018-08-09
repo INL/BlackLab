@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.testutil.DocIndexerExample;
@@ -152,7 +152,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public List<String> findConc(String query) throws ParseException {
-        HitsAbstract hits = find(query, null);
+        Hits hits = find(query, null);
         return getConcordances(hits, word);
     }
 
@@ -176,7 +176,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      * @throws ParseException
      */
-    public HitsAbstract find(String pattern, Query filter) throws ParseException {
+    public Hits find(String pattern, Query filter) throws ParseException {
         return searcher.find(CorpusQueryLanguageParser.parse(pattern), searcher.mainAnnotatedField(), filter, null);
     }
 
@@ -187,7 +187,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      * @throws ParseException
      */
-    public HitsAbstract find(String pattern) throws ParseException {
+    public Hits find(String pattern) throws ParseException {
         return find(pattern, null);
     }
 
@@ -208,7 +208,7 @@ public class TestIndex {
      * @param hits the hits to display
      * @return the left, match and right values for the "word" annotation
      */
-    static List<String> getConcordances(HitsAbstract hits, Annotation word) {
+    static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(-1);
         for (Hit hit : hits) {

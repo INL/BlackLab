@@ -34,8 +34,8 @@ public class Concordances {
     /**
      * @param hits
      */
-    Concordances(HitsAbstract hits, int contextSize) {
-        if (hits.settings.concordanceType() == ConcordanceType.FORWARD_INDEX) {
+    Concordances(Hits hits, int contextSize) {
+        if (hits.settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
         }
     
@@ -75,12 +75,12 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(HitsAbstract hits, int wordsAroundHit,
+    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, int wordsAroundHit,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)
             return;
-        Doc doc = hits.index.doc(hits.get(0).doc());
+        Doc doc = hits.index().doc(hits.get(0).doc());
         int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
@@ -123,7 +123,7 @@ public class Concordances {
      * @param fieldName field to use for building concordances
      * @return the concordances
      */
-    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(HitsAbstract hits, int contextSize, AnnotatedField field) {
+    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
@@ -138,7 +138,7 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            HitsAbstract hitsInThisDoc = new HitsImpl(hits.index(), field, l, hits.settings());
+            Hits hitsInThisDoc = new HitsImpl(hits.index(), field, l, hits.settings());
             hitsInThisDoc.copyMaxHitsRetrieved(hits);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }

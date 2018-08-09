@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -126,11 +126,11 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    public HitPropertyContextWords(HitsAbstract hits, Annotation annotation, boolean sensitive, String wordSpec) {
+    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive, String wordSpec) {
         this(hits, annotation, sensitive, parseContextWordSpec(wordSpec));
     }
 
-    public HitPropertyContextWords(HitsAbstract hits, Annotation annotation, boolean sensitive,
+    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
             List<ContextPart> words) {
         super(hits);
         this.searcher = hits.index();
@@ -289,7 +289,7 @@ public class HitPropertyContextWords extends HitProperty {
         return result.toString();
     }
 
-    public static HitPropertyContextWords deserialize(HitsAbstract hits, String info) {
+    public static HitPropertyContextWords deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
         AnnotatedField field = hits.field();
         String propName = parts[0];

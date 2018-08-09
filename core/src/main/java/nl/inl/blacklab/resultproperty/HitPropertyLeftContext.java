@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -42,19 +42,19 @@ public class HitPropertyLeftContext extends HitProperty {
 
     private BlackLabIndex searcher;
 
-    public HitPropertyLeftContext(HitsAbstract hits, Annotation annotation) {
+    public HitPropertyLeftContext(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyLeftContext(HitsAbstract hits, AnnotatedField field) {
+    public HitPropertyLeftContext(Hits hits, AnnotatedField field) {
         this(hits, field.annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyLeftContext(HitsAbstract hits) {
+    public HitPropertyLeftContext(Hits hits) {
         this(hits, hits.index().mainAnnotatedField().annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyLeftContext(HitsAbstract hits, Annotation annotation, boolean sensitive) {
+    public HitPropertyLeftContext(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
         this.searcher = hits.index();
         this.luceneFieldName = annotation.luceneFieldPrefix();
@@ -63,11 +63,11 @@ public class HitPropertyLeftContext extends HitProperty {
         this.sensitive = sensitive;
     }
 
-    public HitPropertyLeftContext(HitsAbstract hits, AnnotatedField field, boolean sensitive) {
+    public HitPropertyLeftContext(Hits hits, AnnotatedField field, boolean sensitive) {
         this(hits, field.annotations().main(), sensitive);
     }
 
-    public HitPropertyLeftContext(HitsAbstract hits, boolean sensitive) {
+    public HitPropertyLeftContext(Hits hits, boolean sensitive) {
         this(hits, hits.index().mainAnnotatedField(), sensitive);
     }
 
@@ -154,7 +154,7 @@ public class HitPropertyLeftContext extends HitProperty {
         return serializeReverse() + PropValSerializeUtil.combineParts("left", thePropName, sensitive ? "s" : "i");
     }
 
-    public static HitPropertyLeftContext deserialize(HitsAbstract hits, String info) {
+    public static HitPropertyLeftContext deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
         AnnotatedField field = hits.field();
         String propName = parts[0];

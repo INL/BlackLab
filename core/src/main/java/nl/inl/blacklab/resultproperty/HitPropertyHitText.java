@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the text actually matched. Requires
@@ -40,19 +40,19 @@ public class HitPropertyHitText extends HitProperty {
 
     private Annotation annotation;
 
-    public HitPropertyHitText(HitsAbstract hits, Annotation annotation) {
+    public HitPropertyHitText(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyHitText(HitsAbstract hits, AnnotatedField field) {
+    public HitPropertyHitText(Hits hits, AnnotatedField field) {
         this(hits, field.annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyHitText(HitsAbstract hits) {
+    public HitPropertyHitText(Hits hits) {
         this(hits, hits.index().mainAnnotatedField(), hits.index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyHitText(HitsAbstract hits, Annotation annotation, boolean sensitive) {
+    public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
         this.searcher = hits.index();
         this.annotation = annotation;
@@ -60,11 +60,11 @@ public class HitPropertyHitText extends HitProperty {
         this.sensitive = sensitive;
     }
 
-    public HitPropertyHitText(HitsAbstract hits, AnnotatedField field, boolean sensitive) {
+    public HitPropertyHitText(Hits hits, AnnotatedField field, boolean sensitive) {
         this(hits, field.annotations().main(), sensitive);
     }
 
-    public HitPropertyHitText(HitsAbstract hits, boolean sensitive) {
+    public HitPropertyHitText(Hits hits, boolean sensitive) {
         this(hits, hits.index().mainAnnotatedField(), sensitive);
     }
 
@@ -140,7 +140,7 @@ public class HitPropertyHitText extends HitProperty {
         return serializeReverse() + PropValSerializeUtil.combineParts("hit", annotation.name(), sensitive ? "s" : "i");
     }
 
-    public static HitPropertyHitText deserialize(HitsAbstract hits, String info) {
+    public static HitPropertyHitText deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
         AnnotatedField field = hits.field();
         String propName = parts[0];

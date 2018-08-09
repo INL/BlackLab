@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -57,7 +57,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
      * @throws BlsException
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    private Pair<HitsAbstract, HitGroups> getHits() throws BlsException {
+    private Pair<Hits, HitGroups> getHits() throws BlsException {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -70,7 +70,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             sortBy = null;
 
         JobWithHits job = null;
-        HitsAbstract hits = null;
+        Hits hits = null;
         HitGroups groups = null;
 
         try {
@@ -181,7 +181,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.add(StringUtils.join(kwic.getMatch(otherProp), " "));
     }
 
-    private void writeHits(HitsAbstract hits, DataStreamPlain ds) throws BlsException {
+    private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
         final Annotation mainTokenProperty = getSearcher().mainAnnotatedField().annotations().main();
         List<Annotation> otherTokenProperties = new ArrayList<>();
 
@@ -245,7 +245,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Pair<HitsAbstract, HitGroups> result = getHits();
+        Pair<Hits, HitGroups> result = getHits();
         if (result.getLeft() != null)
             writeHits(result.getLeft(), (DataStreamPlain) ds);
         else

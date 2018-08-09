@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
@@ -72,7 +72,7 @@ public class JobDocs extends JobWithDocs {
     public void performSearch() throws BlsException {
         if (inputJob != null) {
             JobWithHits hitsSearch = (JobWithHits) inputJob;
-            HitsAbstract hits = hitsSearch.getHits();
+            Hits hits = hitsSearch.getHits();
             // Now, get per document results
             docResults = hits.perDocResults();
         } else {

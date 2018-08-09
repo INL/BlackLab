@@ -64,7 +64,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -466,12 +466,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public HitsAbstract find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses {
+    public Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses {
         return HitsImpl.fromSpanQuery(this, query, settings);
     }
 
     @Override
-    public HitsAbstract find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
             throws BooleanQuery.TooManyClauses {
         return HitsImpl.fromSpanQuery(this, createSpanQuery(pattern, field, filter), settings);
     }

@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.results.DocOrHitGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -52,7 +52,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (BlsConfig.traceRequestHandling)
             logger.debug("RequestHandlerHits.handle start");
 
-        HitsAbstract total = null;
+        Hits total = null;
         HitsWindow window = null;
         Job job = null;
 
@@ -95,7 +95,7 @@ public class RequestHandlerHits extends RequestHandler {
                 HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
                         ? HitProperty.deserialize(group.getHits(), sortBy)
                         : null;
-                HitsAbstract hitsInGroup = sortProp != null ? group.getHits().sortedBy(sortProp) : group.getHits();
+                Hits hitsInGroup = sortProp != null ? group.getHits().sortedBy(sortProp) : group.getHits();
 
                 // Important, only count hits within this group for the total
                 // We should have retrieved all the hits already, as JobGroups always counts all hits.
@@ -273,7 +273,7 @@ public class RequestHandlerHits extends RequestHandler {
         }
     }
 
-    private void dataStreamCollocations(DataStream ds, HitsAbstract originalHits) {
+    private void dataStreamCollocations(DataStream ds, Hits originalHits) {
         int contextSize = searchParam.getInteger("wordsaroundhit");
         if (originalHits.settings().contextSize() != contextSize)
             originalHits = originalHits.copy(originalHits.settings().withContextSize(contextSize));
