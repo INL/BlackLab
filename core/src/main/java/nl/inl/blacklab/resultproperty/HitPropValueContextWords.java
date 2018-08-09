@@ -6,7 +6,7 @@ import java.util.List;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValueContext {
@@ -16,7 +16,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     boolean sensitive;
 
-    public HitPropValueContextWords(Hits hits, Annotation annotation, int[] value, boolean sensitive) {
+    public HitPropValueContextWords(HitsAbstract hits, Annotation annotation, int[] value, boolean sensitive) {
         super(hits, annotation);
         this.valueTokenId = value;
         this.sensitive = sensitive;
@@ -43,7 +43,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
         return false;
     }
 
-    public static HitPropValue deserialize(Hits hits, String info) {
+    public static HitPropValue deserialize(HitsAbstract hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
         AnnotatedField field = hits.field();
         String propName = parts[0];

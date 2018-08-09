@@ -26,13 +26,13 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 
 public class TestHitPropertySerialize {
 
     private MockSearcher mockSearcher = new MockSearcher();
 
-    private Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
+    private HitsImpl hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
 
     private Annotation lemmaAnnotation;
 

@@ -8,7 +8,7 @@ import org.apache.lucene.index.LeafReader;
 
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.util.XmlHighlighter;
 
 /**
@@ -129,7 +129,7 @@ public interface Doc {
      * @param endAtWord where to end highlighting (first word not returned)
      * @return the highlighted content
      */
-    String highlightContent(Hits hits, int startAtWord, int endAtWord);
+    String highlightContent(HitsAbstract hits, int startAtWord, int endAtWord);
 
     /**
      * Highlight field content with the specified hits.
@@ -140,7 +140,7 @@ public interface Doc {
      * @param hits the hits
      * @return the highlighted content
      */
-    default String highlightContent(Hits hits) {
+    default String highlightContent(HitsAbstract hits) {
         return highlightContent(hits, -1, -1);
     }
     

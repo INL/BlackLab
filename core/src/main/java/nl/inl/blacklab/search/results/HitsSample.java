@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
-public abstract class HitsSample extends Hits {
+public abstract class HitsSample extends HitsImpl {
 
     public final static long RANDOM_SEED = Long.MIN_VALUE;
 
@@ -21,7 +21,7 @@ public abstract class HitsSample extends Hits {
      *            randomly chosen seed
      * @return the sample
      */
-    public static HitsSample fromHits(Hits hits, float ratio, long seed) {
+    public static HitsSample fromHits(HitsAbstract hits, float ratio, long seed) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(hits, ratio, seed);
@@ -36,7 +36,7 @@ public abstract class HitsSample extends Hits {
      *            randomly chosen seed
      * @return the sample
      */
-    public static HitsSample fromHits(Hits hits, int number, long seed) {
+    public static HitsSample fromHits(HitsAbstract hits, int number, long seed) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(hits, number, seed);
@@ -56,7 +56,7 @@ public abstract class HitsSample extends Hits {
     public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, float ratio, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), ratio, seed);
+        return new HitsSampleImpl(HitsImpl.fromSpanQuery(searcher, query, settings), ratio, seed);
     }
 
     /**
@@ -73,7 +73,7 @@ public abstract class HitsSample extends Hits {
     public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, int number, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(Hits.fromSpanQuery(searcher, query, settings), number, seed);
+        return new HitsSampleImpl(HitsImpl.fromSpanQuery(searcher, query, settings), number, seed);
     }
 
     protected static long getRandomSeed() {

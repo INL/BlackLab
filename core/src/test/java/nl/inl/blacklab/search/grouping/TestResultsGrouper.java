@@ -33,7 +33,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 
 public class TestResultsGrouper {
     int[] doc = { 1, 2, 1, 3, 2, 1 };
@@ -49,7 +49,7 @@ public class TestResultsGrouper {
         Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
 
         searcher.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.fromSpanQuery(searcher, query, null);
+        HitsImpl hits = HitsImpl.fromSpanQuery(searcher, query, null);
         HitProperty crit = new HitPropertyDocumentId(hits);
         HitGroups grouper = hits.groupedBy(crit);
         Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();

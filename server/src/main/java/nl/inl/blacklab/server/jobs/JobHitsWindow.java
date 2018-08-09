@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -54,7 +55,7 @@ public class JobHitsWindow extends JobWithHits {
     @Override
     protected void performSearch() throws BlsException {
         // Now, create a HitsWindow on these hits.
-        Hits inputHits = ((JobWithHits) inputJob).getHits();
+        HitsAbstract inputHits = ((JobWithHits) inputJob).getHits();
         setPriorityInternal(); // make sure hits has the right priority
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
@@ -80,7 +81,7 @@ public class JobHitsWindow extends JobWithHits {
         ds.entry("requestedWindowSize", requestedWindowSize)
                 .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
         if (hitsWindow != null) {
-            Hits hits = hitsWindow.getOriginalHits();
+            HitsImpl hits = hitsWindow.getOriginalHits();
             ds.entry("hitsObjId", hits.getHitsObjId())
                     .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
                     .entry("doneFetchingHits", hits.doneFetchingHits());

@@ -22,7 +22,7 @@ import java.util.List;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -173,7 +173,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
 
-    public static HitPropertyMultiple deserialize(Hits hits, String info) {
+    public static HitPropertyMultiple deserialize(HitsAbstract hits, String info) {
         String[] strValues = PropValSerializeUtil.splitMultiple(info);
         HitProperty[] values = new HitProperty[strValues.length];
         int i = 0;

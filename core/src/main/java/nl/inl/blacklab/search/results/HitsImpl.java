@@ -14,8 +14,6 @@ import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -31,7 +29,6 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -42,10 +39,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPriority;
 
-public class Hits implements Iterable<Hit>, Prioritizable {
-
-    private static final Logger logger = LogManager.getLogger(Hits.class);
-    
+public class HitsImpl extends HitsAbstract {
     
     // Factory methods
     //--------------------------------------------------------------------
@@ -58,7 +52,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings search settings, or null for default
      * @return hits found
      */
-    public static Hits emptyList(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
+    public static HitsImpl emptyList(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
         return fromList(searcher, field, (List<Hit>) null, settings);
     }
 
@@ -73,8 +67,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings search settings, or null for default
      * @return hits found
      */
-    public static Hits fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        return new Hits(searcher, field, hits, settings);
+    public static HitsImpl fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        return new HitsImpl(searcher, field, hits, settings);
     }
 
     /**
@@ -85,8 +79,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings search settings
      * @return hits found
      */
-    public static Hits fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, HitsSettings settings) {
-        return new Hits(searcher, searcher.annotatedField(query.getField()), query, settings);
+    public static HitsImpl fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, HitsSettings settings) {
+        return new HitsImpl(searcher, searcher.annotatedField(query.getField()), query, settings);
     }
 
     /**
@@ -101,26 +95,14 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings search settings
      * @return hits found
      */
-    public static Hits fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
-        return new Hits(searcher, field, source, settings);
+    public static HitsImpl fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
+        return new HitsImpl(searcher, field, source, settings);
     }
 
     // Hits object ids
     //--------------------------------------------------------------------
 
-    /** Id the next Hits instance will get */
-    private static int nextHitsObjId = 0;
-
-    private synchronized static int getNextHitsObjId() {
-        return nextHitsObjId++;
-    }
-
-    /** Unique id of this Hits instance */
-    private final int hitsObjId = getNextHitsObjId();
     
-    public int getHitsObjId() {
-        return hitsObjId;
-    }
 
     
     // Instance variables
@@ -128,23 +110,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     
     // General stuff
     
-    BlackLabIndex index;
-
-    /**
-     * Settings for retrieving hits.
-     */
-    HitsSettings settings;
     
-    /**
-     * The field these hits came from (will also be used as concordance field)
-     */
-    private AnnotatedField field;
-
-    /**
-     * Helper object for implementing query thread priority (making sure queries
-     * don't hog the CPU for way too long).
-     */
-    ThreadPriority threadPriority;
     
     // Hit information
 
@@ -152,9 +118,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * The hits.
      */
     protected List<Hit> hits;
-
-    /** Context of our query; mostly used to keep track of captured groups. */
-    private HitQueryContext hitQueryContext;
 
     /**
      * The captured groups, if we have any.
@@ -219,6 +182,9 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
     // Stats
 
+    /** Context of our query; mostly used to keep track of captured groups. */
+    private HitQueryContext hitQueryContext;
+
     /**
      * If true, we've stopped retrieving hits because there are more than the
      * maximum we've set.
@@ -253,11 +219,13 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     protected int previousHitDoc = -1;
 
+    private List<String> capturedGroupNames;
+
 
     // Constructors
     //--------------------------------------------------------------------
 
-    public Hits(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
+    public HitsImpl(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
         this.index = searcher;
         this.field = field;
         this.settings = settings == null ? searcher.hitsSettings() : settings;
@@ -274,7 +242,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param hits the list of hits to wrap
      * @param settings settings, or null for default
      */
-    protected Hits(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+    protected HitsImpl(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         this(searcher, field, settings);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
@@ -299,7 +267,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
+    private HitsImpl(BlackLabIndex searcher, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
         this(searcher, field, (List<Hit>) null, settings);
         try {
             IndexReader reader = searcher.reader();
@@ -360,7 +328,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      */
-    private Hits(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
+    private HitsImpl(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
         this(searcher, field, (List<Hit>) null, settings);
 
         currentSourceSpans = source;
@@ -380,21 +348,24 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param copyFrom the Hits object to copy
      * @param settings settings to override, or null to copy
      */
-    private Hits(Hits copyFrom, HitsSettings settings) {
+    private HitsImpl(HitsImpl copyFrom, HitsSettings settings) {
         this(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
             // (should be detected by the client)
         }
-        hits = copyFrom.hits;
         sourceSpansFullyRead = true;
+        hits = copyFrom.hits;
+        capturedGroups = copyFrom.capturedGroups;
+        capturedGroupNames = copyFrom.capturedGroupNames;
         hitsCounted = copyFrom.countSoFarHitsCounted();
         docsRetrieved = copyFrom.countSoFarDocsRetrieved();
         docsCounted = copyFrom.countSoFarDocsCounted();
         previousHitDoc = copyFrom.previousHitDoc;
         
-        copyMaxAndContextFrom(copyFrom);
+        
+        copyMaxHitsRetrieved(copyFrom);
 
         threadPriority = new ThreadPriority();
     }
@@ -403,29 +374,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Load balancing
     //--------------------------------------------------------------------
 
-    /**
-     * Set the thread priority level for this Hits object.
-     *
-     * Allows us to set a query to low-priority, or to (almost) pause it.
-     *
-     * @param level the desired priority level
-     */
-    @Override
-    public void setPriorityLevel(ThreadPriority.Level level) {
-        threadPriority.setPriorityLevel(level);
-    }
-
-    /**
-     * Get the thread priority level for this Hits object.
-     *
-     * Can be normal, low-priority, or (almost) paused.
-     *
-     * @return the current priority level
-     */
-    @Override
-    public ThreadPriority.Level getPriorityLevel() {
-        return threadPriority.getPriorityLevel();
-    }
+    
 
     
     // Copying hits objects (and their relevant settings)
@@ -441,8 +390,9 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return a copy of this Hits object
      */
-    public Hits copy(HitsSettings settings) {
-        return new Hits(this, settings);
+    @Override
+    public HitsImpl copy(HitsSettings settings) {
+        return new HitsImpl(this, settings);
     }
 
     /**
@@ -452,10 +402,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @param copyFrom where to copy stuff from
      */
-    public void copyMaxAndContextFrom(Hits copyFrom) {
+    @Override
+    public void copyMaxHitsRetrieved(HitsAbstract copyFrom) {
         this.maxHitsRetrieved = copyFrom.maxHitsRetrieved();
         this.maxHitsCounted = copyFrom.maxHitsCounted();
-        this.hitQueryContext = copyFrom.hitQueryContext();
     }
     
 
@@ -472,7 +422,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param sortProp the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
      */
-    public Hits sortedBy(final HitProperty sortProp) {
+    @Override
+    public HitsAbstract sortedBy(final HitProperty sortProp) {
         return sortedBy(sortProp, false);
     }
 
@@ -488,7 +439,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param reverseSort if true, sort in descending order
      * @return sorted hits
      */
-    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
+    @Override
+    public HitsAbstract sortedBy(HitProperty sortProp, boolean reverseSort) {
         // Sort hits
         try {
             ensureAllHitsRead();
@@ -499,7 +451,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             return this;
         }
 
-        Hits hits = copy(null);
+        HitsImpl hits = copy(null);
         sortProp = sortProp.copyWithHits(hits);
         
         // Make sure we have a sort order array of sufficient size
@@ -538,7 +490,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    public Hits filteredBy(HitProperty property, HitPropValue value) {
+    @Override
+    public HitsAbstract filteredBy(HitProperty property, HitPropValue value) {
         List<Annotation> requiredContext = property.needsContext();
         property.setContexts(new Contexts(this, requiredContext));
 
@@ -547,8 +500,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             if (property.get(i).equals(value))
                 filtered.add(get(i));
         }
-        Hits hits = new Hits(index, field, filtered, settings);
-        hits.copyMaxAndContextFrom(this);
+        HitsImpl hits = new HitsImpl(index, field, filtered, settings);
+        hits.copyMaxHitsRetrieved(this);
         return hits;
     }
 
@@ -558,6 +511,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param criteria the hit property to group on
      * @return a HitGroups object representing the grouped hits
      */
+    @Override
     public HitGroups groupedBy(final HitProperty criteria) {
         return ResultsGrouper.fromHits(this, criteria);
     }
@@ -567,6 +521,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the per-document view.
      */
+    @Override
     public DocResults perDocResults() {
         return DocResults.fromHits(index(), this);
     }
@@ -579,10 +534,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the frequency of each occurring token
      */
+    @Override
     public TermFrequencyList getCollocations() {
         return TermFrequencyList.collocations(this, null, null, true);
     }
 
+    @Override
     public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         return TermFrequencyList.collocations(this, annotation, ctx, sort);
     }
@@ -601,6 +558,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param windowSize size of the window
      * @return the window
      */
+    @Override
     public HitsWindow window(int first, int windowSize) {
         return new HitsWindow(this, first, windowSize, settings());
     }
@@ -620,6 +578,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param settings settings to use, or null to inherit
      * @return the window
      */
+    @Override
     public HitsWindow window(int first, int windowSize, HitsSettings settings) {
         return new HitsWindow(this, first, windowSize, settings == null ? this.settings() : settings);
     }
@@ -630,6 +589,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param hit the hit we want (must be in this Hits object)
      * @return window
      */
+    @Override
     public HitsWindow window(Hit hit) {
         int i = hits.indexOf(hit);
         if (i < 0)
@@ -639,27 +599,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     
     // Settings, general stuff
     //--------------------------------------------------------------------
-
-    /**
-     * Returns the searcher object.
-     *
-     * @return the searcher object.
-     */
-    public BlackLabIndex index() {
-        return index;
-    }
-    
-    public AnnotatedField field() {
-        return field;
-    }
-
-    public HitsSettings settings() {
-        return settings;
-    }
-
-    private HitQueryContext hitQueryContext() {
-        return hitQueryContext;
-    }
 
     @Override
     public String toString() {
@@ -727,6 +666,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param i index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
+    @Override
     public Hit getByOriginalOrder(int i) {
         try {
             ensureHitsRead(i + 1);
@@ -746,6 +686,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param i index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
+    @Override
     public synchronized Hit get(int i) {
         try {
             ensureHitsRead(i + 1);
@@ -768,7 +709,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param docid the doc id to get hits for
      * @return the list of hits in this doc (if any)
      */
-    public Hits getHitsInDoc(int docid) {
+    @Override
+    public HitsAbstract getHitsInDoc(int docid) {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -776,15 +718,15 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return Hits.emptyList(index, field, settings);
+            return HitsImpl.emptyList(index, field, settings);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        Hits result = Hits.fromList(index, field, hitsInDoc, settings);
-        result.copyMaxAndContextFrom(this);
+        HitsImpl result = HitsImpl.fromList(index, field, hitsInDoc, settings);
+        result.copyMaxHitsRetrieved(this);
         return result;
     }
 
@@ -797,12 +739,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the captured group names, in index order
      */
+    @Override
     public List<String> getCapturedGroupNames() {
-        if (hitQueryContext == null)
-            return null;
-        return hitQueryContext.getCapturedGroupNames();
+        return capturedGroupNames;
     }
 
+    @Override
     public boolean hasCapturedGroups() {
         return capturedGroups != null;
     }
@@ -816,6 +758,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param hit the hit to get captured group information for
      * @return the captured group information, or null if none
      */
+    @Override
     public Span[] getCapturedGroups(Hit hit) {
         if (capturedGroups == null)
             return null;
@@ -831,6 +774,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param hit hit to get the captured group map for
      * @return the captured group information map
      */
+    @Override
     public Map<String, Span> getCapturedGroupMap(Hit hit) {
         if (capturedGroups == null)
             return null;
@@ -847,7 +791,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Hits fetching
     //--------------------------------------------------------------------
 
-    void ensureAllHitsRead() throws InterruptedException {
+    @Override
+    protected void ensureAllHitsRead() throws InterruptedException {
         ensureHitsRead(-1);
     }
 
@@ -860,7 +805,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
-    void ensureHitsRead(int number) throws InterruptedException {
+    @Override
+    protected void ensureHitsRead(int number) throws InterruptedException {
         // Prevent locking when not required
         if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
             return;
@@ -937,6 +883,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
                             currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
                             if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
                                 capturedGroups = new HashMap<>();
+                                capturedGroupNames = hitQueryContext.getCapturedGroupNames();
                             }
 
                             int doc = currentSourceSpans.nextDoc();
@@ -995,9 +942,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
     }
 
-    public ThreadPriority getThreadPriority() {
-        return threadPriority;
-    }
+    
     
     // Stats about hits fetching
     // --------------------------------------------------------------------------
@@ -1169,6 +1114,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         
     };
     
+    @Override
     public ResultsStatsHitsDocs stats() {
         return hitsDocsStats;
     }
@@ -1187,6 +1133,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
+    @Override
     public boolean sizeAtLeast(int lowerBound) {
         try {
             // Try to fetch at least this many hits
@@ -1210,6 +1157,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the number of hits available
      */
+    @Override
     public int size() {
         try {
             // Probably not all hits have been seen yet. Collect them all.
@@ -1233,6 +1181,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the total hit count
      */
+    @Override
     public int totalSize() {
         try {
             ensureAllHitsRead();
@@ -1249,6 +1198,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the number of documents.
      */
+    @Override
     public int numberOfDocs() {
         try {
             ensureAllHitsRead();
@@ -1266,6 +1216,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the total number of documents.
      */
+    @Override
     public int totalNumberOfDocs() {
         try {
             ensureAllHitsRead();
@@ -1285,6 +1236,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the current total hit count
      */
+    @Override
     public int countSoFarHitsCounted() {
         return hitsCounted;
     }
@@ -1297,6 +1249,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the current total hit count
      */
+    @Override
     public int countSoFarHitsRetrieved() {
         return hits.size();
     }
@@ -1309,6 +1262,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the current total hit count
      */
+    @Override
     public int countSoFarDocsCounted() {
         return docsCounted;
     }
@@ -1321,6 +1275,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return the current total hit count
      */
+    @Override
     public int countSoFarDocsRetrieved() {
         return docsRetrieved;
     }
@@ -1333,6 +1288,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @return true iff all hits have been retrieved/counted.
      */
+    @Override
     public boolean doneFetchingHits() {
         return sourceSpansFullyRead || maxHitsCounted;
     }
@@ -1342,6 +1298,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * 
      * @return true if we reached the maximum and stopped retrieving hits
      */
+    @Override
     public boolean maxHitsRetrieved() {
         return maxHitsRetrieved;
     }
@@ -1351,6 +1308,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * 
      * @return true if we reached the maximum and stopped counting hits
      */
+    @Override
     public boolean maxHitsCounted() {
         return maxHitsCounted;
     }
@@ -1358,14 +1316,5 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Hits display
     //--------------------------------------------------------------------
 
-    public Concordances concordances(int contextSize) {
-        return new Concordances(this, contextSize);
-    }
-    
-    public Kwics kwics(int contextSize) {
-        return new Kwics(this, contextSize);
-    }
-    
-    
 
 }

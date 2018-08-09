@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -52,7 +52,7 @@ public class JobHitsSorted extends JobWithHits {
     @Override
     protected void performSearch() throws BlsException {
         // Now, sort the hits.
-        Hits hitsUnsorted = ((JobWithHits) inputJob).getHits();
+        HitsAbstract hitsUnsorted = ((JobWithHits) inputJob).getHits();
         HitSortSettings sortSett = jobDesc.getHitSortSettings();
         HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortSett.sortBy());
         if (sortProp != null) {

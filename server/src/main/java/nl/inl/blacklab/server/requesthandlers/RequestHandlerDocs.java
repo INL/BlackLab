@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -144,7 +144,7 @@ public class RequestHandlerDocs extends RequestHandler {
             DocResults docResults = group == null ? total.getDocResults() : group.getResults();
             double totalTime = group == null ? (total.threwException() ? -1 : total.userWaitTime())
                     : searchGrouped.userWaitTime();
-            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (Hits) null, (Hits) null,
+            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (HitsImpl) null, (HitsImpl) null,
                     group != null, docResults, (DocOrHitGroups) null, window);
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
@@ -174,7 +174,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 ds.endEntry();
 
                 // Snippets
-                Hits hits2 = result.getHits(5); // TODO: make num. snippets configurable
+                HitsImpl hits2 = result.getHits(5); // TODO: make num. snippets configurable
                 if (hits2.sizeAtLeast(1)) {
                     ds.startEntry("snippets").startList();
                     boolean wantConcordances = searchParam.getString("usecontent").equals("orig");

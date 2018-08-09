@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.ResultsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -40,7 +40,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
             ds.startMap();
             ds.startEntry("summary").startMap();
-            Hits hits = search.getHits();
+            HitsAbstract hits = search.getHits();
             WindowSettings windowSettings = searchParam.getWindowSettings();
             final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
             final int requestedWindowSize = windowSettings.size() < 0

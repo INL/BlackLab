@@ -24,7 +24,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene
@@ -37,11 +37,11 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private String friendlyName;
 
-    public HitPropertyDocumentStoredField(Hits hits, String fieldName) {
+    public HitPropertyDocumentStoredField(HitsAbstract hits, String fieldName) {
         this(hits, fieldName, fieldName);
     }
 
-    public HitPropertyDocumentStoredField(Hits hits, String fieldName, String friendlyName) {
+    public HitPropertyDocumentStoredField(HitsAbstract hits, String fieldName, String friendlyName) {
         super(hits);
         reader = hits.index().reader();
         this.fieldName = fieldName;
@@ -101,7 +101,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         return serializeReverse() + PropValSerializeUtil.combineParts("field", fieldName);
     }
 
-    public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {
+    public static HitPropertyDocumentStoredField deserialize(HitsAbstract hits, String info) {
         return new HitPropertyDocumentStoredField(hits, info);
     }
 }

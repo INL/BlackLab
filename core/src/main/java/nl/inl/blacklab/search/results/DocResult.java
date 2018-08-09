@@ -27,14 +27,14 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public class DocResult {
     private int docId;
 
-    private Hits hits;
+    private HitsImpl hits;
 
     private float score;
 
     public DocResult(BlackLabIndex searcher, AnnotatedField field, int docId, float score) {
         this.docId = docId;
         this.score = score;
-        hits = Hits.emptyList(searcher, field, null);
+        hits = HitsImpl.emptyList(searcher, field, null);
     }
 
     /**
@@ -43,7 +43,7 @@ public class DocResult {
      * @param doc the Lucene document id
      * @param docHits hits in the document
      */
-    public DocResult(int doc, Hits docHits) {
+    public DocResult(int doc, HitsImpl docHits) {
         this.docId = doc;
         this.score = 0.0f;
         hits = docHits;
@@ -72,7 +72,7 @@ public class DocResult {
      *            ones you don't want concordances for.
      * @return the hits
      */
-    public Hits getHits(int max) {
+    public HitsImpl getHits(int max) {
         if (max <= 0)
             return hits;
         return hits.window(0, max);

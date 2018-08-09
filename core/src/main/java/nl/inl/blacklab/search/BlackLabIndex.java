@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
@@ -131,7 +131,7 @@ public interface BlackLabIndex extends Closeable {
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses;
+    HitsAbstract find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses;
 
     /**
      * Find hits for a pattern in a field.
@@ -145,7 +145,7 @@ public interface BlackLabIndex extends Closeable {
      * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
+    HitsAbstract find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
             throws BooleanQuery.TooManyClauses;
 
     /**

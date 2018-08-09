@@ -19,9 +19,6 @@ import nl.inl.util.XmlHighlighter;
  * Methods for creating Concordances from hits.
  */
 public class Concordances {
-    
-    /** Our hits object */
-    private final Hits hits;
 
     /**
      * The concordances, if they have been retrieved.
@@ -37,8 +34,7 @@ public class Concordances {
     /**
      * @param hits
      */
-    Concordances(Hits hits, int contextSize) {
-        this.hits = hits;
+    Concordances(HitsAbstract hits, int contextSize) {
         if (hits.settings.concordanceType() == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
         }
@@ -51,7 +47,7 @@ public class Concordances {
             Thread.currentThread().interrupt();
         }
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(contextSize < 0 ? hits.settings().contextSize() : contextSize, hits.field());
+        concordances = retrieveConcordancesFromContentStore(hits, contextSize < 0 ? hits.settings().contextSize() : contextSize, hits.field());
     }
 
     /**
@@ -66,7 +62,7 @@ public class Concordances {
      * @return concordance for this hit
      */
     public Concordance get(Hit h) {
-        if (this.hits.settings.concordanceType() == ConcordanceType.FORWARD_INDEX)
+        if (kwics != null)
             return kwics.get(h).toConcordance();
         if (concordances == null)
             throw new BlackLabException("Call findConcordances() before getConcordance().");
@@ -86,20 +82,20 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, int wordsAroundHit,
+    private synchronized static void makeConcordancesSingleDocContentStore(HitsAbstract hits, int wordsAroundHit,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
-        if (hits.hits.isEmpty())
+        if (hits.size() == 0)
             return;
-        Doc doc = hits.index.doc(hits.hits.get(0).doc());
-        int arrayLength = hits.hits.size() * 2;
+        Doc doc = hits.index.doc(hits.get(0).doc());
+        int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
 
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
-        for (Hit hit : hits.hits) {
+        for (Hit hit : hits) {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 
@@ -122,8 +118,8 @@ public class Concordances {
 
         // Make all the concordances
         List<Concordance> newConcs = doc.makeConcordancesFromContentStore(hits.field(), startsOfWords, endsOfWords, hl);
-        for (int i = 0; i < hits.hits.size(); i++) {
-            conc.put(hits.hits.get(i), newConcs.get(i));
+        for (int i = 0; i < hits.size(); i++) {
+            conc.put(hits.get(i), newConcs.get(i));
         }
     }
 
@@ -134,12 +130,12 @@ public class Concordances {
      * @param fieldName field to use for building concordances
      * @return the concordances
      */
-    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(int contextSize, AnnotatedField field) {
+    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(HitsAbstract hits, int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(this.hits.index.defaultUnbalancedTagsStrategy());
+        hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-        for (Hit key : this.hits.hits) {
+        for (Hit key: hits) {
             List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = new ArrayList<>();
@@ -149,8 +145,8 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = new Hits(this.hits.index, field, l, this.hits.settings);
-            hitsInThisDoc.copyMaxAndContextFrom(this.hits);
+            HitsAbstract hitsInThisDoc = new HitsImpl(hits.index(), field, l, hits.settings());
+            hitsInThisDoc.copyMaxHitsRetrieved(hits);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

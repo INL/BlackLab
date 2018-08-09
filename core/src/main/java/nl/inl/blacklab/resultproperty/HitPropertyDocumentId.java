@@ -19,14 +19,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 /**
  * A hit property for grouping per document.
  */
 public class HitPropertyDocumentId extends HitProperty {
 
-    public HitPropertyDocumentId(Hits hits) {
+    public HitPropertyDocumentId(HitsAbstract hits) {
         super(hits);
     }
 
@@ -58,7 +58,7 @@ public class HitPropertyDocumentId extends HitProperty {
         return serializeReverse() + "docid";
     }
 
-    public static HitPropertyDocumentId deserialize(Hits hits) {
+    public static HitPropertyDocumentId deserialize(HitsAbstract hits) {
         return new HitPropertyDocumentId(hits);
     }
 }

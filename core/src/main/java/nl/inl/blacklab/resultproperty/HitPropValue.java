@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.util.StringUtil;
 
 /**
@@ -42,7 +42,7 @@ public abstract class HitPropValue implements Comparable<Object> {
      * @param serialized the serialized object
      * @return the HitPropValue object, or null if it could not be deserialized
      */
-    public static HitPropValue deserialize(Hits hits, String serialized) {
+    public static HitPropValue deserialize(HitsAbstract hits, String serialized) {
 
         if (PropValSerializeUtil.isMultiple(serialized))
             return HitPropValueMultiple.deserialize(hits, serialized);

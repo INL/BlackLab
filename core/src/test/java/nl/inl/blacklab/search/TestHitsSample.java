@@ -21,7 +21,7 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsSample;
 
 public class TestHitsSample {
@@ -32,7 +32,7 @@ public class TestHitsSample {
 
     private static void assertSampleRatio(int[] expected, float ratio, long seed) {
         MockSearcher mockSearcher = new MockSearcher();
-        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), ratio, seed);
+        HitsImpl hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), ratio, seed);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {
@@ -45,7 +45,7 @@ public class TestHitsSample {
 
     private static void assertSampleNumber(int[] expected, int number, long seed) {
         MockSearcher mockSearcher = new MockSearcher();
-        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
+        HitsImpl hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {

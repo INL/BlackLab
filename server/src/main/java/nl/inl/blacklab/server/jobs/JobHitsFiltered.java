@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -54,7 +54,7 @@ public class JobHitsFiltered extends JobWithHits {
     @Override
     protected void performSearch() throws BlsException {
         // Now, filter the hits.
-        Hits hitsUnfiltered = ((JobWithHits) inputJob).getHits();
+        HitsAbstract hitsUnfiltered = ((JobWithHits) inputJob).getHits();
         HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
         HitProperty prop = HitProperty.deserialize(hitsUnfiltered, filterSett.getProperty());
         HitPropValue value = HitPropValue.deserialize(hitsUnfiltered, filterSett.getValue());

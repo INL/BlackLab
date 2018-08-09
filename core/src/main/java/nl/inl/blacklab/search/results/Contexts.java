@@ -106,7 +106,7 @@ public class Contexts {
      * @param hits hits to find contexts for
      * @param annotations the field and properties to use for the context
      */
-    public Contexts(Hits hits, List<Annotation> annotations) {
+    public Contexts(HitsAbstract hits, List<Annotation> annotations) {
         hits.size(); // make sure all hits have been read
 
         List<ForwardIndex> fis = new ArrayList<>();

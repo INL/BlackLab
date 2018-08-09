@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSample;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -51,7 +51,7 @@ public class JobHitsSample extends JobWithHits {
 
     @Override
     protected void performSearch() throws BlsException {
-        Hits inputHits = ((JobWithHits) inputJob).getHits();
+        HitsAbstract inputHits = ((JobWithHits) inputJob).getHits();
         SampleSettings sample = jobDesc.getSampleSettings();
         if (sample.percentage() >= 0) {
             hits = HitsSample.fromHits(inputHits, sample.percentage() / 100f, sample.seed());

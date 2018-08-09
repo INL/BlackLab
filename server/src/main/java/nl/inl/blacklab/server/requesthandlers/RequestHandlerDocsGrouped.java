@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.ResultsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -55,7 +55,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             ds.startEntry("summary").startMap();
             ResultsWindow ourWindow = new ResultsWindowImpl(groups.numberOfGroups(), first, number,
                     numberOfGroupsInWindow);
-            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (Hits) null, (Hits) null, false,
+            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (HitsImpl) null, (HitsImpl) null, false,
                     docResults, groups, ourWindow);
             ds.endMap().endEntry();
 

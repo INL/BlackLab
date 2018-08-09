@@ -14,7 +14,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.util.ExUtil;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
@@ -189,7 +189,7 @@ public class DocImpl implements Doc {
      * @return a list of HitSpan objects containing the character positions for the
      *         hits.
      */
-    private List<HitCharSpan> getCharacterOffsets(Hits hits) {
+    private List<HitCharSpan> getCharacterOffsets(HitsAbstract hits) {
         int[] starts = new int[hits.size()];
         int[] ends = new int[hits.size()];
         Iterator<Hit> hitsIt = hits.iterator();
@@ -268,7 +268,7 @@ public class DocImpl implements Doc {
     }
 
     @Override
-    public String highlightContent(Hits hits, int startAtWord, int endAtWord) {
+    public String highlightContent(HitsAbstract hits, int startAtWord, int endAtWord) {
 
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one

@@ -79,7 +79,7 @@ import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -110,7 +110,7 @@ public class QueryTool {
     BlackLabIndex searcher;
 
     /** The hits that are the result of our query. */
-    private Hits hits = null;
+    private HitsAbstract hits = null;
 
     /** The docs that are the result of our query. */
     private DocResults docs = null;
@@ -122,7 +122,7 @@ public class QueryTool {
      * If all hits or the current group of hits have been sorted, this contains the
      * sorted hits.
      */
-    private Hits sortedHits = null;
+    private HitsAbstract sortedHits = null;
 
     /** The collocations, or null if we're not looking at collocations. */
     private TermFrequencyList collocations = null;
@@ -718,7 +718,7 @@ public class QueryTool {
                 showResultsPage();
             } else if (lcased.startsWith("snippet ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
-                Hits currentHitSet = getCurrentSortedHitSet();
+                HitsAbstract currentHitSet = getCurrentSortedHitSet();
                 if (hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
@@ -736,12 +736,12 @@ public class QueryTool {
                 }
             } else if (lcased.startsWith("highlight ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
-                Hits currentHitSet = getCurrentSortedHitSet();
+                HitsAbstract currentHitSet = getCurrentSortedHitSet();
                 if (currentHitSet == null || hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
-                    Hits hitsInDoc = hits.getHitsInDoc(docId);
+                    HitsAbstract hitsInDoc = hits.getHitsInDoc(docId);
                     outprintln(StringUtil.wrapToString(searcher.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
@@ -1207,7 +1207,7 @@ public class QueryTool {
     private void sortHits(String sortBy, String annotationName) {
         Timer t = new Timer();
 
-        Hits hitsToSort = getCurrentHitSet();
+        HitsAbstract hitsToSort = getCurrentHitSet();
 
         Annotation annotation = annotationName == null ? contentsField.annotations().main() : contentsField.annotations().get(annotationName);
         HitProperty crit = null;
@@ -1442,7 +1442,7 @@ public class QueryTool {
 
     private void showDocsPage() {
         if (docs == null) {
-            Hits currentHitSet = getCurrentHitSet();
+            HitsAbstract currentHitSet = getCurrentHitSet();
             if (currentHitSet != null)
                 docs = currentHitSet.perDocResults();
             else if (filterQuery != null) {
@@ -1486,7 +1486,7 @@ public class QueryTool {
      */
     private void showHitsPage() {
 
-        Hits hitsToShow = getCurrentSortedHitSet();
+        HitsAbstract hitsToShow = getCurrentSortedHitSet();
         if (!showConc) {
             if (determineTotalNumberOfHits) {
                 // Just show total number of hits, no concordances
@@ -1610,7 +1610,7 @@ public class QueryTool {
      *
      * @return the hit set
      */
-    private Hits getCurrentSortedHitSet() {
+    private HitsAbstract getCurrentSortedHitSet() {
         if (sortedHits != null)
             return sortedHits;
         return getCurrentHitSet();
@@ -1623,8 +1623,8 @@ public class QueryTool {
      *
      * @return the hit set
      */
-    private Hits getCurrentHitSet() {
-        Hits hitsToShow = hits;
+    private HitsAbstract getCurrentHitSet() {
+        HitsAbstract hitsToShow = hits;
         if (showWhichGroup >= 0) {
             HitGroup g = groups.getGroups().get(showWhichGroup);
             hitsToShow = g.getHits();

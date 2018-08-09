@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
@@ -160,8 +160,8 @@ public class Example {
      */
     static void findPattern(TextPattern tp) {
         // Execute the search
-        Hits hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
-        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, searcher.mainAnnotatedField()));
+        HitsAbstract hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
+        HitsAbstract sortedHits = hits.sortedBy(new HitPropertyHitText(hits, searcher.mainAnnotatedField()));
 
         // Display the concordances
         displayConcordances(sortedHits);
@@ -172,7 +172,7 @@ public class Example {
      *
      * @param hits the hits to display
      */
-    static void displayConcordances(Hits hits) {
+    static void displayConcordances(HitsAbstract hits) {
         // Loop over the hits and display.
         Concordances concs = hits.concordances(-1);
         for (Hit hit : hits) {

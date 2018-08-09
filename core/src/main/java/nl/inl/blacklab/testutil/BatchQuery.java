@@ -7,7 +7,7 @@ import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
@@ -84,7 +84,7 @@ public class BatchQuery {
                 Timer t = new Timer();
                 System.out.print(query + "\t");
                 TextPattern tp = CorpusQueryLanguageParser.parse(query);
-                Hits hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
+                HitsAbstract hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
                 System.out.print(t.elapsed());
                 if (determineTotalHits) {
                     System.out.print("\t" + hits.size() + "\t" + t.elapsed());

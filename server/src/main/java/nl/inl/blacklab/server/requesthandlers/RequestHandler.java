@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.results.DocCounts;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSample;
 import nl.inl.blacklab.search.results.ResultsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -583,7 +583,7 @@ public abstract class RequestHandler {
      */
     protected void addSummaryCommonFields(DataStream ds, SearchParameters searchParam, double searchTime,
             double countTime,
-            Hits hits, Hits totalHits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups,
+            HitsAbstract hits, HitsAbstract totalHits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups,
             ResultsWindow window) throws BlsException {
 
         if (hits == null && docResults != null) {

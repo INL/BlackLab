@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class Kwics {
     
     /** Our hits object */
-    private final Hits hits;
+    private final HitsAbstract hits;
 
     /**
      * The KWIC data, if it has been retrieved.
@@ -32,7 +32,7 @@ public class Kwics {
     /**
      * @param hits
      */
-    Kwics(Hits hits, int contextSize) {
+    Kwics(HitsAbstract hits, int contextSize) {
         this.hits = hits;
         try {
             hits.ensureAllHitsRead();

@@ -26,7 +26,7 @@ import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 public class TestHits {
 
@@ -36,7 +36,7 @@ public class TestHits {
         int[] aStart = new int[] { 1, 2 };
         int[] aEnd = new int[] { 2, 3 };
         MockSearcher mockSearcher = new MockSearcher();
-        Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd);
+        HitsAbstract hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd);
 
         int i = 0;
         for (Hit hit : hits) {

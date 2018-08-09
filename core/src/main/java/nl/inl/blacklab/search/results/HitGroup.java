@@ -26,11 +26,11 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
 public class HitGroup extends Group {
-    Hits results;
+    HitsImpl results;
 
     HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
         super(groupIdentity);
-        results = Hits.emptyList(searcher, field, settings);
+        results = HitsImpl.emptyList(searcher, field, settings);
     }
 
     /**
@@ -45,10 +45,10 @@ public class HitGroup extends Group {
      */
     HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         super(groupIdentity);
-        results = Hits.fromList(searcher, field, hits, settings);
+        results = HitsImpl.fromList(searcher, field, hits, settings);
     }
 
-    public Hits getHits() {
+    public HitsImpl getHits() {
         return results;
     }
 

@@ -57,7 +57,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Our source hits object
      */
-    private Hits sourceHits;
+    private HitsImpl sourceHits;
 
     /**
      * Iterator in our source hits object
@@ -84,7 +84,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param hits hits to get per-doc result for
      * @return the per-document results.
      */
-    public static DocResults fromHits(BlackLabIndex searcher, Hits hits) {
+    public static DocResults fromHits(BlackLabIndex searcher, HitsImpl hits) {
         return new DocResults(searcher, hits);
     }
 
@@ -101,7 +101,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher search object
      * @param hits the hits to view per-document
      */
-    DocResults(BlackLabIndex searcher, Hits hits) {
+    DocResults(BlackLabIndex searcher, HitsImpl hits) {
         this.searcher = searcher;
         this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
@@ -359,8 +359,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 Hit hit = sourceHitsIterator.next();
                 if (hit.doc() != doc) {
                     if (docHits != null) {
-                        Hits hits = Hits.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
-                        hits.copyMaxAndContextFrom(sourceHits); // concordance type, etc.
+                        HitsImpl hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                        hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                         addDocResultToList(doc, hits);
                     }
                     doc = hit.doc();
@@ -374,8 +374,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = Hits.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
-                    hits.copyMaxAndContextFrom(sourceHits); // concordance type, etc.
+                    HitsImpl hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                    hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                     addDocResultToList(doc, hits);
                 }
             }
@@ -384,7 +384,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         }
     }
 
-    private void addDocResultToList(int doc, Hits docHits) {
+    private void addDocResultToList(int doc, HitsImpl docHits) {
         DocResult docResult = new DocResult(doc, docHits);
         results.add(docResult);
     }
@@ -495,7 +495,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return new DocResultsWindow(this, first, number);
     }
 
-    public Hits getOriginalHits() {
+    public HitsImpl getOriginalHits() {
         return sourceHits;
     }
 

@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Represents a subset of a Hits object, for example a page of hits.
  */
-public class HitsWindow extends Hits implements ResultsWindow {
+public class HitsWindow extends HitsImpl implements ResultsWindow {
     /**
      * Number of hits in the window
      */
@@ -36,7 +36,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
     /**
      * The source hits into which this is a window
      */
-    private Hits source;
+    private HitsImpl source;
 
     /**
      * Construct a HitsWindow object.
@@ -49,7 +49,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
      * @param windowSize the size of our window
      * @param settings settings to use
      */
-    HitsWindow(Hits source, int first, int windowSize, HitsSettings settings) {
+    HitsWindow(HitsImpl source, int first, int windowSize, HitsSettings settings) {
         super(source.index(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
         this.source = source;
         this.first = first;
@@ -79,7 +79,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
             // OPT: copy context as well..?
         }
 
-        copyMaxAndContextFrom(source); // type of concordances to make, etc.
+        copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
     /**
@@ -182,7 +182,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
      * 
      * @return the original Hits object
      */
-    public Hits getOriginalHits() {
+    public HitsImpl getOriginalHits() {
         return source;
     }
 

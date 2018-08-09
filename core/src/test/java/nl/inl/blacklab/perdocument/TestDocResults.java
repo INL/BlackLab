@@ -22,7 +22,7 @@ import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockSearcher;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsImpl;
 
 public class TestDocResults {
 
@@ -33,7 +33,7 @@ public class TestDocResults {
         int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 
         MockSearcher searcher = new MockSearcher();
-        Hits hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
+        HitsImpl hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
         DocResults drs = hits.perDocResults();
 
         int[] expDoc = new int[] { 1, 2, 3 };

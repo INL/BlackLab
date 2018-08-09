@@ -26,7 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -36,7 +36,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
     /** The Hits object we're looking at */
-    protected Hits hits;
+    protected HitsAbstract hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse = false;
@@ -44,7 +44,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
     /** Hit contexts, if any */
     protected Contexts contexts = null;
 
-    public HitProperty(Hits hits) {
+    public HitProperty(HitsAbstract hits) {
         this.hits = hits;
         contextIndices = new ArrayList<>();
         contextIndices.add(0); // in case it's accidentally not set, set a default value
@@ -113,7 +113,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @param serialized the serialized object
      * @return the HitProperty object, or null if it could not be deserialized
      */
-    public static HitProperty deserialize(Hits hits, String serialized) {
+    public static HitProperty deserialize(HitsAbstract hits, String serialized) {
         if (PropValSerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {
@@ -204,7 +204,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @param newHits new Hits object to use
      * @return the new HitProperty object
      */
-    public HitProperty copyWithHits(Hits newHits) {
+    public HitProperty copyWithHits(HitsAbstract newHits) {
         // A bit ugly, but it works..
         return HitProperty.deserialize(newHits, serialize());
     }

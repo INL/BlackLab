@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -465,7 +465,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         if (inputJob != null) {
             ds.startEntry("inputJob").startMap();
             ds.entry("type", inputJob.getClass().getName());
-            Hits hits = null;
+            HitsAbstract hits = null;
             if (inputJob instanceof JobWithHits) {
                 hits = ((JobWithHits) inputJob).getHits();
             }

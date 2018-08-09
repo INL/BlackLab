@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
 
 public class HitPropValueMultiple extends HitPropValue {
     HitPropValue[] value;
@@ -32,7 +32,7 @@ public class HitPropValueMultiple extends HitPropValue {
         return false;
     }
 
-    public static HitPropValueMultiple deserialize(Hits hits, String info) {
+    public static HitPropValueMultiple deserialize(HitsAbstract hits, String info) {
         String[] strValues = PropValSerializeUtil.splitMultiple(info);
         HitPropValue[] values = new HitPropValue[strValues.length];
         int i = 0;
