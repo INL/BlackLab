@@ -204,19 +204,18 @@ public class ConfigReader extends YamlJsonReader {
                 readCollator(e, searcher);
                 break;
             case "contextSize":
-                hitsSett.setContextSize(integer(e));
+                searcher.setHitsSettings(hitsSett.withContextSize(integer(e)));
                 break;
             case "maxHitsToRetrieve":
-                hitsSett.setMaxHitsToRetrieve(integer(e));
+                searcher.setHitsSettings(hitsSett.withMaxHitsToRetrieve(integer(e)));
                 break;
             case "maxHitsToCount":
-                hitsSett.setMaxHitsToCount(integer(e));
+                searcher.setHitsSettings(hitsSett.withMaxHitsToCount(integer(e)));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown key " + e.getKey() + " in search section");
             }
         }
-        hitsSett.freeze();
     }
 
     private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex searcher) {

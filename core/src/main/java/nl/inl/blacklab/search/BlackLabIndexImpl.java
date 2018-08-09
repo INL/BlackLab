@@ -410,6 +410,11 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public HitsSettings hitsSettings() {
         return hitsSettings;
     }
+    
+    @Override
+    public void setHitsSettings(HitsSettings hitsSettings) {
+        this.hitsSettings = hitsSettings;
+    }
 
     @Override
     public UnbalancedTagsStrategy defaultUnbalancedTagsStrategy() {
@@ -644,7 +649,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 // See if we have a punctuation forward index. If we do,
                 // default to creating concordances using that.
                 if (mainContentsField.hasPunctuationForwardIndex()) {
-                    hitsSettings.setConcordanceType(ConcordanceType.FORWARD_INDEX);
+                    hitsSettings = hitsSettings.withConcordanceType(ConcordanceType.FORWARD_INDEX);
                 }
             }
 

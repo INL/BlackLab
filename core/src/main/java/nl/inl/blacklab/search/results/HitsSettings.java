@@ -1,9 +1,8 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.indexmetadata.Freezable;
 
-public final class HitsSettings implements Freezable<HitsSettings> {
+public final class HitsSettings {
     
     public static HitsSettings defaults() {
         return new HitsSettings();
@@ -39,8 +38,6 @@ public final class HitsSettings implements Freezable<HitsSettings> {
 
     /** Our desired context size */
     private int desiredContextSize;
-
-    private boolean frozen = false;
 
     /**
      * Get a (non-frozen) copy of a HitsSettings instance.
@@ -94,19 +91,6 @@ public final class HitsSettings implements Freezable<HitsSettings> {
         return concsType;
     }
 
-    /**
-     * Do we want to retrieve concordances from the forward index or from the
-     * content store? Forward index is more efficient but doesn't exactly reproduces
-     * the original XML.
-     *
-     * The default type can be set by calling Searcher.setDefaultConcordanceType().
-     *
-     * @param type the type of concordances to make
-     */
-    public void setConcordanceType(ConcordanceType type) {
-        this.concsType = type;
-    }
-
     public int contextSize() {
         return desiredContextSize;
     }
@@ -116,50 +100,55 @@ public final class HitsSettings implements Freezable<HitsSettings> {
     //------------------------------------------------------------------------
 
     /**
-     * Set the maximum number of hits to retrieve
+     * Get settings with different maximum number of hits to retrieve
      * 
      * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
      * @return settings object
      */
-    public HitsSettings setMaxHitsToRetrieve(int n) {
-        ensureNotFrozen();
-        this.maxHitsToRetrieve = n;
-        return this;
+    public HitsSettings withMaxHitsToRetrieve(int n) {
+        HitsSettings x = copy();
+        x.maxHitsToRetrieve = n;
+        return x;
     }
 
     /**
-     * Set the maximum number of hits to count
+     * Get settings with different maximum number of hits to count
      * 
      * @param n the number of hits, or HitsSettings.UNLIMITED for no limit
      * @return settings object
      */
-    public HitsSettings setMaxHitsToCount(int n) {
-        ensureNotFrozen();
-        this.maxHitsToCount = n;
-        return this;
+    public HitsSettings withMaxHitsToCount(int n) {
+        HitsSettings x = copy();
+        x.maxHitsToCount = n;
+        return x;
     }
 
     /**
-     * Sets the context size.
+     * Get settings with different context size.
      * 
      * @param n context size 
      * @return settings object
      */
-    public HitsSettings setContextSize(int n) {
-        ensureNotFrozen();
-        desiredContextSize = n;
-        return this;
+    public HitsSettings withContextSize(int n) {
+        HitsSettings x = copy();
+        x.desiredContextSize = n;
+        return x;
     }
     
-    @Override
-    public HitsSettings freeze() {
-        this.frozen = true;
-        return this;
-    }
-
-    @Override
-    public boolean isFrozen() {
-        return frozen;
+    /**
+     * Do we want to retrieve concordances from the forward index or from the
+     * content store? Forward index is more efficient but doesn't exactly reproduces
+     * the original XML.
+     *
+     * The default type can be set by calling Searcher.setDefaultConcordanceType().
+     *
+     * @param type the type of concordances to make
+     * @return settings object
+     */
+    public HitsSettings withConcordanceType(ConcordanceType type) {
+        HitsSettings x = copy();
+        x.concsType = type;
+        return x;
     }
 
 }

@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -74,9 +75,10 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
         hit = Hit.create(luceneDocId, start, end);
-        Hits hits = Hits.fromList(searcher, searcher.mainAnnotatedField(), Arrays.asList(hit), null);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        hits.settings().setConcordanceType(origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX);
+        ConcordanceType concType = origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+        HitsSettings settings = searcher.hitsSettings().withConcordanceType(concType);
+        Hits hits = Hits.fromList(searcher, searcher.mainAnnotatedField(), Arrays.asList(hit), settings);
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }

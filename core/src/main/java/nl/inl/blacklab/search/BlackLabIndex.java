@@ -344,4 +344,6 @@ public interface BlackLabIndex extends Closeable {
 
     void setDefaultMatchSensitivity(MatchSensitivity m);
 
+    void setHitsSettings(HitsSettings withContextSize);
+
 }

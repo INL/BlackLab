@@ -754,7 +754,7 @@ public class QueryTool {
             } else if (lcased.startsWith("context ")) {
                 contextSize = parseInt(lcased.substring(8), 0);
                 if (hits != null && hits.settings().contextSize() != contextSize) {
-                    hits = hits.copy(hits.settings().copy().setContextSize(contextSize).freeze());
+                    hits = hits.copy(hits.settings().withContextSize(contextSize));
                     collocations = null;
                 }
                 showResultsPage();
@@ -811,8 +811,8 @@ public class QueryTool {
                 boolean b = false;
                 if (v.equals("on") || v.equals("yes") || v.equals("true"))
                     b = true;
-                searcher.hitsSettings()
-                        .setConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE);
+                searcher.setHitsSettings(searcher.hitsSettings()
+                        .withConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE));
             } else if (lcased.startsWith("stripxml ")) {
                 String v = lcased.substring(9);
                 boolean b = false;
@@ -1574,7 +1574,7 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsSettings settings = hitsToShow.settings().copy().setContextSize(contextSize).freeze();
+        HitsSettings settings = hitsToShow.settings().withContextSize(contextSize);
         HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, settings);
 
         // Compile hits display info and calculate necessary width of left context column

@@ -269,7 +269,7 @@ public class RequestHandlerHits extends RequestHandler {
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
         int contextSize = searchParam.getInteger("wordsaroundhit");
         if (originalHits.settings().contextSize() != contextSize)
-            originalHits = originalHits.copy(originalHits.settings().copy().setContextSize(contextSize).freeze());
+            originalHits = originalHits.copy(originalHits.settings().withContextSize(contextSize));
         ds.startMap().startEntry("tokenFrequencies").startMap();
         TermFrequencyList tfl = originalHits.getCollocations();
         for (TermFrequency tf : tfl) {

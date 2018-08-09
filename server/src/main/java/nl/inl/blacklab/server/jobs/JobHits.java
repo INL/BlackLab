@@ -115,17 +115,16 @@ public class JobHits extends JobWithHits {
             if (searchSett.isDebugMode() && searchSett.getFiMatchNfaFactor() != -1)
                 ClauseCombinerNfa.setNfaThreshold(searchSett.getFiMatchNfaFactor());
 
-            hits = searcher.find(textPattern, searcher.mainAnnotatedField(), filter, null);
-
             // Set the max retrieve/count value
             MaxSettings maxSettings = jobDesc.getMaxSettings();
-            HitsSettings hitsSettings = hits.settings();
-            hitsSettings.setMaxHitsToRetrieve(maxSettings.maxRetrieve());
-            hitsSettings.setMaxHitsToCount(maxSettings.maxCount());
             ContextSettings contextSettings = jobDesc.getContextSettings();
-            hitsSettings.setConcordanceType(contextSettings.concType());
-            hitsSettings.setContextSize(contextSettings.size());
-            hitsSettings.freeze(); // cannot be changed after this
+            HitsSettings hitsSettings = searcher.hitsSettings()
+                    .withMaxHitsToRetrieve(maxSettings.maxRetrieve())
+                    .withMaxHitsToCount(maxSettings.maxCount())
+                    .withConcordanceType(contextSettings.concType())
+                    .withContextSize(contextSettings.size());
+            hits = searcher.find(textPattern, searcher.mainAnnotatedField(), filter, hitsSettings);
+
         } catch (RegexpTooLargeException e) {
             throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
         } catch (TooManyClauses e) {

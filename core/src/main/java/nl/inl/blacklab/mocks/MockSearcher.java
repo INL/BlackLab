@@ -50,8 +50,7 @@ public class MockSearcher implements BlackLabIndex {
         analyzer = new BLStandardAnalyzer();
         hitsSettings = HitsSettings
                 .defaults()
-                .setContextSize(5)
-                .freeze();
+                .withContextSize(5);
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
@@ -199,6 +198,11 @@ public class MockSearcher implements BlackLabIndex {
     @Override
     public Analyzer analyzer() {
         return analyzer;
+    }
+
+    @Override
+    public void setHitsSettings(HitsSettings settings) {
+        throw new UnsupportedOperationException();
     }
 
 }

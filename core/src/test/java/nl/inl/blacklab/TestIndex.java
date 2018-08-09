@@ -118,7 +118,7 @@ public class TestIndex {
         }
 
         // Create the BlackLab searcher object
-        HitsSettings settings = HitsSettings.defaults().setContextSize(1).freeze();
+        HitsSettings settings = HitsSettings.defaults().withContextSize(1);
         searcher = BlackLabIndex.open(indexDir, settings);
         word = searcher.mainAnnotatedField().annotations().get("word");
     }
