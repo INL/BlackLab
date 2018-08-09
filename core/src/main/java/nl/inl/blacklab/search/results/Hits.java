@@ -394,7 +394,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // (should be detected by the client)
         }
         hits = copyFrom.hits;
-        hitDisplay.kwics = copyFrom.hitDisplay().kwics;
         sourceSpansFullyRead = true;
         hitsCounted = copyFrom.countSoFarHitsCounted();
         docsRetrieved = copyFrom.countSoFarDocsRetrieved();
@@ -919,10 +918,12 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     // Hits display
     //--------------------------------------------------------------------
 
-    private HitDisplay hitDisplay = new HitDisplay(this);
+    public Concordances concordances(int contextSize) {
+        return new Concordances(this, contextSize);
+    }
     
-    public HitDisplay hitDisplay() {
-        return hitDisplay;
+    public Kwics kwics(int contextSize) {
+        return new Kwics(this, contextSize);
     }
     
     // Hits fetching

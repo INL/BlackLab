@@ -10,6 +10,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
@@ -18,6 +19,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -176,22 +178,24 @@ public class RequestHandlerDocs extends RequestHandler {
                 if (hits2.sizeAtLeast(1)) {
                     ds.startEntry("snippets").startList();
                     boolean wantConcordances = searchParam.getString("usecontent").equals("orig");
+                    Concordances concordances = null;
+                    Kwics kwics = null;
                     if (wantConcordances)
-                        hits2.hitDisplay().findConcordances(-1);
+                        concordances = hits2.concordances(-1);
                     else
-                        hits2.hitDisplay().findKwics(-1);
+                        kwics = hits2.kwics(-1);
                     for (Hit hit : hits2) {
                         // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                         ds.startItem("snippet").startMap();
                         if (wantConcordances) {
                             // Add concordance from original XML
-                            Concordance c = hits2.hitDisplay().getConcordance(hit);
+                            Concordance c = concordances.get(hit);
                             ds.startEntry("left").plain(c.left()).endEntry()
                                     .startEntry("match").plain(c.match()).endEntry()
                                     .startEntry("right").plain(c.right()).endEntry();
                         } else {
                             // Add KWIC info
-                            Kwic c = hits2.hitDisplay().getKwic(hit);
+                            Kwic c = kwics.get(hit);
                             ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
                                     .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
                                     .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();

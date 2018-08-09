@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
 
@@ -209,9 +210,9 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
-        hits.hitDisplay().findKwics(-1);
+        Kwics kwics = hits.kwics(-1);
         for (Hit hit : hits) {
-            Kwic kwic = hits.hitDisplay().getKwic(hit);
+            Kwic kwic = kwics.get(hit);
             String left = StringUtil.join(kwic.getLeft(word), " ");
             String match = StringUtil.join(kwic.getMatch(word), " ");
             String right = StringUtil.join(kwic.getRight(word), " ");

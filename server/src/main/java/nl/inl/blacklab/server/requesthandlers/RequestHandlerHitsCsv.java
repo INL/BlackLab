@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -211,7 +212,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
             // So we need to manually retrieve the documents and their data
             Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
-            hits.hitDisplay().findKwics(-1);
+            Kwics kwics = hits.kwics(-1);
             for (Hit hit : hits) {
                 String pid;
                 String title;
@@ -232,7 +233,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     title = p.getRight();
                 }
 
-                writeHit(hits.hitDisplay().getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
+                writeHit(kwics.get(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
                 printer.printRecord(row);
             }
             printer.flush();

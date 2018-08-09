@@ -44,6 +44,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.GroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.GroupPropertySize;
@@ -71,6 +72,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
@@ -721,9 +723,9 @@ public class QueryTool {
                     errprintln("Hit number out of range.");
                 } else {
                     HitsWindow singleHit = currentHitSet.window(hitId, 1);
-                    singleHit.hitDisplay().findConcordances(snippetSize);
+                    Concordances concordances = singleHit.concordances(snippetSize);
                     Hit h = currentHitSet.get(hitId);
-                    Concordance conc = singleHit.hitDisplay().getConcordance(h);
+                    Concordance conc = concordances.get(h);
                     String[] concParts;
                     if (stripXML)
                         concParts = conc.partsNoXml();
@@ -1533,9 +1535,9 @@ public class QueryTool {
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
-        window.hitDisplay().findConcordances(-1);
+        Concordances concordances = window.concordances(-1);
         for (Hit hit : window) {
-            Concordance conc = window.hitDisplay().getConcordance(hit);
+            Concordance conc = concordances.get(hit);
 
             // Filter out the XML tags
             String left, hitText, right;

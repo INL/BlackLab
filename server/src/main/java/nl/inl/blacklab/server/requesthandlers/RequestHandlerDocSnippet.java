@@ -10,10 +10,12 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -110,8 +112,8 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 
         HitsWindow singleHit = hits.window(hit);
         if (useOrigContent) {
-            singleHit.hitDisplay().findConcordances(wordsAroundHit);
-            Concordance c = singleHit.hitDisplay().getConcordance(hit);
+            Concordances concordances = singleHit.concordances(wordsAroundHit);
+            Concordance c = concordances.get(hit);
             if (!isFragment) {
                 ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
@@ -120,8 +122,8 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                 ds.plain(c.match());
             }
         } else {
-            singleHit.hitDisplay().findKwics(wordsAroundHit);
-            Kwic c = singleHit.hitDisplay().getKwic(hit);
+            Kwics kwics = singleHit.kwics(wordsAroundHit);
+            Kwic c = kwics.get(hit);
             if (!isFragment) {
                 ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
                         .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()

@@ -28,6 +28,7 @@ import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -173,9 +174,9 @@ public class Example {
      */
     static void displayConcordances(Hits hits) {
         // Loop over the hits and display.
-        hits.hitDisplay().findConcordances(-1);
+        Concordances concs = hits.concordances(-1);
         for (Hit hit : hits) {
-            Concordance conc = hits.hitDisplay().getConcordance(hit);
+            Concordance conc = concs.get(hit);
             // Strip out XML tags for display.
             String[] concParts = conc.partsNoXml();
             String left = concParts[0];
