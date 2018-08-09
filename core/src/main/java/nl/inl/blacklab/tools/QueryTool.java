@@ -1582,16 +1582,16 @@ public class QueryTool {
         // Summarize
         String msg;
         if (!determineTotalNumberOfHits) {
-            msg = hitsToShow.totalSize() + " hits counted so far (total not determined)";
+            msg = hitsToShow.hitsCountedSoFar() + " hits counted so far (total not determined)";
         } else {
             int numberRetrieved = hitsToShow.size();
-            String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.numberOfDocs() + " documents";
-            if (hitsToShow.maxHitsRetrieved()) {
-                if (hitsToShow.maxHitsCounted()) {
-                    msg = hitsInDocs + " retrieved, more than " + hitsToShow.totalSize() + " ("
-                            + hitsToShow.totalNumberOfDocs() + " docs) total";
+            String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.docsProcessedTotal() + " documents";
+            if (hitsToShow.hitsProcessedExceededMaximum()) {
+                if (hitsToShow.hitsCountedExceededMaximum()) {
+                    msg = hitsInDocs + " retrieved, more than " + hitsToShow.hitsCountedTotal() + " ("
+                            + hitsToShow.docsCountedTotal() + " docs) total";
                 } else {
-                    msg = hitsInDocs + " retrieved, " + hitsToShow.totalSize() + " (" + hitsToShow.totalNumberOfDocs()
+                    msg = hitsInDocs + " retrieved, " + hitsToShow.hitsCountedTotal() + " (" + hitsToShow.docsCountedTotal()
                             + " docs) total";
                 }
             } else {

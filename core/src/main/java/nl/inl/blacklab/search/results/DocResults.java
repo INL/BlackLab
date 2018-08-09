@@ -57,7 +57,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Our source hits object
      */
-    private HitsImpl sourceHits;
+    private HitsAbstract sourceHits;
 
     /**
      * Iterator in our source hits object
@@ -84,7 +84,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param hits hits to get per-doc result for
      * @return the per-document results.
      */
-    public static DocResults fromHits(BlackLabIndex searcher, HitsImpl hits) {
+    public static DocResults fromHits(BlackLabIndex searcher, HitsAbstract hits) {
         return new DocResults(searcher, hits);
     }
 
@@ -101,7 +101,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @param searcher search object
      * @param hits the hits to view per-document
      */
-    DocResults(BlackLabIndex searcher, HitsImpl hits) {
+    DocResults(BlackLabIndex searcher, HitsAbstract hits) {
         this.searcher = searcher;
         this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
@@ -291,7 +291,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     public int totalSize() {
         if (sourceHits == null)
             return size(); // no hits, just documents
-        return sourceHits.totalNumberOfDocs();
+        return sourceHits.docsCountedTotal();
     }
 
     /**
@@ -359,7 +359,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 Hit hit = sourceHitsIterator.next();
                 if (hit.doc() != doc) {
                     if (docHits != null) {
-                        HitsImpl hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                        HitsAbstract hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
                         hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                         addDocResultToList(doc, hits);
                     }
@@ -374,7 +374,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    HitsImpl hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                    HitsAbstract hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
                     hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                     addDocResultToList(doc, hits);
                 }
@@ -384,7 +384,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         }
     }
 
-    private void addDocResultToList(int doc, HitsImpl docHits) {
+    private void addDocResultToList(int doc, HitsAbstract docHits) {
         DocResult docResult = new DocResult(doc, docHits);
         results.add(docResult);
     }
@@ -397,7 +397,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     public boolean maxHitsRetrieved() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.maxHitsRetrieved();
+        return sourceHits.hitsProcessedExceededMaximum();
     }
 
     /**
@@ -408,7 +408,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     public boolean maxHitsCounted() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.maxHitsCounted();
+        return sourceHits.hitsCountedExceededMaximum();
     }
 
     /**
@@ -495,7 +495,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return new DocResultsWindow(this, first, number);
     }
 
-    public HitsImpl getOriginalHits() {
+    public HitsAbstract getOriginalHits() {
         return sourceHits;
     }
 
@@ -550,10 +550,10 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     }
 
     public int countSoFarDocsCounted() {
-        return sourceHits == null ? results.size() : sourceHits.countSoFarDocsCounted();
+        return sourceHits == null ? results.size() : sourceHits.docsCountedSoFar();
     }
 
     public int countSoFarDocsRetrieved() {
-        return sourceHits == null ? results.size() : sourceHits.countSoFarDocsRetrieved();
+        return sourceHits == null ? results.size() : sourceHits.docsProcessedSoFar();
     }
 }

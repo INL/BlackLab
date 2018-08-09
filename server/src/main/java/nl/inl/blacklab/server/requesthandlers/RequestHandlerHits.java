@@ -103,7 +103,7 @@ public class RequestHandlerHits extends RequestHandler {
 
                 int first = Math.max(0, searchParam.getInteger("first"));
                 int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
-                if (!hitsInGroup.sizeAtLeast(first))
+                if (!hitsInGroup.hitsProcessedAtLeast(first))
                     return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
                 window = hitsInGroup.window(first, size);
             } else {
@@ -131,10 +131,10 @@ public class RequestHandlerHits extends RequestHandler {
                 int first = Math.max(0, searchParam.getInteger("first"));
                 int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-                total.sizeAtLeast(first + size);
+                total.hitsProcessedAtLeast(first + size);
 
                 // We blocked, so if we don't have the page available, the request is out of bounds.
-                if (total.countSoFarHitsRetrieved() < first)
+                if (total.hitsProcessedSoFar() < first)
                     first = 0;
 
                 window = total.window(first, size);

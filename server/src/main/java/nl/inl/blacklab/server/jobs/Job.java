@@ -472,8 +472,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
             ds.entry("hasHitsObject", hits != null);
             if (hits != null) {
                 ds.entry("hitsObjId", hits.getHitsObjId())
-                        .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
-                        .entry("doneFetchingHits", hits.doneFetchingHits());
+                        .entry("retrievedSoFar", hits.hitsProcessedSoFar())
+                        .entry("doneFetchingHits", hits.doneProcessingAndCounting());
             }
             ds.endMap().endEntry();
         }

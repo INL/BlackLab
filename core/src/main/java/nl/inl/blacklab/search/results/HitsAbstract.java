@@ -22,207 +22,39 @@ public abstract class HitsAbstract implements Iterable<Hit>, Prioritizable {
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
-    public abstract boolean maxHitsCounted();
-
-    public abstract boolean maxHitsRetrieved();
-
-    public abstract boolean doneFetchingHits();
-
-    public abstract int countSoFarDocsRetrieved();
-
-    public abstract int countSoFarDocsCounted();
-
-    public abstract int countSoFarHitsRetrieved();
-
-    public abstract int countSoFarHitsCounted();
-
-    public abstract int totalNumberOfDocs();
-
-    public abstract int numberOfDocs();
-
-    public abstract int size();
-
-    public abstract int totalSize();
-
-    public abstract boolean sizeAtLeast(int lowerBound);
-
-    // Stats about hits fetching
-    // --------------------------------------------------------------------------
-    
-    private ResultsNumber resultsNumberHitsProcessed = new ResultsNumber() {
-        @Override
-        public int total() {
-            return size();
-        }
-
-        @Override
-        public boolean atLeast(int lowerBound) {
-            return sizeAtLeast(lowerBound);
-        }
-
-        @Override
-        public int soFar() {
-            return countSoFarHitsRetrieved();
-        }
-
-        @Override
-        public boolean done() {
-            return doneFetchingHits();
-        }
-
-        @Override
-        public boolean exceededMaximum() {
-            return maxHitsRetrieved();
-        }
-
-        @Override
-        public int maximum() {
-            return settings.maxHitsToRetrieve();
-        }
-    };
-    
-    ResultsNumber resultsNumberHitsCounted = new ResultsNumber() {
-        @Override
-        public int total() {
-            return totalSize();
-        }
-
-        @Override
-        public boolean atLeast(int lowerBound) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int soFar() {
-            return countSoFarHitsCounted();
-        }
-
-        @Override
-        public boolean done() {
-            return doneFetchingHits();
-        }
-
-        @Override
-        public boolean exceededMaximum() {
-            return maxHitsCounted();
-        }
-
-        @Override
-        public int maximum() {
-            return settings.maxHitsToCount();
-        }
-    };
-    
-    private ResultsNumber resultsNumberDocsProcessed = new ResultsNumber() {
-        @Override
-        public int total() {
-            return numberOfDocs();
-        }
-
-        @Override
-        public boolean atLeast(int lowerBound) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int soFar() {
-            return countSoFarDocsRetrieved();
-        }
-
-        @Override
-        public boolean done() {
-            return doneFetchingHits();
-        }
-
-        @Override
-        public boolean exceededMaximum() {
-            return maxHitsRetrieved();
-        }
-
-        @Override
-        public int maximum() {
-            throw new UnsupportedOperationException();
-        }
-    };
-    
-    private ResultsNumber resultsNumberDocsCounted = new ResultsNumber() {
-        @Override
-        public int total() {
-            if (done())
-                return soFar();
-            throw new UnsupportedOperationException("Cannot return total docs until all hits have been fetched");
-        }
-
-        @Override
-        public boolean atLeast(int lowerBound) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public int soFar() {
-            return countSoFarDocsCounted();
-        }
-
-        @Override
-        public boolean done() {
-            return doneFetchingHits();
-        }
-
-        @Override
-        public boolean exceededMaximum() {
-            return maxHitsCounted();
-        }
-
-        @Override
-        public int maximum() {
-            throw new UnsupportedOperationException();
-        }
-    };
-    
-    private ResultsStats hitStats = new ResultsStats() {
-        @Override
-        public ResultsNumber processed() {
-            return resultsNumberHitsProcessed;
-        }
-
-        @Override
-        public ResultsNumber counted() {
-            return resultsNumberHitsCounted;
-        }
-    };
-    
-    private ResultsStats docStats = new ResultsStats() {
-        @Override
-        public ResultsNumber processed() {
-            return resultsNumberDocsProcessed;
-        }
-
-        @Override
-        public ResultsNumber counted() {
-            return resultsNumberDocsCounted;
-        }
-    };
-    
-    private ResultsStatsHitsDocs hitsDocsStats = new ResultsStatsHitsDocs() {
-        @Override
-        public ResultsStats hits() {
-            return hitStats;
-        }
-
-        @Override
-        public ResultsStats docs() {
-            return docStats;
-        }
-        
-    };
-    
-    public ResultsStatsHitsDocs stats() {
-        return hitsDocsStats;
+    public HitsAbstract(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+        this.index = index;
+        this.field = field;
+        this.settings = settings == null ? index.hitsSettings() : settings;
     }
-    
-    protected abstract void ensureHitsRead(int number) throws InterruptedException;
 
-    protected abstract void ensureAllHitsRead() throws InterruptedException;
+    public abstract int hitsProcessedSoFar();
+
+    public abstract boolean hitsProcessedAtLeast(int lowerBound);
+
+    public abstract int hitsProcessedTotal();
+
+    public abstract int hitsCountedSoFar();
+
+    public abstract int hitsCountedTotal();
+
+    public abstract int docsProcessedSoFar();
+
+    public abstract int docsProcessedTotal();
+
+    public abstract int docsCountedSoFar();
+
+    public abstract int docsCountedTotal();
+
+    public abstract boolean doneProcessingAndCounting();
+
+    public abstract boolean hitsCountedExceededMaximum();
+
+    public abstract boolean hitsProcessedExceededMaximum();
+
+    public int size() {
+        return hitsProcessedTotal();
+    }
 
     public abstract Map<String, Span> getCapturedGroupMap(Hit hit);
 

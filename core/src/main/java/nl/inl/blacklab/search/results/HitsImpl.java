@@ -47,13 +47,13 @@ public class HitsImpl extends HitsAbstract {
     /**
      * Construct an empty Hits object.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits are from
      * @param settings search settings, or null for default
      * @return hits found
      */
-    public static HitsImpl emptyList(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
-        return fromList(searcher, field, (List<Hit>) null, settings);
+    public static HitsImpl emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+        return fromList(index, field, (List<Hit>) null, settings);
     }
 
     /**
@@ -61,26 +61,26 @@ public class HitsImpl extends HitsAbstract {
      *
      * Does not copy the list, but reuses it.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits are from
      * @param hits the list of hits to wrap, or null for empty Hits object
      * @param settings search settings, or null for default
      * @return hits found
      */
-    public static HitsImpl fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        return new HitsImpl(searcher, field, hits, settings);
+    public static HitsImpl fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        return new HitsImpl(index, field, hits, settings);
     }
 
     /**
      * Construct a Hits object from a SpanQuery.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param query the query to execute to get the hits
      * @param settings search settings
      * @return hits found
      */
-    public static HitsImpl fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, HitsSettings settings) {
-        return new HitsImpl(searcher, searcher.annotatedField(query.getField()), query, settings);
+    public static HitsImpl fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) {
+        return new HitsImpl(index, index.annotatedField(query.getField()), query, settings);
     }
 
     /**
@@ -89,14 +89,14 @@ public class HitsImpl extends HitsAbstract {
      * Used for testing. Don't use this in applications, but construct a Hits object
      * from a SpanQuery, as it's more efficient.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      * @param settings search settings
      * @return hits found
      */
-    public static HitsImpl fromSpans(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
-        return new HitsImpl(searcher, field, source, settings);
+    public static HitsImpl fromSpans(BlackLabIndex index, AnnotatedField field, BLSpans source, HitsSettings settings) {
+        return new HitsImpl(index, field, source, settings);
     }
 
     // Hits object ids
@@ -225,10 +225,8 @@ public class HitsImpl extends HitsAbstract {
     // Constructors
     //--------------------------------------------------------------------
 
-    public HitsImpl(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
-        this.index = searcher;
-        this.field = field;
-        this.settings = settings == null ? searcher.hitsSettings() : settings;
+    public HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+        super(index, field, settings);
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
     }
     
@@ -237,13 +235,13 @@ public class HitsImpl extends HitsAbstract {
      *
      * Does not copy the list, but reuses it.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits came from
      * @param hits the list of hits to wrap
      * @param settings settings, or null for default
      */
-    protected HitsImpl(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        this(searcher, field, settings);
+    protected HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        this(index, field, settings);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         int prevDoc = -1;
@@ -261,16 +259,16 @@ public class HitsImpl extends HitsAbstract {
     /**
      * Construct a Hits object from a SpanQuery.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits came from
      * @param sourceQuery the query to execute to get the hits
      * @throws TooManyClauses if the query is overly broad (expands to too many
      *             terms)
      */
-    private HitsImpl(BlackLabIndex searcher, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
-        this(searcher, field, (List<Hit>) null, settings);
+    private HitsImpl(BlackLabIndex index, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
+        this(index, field, (List<Hit>) null, settings);
         try {
-            IndexReader reader = searcher.reader();
+            IndexReader reader = index.reader();
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
             BLSpanQuery optimize = ((BLSpanQuery) sourceQuery).optimize(reader);
@@ -285,7 +283,7 @@ public class HitsImpl extends HitsAbstract {
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): createWeight");
-            weight = spanQuery.createWeight(searcher.searcher(), false);
+            weight = spanQuery.createWeight(index.searcher(), false);
             weight.extractTerms(terms);
             threadPriority = new ThreadPriority();
             if (BlackLabIndexImpl.isTraceQueryExecution())
@@ -324,12 +322,12 @@ public class HitsImpl extends HitsAbstract {
      * Note that the Spans provided must be start-point sorted and contain unique
      * hits.
      *
-     * @param searcher the searcher object
+     * @param index the index object
      * @param field field our hits came from
      * @param source where to retrieve the Hit objects from
      */
-    private HitsImpl(BlackLabIndex searcher, AnnotatedField field, BLSpans source, HitsSettings settings) {
-        this(searcher, field, (List<Hit>) null, settings);
+    private HitsImpl(BlackLabIndex index, AnnotatedField field, BLSpans source, HitsSettings settings) {
+        this(index, field, (List<Hit>) null, settings);
 
         currentSourceSpans = source;
         try {
@@ -359,9 +357,9 @@ public class HitsImpl extends HitsAbstract {
         hits = copyFrom.hits;
         capturedGroups = copyFrom.capturedGroups;
         capturedGroupNames = copyFrom.capturedGroupNames;
-        hitsCounted = copyFrom.countSoFarHitsCounted();
-        docsRetrieved = copyFrom.countSoFarDocsRetrieved();
-        docsCounted = copyFrom.countSoFarDocsCounted();
+        hitsCounted = copyFrom.hitsCountedSoFar();
+        docsRetrieved = copyFrom.docsProcessedSoFar();
+        docsCounted = copyFrom.docsCountedSoFar();
         previousHitDoc = copyFrom.previousHitDoc;
         
         
@@ -404,8 +402,8 @@ public class HitsImpl extends HitsAbstract {
      */
     @Override
     public void copyMaxHitsRetrieved(HitsAbstract copyFrom) {
-        this.maxHitsRetrieved = copyFrom.maxHitsRetrieved();
-        this.maxHitsCounted = copyFrom.maxHitsCounted();
+        this.maxHitsRetrieved = copyFrom.hitsProcessedExceededMaximum();
+        this.maxHitsCounted = copyFrom.hitsCountedExceededMaximum();
     }
     
 
@@ -791,7 +789,6 @@ public class HitsImpl extends HitsAbstract {
     // Hits fetching
     //--------------------------------------------------------------------
 
-    @Override
     protected void ensureAllHitsRead() throws InterruptedException {
         ensureHitsRead(-1);
     }
@@ -805,7 +802,6 @@ public class HitsImpl extends HitsAbstract {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
-    @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // Prevent locking when not required
         if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
@@ -825,7 +821,7 @@ public class HitsImpl extends HitsAbstract {
         boolean readAllHits = number < 0;
         try {
             int maxHitsToCount = settings.maxHitsToCount();
-            int maxHitsToRetrieve = settings.maxHitsToRetrieve();
+            int maxHitsToRetrieve = settings.maxHitsToProcess();
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long
@@ -959,7 +955,7 @@ public class HitsImpl extends HitsAbstract {
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
     @Override
-    public boolean sizeAtLeast(int lowerBound) {
+    public boolean hitsProcessedAtLeast(int lowerBound) {
         try {
             // Try to fetch at least this many hits
             ensureHitsRead(lowerBound);
@@ -983,7 +979,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the number of hits available
      */
     @Override
-    public int size() {
+    public int hitsProcessedTotal() {
         try {
             // Probably not all hits have been seen yet. Collect them all.
             ensureAllHitsRead();
@@ -1007,7 +1003,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the total hit count
      */
     @Override
-    public int totalSize() {
+    public int hitsCountedTotal() {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -1024,7 +1020,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the number of documents.
      */
     @Override
-    public int numberOfDocs() {
+    public int docsProcessedTotal() {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -1042,7 +1038,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the total number of documents.
      */
     @Override
-    public int totalNumberOfDocs() {
+    public int docsCountedTotal() {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -1062,7 +1058,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the current total hit count
      */
     @Override
-    public int countSoFarHitsCounted() {
+    public int hitsCountedSoFar() {
         return hitsCounted;
     }
 
@@ -1075,7 +1071,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the current total hit count
      */
     @Override
-    public int countSoFarHitsRetrieved() {
+    public int hitsProcessedSoFar() {
         return hits.size();
     }
 
@@ -1088,7 +1084,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the current total hit count
      */
     @Override
-    public int countSoFarDocsCounted() {
+    public int docsCountedSoFar() {
         return docsCounted;
     }
 
@@ -1101,7 +1097,7 @@ public class HitsImpl extends HitsAbstract {
      * @return the current total hit count
      */
     @Override
-    public int countSoFarDocsRetrieved() {
+    public int docsProcessedSoFar() {
         return docsRetrieved;
     }
 
@@ -1114,7 +1110,7 @@ public class HitsImpl extends HitsAbstract {
      * @return true iff all hits have been retrieved/counted.
      */
     @Override
-    public boolean doneFetchingHits() {
+    public boolean doneProcessingAndCounting() {
         return sourceSpansFullyRead || maxHitsCounted;
     }
 
@@ -1124,7 +1120,7 @@ public class HitsImpl extends HitsAbstract {
      * @return true if we reached the maximum and stopped retrieving hits
      */
     @Override
-    public boolean maxHitsRetrieved() {
+    public boolean hitsProcessedExceededMaximum() {
         return maxHitsRetrieved;
     }
 
@@ -1134,7 +1130,7 @@ public class HitsImpl extends HitsAbstract {
      * @return true if we reached the maximum and stopped counting hits
      */
     @Override
-    public boolean maxHitsCounted() {
+    public boolean hitsCountedExceededMaximum() {
         return maxHitsCounted;
     }
 

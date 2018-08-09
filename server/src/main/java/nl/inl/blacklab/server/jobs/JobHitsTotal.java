@@ -57,11 +57,11 @@ public class JobHitsTotal extends JobWithHits {
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        ds.entry("hitsCounted", hits != null ? hits.countSoFarHitsCounted() : -1);
+        ds.entry("hitsCounted", hits != null ? hits.hitsCountedSoFar() : -1);
         if (hits != null) {
             ds.entry("hitsObjId", hits.getHitsObjId())
-                    .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
-                    .entry("doneFetchingHits", hits.doneFetchingHits());
+                    .entry("retrievedSoFar", hits.hitsProcessedSoFar())
+                    .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }
     }
 }

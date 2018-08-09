@@ -284,10 +284,10 @@ public class DocImpl implements Doc {
         boolean mustFixUnbalancedTags = !wholeDocument;
 
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
-        if (hits.sizeAtLeast(1) || mustFixUnbalancedTags) {
+        if (hits.hitsProcessedAtLeast(1) || mustFixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitspans = null;
-            if (hits.sizeAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
+            if (hits.hitsProcessedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
                 hitspans = getCharacterOffsets(hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());

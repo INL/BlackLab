@@ -34,13 +34,6 @@ public class Kwics {
      */
     Kwics(HitsAbstract hits, int contextSize) {
         this.hits = hits;
-        try {
-            hits.ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Just go ahead with the hits we did
-            // get, so at least we'll have valid concordances.
-            Thread.currentThread().interrupt();
-        }
     
         // Get the concordances
         kwics = retrieveKwics(contextSize < 0 ? hits.settings().contextSize() : contextSize, hits.field());

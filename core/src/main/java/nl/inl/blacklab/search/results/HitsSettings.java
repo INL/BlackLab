@@ -26,7 +26,7 @@ public final class HitsSettings {
      * Stop retrieving hits after this number. (NO_LIMIT = -1 = don't stop
      * retrieving)
      */
-    private int maxHitsToRetrieve;
+    private int maxHitsToProcess;
 
     /**
      * Stop counting hits after this number. (NO_LIMIT = -1 = don't stop counting)
@@ -45,7 +45,7 @@ public final class HitsSettings {
      * @param copyFrom instance to copy
      */
     private HitsSettings(HitsSettings copyFrom) {
-        maxHitsToRetrieve = copyFrom.maxHitsToRetrieve();
+        maxHitsToProcess = copyFrom.maxHitsToProcess();
         maxHitsToCount = copyFrom.maxHitsToCount();
         concsType = copyFrom.concordanceType();
         desiredContextSize = copyFrom.contextSize();
@@ -56,7 +56,7 @@ public final class HitsSettings {
      * @param index index
      */
     private HitsSettings() {
-        maxHitsToRetrieve = DEFAULT_MAX_RETRIEVE;
+        maxHitsToProcess = DEFAULT_MAX_RETRIEVE;
         maxHitsToCount = DEFAULT_MAX_COUNT;
         concsType = DEFAULT_CONC_TYPE;
         desiredContextSize = DEFAULT_CONTEXT_SIZE;
@@ -67,8 +67,8 @@ public final class HitsSettings {
     }
 
     /** @return the maximum number of hits to retrieve. */
-    public int maxHitsToRetrieve() {
-        return maxHitsToRetrieve;
+    public int maxHitsToProcess() {
+        return maxHitsToProcess;
     }
 
     /** @return the maximum number of hits to count. */
@@ -103,7 +103,7 @@ public final class HitsSettings {
      */
     public HitsSettings withMaxHitsToRetrieve(int n) {
         HitsSettings x = copy();
-        x.maxHitsToRetrieve = n;
+        x.maxHitsToProcess = n;
         return x;
     }
 

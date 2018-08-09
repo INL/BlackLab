@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.search.results.HitsAbstract;
-import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -60,7 +59,7 @@ public class JobHitsWindow extends JobWithHits {
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
         requestedWindowSize = windowSett.size();
-        if (!inputHits.sizeAtLeast(first + 1)) {
+        if (!inputHits.hitsProcessedAtLeast(first + 1)) {
             debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
             first = 0;
         }
@@ -79,12 +78,12 @@ public class JobHitsWindow extends JobWithHits {
         HitsWindow hitsWindow = getHits();
 
         ds.entry("requestedWindowSize", requestedWindowSize)
-                .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.size());
+                .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.windowSize());
         if (hitsWindow != null) {
-            HitsImpl hits = hitsWindow.getOriginalHits();
+            HitsAbstract hits = hitsWindow.getOriginalHits();
             ds.entry("hitsObjId", hits.getHitsObjId())
-                    .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
-                    .entry("doneFetchingHits", hits.doneFetchingHits());
+                    .entry("retrievedSoFar", hits.hitsProcessedSoFar())
+                    .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }
     }
 }

@@ -36,7 +36,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
     /**
      * The source hits into which this is a window
      */
-    private HitsImpl source;
+    private HitsAbstract source;
 
     /**
      * Construct a HitsWindow object.
@@ -49,22 +49,22 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * @param windowSize the size of our window
      * @param settings settings to use
      */
-    HitsWindow(HitsImpl source, int first, int windowSize, HitsSettings settings) {
+    HitsWindow(HitsAbstract source, int first, int windowSize, HitsSettings settings) {
         super(source.index(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;
 
         // Error if first out of range
-        boolean emptyResultSet = !source.sizeAtLeast(1);
+        boolean emptyResultSet = !source.hitsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
-                (!emptyResultSet && !source.sizeAtLeast(first + 1))) {
+                (!emptyResultSet && !source.hitsProcessedAtLeast(first + 1))) {
             throw new IllegalArgumentException("First hit out of range");
         }
 
         // Auto-clamp number
         int number = windowSize;
-        if (!source.sizeAtLeast(first + number))
+        if (!source.hitsProcessedAtLeast(first + number))
             number = source.size() - first;
 
         // Copy the hits we're interested in.
@@ -89,7 +89,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      */
     @Override
     public boolean hasNext() {
-        return source.sizeAtLeast(first + windowSize + 1);
+        return source.hitsProcessedAtLeast(first + windowSize + 1);
     }
 
     /**
@@ -151,7 +151,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * @return number of hits
      */
     @Override
-    public int size() {
+    public int windowSize() {
         return hits.size();
     }
 
@@ -174,7 +174,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      */
     @Override
     public int sourceTotalSize() {
-        return source.totalSize();
+        return source.hitsCountedTotal();
     }
 
     /**
@@ -182,7 +182,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * 
      * @return the original Hits object
      */
-    public HitsImpl getOriginalHits() {
+    public HitsAbstract getOriginalHits() {
         return source;
     }
 

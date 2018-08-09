@@ -23,12 +23,12 @@ public abstract class JobWithHits extends Job {
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        ds.entry("countHitsRetrieved", hits == null ? -1 : hits.countSoFarDocsRetrieved());
+        ds.entry("countHitsRetrieved", hits == null ? -1 : hits.docsProcessedSoFar());
         ds.entry("hasHitsObject", hits != null);
         if (hits != null) {
             ds.entry("hitsObjId", hits.getHitsObjId())
-                    .entry("retrievedSoFar", hits.countSoFarHitsRetrieved())
-                    .entry("doneFetchingHits", hits.doneFetchingHits());
+                    .entry("retrievedSoFar", hits.hitsProcessedSoFar())
+                    .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }
     }
 

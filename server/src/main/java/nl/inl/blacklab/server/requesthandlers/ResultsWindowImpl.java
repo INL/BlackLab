@@ -46,7 +46,7 @@ class ResultsWindowImpl implements ResultsWindow {
     }
 
     @Override
-    public int size() {
+    public int windowSize() {
         return actualWindowSize;
     }
 

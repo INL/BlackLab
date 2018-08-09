@@ -109,5 +109,10 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
     public int requestedWindowSize() {
         return numberPerPage;
     }
+    
+    @Override
+    public int windowSize() {
+        return results.size();
+    }
 
 }

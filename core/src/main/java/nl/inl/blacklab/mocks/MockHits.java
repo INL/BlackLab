@@ -56,12 +56,12 @@ public class MockHits extends HitsImpl {
     }
 
     @Override
-    public boolean maxHitsRetrieved() {
+    public boolean hitsProcessedExceededMaximum() {
         return false;
     }
 
     @Override
-    public boolean maxHitsCounted() {
+    public boolean hitsCountedExceededMaximum() {
         return false;
     }
 
@@ -71,52 +71,52 @@ public class MockHits extends HitsImpl {
     }
 
     @Override
-    public boolean sizeAtLeast(int lowerBound) {
-        return size() >= lowerBound;
+    public boolean hitsProcessedAtLeast(int lowerBound) {
+        return hitsProcessedTotal() >= lowerBound;
     }
 
     @Override
-    public int size() {
+    public int hitsProcessedTotal() {
         return start.length;
     }
 
     @Override
-    public int totalSize() {
-        return size();
+    public int hitsCountedTotal() {
+        return hitsProcessedTotal();
     }
 
     @Override
-    public int numberOfDocs() {
+    public int docsProcessedTotal() {
         return numberOfDocs;
     }
 
     @Override
-    public int totalNumberOfDocs() {
-        return numberOfDocs();
+    public int docsCountedTotal() {
+        return docsProcessedTotal();
     }
 
     @Override
-    public int countSoFarHitsCounted() {
-        return size();
+    public int hitsCountedSoFar() {
+        return hitsProcessedTotal();
     }
 
     @Override
-    public int countSoFarHitsRetrieved() {
-        return size();
+    public int hitsProcessedSoFar() {
+        return hitsProcessedTotal();
     }
 
     @Override
-    public int countSoFarDocsCounted() {
-        return numberOfDocs();
+    public int docsCountedSoFar() {
+        return docsProcessedTotal();
     }
 
     @Override
-    public int countSoFarDocsRetrieved() {
-        return numberOfDocs();
+    public int docsProcessedSoFar() {
+        return docsProcessedTotal();
     }
 
     @Override
-    public boolean doneFetchingHits() {
+    public boolean doneProcessingAndCounting() {
         return true;
     }
 

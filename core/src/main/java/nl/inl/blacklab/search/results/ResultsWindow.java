@@ -52,7 +52,7 @@ public interface ResultsWindow {
      *
      * @return number of results
      */
-    int size();
+    int windowSize();
 
     /**
      * How many results are available in the original source Hits object?

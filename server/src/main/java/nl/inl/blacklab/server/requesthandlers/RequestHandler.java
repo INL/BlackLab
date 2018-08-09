@@ -606,17 +606,17 @@ public abstract class RequestHandler {
         boolean countFailed = countTime < 0;
         if (countTime != 0)
             ds.entry("countTime", (int) (countTime * 1000));
-        ds.entry("stillCounting", totalHits == null ? false : !totalHits.doneFetchingHits());
+        ds.entry("stillCounting", totalHits == null ? false : !totalHits.doneProcessingAndCounting());
 
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         if (totalHits != null) {
             // We have a hits object we can query for this information
-            ds.entry("numberOfHits", countFailed ? -1 : totalHits.countSoFarHitsCounted())
-                    .entry("numberOfHitsRetrieved", totalHits.countSoFarHitsRetrieved())
-                    .entry("stoppedCountingHits", totalHits.maxHitsCounted())
-                    .entry("stoppedRetrievingHits", totalHits.maxHitsRetrieved());
-            ds.entry("numberOfDocs", countFailed ? -1 : totalHits.countSoFarDocsCounted())
-                    .entry("numberOfDocsRetrieved", totalHits.countSoFarDocsRetrieved());
+            ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
+                    .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
+                    .entry("stoppedCountingHits", totalHits.hitsCountedExceededMaximum())
+                    .entry("stoppedRetrievingHits", totalHits.hitsProcessedExceededMaximum());
+            ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
+                    .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
         } else if (isViewDocGroup) {
             // Viewing single group of documents, possibly based on a hits search.
             // group.getResults().getOriginalHits() returns null in this case,
@@ -649,7 +649,7 @@ public abstract class RequestHandler {
         if (window != null) {
             ds.entry("windowFirstResult", window.first())
                     .entry("requestedWindowSize", window.requestedWindowSize())
-                    .entry("actualWindowSize", window.size())
+                    .entry("actualWindowSize", window.windowSize())
                     .entry("windowHasPrevious", window.hasPrevious())
                     .entry("windowHasNext", window.hasNext());
         }

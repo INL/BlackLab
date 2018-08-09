@@ -53,6 +53,6 @@ public class JobDocsTotal extends JobWithDocs {
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
         ds.entry("docsCounted",
-                docResults.getOriginalHits() != null ? docResults.getOriginalHits().countSoFarDocsCounted() : -1);
+                docResults.getOriginalHits() != null ? docResults.getOriginalHits().docsCountedSoFar() : -1);
     }
 }
