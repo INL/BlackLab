@@ -32,6 +32,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
@@ -46,7 +48,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -275,7 +276,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
                 FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
             usedTemplate = true;
         }
@@ -302,7 +303,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             mapper.writeValue(metadataFile, encodeToJson());
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -482,7 +483,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                     // documents, go to the next alternative.
                     break;
                 } catch (IOException e) {
-                    throw new BlackLabException(e);
+                    throw BlackLabException.wrap(e);
                 }
             }
         }
@@ -685,11 +686,11 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         }
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
-            throw new BlackLabException(
+            throw new IndexTooOld(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
         if (!tagLengthInPayload)
-            throw new BlackLabException(
+            throw new IndexTooOld(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
 
         // Specified in index metadata file?
@@ -973,8 +974,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
                 ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
                 extractFromJson(jsonRoot, reader, usedTemplate, false);
-            } catch (Exception e) {
-                throw new BlackLabException(e);
+            } catch (IOException e) {
+                throw BlackLabException.wrap(e);
             }
         }
 

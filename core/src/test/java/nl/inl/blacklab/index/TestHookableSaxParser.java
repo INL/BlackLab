@@ -3,6 +3,7 @@ package nl.inl.blacklab.index;
 import java.io.IOException;
 import java.io.StringReader;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -13,8 +14,8 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.search.BlackLabException;
 
 public class TestHookableSaxParser {
 
@@ -40,8 +41,8 @@ public class TestHookableSaxParser {
         factory.setNamespaceAware(true);
         try {
             parser = factory.newSAXParser();
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (ParserConfigurationException | SAXException e) {
+            throw BlackLabException.wrap(e);
         }
 
         hookHandler = new StringConcatenateHandler();

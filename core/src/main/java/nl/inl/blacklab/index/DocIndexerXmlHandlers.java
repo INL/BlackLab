@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -40,12 +41,14 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -569,7 +572,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                             .asSubclass(MetadataFetcher.class);
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
-                } catch (Exception e) {
+                } catch (ReflectiveOperationException e) {
                     throw new BlackLabException(e);
                 }
             }
@@ -631,15 +634,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     @Override
-    public void index() throws IOException, MalformedInputFileException {
+    public void index() throws IOException, MalformedInputFile {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         factory.setNamespaceAware(true);
         SAXParser parser;
         try {
             parser = factory.newSAXParser();
-        } catch (Exception e1) {
+        } catch (SAXException | ParserConfigurationException e1) {
             // Unrecoverable error, throw runtime exception
-            throw new BlackLabException(e1);
+            throw BlackLabException.wrap(e1);
         }
         try {
             InputSource is = new InputSource(reader);
@@ -648,8 +651,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             xmlReader.setContentHandler(saxParseHandler);
             xmlReader.parse(is);
         } catch (SAXException e) {
-            throw new MalformedInputFileException(e);
-        } catch (DocIndexer.MaxDocsReachedException e) {
+            throw new MalformedInputFile(e);
+        } catch (MaxDocsReachedException e) {
             // OK; just stop indexing prematurely
         }
 

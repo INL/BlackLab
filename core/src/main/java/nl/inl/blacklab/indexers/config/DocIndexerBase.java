@@ -23,15 +23,17 @@ import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.MalformedInputFileException;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -179,7 +181,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void setCurrentAnnotatedFieldName(String name) {
         currentAnnotatedField = getAnnotatedField(name);
         if (currentAnnotatedField == null)
-            throw new InputFormatConfigException("Tried to index annotated field " + name
+            throw new InvalidInputFormatConfig("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
         annotStartTag = currentAnnotatedField.getTagProperty();
         annotMain = currentAnnotatedField.getMainAnnotation();
@@ -249,7 +251,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             try (InputStream is = new FileInputStream(f)) {
                 data = IOUtils.toByteArray(is);
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
         if (data == null) {
@@ -273,8 +275,6 @@ public abstract class DocIndexerBase extends DocIndexer {
                 throw new BlackLabException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
             }
-        } catch (Exception e1) {
-            throw new BlackLabException(e1);
         }
 
     }
@@ -580,10 +580,10 @@ public abstract class DocIndexerBase extends DocIndexer {
 
             // Add payload to start tag annotation indicating end position
             if (openInlineTags.isEmpty())
-                throw new MalformedInputFileException("Close tag " + tagName + " found, but that tag is not open");
+                throw new MalformedInputFile("Close tag " + tagName + " found, but that tag is not open");
             OpenTagInfo openTag = openInlineTags.remove(openInlineTags.size() - 1);
             if (!openTag.name.equals(tagName))
-                throw new MalformedInputFileException(
+                throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
             propTags().setPayloadAtIndex(openTag.index, new BytesRef(payload));
@@ -730,8 +730,8 @@ public abstract class DocIndexerBase extends DocIndexer {
                             .asSubclass(MetadataFetcher.class);
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
-                } catch (Exception e) {
-                    throw new BlackLabException(e);
+                } catch (ReflectiveOperationException e) {
+                    throw BlackLabException.wrap(e);
                 }
             }
         }

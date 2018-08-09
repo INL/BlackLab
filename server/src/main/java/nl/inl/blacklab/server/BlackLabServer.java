@@ -28,8 +28,8 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.ConfigReader;
-import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -282,7 +282,7 @@ public class BlackLabServer extends HttpServlet {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
             } catch (InterruptedException e) {
                 httpCode = Response.internalError(es, e, debugMode, 7);
-            } catch (RegexpTooLargeException e) {
+            } catch (RegexpTooLarge e) {
                 httpCode = Response.badRequest(es, "REGEXP_TOO_LARGE", e.getMessage());
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, 32);

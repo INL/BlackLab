@@ -20,12 +20,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.results.Hit;

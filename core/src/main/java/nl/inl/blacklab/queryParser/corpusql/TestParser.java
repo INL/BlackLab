@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestParser {
@@ -36,9 +37,7 @@ public class TestParser {
             try {
                 TextPattern result = CorpusQueryLanguageParser.parse(expr);
                 System.out.println("Result: " + result + "\n");
-            } catch (TokenMgrError e) {
-                e.printStackTrace(System.err);
-            } catch (ParseException e) {
+            } catch (InvalidQuery e) {
                 e.printStackTrace(System.err);
             }
             Thread.sleep(100);

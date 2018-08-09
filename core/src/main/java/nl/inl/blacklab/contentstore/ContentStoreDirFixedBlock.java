@@ -37,7 +37,7 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.CollUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
@@ -420,7 +420,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            BlackLabException.wrap(e);
         }
     }
 
@@ -567,7 +567,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             fchContentsFile.write(buf);
             return freeBlock;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -649,7 +649,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 rafContentsFile = null;
             }
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -910,7 +910,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 zipbufPool.release(zipbuf);
             }
         } catch (DataFormatException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

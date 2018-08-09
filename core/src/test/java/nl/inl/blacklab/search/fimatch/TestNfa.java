@@ -9,7 +9,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public class TestNfa {

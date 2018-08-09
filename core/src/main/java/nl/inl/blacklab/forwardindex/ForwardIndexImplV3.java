@@ -38,7 +38,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ExUtil;
 
@@ -225,7 +225,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 openTokensFileForReading();
             }
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
 
         if (create) {
@@ -315,7 +315,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 writeTokensFp.setLength(0);
 
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
         if (termsFile.exists() && !termsFile.delete())
             throw new BlackLabException("Could not delete file: " + termsFile);
@@ -586,7 +586,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
             return newDocumentFiid;
         } catch (IOException e1) {
-            throw new BlackLabException(e1);
+            throw BlackLabException.wrap(e1);
         }
     }
 

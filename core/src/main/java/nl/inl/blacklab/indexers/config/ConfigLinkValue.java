@@ -3,6 +3,8 @@ package nl.inl.blacklab.indexers.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+
 /** Configuration for linked document link values. */
 public class ConfigLinkValue {
 
@@ -24,9 +26,9 @@ public class ConfigLinkValue {
 
     public void validate() {
         if (valuePath == null && valueField == null)
-            throw new InputFormatConfigException("Link value must have either valuePath or valueField");
+            throw new InvalidInputFormatConfig("Link value must have either valuePath or valueField");
         if (valuePath != null && valueField != null)
-            throw new InputFormatConfigException("Link value may only define either valuePath or valueField");
+            throw new InvalidInputFormatConfig("Link value may only define either valuePath or valueField");
         for (ConfigProcessStep step : process) {
             step.validate();
         }

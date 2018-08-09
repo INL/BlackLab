@@ -17,8 +17,8 @@ import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.ZipHandleManager;
-import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Process (trees of) files, which may include archives that we want to
@@ -144,7 +144,7 @@ public class FileProcessor implements AutoCloseable {
                 proc.setFileHandler(fileCapturer);
                 proc.processFile(f);
             } catch (FileNotFoundException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
 
             // FileProcessor must have completed/be closed before result is available
@@ -158,7 +158,7 @@ public class FileProcessor implements AutoCloseable {
                     return IOUtils.toByteArray(is);
                 }
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         } else {
             throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());

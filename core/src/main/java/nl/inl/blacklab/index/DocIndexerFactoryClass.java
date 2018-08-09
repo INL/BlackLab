@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
@@ -26,7 +27,6 @@ import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
 import nl.inl.blacklab.indexers.DocIndexerTeiText;
 import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -149,7 +149,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -178,7 +178,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -209,7 +209,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException | IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -239,7 +239,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 }

@@ -21,11 +21,11 @@ import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
-import nl.inl.blacklab.indexers.config.InputFormatConfigException;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
@@ -75,7 +75,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     };
 
     @Override
-    public void init() throws InputFormatConfigException {
+    public void init() throws InvalidInputFormatConfig {
         if (isInitialized)
             return;
         isInitialized = true;
@@ -98,7 +98,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     addFormat(format);
                 }
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
 
@@ -153,7 +153,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         return desc;
     }
 
-    protected void addFormat(ConfigInputFormat format) throws InputFormatConfigException {
+    protected void addFormat(ConfigInputFormat format) throws InvalidInputFormatConfig {
         if (isSupported(format.getName()))
             throw new IllegalArgumentException("A config format with this name already exists.");
 
@@ -178,10 +178,10 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
      * must also be present in the dirs list.
      * 
      * @param dirs
-     * @throws InputFormatConfigException when one of the formats could not be
+     * @throws InvalidInputFormatConfig when one of the formats could not be
      *             loaded
      */
-    public void addFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
+    public void addFormatsInDirectories(List<File> dirs) throws InvalidInputFormatConfig {
         // Finds all new configs and add them to the "unloaded" list
         FileTask configLocator = new FileTask() {
             @Override
@@ -238,7 +238,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
             try {
                 load(e.getKey(), e.getValue());
-            } catch (InputFormatConfigException ex) {
+            } catch (InvalidInputFormatConfig ex) {
                 logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
                 // an invalid format somehow got saved, or something else went wrong, just ignore this file then
             }

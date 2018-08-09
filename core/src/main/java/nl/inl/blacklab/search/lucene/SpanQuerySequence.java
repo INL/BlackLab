@@ -33,7 +33,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;

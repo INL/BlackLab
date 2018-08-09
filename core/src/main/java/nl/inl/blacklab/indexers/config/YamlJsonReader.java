@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+
 /**
  * Base class for a class that interprets a JSON structure.
  *
@@ -17,7 +19,7 @@ public class YamlJsonReader {
 
     public static ObjectNode obj(JsonNode node, String name) {
         if (!(node instanceof ObjectNode))
-            throw new InputFormatConfigException(name + " must be an object");
+            throw new InvalidInputFormatConfig(name + " must be an object");
         return (ObjectNode) node;
     }
 
@@ -27,7 +29,7 @@ public class YamlJsonReader {
 
     public static ArrayNode array(JsonNode node, String name) {
         if (!(node instanceof ArrayNode))
-            throw new InputFormatConfigException(name + " must be an array");
+            throw new InvalidInputFormatConfig(name + " must be an array");
         return (ArrayNode) node;
     }
 
@@ -37,7 +39,7 @@ public class YamlJsonReader {
 
     public static String str(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a string value");
+            throw new InvalidInputFormatConfig(name + " must be a string value");
         return node.asText();
     }
 
@@ -47,7 +49,7 @@ public class YamlJsonReader {
 
     public static boolean bool(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a boolean value");
+            throw new InvalidInputFormatConfig(name + " must be a boolean value");
         return node.asBoolean();
     }
 
@@ -57,7 +59,7 @@ public class YamlJsonReader {
 
     public static int integer(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be an integer value");
+            throw new InvalidInputFormatConfig(name + " must be an integer value");
         return node.asInt();
     }
 
@@ -67,7 +69,7 @@ public class YamlJsonReader {
 
     public static long longint(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a (long) integer value");
+            throw new InvalidInputFormatConfig(name + " must be a (long) integer value");
         return node.asLong();
     }
 
@@ -77,7 +79,7 @@ public class YamlJsonReader {
 
     public static double numeric(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a numeric value");
+            throw new InvalidInputFormatConfig(name + " must be a numeric value");
         return node.asDouble();
     }
 
@@ -87,10 +89,10 @@ public class YamlJsonReader {
 
     public static char character(JsonNode node, String name) {
         if (!(node instanceof ValueNode))
-            throw new InputFormatConfigException(name + " must be a single character");
+            throw new InvalidInputFormatConfig(name + " must be a single character");
         String txt = node.asText();
         if (txt.length() != 1)
-            throw new InputFormatConfigException(name + " must be a single character");
+            throw new InvalidInputFormatConfig(name + " must be a single character");
         return txt.charAt(0);
     }
 

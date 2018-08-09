@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.RegexpTooLargeException;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -125,7 +125,7 @@ public class JobHits extends JobWithHits {
                     .withContextSize(contextSettings.size());
             hits = searcher.find(textPattern, searcher.mainAnnotatedField(), filter, hitsSettings);
 
-        } catch (RegexpTooLargeException e) {
+        } catch (RegexpTooLarge e) {
             throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
         } catch (TooManyClauses e) {
             throw new BadRequest("QUERY_TOO_BROAD",

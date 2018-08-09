@@ -15,24 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
 import org.xml.sax.Locator;
-import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.StringUtil;
 
 /**
@@ -464,50 +455,6 @@ public class HookableSaxHandler extends DefaultHandler {
     public void startElement(String uri, String localName, String qName, Attributes attributes) {
         for (SaxParserHook hook : hooks) {
             hook.startElement(uri, localName, qName, attributes);
-        }
-    }
-
-    /**
-     * Test program
-     *
-     * @param args
-     * @throws ParserConfigurationException
-     * @throws SAXException
-     * @throws IOException
-     */
-    public static void main(String[] args) throws ParserConfigurationException, SAXException,
-            IOException {
-        String xml = "<root>"
-                + "<child><name>A</name><child att='123'><name>C</name></child></child>"
-                + "<child><name>B</name><child att='456'><name>D</name></child></child>"
-                + "</root>";
-        HookableSaxHandler hookableHandler = new HookableSaxHandler();
-        hookableHandler.addHook("/root/child", new ElementHandler() {
-            @Override
-            public void startElement(String uri, String localName, String qName,
-                    Attributes attributes) {
-                System.out.println("Found an element: " + localName);
-            }
-
-            @Override
-            public void endElement(String uri, String localName, String qName) {
-                System.out.println("End of element: " + localName);
-            }
-        }, true);
-        hookableHandler.addHook("//child/name", new ElementHandler() {
-            @Override
-            public void characters(char[] ch, int start, int length) {
-                System.out.println("Child name: " + new String(ch, start, length));
-            }
-        }, true);
-
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        factory.setNamespaceAware(true);
-        try {
-            SAXParser parser = factory.newSAXParser();
-            parser.parse(new InputSource(new StringReader(xml)), hookableHandler);
-        } catch (Exception e) {
-            throw new BlackLabException(e);
         }
     }
 

@@ -27,11 +27,11 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.XmlUtil;
 
 /**
@@ -151,7 +151,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 xpathAuthor = xpath.compile("//dc:creator");
                 xpathDate = xpath.compile("//dc:date");
             } catch (XPathExpressionException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
 
             try {
@@ -310,10 +310,8 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 cached.put(dpo, metadata); // save in cache so we don't query it twice
                 return metadata;
 
-            } catch (XPathExpressionException e) {
-                throw new BlackLabException(e);
-            } catch (DOMException e) {
-                throw new BlackLabException(e);
+            } catch (XPathExpressionException | DOMException e) {
+                throw BlackLabException.wrap(e);
             }
         }
 

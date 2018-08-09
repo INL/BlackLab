@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -22,13 +24,14 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
-import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata from an
@@ -58,8 +61,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
         } else {
             try {
                 metadataZipFile = new ZipFile(new File(zipFilePath));
-            } catch (Exception e) {
-                throw new BlackLabException(e);
+            } catch (IOException e) {
+                throw BlackLabException.wrap(e);
             }
         }
     }
@@ -133,6 +136,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
                 SAXParser parser;
                 parser = factory.newSAXParser();
                 parser.parse(new InputSource(reader), new MetadataParser());
+            } catch (SAXException | ParserConfigurationException e) {
+                throw BlackLabException.wrap(e);
             }
 
             // Store metadata XML in content store and corresponding id in
@@ -143,8 +148,8 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
             if (metadataZipFile == null)
                 is.close();
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 

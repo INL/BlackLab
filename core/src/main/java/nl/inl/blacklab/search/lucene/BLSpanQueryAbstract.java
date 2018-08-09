@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -41,7 +41,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     protected String luceneFieldName = "";
 
     protected List<BLSpanQuery> clauses;
-
+    
     public BLSpanQueryAbstract() {
         //
     }

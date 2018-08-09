@@ -15,7 +15,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Manages downloaded files.

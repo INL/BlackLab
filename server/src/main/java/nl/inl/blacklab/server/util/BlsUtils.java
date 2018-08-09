@@ -13,10 +13,9 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.TokenMgrError;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -64,11 +63,7 @@ public class BlsUtils {
             try {
                 CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, filter);
                 return q.getFilterQuery();
-            } catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-                throw new BadRequest("FILTER_SYNTAX_ERROR",
-                        "Error parsing ContextQL filter query: "
-                                + e.getMessage());
-            } catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
+            } catch (InvalidQuery e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing ContextQL filter query: "
                                 + e.getMessage());
@@ -92,10 +87,7 @@ public class BlsUtils {
         if (language.equals("corpusql")) {
             try {
                 return CorpusQueryLanguageParser.parse(pattern);
-            } catch (ParseException e) {
-                throw new BadRequest("PATT_SYNTAX_ERROR",
-                        "Syntax error in CorpusQL pattern: " + e.getMessage());
-            } catch (TokenMgrError e) {
+            } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in CorpusQL pattern: " + e.getMessage());
             }
@@ -104,10 +96,7 @@ public class BlsUtils {
                 CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
                         pattern);
                 return q.getContentsQuery();
-            } catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-                throw new BadRequest("PATT_SYNTAX_ERROR",
-                        "Syntax error in ContextQL pattern: " + e.getMessage());
-            } catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
+            } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in ContextQL pattern: " + e.getMessage());
             }

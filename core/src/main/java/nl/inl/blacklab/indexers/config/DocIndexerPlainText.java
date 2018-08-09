@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -13,6 +14,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.input.BOMInputStream;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
@@ -27,14 +30,18 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     private StringBuilder fullText;
 
     @Override
-    public void close() throws Exception {
-        reader.close();
+    public void close() throws BlackLabException {
+        try {
+            reader.close();
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
+        }
     }
 
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         if (config.getAnnotatedFields().size() > 1)
-            throw new InputFormatConfigException("Plain text type can only have 1 annotated field");
+            throw new InvalidInputFormatConfig("Plain text type can only have 1 annotated field");
         super.setConfigInputFormat(config);
     }
 
@@ -70,7 +77,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
         // For the configured annotated field...
         if (config.getAnnotatedFields().size() > 1)
-            throw new InputFormatConfigException("Plain text files can only have 1 annotated field");
+            throw new InvalidInputFormatConfig("Plain text files can only have 1 annotated field");
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             setCurrentAnnotatedFieldName(annotatedField.getName());
 
@@ -99,7 +106,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                         if (annotation.getValuePath().equals(".")) {
                             annotation(annotation.getName(), processedWord, 1, null);
                         } else {
-                            throw new InputFormatConfigException("Plain text annotation must have valuePath '.'");
+                            throw new InvalidInputFormatConfig("Plain text annotation must have valuePath '.'");
                         }
                     }
                     punctuation(punct.toString());

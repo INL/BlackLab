@@ -39,7 +39,7 @@ import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public final class LuceneUtil {

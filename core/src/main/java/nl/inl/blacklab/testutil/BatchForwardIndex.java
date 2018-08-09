@@ -2,8 +2,8 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.Timer;

@@ -39,6 +39,8 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.GroupProperty;
@@ -53,7 +55,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -175,33 +176,13 @@ public class QueryTool {
     /** Lists of words read from file to choose random word from (for batch mode) */
     private Map<String, List<String>> wordLists = new HashMap<>();
 
-    /** Thrown when an error occurs during parsing */
-    static class ParseException extends Exception {
-
-        public ParseException() {
-            super();
-        }
-
-        public ParseException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public ParseException(String message) {
-            super(message);
-        }
-
-        public ParseException(Throwable cause) {
-            super(cause);
-        }
-    }
-
     /** Generic command parser interface */
     abstract static class Parser {
         public abstract String getPrompt();
 
         public abstract String getName();
 
-        public abstract TextPattern parse(String query) throws ParseException;
+        public abstract TextPattern parse(String query) throws InvalidQuery;
 
         /**
          * Get the filter query included in the last query, if any. Only used for
@@ -237,16 +218,8 @@ public class QueryTool {
          * @throws ParseException
          */
         @Override
-        public TextPattern parse(String query) throws ParseException {
-            try {
-                return CorpusQueryLanguageParser.parse(query);
-            } catch (nl.inl.blacklab.queryParser.corpusql.ParseException e) {
-                throw new ParseException(e.getMessage());
-            } catch (nl.inl.blacklab.queryParser.corpusql.TokenMgrError e) {
-                throw new ParseException(e.getMessage());
-            } catch (Exception e) {
-                throw new ParseException("Fatale fout tijdens parsen: " + e.getMessage());
-            }
+        public TextPattern parse(String query) throws InvalidQuery {
+            return CorpusQueryLanguageParser.parse(query);
         }
 
         @Override
@@ -286,25 +259,11 @@ public class QueryTool {
          * @throws ParseException
          */
         @Override
-        public TextPattern parse(String query) throws ParseException {
-
-            try {
-                //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
-                CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, query);
-                includedFilterQuery = q.getFilterQuery();
-                return q.getContentsQuery();
-            } catch (nl.inl.blacklab.queryParser.contextql.ParseException e) {
-                throw new ParseException(e.getMessage());
-            } catch (nl.inl.blacklab.queryParser.contextql.TokenMgrError e) {
-                throw new ParseException(e.getMessage());
-            }
-
-            /*
-            Class<?> classXCQLParser = Class.forName("nl.inl.clarinsd.xcqlparser.XCQLParser");
-            Method methodParse = classXCQLParser.getDeclaredMethod("parse", String.class);
-            Object returnValue = methodParse.invoke(classXCQLParser, query);
-            return (TextPattern) returnValue;
-            */
+        public TextPattern parse(String query) throws InvalidQuery {
+            //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
+            CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, query);
+            includedFilterQuery = q.getFilterQuery();
+            return q.getContentsQuery();
         }
 
         @Override
@@ -431,7 +390,7 @@ public class QueryTool {
         try {
             run(indexDir, commandFile, Charset.defaultCharset().name());
         } catch (UnsupportedEncodingException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -457,8 +416,8 @@ public class QueryTool {
     public static void runInteractive(File indexDir) throws CorruptIndexException {
         try {
             run(indexDir, null, Charset.defaultCharset().name());
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -500,7 +459,7 @@ public class QueryTool {
             QueryTool c = new QueryTool(indexDir, in, out, err);
             c.commandProcessor();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -574,7 +533,7 @@ public class QueryTool {
             try {
                 outprintln("Opening index " + indexDir.getCanonicalPath() + "...");
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
 
@@ -583,7 +542,7 @@ public class QueryTool {
             searcher = BlackLabIndex.open(indexDir);
             contentsField = searcher.mainAnnotatedField();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
 
         if (in == null) {
@@ -640,7 +599,7 @@ public class QueryTool {
             try {
                 cmd = readCommand(prompt);
             } catch (IOException e1) {
-                throw new BlackLabException(e1);
+                throw BlackLabException.wrap(e1);
             }
             if (cmd == null || cmd.trim().equals("exit")) {
                 break;
@@ -677,7 +636,7 @@ public class QueryTool {
             try {
                 Thread.sleep(100); // Give Eclipse console time to show stderr output
             } catch (InterruptedException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
         cleanup();
@@ -1006,7 +965,7 @@ public class QueryTool {
             } catch (ClassNotFoundException e) {
                 // Can't init JLine; too bad, fall back to stdin
                 outprintln("Command line editing not available; to enable, place jline jar in classpath.");
-            } catch (Exception e) {
+            } catch (ReflectiveOperationException e) {
                 throw new BlackLabException("Could not init JLine console reader", e);
             }
         }
@@ -1014,7 +973,7 @@ public class QueryTool {
         if (jlineConsoleReader != null) {
             try {
                 return (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
-            } catch (Exception e) {
+            } catch (ReflectiveOperationException e) {
                 throw new BlackLabException("Could not invoke JLine ConsoleReader.readLine()", e);
             }
         }
@@ -1142,9 +1101,9 @@ public class QueryTool {
             else
                 statInfo = "?";
             commandWasQuery = true;
-        } catch (ParseException e) {
+        } catch (InvalidQuery e) {
             // Parse error
-            errprintln("Invalid query: " + e.getMessage());
+            errprintln(e.getMessage());
             errprintln("(Type 'help' for examples or see accompanying documents)");
         } catch (UnsupportedOperationException e) {
             // Unimplemented part of query language used

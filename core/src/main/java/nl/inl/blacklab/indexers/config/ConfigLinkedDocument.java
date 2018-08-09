@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+
 /** Configuration for a linked document. */
 public class ConfigLinkedDocument {
 
@@ -67,7 +69,7 @@ public class ConfigLinkedDocument {
         ConfigInputFormat.req(name, t, "name");
         ConfigInputFormat.req(!linkValues.isEmpty(), t, "have at least one linkPath");
         if (inputFormatIdentifier == null)
-            throw new InputFormatConfigException("linked document must have inputFormat");
+            throw new InvalidInputFormatConfig("linked document must have inputFormat");
         ConfigInputFormat.req(inputFile, t, "inputFile");
     }
 

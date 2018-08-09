@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -34,7 +35,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Utilities for working with files
@@ -69,8 +70,9 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return write interface into the file
+     * @throws FileNotFoundException 
      */
-    public static PrintWriter openForWriting(File file) {
+    public static PrintWriter openForWriting(File file) throws FileNotFoundException {
         return openForWriting(file, DEFAULT_ENCODING);
     }
 
@@ -83,8 +85,9 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return write interface into the file
+     * @throws FileNotFoundException 
      */
-    public static PrintWriter openForWriting(File file, String encoding) {
+    public static PrintWriter openForWriting(File file, String encoding) throws FileNotFoundException {
         return openForWriting(file, Charset.forName(encoding));
     }
 
@@ -97,14 +100,10 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return write interface into the file
+     * @throws FileNotFoundException 
      */
-    public static PrintWriter openForWriting(File file, Charset encoding) {
-        try {
-            return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
-                    file), encoding)));
-        } catch (Exception e) {
-            throw new BlackLabException(e);
-        }
+    public static PrintWriter openForWriting(File file, Charset encoding) throws FileNotFoundException {
+        return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding)));
     }
 
     /**
@@ -114,8 +113,9 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return read interface into the file
+     * @throws FileNotFoundException 
      */
-    public static BufferedReader openForReading(File file) {
+    public static BufferedReader openForReading(File file) throws FileNotFoundException {
         return openForReading(file, DEFAULT_ENCODING);
     }
 
@@ -127,8 +127,9 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return read interface into the file
+     * @throws FileNotFoundException 
      */
-    public static BufferedReader openForReading(File file, String encoding) {
+    public static BufferedReader openForReading(File file, String encoding) throws FileNotFoundException {
         return openForReading(file, Charset.forName(encoding));
     }
 
@@ -140,13 +141,10 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return read interface into the file
+     * @throws FileNotFoundException 
      */
-    public static BufferedReader openForReading(File file, Charset encoding) {
-        try {
-            return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));
-        } catch (Exception e) {
-            throw new BlackLabException(e);
-        }
+    public static BufferedReader openForReading(File file, Charset encoding) throws FileNotFoundException {
+        return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));
     }
 
     /**

@@ -18,6 +18,7 @@ package nl.inl.blacklab.search;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
 /**

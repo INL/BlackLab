@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,6 +17,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -217,12 +220,12 @@ public class ConfigInputFormat {
 
     static void req(String value, String type, String name) {
         if (value == null || value.isEmpty())
-            throw new InputFormatConfigException(StringUtils.capitalize(type) + " must have a " + name);
+            throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must have a " + name);
     }
 
     static void req(boolean test, String type, String mustMsg) {
         if (!test)
-            throw new InputFormatConfigException(StringUtils.capitalize(type) + " must " + mustMsg);
+            throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must " + mustMsg);
     }
 
     public String getName() {
@@ -437,15 +440,19 @@ public class ConfigInputFormat {
     }
 
     public BufferedReader getFormatFile() {
-        if (readFromFile == null)
-            return null;
+        try {
+            if (readFromFile == null)
+                return null;
 
-        if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
-            InputStream stream = DocumentFormats.class.getClassLoader()
-                    .getResourceAsStream("formats/" + getName() + ".blf.yaml");
-            return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+            if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
+                InputStream stream = DocumentFormats.class.getClassLoader()
+                        .getResourceAsStream("formats/" + getName() + ".blf.yaml");
+                return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+            }
+            return FileUtil.openForReading(readFromFile);
+        } catch (FileNotFoundException e) {
+            throw BlackLabException.wrap(e);
         }
-        return FileUtil.openForReading(readFromFile);
     }
 
     public void setReadFromFile(File readFromFile) {

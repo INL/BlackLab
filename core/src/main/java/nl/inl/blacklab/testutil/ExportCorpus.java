@@ -1,13 +1,14 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
@@ -93,6 +94,8 @@ public class ExportCorpus {
                     }
                     try (PrintWriter pw = FileUtil.openForWriting(file)) {
                         pw.write(xml);
+                    } catch (FileNotFoundException e) {
+                        throw BlackLabException.wrap(e);
                     }
                 } catch (RuntimeException e) {
                     // HACK: a bug in an older content store implementation can cause this

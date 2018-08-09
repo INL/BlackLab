@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
@@ -45,7 +46,7 @@ public class InputFormatReader extends YamlJsonReader {
      *            configs that this config depends on. (for config keys "baseFormat"
      *            and "inputFormat")
      * @throws IOException
-     * @throws InputFormatConfigException if the file is not a valid config
+     * @throws InvalidInputFormatConfig if the file is not a valid config
      */
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg,
             Function<String, Optional<ConfigInputFormat>> finder) throws IOException {
@@ -55,7 +56,7 @@ public class InputFormatReader extends YamlJsonReader {
         try {
             root = mapper.readTree(r);
         } catch (JsonParseException e) {
-            throw new InputFormatConfigException("Could not parse config file: " + e.getMessage());
+            throw new InvalidInputFormatConfig("Could not parse config file: " + e.getMessage());
         }
         read(root, cfg, finder);
     }
@@ -68,7 +69,7 @@ public class InputFormatReader extends YamlJsonReader {
      *            configs that this config depends on. ("baseFormat" and
      *            "inputFormat")
      * @throws IOException
-     * @throws InputFormatConfigException if the file is not a valid config
+     * @throws InvalidInputFormatConfig if the file is not a valid config
      */
     public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder)
             throws IOException {
@@ -95,12 +96,12 @@ public class InputFormatReader extends YamlJsonReader {
             case "baseFormat": {
                 String formatIdentifier = str(e);
                 if (finder == null)
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Format depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
 
                 ConfigInputFormat baseFormat = finder
                         .apply(formatIdentifier)
-                        .orElseThrow(() -> new InputFormatConfigException(
+                        .orElseThrow(() -> new InvalidInputFormatConfig(
                                 "Base format " + formatIdentifier + " not found for format " + cfg.getName()));
 
                 cfg.setBaseFormat(baseFormat);
@@ -153,7 +154,7 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setVisible(bool(e));
                 break;
             default:
-                throw new InputFormatConfigException("Unknown top-level key " + e.getKey());
+                throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
             }
         }
     }
@@ -183,7 +184,7 @@ public class InputFormatReader extends YamlJsonReader {
                 readMetadataFieldGroups(e, corpusConfig);
                 break;
             default:
-                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in corpusConfig");
+                throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in corpusConfig");
             }
         }
 
@@ -234,7 +235,7 @@ public class InputFormatReader extends YamlJsonReader {
                     g.setAddRemainingFields(bool(e));
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
                 }
             }
@@ -280,7 +281,7 @@ public class InputFormatReader extends YamlJsonReader {
                     readInlineTags(e, af);
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in annotated field " + fieldName);
                 }
             }
@@ -324,12 +325,12 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "forEachPath":
                 if (!isSubAnnotation)
-                    throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
+                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
                 annot.setForEachPath(str(e));
                 break;
             case "namePath":
                 if (!isSubAnnotation)
-                    throw new InputFormatConfigException("Only subannotations may have forEachPath/namePath");
+                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
                 annot.setName(str(e));
                 break;
             case "process":
@@ -346,7 +347,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "sensitivity":
                 if (isSubAnnotation)
-                    throw new InputFormatConfigException("Subannotations may not have their own sensitivity settings");
+                    throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings");
                 annot.setSensitivity(SensitivitySetting.fromStringValue(str(e)));
                 break;
             case "uiType":
@@ -354,7 +355,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "subAnnotations":
                 if (isSubAnnotation)
-                    throw new InputFormatConfigException("Subannotations may not have their own subannotations");
+                    throw new InvalidInputFormatConfig("Subannotations may not have their own subannotations");
                 readSubAnnotations(e, annot);
                 break;
             case "forwardIndex":
@@ -364,7 +365,7 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setMultipleValues(bool(e));
                 break;
             default:
-                throw new InputFormatConfigException(
+                throw new InvalidInputFormatConfig(
                         "Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
             }
         }
@@ -400,7 +401,7 @@ public class InputFormatReader extends YamlJsonReader {
                     readAnnotations(e, s);
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in standoff annotations block");
                 }
             }
@@ -424,7 +425,7 @@ public class InputFormatReader extends YamlJsonReader {
                     t.setDisplayAs(str(e));
                     break;
                 default:
-                    throw new InputFormatConfigException("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
+                    throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
             }
             af.addInlineTag(t);
@@ -444,7 +445,7 @@ public class InputFormatReader extends YamlJsonReader {
                 readMetadataBlock(as, cfg);
             }
         } else {
-            throw new InputFormatConfigException("Wrong node type for metadata (must be object or array)");
+            throw new InvalidInputFormatConfig("Wrong node type for metadata (must be object or array)");
         }
     }
 
@@ -464,7 +465,7 @@ public class InputFormatReader extends YamlJsonReader {
                 readMetadataFields(e, b);
                 break;
             default:
-                throw new InputFormatConfigException("Unknown key " + e.getKey() + " in metadata block");
+                throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in metadata block");
             }
         }
     }
@@ -526,7 +527,7 @@ public class InputFormatReader extends YamlJsonReader {
                     f.addDisplayValues(values);
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in metadata field " + f.getName());
                 }
             }
@@ -565,7 +566,7 @@ public class InputFormatReader extends YamlJsonReader {
                     readInputFormat(ld, e);
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }
@@ -577,7 +578,7 @@ public class InputFormatReader extends YamlJsonReader {
         String formatIdentifier = str(e);
         Format format = DocumentFormats.getFormat(formatIdentifier);
         if (format == null)
-            throw new InputFormatConfigException(
+            throw new InvalidInputFormatConfig(
                     "Unknown input format " + str(e) + " in linked document " + ld.getName());
 
         ld.setInputFormatIdentifier(formatIdentifier);
@@ -605,7 +606,7 @@ public class InputFormatReader extends YamlJsonReader {
                     lv.setProcess(readProcess(e));
                     break;
                 default:
-                    throw new InputFormatConfigException(
+                    throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in linked document " + ld.getName());
                 }
             }

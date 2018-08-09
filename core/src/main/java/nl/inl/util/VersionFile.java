@@ -21,7 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Reads/writes a type/version file for a directory, to indicate the version of
@@ -162,6 +162,8 @@ public class VersionFile {
     public void write() {
         try (PrintWriter w = FileUtil.openForWriting(file)) {
             w.write(type + "||" + version + "\n");
+        } catch (FileNotFoundException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 

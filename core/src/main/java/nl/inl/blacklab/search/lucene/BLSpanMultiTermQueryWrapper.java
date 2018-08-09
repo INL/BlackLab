@@ -16,7 +16,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -43,8 +43,8 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             Field fldTerm = AutomatonQuery.class.getDeclaredField("term");
             fldTerm.setAccessible(true);
             this.term = (Term) fldTerm.get(query);
-        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-            throw new BlackLabException(e);
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            throw BlackLabException.wrap(e);
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
     }
@@ -185,7 +185,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         try {
             n = reader.getSumTotalTermFreq(term.field()); // total terms in field
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
         // Make a very rough estimate of the number of terms that could match
         // this. We tend to guess on the high side, because clauses matching lots

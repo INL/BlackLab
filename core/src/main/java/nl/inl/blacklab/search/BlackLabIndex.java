@@ -13,6 +13,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -48,7 +49,7 @@ public interface BlackLabIndex extends Closeable {
             }
             return false;
         } catch (FileNotFoundException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

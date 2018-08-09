@@ -35,7 +35,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Keeps a first-come-first-serve list of unique terms. Each term gets a unique
@@ -486,7 +486,7 @@ class TermsImplV3 extends Terms {
                 }
             }
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -645,7 +645,7 @@ class TermsImplV3 extends Terms {
                 }
             }
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

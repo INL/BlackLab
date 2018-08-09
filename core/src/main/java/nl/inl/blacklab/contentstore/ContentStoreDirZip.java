@@ -21,7 +21,7 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.SimpleResourcePool;
 
 /**
@@ -115,12 +115,10 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
             compresser.setInput(encoded);
             compresser.finish();
             int compressedDataLength = compresser.deflate(zipbuf);
-            if (compressedDataLength <= 0) {
+            if (compressedDataLength <= 0)
                 throw new BlackLabException("Error, deflate returned " + compressedDataLength);
-            }
-            if (compressedDataLength == zipbuf.length) {
+            if (compressedDataLength == zipbuf.length)
                 throw new BlackLabException("Error, deflate returned size of zipbuf, this indicates insufficient space");
-            }
             return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
         } finally {
             compresserPool.release(compresser);
@@ -138,9 +136,8 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
                 decompresser.reset();
                 decompresser.setInput(buf, offset, length);
                 int resultLength = decompresser.inflate(zipbuf);
-                if (resultLength <= 0) {
+                if (resultLength <= 0)
                     throw new BlackLabException("Error, inflate returned " + resultLength);
-                }
                 if (!decompresser.finished()) {
                     // This shouldn't happen because our max block size prevents it
                     throw new BlackLabException("Unzip buffer size insufficient");
@@ -151,7 +148,7 @@ public class ContentStoreDirZip extends ContentStoreDirUtf8 {
                 zipbufPool.release(zipbuf);
             }
         } catch (DataFormatException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

@@ -32,11 +32,11 @@ import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Concordance;
@@ -400,7 +400,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             atomicReaderContexts = reader == null ? null : reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
 
         sourceSpansFullyRead = false;
@@ -428,7 +428,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         try {
             sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -1821,7 +1821,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         } finally {
             ensureHitsReadLock.unlock();
         }

@@ -18,8 +18,8 @@ package nl.inl.blacklab.search.textpattern;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PrefixQuery;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -40,7 +40,7 @@ public class TextPatternPrefix extends TextPatternTerm {
             // If we pass in a prefix expression matching a lot of words,
             // stack overflow may occur inside Lucene's automaton building
             // code and we may end up here.
-            throw new RegexpTooLargeException();
+            throw new RegexpTooLarge();
         }
     }
 

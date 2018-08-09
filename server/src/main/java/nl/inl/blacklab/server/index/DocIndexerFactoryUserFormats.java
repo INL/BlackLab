@@ -17,9 +17,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerFactoryConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatConfigException;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -182,7 +182,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             addFormat(config);
         } catch (IllegalUserFormatIdentifier e) {
             throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());
-        } catch (InputFormatConfigException e) {
+        } catch (InvalidInputFormatConfig e) {
             throw new BadRequest("CONFIG_ERROR", e.getMessage());
         } catch (IOException e) {
             throw new InternalServerError("Could not create user format: " + e.getMessage(), 40);
@@ -226,7 +226,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
 
     // Overridden to remove duplicate check, we just overwrite the format with the new one
     @Override
-    protected void addFormat(ConfigInputFormat format) throws InputFormatConfigException {
+    protected void addFormat(ConfigInputFormat format) throws InvalidInputFormatConfig {
         format.validate();
         supported.put(format.getName(), format);
         unloaded.remove(format.getName());

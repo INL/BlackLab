@@ -7,7 +7,7 @@ import java.util.List;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreDirZip;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
 

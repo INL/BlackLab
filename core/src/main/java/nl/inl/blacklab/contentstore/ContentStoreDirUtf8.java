@@ -35,7 +35,7 @@ import java.util.Set;
 import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.ExUtil;
 
 /**
@@ -379,7 +379,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            BlackLabException.wrap(e);
         }
     }
 
@@ -497,7 +497,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             bytesWritten += buf.length;
             currentBlockContents = new StringBuilder(newEntryBlockSizeCharacters);
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            BlackLabException.wrap(e);
         }
     }
 
@@ -648,7 +648,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             if (currentStoreFileStream != null)
                 currentStoreFileStream.close();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            BlackLabException.wrap(e);
         }
     }
 

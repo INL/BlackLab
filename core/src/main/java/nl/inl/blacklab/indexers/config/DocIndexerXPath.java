@@ -31,9 +31,9 @@ import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
@@ -81,7 +81,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     private ConfigAnnotatedField currentAnnotatedField;
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         // NOP, we already closed our input after we read it
     }
 
@@ -90,7 +90,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         try {
             setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -111,7 +111,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             setDocument(IOUtils.toByteArray(is), defaultCharset);
             is.close();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -122,7 +122,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     Indexer.DEFAULT_INPUT_ENCODING);
             reader.close();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -751,7 +751,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 attr.put(name, value);
             }
         } catch (NavException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
         navpop();
         return attr;
@@ -766,7 +766,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             documentByteOffset = (int) fragment;
             documentLengthBytes = (int) (fragment >> 32);
         } catch (NavException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
 
         lastCharPosition = 0;
@@ -797,7 +797,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
             return lastCharPosition;
         } catch (NavException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

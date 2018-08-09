@@ -4,8 +4,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -44,7 +44,7 @@ public class RequestHandlerExplain extends RequestHandler {
         } catch (TooManyClauses e) {
             return Response.badRequest(ds, "QUERY_TOO_BROAD",
                     "Query too broad, too many matching terms. Please be more specific.");
-        } catch (ParseException e) {
+        } catch (InvalidQuery e) {
             return Response.badRequest(ds, "PATT_SYNTAX_ERROR",
                     "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
         }

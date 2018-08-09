@@ -2,7 +2,8 @@ package nl.inl.blacklab.queryParser.corpusql;
 
 import java.io.StringReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
@@ -15,9 +16,9 @@ public class CorpusQueryLanguageParser {
      * 
      * @param query our query
      * @return the parsed query
-     * @throws ParseException on parse error
+     * @throws InvalidQuery on parse error
      */
-    public static TextPattern parse(String query) throws ParseException {
+    public static TextPattern parse(String query) throws InvalidQuery {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
         return parser.parseQuery(query);
     }
@@ -30,10 +31,14 @@ public class CorpusQueryLanguageParser {
     public CorpusQueryLanguageParser() {
     }
 
-    public TextPattern parseQuery(String query) throws ParseException {
-        GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
-        parser.wrapper = this;
-        return parser.query();
+    public TextPattern parseQuery(String query) throws InvalidQuery {
+        try {
+            GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
+            parser.wrapper = this;
+            return parser.query();
+        } catch (ParseException | TokenMgrError e) {
+            throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
+        }
     }
 
     int num(Token t) {
@@ -43,7 +48,7 @@ public class CorpusQueryLanguageParser {
     String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
-        throw new BlackLabException();
+        throw new BlackLabException("Cannot chop ends off string shorter than 2 chars");
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {

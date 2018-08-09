@@ -25,10 +25,12 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -96,8 +98,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                             .asSubclass(MetadataFetcher.class);
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
-                } catch (Exception e) {
-                    throw new BlackLabException(e);
+                } catch (ReflectiveOperationException | IllegalArgumentException e) {
+                    throw BlackLabException.wrap(e);
                 }
             }
         }
@@ -132,7 +134,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
     }
 
     @Override
-    public void index() throws IOException, MalformedInputFileException {
+    public void index() throws IOException, MalformedInputFile {
         BufferedReader r = new BufferedReader(reader);
         boolean firstWord = true;
 

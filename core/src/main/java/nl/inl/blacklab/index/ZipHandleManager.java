@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Manages opened zip files.
@@ -98,7 +98,7 @@ public class ZipHandleManager {
             try {
                 zipFile.close();
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
 

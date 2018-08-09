@@ -17,6 +17,7 @@ package nl.inl.blacklab.indexers;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -26,10 +27,10 @@ import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
 
@@ -160,22 +161,26 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         dates = new HashMap<>();
         authors = new HashMap<>();
         // File metadataFile = new File("c:\\temp\\dpo_metadata.txt");
-        BufferedReader r = FileUtil.openForReading(metadataFile);
-        String l;
-        while (true) {
-            try {
-                l = r.readLine();
-            } catch (IOException e) {
-                throw new BlackLabException(e);
+        try {
+            BufferedReader r = FileUtil.openForReading(metadataFile);
+            String l;
+            while (true) {
+                try {
+                    l = r.readLine();
+                } catch (IOException e) {
+                    throw BlackLabException.wrap(e);
+                }
+                if (l == null)
+                    break;
+                if (l.length() == 0)
+                    continue;
+                String[] fields = l.split("\t", -1);
+                titles.put(fields[0].trim(), fields[1].trim());
+                dates.put(fields[0].trim(), fields[3].trim());
+                authors.put(fields[0].trim(), fields[4].trim());
             }
-            if (l == null)
-                break;
-            if (l.length() == 0)
-                continue;
-            String[] fields = l.split("\t", -1);
-            titles.put(fields[0].trim(), fields[1].trim());
-            dates.put(fields[0].trim(), fields[3].trim());
-            authors.put(fields[0].trim(), fields[4].trim());
+        } catch (FileNotFoundException e) {
+            throw BlackLabException.wrap(e);
         }
         externalMetadataAvailable = true;
     }

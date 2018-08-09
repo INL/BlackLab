@@ -47,6 +47,7 @@ import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -475,7 +476,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             IndexReader indexReader = reader();
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -975,12 +976,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                     // Iterate over matching docs
                     DocIdSetIterator it = scorer.iterator();
                     while (true) {
-                        int docId;
-                        try {
-                            docId = it.nextDoc() + leafContext.docBase;
-                        } catch (IOException e) {
-                            throw new BlackLabException(e);
-                        }
+                        int docId = it.nextDoc() + leafContext.docBase;
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
                         Document d = freshReader.document(docId);
@@ -998,8 +994,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             // Finally, delete the documents from the Lucene index
             indexWriter.deleteDocuments(q);
 
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 

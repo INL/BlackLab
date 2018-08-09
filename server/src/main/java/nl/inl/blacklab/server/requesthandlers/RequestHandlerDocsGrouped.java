@@ -6,12 +6,10 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSample;
 import nl.inl.blacklab.search.results.ResultsWindow;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
 import nl.inl.blacklab.server.jobs.User;
 

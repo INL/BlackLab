@@ -17,7 +17,7 @@ package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.VersionFile;
 
 /**

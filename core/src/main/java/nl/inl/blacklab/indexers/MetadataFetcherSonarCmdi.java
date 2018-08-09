@@ -28,10 +28,10 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
-import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata from an
@@ -61,8 +61,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
         } else {
             try {
                 metadataZipFile = new ZipFile(new File(zipFilePath));
-            } catch (Exception e) {
-                throw new BlackLabException(e);
+            } catch (IOException e) {
+                throw BlackLabException.wrap(e);
             }
         }
     }
@@ -158,7 +158,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
             if (metadataZipFile == null)
                 is.close();
         } catch (SAXException | ParserConfigurationException | IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 

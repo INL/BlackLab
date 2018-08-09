@@ -20,8 +20,8 @@ import java.util.regex.Pattern;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.RegexpTooLargeException;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -52,7 +52,7 @@ public class TextPatternRegex extends TextPatternTerm {
             // If we pass in a really large regular expression, like a huge
             // list of words combined with OR, stack overflow occurs inside
             // Lucene's automaton building code and we may end up here.
-            throw new RegexpTooLargeException();
+            throw new RegexpTooLarge();
         }
     }
 

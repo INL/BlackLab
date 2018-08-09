@@ -31,7 +31,8 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
@@ -80,7 +81,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         if (config.getAnnotatedFields().size() > 1)
-            throw new InputFormatConfigException("CHAT input type can only have 1 annotated field");
+            throw new InvalidInputFormatConfig("CHAT input type can only have 1 annotated field");
         super.setConfigInputFormat(config);
     }
 
@@ -90,7 +91,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try (BufferedReader thefile = FileUtil.openForReading(file, "utf8")) {
             charEncodingLine = thefile.readLine();
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
         Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
         if (charEncoding == null) {
@@ -117,8 +118,12 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void close() throws IOException {
-        reader.close();
+    public void close() throws BlackLabException {
+        try {
+            reader.close();
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
+        }
     }
 
     @Override
@@ -419,7 +424,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
-                throw new BlackLabException(e1);
+                throw BlackLabException.wrap(e1);
             }
         }
         return date;

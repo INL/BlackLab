@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatConfigException;
 
 /**
  * Document format registry, for resolving a DocIndexer class given a format
@@ -73,7 +73,7 @@ public class DocumentFormats {
     }
 
     // Convenience method to avoid applications always having to create a DocIndexerFactory instance
-    public static void registerFormatsInDirectories(List<File> dirs) throws InputFormatConfigException {
+    public static void registerFormatsInDirectories(List<File> dirs) throws InvalidInputFormatConfig {
         builtinConfigFactory.addFormatsInDirectories(dirs);
     }
 

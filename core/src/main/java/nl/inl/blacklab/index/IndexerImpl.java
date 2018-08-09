@@ -37,11 +37,12 @@ import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -499,7 +500,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public void index(String documentName, Reader reader) throws Exception {
         try {
             docIndexerWrapper.file(documentName, reader);
-        } catch (MalformedInputFileException e) {
+        } catch (MalformedInputFile e) {
             listener.errorOccurred(e, documentName, null);
             logger.error("Parsing " + documentName + " failed:");
             e.printStackTrace();
@@ -547,7 +548,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setErrorHandler(listener);
             proc.processFile(file);
         } catch (FileNotFoundException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -576,14 +577,10 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     @Override
     public synchronized int docsToDoLeft() {
-        try {
-            if (maxNumberOfDocsToIndex < 0)
-                return maxNumberOfDocsToIndex;
-            int docsDone = searcher.writer().numDocs();
-            return Math.max(0, maxNumberOfDocsToIndex - docsDone);
-        } catch (Exception e) {
-            throw new BlackLabException(e);
-        }
+        if (maxNumberOfDocsToIndex < 0)
+            return maxNumberOfDocsToIndex;
+        int docsDone = searcher.writer().numDocs();
+        return Math.max(0, maxNumberOfDocsToIndex - docsDone);
     }
 
     /*

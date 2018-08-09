@@ -21,8 +21,9 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.index.MalformedInputFileException;
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 
@@ -102,7 +103,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         if (config.getAnnotatedFields().size() > 1)
-            throw new InputFormatConfigException("Tabular type can only have 1 annotated field");
+            throw new InvalidInputFormatConfig("Tabular type can only have 1 annotated field");
         super.setConfigInputFormat(config);
         Map<String, String> opt = config.getFileTypeOptions();
         Type type = opt.containsKey("type") ? Type.fromStringValue(opt.get("type")) : Type.CSV;
@@ -115,7 +116,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = CSVFormat.EXCEL;
             break;
         default:
-            throw new InputFormatConfigException("Unknown tabular type " + opt.get("type") + " (use csv or tsv)");
+            throw new InvalidInputFormatConfig("Unknown tabular type " + opt.get("type") + " (use csv or tsv)");
         }
         if (opt.containsKey("columnNames") && opt.get("columnNames").equalsIgnoreCase("true"))
             tabularFormat = tabularFormat.withFirstRecordAsHeader();
@@ -156,14 +157,18 @@ public class DocIndexerTabular extends DocIndexerConfig {
             inputReader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
             records = tabularFormat.parse(inputReader);
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
     @Override
-    public void close() throws Exception {
-        if (inputReader != null)
-            inputReader.close();
+    public void close() throws BlackLabException {
+        try {
+            if (inputReader != null)
+                inputReader.close();
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
+        }
     }
 
     @Override
@@ -205,7 +210,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             String rest = m.group(3).trim();
                             boolean selfClosing = rest.endsWith("/");
                             if (!isOpenTag && selfClosing)
-                                throw new MalformedInputFileException("Close tag must not also end with /: " + tagName);
+                                throw new MalformedInputFile("Close tag must not also end with /: " + tagName);
                             if (selfClosing)
                                 rest = rest.substring(0, rest.length() - 1);
                             Map<String, String> attributes = getAttr(rest);
@@ -213,9 +218,9 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             if (lookForDocumentTags && tagName.equals(config.getDocumentPath())) {
                                 // Document tag.
                                 if (inDocument && isOpenTag)
-                                    throw new MalformedInputFileException("Found document open tag inside document");
+                                    throw new MalformedInputFile("Found document open tag inside document");
                                 if (!inDocument && !isOpenTag)
-                                    throw new MalformedInputFileException(
+                                    throw new MalformedInputFile(
                                             "Found document close tag outside of document");
                                 if (isOpenTag) {
                                     // Start a new document and add attributes as metadata fields

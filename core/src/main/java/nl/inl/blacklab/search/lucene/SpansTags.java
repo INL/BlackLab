@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.Span;
 
 /**

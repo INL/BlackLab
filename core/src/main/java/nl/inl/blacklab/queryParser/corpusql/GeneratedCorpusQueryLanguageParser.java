@@ -5,7 +5,6 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.util.HashMap;
 import java.util.Map;
 
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -25,8 +24,6 @@ import nl.inl.blacklab.search.textpattern.TextPatternEdge;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;

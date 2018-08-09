@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 

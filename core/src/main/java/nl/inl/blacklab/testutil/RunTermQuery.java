@@ -25,7 +25,7 @@ import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
@@ -157,8 +157,8 @@ public class RunTermQuery {
                                     "      Freq:   " + postingsEnum.freq() + "\n");
                 }
             }
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 

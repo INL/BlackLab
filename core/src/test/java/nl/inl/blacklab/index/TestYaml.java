@@ -20,7 +20,7 @@ import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.indexers.config.InputFormatConfigException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /**
  *
@@ -41,7 +41,7 @@ public class TestYaml {
         try {
             factoryConfig.load("nodups", new File("src/test/resources/yaml/nodups.blf.yaml"));
             Assert.fail("expected duplicates error");
-        } catch (InputFormatConfigException ex) {
+        } catch (InvalidInputFormatConfig ex) {
             Assert.assertTrue(ex.getMessage().contains("Duplicate"));
         }
     }

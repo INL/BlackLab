@@ -11,7 +11,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -52,7 +52,7 @@ class FiidLookup {
             if (!hasFiids(numToCheck))
                 cachedFiids = null;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            BlackLabException.wrap(e);
         }
     }
 
@@ -78,9 +78,9 @@ class FiidLookup {
 
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return Integer.parseInt(reader.document(docId).get(fiidFieldName));
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+            return Long.parseLong(reader.document(docId).get(fiidFieldName));
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
 
     }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
@@ -45,7 +46,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             docIndexer = new DocIndexerChat();
             break;
         default:
-            throw new InputFormatConfigException(
+            throw new InvalidInputFormatConfig(
                     "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
         }
 
@@ -94,7 +95,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             // Define the properties that make up our annotated field
             List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
             if (annotations.isEmpty())
-                throw new InputFormatConfigException("No annotations defined for field " + af.getName());
+                throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
             AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
                     getSensitivitySetting(mainAnnotation), false);
@@ -148,11 +149,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 String find = param.get("find");
                 String replace = param.get("replace");
                 if (find == null || replace == null)
-                    throw new InputFormatConfigException("replace needs parameters find and replace");
+                    throw new InvalidInputFormatConfig("replace needs parameters find and replace");
                 try {
                     result = result.replaceAll(find, replace);
                 } catch (PatternSyntaxException e) {
-                    throw new InputFormatConfigException("Syntax error in replace regex: " + find);
+                    throw new InvalidInputFormatConfig("Syntax error in replace regex: " + find);
                 }
                 break;
             }

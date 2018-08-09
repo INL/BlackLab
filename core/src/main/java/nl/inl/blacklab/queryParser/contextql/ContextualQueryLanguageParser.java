@@ -9,7 +9,8 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -27,9 +28,9 @@ public class ContextualQueryLanguageParser {
      * @param searcher our index
      * @param query our query
      * @return the parsed query
-     * @throws ParseException on parse error
+     * @throws InvalidQuery on parse error
      */
-    public static CompleteQuery parse(BlackLabIndex searcher, String query) throws ParseException {
+    public static CompleteQuery parse(BlackLabIndex searcher, String query) throws InvalidQuery {
         ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(searcher);
         return parser.parse(query);
     }
@@ -142,10 +143,14 @@ public class ContextualQueryLanguageParser {
         this.index = searcher;
     }
     
-    public CompleteQuery parse(String query) throws ParseException {
-        GeneratedContextualQueryLanguageParser parser = new GeneratedContextualQueryLanguageParser(new StringReader(query));
-        parser.wrapper = this;
-        return parser.query();
+    public CompleteQuery parse(String query) throws InvalidQuery {
+        try {
+            GeneratedContextualQueryLanguageParser parser = new GeneratedContextualQueryLanguageParser(new StringReader(query));
+            parser.wrapper = this;
+            return parser.query();
+        } catch (ParseException | TokenMgrError e) {
+            throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
+        }
     }
 
     public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {

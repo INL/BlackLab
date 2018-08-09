@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -81,11 +80,7 @@ public class HitPropertyHitText extends HitProperty {
             return new HitPropValueContextWords(hits, annotation, new int[0], sensitive);
         int[] dest = new int[n];
         int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-        try {
-            System.arraycopy(context, contextStart + contextHitStart, dest, 0, n);
-        } catch (Exception e) {
-            throw new BlackLabException(e);
-        }
+        System.arraycopy(context, contextStart + contextHitStart, dest, 0, n);
         return new HitPropValueContextWords(hits, annotation, dest, sensitive);
     }
 

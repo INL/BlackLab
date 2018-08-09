@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * A list of DocResult objects (document-level query results). The list may be

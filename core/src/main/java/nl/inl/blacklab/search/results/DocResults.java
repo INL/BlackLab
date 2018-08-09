@@ -31,10 +31,10 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
-import nl.inl.blacklab.search.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.util.ReverseComparator;
@@ -135,20 +135,15 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         try {
             DocIdSetIterator it = scorer.iterator();
             while (true) {
-                int docId;
-                try {
-                    docId = it.nextDoc();
-                } catch (IOException e) {
-                    throw new BlackLabException(e);
-                }
+                int docId = it.nextDoc();
                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                     break;
 
                 DocResult dr = new DocResult(searcher, null, docId, scorer.score());
                 results.add(dr);
             }
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -205,7 +200,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 }
             });
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
 
         //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));

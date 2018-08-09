@@ -10,7 +10,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.search.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Used to get an integer field value for a document.
@@ -43,7 +43,7 @@ public class DocIntFieldGetter implements Closeable {
             uninv = new UninvertingReader(reader, fields);
             docValues = uninv.getNumericDocValues(intFieldName);
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw BlackLabException.wrap(e);
         }
     }
 
@@ -53,7 +53,7 @@ public class DocIntFieldGetter implements Closeable {
             try {
                 uninv.close();
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
     }
@@ -76,8 +76,8 @@ public class DocIntFieldGetter implements Closeable {
         Document document;
         try {
             document = reader.document(doc);
-        } catch (Exception e) {
-            throw new BlackLabException(e);
+        } catch (IOException e) {
+            throw BlackLabException.wrap(e);
         }
         String strVal = document.get(intFieldName);
         if (strVal != null) {

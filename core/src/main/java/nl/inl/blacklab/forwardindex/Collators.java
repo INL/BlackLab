@@ -4,8 +4,8 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.ForwardIndex.CollatorVersion;
-import nl.inl.blacklab.search.BlackLabException;
 
 /**
  * Collators to use for term equality testing for different sensitivity
@@ -67,7 +67,7 @@ public class Collators {
                 coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
                 return coll;
             } catch (ParseException e) {
-                throw new BlackLabException(e);
+                throw BlackLabException.wrap(e);
             }
         }
     }
