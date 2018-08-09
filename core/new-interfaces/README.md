@@ -41,31 +41,34 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 struct
-
-- write tests for the struct interfaces; use the new struct interfaces (IndexMetadata, etc.)
-    - NOTE: right now, IndexStructure needs IndexReader because it detects certain things from the index.
-            this implementation needs to stay supported, but become legacy. For new indexes, all metadata
-            should be in the metadata file, so the new implementation will be decoupled from the index.
-    - think about index format versioning. right now forwardindex, contentstore, etc. have a separate version,
-      but when we integrate with the Lucene index, we'll have a single Codec version. We should start moving away from
-      separate versioning.
-    - remove support for "index template" file; using input format configs is the future. Setting up your own IndexMetadata
-      from code should be possible as well, with IndexMetadataWriter.
++ use the new struct interfaces (IndexMetadata, etc.)
 + use AnnotatedField / Annotation / AnnotationSensitivity everywhere
 
 index
 + separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
-- introduce Doc; replace (most) docIds with it
-- replace separate ForwardIndexes with single ForwardIndex / AnnotationForwardIndex
-  use ContentStoreDoc / ForwardIndexDoc
++ introduce Doc; replace (most) docIds with it
   
 results
-- introduce new Results / Hits / Hit interfaces
-  also Groups / HitGroups / ResultProperty
+- replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
+- eliminate HitsWindow, have Hits contain optional window stats
+- introduce base interface Results connecting Hits, HitGroups, GroupGroups; 
+  also ResultProperty (HitProperty / GroupProperty)
   
 search
 - introduce new Search interface for building searches
 - update caching in BLS
+
+MISC
+- replace separate ForwardIndexes with single ForwardIndex / AnnotationForwardIndex
+  use ContentStoreDoc / ForwardIndexDoc
+- NOTE: right now, IndexStructure needs IndexReader because it detects certain things from the index.
+        this implementation needs to stay supported, but become legacy. For new indexes, all metadata
+        should be in the metadata file, so the new implementation will be decoupled from the index.
+- think about index format versioning. right now forwardindex, contentstore, etc. have a separate version,
+  but when we integrate with the Lucene index, we'll have a single Codec version. We should start moving away from
+  separate versioning.
+- remove support for "index template" file; using input format configs is the future. Setting up your own IndexMetadata
+  from code should be possible as well, with IndexMetadataWriter.
 
 
 ### Design ###
