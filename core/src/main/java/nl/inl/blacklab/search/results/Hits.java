@@ -71,7 +71,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      *
      * @param searcher the searcher object
      * @param field field our hits are from
-     * @param settings search settings
+     * @param settings search settings, or null for default
      * @return hits found
      */
     public static Hits emptyList(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
@@ -86,7 +86,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param searcher the searcher object
      * @param field field our hits are from
      * @param hits the list of hits to wrap, or null for empty Hits object
-     * @param settings search settings
+     * @param settings search settings, or null for default
      * @return hits found
      */
     public static Hits fromList(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
@@ -321,7 +321,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     public Hits(BlackLabIndex searcher, AnnotatedField field, HitsSettings settings) {
         this.index = searcher;
         this.field = field;
-        this.settings = settings == null ? searcher.hitsSettings().copy() : settings;
+        this.settings = settings == null ? searcher.hitsSettings() : settings;
         hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
     }
     
@@ -333,6 +333,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @param searcher the searcher object
      * @param field field our hits came from
      * @param hits the list of hits to wrap
+     * @param settings settings, or null for default
      */
     protected Hits(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         this(searcher, field, settings);

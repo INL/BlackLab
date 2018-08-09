@@ -72,7 +72,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         BlackLabIndex searcher = getSearcher();
         int docId = BlsUtils.getDocIdFromPid(searcher, docPid);
-        if (searcher.docExists(docId))
+        if (!searcher.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
         Doc doc = searcher.doc(docId);
         Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);
@@ -105,7 +105,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        Hits hitsInDoc = hits == null ? null : hits.getHitsInDoc(docId);
+        Hits hitsInDoc = hits == null ? Hits.emptyList(searcher, searcher.mainAnnotatedField(), null) : hits.getHitsInDoc(docId);
         content = doc.highlightContent(hitsInDoc, startAtWord, endAtWord);
 
         boolean outputXmlDeclaration = true;

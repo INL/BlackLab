@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -43,31 +44,35 @@ public class RequestHandlerServerInfo extends RequestHandler {
             ds.startAttrEntry("index", "name", index.getId());
             ds.startMap();
 
-            synchronized (index) {
-                IndexMetadata indexMetadata = index.getIndexMetadata();
-                IndexStatus status = index.getStatus();
-
-                ds.entry("displayName", indexMetadata.displayName());
-                ds.entry("status", status);
-
-                if (status.equals(IndexStatus.INDEXING)) {
-                    IndexListener indexProgress = index.getIndexerListener();
-                    synchronized (indexProgress) {
-                        ds.startEntry("indexProgress").startMap()
-                                .entry("filesProcessed", indexProgress.getFilesProcessed())
-                                .entry("docsDone", indexProgress.getDocsDone())
-                                .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                                .endMap().endEntry();
+            try {
+                synchronized (index) {
+                    IndexMetadata indexMetadata = index.getIndexMetadata();
+                    IndexStatus status = index.getStatus();
+    
+                    ds.entry("displayName", indexMetadata.displayName());
+                    ds.entry("status", status);
+    
+                    if (status.equals(IndexStatus.INDEXING)) {
+                        IndexListener indexProgress = index.getIndexerListener();
+                        synchronized (indexProgress) {
+                            ds.startEntry("indexProgress").startMap()
+                                    .entry("filesProcessed", indexProgress.getFilesProcessed())
+                                    .entry("docsDone", indexProgress.getDocsDone())
+                                    .entry("tokensProcessed", indexProgress.getTokensProcessed())
+                                    .endMap().endEntry();
+                        }
                     }
+    
+                    String formatIdentifier = indexMetadata.documentFormat();
+                    if (formatIdentifier != null && formatIdentifier.length() > 0)
+                        ds.entry("documentFormat", formatIdentifier);
+                    ds.entry("timeModified", indexMetadata.timeModified());
+                    if (indexMetadata.tokenCount() > 0)
+                        ds.entry("tokenCount", indexMetadata.tokenCount());
                 }
-
-                String formatIdentifier = indexMetadata.documentFormat();
-                if (formatIdentifier != null && formatIdentifier.length() > 0)
-                    ds.entry("documentFormat", formatIdentifier);
-                ds.entry("timeModified", indexMetadata.timeModified());
-                if (indexMetadata.tokenCount() > 0)
-                    ds.entry("tokenCount", indexMetadata.tokenCount());
-
+            } catch (IndexTooOld e) {
+                // Cannot open this index; log and skip it.
+                logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }
 
             ds.endMap();

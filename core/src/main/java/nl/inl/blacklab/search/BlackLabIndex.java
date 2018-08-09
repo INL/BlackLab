@@ -3,17 +3,16 @@ package nl.inl.blacklab.search;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.text.Collator;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -58,10 +57,10 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param indexDir the index directory
      * @return the searcher
-     * @throws CorruptIndexException
-     * @throws IOException
+     * @throw IndexTooOld if the index format is no longer supported
+     * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir) throws CorruptIndexException, IOException {
+    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null);
     }
 
@@ -71,10 +70,10 @@ public interface BlackLabIndex extends Closeable {
      * @param indexDir the index directory
      * @param settings default search settings
      * @return the searcher
-     * @throws CorruptIndexException
-     * @throws IOException
+     * @throw IndexTooOld if the index format is no longer supported
+     * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir, HitsSettings settings) throws CorruptIndexException, IOException {
+    static BlackLabIndex open(File indexDir, HitsSettings settings) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
 

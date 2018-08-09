@@ -48,6 +48,7 @@ import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -364,10 +365,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param createNewIndex if true, delete existing index in this location if it
      *            exists.
      * @param indexTemplateFile index template file to use to create index
-     * @throws IOException
+     * @throws ErrorOpeningIndex
      */
     BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile)
-            throws IOException {
+            throws ErrorOpeningIndex {
         this(indexDir, indexMode, createNewIndex, indexTemplateFile, null);
     }
 
@@ -380,27 +381,31 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *            exists.
      * @param indexTemplateFile index template file to use to create index
      * @param settings default search settings
-     * @throws IOException
+     * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, HitsSettings settings) throws IOException {
+    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, HitsSettings settings) throws ErrorOpeningIndex {
         this(settings);
         this.indexMode = indexMode;
 
-        ConfigReader.applyConfig(this);
+        try {
+            ConfigReader.applyConfig(this);
 
-        openIndex(indexDir, indexMode, createNewIndex);
+            openIndex(indexDir, indexMode, createNewIndex);
 
-        // Determine the index structure
-        if (traceIndexOpening)
-            logger.debug("  Determining index structure...");
-        IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
-        indexMetadata = indexMetadataImpl;
-        if (indexMode)
-            indexMetadataWriter = indexMetadataImpl;
-        else
-            indexMetadata.freeze();
+            // Determine the index structure
+            if (traceIndexOpening)
+                logger.debug("  Determining index structure...");
+            IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
+            indexMetadata = indexMetadataImpl;
+            if (indexMode)
+                indexMetadataWriter = indexMetadataImpl;
+            else
+                indexMetadata.freeze();
 
-        finishOpeningIndex(indexDir, indexMode, createNewIndex);
+            finishOpeningIndex(indexDir, indexMode, createNewIndex);
+        } catch (IOException e) {
+            throw new ErrorOpeningIndex(e);
+        }
     }
 
     // Methods for querying the index

@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -199,18 +200,14 @@ public class Index {
      * up-to-date version.
      *
      * @return the index metadata
-     * @throws InternalServerError when no searcher could not be opened
+     * @throws ErrorOpeningIndex when searcher could not be opened
      */
-    public synchronized IndexMetadata getIndexMetadata() throws InternalServerError {
+    public synchronized IndexMetadata getIndexMetadata() throws ErrorOpeningIndex {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {
             // swallow, we're apparently still busy indexing something,
             // this isn't a problem, we'll just use the Indexer's searcher to get the structure instead
-        } catch (InternalServerError e) {
-            // Rethrow here on purpose
-            // this means there is something wrong in such a way that we can't even open a Searcher anymore
-            throw e;
         }
 
         if (this.searcher != null)
@@ -241,20 +238,14 @@ public class Index {
      * @throws ServiceUnavailable if the index could not be opened due to currently
      *             ongoing indexing
      */
-    private synchronized void openForSearching() throws InternalServerError, ServiceUnavailable {
+    private synchronized void openForSearching() throws ErrorOpeningIndex, ServiceUnavailable {
         cleanupClosedIndexerOrThrow();
 
         if (this.searcher != null)
             return;
 
-        try {
-            logger.debug("Opening index '" + id + "', dir = " + dir);
-            searcher = BlackLabIndex.open(this.dir);
-        } catch (Exception e) {
-            this.searcher = null;
-
-            throw new InternalServerError("Could not open index '" + id + "'", 27, e);
-        }
+        logger.debug("Opening index '" + id + "', dir = " + dir);
+        searcher = BlackLabIndex.open(this.dir);
     }
 
     /**

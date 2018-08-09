@@ -62,11 +62,7 @@ public final class HitsSettings {
         desiredContextSize = DEFAULT_CONTEXT_SIZE;
     }
     
-    /**
-     * Get a (non-frozen) copy.
-     * @return non-frozen copy
-     */
-    public HitsSettings copy() {
+    private HitsSettings copy() {
         return new HitsSettings(this);
     }
 

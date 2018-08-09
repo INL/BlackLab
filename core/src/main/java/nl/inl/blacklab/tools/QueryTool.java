@@ -40,6 +40,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -521,9 +522,9 @@ public class QueryTool {
      * @param in where to read commands from
      * @param out where to write output to
      * @param err where to write errors to
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex if we couldn't open the index
      */
-    public QueryTool(File indexDir, BufferedReader in, PrintWriter out, PrintWriter err) throws CorruptIndexException {
+    public QueryTool(File indexDir, BufferedReader in, PrintWriter out, PrintWriter err) throws ErrorOpeningIndex {
         this.in = in;
         this.out = out;
         this.err = err;
@@ -538,12 +539,8 @@ public class QueryTool {
         }
 
         // Create the BlackLab searcher object
-        try {
-            searcher = BlackLabIndex.open(indexDir);
-            contentsField = searcher.mainAnnotatedField();
-        } catch (IOException e) {
-            throw BlackLabException.wrap(e);
-        }
+        searcher = BlackLabIndex.open(indexDir);
+        contentsField = searcher.mainAnnotatedField();
 
         if (in == null) {
             webSafeOperationOnly = true; // don't allow file operations in web mode

@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -29,7 +30,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 /**
  * Get information about the structure of an index.
@@ -177,13 +177,15 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.startEntry("properties").startMap();
         for (Annotation annotation: annotations) {
             ds.startAttrEntry("property", "name", annotation.name()).startMap();
+            AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
+            String offsetsAlternative = offsetsSensitivity == null ? "" : offsetsSensitivity.sensitivity().luceneFieldSuffix();
             ds
                     .entry("displayName", annotation.displayName())
                     .entry("description", annotation.description())
                     .entry("uiType", annotation.uiType())
                     .entry("hasForwardIndex", annotation.hasForwardIndex())
                     .entry("sensitivity", annotation.sensitivitySettingDesc())
-                    .entry("offsetsAlternative", StringUtil.nullToEmpty(annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix()))
+                    .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
             String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
