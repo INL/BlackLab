@@ -25,12 +25,8 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
-import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
-import org.eclipse.collections.api.tuple.primitive.IntIntPair;
-import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -41,11 +37,9 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.util.StringUtil;
 import nl.inl.util.ThreadPriority;
 
 public class Hits implements Iterable<Hit>, Prioritizable {
@@ -586,78 +580,13 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * @return the frequency of each occurring token
      */
     public TermFrequencyList getCollocations() {
-        return getCollocations(null, null, true);
+        return TermFrequencyList.collocations(this, null, null, true);
     }
 
-    /**
-     * Count occurrences of context words around hit.
-     *
-     * @param annotation annotation to use for the collocations, or null if default
-     * @param ctx query execution context, containing the sensitivity settings
-     * @param sort whether or not to sort the list by descending frequency
-     *
-     * @return the frequency of each occurring token
-     */
     public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        if (annotation == null)
-            annotation = index.mainAnnotatedField().annotations().main();
-        
-        // TODO: use sensitivity settings
-//        if (ctx == null)
-//            ctx = searcher.defaultExecutionContext(settings().concordanceField());
-//        ctx = ctx.withAnnotation(annotation);
-        
-        Contexts contexts = new Contexts(this, Arrays.asList(annotation));
-        MutableIntIntMap coll = IntIntMaps.mutable.empty();
-        for (int j = 0; j < hits.size(); j++) {
-            int[] context = contexts.getContext(j);
-
-            // Count words
-            int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
-            int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
-            int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
-            int indexInContent = Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-            for (int i = 0; i < contextLength; i++, indexInContent++) {
-                if (i >= contextHitStart && i < contextRightStart)
-                    continue; // don't count words in hit itself, just around [option..?]
-                int w = context[indexInContent];
-                int n;
-                if (!coll.contains(w))
-                    n = 1;
-                else
-                    n = coll.get(w) + 1;
-                coll.put(w, n);
-            }
-        }
-
-        // Get the actual words from the sort positions
-        MatchSensitivity sensitivity = index.defaultMatchSensitivity();
-        Terms terms = index.forwardIndex(contexts.getContextAnnotations().get(0)).terms();
-        Map<String, Integer> wordFreq = new HashMap<>();
-        for (IntIntPair e : coll.keyValuesView()) {
-            int key = e.getOne();
-            int value = e.getTwo();
-            String word = terms.get(key);
-            if (!sensitivity.isDiacriticsSensitive()) {
-                word = StringUtil.stripAccents(word);
-            }
-            if (!sensitivity.isCaseSensitive()) {
-                word = word.toLowerCase();
-            }
-            // Note that multiple ids may map to the same word (because of sensitivity settings)
-            // Here, those groups are merged.
-            Integer n = wordFreq.get(word);
-            if (n == null) {
-                n = 0;
-            }
-            n += value;
-            wordFreq.put(word, n);
-        }
-
-        // Transfer from map to list
-        return new TermFrequencyList(wordFreq, sort);
+        return TermFrequencyList.collocations(this, annotation, ctx, sort);
     }
-
+    
     /**
      * Get a window into this list of hits.
      *
@@ -915,17 +844,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
     }
 
     
-    // Hits display
-    //--------------------------------------------------------------------
-
-    public Concordances concordances(int contextSize) {
-        return new Concordances(this, contextSize);
-    }
-    
-    public Kwics kwics(int contextSize) {
-        return new Kwics(this, contextSize);
-    }
-    
     // Hits fetching
     //--------------------------------------------------------------------
 
@@ -1077,6 +995,10 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
     }
 
+    public ThreadPriority getThreadPriority() {
+        return threadPriority;
+    }
+    
     // Stats about hits fetching
     // --------------------------------------------------------------------------
     
@@ -1293,11 +1215,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
             // Probably not all hits have been seen yet. Collect them all.
             ensureAllHitsRead();
         } catch (InterruptedException e) {
-            // Thread was interrupted; don't complete the operation but return
-            // and let the caller detect and deal with the interruption.
-            // Returned value is probably not the correct total number of hits,
-            // but will not cause any crashes. The thread was interrupted anyway,
-            // the value should never be presented to the user.
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
             maxHitsCounted = true; // indicate that we've stopped counting
             Thread.currentThread().interrupt();
         }
@@ -1318,11 +1237,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
-            // Thread was interrupted; don't complete the operation but return
-            // and let the caller detect and deal with the interruption.
-            // Returned value is probably not the correct total number of hits,
-            // but will not cause any crashes. The thread was interrupted anyway,
-            // the value should never be presented to the user.
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
             Thread.currentThread().interrupt();
         }
         return hitsCounted;
@@ -1337,11 +1253,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
-            // Thread was interrupted; don't complete the operation but return
-            // and let the caller detect and deal with the interruption.
-            // Returned value is probably not the correct total number of hits,
-            // but will not cause any crashes. The thread was interrupted anyway,
-            // the value should never be presented to the user.
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
             Thread.currentThread().interrupt();
         }
         return docsRetrieved;
@@ -1357,11 +1270,8 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
-            // Thread was interrupted; don't complete the operation but return
-            // and let the caller detect and deal with the interruption.
-            // Returned value is probably not the correct total number of hits,
-            // but will not cause any crashes. The thread was interrupted anyway,
-            // the value should never be presented to the user.
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
             Thread.currentThread().interrupt();
         }
         return docsCounted;
@@ -1445,8 +1355,17 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         return maxHitsCounted;
     }
 
-    public ThreadPriority getThreadPriority() {
-        return threadPriority;
+    // Hits display
+    //--------------------------------------------------------------------
+
+    public Concordances concordances(int contextSize) {
+        return new Concordances(this, contextSize);
     }
+    
+    public Kwics kwics(int contextSize) {
+        return new Kwics(this, contextSize);
+    }
+    
+    
 
 }
