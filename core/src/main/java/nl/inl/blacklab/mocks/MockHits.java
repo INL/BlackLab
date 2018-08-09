@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -153,11 +152,6 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public void findContext(List<Annotation> fieldProps) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public TermFrequencyList getCollocations(Annotation propName, QueryExecutionContext ctx, boolean sort) {
         throw new UnsupportedOperationException();
     }
@@ -178,22 +172,7 @@ public class MockHits extends Hits {
     }
 
     @Override
-    public List<Annotation> getContextFieldPropName() {
-        return null;
-    }
-
-    @Override
-    public void setContextField(List<Annotation> contextField) {
-        // NOP
-    }
-
-    @Override
     public Hits getHitsInDoc(int docid) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int[] getHitContext(int hitNumber) {
         throw new UnsupportedOperationException();
     }
 

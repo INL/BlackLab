@@ -57,7 +57,7 @@ public class ResultsGrouper extends HitGroups {
     /**
      * Field our current concordances came from.
      */
-    private List<Annotation> contextField;
+    private List<Annotation> contextAnnotations;
 
     /**
      * Total number of hits.
@@ -98,9 +98,9 @@ public class ResultsGrouper extends HitGroups {
         defaultConcField = hits.field();
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
-            hits.findContext(requiredContext);
+            hits.getContexts().findContext(requiredContext);
         }
-        contextField = hits.getContextFieldPropName();
+        contextAnnotations = hits.getContexts().getContextAnnotations();
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
         for (int i = 0; i < hits.size(); i++) {
@@ -120,7 +120,7 @@ public class ResultsGrouper extends HitGroups {
             HitPropValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
             HitGroup group = new HitGroup(searcher, groupId, defaultConcField, hitList, hits.settings());
-            group.setContextField(contextField);
+            group.setContextAnnotations(contextAnnotations);
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }

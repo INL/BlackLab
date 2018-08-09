@@ -62,7 +62,7 @@ public class HitGroup extends Group {
         return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
     }
 
-    public void setContextField(List<Annotation> contextField) {
-        results.setContextField(contextField);
+    public void setContextAnnotations(List<Annotation> contextField) {
+        results.contexts.setContextField(contextField);
     }
 }

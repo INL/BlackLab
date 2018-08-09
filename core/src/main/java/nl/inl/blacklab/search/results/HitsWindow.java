@@ -54,7 +54,7 @@ public class HitsWindow extends Hits implements ResultsWindow {
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;
-        this.contextFieldsPropName = source.getContextFieldPropName();
+        this.contexts.contextAnnotations = source.getContexts().getContextAnnotations();
 
         // Error if first out of range
         boolean emptyResultSet = !source.sizeAtLeast(1);

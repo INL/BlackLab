@@ -156,9 +156,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     private AnnotatedField field;
 
-    /** Context of our query; mostly used to keep track of captured groups. */
-    private HitQueryContext hitQueryContext;
-
     /**
      * Helper object for implementing query thread priority (making sure queries
      * don't hog the CPU for way too long).
@@ -171,6 +168,9 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * The hits.
      */
     protected List<Hit> hits;
+
+    /** Context of our query; mostly used to keep track of captured groups. */
+    private HitQueryContext hitQueryContext;
 
     /**
      * The captured groups, if we have any.
@@ -249,35 +249,6 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     private Map<Hit, Concordance> concordances;
     
-    // Context
-
-    /**
-     * The hit contexts.
-     *
-     * There may be multiple contexts for each hit (see contextFieldsPropName). Each
-     * int array starts with three bookkeeping integers, followed by the contexts
-     * information. The bookkeeping integers are: * 0 = hit start, index of the hit
-     * word (and length of the left context), counted from the start the context * 1
-     * = right start, start of the right context, counted from the start the context
-     * * 2 = context length, length of 1 context. As stated above, there may be
-     * multiple contexts.
-     *
-     * The first context therefore starts at index 3.
-     *
-     */
-    private int[][] contexts;
-
-    /**
-     * The current context size (number of words around hits we now have).
-     */
-    private int currentContextSize;
-
-    /**
-     * If we have context information, this specifies the property (i.e. word,
-     * lemma, pos) the context came from. Otherwise, it is null.
-     */
-    protected List<Annotation> contextFieldsPropName;
-    
     // Stats
 
     /**
@@ -339,7 +310,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         this(searcher, field, settings);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
-        currentContextSize = -1;
+        contexts.currentContextSize = -1;
         int prevDoc = -1;
         docsRetrieved = docsCounted = 0;
         for (Hit h : this.hits) {
@@ -459,7 +430,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         
         copyMaxAndContextFrom(copyFrom);
 
-        currentContextSize = -1; // context is not copied
+        contexts.currentContextSize = -1; // context is not copied
         etiquette = new ThreadPriority();
     }
 
@@ -578,7 +549,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = sortProp.needsContext();
         if (requiredContext != null)
-            hits.findContext(requiredContext);
+            hits.getContexts().findContext(requiredContext);
 
         // Perform the actual sort.
         Arrays.sort(hits.sortOrder, sortProp);
@@ -604,7 +575,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      */
     public Hits filteredBy(HitProperty property, HitPropValue value) {
         List<Annotation> requiredContext = property.needsContext();
-        findContext(requiredContext);
+        contexts.findContext(requiredContext);
 
         List<Hit> filtered = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
@@ -665,16 +636,16 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 //            ctx = searcher.defaultExecutionContext(settings().concordanceField());
 //        ctx = ctx.withAnnotation(annotation);
         
-        findContext(Arrays.asList(annotation));
+        contexts.findContext(Arrays.asList(annotation));
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < hits.size(); j++) {
-            int[] context = contexts[j];
+            int[] context = contexts.contexts[j];
 
             // Count words
-            int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
-            int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
-            int contextLength = context[CONTEXTS_LENGTH_INDEX];
-            int indexInContent = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+            int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
+            int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
+            int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
+            int indexInContent = Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
             for (int i = 0; i < contextLength; i++, indexInContent++) {
                 if (i >= contextHitStart && i < contextRightStart)
                     continue; // don't count words in hit itself, just around [option..?]
@@ -690,7 +661,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
         // Get the actual words from the sort positions
         MatchSensitivity sensitivity = index.defaultMatchSensitivity();
-        Terms terms = index.forwardIndex(contextFieldsPropName.get(0)).terms();
+        Terms terms = index.forwardIndex(contexts.getContextAnnotations().get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();
@@ -1135,7 +1106,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * You shouldn't have to call this manually, as it's automatically called when
      * you call getConcordance() for the first time.
      */
-    synchronized void findConcordances() {
+    private synchronized void findConcordances() {
         if (settings.concordanceType() == ConcordanceType.FORWARD_INDEX) {
             findKwics();
             return;
@@ -1247,7 +1218,7 @@ public class Hits implements Iterable<Hit>, Prioritizable {
      * you call getKwic() for the first time.
      *
      */
-    synchronized void findKwics() {
+    private synchronized void findKwics() {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -1354,16 +1325,16 @@ public class Hits implements Iterable<Hit>, Prioritizable {
 
         // Save existing context so we can restore it afterwards
         int[][] oldContexts = null;
-        if (!hits.isEmpty() && contexts != null)
-            oldContexts = saveContexts();
+        if (!hits.isEmpty() && contexts.contexts != null)
+            oldContexts = contexts.saveContexts();
 
         // TODO: more efficient to get all contexts with one getContextWords() call!
 
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
-            getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
-            punctContext = saveContexts();
+            contexts.getContextWords(wordsAroundHit, Arrays.asList(punctForwardIndex));
+            punctContext = contexts.saveContexts();
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
 
@@ -1382,14 +1353,14 @@ public class Hits implements Iterable<Hit>, Prioritizable {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
-                getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
-                attrContext[i] = saveContexts();
+                contexts.getContextWords(wordsAroundHit, Arrays.asList(attrFI[i]));
+                attrContext[i] = contexts.saveContexts();
                 i++;
             }
         }
         
         // Get word context
-        getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
+        contexts.getContextWords(wordsAroundHit, Arrays.asList(forwardIndex));
         Terms terms = forwardIndex.terms();
 
         // Make the concordances from the context
@@ -1399,11 +1370,11 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         for (int i = 0; i < hits.size(); i++) {
             Hit h = hits.get(i);
             List<String> tokens = new ArrayList<>();
-            int[] context = contexts[i];
-            int contextLength = context[CONTEXTS_LENGTH_INDEX];
-            int contextRightStart = context[CONTEXTS_RIGHT_START_INDEX];
-            int contextHitStart = context[CONTEXTS_HIT_START_INDEX];
-            int indexInContext = CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+            int[] context = contexts.contexts[i];
+            int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
+            int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
+            int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
+            int indexInContext = Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
             for (int j = 0; j < contextLength; j++, indexInContext++) {
 
                 // Add punctuation before word
@@ -1440,242 +1411,277 @@ public class Hits implements Iterable<Hit>, Prioritizable {
         }
 
         if (oldContexts != null) {
-            restoreContexts(oldContexts);
+            contexts.restoreContexts(oldContexts);
         }
     }
 
     
     // Stuff related to contexts
     //-----------------------------------------------------------
-
-    /** In context arrays, how many bookkeeping ints are stored at the start? */
-    public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
     
-    /**
-     * In context arrays, what index after the bookkeeping units indicates the hit
-     * start?
-     */
-    public final static int CONTEXTS_HIT_START_INDEX = 0;
-    
-    /**
-     * In context arrays, what index indicates the hit end (start of right part)?
-     */
-    public final static int CONTEXTS_RIGHT_START_INDEX = 1;
-    
-    /** In context arrays, what index indicates the length of the context? */
-    public final static int CONTEXTS_LENGTH_INDEX = 2;
-    
-    
-    /**
-     * Retrieve context words for the hits.
-     *
-     * @param fieldProps the field and properties to use for the context
-     */
-    public synchronized void findContext(List<Annotation> fieldProps) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Just go ahead with the hits we did
-            // get, so at least we can return with valid context.
-            Thread.currentThread().interrupt();
-        }
-        // Make sure we don't have the desired context already
-        if (contextFieldsPropName != null && contextFieldsPropName.equals(fieldProps)
-                && settings().contextSize() == currentContextSize) {
-            return;
-        }
+    Contexts contexts = new Contexts();
 
-        List<ForwardIndex> fis = new ArrayList<>();
-        for (Annotation fieldPropName : fieldProps) {
-            fis.add(index.forwardIndex(fieldPropName));
-        }
-
-        // Get the context
-        // Group hits per document
-        List<Hit> hitsInSameDoc = new ArrayList<>();
-        int currentDoc = -1;
-        int index = 0;
-        if (contexts == null || contexts.length < hits.size()) {
-            contexts = new int[hits.size()][];
-        }
-        for (Hit hit : hits) {
-            if (hit.doc() != currentDoc) {
-                if (currentDoc >= 0) {
-                    try {
-                        etiquette.behave();
-                    } catch (InterruptedException e) {
-                        // Thread was interrupted. Just go ahead with the hits we did
-                        // get, so at least we can return with valid context.
-                        Thread.currentThread().interrupt();
-                    }
-
-                    findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
-
-                    // Reset hits list for next doc
-                    hitsInSameDoc.clear();
-                }
-                currentDoc = hit.doc(); // start a new document
-            }
-            hitsInSameDoc.add(hit);
-            index++;
-        }
-        if (!hitsInSameDoc.isEmpty())
-            findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
-
-        currentContextSize = settings().contextSize();
-        contextFieldsPropName = new ArrayList<>(fieldProps);
+    public Contexts getContexts() {
+        return contexts;
     }
 
-    /**
-     * Helper method for findContext(). Finds the hits in a single document and adds
-     * context to our contexts array.
-     *
-     * @param hitsInSameDoc the hits in one document
-     * @param firstHitIndex index of the first hit
-     * @param fis forward indices needed for contexts
-     */
-    private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
-        // Find context for the hits in the current document
-        Hits hitsObj = new Hits(index, index.mainAnnotatedField(), hitsInSameDoc, settings);
-        hitsObj.copyMaxAndContextFrom(this);
-        hitsObj.getContextWords(settings().contextSize(), fis);
-
-        // Copy the contexts from the temporary Hits object to this one
-        for (int i = 0; i < hitsInSameDoc.size(); i++) {
-            contexts[firstHitIndex + i] = hitsObj.getHitContext(i);
-        }
-    }
-
-    /**
-     * Get context words from the forward index.
-     *
-     * NOTE: not synchronized because only ever called from synchronized methods!
-     *
-     * @param wordsAroundHit how many words of context we want
-     * @param contextSources forward indices to get context from
-     */
-    private synchronized void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
-
-        int n = hits.size();
-        if (n == 0)
-            return;
-        int[] startsOfSnippets = new int[n];
-        int[] endsOfSnippets = new int[n];
-        int i = 0;
-        for (Hit h : hits) {
-            startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
-            endsOfSnippets[i] = h.end() + wordsAroundHit;
-            i++;
-        }
-
-        int fiNumber = 0;
-        int doc = hits.get(0).doc();
-        for (ForwardIndex forwardIndex : contextSources) {
-            // Get all the words from the forward index
-            List<int[]> words;
-            if (forwardIndex != null) {
-                // We have a forward index for this field. Use it.
-                int fiid = forwardIndex.luceneDocIdToFiid(doc);
-                words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
-            } else {
-                throw new BlackLabException("Cannot get context without a forward index");
+    public class Contexts {
+        
+        /** In context arrays, how many bookkeeping ints are stored at the start? */
+        public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
+        
+        /**
+         * In context arrays, what index after the bookkeeping units indicates the hit
+         * start?
+         */
+        public final static int CONTEXTS_HIT_START_INDEX = 0;
+        
+        /**
+         * In context arrays, what index indicates the hit end (start of right part)?
+         */
+        public final static int CONTEXTS_RIGHT_START_INDEX = 1;
+        
+        /** In context arrays, what index indicates the length of the context? */
+        public final static int CONTEXTS_LENGTH_INDEX = 2;
+        
+        
+        /**
+         * The hit contexts.
+         *
+         * There may be multiple contexts for each hit (see contextFieldsPropName). Each
+         * int array starts with three bookkeeping integers, followed by the contexts
+         * information. The bookkeeping integers are: * 0 = hit start, index of the hit
+         * word (and length of the left context), counted from the start the context * 1
+         * = right start, start of the right context, counted from the start the context
+         * * 2 = context length, length of 1 context. As stated above, there may be
+         * multiple contexts.
+         *
+         * The first context therefore starts at index 3.
+         *
+         */
+        private int[][] contexts;
+    
+        /**
+         * The current context size (number of words around hits we now have).
+         */
+        private int currentContextSize;
+    
+        /**
+         * If we have context information, this specifies the annotation(s) (i.e. word,
+         * lemma, pos) the context came from. Otherwise, it is null.
+         */
+        protected List<Annotation> contextAnnotations;
+        
+        /**
+         * Retrieve context words for the hits.
+         *
+         * @param fieldProps the field and properties to use for the context
+         */
+        public synchronized void findContext(List<Annotation> fieldProps) {
+            try {
+                ensureAllHitsRead();
+            } catch (InterruptedException e) {
+                // Thread was interrupted. Just go ahead with the hits we did
+                // get, so at least we can return with valid context.
+                Thread.currentThread().interrupt();
             }
-
-            // Build the actual concordances
-            Iterator<int[]> wordsIt = words.iterator();
-            int hitNum = 0;
+            // Make sure we don't have the desired context already
+            if (contextAnnotations != null && contextAnnotations.equals(fieldProps)
+                    && settings().contextSize() == currentContextSize) {
+                return;
+            }
+    
+            List<ForwardIndex> fis = new ArrayList<>();
+            for (Annotation fieldPropName : fieldProps) {
+                fis.add(index.forwardIndex(fieldPropName));
+            }
+    
+            // Get the context
+            // Group hits per document
+            List<Hit> hitsInSameDoc = new ArrayList<>();
+            int currentDoc = -1;
+            int index = 0;
             if (contexts == null || contexts.length < hits.size()) {
                 contexts = new int[hits.size()][];
             }
             for (Hit hit : hits) {
-                int[] theseWords = wordsIt.next();
-
-                // Put the concordance in the Hit object
-                int firstWordIndex = startsOfSnippets[hitNum];
-
-                if (fiNumber == 0) {
-                    // Allocate context array and set hit and right start and context length
-                    contexts[hitNum] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS
-                            + theseWords.length * contextSources.size()];
-                    contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start() - firstWordIndex;
-                    contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end() - firstWordIndex;
-                    contexts[hitNum][CONTEXTS_LENGTH_INDEX] = theseWords.length;
+                if (hit.doc() != currentDoc) {
+                    if (currentDoc >= 0) {
+                        try {
+                            etiquette.behave();
+                        } catch (InterruptedException e) {
+                            // Thread was interrupted. Just go ahead with the hits we did
+                            // get, so at least we can return with valid context.
+                            Thread.currentThread().interrupt();
+                        }
+    
+                        findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
+    
+                        // Reset hits list for next doc
+                        hitsInSameDoc.clear();
+                    }
+                    currentDoc = hit.doc(); // start a new document
                 }
-                // Copy the context we just retrieved into the context array
-                int start = fiNumber * theseWords.length + CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-                System.arraycopy(theseWords, 0, contexts[hitNum], start, theseWords.length);
-                hitNum++;
+                hitsInSameDoc.add(hit);
+                index++;
             }
-
-            fiNumber++;
+            if (!hitsInSameDoc.isEmpty())
+                findPartOfContext(hitsInSameDoc, index - hitsInSameDoc.size(), fis);
+    
+            currentContextSize = settings().contextSize();
+            contextAnnotations = new ArrayList<>(fieldProps);
         }
-    }
-
-    /**
-     * Get the context information from the list of hits, so we can look up a
-     * different context but still have access to this one as well.
-     *
-     * NOTE: not synchronized because only ever called from synchronized methods!
-     *
-     * @return the context
-     */
-    private synchronized int[][] saveContexts() {
-        int[][] saved = new int[contexts.length][];
-        for (int i = 0; i < contexts.length; i++) {
-            saved[i] = Arrays.copyOf(contexts[i], contexts[i].length);
-        }
-        return saved;
-    }
-
-    /**
-     * Put context information into the list of hits.
-     *
-     * NOTE: not synchronized because only ever called from synchronized methods!
-     *
-     * @param saved the context to restore
-     */
-    private synchronized void restoreContexts(int[][] saved) {
-        if (contexts == null || contexts.length != saved.length) {
-            contexts = new int[saved.length][];
-        }
-        for (int i = 0; i < saved.length; i++) {
-            if (contexts[i] == null || contexts[i].length != saved[i].length) {
-                contexts[i] = new int[saved[i].length];
+    
+        /**
+         * Helper method for findContext(). Finds the hits in a single document and adds
+         * context to our contexts array.
+         *
+         * @param hitsInSameDoc the hits in one document
+         * @param firstHitIndex index of the first hit
+         * @param fis forward indices needed for contexts
+         */
+        private synchronized void findPartOfContext(List<Hit> hitsInSameDoc, int firstHitIndex, List<ForwardIndex> fis) {
+            // Find context for the hits in the current document
+            Hits hitsObj = new Hits(index, index.mainAnnotatedField(), hitsInSameDoc, settings);
+            hitsObj.copyMaxAndContextFrom(Hits.this);
+            hitsObj.getContexts().getContextWords(settings().contextSize(), fis);
+    
+            // Copy the contexts from the temporary Hits object to this one
+            for (int i = 0; i < hitsInSameDoc.size(); i++) {
+                contexts[firstHitIndex + i] = hitsObj.getContexts().getHitContext(i);
             }
-            System.arraycopy(saved[i], 0, contexts, 0, saved[i].length);
+        }
+    
+        /**
+         * Get context words from the forward index.
+         *
+         * NOTE: not synchronized because only ever called from synchronized methods!
+         *
+         * @param wordsAroundHit how many words of context we want
+         * @param contextSources forward indices to get context from
+         */
+        private synchronized void getContextWords(int wordsAroundHit, List<ForwardIndex> contextSources) {
+    
+            int n = hits.size();
+            if (n == 0)
+                return;
+            int[] startsOfSnippets = new int[n];
+            int[] endsOfSnippets = new int[n];
+            int i = 0;
+            for (Hit h : hits) {
+                startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
+                endsOfSnippets[i] = h.end() + wordsAroundHit;
+                i++;
+            }
+    
+            int fiNumber = 0;
+            int doc = hits.get(0).doc();
+            for (ForwardIndex forwardIndex : contextSources) {
+                // Get all the words from the forward index
+                List<int[]> words;
+                if (forwardIndex != null) {
+                    // We have a forward index for this field. Use it.
+                    int fiid = forwardIndex.luceneDocIdToFiid(doc);
+                    words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
+                } else {
+                    throw new BlackLabException("Cannot get context without a forward index");
+                }
+    
+                // Build the actual concordances
+                Iterator<int[]> wordsIt = words.iterator();
+                int hitNum = 0;
+                if (contexts == null || contexts.length < hits.size()) {
+                    contexts = new int[hits.size()][];
+                }
+                for (Hit hit : hits) {
+                    int[] theseWords = wordsIt.next();
+    
+                    // Put the concordance in the Hit object
+                    int firstWordIndex = startsOfSnippets[hitNum];
+    
+                    if (fiNumber == 0) {
+                        // Allocate context array and set hit and right start and context length
+                        contexts[hitNum] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS
+                                + theseWords.length * contextSources.size()];
+                        contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start() - firstWordIndex;
+                        contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end() - firstWordIndex;
+                        contexts[hitNum][CONTEXTS_LENGTH_INDEX] = theseWords.length;
+                    }
+                    // Copy the context we just retrieved into the context array
+                    int start = fiNumber * theseWords.length + CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+                    System.arraycopy(theseWords, 0, contexts[hitNum], start, theseWords.length);
+                    hitNum++;
+                }
+    
+                fiNumber++;
+            }
+        }
+    
+        /**
+         * Get the context information from the list of hits, so we can look up a
+         * different context but still have access to this one as well.
+         *
+         * NOTE: not synchronized because only ever called from synchronized methods!
+         *
+         * @return the context
+         */
+        private synchronized int[][] saveContexts() {
+            int[][] saved = new int[contexts.length][];
+            for (int i = 0; i < contexts.length; i++) {
+                saved[i] = Arrays.copyOf(contexts[i], contexts[i].length);
+            }
+            return saved;
+        }
+    
+        /**
+         * Put context information into the list of hits.
+         *
+         * NOTE: not synchronized because only ever called from synchronized methods!
+         *
+         * @param saved the context to restore
+         */
+        private synchronized void restoreContexts(int[][] saved) {
+            if (contexts == null || contexts.length != saved.length) {
+                contexts = new int[saved.length][];
+            }
+            for (int i = 0; i < saved.length; i++) {
+                if (contexts[i] == null || contexts[i].length != saved[i].length) {
+                    contexts[i] = new int[saved[i].length];
+                }
+                System.arraycopy(saved[i], 0, contexts, 0, saved[i].length);
+            }
+        }
+    
+        /**
+         * Get the field our current concordances were retrieved from
+         *
+         * @return the field name
+         */
+        public synchronized List<Annotation> getContextAnnotations() {
+            return contextAnnotations;
+        }
+    
+        /**
+         * Set the field annotations to retrieve context from
+         * 
+         * @param contextAnnotations the field annotations
+         */
+        public synchronized void setContextField(List<Annotation> contextAnnotations) {
+            this.contextAnnotations = contextAnnotations == null ? null
+                    : new ArrayList<>(
+                            contextAnnotations);
+        }
+    
+        /**
+         * Return the context(s) for the specified hit number
+         * 
+         * @param hitNumber which hit we want the context(s) for
+         * @return the context(s)
+         */
+        public synchronized int[] getHitContext(int hitNumber) {
+            return contexts[hitNumber];
         }
     }
-
-    /**
-     * Get the field our current concordances were retrieved from
-     *
-     * @return the field name
-     */
-    public synchronized List<Annotation> getContextFieldPropName() {
-        return contextFieldsPropName;
-    }
-
-    /**
-     * Set the field properties to retrieve context from
-     * 
-     * @param contextField the field properties
-     */
-    public synchronized void setContextField(List<Annotation> contextField) {
-        this.contextFieldsPropName = contextField == null ? null
-                : new ArrayList<>(
-                        contextField);
-    }
-
-    /**
-     * Return the context(s) for the specified hit number
-     * 
-     * @param hitNumber which hit we want the context(s) for
-     * @return the context(s)
-     */
-    public synchronized int[] getHitContext(int hitNumber) {
-        return contexts[hitNumber];
-    }
-
     
     // Hits fetching
     //--------------------------------------------------------------------

@@ -24,6 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hits.Contexts;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -72,17 +73,17 @@ public class HitPropertyLeftContext extends HitProperty {
 
     @Override
     public HitPropValueContextWords get(int hitNumber) {
-        int[] context = hits.getHitContext(hitNumber);
-        int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
-        //int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
-        int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
+        int[] context = hits.getContexts().getHitContext(hitNumber);
+        int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
+        //int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
+        int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
 
         // Copy the desired part of the context
         int n = contextHitStart;
         if (n <= 0)
             return new HitPropValueContextWords(hits, annotation, new int[0], sensitive);
         int[] dest = new int[n];
-        int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.get(0) + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
         System.arraycopy(context, contextStart, dest, 0, n);
 
         // Reverse the order of the array, because we want to sort from right to left
@@ -100,12 +101,12 @@ public class HitPropertyLeftContext extends HitProperty {
     public int compare(Object i, Object j) {
         //Hit a = hits.getByOriginalOrder((Integer)i);
         //Hit b = hits.getByOriginalOrder((Integer)j);
-        int[] ca = hits.getHitContext((Integer) i);
-        int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
-        int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];
-        int[] cb = hits.getHitContext((Integer) j);
-        int cbHitStart = cb[Hits.CONTEXTS_HIT_START_INDEX];
-        int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
+        int[] ca = hits.getContexts().getHitContext((Integer) i);
+        int caHitStart = ca[Contexts.CONTEXTS_HIT_START_INDEX];
+        int caLength = ca[Contexts.CONTEXTS_LENGTH_INDEX];
+        int[] cb = hits.getContexts().getHitContext((Integer) j);
+        int cbHitStart = cb[Contexts.CONTEXTS_HIT_START_INDEX];
+        int cbLength = cb[Contexts.CONTEXTS_LENGTH_INDEX];
 
         // Compare the left context for these two hits, starting at the end
         int contextIndex = contextIndices.get(0);
@@ -113,8 +114,8 @@ public class HitPropertyLeftContext extends HitProperty {
         int bi = cbHitStart - 1;
         while (ai >= 0 && bi >= 0) {
             int cmp = terms.compareSortPosition(
-                    ca[contextIndex * caLength + ai + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
-                    cb[contextIndex * cbLength + bi + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS], sensitive);
+                    ca[contextIndex * caLength + ai + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+                    cb[contextIndex * cbLength + bi + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS], sensitive);
             if (cmp != 0)
                 return reverse ? -cmp : cmp;
             ai--;

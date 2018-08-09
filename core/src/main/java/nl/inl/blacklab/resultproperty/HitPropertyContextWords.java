@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hits.Contexts;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -179,10 +180,10 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public HitPropValueContextWords get(int hitNumber) {
-        int[] context = hits.getHitContext(hitNumber);
-        int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
-        int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
-        int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
+        int[] context = hits.getContexts().getHitContext(hitNumber);
+        int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
+        int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
+        int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
 
         int[] dest = new int[totalWords];
         int destIndex = 0;
@@ -229,7 +230,7 @@ public class HitPropertyContextWords extends HitProperty {
             }
             // Copy the words we want to our dest array
             int valuesCopied = 0;
-            int contextStartIndex = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+            int contextStartIndex = contextLength * contextIndices.get(0) + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
             if (valuesToCopy) {
                 for (int srcIndex = firstWordSrcIndex; srcIndex != firstInvalidSrcIndex; srcIndex += srcDirection) {
                     dest[destIndex] = context[contextStartIndex + srcIndex];

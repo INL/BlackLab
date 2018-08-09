@@ -90,7 +90,7 @@ public class DocResult {
     }
 
     public void setContextField(List<Annotation> contextField) {
-        hits.setContextField(contextField);
+        hits.contexts.setContextField(contextField);
     }
 
 }

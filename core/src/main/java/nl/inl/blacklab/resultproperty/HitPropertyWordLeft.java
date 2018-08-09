@@ -24,6 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hits.Contexts;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -72,26 +73,26 @@ public class HitPropertyWordLeft extends HitProperty {
 
     @Override
     public HitPropValueContextWord get(int hitNumber) {
-        int[] context = hits.getHitContext(hitNumber);
-        int contextHitStart = context[Hits.CONTEXTS_HIT_START_INDEX];
-        //int contextRightStart = context[Hits.CONTEXTS_RIGHT_START_INDEX];
-        int contextLength = context[Hits.CONTEXTS_LENGTH_INDEX];
+        int[] context = hits.getContexts().getHitContext(hitNumber);
+        int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
+        //int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
+        int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
 
         if (contextHitStart <= 0)
             return new HitPropValueContextWord(hits, annotation, -1, sensitive);
-        int contextStart = contextLength * contextIndices.get(0) + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.get(0) + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
         return new HitPropValueContextWord(hits, annotation, context[contextStart
                 + contextHitStart - 1], sensitive);
     }
 
     @Override
     public int compare(Object i, Object j) {
-        int[] ca = hits.getHitContext((Integer) i);
-        int caHitStart = ca[Hits.CONTEXTS_HIT_START_INDEX];
-        int caLength = ca[Hits.CONTEXTS_LENGTH_INDEX];
-        int[] cb = hits.getHitContext((Integer) j);
-        int cbHitStart = cb[Hits.CONTEXTS_HIT_START_INDEX];
-        int cbLength = cb[Hits.CONTEXTS_LENGTH_INDEX];
+        int[] ca = hits.getContexts().getHitContext((Integer) i);
+        int caHitStart = ca[Contexts.CONTEXTS_HIT_START_INDEX];
+        int caLength = ca[Contexts.CONTEXTS_LENGTH_INDEX];
+        int[] cb = hits.getContexts().getHitContext((Integer) j);
+        int cbHitStart = cb[Contexts.CONTEXTS_HIT_START_INDEX];
+        int cbLength = cb[Contexts.CONTEXTS_LENGTH_INDEX];
 
         if (caHitStart <= 0)
             return cbHitStart <= 0 ? 0 : (reverse ? 1 : -1);
@@ -101,8 +102,8 @@ public class HitPropertyWordLeft extends HitProperty {
         int contextIndex = contextIndices.get(0);
 
         int cmp = terms.compareSortPosition(
-                ca[contextIndex * caLength + caHitStart - 1 + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
-                cb[contextIndex * cbLength + cbHitStart - 1 + Hits.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+                ca[contextIndex * caLength + caHitStart - 1 + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+                cb[contextIndex * cbLength + cbHitStart - 1 + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
                 sensitive);
         return reverse ? -cmp : cmp;
     }
