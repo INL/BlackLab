@@ -23,8 +23,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Hits.Contexts;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -73,7 +73,7 @@ public class HitPropertyRightContext extends HitProperty {
 
     @Override
     public HitPropValueContextWords get(int hitNumber) {
-        int[] context = hits.getContexts().getHitContext(hitNumber);
+        int[] context = contexts.getHitContext(hitNumber);
         //int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
         int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
         int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
@@ -90,10 +90,10 @@ public class HitPropertyRightContext extends HitProperty {
 
     @Override
     public int compare(Object i, Object j) {
-        int[] ca = hits.getContexts().getHitContext((Integer) i);
+        int[] ca = contexts.getHitContext((Integer) i);
         int caRightStart = ca[Contexts.CONTEXTS_RIGHT_START_INDEX];
         int caLength = ca[Contexts.CONTEXTS_LENGTH_INDEX];
-        int[] cb = hits.getContexts().getHitContext((Integer) j);
+        int[] cb = contexts.getHitContext((Integer) j);
         int cbRightStart = cb[Contexts.CONTEXTS_RIGHT_START_INDEX];
         int cbLength = cb[Contexts.CONTEXTS_LENGTH_INDEX];
 

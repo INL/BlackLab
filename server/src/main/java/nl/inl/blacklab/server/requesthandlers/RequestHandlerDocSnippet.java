@@ -108,7 +108,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
 
         if (useOrigContent) {
-            Concordance c = hits.getConcordance(hit, wordsAroundHit);
+            Concordance c = hits.hitDisplay().getConcordance(hit, wordsAroundHit);
             if (!isFragment) {
                 ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
@@ -117,7 +117,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                 ds.plain(c.match());
             }
         } else {
-            Kwic c = hits.getKwic(hit, wordsAroundHit);
+            Kwic c = hits.hitDisplay().getKwic(hit, wordsAroundHit);
             if (!isFragment) {
                 ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
                         .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()

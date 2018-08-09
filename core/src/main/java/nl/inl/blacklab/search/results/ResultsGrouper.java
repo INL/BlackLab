@@ -55,11 +55,6 @@ public class ResultsGrouper extends HitGroups {
     private AnnotatedField defaultConcField;
 
     /**
-     * Field our current concordances came from.
-     */
-    private List<Annotation> contextAnnotations;
-
-    /**
      * Total number of hits.
      */
     private int totalHits = 0;
@@ -80,31 +75,16 @@ public class ResultsGrouper extends HitGroups {
      */
     ResultsGrouper(Hits hits, HitProperty criteria) {
         super(hits.index(), criteria);
-        init(hits, criteria);
-    }
-
-    /**
-     * Don't use this; use Hits.groupedBy().
-     * 
-     * @param hits hits to group
-     * @param criteria criteria to group by
-     * @return grouped hits
-     */
-    public static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
-        return new ResultsGrouper(hits, criteria);
-    }
-
-    private void init(Hits hits, HitProperty criteria) {
+        
         defaultConcField = hits.field();
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
-            hits.getContexts().findContext(requiredContext);
+            criteria.setContexts(new Contexts(hits, requiredContext));
         }
-        contextAnnotations = hits.getContexts().getContextAnnotations();
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
         for (int i = 0; i < hits.size(); i++) {
-
+        
             HitPropValue identity = getGroupIdentity(i);
             List<Hit> group = groupLists.get(identity);
             if (group == null) {
@@ -120,14 +100,20 @@ public class ResultsGrouper extends HitGroups {
             HitPropValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
             HitGroup group = new HitGroup(searcher, groupId, defaultConcField, hitList, hits.settings());
-            group.setContextAnnotations(contextAnnotations);
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }
+    }
 
-        // If the group identities are context words, we should possibly merge
-        // some groups if they have identical sort orders (up to now, we've grouped on
-        // token id, not sort order).
+    /**
+     * Don't use this; use Hits.groupedBy().
+     * 
+     * @param hits hits to group
+     * @param criteria criteria to group by
+     * @return grouped hits
+     */
+    public static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
+        return new ResultsGrouper(hits, criteria);
     }
 
     /**

@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -114,6 +115,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public List<Annotation> needsContext() {
         return contextNeeded;
+    }
+
+    @Override
+    public void setContexts(Contexts contexts) {
+        for (HitProperty prop: criteria) {
+            prop.setContexts(contexts);
+        }
     }
 
     @Override

@@ -180,13 +180,13 @@ public class RequestHandlerDocs extends RequestHandler {
                         ds.startItem("snippet").startMap();
                         if (searchParam.getString("usecontent").equals("orig")) {
                             // Add concordance from original XML
-                            Concordance c = hits2.getConcordance(hit);
+                            Concordance c = hits2.hitDisplay().getConcordance(hit);
                             ds.startEntry("left").plain(c.left()).endEntry()
                                     .startEntry("match").plain(c.match()).endEntry()
                                     .startEntry("right").plain(c.right()).endEntry();
                         } else {
                             // Add KWIC info
-                            Kwic c = hits2.getKwic(hit);
+                            Kwic c = hits2.hitDisplay().getKwic(hit);
                             ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
                                     .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
                                     .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();

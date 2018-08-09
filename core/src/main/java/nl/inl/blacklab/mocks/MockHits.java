@@ -5,8 +5,6 @@ import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -129,26 +127,6 @@ public class MockHits extends Hits {
     @Override
     public Hit get(int i) {
         return Hit.create(doc[i], start[i], end[i]);
-    }
-
-    @Override
-    public Kwic getKwic(AnnotatedField fieldName, Hit hit, int contextSize) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Kwic getKwic(Hit h, int contextSize) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Concordance getConcordance(AnnotatedField fieldName, Hit hit, int contextSize) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Concordance getConcordance(Hit h, int contextSize) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

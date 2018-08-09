@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search;
 
 import java.util.AbstractList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,8 +39,6 @@ public class Kwic {
     private int hitStart;
 
     private int hitEnd;
-
-    public static final Collection<String> DEFAULT_CONC_ATTR_PROP = null;
 
     public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 

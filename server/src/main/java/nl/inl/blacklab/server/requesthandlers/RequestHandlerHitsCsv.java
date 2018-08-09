@@ -231,7 +231,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     title = p.getRight();
                 }
 
-                writeHit(hits.getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
+                writeHit(hits.hitDisplay().getKwic(hit), mainTokenProperty, otherTokenProperties, pid, title, row);
                 printer.printRecord(row);
             }
             printer.flush();

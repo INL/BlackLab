@@ -386,8 +386,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 
     private void addDocResultToList(int doc, Hits docHits) {
         DocResult docResult = new DocResult(doc, docHits);
-        // Make sure we remember what kind of context we have, if any
-        docResult.setContextField(sourceHits.contexts.getContextAnnotations());
         results.add(docResult);
     }
 

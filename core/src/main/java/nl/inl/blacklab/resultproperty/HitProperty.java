@@ -25,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -39,6 +40,9 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
 
     /** Reverse comparison result or not? */
     protected boolean reverse = false;
+
+    /** Hit contexts, if any */
+    protected Contexts contexts = null;
 
     public HitProperty(Hits hits) {
         this.hits = hits;
@@ -77,6 +81,10 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      */
     public List<Annotation> needsContext() {
         return null;
+    }
+
+    public void setContexts(Contexts contexts) {
+        this.contexts = contexts;
     }
 
     public abstract String getName();

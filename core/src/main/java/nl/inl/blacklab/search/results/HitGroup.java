@@ -20,7 +20,6 @@ import java.util.List;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -60,9 +59,5 @@ public class HitGroup extends Group {
     @Override
     public String toString() {
         return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
-    }
-
-    public void setContextAnnotations(List<Annotation> contextField) {
-        results.contexts.setContextField(contextField);
     }
 }

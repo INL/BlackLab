@@ -15,13 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
-
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A document result, containing a Lucene document from the index and a
@@ -87,10 +84,6 @@ public class DocResult {
 
     public float getScore() {
         return score;
-    }
-
-    public void setContextField(List<Annotation> contextField) {
-        hits.contexts.setContextField(contextField);
     }
 
 }

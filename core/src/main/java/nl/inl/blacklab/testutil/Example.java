@@ -174,7 +174,7 @@ public class Example {
     static void displayConcordances(Hits hits) {
         // Loop over the hits and display.
         for (Hit hit : hits) {
-            Concordance conc = hits.getConcordance(hit);
+            Concordance conc = hits.hitDisplay().getConcordance(hit);
             // Strip out XML tags for display.
             String[] concParts = conc.partsNoXml();
             String left = concParts[0];

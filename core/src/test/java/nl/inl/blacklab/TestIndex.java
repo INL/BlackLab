@@ -210,7 +210,7 @@ public class TestIndex {
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         for (Hit hit : hits) {
-            Kwic kwic = hits.getKwic(hit);
+            Kwic kwic = hits.hitDisplay().getKwic(hit);
             String left = StringUtil.join(kwic.getLeft(word), " ");
             String match = StringUtil.join(kwic.getMatch(word), " ");
             String right = StringUtil.join(kwic.getRight(word), " ");

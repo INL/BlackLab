@@ -721,7 +721,7 @@ public class QueryTool {
                     errprintln("Hit number out of range.");
                 } else {
                     Hit h = currentHitSet.get(hitId);
-                    Concordance conc = hits.getConcordance(h, snippetSize);
+                    Concordance conc = hits.hitDisplay().getConcordance(h, snippetSize);
                     String[] concParts;
                     if (stripXML)
                         concParts = conc.partsNoXml();
@@ -1532,7 +1532,7 @@ public class QueryTool {
         List<HitToShow> toShow = new ArrayList<>();
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
         for (Hit hit : window) {
-            Concordance conc = window.getConcordance(hit);
+            Concordance conc = window.hitDisplay().getConcordance(hit);
 
             // Filter out the XML tags
             String left, hitText, right;
