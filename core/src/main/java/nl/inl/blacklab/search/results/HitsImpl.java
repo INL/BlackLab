@@ -535,6 +535,53 @@ public class HitsImpl extends HitsAbstract {
     }
     
     @Override
+    public Iterable<Hit> originalOrder() {
+        // Construct a custom iterator that iterates over the hits in the hits
+        // list, but can also take into account the Spans object that may not have
+        // been fully read. This ensures we don't instantiate Hit objects for all hits
+        // if we just want to display the first few.
+        return new Iterable<Hit>() {
+            @Override
+            public Iterator<Hit> iterator() {
+                // TODO Auto-generated method stub
+                return new Iterator<Hit>() {
+                    int index = -1;
+                
+                    @Override
+                    public boolean hasNext() {
+                        // Do we still have hits in the hits list?
+                        try {
+                            ensureHitsRead(index + 2);
+                        } catch (InterruptedException e) {
+                            // Thread was interrupted. Don't finish reading hits and accept possibly wrong
+                            // answer.
+                            // Client must detect the interruption and stop the thread.
+                            Thread.currentThread().interrupt();
+                        }
+                        return hits.size() >= index + 2;
+                    }
+                
+                    @Override
+                    public Hit next() {
+                        // Check if there is a next, taking unread hits from Spans into account
+                        if (hasNext()) {
+                            index++;
+                            return hits.get(index);
+                        }
+                        throw new NoSuchElementException();
+                    }
+                
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                
+                };
+            }
+        };
+    }
+    
+    @Override
     public Hit getByOriginalOrder(int i) {
         try {
             ensureHitsRead(i + 1);

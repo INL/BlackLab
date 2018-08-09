@@ -65,7 +65,6 @@ public class Contexts {
      * in the specified order.
      * 
      * @param requested annotations we want
-     * @return new contexts instance
      */
     @SuppressWarnings("unused")
     private Contexts(Contexts source, List<Annotation> requested) {
@@ -119,10 +118,8 @@ public class Contexts {
         List<Hit> hitsInSameDoc = new ArrayList<>();
         int currentDoc = -1;
         int index = 0;
-        if (contexts == null || contexts.length < hits.size()) {
-            contexts = new int[hits.size()][];
-        }
-        for (Hit hit: hits) {
+        contexts = new int[hits.size()][];
+        for (Hit hit: hits.originalOrder()) {
             if (hit.doc() != currentDoc) {
                 if (currentDoc >= 0) {
                     try {
@@ -349,6 +346,10 @@ public class Contexts {
             fiNumber++;
         }
         return contexts;
+    }
+
+    public int size() {
+        return contexts.length;
     }
 
 }

@@ -381,4 +381,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     Kwics kwics(int contextSize);
 
+    Iterable<Hit> originalOrder();
+
 }

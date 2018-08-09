@@ -74,7 +74,7 @@ public class Kwics {
     private Map<Hit, Kwic> retrieveKwics(int contextSize, AnnotatedField field) {
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-        for (Hit key: this.hits) {
+        for (Hit key: hits) {
             List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = new ArrayList<>();
@@ -87,17 +87,16 @@ public class Kwics {
         Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                attrForwardIndices.put(annotation, this.hits.index().forwardIndex(annotation));
+                attrForwardIndices.put(annotation, hits.index().forwardIndex(annotation));
             }
         }
-        ForwardIndex wordForwardIndex = this.hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
-        ForwardIndex punctForwardIndex = this.hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
+        ForwardIndex wordForwardIndex = hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
+        ForwardIndex punctForwardIndex = hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
         Map<Hit, Kwic> conc1 = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
             Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
         }
         return conc1;
     }
-    
     
 }

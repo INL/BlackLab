@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
@@ -26,10 +25,6 @@ abstract class GroupsAbstract implements Groups {
 
     public GroupsAbstract(HitProperty criteria) {
         this.criteria = criteria;
-    }
-
-    protected HitPropValue getGroupIdentity(int index) {
-        return criteria.get(index);
     }
 
     @Override

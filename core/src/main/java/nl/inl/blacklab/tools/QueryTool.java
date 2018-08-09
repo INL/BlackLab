@@ -44,7 +44,6 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.GroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.GroupPropertySize;
@@ -218,7 +217,7 @@ public class QueryTool {
          *
          * @param query the query
          * @return the corresponding TextPattern
-         * @throws ParseException
+         * @throws InvalidQuery on parse error
          */
         @Override
         public TextPattern parse(String query) throws InvalidQuery {
@@ -259,7 +258,7 @@ public class QueryTool {
          *
          * @param query the query
          * @return the corresponding TextPattern
-         * @throws ParseException
+         * @throws InvalidQuery on parse error
          */
         @Override
         public TextPattern parse(String query) throws InvalidQuery {

@@ -85,7 +85,7 @@ public class ResultsGrouper extends HitGroups {
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
         for (int i = 0; i < hits.size(); i++) {
         
-            HitPropValue identity = getGroupIdentity(i);
+            HitPropValue identity = criteria.get(i);
             List<Hit> group = groupLists.get(identity);
             if (group == null) {
                 group = new ArrayList<>();

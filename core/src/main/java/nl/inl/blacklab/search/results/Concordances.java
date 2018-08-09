@@ -123,7 +123,7 @@ public class Concordances {
      * @param fieldName field to use for building concordances
      * @return the concordances
      */
-    private Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize, AnnotatedField field) {
+    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize, AnnotatedField field) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
