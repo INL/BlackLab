@@ -38,6 +38,8 @@ public class Timer {
 
     /**
      * Describe the elapsed time in a human-readable way.
+     * 
+     * Does not report milliseconds.
      *
      * @return human-readable string for the elapsed time.
      */

@@ -48,6 +48,31 @@ index
 + separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
 + introduce Doc; replace (most) docIds with it
   
+(NB aborted attempt op stash)
+  
+- Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
+  D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
+  Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
+  een lijst met Hit+Context objects te instantieren en die te sorteren.
+  
+  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien.
+  
+- ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
+
+- get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
+
+- save() / isImmutable() toch voorlopig weg?
+
+- HitProperty vergelijkt Hits en niet Hit-original-indexes zoals nu.
+- Contexts.get(Hit) om de context van een hit te krijgen.
+- Hit krijgt een extra veld "originalIndex". Dit wordt eenmalig gezet.
+- static method Contexts.retrieve(hits, ...) kiest, afhankelijk van de hits, de geschiktste Contexts implementatie:
+  * hoogste originalIndex niet veel groter dan aantal hits: array-based, zodat lookup intern op basis van originalIndex kan gebeuren
+  * hoogste originalIndex veel groter (bijv 4x of meer) dan aantal hits: hash-based, zodat lookup intern in een Map oid gedaan wordt.
+    trager maar geheugen-efficienter, en voor kleinere sets geeft het niet zo.
+    threshold kan best hoog liggen trouwens, want we bewaren Contexts tegenwoordig niet meer, dus ze nemen slechts tijdelijk "veel" geheugen in. Aan de andere kant kan cache-efficientie een overweging zijn als het array erg sparsely populated wordt.
+  
+  
 results
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
 - eliminate HitsWindow, have Hits contain optional window stats
