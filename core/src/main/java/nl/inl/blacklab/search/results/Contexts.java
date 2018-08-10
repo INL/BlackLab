@@ -123,7 +123,7 @@ public class Contexts {
             if (hit.doc() != currentDoc) {
                 if (currentDoc >= 0) {
                     try {
-                        hits.getThreadPriority().behave();
+                        hits.threadPauser().waitIfPaused();
                     } catch (InterruptedException e) {
                         // Thread was interrupted. Just go ahead with the hits we did
                         // get, so at least we can return with valid context.

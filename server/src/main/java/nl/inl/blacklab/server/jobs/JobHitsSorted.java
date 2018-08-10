@@ -61,7 +61,7 @@ public class JobHitsSorted extends JobWithHits {
             // Be lenient of clients passing wrong sortBy values; simply ignore bad sort requests.
             hits = hitsUnsorted;
         }
-        setPriorityInternal();
+        setPausedInternal();
     }
 
     @Override

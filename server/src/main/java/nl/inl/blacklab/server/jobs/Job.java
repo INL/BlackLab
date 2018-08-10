@@ -16,8 +16,6 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.ExUtil;
-import nl.inl.util.ThreadPriority;
-import nl.inl.util.ThreadPriority.Level;
 
 public abstract class Job implements Comparable<Job>, Prioritizable {
 
@@ -139,7 +137,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
     protected User user;
 
     /** Is this job running in low priority? */
-    protected ThreadPriority.Level level = ThreadPriority.Level.RUNNING;
+    protected boolean paused = false;
 
     private double worthiness = -1;
 
@@ -505,8 +503,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
                 .entry("setLevelRunningAt", setLevelRunningAt)
                 .entry("performCalled", performCalled)
                 .entry("cancelJobCalled", cancelJobCalled)
-                .entry("priorityLevel", level.toString())
-                .entry("resultsPriorityLevel", getPriorityOfResultsObject().toString())
+                .entry("priorityLevel", paused ? "PAUSED" : "RUNNING")
+                .entry("resultsPriorityLevel", isResultsObjectPaused() ? "PAUSED" : "RUNNING")
                 .startEntry("thrownException")
                 .startMap();
         // Information about thrown exception, if any
@@ -546,16 +544,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
     private String status() {
         if (finished())
             return "finished";
-        if (level == null)
-            return "(level == NULL!)";
-        switch (level) {
-        case PAUSED:
-            return "paused";
-        case RUNNING_LOW_PRIO:
-            return "lowprio";
-        default:
-            return "running";
-        }
+        return paused ? "paused" : "running";
     }
 
     protected void cleanup() {
@@ -678,7 +667,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      * @return number of ms since the job was paused, or 0 if not paused
      */
     public double currentPauseLength() {
-        if (level != Level.PAUSED)
+        if (!isPaused())
             return 0;
         return (System.currentTimeMillis() - setLevelPausedAt) / 1000.0;
     }
@@ -691,7 +680,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      * @return number of ms since the job was set to running, or 0 if not running
      */
     public double currentRunPhaseLength() {
-        if (level == Level.PAUSED)
+        if (isPaused())
             return 0;
         return (System.currentTimeMillis() - setLevelRunningAt) / 1000.0;
     }
@@ -702,7 +691,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      * @return total number of ms the job has been paused
      */
     public double pausedTotal() {
-        if (finished() || level != Level.PAUSED)
+        if (finished() || !isPaused())
             return pausedTime / 1000.0;
         return (pausedTime + System.currentTimeMillis() - setLevelPausedAt) / 1000.0;
     }
@@ -736,55 +725,43 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      */
     protected abstract Prioritizable getObjectToPrioritize();
 
-    /**
-     * Set the thread priority level.
-     *
-     * @param level the desired priority level.
-     */
     @Override
-    public void setPriorityLevel(ThreadPriority.Level level) {
-        if (this.level != level) {
-            if (this.level == Level.PAUSED) {
+    public void pause(boolean paused) {
+        if (this.paused != paused) {
+            if (!this.paused) {
                 // Keep track of total paused time
                 pausedTime += System.currentTimeMillis() - setLevelPausedAt;
-            } else if (level == Level.PAUSED) {
+                setLevelRunningAt = System.currentTimeMillis();
+            } else {
                 // Make sure we can keep track of total paused time
                 setLevelPausedAt = System.currentTimeMillis();
             }
-            if (level != Level.PAUSED) {
-                setLevelRunningAt = System.currentTimeMillis();
-            }
-            this.level = level;
+            this.paused = paused;
         }
-        setPriorityInternal();
+        setPausedInternal();
     }
 
-    /**
-     * Get the thread priority level.
-     *
-     * @return the current priority level.
-     */
     @Override
-    public ThreadPriority.Level getPriorityLevel() {
-        return level;
+    public boolean isPaused() {
+        return paused;
     }
-
+    
     /**
      * Set the priority/paused status of a Prioritizable object.
      *
      * @param p object to set the priority of
      */
-    protected void setPriority(Prioritizable p) {
+    protected void setPaused(Prioritizable p) {
         if (p != null) {
-            p.setPriorityLevel(level);
+            p.pause(isPaused());
         }
     }
 
     /**
      * Set the operation to the current priority level (normal, low or paused).
      */
-    protected void setPriorityInternal() {
-        setPriority(getObjectToPrioritize());
+    protected void setPausedInternal() {
+        setPaused(getObjectToPrioritize());
     }
 
     /**
@@ -792,21 +769,21 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      * 
      * @return the priority level
      */
-    protected Level getPriorityOfResultsObject() {
+    protected boolean isResultsObjectPaused() {
         Prioritizable p = getObjectToPrioritize();
-        return p == null ? Level.RUNNING : p.getPriorityLevel();
+        return p == null ? false : p.isPaused();
     }
-
+    
     public void setFinished() {
         lastAccessed = finishedAt = System.currentTimeMillis();
         //logger.debug("Search " + this + " finished at " + finishedAt);
-        if (level != Level.RUNNING) {
+        if (paused) {
             // Don't confuse the system by still being in PAUSED
             // (possible because this is cooperative multitasking,
             //  so PAUSED doesn't necessarily mean the thread isn't
             //  running right now and it might actually finish while
             //  "PAUSED")
-            setPriorityLevel(Level.RUNNING);
+            pause(false);
         }
     }
 

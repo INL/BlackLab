@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.util.ThreadPriority;
+import nl.inl.util.ThreadPauser;
 
 public class HitsImpl extends HitsAbstract {
     
@@ -249,7 +249,7 @@ public class HitsImpl extends HitsAbstract {
                 prevDoc = h.doc();
             }
         }
-        threadPriority = new ThreadPriority();
+        threadPauser = new ThreadPauser();
     }
 
     /**
@@ -280,12 +280,12 @@ public class HitsImpl extends HitsAbstract {
                 logger.debug("Hits(): createWeight");
             weight = spanQuery.createWeight(index.searcher(), false);
             weight.extractTerms(terms);
-            threadPriority = new ThreadPriority();
+            threadPauser = new ThreadPauser();
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): extract terms");
             for (Term term : terms) {
                 try {
-                    threadPriority.behave();
+                    threadPauser.waitIfPaused();
                 } catch (InterruptedException e) {
                     // Taking too long, break it off.
                     // Not a very graceful way to do it... but at least it won't
@@ -704,7 +704,7 @@ public class HitsImpl extends HitsAbstract {
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long
-                threadPriority.behave();
+                threadPauser.waitIfPaused();
 
                 // Stop if we're at the maximum number of hits we want to count
                 if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {

@@ -55,7 +55,7 @@ public class JobDocsWindow extends JobWithDocs {
     protected void performSearch() throws BlsException {
         // Now, create a HitsWindow on these hits.
         DocResults sourceResults = ((JobWithDocs) inputJob).getDocResults();
-        setPriorityInternal(); // make sure sourceResults has the right priority
+        setPausedInternal(); // make sure sourceResults has the right priority
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
         requestedWindowSize = windowSett.size();

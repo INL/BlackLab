@@ -63,7 +63,7 @@ public class JobHitsFiltered extends JobWithHits {
         }
 
         hits = hitsUnfiltered.filteredBy(prop, value);
-        setPriorityInternal();
+        setPausedInternal();
     }
 
     @Override

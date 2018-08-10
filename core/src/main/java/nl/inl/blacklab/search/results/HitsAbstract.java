@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.ThreadPriority;
+import nl.inl.util.ThreadPauser;
 
 public abstract class HitsAbstract implements Hits {
 
@@ -42,16 +42,16 @@ public abstract class HitsAbstract implements Hits {
      */
     protected AnnotatedField field;
     /**
-     * Helper object for implementing query thread priority (making sure queries
+     * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
-    protected ThreadPriority threadPriority;
+    protected ThreadPauser threadPauser;
 
     public HitsAbstract(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
         this.index = index;
         this.field = field;
         this.settings = settings == null ? index.hitsSettings() : settings;
-        threadPriority = new ThreadPriority();
+        threadPauser = new ThreadPauser();
     }
 
     /* (non-Javadoc)
@@ -268,20 +268,14 @@ public abstract class HitsAbstract implements Hits {
         return hitsObjId;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.search.results.Hits#setPriorityLevel(nl.inl.util.ThreadPriority.Level)
-     */
     @Override
-    public void setPriorityLevel(ThreadPriority.Level level) {
-        threadPriority.setPriorityLevel(level);
+    public void pause(boolean pause) {
+        threadPauser.pause(pause);
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.search.results.Hits#getPriorityLevel()
-     */
     @Override
-    public ThreadPriority.Level getPriorityLevel() {
-        return threadPriority.getPriorityLevel();
+    public boolean isPaused() {
+        return threadPauser.isPaused();
     }
 
     /* (non-Javadoc)
@@ -312,8 +306,8 @@ public abstract class HitsAbstract implements Hits {
      * @see nl.inl.blacklab.search.results.Hits#getThreadPriority()
      */
     @Override
-    public ThreadPriority getThreadPriority() {
-        return threadPriority;
+    public ThreadPauser threadPauser() {
+        return threadPauser;
     }
 
     /* (non-Javadoc)

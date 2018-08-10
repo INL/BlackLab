@@ -65,7 +65,7 @@ public class JobHitsGrouped extends JobWithHits {
     protected void performSearch() throws BlsException {
         // Now, group the hits.
         hits = ((JobWithHits) inputJob).getHits();
-        setPriorityInternal();
+        setPausedInternal();
         HitGroupSettings groupSett = jobDesc.getHitGroupSettings();
         if (groupSett == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "No group property specified.");

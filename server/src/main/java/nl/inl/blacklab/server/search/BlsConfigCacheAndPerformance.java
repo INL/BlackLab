@@ -200,7 +200,7 @@ public class BlsConfigCacheAndPerformance {
         }
     }
 
-    public boolean enableThreadPriority() {
+    public boolean enableThreadPausing() {
         return enableThreadPriority;
     }
 

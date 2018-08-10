@@ -24,8 +24,7 @@ import nl.inl.blacklab.server.jobs.JobDocsTotal;
 import nl.inl.blacklab.server.jobs.JobHitsTotal;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.MemoryUtil;
-import nl.inl.util.ThreadPriority;
-import nl.inl.util.ThreadPriority.Level;
+import nl.inl.util.ThreadPauser;
 
 public class SearchCache {
 
@@ -83,7 +82,7 @@ public class SearchCache {
 
         // Make sure long operations yield their thread occasionally,
         // and automatically abort really long operations.
-        ThreadPriority.setEnabled(cacheConfig.enableThreadPriority());
+        ThreadPauser.setEnabled(cacheConfig.enableThreadPausing());
 
         cachedSearches = new HashMap<>();
 
@@ -460,18 +459,17 @@ public class SearchCache {
         // See what to do with the current search
         switch (action) {
         case RUN_NORMALLY:
-            if (search.getPriorityLevel() != Level.RUNNING) {
+            if (search.isPaused()) {
                 if (BlsConfig.traceCache)
                     logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
-                search.setPriorityLevel(Level.RUNNING);
+                search.pause(false);
             }
             break;
         case PAUSE:
-            if (search.getPriorityLevel() != Level.PAUSED) {
+            if (!search.isPaused()) {
                 if (BlsConfig.traceCache)
-                    logger.debug("LOADMGR: Pausing search: " + search + " (was: " + search.getPriorityLevel() + ") ("
-                            + reason + ")");
-                search.setPriorityLevel(Level.PAUSED);
+                    logger.debug("LOADMGR: Pausing search: " + search + " (" + reason + ")");
+                search.pause(true);
             }
             break;
         case ABORT:

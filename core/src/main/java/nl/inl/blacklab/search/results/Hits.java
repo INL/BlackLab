@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.ThreadPriority;
+import nl.inl.util.ThreadPauser;
 
 public interface Hits extends Iterable<Hit>, Prioritizable {
 
@@ -345,24 +345,24 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     int getHitsObjId();
 
     /**
-     * Set the thread priority level for this Hits object.
+     * Pause or unpause this search.
      *
-     * Allows us to set a query to low-priority, or to (almost) pause it.
+     * This can be used to stop a heavy search from consuming CPU resources
+     * when other users are waiting.
+     * 
+     * Pausing actually amounts to "proceeding very slowly".
      *
-     * @param level the desired priority level
+     * @param pause if true, pause the search; if false, unpause it
      */
-    @Override
-    void setPriorityLevel(ThreadPriority.Level level);
+    void pause(boolean pause);
 
     /**
-     * Get the thread priority level for this Hits object.
+     * Is this search currently paused?
      *
-     * Can be normal, low-priority, or (almost) paused.
-     *
-     * @return the current priority level
+     * @return true if search is paused, false if not
      */
     @Override
-    ThreadPriority.Level getPriorityLevel();
+    boolean isPaused();
 
     /**
      * Returns the searcher object.
@@ -375,7 +375,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     HitsSettings settings();
 
-    ThreadPriority getThreadPriority();
+    ThreadPauser threadPauser();
 
     Concordances concordances(int contextSize);
 

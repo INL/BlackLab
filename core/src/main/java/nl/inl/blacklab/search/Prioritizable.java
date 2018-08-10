@@ -1,25 +1,24 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.util.ThreadPriority;
-
 public interface Prioritizable {
 
     /**
-     * Set the thread priority level for this Hits object.
+     * Pause or unpause this operation.
      *
-     * Allows us to set a query to low-priority, or to (almost) pause it.
+     * This can be used to stop a heavy search from consuming CPU resources
+     * when other users are waiting.
+     * 
+     * Pausing actually amounts to "proceeding very slowly".
      *
-     * @param level the desired priority level
+     * @param pause if true, pause the operation; if false, unpause it
      */
-    void setPriorityLevel(ThreadPriority.Level level);
+    void pause(boolean pause);
 
     /**
-     * Get the thread priority level for this Hits object.
+     * Is this operation currently paused?
      *
-     * Can be normal, low-priority, or (almost) paused.
-     *
-     * @return the current priority level
+     * @return true if operation is paused, false if not
      */
-    ThreadPriority.Level getPriorityLevel();
-
+    boolean isPaused();
+    
 }

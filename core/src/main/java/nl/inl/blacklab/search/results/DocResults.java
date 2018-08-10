@@ -38,7 +38,6 @@ import nl.inl.blacklab.resultproperty.HitPropValueInt;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.util.ReverseComparator;
-import nl.inl.util.ThreadPriority.Level;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -538,15 +537,15 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     }
 
     @Override
-    public void setPriorityLevel(Level level) {
+    public void pause(boolean pause) {
         if (sourceHits != null) {
-            sourceHits.setPriorityLevel(level);
+            sourceHits.pause(pause);
         }
     }
 
     @Override
-    public Level getPriorityLevel() {
-        return sourceHits.getPriorityLevel();
+    public boolean isPaused() {
+        return sourceHits.isPaused();
     }
 
     public int countSoFarDocsCounted() {
