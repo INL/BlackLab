@@ -39,7 +39,7 @@ import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public final class LuceneUtil {
@@ -74,7 +74,7 @@ public final class LuceneUtil {
                         result.add(term);
                 }
             } catch (IOException e) {
-                throw new BlackLabException(e);
+                throw new BlackLabRuntimeException(e);
             }
             return result;
         }
@@ -97,7 +97,7 @@ public final class LuceneUtil {
             }
             return terms;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw new BlackLabRuntimeException(e);
         }
     }
 
@@ -182,7 +182,7 @@ public final class LuceneUtil {
                     for (int i = 0; i < docPosEnum.freq(); i++) {
                         int position = docPosEnum.nextPosition();
                         if (position == -1)
-                            throw new BlackLabException("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
+                            throw new BlackLabRuntimeException("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
                                     + docPosEnum.freq() + ")");
                         if (position >= start && position <= end) {
                             if (concordanceWords[position - start] == null)
@@ -204,7 +204,7 @@ public final class LuceneUtil {
                 System.arraycopy(concordanceWords, 0, partial, 0, numFound);
                 for (int i = 0; i < numFound; i++) {
                     if (partial[i] == null) {
-                        throw new BlackLabException("Not all words found (" + numFound + " out of "
+                        throw new BlackLabRuntimeException("Not all words found (" + numFound + " out of "
                                 + concordanceWords.length
                                 + "); missing words in the middle of concordance!");
                     }
@@ -344,7 +344,7 @@ public final class LuceneUtil {
             }
             return new ArrayList<>(results);
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw new BlackLabRuntimeException(e);
         }
     }
 
@@ -357,11 +357,11 @@ public final class LuceneUtil {
             IndexReader indexReader = indexSearcher.getIndexReader();
             for (LeafReaderContext arc : indexReader.leaves()) {
                 if (weight == null)
-                    throw new BlackLabException("weight == null");
+                    throw new BlackLabRuntimeException("weight == null");
                 if (arc == null)
-                    throw new BlackLabException("arc == null");
+                    throw new BlackLabRuntimeException("arc == null");
                 if (arc.reader() == null)
-                    throw new BlackLabException("arc.reader() == null");
+                    throw new BlackLabRuntimeException("arc.reader() == null");
                 Scorer scorer = weight.scorer(arc);
                 if (scorer != null) {
                     DocIdSetIterator it = scorer.iterator();
@@ -405,7 +405,7 @@ public final class LuceneUtil {
             }
             return totalTerms;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw new BlackLabRuntimeException(e);
         }
     }
 
@@ -449,7 +449,7 @@ public final class LuceneUtil {
             }
             return results;
         } catch (IOException e) {
-            throw new BlackLabException(e);
+            throw new BlackLabRuntimeException(e);
         }
     }
 }

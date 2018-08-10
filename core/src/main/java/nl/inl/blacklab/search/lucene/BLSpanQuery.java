@@ -25,7 +25,7 @@ import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -80,7 +80,7 @@ public abstract class BLSpanQuery extends SpanQuery {
      */
     public static int addMaxValues(int a, int b) {
         if (a < 0 || b < 0)
-            throw new BlackLabException(
+            throw new BlackLabRuntimeException(
                     "max values cannot be negative (possible use of old -1 == max, now BLSpanQuery.MAX_UNLIMITED)");
         // Is either value infinite?
         if (a == Integer.MAX_VALUE || b == Integer.MAX_VALUE)

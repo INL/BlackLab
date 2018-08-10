@@ -14,6 +14,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 
+import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {

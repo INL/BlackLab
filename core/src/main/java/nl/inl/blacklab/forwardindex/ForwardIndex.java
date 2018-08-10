@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 
@@ -169,7 +169,7 @@ public abstract class ForwardIndex {
             if (!create)
                 throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
             if (!dir.mkdir())
-                throw new BlackLabException("Could not create dir: " + dir);
+                throw new BlackLabRuntimeException("Could not create dir: " + dir);
         }
 
         // Version check

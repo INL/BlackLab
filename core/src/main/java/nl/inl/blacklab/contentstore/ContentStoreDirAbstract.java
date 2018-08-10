@@ -17,7 +17,7 @@ package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.VersionFile;
 
 /**
@@ -45,7 +45,7 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
         if (vf.exists())
             vf.read();
         else
-            throw new BlackLabException("Content store directory must contain version file! (" + dir + ")");
+            throw new BlackLabRuntimeException("Content store directory must contain version file! (" + dir + ")");
         return vf;
     }
 

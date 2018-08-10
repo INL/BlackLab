@@ -18,7 +18,7 @@ package nl.inl.blacklab.search;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
 /**
@@ -51,7 +51,7 @@ public class ContentAccessor {
     private int getContentId(Document d) {
         String contentIdStr = d.get(contentIdField);
         if (contentIdStr == null)
-            throw new BlackLabException("Lucene document has no content id: " + d);
+            throw new BlackLabRuntimeException("Lucene document has no content id: " + d);
         return Integer.parseInt(contentIdStr);
     }
 

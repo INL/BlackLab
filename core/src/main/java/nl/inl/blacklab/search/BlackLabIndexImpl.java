@@ -47,7 +47,7 @@ import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -199,7 +199,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             }
             return value == null ? defaultValue : value;
         } catch (IOException e) {
-            throw new BlackLabException("Could not read '" + key + "' from manifest", e);
+            throw new BlackLabRuntimeException("Could not read '" + key + "' from manifest", e);
         }
     }
 
@@ -482,7 +482,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             IndexReader indexReader = reader();
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -571,7 +571,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
             throws IOException, CorruptIndexException, LockObtainFailedException {
         if (!indexMode && createNewIndex)
-            throw new BlackLabException("Cannot create new index, not in index mode");
+            throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
 
         if (!createNewIndex) {
             if (!indexMode || VersionFile.exists(indexDir)) {
@@ -650,7 +650,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new BlackLabException("Could not detect main contents field");
+                        throw new BlackLabRuntimeException("Could not detect main contents field");
                 }
             } else {
                 // See if we have a punctuation forward index. If we do,
@@ -901,7 +901,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             CorruptIndexException, LockObtainFailedException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
-                throw new BlackLabException("Could not create dir: " + indexDir);
+                throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
         }
         Path indexPath = indexDir.toPath();
         while (Files.isSymbolicLink(indexPath)) {
@@ -967,7 +967,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void delete(Query q) {
         if (!indexMode)
-            throw new BlackLabException("Cannot delete documents, not in index mode");
+            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
         try {
             // Open a fresh reader to execute the query
             try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
@@ -1001,7 +1001,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             indexWriter.deleteDocuments(q);
 
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

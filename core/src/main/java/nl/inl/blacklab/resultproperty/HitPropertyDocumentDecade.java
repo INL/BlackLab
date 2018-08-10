@@ -22,7 +22,7 @@ import java.util.List;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -60,7 +60,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
             }
             return new HitPropValueDecade(year);
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -99,7 +99,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
             return reverse ? bYear - aYear : aYear - bYear;
 
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

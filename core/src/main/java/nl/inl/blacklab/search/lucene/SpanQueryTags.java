@@ -27,7 +27,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 
@@ -85,7 +85,7 @@ public class SpanQueryTags extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
         if (attr != null)
-            throw new BlackLabException("Query should've been rewritten! (attr != null)");
+            throw new BlackLabRuntimeException("Query should've been rewritten! (attr != null)");
         BLSpanWeight weight = clause.createWeight(searcher, needsScores);
         return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
     }

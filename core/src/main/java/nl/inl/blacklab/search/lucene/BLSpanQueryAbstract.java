@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -73,7 +73,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
             for (int i = 1; i < clauses.size(); i++) {
                 String f = AnnotatedFieldNameUtil.getBaseName(clauses.get(i).getField());
                 if (!baseFieldName.equals(f))
-                    throw new BlackLabException("Mix of incompatible fields in query ("
+                    throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
                             + baseFieldName + " and " + f + ")");
             }
         }

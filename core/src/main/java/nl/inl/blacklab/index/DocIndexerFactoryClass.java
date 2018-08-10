@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.indexers.DocIndexerAlto;
 import nl.inl.blacklab.indexers.DocIndexerFolia;
 import nl.inl.blacklab.indexers.DocIndexerPageXml;
@@ -149,7 +149,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -178,7 +178,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -209,7 +209,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException | IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -239,7 +239,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 }

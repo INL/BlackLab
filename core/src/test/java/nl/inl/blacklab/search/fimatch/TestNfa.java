@@ -9,7 +9,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public class TestNfa {
@@ -25,16 +25,16 @@ public class TestNfa {
                 boolean caseSensitive,
                 boolean diacSensitive) {
             if (annotNumber != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             if (annotValue.length() > 1)
-                throw new BlackLabException("only words of length 1 are valid");
+                throw new BlackLabRuntimeException("only words of length 1 are valid");
             results.add(annotValue.charAt(0));
         }
 
         @Override
         public int getAnnotationNumber(String annotName) {
             if (!annotName.equals("word"))
-                throw new BlackLabException("only 'word' is valid annotation");
+                throw new BlackLabRuntimeException("only 'word' is valid annotation");
             return 0;
         }
 
@@ -51,14 +51,14 @@ public class TestNfa {
         @Override
         public String getTermString(int annotIndex, int termId) {
             if (annotIndex != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             return Character.toString((char) termId);
         }
 
         @Override
         public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
             if (annotIndex != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {
                 if (termId[i] != termId[0])
                     return false;
@@ -78,7 +78,7 @@ public class TestNfa {
         @Override
         public int getToken(int annotIndex, int pos) {
             if (annotIndex != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             if (!validPos(pos))
                 return -1;
             return input.charAt(pos);
@@ -92,14 +92,14 @@ public class TestNfa {
         @Override
         public String getTermString(int annotIndex, int termId) {
             if (annotIndex != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             return Character.toString((char) termId);
         }
 
         @Override
         public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
             if (annotIndex != 0)
-                throw new BlackLabException("only 0 is valid annotation");
+                throw new BlackLabRuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {
                 if (termId[i] != termId[0])
                     return false;

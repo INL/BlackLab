@@ -33,7 +33,7 @@ import java.util.TreeMap;
 import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
-import nl.inl.blacklab.index.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;

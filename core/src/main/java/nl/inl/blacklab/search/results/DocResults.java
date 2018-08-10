@@ -31,7 +31,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
@@ -143,7 +143,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 results.add(dr);
             }
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -200,7 +200,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 }
             });
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
 
         //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));

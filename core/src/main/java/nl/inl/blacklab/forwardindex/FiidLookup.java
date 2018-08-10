@@ -11,7 +11,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.uninverting.UninvertingReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -52,7 +52,7 @@ class FiidLookup {
             if (!hasFiids(numToCheck))
                 cachedFiids = null;
         } catch (IOException e) {
-            BlackLabException.wrap(e);
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -80,7 +80,7 @@ class FiidLookup {
         try {
             return Long.parseLong(reader.document(docId).get(fiidFieldName));
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
 
     }

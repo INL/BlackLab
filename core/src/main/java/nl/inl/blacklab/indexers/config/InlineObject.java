@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Information about an inline object while parsing.
@@ -37,7 +37,7 @@ class InlineObject implements Comparable<InlineObject> {
         this.text = text;
         this.offset = offset;
         if (offset < 0)
-            throw new BlackLabException("Inline object with offset < 0");
+            throw new BlackLabRuntimeException("Inline object with offset < 0");
         this.type = type;
         this.attributes = Collections.emptyMap();
         if (attributes != null)

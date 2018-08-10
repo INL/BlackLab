@@ -25,7 +25,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -99,7 +99,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException | IllegalArgumentException e) {
-                    throw BlackLabException.wrap(e);
+                    throw BlackLabRuntimeException.wrap(e);
                 }
             }
         }

@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Utilities for working with files
@@ -186,7 +186,7 @@ public class FileUtil {
             }
             return result;
         } catch (Exception e) {
-            throw new BlackLabException(e);
+            throw new BlackLabRuntimeException(e);
         }
     }
 
@@ -337,7 +337,7 @@ public class FileUtil {
     public static File[] listFilesSorted(File dir) {
         File[] files = dir.listFiles();
         if (files == null)
-            throw new BlackLabException("Error listing in directory: " + dir);
+            throw new BlackLabRuntimeException("Error listing in directory: " + dir);
         Arrays.sort(files, LIST_FILES_COMPARATOR);
         return files;
     }

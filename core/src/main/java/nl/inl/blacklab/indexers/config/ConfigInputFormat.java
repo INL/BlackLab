@@ -17,7 +17,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
@@ -451,7 +451,7 @@ public class ConfigInputFormat {
             }
             return FileUtil.openForReading(readFromFile);
         } catch (FileNotFoundException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

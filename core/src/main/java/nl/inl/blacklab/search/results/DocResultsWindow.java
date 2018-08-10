@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * A list of DocResult objects (document-level query results). The list may be
@@ -45,7 +45,7 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
         boolean emptyResultSet = !source.sizeAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
                 (!emptyResultSet && !source.sizeAtLeast(first + 1))) {
-            throw new BlackLabException("First hit out of range");
+            throw new BlackLabRuntimeException("First hit out of range");
         }
 
         // Auto-clamp number

@@ -41,7 +41,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
@@ -573,7 +573,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
-                    throw new BlackLabException(e);
+                    throw new BlackLabRuntimeException(e);
                 }
             }
         }
@@ -642,7 +642,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             parser = factory.newSAXParser();
         } catch (SAXException | ParserConfigurationException e1) {
             // Unrecoverable error, throw runtime exception
-            throw BlackLabException.wrap(e1);
+            throw BlackLabRuntimeException.wrap(e1);
         }
         try {
             InputSource is = new InputSource(reader);

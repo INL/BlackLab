@@ -9,7 +9,7 @@ import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
@@ -164,7 +164,7 @@ public class ContextualQueryLanguageParser {
     String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
-        throw new BlackLabException();
+        throw new BlackLabRuntimeException();
     }
     
     String defaultProperty() {

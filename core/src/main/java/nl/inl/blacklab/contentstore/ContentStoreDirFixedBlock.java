@@ -37,7 +37,7 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CollUtil;
 import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
@@ -312,18 +312,18 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     public ContentStoreDirFixedBlock(File dir, boolean create) {
         this.dir = dir;
         if (!dir.exists() && !dir.mkdir())
-            throw new BlackLabException("Could not create dir: " + dir);
+            throw new BlackLabRuntimeException("Could not create dir: " + dir);
         tocFile = new File(dir, TOC_FILE_NAME);
         contentsFile = new File(dir, CONTENTS_FILE_NAME);
         if (create && tocFile.exists()) {
             // Delete the ContentStore files
             if (!tocFile.delete())
-                throw new BlackLabException("Could not delete TOC file: " + tocFile);
+                throw new BlackLabRuntimeException("Could not delete TOC file: " + tocFile);
             File versionFile = new File(dir, VERSION_FILE_NAME);
             if (versionFile.exists() && !versionFile.delete())
-                throw new BlackLabException("Could not delete version file: " + tocFile);
+                throw new BlackLabRuntimeException("Could not delete version file: " + tocFile);
             if (contentsFile.exists() && !contentsFile.delete())
-                throw new BlackLabException("Could not delete contents file: " + contentsFile);
+                throw new BlackLabRuntimeException("Could not delete contents file: " + contentsFile);
 
             // Also delete old content store format files if present
             File[] dataFiles = dir.listFiles(new FilenameFilter() {
@@ -333,10 +333,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 }
             });
             if (dataFiles == null)
-                throw new BlackLabException("Error finding old data files in content store dir: " + dir);
+                throw new BlackLabRuntimeException("Error finding old data files in content store dir: " + dir);
             for (File f : dataFiles) {
                 if (!f.delete())
-                    throw new BlackLabException("Could not delete data file: " + f);
+                    throw new BlackLabRuntimeException("Could not delete data file: " + f);
             }
         }
         toc = IntObjectMaps.mutable.empty(); //Maps.mutable.empty();
@@ -346,7 +346,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         if (create) {
             clear();
             if (tocFile.exists() && !tocFile.delete())
-                throw new BlackLabException("Could not delete file: " + tocFile);
+                throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
             setStoreType();
         }
         blockIndicesWhileStoring = new IntArrayList();
@@ -391,7 +391,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
         // delete contents file and empty TOC
         if (contentsFile.exists() && !contentsFile.delete())
-            throw new BlackLabException("Could not delete file: " + contentsFile);
+            throw new BlackLabRuntimeException("Could not delete file: " + contentsFile);
         toc.clear();
         freeBlocks.clear();
         tocModified = true;
@@ -420,7 +420,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            BlackLabException.wrap(e);
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -567,7 +567,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             fchContentsFile.write(buf);
             return freeBlock;
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -636,7 +636,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 fchContentsFile = rafContentsFile.getChannel();
             }
         } catch (FileNotFoundException e) {
-            throw new BlackLabException("Contents file not found" + CONTENTS_FILE_NAME, e);
+            throw new BlackLabRuntimeException("Contents file not found" + CONTENTS_FILE_NAME, e);
         }
     }
 
@@ -649,7 +649,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 rafContentsFile = null;
             }
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -753,7 +753,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                             int bytesRead = fileChannel.read(buffer, readStartOffset);
                             if (bytesRead < bytesToRead) {
                                 // Apparently, something went wrong.
-                                throw new BlackLabException("Not enough bytes read, " + bytesRead
+                                throw new BlackLabRuntimeException("Not enough bytes read, " + bytesRead
                                         + " < " + bytesToRead);
                             }
                             String decodedBlock = decodeBlock(buffer.array(), 0, bytesRead);
@@ -844,10 +844,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 compresser.finish();
                 int compressedDataLength = compresser.deflate(zipbuf, 0, zipbuf.length, Deflater.FULL_FLUSH);
                 if (compressedDataLength <= 0) {
-                    throw new BlackLabException("Error, deflate returned " + compressedDataLength);
+                    throw new BlackLabRuntimeException("Error, deflate returned " + compressedDataLength);
                 }
                 if (compressedDataLength == zipbuf.length) {
-                    throw new BlackLabException(
+                    throw new BlackLabRuntimeException(
                             "Error, deflate returned size of zipbuf, this indicates insufficient space");
                 }
 
@@ -898,11 +898,11 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 decompresser.setInput(buf, offset, length);
                 int resultLength = decompresser.inflate(zipbuf);
                 if (resultLength <= 0) {
-                    throw new BlackLabException("Error, inflate returned " + resultLength);
+                    throw new BlackLabRuntimeException("Error, inflate returned " + resultLength);
                 }
                 if (!decompresser.finished()) {
                     // This shouldn't happen because our max block size prevents it
-                    throw new BlackLabException("Unzip buffer size insufficient");
+                    throw new BlackLabRuntimeException("Unzip buffer size insufficient");
                 }
                 return new String(zipbuf, 0, resultLength, DEFAULT_CHARSET);
             } finally {
@@ -910,7 +910,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 zipbufPool.release(zipbuf);
             }
         } catch (DataFormatException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

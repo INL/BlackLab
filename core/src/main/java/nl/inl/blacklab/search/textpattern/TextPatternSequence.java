@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
@@ -35,7 +35,7 @@ public class TextPatternSequence extends TextPatternAndNot {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         if (!exclude.isEmpty())
-            throw new BlackLabException("clausesNot not empty!");
+            throw new BlackLabRuntimeException("clausesNot not empty!");
         List<BLSpanQuery> chResults = new ArrayList<>();
         for (TextPattern cl : include) {
             chResults.add(cl.translate(context));

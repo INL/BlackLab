@@ -20,7 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -49,15 +49,27 @@ public class Example {
      * Some test XML data to index.
      */
     static String[] testData = {
-            "<doc>" + "<w l='the'   p='art' >The</w> " + "<w l='quick' p='adj'>quick</w> "
-                    + "<w l='brown' p='adj'>brown</w> " + "<w l='fox'   p='nou'>fox</w> "
-                    + "<w l='jump'  p='vrb' >jumps</w> " + "<w l='over'  p='pre' >over</w> "
-                    + "<w l='the'   p='art' >the</w> " + "<w l='lazy'  p='adj'>lazy</w> "
-                    + "<w l='dog'   p='nou'>dog</w>" + ".</doc>",
+            "<doc>" +
+                    "<w l='the'   p='art' >The</w> " +
+                    "<w l='quick' p='adj'>quick</w> " +
+                    "<w l='brown' p='adj'>brown</w> " +
+                    "<w l='fox'   p='nou'>fox</w> " +
+                    "<w l='jump'  p='vrb' >jumps</w> " +
+                    "<w l='over'  p='pre' >over</w> " +
+                    "<w l='the'   p='art' >the</w> " +
+                    "<w l='lazy'  p='adj'>lazy</w> " +
+                    "<w l='dog'   p='nou'>dog</w>" +
+                    ".</doc>",
 
-            "<doc> " + "<w l='may' p='vrb'>May</w> " + "<w l='the' p='art'>the</w> "
-                    + "<w l='force' p='nou'>force</w> " + "<w l='be' p='vrb'>be</w> "
-                    + "<w l='with' p='pre'>with</w> " + "<w l='you' p='pro'>you</w>" + ".</doc>", };
+            "<doc> " +
+                    "<w l='may' p='vrb'>May</w> " +
+                    "<w l='the' p='art'>the</w> " +
+                    "<w l='force' p='nou'>force</w> " +
+                    "<w l='be' p='vrb'>be</w> " +
+                    "<w l='with' p='pre'>with</w> " +
+                    "<w l='you' p='pro'>you</w>" +
+                    ".</doc>"
+    };
 
     /**
      * The main program
@@ -67,27 +79,17 @@ public class Example {
      */
     public static void main(String[] args) throws IOException {
 
-        // Get a temporary directory for our test index
+        // Get a temporary directory for our test index, and make sure it doesn't exist
         File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");
-        if (indexDir.exists()) {
-            // Delete the old example dir
-            // (NOTE: we cannot do this on exit because memory mappings may
-            //  prevent deletion on Windows)
-            FileUtil.processTree(indexDir, new FileTask() {
-                @Override
-                public void process(File f) {
-                    if (!f.delete())
-                        throw new BlackLabException("Could not delete file: " + f);
-                }
-            });
-        }
+        cleanupOldIndexDir(indexDir);
 
-        // Register our custom DocIndexer, then create a BlackLab indexer using it
+        // Register our custom DocIndexer.
         DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
+
+        // Create an index and add our test documents.
         Indexer indexer = null;
         try {
             indexer = Indexer.createNewIndex(indexDir, "exampleformat");
-            // Index each of our test "documents".
             for (int i = 0; i < testData.length; i++) {
                 indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));
             }
@@ -132,6 +134,21 @@ public class Example {
             // Close the index object
             index.close();
 
+        }
+    }
+
+    private static void cleanupOldIndexDir(File indexDir) {
+        if (indexDir.exists()) {
+            // Delete the old example dir
+            // (NOTE: we cannot do this on exit because memory mappings may
+            //  prevent deletion on Windows)
+            FileUtil.processTree(indexDir, new FileTask() {
+                @Override
+                public void process(File f) {
+                    if (!f.delete())
+                        throw new BlackLabRuntimeException("Could not delete file: " + f);
+                }
+            });
         }
     }
 

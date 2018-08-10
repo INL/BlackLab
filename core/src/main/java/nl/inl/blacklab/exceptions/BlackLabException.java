@@ -6,7 +6,7 @@ package nl.inl.blacklab.exceptions;
  * This will be the base class of all BlackLab-thrown RuntimeExceptions. More
  * specific subclasses can be caught to handle specific situations.
  */
-public class BlackLabException extends RuntimeException {
+public class BlackLabException extends Exception {
     
     public static BlackLabException wrap(Throwable e) {
         if (e instanceof BlackLabException)

@@ -10,7 +10,7 @@ import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.Hit;
@@ -56,7 +56,7 @@ public class DocImpl implements Doc {
             try {
                 document = index.reader().document(id);
             } catch (IOException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
         return document;
@@ -87,7 +87,7 @@ public class DocImpl implements Doc {
                     maxP = endsOfWords[i];
             }
             if (minP < 0 || maxP < 0)
-                throw new BlackLabException("Can't determine min and max positions");
+                throw new BlackLabRuntimeException("Can't determine min and max positions");
 
             String fieldPropName = field.offsetsField();
 
@@ -162,10 +162,10 @@ public class DocImpl implements Doc {
             }
             if (found < total) {
                 if (!fillInDefaultsIfNotFound)
-                    throw new BlackLabException("Could not find all character offsets!");
+                    throw new BlackLabRuntimeException("Could not find all character offsets!");
 
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
-                    throw new BlackLabException("Could not find default char positions!");
+                    throw new BlackLabRuntimeException("Could not find default char positions!");
 
                 for (int m = 0; m < numStarts; m++) {
                     if (!done[m])

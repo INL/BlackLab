@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 import nl.inl.util.StringUtil;
 
@@ -219,7 +219,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 lengthInTokens = true;
                 return;
             }
-            throw new BlackLabException();
+            throw new BlackLabRuntimeException();
         }
     
         // Not a bookkeeping field; must be a annotation (alternative).

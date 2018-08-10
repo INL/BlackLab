@@ -28,7 +28,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
@@ -55,14 +55,14 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
         if (zipFilePath == null) {
             zipFilePath = docIndexer.getParameter("metadataDir");
             if (zipFilePath == null)
-                throw new BlackLabException(
+                throw new BlackLabRuntimeException(
                         "For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
             metadataDir = new File(zipFilePath);
         } else {
             try {
                 metadataZipFile = new ZipFile(new File(zipFilePath));
             } catch (IOException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
     }
@@ -137,7 +137,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
                 parser = factory.newSAXParser();
                 parser.parse(new InputSource(reader), new MetadataParser());
             } catch (SAXException | ParserConfigurationException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
 
             // Store metadata XML in content store and corresponding id in
@@ -149,7 +149,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
             if (metadataZipFile == null)
                 is.close();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

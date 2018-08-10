@@ -17,7 +17,7 @@ import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.ZipHandleManager;
 
 /**
@@ -144,7 +144,7 @@ public class FileProcessor implements AutoCloseable {
                 proc.setFileHandler(fileCapturer);
                 proc.processFile(f);
             } catch (FileNotFoundException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
 
             // FileProcessor must have completed/be closed before result is available
@@ -158,7 +158,7 @@ public class FileProcessor implements AutoCloseable {
                     return IOUtils.toByteArray(is);
                 }
             } catch (IOException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         } else {
             throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
@@ -458,7 +458,7 @@ public class FileProcessor implements AutoCloseable {
             // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
-            throw new BlackLabException("Interrupted while waiting for processing threads to finish", e);
+            throw new BlackLabRuntimeException("Interrupted while waiting for processing threads to finish", e);
         }
     }
 

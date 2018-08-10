@@ -37,7 +37,8 @@ import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
@@ -548,7 +549,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setErrorHandler(listener);
             proc.processFile(file);
         } catch (FileNotFoundException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

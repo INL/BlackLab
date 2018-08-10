@@ -35,7 +35,7 @@ import java.util.Set;
 import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.ExUtil;
 
 /**
@@ -292,15 +292,15 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     public ContentStoreDirUtf8(File dir, boolean create) {
         this.dir = dir;
         if (!dir.exists() && !dir.mkdir())
-            throw new BlackLabException("Could not create dir: " + dir);
+            throw new BlackLabRuntimeException("Could not create dir: " + dir);
         tocFile = new File(dir, "toc.dat");
         if (create && tocFile.exists()) {
             // Delete the ContentStore files
             if (!tocFile.delete())
-                throw new BlackLabException("Could not delete file: " + tocFile);
+                throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
             File versionFile = new File(dir, "version.dat");
             if (versionFile.exists() && !versionFile.delete())
-                throw new BlackLabException("Could not delete file: " + versionFile);
+                throw new BlackLabRuntimeException("Could not delete file: " + versionFile);
             File[] dataFiles = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir1, String name) {
@@ -308,10 +308,10 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                 }
             });
             if (dataFiles == null)
-                throw new BlackLabException("Error finding old data files in content store dir: " + dir);
+                throw new BlackLabRuntimeException("Error finding old data files in content store dir: " + dir);
             for (File f : dataFiles) {
                 if (!f.delete())
-                    throw new BlackLabException("Could not delete file: " + f);
+                    throw new BlackLabRuntimeException("Could not delete file: " + f);
             }
         }
         toc = Maps.mutable.empty();
@@ -321,7 +321,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         if (create) {
             clear();
             if (tocFile.exists() && !tocFile.delete())
-                throw new BlackLabException("Could not delete file: " + tocFile);
+                throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
             setStoreType();
         }
         blockOffsetWhileStoring = new ArrayList<>();
@@ -347,7 +347,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             TocEntry e = me.getValue();
             File f = getContentFile(e.fileId);
             if (f.exists() && !f.delete())
-                throw new BlackLabException("Could not delete file: " + f);
+                throw new BlackLabRuntimeException("Could not delete file: " + f);
         }
         toc.clear();
         tocModified = true;
@@ -379,7 +379,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            BlackLabException.wrap(e);
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -491,13 +491,13 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
             String blockContent = currentBlockContents.toString();
             if (blockContent.length() == 0)
-                throw new BlackLabException("ERROR, tried to write an empty block");
+                throw new BlackLabRuntimeException("ERROR, tried to write an empty block");
             byte[] buf = encodeBlock(blockContent);
             os.write(buf);
             bytesWritten += buf.length;
             currentBlockContents = new StringBuilder(newEntryBlockSizeCharacters);
         } catch (IOException e) {
-            BlackLabException.wrap(e);
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -634,7 +634,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             if (currentStoreFileStream == null) {
                 File f = getContentFile(currentFileId);
                 if (createNew && f.exists() && !f.delete()) // leftover from previous index; delete
-                    throw new BlackLabException("Could not delete file: " + f);
+                    throw new BlackLabRuntimeException("Could not delete file: " + f);
                 currentStoreFileStream = new BufferedOutputStream(new FileOutputStream(f, true));
             }
             return currentStoreFileStream;
@@ -648,7 +648,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             if (currentStoreFileStream != null)
                 currentStoreFileStream.close();
         } catch (IOException e) {
-            BlackLabException.wrap(e);
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -747,7 +747,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                             int bytesRead = fileChannel.read(buffer, readStartOffset);
                             if (bytesRead < bytesToRead) {
                                 // Apparently, something went wrong.
-                                throw new BlackLabException("Not enough bytes read, " + bytesRead
+                                throw new BlackLabRuntimeException("Not enough bytes read, " + bytesRead
                                         + " < " + bytesToRead);
                             }
                             decoded.append(decodeBlock(buffer.array(), 0, bytesRead));

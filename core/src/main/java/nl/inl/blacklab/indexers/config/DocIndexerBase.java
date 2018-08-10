@@ -23,7 +23,7 @@ import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReachedException;
@@ -251,11 +251,11 @@ public abstract class DocIndexerBase extends DocIndexer {
             try (InputStream is = new FileInputStream(f)) {
                 data = IOUtils.toByteArray(is);
             } catch (IOException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
         if (data == null) {
-            throw new BlackLabException("Error reading linked document");
+            throw new BlackLabRuntimeException("Error reading linked document");
         }
 
         // Index the data
@@ -272,7 +272,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 }
                 ldi.indexSpecificDocument(documentPath);
             } else {
-                throw new BlackLabException("Linked document indexer must be subclass of DocIndexerBase, but is "
+                throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
             }
         }
@@ -731,7 +731,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
-                    throw BlackLabException.wrap(e);
+                    throw BlackLabRuntimeException.wrap(e);
                 }
             }
         }

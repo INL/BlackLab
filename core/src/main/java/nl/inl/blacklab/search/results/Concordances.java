@@ -8,7 +8,7 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
@@ -58,7 +58,7 @@ public class Concordances {
         if (kwics != null)
             return kwics.get(h).toConcordance();
         if (concordances == null)
-            throw new BlackLabException("Call findConcordances() before getConcordance().");
+            throw new BlackLabRuntimeException("Call findConcordances() before getConcordance().");
         return concordances.get(h);
     }
 

@@ -21,7 +21,7 @@ import java.nio.ByteBuffer;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -91,7 +91,7 @@ class SpansTags extends BLSpans {
             }
             return end;
         } catch (IOException e) {
-            throw new BlackLabException("Error getting payload");
+            throw new BlackLabRuntimeException("Error getting payload");
         }
 
     }

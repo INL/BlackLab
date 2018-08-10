@@ -8,7 +8,7 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -52,7 +52,7 @@ public class Kwics {
      */
     public Kwic get(Hit h) {
         if (kwics == null)
-            throw new BlackLabException("Call findKwics() before getKwic().");
+            throw new BlackLabRuntimeException("Call findKwics() before getKwic().");
         return kwics.get(h);
     }
 

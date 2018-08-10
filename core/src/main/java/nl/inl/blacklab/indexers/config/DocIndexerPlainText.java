@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
@@ -30,11 +30,11 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     private StringBuilder fullText;
 
     @Override
-    public void close() throws BlackLabException {
+    public void close() throws BlackLabRuntimeException {
         try {
             reader.close();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

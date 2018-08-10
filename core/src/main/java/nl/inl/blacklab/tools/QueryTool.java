@@ -39,7 +39,7 @@ import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
@@ -392,7 +392,7 @@ public class QueryTool {
         try {
             run(indexDir, commandFile, Charset.defaultCharset().name());
         } catch (UnsupportedEncodingException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -419,7 +419,7 @@ public class QueryTool {
         try {
             run(indexDir, null, Charset.defaultCharset().name());
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -461,7 +461,7 @@ public class QueryTool {
             QueryTool c = new QueryTool(indexDir, in, out, err);
             c.commandProcessor();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -535,7 +535,7 @@ public class QueryTool {
             try {
                 outprintln("Opening index " + indexDir.getCanonicalPath() + "...");
             } catch (IOException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
 
@@ -597,7 +597,7 @@ public class QueryTool {
             try {
                 cmd = readCommand(prompt);
             } catch (IOException e1) {
-                throw BlackLabException.wrap(e1);
+                throw BlackLabRuntimeException.wrap(e1);
             }
             if (cmd == null || cmd.trim().equals("exit")) {
                 break;
@@ -634,7 +634,7 @@ public class QueryTool {
             try {
                 Thread.sleep(100); // Give Eclipse console time to show stderr output
             } catch (InterruptedException e) {
-                throw BlackLabException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
         cleanup();
@@ -966,7 +966,7 @@ public class QueryTool {
                 // Can't init JLine; too bad, fall back to stdin
                 outprintln("Command line editing not available; to enable, place jline jar in classpath.");
             } catch (ReflectiveOperationException e) {
-                throw new BlackLabException("Could not init JLine console reader", e);
+                throw new BlackLabRuntimeException("Could not init JLine console reader", e);
             }
         }
 
@@ -974,7 +974,7 @@ public class QueryTool {
             try {
                 return (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
             } catch (ReflectiveOperationException e) {
-                throw new BlackLabException("Could not invoke JLine ConsoleReader.readLine()", e);
+                throw new BlackLabRuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
             }
         }
 

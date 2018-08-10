@@ -2,7 +2,7 @@ package nl.inl.blacklab.queryParser.corpusql;
 
 import java.io.StringReader;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -48,7 +48,7 @@ public class CorpusQueryLanguageParser {
     String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
-        throw new BlackLabException("Cannot chop ends off string shorter than 2 chars");
+        throw new BlackLabRuntimeException("Cannot chop ends off string shorter than 2 chars");
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {

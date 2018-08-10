@@ -31,7 +31,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
@@ -91,7 +91,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try (BufferedReader thefile = FileUtil.openForReading(file, "utf8")) {
             charEncodingLine = thefile.readLine();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
         if (charEncoding == null) {
@@ -118,11 +118,11 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void close() throws BlackLabException {
+    public void close() throws BlackLabRuntimeException {
         try {
             reader.close();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -424,7 +424,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
-                throw BlackLabException.wrap(e1);
+                throw BlackLabRuntimeException.wrap(e1);
             }
         }
         return date;

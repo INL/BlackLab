@@ -24,7 +24,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -291,7 +291,7 @@ public class HitsImpl extends HitsAbstract {
                     // Not a very graceful way to do it... but at least it won't
                     // be stuck forever.
                     Thread.currentThread().interrupt(); // client can check this
-                    throw new BlackLabException("Query matches too many terms; aborted.");
+                    throw new BlackLabRuntimeException("Query matches too many terms; aborted.");
                 }
                 termContexts.put(term, TermContext.build(reader.getContext(), term));
             }
@@ -300,7 +300,7 @@ public class HitsImpl extends HitsAbstract {
             atomicReaderContexts = reader == null ? null : reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
 
         sourceSpansFullyRead = false;
@@ -328,7 +328,7 @@ public class HitsImpl extends HitsAbstract {
         try {
             sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -476,7 +476,7 @@ public class HitsImpl extends HitsAbstract {
     public HitsWindow window(Hit hit) {
         int i = hits.indexOf(hit);
         if (i < 0)
-            throw new BlackLabException("Hit not found in hits list!");
+            throw new BlackLabRuntimeException("Hit not found in hits list!");
         return window(i, 1);
     }
     
@@ -811,7 +811,7 @@ public class HitsImpl extends HitsAbstract {
             maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         } finally {
             ensureHitsReadLock.unlock();
         }

@@ -11,7 +11,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -48,7 +48,7 @@ public interface BlackLabIndex extends Closeable {
             }
             return false;
         } catch (FileNotFoundException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -211,7 +211,7 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param annotation the annotation for which we want the forward index
      * @return the ForwardIndex if found/created
-     * @throws BlackLabException if the annotation has no forward index
+     * @throws BlackLabRuntimeException if the annotation has no forward index
      */
     ForwardIndex forwardIndex(Annotation annotation);
 

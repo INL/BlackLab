@@ -30,7 +30,7 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 
@@ -184,7 +184,7 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        throw new BlackLabException("Sequence should have been rewritten!");
+        throw new BlackLabRuntimeException("Sequence should have been rewritten!");
     }
 
     @Override

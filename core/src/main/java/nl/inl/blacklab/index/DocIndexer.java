@@ -38,7 +38,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -78,7 +78,7 @@ public abstract class DocIndexer implements AutoCloseable {
     Set<String> numericFields = new HashSet<>();
     
     @Override
-    public abstract void close() throws BlackLabException;
+    public abstract void close() throws BlackLabRuntimeException;
 
     public Document getCurrentLuceneDoc() {
         return currentLuceneDoc;
@@ -145,7 +145,7 @@ public abstract class DocIndexer implements AutoCloseable {
             Charset detectedCharset = unicodeStream.getEncoding();
             setDocument(new InputStreamReader(unicodeStream, detectedCharset));
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

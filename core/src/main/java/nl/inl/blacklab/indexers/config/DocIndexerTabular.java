@@ -21,7 +21,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.util.ExUtil;
@@ -157,17 +157,17 @@ public class DocIndexerTabular extends DocIndexerConfig {
             inputReader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
             records = tabularFormat.parse(inputReader);
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
     @Override
-    public void close() throws BlackLabException {
+    public void close() throws BlackLabRuntimeException {
         try {
             if (inputReader != null)
                 inputReader.close();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

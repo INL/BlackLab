@@ -15,7 +15,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -48,7 +48,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void close() throws BlackLabException {
+    public void close() throws BlackLabRuntimeException {
         outputIndexer.close();
     }
 

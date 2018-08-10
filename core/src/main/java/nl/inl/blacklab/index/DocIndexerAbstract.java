@@ -20,7 +20,7 @@ import java.io.Reader;
 import java.lang.reflect.Method;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CountingReader;
 
 /**
@@ -153,11 +153,11 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     }
 
     @Override
-    public void close() throws BlackLabException {
+    public void close() throws BlackLabRuntimeException {
         try {
             reader.close();
         } catch (IOException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

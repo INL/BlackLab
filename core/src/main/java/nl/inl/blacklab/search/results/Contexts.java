@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
@@ -75,7 +75,7 @@ public class Contexts {
                 contextsToSelect.add(i);
         }
         if (contextsToSelect.size() < requested.size())
-            throw new BlackLabException("Not all requested contexts were present");
+            throw new BlackLabRuntimeException("Not all requested contexts were present");
     
         // Copy only the requested contexts
         int numberOfHits = source.contexts.length;
@@ -317,7 +317,7 @@ public class Contexts {
                 int fiid = forwardIndex.luceneDocIdToFiid(doc);
                 words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
             } else {
-                throw new BlackLabException("Cannot get context without a forward index");
+                throw new BlackLabRuntimeException("Cannot get context without a forward index");
             }
 
             // Build the actual concordances

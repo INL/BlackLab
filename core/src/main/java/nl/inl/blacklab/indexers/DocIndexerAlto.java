@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
@@ -168,7 +168,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
                 try {
                     l = r.readLine();
                 } catch (IOException e) {
-                    throw BlackLabException.wrap(e);
+                    throw BlackLabRuntimeException.wrap(e);
                 }
                 if (l == null)
                     break;
@@ -180,7 +180,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
                 authors.put(fields[0].trim(), fields[4].trim());
             }
         } catch (FileNotFoundException e) {
-            throw BlackLabException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         externalMetadataAvailable = true;
     }
