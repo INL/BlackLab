@@ -333,5 +333,11 @@ public interface BlackLabIndex extends Closeable {
     void setDefaultMatchSensitivity(MatchSensitivity m);
 
     void setHitsSettings(HitsSettings withContextSize);
+    
+    @Override
+    boolean equals(Object obj);
+    
+    @Override
+    int hashCode();
 
 }

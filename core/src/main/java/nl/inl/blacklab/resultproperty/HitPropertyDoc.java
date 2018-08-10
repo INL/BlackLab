@@ -18,35 +18,36 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
- * A hit property for grouping per document id.
- * 
- * NOTE: prefer using HitPropertyDoc, which includes the actual 
- * Doc instance. 
+ * A hit property for grouping per document.
  */
-public class HitPropertyDocumentId extends HitProperty {
+public class HitPropertyDoc extends HitProperty {
 
-    public HitPropertyDocumentId(Hits hits) {
+    private BlackLabIndex index;
+
+    public HitPropertyDoc(Hits hits) {
         super(hits);
+        index = hits.index();
     }
 
     @Override
-    public HitPropValueInt get(int hitNumber) {
+    public HitPropValueDoc get(int hitNumber) {
         Hit result = hits.getByOriginalOrder(hitNumber);
-        return new HitPropValueInt(result.doc());
+        return new HitPropValueDoc(index.doc(result.doc()));
     }
 
     @Override
     public String getName() {
-        return "document id";
+        return "document";
     }
 
     @Override
     public List<String> getPropNames() {
-        return Arrays.asList("document: id");
+        return Arrays.asList("document");
     }
 
     @Override
@@ -58,10 +59,10 @@ public class HitPropertyDocumentId extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + "docid";
+        return serializeReverse() + "doc";
     }
 
-    public static HitPropertyDocumentId deserialize(Hits hits) {
-        return new HitPropertyDocumentId(hits);
+    public static HitPropertyDoc deserialize(Hits hits) {
+        return new HitPropertyDoc(hits);
     }
 }

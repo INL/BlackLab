@@ -19,7 +19,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     // Inherited from Results
     //--------------------------------------------------------------------
-
+    
     /**
      * For Hits, this is an alias of hitsProcessedTotal.
      * 

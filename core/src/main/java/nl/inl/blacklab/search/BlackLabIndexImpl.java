@@ -1016,5 +1016,29 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         }
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((indexLocation == null) ? 0 : indexLocation.hashCode());
+        return result;
+    }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BlackLabIndexImpl other = (BlackLabIndexImpl) obj;
+        if (indexLocation == null) {
+            if (other.indexLocation != null)
+                return false;
+        } else if (!indexLocation.equals(other.indexLocation))
+            return false;
+        return true;
+    }
+    
 }

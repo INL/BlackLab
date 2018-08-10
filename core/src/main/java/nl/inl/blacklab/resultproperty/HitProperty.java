@@ -134,7 +134,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         }
         String info = parts.length > 1 ? parts[1] : "";
         List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright",
-                "context", "hitposition");
+                "context", "hitposition", "doc");
         int typeNum = types.indexOf(type);
         HitProperty result;
         switch (typeNum) {
@@ -167,6 +167,9 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
             break;
         case 9:
             result = HitPropertyHitPosition.deserialize(hits);
+            break;
+        case 10:
+            result = HitPropertyDoc.deserialize(hits);
             break;
         default:
             logger.debug("Unknown HitProperty '" + type + "'");

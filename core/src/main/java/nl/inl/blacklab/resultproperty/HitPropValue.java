@@ -50,7 +50,7 @@ public abstract class HitPropValue implements Comparable<Object> {
         String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str"/*, "mul"*/);
+        List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str", "doc");
         int typeNum = types.indexOf(type);
         switch (typeNum) {
         case 0:
@@ -63,8 +63,8 @@ public abstract class HitPropValue implements Comparable<Object> {
             return HitPropValueInt.deserialize(info);
         case 4:
             return HitPropValueString.deserialize(info);
-        /*case 5:
-        	return HitPropValueMultiple.deserialize(searcher, info);*/
+        case 5:
+            return HitPropValueDoc.deserialize(hits.index(), info);
         }
         logger.debug("Unknown HitPropValue '" + type + "'");
         return null;

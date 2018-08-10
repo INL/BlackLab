@@ -170,4 +170,10 @@ public interface Doc {
     List<Concordance> makeConcordancesFromContentStore(Field field, int[] startsOfWords,
             int[] endsOfWords, XmlHighlighter hl);
 
+    @Override
+    boolean equals(Object obj);
+    
+    @Override
+    int hashCode();
+    
 }
