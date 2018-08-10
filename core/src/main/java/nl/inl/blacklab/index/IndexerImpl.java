@@ -336,25 +336,16 @@ class IndexerImpl implements DocWriter, Indexer {
         return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setProcessArchivesAsDirectories(boolean)
-     */
     @Override
     public void setProcessArchivesAsDirectories(boolean b) {
         processArchivesAsDirectories = b;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setRecurseSubdirs(boolean)
-     */
     @Override
     public void setRecurseSubdirs(boolean recurseSubdirs) {
         this.defaultRecurseSubdirs = recurseSubdirs;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setFormatIdentifier(java.lang.String)
-     */
     @Override
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
         if (!DocumentFormats.isSupported(formatIdentifier))
@@ -364,18 +355,12 @@ class IndexerImpl implements DocWriter, Indexer {
         this.formatIdentifier = formatIdentifier;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setListener(nl.inl.blacklab.index.IndexListener)
-     */
     @Override
     public void setListener(IndexListener listener) {
         this.listener = listener;
         listener(); // report creation and start of indexing, if it hadn't been reported yet
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#listener()
-     */
     @Override
     public IndexListener listener() {
         if (listener == null) {
@@ -399,17 +384,11 @@ class IndexerImpl implements DocWriter, Indexer {
         logger.error(msg, e);
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setMaxNumberOfDocsToIndex(int)
-     */
     @Override
     public void setMaxNumberOfDocsToIndex(int n) {
         this.maxNumberOfDocsToIndex = n;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#rollback()
-     */
     @Override
     public void rollback() {
         listener().rollbackStart();
@@ -418,9 +397,6 @@ class IndexerImpl implements DocWriter, Indexer {
         hasRollback = true;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#close()
-     */
     // TODO this should call close() on running FileProcessors
     @Override
     public synchronized void close() {
@@ -443,9 +419,6 @@ class IndexerImpl implements DocWriter, Indexer {
         closed = true;
     }
     
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#isClosed()
-     */
     @Override
     public boolean isClosed() {
         return closed;
@@ -484,17 +457,11 @@ class IndexerImpl implements DocWriter, Indexer {
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#index(java.lang.String, java.io.InputStream)
-     */
     @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, "*");
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#index(java.lang.String, java.io.Reader)
-     */
     @Override
     public void index(String documentName, Reader reader) {
         try {
@@ -512,9 +479,6 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#index(java.lang.String, java.io.InputStream, java.lang.String)
-     */
     @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
         try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs,
@@ -526,9 +490,6 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#index(java.io.File)
-     */
     @Override
     public void index(File file) {
         index(file, "*");
@@ -629,9 +590,6 @@ class IndexerImpl implements DocWriter, Indexer {
         return searcher;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setLinkedFileDirs(java.util.List)
-     */
     @Override
     public void setLinkedFileDirs(List<File> linkedFileDirs) {
         this.linkedFileDirs.clear();
@@ -651,9 +609,6 @@ class IndexerImpl implements DocWriter, Indexer {
         this.linkedFileDirs.add(linkedFileDir);
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setLinkedFileResolver(java.util.function.Function)
-     */
     @Override
     public void setLinkedFileResolver(Function<String, File> resolver) {
         this.linkedFileResolver = resolver;
@@ -680,9 +635,6 @@ class IndexerImpl implements DocWriter, Indexer {
         return f;
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setUseThreads(boolean)
-     */
     @Override
     public void setUseThreads(boolean useThreads) {
         this.useThreads = useThreads;
