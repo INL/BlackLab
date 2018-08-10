@@ -79,7 +79,7 @@ public class HitsSampleImpl extends HitsSample {
 
     @Override
     public String toString() {
-        return "HitsSampleImpl#" + getHitsObjId() + " (source=" + source + ")";
+        return "HitsSampleImpl#" + resultsObjId() + " (source=" + source + ")";
     }
 
 }

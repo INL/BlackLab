@@ -134,7 +134,7 @@ public abstract class HitsSample extends HitsImpl {
 
     @Override
     public String toString() {
-        return "HitsSample#" + getHitsObjId();
+        return "HitsSample#" + resultsObjId();
     }
 
 }

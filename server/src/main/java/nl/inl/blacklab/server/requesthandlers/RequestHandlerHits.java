@@ -287,7 +287,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (originalHits.settings().contextSize() != contextSize)
             originalHits = originalHits.copy(originalHits.settings().withContextSize(contextSize));
         ds.startMap().startEntry("tokenFrequencies").startMap();
-        TermFrequencyList tfl = originalHits.getCollocations();
+        TermFrequencyList tfl = originalHits.collocations();
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }

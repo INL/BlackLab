@@ -1392,7 +1392,7 @@ public class QueryTool {
                 collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
+            collocations = hits.collocations(collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
         }
 
         int i = 0;
@@ -1532,7 +1532,7 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            toShow.add(new HitToShow(hit.doc(), left, hitText, right, window.getCapturedGroupMap(hit)));
+            toShow.add(new HitToShow(hit.doc(), left, hitText, right, window.capturedGroupMap(hit)));
             if (leftContextMaxSize < left.length())
                 leftContextMaxSize = left.length();
         }

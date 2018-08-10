@@ -59,7 +59,7 @@ public class JobHitsTotal extends JobWithHits {
     protected void dataStreamSubclassEntries(DataStream ds) {
         ds.entry("hitsCounted", hits != null ? hits.hitsCountedSoFar() : -1);
         if (hits != null) {
-            ds.entry("hitsObjId", hits.getHitsObjId())
+            ds.entry("hitsObjId", hits.resultsObjId())
                     .entry("retrievedSoFar", hits.hitsProcessedSoFar())
                     .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }

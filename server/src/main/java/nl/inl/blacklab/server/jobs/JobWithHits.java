@@ -26,7 +26,7 @@ public abstract class JobWithHits extends Job {
         ds.entry("countHitsRetrieved", hits == null ? -1 : hits.docsProcessedSoFar());
         ds.entry("hasHitsObject", hits != null);
         if (hits != null) {
-            ds.entry("hitsObjId", hits.getHitsObjId())
+            ds.entry("hitsObjId", hits.resultsObjId())
                     .entry("retrievedSoFar", hits.hitsProcessedSoFar())
                     .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }

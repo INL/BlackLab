@@ -138,13 +138,13 @@ public abstract class HitsAbstract implements Hits {
      * @see nl.inl.blacklab.search.results.Hits#getCapturedGroupMap(nl.inl.blacklab.search.results.Hit)
      */
     @Override
-    public abstract Map<String, Span> getCapturedGroupMap(Hit hit);
+    public abstract Map<String, Span> capturedGroupMap(Hit hit);
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#getCapturedGroups(nl.inl.blacklab.search.results.Hit)
      */
     @Override
-    public abstract Span[] getCapturedGroups(Hit hit);
+    public abstract Span[] capturedGroups(Hit hit);
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#hasCapturedGroups()
@@ -156,7 +156,7 @@ public abstract class HitsAbstract implements Hits {
      * @see nl.inl.blacklab.search.results.Hits#getCapturedGroupNames()
      */
     @Override
-    public abstract List<String> getCapturedGroupNames();
+    public abstract List<String> capturedGroupNames();
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#getHitsInDoc(int)
@@ -210,13 +210,13 @@ public abstract class HitsAbstract implements Hits {
      * @see nl.inl.blacklab.search.results.Hits#getCollocations(nl.inl.blacklab.search.indexmetadata.Annotation, nl.inl.blacklab.search.QueryExecutionContext, boolean)
      */
     @Override
-    public abstract TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort);
+    public abstract TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort);
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#getCollocations()
      */
     @Override
-    public abstract TermFrequencyList getCollocations();
+    public abstract TermFrequencyList collocations();
 
     /* (non-Javadoc)
      * @see nl.inl.blacklab.search.results.Hits#perDocResults()
@@ -264,7 +264,7 @@ public abstract class HitsAbstract implements Hits {
      * @see nl.inl.blacklab.search.results.Hits#getHitsObjId()
      */
     @Override
-    public int getHitsObjId() {
+    public int resultsObjId() {
         return hitsObjId;
     }
 

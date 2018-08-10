@@ -453,12 +453,12 @@ public class HitsImpl extends HitsAbstract {
     }
 
     @Override
-    public TermFrequencyList getCollocations() {
+    public TermFrequencyList collocations() {
         return TermFrequencyList.collocations(this, null, null, true);
     }
 
     @Override
-    public synchronized TermFrequencyList getCollocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+    public synchronized TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         return TermFrequencyList.collocations(this, annotation, ctx, sort);
     }
     
@@ -635,7 +635,7 @@ public class HitsImpl extends HitsAbstract {
     //--------------------------------------------------------------------
 
     @Override
-    public List<String> getCapturedGroupNames() {
+    public List<String> capturedGroupNames() {
         return capturedGroupNames;
     }
 
@@ -645,18 +645,18 @@ public class HitsImpl extends HitsAbstract {
     }
 
     @Override
-    public Span[] getCapturedGroups(Hit hit) {
+    public Span[] capturedGroups(Hit hit) {
         if (capturedGroups == null)
             return null;
         return capturedGroups.get(hit);
     }
 
     @Override
-    public Map<String, Span> getCapturedGroupMap(Hit hit) {
+    public Map<String, Span> capturedGroupMap(Hit hit) {
         if (capturedGroups == null)
             return null;
         Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
-        List<String> names = getCapturedGroupNames();
+        List<String> names = capturedGroupNames();
         Span[] groups = capturedGroups.get(hit);
         for (int i = 0; i < names.size(); i++) {
             result.put(names.get(i), groups[i]);

@@ -131,7 +131,7 @@ public class MockHits extends HitsImpl {
     }
 
     @Override
-    public TermFrequencyList getCollocations(Annotation propName, QueryExecutionContext ctx, boolean sort) {
+    public TermFrequencyList collocations(Annotation propName, QueryExecutionContext ctx, boolean sort) {
         throw new UnsupportedOperationException();
     }
 
@@ -141,12 +141,12 @@ public class MockHits extends HitsImpl {
     }
 
     @Override
-    public Span[] getCapturedGroups(Hit hit) {
+    public Span[] capturedGroups(Hit hit) {
         return null;
     }
 
     @Override
-    public Map<String, Span> getCapturedGroupMap(Hit hit) {
+    public Map<String, Span> capturedGroupMap(Hit hit) {
         return null;
     }
 
@@ -157,7 +157,7 @@ public class MockHits extends HitsImpl {
 
     @Override
     public String toString() {
-        return "MockHits#" + getHitsObjId();
+        return "MockHits#" + resultsObjId();
     }
 
     @Override

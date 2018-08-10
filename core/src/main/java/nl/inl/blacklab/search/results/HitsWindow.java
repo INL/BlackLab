@@ -75,7 +75,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
             Hit hit = source.get(i);
             hits.add(hit);
             if (capturedGroups != null)
-                capturedGroups.put(hit, source.getCapturedGroups(hit));
+                capturedGroups.put(hit, source.capturedGroups(hit));
             // OPT: copy context as well..?
         }
 
@@ -193,7 +193,7 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
 
     @Override
     public String toString() {
-        return "HitsWindow#" + getHitsObjId() + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
+        return "HitsWindow#" + resultsObjId() + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
     }
 
 }

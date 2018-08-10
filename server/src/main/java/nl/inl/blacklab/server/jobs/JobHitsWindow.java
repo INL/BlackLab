@@ -81,7 +81,7 @@ public class JobHitsWindow extends JobWithHits {
                 .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.windowSize());
         if (hitsWindow != null) {
             Hits hits = hitsWindow.getOriginalHits();
-            ds.entry("hitsObjId", hits.getHitsObjId())
+            ds.entry("hitsObjId", hits.resultsObjId())
                     .entry("retrievedSoFar", hits.hitsProcessedSoFar())
                     .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }
