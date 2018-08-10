@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -70,12 +69,12 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
         // Copy the hits we're interested in.
         hits = new ArrayList<>();
         if (source.hasCapturedGroups())
-            capturedGroups = new HashMap<>();
+            capturedGroups = new CapturedGroupsImpl(source.capturedGroups().names());
         for (int i = first; i < first + number; i++) {
             Hit hit = source.get(i);
             hits.add(hit);
             if (capturedGroups != null)
-                capturedGroups.put(hit, source.capturedGroups(hit));
+                capturedGroups.put(hit, source.capturedGroups().get(hit));
             // OPT: copy context as well..?
         }
 

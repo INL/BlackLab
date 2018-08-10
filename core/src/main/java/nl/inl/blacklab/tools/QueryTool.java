@@ -1532,7 +1532,7 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            toShow.add(new HitToShow(hit.doc(), left, hitText, right, window.capturedGroupMap(hit)));
+            toShow.add(new HitToShow(hit.doc(), left, hitText, right, window.capturedGroups().getMap(hit)));
             if (leftContextMaxSize < left.length())
                 leftContextMaxSize = left.length();
         }

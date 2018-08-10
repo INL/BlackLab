@@ -1,8 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,7 +9,6 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -96,16 +93,10 @@ public abstract class HitsAbstract implements Hits {
     }
 
     @Override
-    public abstract Map<String, Span> capturedGroupMap(Hit hit);
-
-    @Override
-    public abstract Span[] capturedGroups(Hit hit);
+    public abstract CapturedGroups capturedGroups();
 
     @Override
     public abstract boolean hasCapturedGroups();
-
-    @Override
-    public abstract List<String> capturedGroupNames();
 
     @Override
     public abstract Hits getHitsInDoc(int docid);

@@ -1,12 +1,10 @@
 package nl.inl.blacklab.mocks;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -24,7 +22,7 @@ public class MockHits extends HitsImpl {
     private int numberOfDocs;
 
     public MockHits(BlackLabIndex index, AnnotatedField field, int[] doc, int[] start, int[] end) {
-        super(index, field, null);
+        super(index, field, null, null);
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -138,16 +136,6 @@ public class MockHits extends HitsImpl {
     @Override
     public boolean hasCapturedGroups() {
         return false;
-    }
-
-    @Override
-    public Span[] capturedGroups(Hit hit) {
-        return null;
-    }
-
-    @Override
-    public Map<String, Span> capturedGroupMap(Hit hit) {
-        return null;
     }
 
     @Override

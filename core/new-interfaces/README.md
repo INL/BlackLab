@@ -56,7 +56,7 @@ index
   een lijst met Hit+Context objects te instantieren en die te sorteren.
   
   Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien.
-  
+ 
 - ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
 
 - get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
@@ -71,10 +71,16 @@ index
   * hoogste originalIndex veel groter (bijv 4x of meer) dan aantal hits: hash-based, zodat lookup intern in een Map oid gedaan wordt.
     trager maar geheugen-efficienter, en voor kleinere sets geeft het niet zo.
     threshold kan best hoog liggen trouwens, want we bewaren Contexts tegenwoordig niet meer, dus ze nemen slechts tijdelijk "veel" geheugen in. Aan de andere kant kan cache-efficientie een overweging zijn als het array erg sparsely populated wordt.
-  
+
+- Hits.copyMaxHitsRetrieved: kunnen we deze stats niet samen met field in een soort "query info / state" objectje vatten wat we kopieren (of refereren)?
   
 results
+
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
+  PROBLEM: DocResults relies on the fact that results are sorted by document.
+  Special class of grouping operation..?
+  But can we know whether Hits are doc-sorted or not...?
+
 - eliminate HitsWindow, have Hits contain optional window stats
 - introduce base interface Results connecting Hits, HitGroups, GroupGroups; 
   also ResultProperty (HitProperty / GroupProperty)

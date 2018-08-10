@@ -1,15 +1,12 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -289,35 +286,18 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     boolean doneProcessingAndCounting();
 
     /**
-     * Get the captured group information in map form.
+     * Get the captured group information, if any.
      *
-     * Relatively slow; use getCapturedGroups() and getCapturedGroupNames() for a
-     * faster alternative.
-     *
-     * @param hit hit to get the captured group map for
-     * @return the captured group information map
+     * @return the captured group information, or null if there were no captured groups
      */
-    Map<String, Span> capturedGroupMap(Hit hit);
+    CapturedGroups capturedGroups();
 
     /**
-     * Get the captured group information for this hit, if any.
-     *
-     * The names of the captured groups can be obtained through the
-     * getCapturedGroupNames() method.
-     *
-     * @param hit the hit to get captured group information for
-     * @return the captured group information, or null if none
+     * Do we have captured groups?
+     * 
+     * @return true if we do, false if we don't
      */
-    Span[] capturedGroups(Hit hit);
-
     boolean hasCapturedGroups();
-
-    /**
-     * Get the captured group name information.
-     *
-     * @return the captured group names, in index order
-     */
-    List<String> capturedGroupNames();
 
     /**
      * Convenience method to get all hits in a single doc from a larger hitset.

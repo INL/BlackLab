@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -84,29 +83,41 @@ public class HitsImpl extends HitsAbstract {
         return new HitsImpl(index, index.annotatedField(query.getField()), query, settings);
     }
 
-    /**
-     * Construct a Hits object from a Spans.
-     *
-     * Used for testing. Don't use this in applications, but construct a Hits object
-     * from a SpanQuery, as it's more efficient.
-     *
-     * @param index the index object
-     * @param field field our hits came from
-     * @param source where to retrieve the Hit objects from
-     * @param settings search settings
-     * @return hits found
-     */
-    public static HitsImpl fromSpans(BlackLabIndex index, AnnotatedField field, BLSpans source, HitsSettings settings) {
-        return new HitsImpl(index, field, source, settings);
-    }
-
     
     // Instance variables
     //--------------------------------------------------------------------
-    
-    // General stuff
-    
-    
+
+    // Fetching information
+
+    /**
+     * If true, we've stopped retrieving hits because there are more than the
+     * maximum we've set.
+     */
+    private boolean maxHitsRetrieved = false;
+
+    /**
+     * If true, we've stopped counting hits because there are more than the maximum
+     * we've set.
+     */
+    private boolean maxHitsCounted = false;
+
+    /**
+     * The number of hits we've seen and counted so far. May be more than the number
+     * of hits we've retrieved if that exceeds maxHitsToRetrieve.
+     */
+    protected int hitsCounted = 0;
+
+    /**
+     * The number of separate documents we've seen in the hits retrieved.
+     */
+    protected int docsRetrieved = 0;
+
+    /**
+     * The number of separate documents we've counted so far (includes non-retrieved
+     * hits).
+     */
+    protected int docsCounted = 0;
+
     
     // Hit information
 
@@ -116,16 +127,13 @@ public class HitsImpl extends HitsAbstract {
     protected List<Hit> hits;
 
     /**
-     * The captured groups, if we have any.
+     * The sort order, if we've sorted, or null if not.
+     * 
+     * Note that, after initial creation of the Hits object, sortOrder is immutable.
      */
-    protected Map<Hit, Span[]> capturedGroups;
+    private Integer[] sortOrder;
     
     // Low-level Lucene hit fetching
-
-    /**
-     * Our SpanQuery.
-     */
-    private BLSpanQuery spanQuery;
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -165,67 +173,18 @@ public class HitsImpl extends HitsAbstract {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
     
-    // Sort
-
-    /**
-     * The sort order, if we've sorted, or null if not.
-     * 
-     * Note that, after initial creation of the Hits object, sortOrder is immutable.
-     */
-    private Integer[] sortOrder;
-    
-    // Display
-
-    // Stats
-
     /** Context of our query; mostly used to keep track of captured groups. */
     private HitQueryContext hitQueryContext;
-
-    /**
-     * If true, we've stopped retrieving hits because there are more than the
-     * maximum we've set.
-     */
-    private boolean maxHitsRetrieved = false;
-
-    /**
-     * If true, we've stopped counting hits because there are more than the maximum
-     * we've set.
-     */
-    private boolean maxHitsCounted = false;
-
-    /**
-     * The number of hits we've seen and counted so far. May be more than the number
-     * of hits we've retrieved if that exceeds maxHitsToRetrieve.
-     */
-    protected int hitsCounted = 0;
-
-    /**
-     * The number of separate documents we've seen in the hits retrieved.
-     */
-    protected int docsRetrieved = 0;
-
-    /**
-     * The number of separate documents we've counted so far (includes non-retrieved
-     * hits).
-     */
-    protected int docsCounted = 0;
 
     /**
      * Document the previous hit was in, so we can count separate documents.
      */
     protected int previousHitDoc = -1;
 
-    private List<String> capturedGroupNames;
-
 
     // Constructors
     //--------------------------------------------------------------------
 
-    public HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
-        super(index, field, settings);
-        hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
-    }
-    
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
@@ -237,7 +196,8 @@ public class HitsImpl extends HitsAbstract {
      * @param settings settings, or null for default
      */
     protected HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        this(index, field, settings);
+        super(index, field, settings);
+        hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         int prevDoc = -1;
@@ -249,6 +209,7 @@ public class HitsImpl extends HitsAbstract {
                 prevDoc = h.doc();
             }
         }
+        sourceSpansFullyRead = true;
         threadPauser = new ThreadPauser();
     }
 
@@ -270,7 +231,7 @@ public class HitsImpl extends HitsAbstract {
 
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): rewrite");
-            spanQuery = optimize.rewrite(reader);
+            BLSpanQuery spanQuery = optimize.rewrite(reader);
 
             //System.err.println(spanQuery);
             termContexts = new HashMap<>();
@@ -309,30 +270,6 @@ public class HitsImpl extends HitsAbstract {
     }
 
     /**
-     * Construct a Hits object from a Spans.
-     *
-     * If possible, don't use this constructor, use the one that takes a SpanQuery,
-     * as it's more efficient.
-     *
-     * Note that the Spans provided must be start-point sorted and contain unique
-     * hits.
-     *
-     * @param index the index object
-     * @param field field our hits came from
-     * @param source where to retrieve the Hit objects from
-     */
-    private HitsImpl(BlackLabIndex index, AnnotatedField field, BLSpans source, HitsSettings settings) {
-        this(index, field, (List<Hit>) null, settings);
-
-        currentSourceSpans = source;
-        try {
-            sourceSpansFullyRead = currentSourceSpans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    /**
      * Construct a Hits object from an existing Hits object.
      *
      * The same hits list is reused. Context and sort order are not copied. All
@@ -342,7 +279,8 @@ public class HitsImpl extends HitsAbstract {
      * @param settings settings to override, or null to copy
      */
     private HitsImpl(HitsImpl copyFrom, HitsSettings settings) {
-        this(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings);
+        super(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings);
+        hitQueryContext = new HitQueryContext(); // to keep track of captured groups, etc.
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -351,7 +289,6 @@ public class HitsImpl extends HitsAbstract {
         sourceSpansFullyRead = true;
         hits = copyFrom.hits;
         capturedGroups = copyFrom.capturedGroups;
-        capturedGroupNames = copyFrom.capturedGroupNames;
         hitsCounted = copyFrom.hitsCountedSoFar();
         docsRetrieved = copyFrom.docsProcessedSoFar();
         docsCounted = copyFrom.docsCountedSoFar();
@@ -633,10 +570,11 @@ public class HitsImpl extends HitsAbstract {
 
     // Captured groups
     //--------------------------------------------------------------------
-
-    @Override
-    public List<String> capturedGroupNames() {
-        return capturedGroupNames;
+    
+    CapturedGroupsImpl capturedGroups;
+    
+    public CapturedGroups capturedGroups() {
+        return capturedGroups;
     }
 
     @Override
@@ -644,27 +582,6 @@ public class HitsImpl extends HitsAbstract {
         return capturedGroups != null;
     }
 
-    @Override
-    public Span[] capturedGroups(Hit hit) {
-        if (capturedGroups == null)
-            return null;
-        return capturedGroups.get(hit);
-    }
-
-    @Override
-    public Map<String, Span> capturedGroupMap(Hit hit) {
-        if (capturedGroups == null)
-            return null;
-        Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
-        List<String> names = capturedGroupNames();
-        Span[] groups = capturedGroups.get(hit);
-        for (int i = 0; i < names.size(); i++) {
-            result.put(names.get(i), groups[i]);
-        }
-        return result;
-    }
-
-    
     // Hits fetching
     //--------------------------------------------------------------------
 
@@ -718,12 +635,6 @@ public class HitsImpl extends HitsAbstract {
                     while (currentSourceSpans == null) {
                         // Exhausted (or not started yet); get next segment spans.
 
-                        if (spanQuery == null) {
-                            // We started from a Spans, not a SpanQuery. We're done now.
-                            // (only used in deprecated methods or while testing)
-                            return;
-                        }
-
                         atomicReaderContextIndex++;
                         if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
                             sourceSpansFullyRead = true;
@@ -757,8 +668,7 @@ public class HitsImpl extends HitsAbstract {
                             hitQueryContext.setSpans(currentSourceSpans);
                             currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
                             if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                                capturedGroups = new HashMap<>();
-                                capturedGroupNames = hitQueryContext.getCapturedGroupNames();
+                                capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                             }
 
                             int doc = currentSourceSpans.nextDoc();
