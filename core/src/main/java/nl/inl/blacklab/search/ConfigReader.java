@@ -160,21 +160,20 @@ public class ConfigReader extends YamlJsonReader {
     }
 
     /**
-     * Configure the searcher according to the blacklab configuration file.
+     * Configure the index according to the blacklab configuration file.
      *
-     * @param searcher
+     * @param index
      * @throws IOException
      */
-    public synchronized static void applyConfig(BlackLabIndex searcher) throws IOException {
+    public synchronized static void applyConfig(BlackLabIndex index) throws IOException {
         if (blacklabConfig == null)
             loadDefaultConfig();
 
-        if (blacklabConfig != null) {
-            readSearcherSettings(blacklabConfig, searcher);
-        }
+        if (blacklabConfig != null)
+            readSearcherSettings(blacklabConfig, index);
     }
 
-    private static void readSearcherSettings(JsonNode root, BlackLabIndex searcher) {
+    private static void readSearcherSettings(JsonNode root, BlackLabIndex index) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
 
@@ -182,7 +181,7 @@ public class ConfigReader extends YamlJsonReader {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "search":
-                readSearch(obj(e), searcher);
+                readSearch(obj(e), index);
                 break;
             case "plugins":
             case "indexing":
@@ -194,23 +193,23 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readSearch(ObjectNode obj, BlackLabIndex searcher) {
-        HitsSettings hitsSett = searcher.hitsSettings();
+    private static void readSearch(ObjectNode obj, BlackLabIndex index) {
+        HitsSettings hitsSett = index.hitsSettings();
         Iterator<Entry<String, JsonNode>> it = obj.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "collator":
-                readCollator(e, searcher);
+                readCollator(e, index);
                 break;
             case "contextSize":
-                searcher.setHitsSettings(hitsSett.withContextSize(integer(e)));
+                index.setHitsSettings(hitsSett.withContextSize(integer(e)));
                 break;
             case "maxHitsToRetrieve":
-                searcher.setHitsSettings(hitsSett.withMaxHitsToRetrieve(integer(e)));
+                index.setHitsSettings(hitsSett.withMaxHitsToRetrieve(integer(e)));
                 break;
             case "maxHitsToCount":
-                searcher.setHitsSettings(hitsSett.withMaxHitsToCount(integer(e)));
+                index.setHitsSettings(hitsSett.withMaxHitsToCount(integer(e)));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown key " + e.getKey() + " in search section");
@@ -218,7 +217,7 @@ public class ConfigReader extends YamlJsonReader {
         }
     }
 
-    private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex searcher) {
+    private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex index) {
         Collator collator;
         if (e.getValue() instanceof ObjectNode) {
             Iterator<Entry<String, JsonNode>> it = obj(e).fields();
@@ -252,7 +251,7 @@ public class ConfigReader extends YamlJsonReader {
         } else {
             collator = Collator.getInstance(new Locale(str(e)));
         }
-        searcher.setCollator(collator);
+        index.setCollator(collator);
     }
 
     private static void readGlobalSettings(JsonNode root) {

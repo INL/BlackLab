@@ -19,7 +19,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockHits;
-import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitsImpl;
@@ -32,7 +32,7 @@ public class TestDocResults {
         int[] aStart = new int[] { 1, 2, 3, 4, 5 };
         int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 
-        MockSearcher searcher = new MockSearcher();
+        MockBlackLabIndex searcher = new MockBlackLabIndex();
         HitsImpl hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
         DocResults drs = hits.perDocResults();
 

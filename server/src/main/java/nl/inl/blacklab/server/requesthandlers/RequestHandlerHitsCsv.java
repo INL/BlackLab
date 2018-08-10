@@ -182,7 +182,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final Annotation mainTokenProperty = getSearcher().mainAnnotatedField().annotations().main();
+        final Annotation mainTokenProperty = blIndex().mainAnnotatedField().annotations().main();
         List<Annotation> otherTokenProperties = new ArrayList<>();
 
         try {
@@ -192,7 +192,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
 
             // Retrieve the additional columns
-            for (AnnotatedField annotatedField: getSearcher().metadata().annotatedFields()) {
+            for (AnnotatedField annotatedField: blIndex().metadata().annotatedFields()) {
                 for (Annotation annotation: annotatedField.annotations()) {
                     if (annotation.equals(mainTokenProperty) || annotation.isInternal())
                         continue;
@@ -218,9 +218,9 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 String title;
 
                 if (!luceneIdToPidAndTitle.containsKey(hit.doc())) {
-                    Document doc = getSearcher().doc(hit.doc()).luceneDoc();
-                    pid = getDocumentPid(getSearcher(), hit.doc(), doc);
-                    String titleField = getSearcher().metadata().metadataFields().special(MetadataFields.TITLE).name();
+                    Document doc = blIndex().doc(hit.doc()).luceneDoc();
+                    pid = getDocumentPid(blIndex(), hit.doc(), doc);
+                    String titleField = blIndex().metadata().metadataFields().special(MetadataFields.TITLE).name();
                     title = doc.get(titleField);
 
                     if (title == null || title.isEmpty())

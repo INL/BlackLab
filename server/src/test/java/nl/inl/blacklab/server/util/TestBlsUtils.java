@@ -7,7 +7,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.index.Index;
 
 public class TestBlsUtils {
 
-    BlackLabIndex searcher = new MockSearcher();
+    BlackLabIndex index = new MockBlackLabIndex();
 
     @Test
     public void testIsValidIndexName() {
@@ -40,47 +40,47 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternRegex("^the$");
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(searcher, "\"the\"", "corpusql"));
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(searcher, "\"the\"", "corpusql", true));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "corpusql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "corpusql", true));
     }
 
     @Test
     public void testParsePattContextQL() throws BlsException {
         TextPattern pattThe = new TextPatternAnnotation("word", new TextPatternWildcard("the"));
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(searcher, "\"the\"", "contextql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "contextql"));
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattWrongLanguage() throws BlsException {
-        BlsUtils.parsePatt(searcher, "\"the\"", "swahili");
+        BlsUtils.parsePatt(index, "\"the\"", "swahili");
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattNoPattern() throws BlsException {
-        BlsUtils.parsePatt(searcher, "", "corpusql", true);
+        BlsUtils.parsePatt(index, "", "corpusql", true);
     }
 
     @Test
     public void testParseFilter() throws BlsException {
         Query f = new TermQuery(new Term("author", "me"));
-        Assert.assertEquals(f, BlsUtils.parseFilter(searcher, "author:me", "luceneql"));
-        Assert.assertEquals(f, BlsUtils.parseFilter(searcher, "author:me", "luceneql", true));
+        Assert.assertEquals(f, BlsUtils.parseFilter(index, "author:me", "luceneql"));
+        Assert.assertEquals(f, BlsUtils.parseFilter(index, "author:me", "luceneql", true));
     }
 
     @Test
     public void testParseFilterContextQl() throws BlsException {
         Query f = new WildcardQuery(new Term("author", "me"));
-        Assert.assertEquals(f, BlsUtils.parseFilter(searcher, "author = me", "contextql"));
+        Assert.assertEquals(f, BlsUtils.parseFilter(index, "author = me", "contextql"));
     }
 
     @Test(expected = BadRequest.class)
     public void testParseFilterWrongLanguage() throws BlsException {
-        BlsUtils.parseFilter(searcher, "author:me", "corpusql");
+        BlsUtils.parseFilter(index, "author:me", "corpusql");
     }
 
     @Test(expected = BadRequest.class)
     public void testParseFilterNoFilter() throws BlsException {
-        BlsUtils.parseFilter(searcher, "", "luceneql", true);
+        BlsUtils.parseFilter(index, "", "luceneql", true);
     }
 
 }

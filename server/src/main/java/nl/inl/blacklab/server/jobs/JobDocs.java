@@ -84,7 +84,7 @@ public class JobDocs extends JobWithDocs {
                 else
                     throw new Forbidden("You must specify at least a filter query.");
             }
-            docResults = searcher.queryDocuments(filterQuery);
+            docResults = blIndex.queryDocuments(filterQuery);
         }
     }
 

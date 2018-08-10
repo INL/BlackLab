@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpanQuery;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
@@ -43,7 +43,7 @@ public class TestResultsGrouper {
     @Test
     public void testGrouper() {
         BLSpanQuery query = new MockSpanQuery(doc, start, end);
-        MockSearcher searcher = new MockSearcher();
+        MockBlackLabIndex searcher = new MockBlackLabIndex();
         
         IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
         Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());

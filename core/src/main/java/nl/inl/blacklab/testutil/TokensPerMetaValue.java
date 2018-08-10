@@ -1,7 +1,6 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Map;
 
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -23,7 +22,7 @@ import nl.inl.util.LuceneUtil;
  */
 public class TokensPerMetaValue {
 
-    public static void main(String[] args) throws IOException, ParseException {
+    public static void main(String[] args) throws ParseException {
 
         String indexDir = "/home/jan/blacklab/gysseling/index";
         if (args.length >= 1)
@@ -32,10 +31,9 @@ public class TokensPerMetaValue {
         if (args.length >= 2)
             annotatedFieldName = args[1];
 
-        BlackLabIndex searcher = BlackLabIndex.open(new File(indexDir));
-        try {
+        try (BlackLabIndex index = BlackLabIndex.open(new File(indexDir))) {
             // Loop over all metadata fields
-            IndexMetadata indexMetadata = searcher.metadata();
+            IndexMetadata indexMetadata = index.metadata();
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");
             for (MetadataField field: indexMetadata.metadataFields()) {
                 // Check if this field has only a few values
@@ -45,15 +43,13 @@ public class TokensPerMetaValue {
                         // Determine token count for this value
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
                                 new BLDutchAnalyzer(), field.name());
-                        DocResults docs = searcher.queryDocuments(filter);
+                        DocResults docs = index.queryDocuments(filter);
                         int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(annotatedFieldName));
                         System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
                                 + totalNumberOfTokens);
                     }
                 }
             }
-        } finally {
-            searcher.close();
         }
     }
 }

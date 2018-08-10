@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
-public class MockSearcher implements BlackLabIndex {
+public class MockBlackLabIndex implements BlackLabIndex {
 
     private IndexMetadata indexMetadata;
 
@@ -44,7 +44,7 @@ public class MockSearcher implements BlackLabIndex {
 
     private IndexSearcher searcher;
 
-    public MockSearcher() {
+    public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata();
         analyzer = new BLStandardAnalyzer();

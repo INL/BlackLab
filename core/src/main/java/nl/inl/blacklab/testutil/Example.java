@@ -41,9 +41,9 @@ import nl.inl.util.FileUtil.FileTask;
 public class Example {
 
     /**
-     * The BlackLab searcher object.
+     * The BlackLab index object.
      */
-    static BlackLabIndex searcher;
+    static BlackLabIndex index;
 
     /**
      * Some test XML data to index.
@@ -106,8 +106,8 @@ public class Example {
 
         }
 
-        // Create the BlackLab searcher object
-        searcher = BlackLabIndex.open(indexDir);
+        // Create the BlackLab index object
+        index = BlackLabIndex.open(indexDir);
         try {
 
             // Find the word "the"
@@ -129,8 +129,8 @@ public class Example {
 
         } finally {
 
-            // Close the searcher object
-            searcher.close();
+            // Close the index object
+            index.close();
 
         }
     }
@@ -160,8 +160,8 @@ public class Example {
      */
     static void findPattern(TextPattern tp) {
         // Execute the search
-        Hits hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
-        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, searcher.mainAnnotatedField()));
+        Hits hits = index.find(tp, index.mainAnnotatedField(), null, null);
+        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, index.mainAnnotatedField()));
 
         // Display the concordances
         displayConcordances(sortedHits);

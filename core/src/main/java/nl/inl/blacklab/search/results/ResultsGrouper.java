@@ -99,7 +99,7 @@ public class ResultsGrouper extends HitGroups {
         for (Map.Entry<HitPropValue, List<Hit>> e : groupLists.entrySet()) {
             HitPropValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            HitGroup group = new HitGroup(searcher, groupId, defaultConcField, hitList, hits.settings());
+            HitGroup group = new HitGroup(index, groupId, defaultConcField, hitList, hits.settings());
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }

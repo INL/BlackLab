@@ -45,8 +45,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
-            BlackLabIndex searcher = index.getSearcher();
-            IndexMetadata indexMetadata = searcher.metadata();
+            BlackLabIndex blIndex = index.blIndex();
+            IndexMetadata indexMetadata = blIndex.metadata();
 
             // Assemble response
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
@@ -98,7 +98,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();
                 Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, searcher, setShowValuesFor,
+                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor,
                         setShowSubpropsFor);
 
                 ds.endAttrEntry();

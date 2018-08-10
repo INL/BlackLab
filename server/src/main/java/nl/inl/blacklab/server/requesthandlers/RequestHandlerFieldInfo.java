@@ -82,14 +82,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
         }
 
-        BlackLabIndex searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.metadata();
+        BlackLabIndex blIndex = blIndex();
+        IndexMetadata indexMetadata = blIndex.metadata();
 
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             Set<String> setShowValuesFor = searchParam.listValuesFor();
             Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedFields().get(fieldName);
-            describeAnnotatedField(ds, indexName, fieldDesc, searcher, setShowValuesFor, setShowSubpropsFor);
+            describeAnnotatedField(ds, indexName, fieldDesc, blIndex, setShowValuesFor, setShowSubpropsFor);
         } else {
             MetadataField fieldDesc = indexMetadata.metadataFields().get(fieldName);
             describeMetadataField(ds, indexName, fieldDesc, true);
@@ -161,7 +161,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     }
 
     public static void describeAnnotatedField(DataStream ds, String indexName, 
-            AnnotatedField fieldDesc, BlackLabIndex searcher, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+            AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
@@ -189,7 +189,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("isInternal", annotation.isInternal());
             String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
             if (showValuesFor.contains(annotation.name())) {
-                Collection<String> values = LuceneUtil.getFieldTerms(searcher.reader(), luceneField,
+                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
                 int n = 0;
@@ -204,7 +204,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 ds.entry("valueListComplete", values.size() <= MAX_FIELD_VALUES);
             }
             if (showSubpropsFor.contains(annotation.name())) {
-                Map<String, Set<String>> subprops = LuceneUtil.getSubprops(searcher.reader(), luceneField);
+                Map<String, Set<String>> subprops = LuceneUtil.getSubprops(index.reader(), luceneField);
                 ds.startEntry("subproperties").startMap();
                 for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
                     String name = subprop.getKey();

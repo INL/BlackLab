@@ -266,7 +266,7 @@ public class HitsImpl extends HitsAbstract {
             IndexReader reader = index.reader();
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
-            BLSpanQuery optimize = ((BLSpanQuery) sourceQuery).optimize(reader);
+            BLSpanQuery optimize = sourceQuery.optimize(reader);
 
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): rewrite");

@@ -32,12 +32,12 @@ import nl.inl.blacklab.search.BlackLabIndex;
  * retrieved, which may be unfeasible for large results sets.
  */
 public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup>, DocOrHitGroups {
-    BlackLabIndex searcher;
+    BlackLabIndex index;
 
-    public HitGroups(BlackLabIndex searcher, HitProperty groupCriteria) {
+    public HitGroups(BlackLabIndex index, HitProperty groupCriteria) {
         super(groupCriteria);
 
-        this.searcher = searcher;
+        this.index = index;
     }
 
     public abstract Map<HitPropValue, HitGroup> getGroupMap();

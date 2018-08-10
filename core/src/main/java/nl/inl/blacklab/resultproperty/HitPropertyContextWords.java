@@ -120,7 +120,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     private boolean sensitive;
 
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
 
     private List<ContextPart> words;
 
@@ -133,9 +133,9 @@ public class HitPropertyContextWords extends HitProperty {
     public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
             List<ContextPart> words) {
         super(hits);
-        this.searcher = hits.index();
+        this.index = hits.index();
         if (annotation == null) {
-            this.annotation = searcher.mainAnnotatedField().annotations().main();
+            this.annotation = index.mainAnnotatedField().annotations().main();
         } else {
             this.annotation = annotation;
         }

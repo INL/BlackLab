@@ -23,7 +23,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockHits;
-import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -35,7 +35,7 @@ public class TestHits {
         int[] aDoc = new int[] { 1, 2 };
         int[] aStart = new int[] { 1, 2 };
         int[] aEnd = new int[] { 2, 3 };
-        MockSearcher mockSearcher = new MockSearcher();
+        MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
         Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd);
 
         int i = 0;

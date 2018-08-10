@@ -34,19 +34,19 @@ public class TestQueryRewriteNfa {
 
     static TestIndex testIndex;
 
-    private static BlackLabIndex searcher;
+    private static BlackLabIndex index;
 
     @BeforeClass
     public static void setUp() throws Exception {
         testIndex = new TestIndex();
-        searcher = testIndex.getSearcher();
+        index = testIndex.index();
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
     }
 
     @AfterClass
     public static void tearDown() {
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
-        searcher.close();
+        index.close();
         testIndex.close();
     }
 
@@ -60,7 +60,7 @@ public class TestQueryRewriteNfa {
     }
 
     void assertRewrite(String cql, String before, String after) {
-        QueryExplanation explanation = searcher.explain(getPatternFromCql(cql), searcher.mainAnnotatedField());
+        QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
         if (before != null) {
             BLSpanQuery original = explanation.getOriginalQuery();
             Assert.assertEquals(before, original.toString());

@@ -30,10 +30,10 @@ public class RequestHandlerExplain extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        BlackLabIndex searcher = getSearcher();
+        BlackLabIndex blIndex = blIndex();
         String patt = searchParam.getString("patt");
         try {
-            QueryExplanation explanation = searcher.explain(CorpusQueryLanguageParser.parse(patt), searcher.mainAnnotatedField());
+            QueryExplanation explanation = blIndex.explain(CorpusQueryLanguageParser.parse(patt), blIndex.mainAnnotatedField());
 
             // Assemble response
             ds.startMap()

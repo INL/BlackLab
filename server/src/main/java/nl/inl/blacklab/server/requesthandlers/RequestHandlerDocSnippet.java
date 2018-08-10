@@ -41,11 +41,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        BlackLabIndex searcher = getSearcher();
-        int luceneDocId = BlsUtils.getDocIdFromPid(searcher, docId);
+        BlackLabIndex blIndex = blIndex();
+        int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = searcher.doc(luceneDocId).luceneDoc();
+        Document document = blIndex.doc(luceneDocId).luceneDoc();
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 24);
 
@@ -80,8 +80,8 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         hit = Hit.create(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
         ConcordanceType concType = origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
-        HitsSettings settings = searcher.hitsSettings().withConcordanceType(concType);
-        HitsImpl hits = HitsImpl.fromList(searcher, searcher.mainAnnotatedField(), Arrays.asList(hit), settings);
+        HitsSettings settings = blIndex.hitsSettings().withConcordanceType(concType);
+        HitsImpl hits = HitsImpl.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), settings);
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }

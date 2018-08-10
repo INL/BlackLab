@@ -22,8 +22,8 @@ import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
  */
 class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
-    /** Our Searcher object */
-    private BlackLabIndex searcher;
+    /** Our index */
+    private BlackLabIndex index;
 
     /** Field name, e.g. "contents" */
     AnnotatedField annotatedField;
@@ -40,8 +40,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     /** The terms object for each annotation */
     private List<Terms> terms = new ArrayList<>();
 
-    ForwardIndexAccessorImpl(BlackLabIndex searcher, AnnotatedField searchField) {
-        this.searcher = searcher;
+    ForwardIndexAccessorImpl(BlackLabIndex index, AnnotatedField searchField) {
+        this.index = index;
         this.annotatedField = searchField;
     }
 
@@ -59,7 +59,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             n = annotationNumbers.size();
             annotationNumbers.put(annotation, n);
             annotationNames.add(annotation);
-            ForwardIndex fi = searcher.forwardIndex(annotation);
+            ForwardIndex fi = index.forwardIndex(annotation);
             fis.add(fi);
             terms.add(fi.terms());
         }

@@ -36,7 +36,7 @@ public class HitPropertyHitText extends HitProperty {
 
     private boolean sensitive;
 
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
 
     private Annotation annotation;
 
@@ -54,9 +54,9 @@ public class HitPropertyHitText extends HitProperty {
 
     public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
-        this.searcher = hits.index();
+        this.index = hits.index();
         this.annotation = annotation;
-        this.terms = searcher.forwardIndex(annotation).terms();
+        this.terms = index.forwardIndex(annotation).terms();
         this.sensitive = sensitive;
     }
 

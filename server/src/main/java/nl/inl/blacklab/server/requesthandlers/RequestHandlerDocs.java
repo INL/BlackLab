@@ -124,14 +124,14 @@ public class RequestHandlerDocs extends RequestHandler {
                 window = searchWindow.getDocResults();
             }
 
-            BlackLabIndex searcher = search.getSearcher();
+            BlackLabIndex blIndex = search.blIndex();
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
             if (includeTokenCount) {
                 // Determine total number of tokens in result set
                 //TODO: use background job?
-                String fieldName = searcher.mainAnnotatedField().name();
+                String fieldName = blIndex.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
                 totalTokens = window.getOriginalDocs().intSum(propTokens);
             }
@@ -150,7 +150,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.metadata());
+            RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
             ds.endEntry();
             ds.endMap().endEntry();
 
@@ -161,7 +161,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
                 // Find pid
                 Document document = result.getDocument();
-                String pid = getDocumentPid(searcher, result.getDocId(), document);
+                String pid = getDocumentPid(blIndex, result.getDocId(), document);
 
                 // Combine all
                 ds.entry("docPid", pid);
@@ -171,7 +171,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
                 // Doc info (metadata, etc.)
                 ds.startEntry("docInfo");
-                dataStreamDocumentInfo(ds, searcher, document);
+                dataStreamDocumentInfo(ds, blIndex, document);
                 ds.endEntry();
 
                 // Snippets

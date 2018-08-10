@@ -45,7 +45,7 @@ public abstract class HitsSample extends HitsImpl {
     /**
      * Take a sample of hits by executing a SpanQuery and sampling the results.
      *
-     * @param searcher searcher object
+     * @param index searcher object
      * @param query query to sample
      * @param ratio ratio of hits to select, from 0 (none) to 1 (all)
      * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
@@ -53,16 +53,16 @@ public abstract class HitsSample extends HitsImpl {
      * @param settings settings to use, or null for defaults
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, float ratio, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, float ratio, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(HitsImpl.fromSpanQuery(searcher, query, settings), ratio, seed);
+        return new HitsSampleImpl(HitsImpl.fromSpanQuery(index, query, settings), ratio, seed);
     }
 
     /**
      * Take a sample of hits by executing a SpanQuery and sampling the results.
      *
-     * @param searcher searcher object
+     * @param index searcher object
      * @param query query to sample
      * @param number number of hits to select
      * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
@@ -70,10 +70,10 @@ public abstract class HitsSample extends HitsImpl {
      * @param settings settings to use
      * @return the sample
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex searcher, BLSpanQuery query, int number, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, int number, long seed, HitsSettings settings) {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(HitsImpl.fromSpanQuery(searcher, query, settings), number, seed);
+        return new HitsSampleImpl(HitsImpl.fromSpanQuery(index, query, settings), number, seed);
     }
 
     protected static long getRandomSeed() {
@@ -91,23 +91,23 @@ public abstract class HitsSample extends HitsImpl {
 
     protected Random random;
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, float ratio, long seed, HitsSettings settings) {
-        super(searcher, field, new ArrayList<Hit>(), settings);
+    protected HitsSample(BlackLabIndex index, AnnotatedField field, float ratio, long seed, HitsSettings settings) {
+        super(index, field, new ArrayList<Hit>(), settings);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, int number, long seed, HitsSettings settings) {
-        super(searcher, field, new ArrayList<Hit>(), settings);
+    protected HitsSample(BlackLabIndex index, AnnotatedField field, int number, long seed, HitsSettings settings) {
+        super(index, field, new ArrayList<Hit>(), settings);
         this.numberOfHitsToSelect = number;
         exactNumberGiven = true;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex searcher, AnnotatedField field, List<Hit> hits, float ratio, long seed, HitsSettings settings) {
-        super(searcher, field, hits, settings);
+    protected HitsSample(BlackLabIndex index, AnnotatedField field, List<Hit> hits, float ratio, long seed, HitsSettings settings) {
+        super(index, field, hits, settings);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);

@@ -443,19 +443,19 @@ public abstract class RequestHandler {
      * Stream document information (metadata, contents authorization)
      *
      * @param ds where to stream information
-     * @param searcher our index
+     * @param index our index
      * @param document Lucene document
      */
-    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex searcher, Document document) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document) {
         ds.startMap();
-        IndexMetadata indexMetadata = searcher.metadata();
+        IndexMetadata indexMetadata = index.metadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String value = document.get(f.name());
             if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
                 ds.entry(f.name(), value);
         }
         int subtractClosingToken = 1;
-        String tokenLengthField = searcher.mainAnnotatedField().tokenLengthField();
+        String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
 
         if (tokenLengthField != null)
             ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractClosingToken);
@@ -533,8 +533,8 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    protected BlackLabIndex getSearcher() throws BlsException {
-        return indexMan.getIndex(indexName).getSearcher();
+    protected BlackLabIndex blIndex() throws BlsException {
+        return indexMan.getIndex(indexName).blIndex();
     }
 
     protected boolean isBlockingOperation() {
@@ -550,15 +550,15 @@ public abstract class RequestHandler {
     /**
      * Get the pid for the specified document
      *
-     * @param searcher where we got this document from
+     * @param index where we got this document from
      * @param luceneDocId Lucene document id
      * @param document the document object
      * @return the pid string (or Lucene doc id in string form if index has no pid
      *         field)
      */
-    public static String getDocumentPid(BlackLabIndex searcher, int luceneDocId,
+    public static String getDocumentPid(BlackLabIndex index, int luceneDocId,
             Document document) {
-        MetadataField pidField = searcher.metadata().metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
+        MetadataField pidField = index.metadata().metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
         if (pidField == null)
             return Integer.toString(luceneDocId);
         return document.get(pidField.name());

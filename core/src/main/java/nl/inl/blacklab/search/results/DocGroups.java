@@ -38,7 +38,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 
     List<DocGroup> orderedGroups = new ArrayList<>();
 
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
 
     private int largestGroupSize = 0;
 
@@ -59,7 +59,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
      */
     DocGroups(DocResults docResults, DocProperty groupBy) {
         this.docResults = docResults;
-        searcher = docResults.getSearcher();
+        index = docResults.index();
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
@@ -76,7 +76,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
             totalResults++;
         }
         for (Map.Entry<HitPropValue, List<DocResult>> e : groupLists.entrySet()) {
-            DocGroup docGroup = new DocGroup(searcher, e.getKey(), e.getValue());
+            DocGroup docGroup = new DocGroup(index, e.getKey(), e.getValue());
             groups.put(e.getKey(), docGroup);
             orderedGroups.add(docGroup);
         }

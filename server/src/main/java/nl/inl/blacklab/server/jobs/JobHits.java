@@ -118,12 +118,12 @@ public class JobHits extends JobWithHits {
             // Set the max retrieve/count value
             MaxSettings maxSettings = jobDesc.getMaxSettings();
             ContextSettings contextSettings = jobDesc.getContextSettings();
-            HitsSettings hitsSettings = searcher.hitsSettings()
+            HitsSettings hitsSettings = blIndex.hitsSettings()
                     .withMaxHitsToRetrieve(maxSettings.maxRetrieve())
                     .withMaxHitsToCount(maxSettings.maxCount())
                     .withConcordanceType(contextSettings.concType())
                     .withContextSize(contextSettings.size());
-            hits = searcher.find(textPattern, searcher.mainAnnotatedField(), filter, hitsSettings);
+            hits = blIndex.find(textPattern, blIndex.mainAnnotatedField(), filter, hitsSettings);
 
         } catch (RegexpTooLarge e) {
             throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");

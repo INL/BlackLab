@@ -114,8 +114,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
     /** If we're running, this is the time when we were set to running */
     private long setLevelRunningAt;
 
-    /** The index searcher */
-    protected BlackLabIndex searcher;
+    /** The index index */
+    protected BlackLabIndex blIndex;
 
     /** Has perform() been called or not? Don't call it twice! */
     private boolean performCalled = false;
@@ -148,8 +148,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         this.searchMan = searchMan;
         this.user = user;
         this.jobDesc = par;
-        searcher = searchMan.getIndexManager().getIndex(par.getIndexName()).getSearcher();
-        searcher.setDefaultMatchSensitivity(searchMan.config().defaultMatchSensitivity());
+        blIndex = searchMan.getIndexManager().getIndex(par.getIndexName()).blIndex();
+        blIndex.setDefaultMatchSensitivity(searchMan.config().defaultMatchSensitivity());
         resetLastAccessed();
         startedAt = -1;
         finishedAt = -1;
@@ -160,8 +160,8 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
         return jobDesc;
     }
 
-    public BlackLabIndex getSearcher() {
-        return searcher;
+    public BlackLabIndex blIndex() {
+        return blIndex;
     }
 
     public void calculateWorthiness() {

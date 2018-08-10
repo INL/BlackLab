@@ -53,8 +53,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
         }
-        BlackLabIndex searcher = getSearcher();
-        IndexMetadata indexMetadata = searcher.metadata();
+        BlackLabIndex blIndex = blIndex();
+        IndexMetadata indexMetadata = blIndex.metadata();
         if (annotatedFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Also specify a annotation to autocomplete for annotated field: " + fieldName);
@@ -95,7 +95,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             }
         }
 
-        autoComplete(ds, fieldName, term, searcher.reader(), sensitiveMatching);
+        autoComplete(ds, fieldName, term, blIndex.reader(), sensitiveMatching);
         return HTTP_OK;
     }
 

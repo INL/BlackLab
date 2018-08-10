@@ -34,7 +34,9 @@ import nl.inl.util.StringUtil;
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
 public class InputFormatReader extends YamlJsonReader {
+    
     public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
+        // (intentionally left blank)
     }
 
     /**

@@ -28,9 +28,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
+    HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
         super(groupIdentity);
-        results = HitsImpl.emptyList(searcher, field, settings);
+        results = HitsImpl.emptyList(index, field, settings);
     }
 
     /**
@@ -38,14 +38,14 @@ public class HitGroup extends Group {
      *
      * NOTE: the list is not copied!
      *
-     * @param searcher the searcher that produced the hits
+     * @param index the searcher that produced the hits
      * @param groupIdentity grouping identity of this group of hits
      * @param field concordance field
      * @param hits the hits
      */
-    HitGroup(BlackLabIndex searcher, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+    HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         super(groupIdentity);
-        results = HitsImpl.fromList(searcher, field, hits, settings);
+        results = HitsImpl.fromList(index, field, hits, settings);
     }
 
     public Hits getHits() {

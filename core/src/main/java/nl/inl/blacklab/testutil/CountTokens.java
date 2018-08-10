@@ -1,7 +1,6 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.index.IndexReader;
@@ -39,7 +38,7 @@ public class CountTokens {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 1) {
@@ -62,11 +61,11 @@ public class CountTokens {
         exportCorpus.count();
     }
 
-    BlackLabIndex searcher;
+    BlackLabIndex index;
 
-    public CountTokens(File indexDir) throws IOException {
+    public CountTokens(File indexDir) {
         System.out.println("Open index " + indexDir + "...");
-        searcher = BlackLabIndex.open(indexDir);
+        index = BlackLabIndex.open(indexDir);
         System.out.println("Done.");
     }
 
@@ -76,13 +75,13 @@ public class CountTokens {
     private void count() {
 
         System.out.println("Getting IndexReader...");
-        final IndexReader reader = searcher.reader();
+        final IndexReader reader = index.reader();
 
-        final String tokenLengthField = searcher.mainAnnotatedField().tokenLengthField();
+        final String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
 
         System.out.println("Calling forEachDocument()...");
         CountTask task = new CountTask(reader, tokenLengthField);
-        searcher.forEachDocument(task);
+        index.forEachDocument(task);
         System.out.println("TOTAL TOKENS: " + task.totalTokens);
     }
 }

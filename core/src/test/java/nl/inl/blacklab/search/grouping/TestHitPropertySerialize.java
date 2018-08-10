@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockForwardIndex;
 import nl.inl.blacklab.mocks.MockHits;
-import nl.inl.blacklab.mocks.MockSearcher;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.results.HitsImpl;
 
 public class TestHitPropertySerialize {
 
-    private MockSearcher mockSearcher = new MockSearcher();
+    private MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
 
     private HitsImpl hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
 

@@ -268,9 +268,9 @@ public class SearchParameters {
         return getString("indexname");
     }
 
-    private BlackLabIndex getSearcher() {
+    private BlackLabIndex blIndex() {
         try {
-            return searchManager.getIndexManager().getIndex(getIndexName()).getSearcher();
+            return searchManager.getIndexManager().getIndex(getIndexName()).blIndex();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -301,7 +301,7 @@ public class SearchParameters {
                                 "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
                     }
                 } else {
-                    pattern = BlsUtils.parsePatt(getSearcher(), patt, pattLang);
+                    pattern = BlsUtils.parsePatt(blIndex(), patt, pattLang);
                 }
             }
         }
@@ -317,13 +317,13 @@ public class SearchParameters {
             String docId = getString("docpid");
             if (docId != null) {
                 // Only hits in 1 doc (for highlighting)
-                int luceneDocId = BlsUtils.getDocIdFromPid(getSearcher(), docId);
+                int luceneDocId = BlsUtils.getDocIdFromPid(blIndex(), docId);
                 if (luceneDocId < 0)
                     throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
                 logger.debug("Filtering on single doc-id");
                 filterQuery = new SingleDocIdFilter(luceneDocId);
             } else if (containsKey("filter")) {
-                filterQuery = BlsUtils.parseFilter(getSearcher(), getString("filter"), getString("filterlang"));
+                filterQuery = BlsUtils.parseFilter(blIndex(), getString("filter"), getString("filterlang"));
             }
         }
         return filterQuery;

@@ -18,16 +18,16 @@ public class QueryExecutionContext {
      * Get a simple execution context for a field. Used for testing/debugging
      * purposes.
      *
-     * @param searcher the searcher
+     * @param index the index
      * @param field field to get an execution context for
      * @return the context
      */
-    public static QueryExecutionContext simple(BlackLabIndex searcher, AnnotatedField field) {
-        return new QueryExecutionContext(searcher, field.annotations().main(), MatchSensitivity.INSENSITIVE);
+    public static QueryExecutionContext simple(BlackLabIndex index, AnnotatedField field) {
+        return new QueryExecutionContext(index, field.annotations().main(), MatchSensitivity.INSENSITIVE);
     }
 
-    /** The searcher object, representing the BlackLab index */
-    private BlackLabIndex searcher;
+    /** The index object, representing the BlackLab index */
+    private BlackLabIndex index;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
     private String subpropPrefix;
@@ -44,14 +44,14 @@ public class QueryExecutionContext {
     /**
      * Construct a query execution context object.
      * 
-     * @param searcher the searcher object
+     * @param index the index object
      * @param annotation the annotation to search
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      */
-    public QueryExecutionContext(BlackLabIndex searcher, Annotation annotation, MatchSensitivity matchSensitivity) {
+    public QueryExecutionContext(BlackLabIndex index, Annotation annotation, MatchSensitivity matchSensitivity) {
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
-        this.searcher = searcher;
+        this.index = index;
         String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
         this.subpropPrefix = annotation.isSubannotation() ? sep + annotation.subName() + sep : "";
         this.requestedSensitivity = matchSensitivity;
@@ -59,16 +59,16 @@ public class QueryExecutionContext {
     }
     
     public QueryExecutionContext withAnnotation(Annotation annotation) {
-        return new QueryExecutionContext(searcher, annotation, requestedSensitivity);
+        return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 
     public QueryExecutionContext withSensitive(MatchSensitivity matchSensitivity) {
-        return new QueryExecutionContext(searcher, sensitivity.annotation(), matchSensitivity);
+        return new QueryExecutionContext(index, sensitivity.annotation(), matchSensitivity);
     }
 
     public QueryExecutionContext withXmlTagsAnnotation() {
         Annotation annotation = sensitivity.annotation().field().annotations().get(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
-        return new QueryExecutionContext(searcher, annotation, requestedSensitivity);
+        return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 
     public String optDesensitize(String value) {
@@ -149,8 +149,8 @@ public class QueryExecutionContext {
         return subpropPrefix;
     }
 
-    public BlackLabIndex getSearcher() {
-        return searcher;
+    public BlackLabIndex getIndex() {
+        return index;
     }
 
     /**

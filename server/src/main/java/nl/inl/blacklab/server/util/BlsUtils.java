@@ -29,12 +29,12 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
 
-    public static Query parseFilter(BlackLabIndex searcher, String filter,
+    public static Query parseFilter(BlackLabIndex index, String filter,
             String filterLang) throws BlsException {
-        return BlsUtils.parseFilter(searcher, filter, filterLang, false);
+        return BlsUtils.parseFilter(index, filter, filterLang, false);
     }
 
-    public static Query parseFilter(BlackLabIndex searcher, String filter,
+    public static Query parseFilter(BlackLabIndex index, String filter,
             String filterLang, boolean required) throws BlsException {
         if (filter == null || filter.length() == 0) {
             if (required)
@@ -43,7 +43,7 @@ public class BlsUtils {
             return null; // not required
         }
 
-        Analyzer analyzer = searcher.analyzer();
+        Analyzer analyzer = index.analyzer();
         if (filterLang.equals("luceneql")) {
             try {
                 QueryParser parser = new QueryParser("", analyzer);
@@ -61,7 +61,7 @@ public class BlsUtils {
             }
         } else if (filterLang.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, filter);
+                CompleteQuery q = ContextualQueryLanguageParser.parse(index, filter);
                 return q.getFilterQuery();
             } catch (InvalidQuery e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
@@ -75,7 +75,7 @@ public class BlsUtils {
                         + "'. Supported: luceneql, contextql.");
     }
 
-    public static TextPattern parsePatt(BlackLabIndex searcher, String pattern,
+    public static TextPattern parsePatt(BlackLabIndex index, String pattern,
             String language, boolean required) throws BlsException {
         if (pattern == null || pattern.length() == 0) {
             if (required)
@@ -93,7 +93,7 @@ public class BlsUtils {
             }
         } else if (language.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(searcher,
+                CompleteQuery q = ContextualQueryLanguageParser.parse(index,
                         pattern);
                 return q.getContentsQuery();
             } catch (InvalidQuery e) {
@@ -107,20 +107,20 @@ public class BlsUtils {
                         + "'. Supported: corpusql, contextql, luceneql.");
     }
 
-    public static TextPattern parsePatt(BlackLabIndex searcher, String pattern,
+    public static TextPattern parsePatt(BlackLabIndex index, String pattern,
             String language) throws BlsException {
-        return parsePatt(searcher, pattern, language, true);
+        return parsePatt(index, pattern, language, true);
     }
 
     /**
      * Get the Lucene Document id given the pid
      *
-     * @param searcher our index
+     * @param index our index
      * @param pid the pid string (or Lucene doc id if we don't use a pid)
      * @return the document id, or -1 if it doesn't exist
      */
-    public static int getDocIdFromPid(BlackLabIndex searcher, String pid) {
-        MetadataField pidField = searcher.metadata().metadataFields().special(MetadataFields.PID);
+    public static int getDocIdFromPid(BlackLabIndex index, String pid) {
+        MetadataField pidField = index.metadata().metadataFields().special(MetadataFields.PID);
         if (pidField == null) {
             int luceneDocId;
             try {
@@ -138,7 +138,7 @@ public class BlsUtils {
         while (true) {
             String p = lowerCase ? pid.toLowerCase() : pid;
             TermQuery documentFilterQuery = new TermQuery(new Term(pidField.name(), p));
-            docResults = searcher.queryDocuments(documentFilterQuery);
+            docResults = index.queryDocuments(documentFilterQuery);
             if (docResults.size() > 1) {
                 // Should probably throw a fatal exception, but sometimes
                 // documents accidentally occur twice in a dataset...

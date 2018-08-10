@@ -71,15 +71,15 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (docPid.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        BlackLabIndex searcher = getSearcher();
-        int docId = BlsUtils.getDocIdFromPid(searcher, docPid);
-        if (!searcher.docExists(docId))
+        BlackLabIndex blIndex = blIndex();
+        int docId = BlsUtils.getDocIdFromPid(blIndex, docPid);
+        if (!blIndex.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-        Doc doc = searcher.doc(docId);
+        Doc doc = blIndex.doc(docId);
         Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", 9);
-        if (!mayView(searcher.metadata(), document)) {
+        if (!mayView(blIndex.metadata(), document)) {
             return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
         }
 
@@ -106,7 +106,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        Hits hitsInDoc = hits == null ? HitsImpl.emptyList(searcher, searcher.mainAnnotatedField(), null) : hits.getHitsInDoc(docId);
+        Hits hitsInDoc = hits == null ? HitsImpl.emptyList(blIndex, blIndex.mainAnnotatedField(), null) : hits.getHitsInDoc(docId);
         content = doc.highlightContent(hitsInDoc, startAtWord, endAtWord);
 
         boolean outputXmlDeclaration = true;

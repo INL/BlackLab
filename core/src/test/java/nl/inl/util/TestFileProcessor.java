@@ -189,6 +189,7 @@ public class TestFileProcessor {
     }
 
     private static class TestException extends Exception {
+        // (intentionally left blank)
     }
 
     // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests

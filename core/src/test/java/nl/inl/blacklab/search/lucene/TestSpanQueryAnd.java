@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 public class TestSpanQueryAnd {
 
+    @SuppressWarnings("unused")
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
         BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));

@@ -26,13 +26,13 @@ public class DocCount extends DocGroup {
 
     private Integer count;
 
-    public DocCount(BlackLabIndex searcher, HitPropValue groupIdentity) {
-        super(searcher, groupIdentity);
+    public DocCount(BlackLabIndex index, HitPropValue groupIdentity) {
+        super(index, groupIdentity);
         count = 0;
     }
 
-    public DocCount(BlackLabIndex searcher, HitPropValue groupIdentity, int count) {
-        super(searcher, groupIdentity);
+    public DocCount(BlackLabIndex index, HitPropValue groupIdentity, int count) {
+        super(index, groupIdentity);
         this.count = count;
     }
 

@@ -429,8 +429,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * @param fieldName the field name to determine the type for
      * @return type of the field (text or numeric)
      */
-    @SuppressWarnings("static-method")
-    private FieldType getFieldType(String fieldName) {
+    private static FieldType getFieldType(String fieldName) {
 
         /* NOTE: detecting the field type does not work well.
          * Querying values and deciding based on those is not the right way

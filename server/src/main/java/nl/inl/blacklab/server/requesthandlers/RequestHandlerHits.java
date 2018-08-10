@@ -147,14 +147,14 @@ public class RequestHandlerHits extends RequestHandler {
 
             DocResults perDocResults = null;
 
-            BlackLabIndex searcher = total.index();
+            BlackLabIndex index = total.index();
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
             if (includeTokenCount) {
                 perDocResults = window.getOriginalHits().perDocResults();
                 // Determine total number of tokens in result set
-                String fieldName = searcher.mainAnnotatedField().name();
+                String fieldName = index.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
                 totalTokens = perDocResults.intSum(propTokens);
             }
@@ -175,11 +175,11 @@ public class RequestHandlerHits extends RequestHandler {
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
-            RequestHandler.dataStreamDocFields(ds, searcher.metadata());
+            RequestHandler.dataStreamDocFields(ds, index.metadata());
             ds.endEntry();
             if (searchParam.getBoolean("explain")) {
                 TextPattern tp = searchParam.getPattern();
-                QueryExplanation explanation = searcher.explain(tp, searcher.mainAnnotatedField());
+                QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.getOriginalQuery())
                         .entry("rewrittenQuery", explanation.getRewrittenQuery())
@@ -202,8 +202,8 @@ public class RequestHandlerHits extends RequestHandler {
                 // Find pid
                 String pid = pids.get(hit.doc());
                 if (pid == null) {
-                    Document document = searcher.doc(hit.doc()).luceneDoc();
-                    pid = getDocumentPid(searcher, hit.doc(), document);
+                    Document document = index.doc(hit.doc()).luceneDoc();
+                    pid = getDocumentPid(index, hit.doc(), document);
                     pids.put(hit.doc(), pid);
                 }
 
@@ -244,10 +244,10 @@ public class RequestHandlerHits extends RequestHandler {
                     docsDone.add(hit.doc());
                     ds.startAttrEntry("docInfo", "pid", pid);
                     if (!pid.equals(lastPid)) {
-                        doc = searcher.doc(hit.doc()).luceneDoc();
+                        doc = index.doc(hit.doc()).luceneDoc();
                         lastPid = pid;
                     }
-                    dataStreamDocumentInfo(ds, searcher, doc);
+                    dataStreamDocumentInfo(ds, index, doc);
                     ds.endAttrEntry();
                 }
             }

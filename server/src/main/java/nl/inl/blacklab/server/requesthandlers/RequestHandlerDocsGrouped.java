@@ -16,7 +16,6 @@ import nl.inl.blacklab.server.jobs.User;
 /**
  * Request handler for grouped doc results.
  */
-@SuppressWarnings("unused")
 public class RequestHandlerDocsGrouped extends RequestHandler {
     public RequestHandlerDocsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {

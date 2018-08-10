@@ -25,17 +25,17 @@ public class ContextualQueryLanguageParser {
     /**
      * Parse a Contextual Query Language query.
      * 
-     * @param searcher our index
+     * @param index our index
      * @param query our query
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static CompleteQuery parse(BlackLabIndex searcher, String query) throws InvalidQuery {
-        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(searcher);
+    public static CompleteQuery parse(BlackLabIndex index, String query) throws InvalidQuery {
+        ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(index);
         return parser.parse(query);
     }
 
-    CompleteQuery clause(BlackLabIndex searcher, String annotation, String relation, String term,
+    CompleteQuery clause(BlackLabIndex index, String annotation, String relation, String term,
             String defaultAnnotation) {
         if (relation == null)
             relation = "=";
@@ -43,7 +43,7 @@ public class ContextualQueryLanguageParser {
             annotation = defaultAnnotation;
 
         if (relation.equals("=")) {
-            return contains(searcher, annotation, term);
+            return contains(index, annotation, term);
         } else if (relation.equals("any")) {
             throw new UnsupportedOperationException("any not yet supported");
         } else if (relation.equals("all")) {
@@ -77,7 +77,7 @@ public class ContextualQueryLanguageParser {
      * Depending on the field name, this will contain a contents query or a filter
      * query.
      *
-     * @param searcher our index
+     * @param index our index
      * @param field the field name. If it starts with "contents.", it is a contents
      *            query. "contents" by itself means "contents.word". "word", "lemma"
      *            and "pos" by themselves are interpreted as being prefixed with
@@ -85,13 +85,13 @@ public class ContextualQueryLanguageParser {
      * @param value the value, optionally with wildcards, to search for
      * @return the query
      */
-    CompleteQuery contains(BlackLabIndex searcher, String field, String value) {
+    CompleteQuery contains(BlackLabIndex index, String field, String value) {
 
         boolean isContentsSearch = false;
         String prop = "word";
         boolean isProperty;
-        if (searcher != null && !searcher.getClass().getSimpleName().startsWith("Mock")) // FIXME: ARGH...
-            isProperty = searcher.mainAnnotatedField().annotations().exists(field);
+        if (index != null && !index.getClass().getSimpleName().startsWith("Mock")) // FIXME: ARGH...
+            isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
             isProperty = field.equals("word") || field.equals("lemma") || field.equals("pos"); // common case
         if (isProperty) {
@@ -139,8 +139,8 @@ public class ContextualQueryLanguageParser {
 
     private String defaultProperty = "contents.word";
 
-    public ContextualQueryLanguageParser(BlackLabIndex searcher) {
-        this.index = searcher;
+    public ContextualQueryLanguageParser(BlackLabIndex index) {
+        this.index = index;
     }
     
     public CompleteQuery parse(String query) throws InvalidQuery {

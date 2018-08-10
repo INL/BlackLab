@@ -13,8 +13,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public abstract class ForwardIndexAccessor {
 
-    public static ForwardIndexAccessor fromSearcher(BlackLabIndex searcher, String searchField) {
-        return new ForwardIndexAccessorImpl(searcher, searcher.annotatedField(searchField));
+    public static ForwardIndexAccessor fromSearcher(BlackLabIndex index, String searchField) {
+        return new ForwardIndexAccessorImpl(index, index.annotatedField(searchField));
     }
     
     /**

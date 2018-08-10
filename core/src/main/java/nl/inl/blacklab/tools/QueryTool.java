@@ -106,7 +106,7 @@ public class QueryTool {
     static boolean batchMode = false;
 
     /** Our BlackLab Searcher object. */
-    BlackLabIndex searcher;
+    BlackLabIndex index;
 
     /** The hits that are the result of our query. */
     private Hits hits = null;
@@ -263,7 +263,7 @@ public class QueryTool {
         @Override
         public TextPattern parse(String query) throws InvalidQuery {
             //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
-            CompleteQuery q = ContextualQueryLanguageParser.parse(searcher, query);
+            CompleteQuery q = ContextualQueryLanguageParser.parse(index, query);
             includedFilterQuery = q.getFilterQuery();
             return q.getContentsQuery();
         }
@@ -488,16 +488,16 @@ public class QueryTool {
     /**
      * Construct the query tool object.
      * 
-     * @param searcher the searcher object (our index)
+     * @param index the index object (our index)
      * @param in where to read commands from
      * @param out where to write output to
      * @param err where to write errors to
      * @throws CorruptIndexException
      */
-    public QueryTool(BlackLabIndex searcher, BufferedReader in, PrintWriter out, PrintWriter err)
+    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err)
             throws CorruptIndexException {
-        this.searcher = searcher;
-        this.contentsField = searcher.mainAnnotatedField();
+        this.index = index;
+        this.contentsField = index.mainAnnotatedField();
         shouldCloseSearcher = false; // caller is responsible
 
         this.in = in;
@@ -511,7 +511,7 @@ public class QueryTool {
             printProgramHead();
         }
 
-        contextSize = searcher.hitsSettings().contextSize();
+        contextSize = index.hitsSettings().contextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -539,16 +539,16 @@ public class QueryTool {
             }
         }
 
-        // Create the BlackLab searcher object
-        searcher = BlackLabIndex.open(indexDir);
-        contentsField = searcher.mainAnnotatedField();
+        // Create the BlackLab index object
+        index = BlackLabIndex.open(indexDir);
+        contentsField = index.mainAnnotatedField();
 
         if (in == null) {
             webSafeOperationOnly = true; // don't allow file operations in web mode
             this.err = out; // send errors to the same output writer in web mode
         }
 
-        contextSize = searcher.hitsSettings().contextSize();
+        contextSize = index.hitsSettings().contextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -568,13 +568,13 @@ public class QueryTool {
     /**
      * Switch to a different Searcher.
      * 
-     * @param searcher the new Searcher to use
+     * @param index the new Searcher to use
      */
-    public void setSearcher(BlackLabIndex searcher) {
+    public void setSearcher(BlackLabIndex index) {
         if (shouldCloseSearcher)
-            searcher.close();
-        this.searcher = searcher;
-        contentsField = searcher.mainAnnotatedField();
+            index.close();
+        this.index = index;
+        contentsField = index.mainAnnotatedField();
         shouldCloseSearcher = false; // caller is responsible
 
         // Reset results
@@ -741,7 +741,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(StringUtil.wrapToString(searcher.doc(docId).highlightContent(hitsInDoc), 80));
+                    outprintln(StringUtil.wrapToString(index.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = parseInt(lcased.substring(12), 0);
@@ -756,7 +756,7 @@ public class QueryTool {
                 } else {
                     String filterExpr = cmd.substring(7);
                     try {
-                        filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, searcher.analyzer(), "title");
+                        filterQuery = LuceneUtil.parseLuceneQuery(filterExpr, index.analyzer(), "title");
                         outprintln("Filter created: " + filterQuery);
                         if (verbose)
                             outprintln(filterQuery.getClass().getName());
@@ -770,7 +770,7 @@ public class QueryTool {
                 boolean b = false;
                 if (v.equals("on") || v.equals("yes") || v.equals("true"))
                     b = true;
-                searcher.setHitsSettings(searcher.hitsSettings()
+                index.setHitsSettings(index.hitsSettings()
                         .withConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE));
             } else if (lcased.startsWith("stripxml ")) {
                 String v = lcased.substring(9);
@@ -790,7 +790,7 @@ public class QueryTool {
                 } else if (v.equals("diac") || v.equals("diacritics")) {
                     diacSensitive = true;
                 }
-                searcher.setDefaultMatchSensitivity(MatchSensitivity.get(caseSensitive, diacSensitive));
+                index.setDefaultMatchSensitivity(MatchSensitivity.get(caseSensitive, diacSensitive));
                 outprintln("Search defaults to "
                         + (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
                         + (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
@@ -889,11 +889,11 @@ public class QueryTool {
     }
 
     private void showMetadata(int docId) {
-        if (searcher.docExists(docId)) {
+        if (index.docExists(docId)) {
             outprintln("Document " + docId + " was deleted.");
             return;
         }
-        Document doc = searcher.doc(docId).luceneDoc();
+        Document doc = index.doc(docId).luceneDoc();
         Map<String, String> metadata = new TreeMap<>(); // sort by key
         for (IndexableField f : doc.getFields()) {
             metadata.put(f.name(), f.stringValue());
@@ -904,8 +904,8 @@ public class QueryTool {
     }
 
     private void showIndexMetadata() {
-        IndexMetadata s = searcher.metadata();
-        outprintln("INDEX STRUCTURE FOR INDEX " + searcher.name() + "\n");
+        IndexMetadata s = index.metadata();
+        outprintln("INDEX STRUCTURE FOR INDEX " + index.name() + "\n");
         out.println("ANNOTATED FIELDS");
         for (AnnotatedField cf: s.annotatedFields()) {
             out.println("- " + cf.name());
@@ -1083,10 +1083,10 @@ public class QueryTool {
             Query filter = filterForThisQuery == null ? null : filterForThisQuery;
 
             // Execute search
-            BLSpanQuery spanQuery = searcher.createSpanQuery(pattern, contentsField, filter);
+            BLSpanQuery spanQuery = index.createSpanQuery(pattern, contentsField, filter);
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
-            hits = searcher.find(spanQuery, null);
+            hits = index.find(spanQuery, null);
             docs = null;
             groups = null;
             sortedHits = null;
@@ -1223,7 +1223,7 @@ public class QueryTool {
                 HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("lemma"));
                 HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
-            } else if (searcher.metadata().metadataFields().exists(sortBy)) {
+            } else if (index.metadata().metadataFields().exists(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
             }
 
@@ -1369,7 +1369,7 @@ public class QueryTool {
      */
     private void cleanup() {
         if (shouldCloseSearcher)
-            searcher.close();
+            index.close();
     }
 
     /**
@@ -1404,7 +1404,7 @@ public class QueryTool {
                 collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.getCollocations(collocAnnotation, searcher.defaultExecutionContext(collocAnnotation.field()), true);
+            collocations = hits.getCollocations(collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
         }
 
         int i = 0;
@@ -1445,7 +1445,7 @@ public class QueryTool {
             if (currentHitSet != null)
                 docs = currentHitSet.perDocResults();
             else if (filterQuery != null) {
-                docs = searcher.queryDocuments(filterQuery);
+                docs = index.queryDocuments(filterQuery);
             } else {
                 System.out.println("No documents to show (set filterquery or search for hits first)");
                 return;
@@ -1456,11 +1456,11 @@ public class QueryTool {
         DocResultsWindow window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        MetadataField titleField = searcher.metadata().metadataFields().special(MetadataFields.TITLE);
+        MetadataField titleField = index.metadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
-            Document d = searcher.doc(id).luceneDoc();
+            Document d = index.doc(id).luceneDoc();
             String title = d.get(titleField.name());
             if (title == null)
                 title = "(doc #" + id + ", no " + titleField.name() + " given)";
@@ -1554,14 +1554,14 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        MetadataField titleField = searcher.metadata().metadataFields().special(MetadataFields.TITLE);
+        MetadataField titleField = index.metadata().metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {
                 if (currentDoc != -1)
                     outprintln("");
                 currentDoc = hit.doc;
-                Document d = searcher.doc(currentDoc).luceneDoc();
+                Document d = index.doc(currentDoc).luceneDoc();
                 String title = d.get(titleField.name());
                 if (title == null)
                     title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";

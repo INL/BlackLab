@@ -30,14 +30,14 @@ public class DocGroup {
 
     private DocResults results;
 
-    public DocGroup(BlackLabIndex searcher, HitPropValue groupIdentity) {
+    public DocGroup(BlackLabIndex index, HitPropValue groupIdentity) {
         this.groupIdentity = groupIdentity;
-        results = new DocResults(searcher);
+        results = new DocResults(index);
     }
 
-    public DocGroup(BlackLabIndex searcher, HitPropValue groupIdentity, List<DocResult> resultList) {
+    public DocGroup(BlackLabIndex index, HitPropValue groupIdentity, List<DocResult> resultList) {
         this.groupIdentity = groupIdentity;
-        results = new DocResults(searcher, resultList);
+        results = new DocResults(index, resultList);
     }
 
     public HitPropValue getIdentity() {

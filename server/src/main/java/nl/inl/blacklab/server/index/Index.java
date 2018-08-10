@@ -83,13 +83,13 @@ public class Index {
     private SearchCache cache;
 
     /**
-     * Only one of these can be set at a time. The searcher is closed and cleared
+     * Only one of these can be set at a time. The index is closed and cleared
      * when an indexer is requested. Running searches are cancelled when this
      * happens. The Indexer is cleared the first time a search is started after it
      * the Indexer has finished indexing (meaning close() has been called on it). In
      * addition, while an index is still running, no new Indexers can be created.
      */
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
     private Indexer indexer;
 
     /** List of users who may access this index (read-only). */
@@ -122,7 +122,7 @@ public class Index {
         this.cache = cache;
 
         // Opened on-demand
-        this.searcher = null;
+        this.index = null;
         this.indexer = null;
 
         shareWithUsersFile = new File(dir, SHARE_WITH_USERS_FILENAME);
@@ -186,12 +186,12 @@ public class Index {
      * @throws InternalServerError when there was an error opening this index
      * @throws ServiceUnavailable when the index is in use.
      */
-    // TODO searcher should not have references to it held for longer times outside of this class
+    // TODO index should not have references to it held for longer times outside of this class
     // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
     // (this is a large job)
-    public synchronized BlackLabIndex getSearcher() throws InternalServerError, ServiceUnavailable {
+    public synchronized BlackLabIndex blIndex() throws InternalServerError, ServiceUnavailable {
         openForSearching();
-        return searcher;
+        return index;
     }
 
     /**
@@ -200,22 +200,22 @@ public class Index {
      * up-to-date version.
      *
      * @return the index metadata
-     * @throws ErrorOpeningIndex when searcher could not be opened
+     * @throws ErrorOpeningIndex when index could not be opened
      */
     public synchronized IndexMetadata getIndexMetadata() throws ErrorOpeningIndex {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {
             // swallow, we're apparently still busy indexing something,
-            // this isn't a problem, we'll just use the Indexer's searcher to get the structure instead
+            // this isn't a problem, we'll just use the Indexer's index to get the structure instead
         }
 
-        if (this.searcher != null)
-            return this.searcher.metadata();
+        if (this.index != null)
+            return this.index.metadata();
         else if (this.indexer != null)
             return this.indexer.indexWriter().metadata();
 
-        // This should literally never happen, after openForSearching either searcher or indexer must be set
+        // This should literally never happen, after openForSearching either index or indexer must be set
         throw new RuntimeException(
                 "Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no Searcher and no Indexer");
     }
@@ -223,10 +223,10 @@ public class Index {
     public synchronized IndexStatus getStatus() {
         if (this.indexer != null && !this.indexer.isClosed())
             return IndexStatus.INDEXING;
-        else if (this.searcher != null && this.searcher.isEmpty())
+        else if (this.index != null && this.index.isEmpty())
             return IndexStatus.EMPTY;
         else
-            return IndexStatus.AVAILABLE; // we're available even when searcher == null since we open on-demand.
+            return IndexStatus.AVAILABLE; // we're available even when index == null since we open on-demand.
     }
 
     /**
@@ -241,11 +241,11 @@ public class Index {
     private synchronized void openForSearching() throws ErrorOpeningIndex, ServiceUnavailable {
         cleanupClosedIndexerOrThrow();
 
-        if (this.searcher != null)
+        if (this.index != null)
             return;
 
         logger.debug("Opening index '" + id + "', dir = " + dir);
-        searcher = BlackLabIndex.open(this.dir);
+        index = BlackLabIndex.open(this.dir);
     }
 
     /**
@@ -294,9 +294,9 @@ public class Index {
      * Has no effect if the index was already closed.
      */
     public synchronized void close() {
-        if (this.searcher != null) {
-            this.searcher.close();
-            this.searcher = null;
+        if (this.index != null) {
+            this.index.close();
+            this.index = null;
         }
 
         // if we're currently indexing, force close the indexer

@@ -30,9 +30,8 @@ public class GetFieldValues {
         }
 
         Map<String, Set<String>> fieldValues = new HashMap<>();
-        BlackLabIndex searcher = BlackLabIndex.open(indexDir);
-        try {
-            IndexReader r = searcher.reader();
+        try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
+            IndexReader r = index.reader();
 
             Set<String> fieldsToLoad = new HashSet<>();
             for (String fieldToLoad : fieldNames) {
@@ -62,8 +61,6 @@ public class GetFieldValues {
                     }
                 }
             }
-        } finally {
-            searcher.close();
         }
 
         for (Map.Entry<String, Set<String>> e : fieldValues.entrySet()) {

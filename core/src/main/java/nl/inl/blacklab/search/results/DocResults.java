@@ -52,7 +52,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Our searcher object
      */
-    BlackLabIndex searcher;
+    BlackLabIndex blIndex;
 
     /**
      * Our source hits object
@@ -80,12 +80,12 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Don't use this; use Hits.perDocResults().
      *
-     * @param searcher searcher object
+     * @param blIndex searcher object
      * @param hits hits to get per-doc result for
      * @return the per-document results.
      */
-    public static DocResults fromHits(BlackLabIndex searcher, Hits hits) {
-        return new DocResults(searcher, hits);
+    public static DocResults fromHits(BlackLabIndex blIndex, Hits hits) {
+        return new DocResults(blIndex, hits);
     }
 
     boolean sourceHitsFullyRead() {
@@ -98,11 +98,11 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Construct per-document results objects from a Hits object
      * 
-     * @param searcher search object
+     * @param blIndex search object
      * @param hits the hits to view per-document
      */
-    DocResults(BlackLabIndex searcher, Hits hits) {
-        this.searcher = searcher;
+    DocResults(BlackLabIndex blIndex, Hits hits) {
+        this.blIndex = blIndex;
         this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
     }
@@ -114,22 +114,22 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      *
      * Used by DocGroups constructor.
      *
-     * @param searcher the searcher that generated the results
+     * @param blIndex the searcher that generated the results
      * @param results the list of results
      */
-    DocResults(BlackLabIndex searcher, List<DocResult> results) {
-        this.searcher = searcher;
+    DocResults(BlackLabIndex blIndex, List<DocResult> results) {
+        this.blIndex = blIndex;
         this.results = results;
     }
 
     /**
      * Construct DocResults from a Scorer (Lucene document results).
      *
-     * @param searcher the searcher that generated the results
+     * @param blIndex the searcher that generated the results
      * @param scorer the scorer to read document results from
      */
-    DocResults(BlackLabIndex searcher, Scorer scorer) {
-        this.searcher = searcher;
+    DocResults(BlackLabIndex blIndex, Scorer scorer) {
+        this.blIndex = blIndex;
         if (scorer == null)
             return; // no matches, empty result set
         try {
@@ -139,7 +139,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                     break;
 
-                DocResult dr = new DocResult(searcher, null, docId, scorer.score());
+                DocResult dr = new DocResult(blIndex, null, docId, scorer.score());
                 results.add(dr);
             }
         } catch (IOException e) {
@@ -150,29 +150,29 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
      * Don't use this, use Searcher.queryDocuments().
      *
-     * @param searcher searcher object
+     * @param blIndex searcher object
      * @param query query to execute
      * @return per-document results
      */
-    public static DocResults fromQuery(BlackLabIndex searcher, Query query) {
-        return new DocResults(searcher, query);
+    public static DocResults fromQuery(BlackLabIndex blIndex, Query query) {
+        return new DocResults(blIndex, query);
     }
 
     /**
      * Find documents whose metadata matches the specified query
      * 
-     * @param searcher searcher object
+     * @param blIndex searcher object
      * @param query metadata query, or null to match all documents
      */
-    DocResults(BlackLabIndex searcher, Query query) {
+    DocResults(BlackLabIndex blIndex, Query query) {
 
-        this.searcher = searcher;
+        this.blIndex = blIndex;
 
         // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
 
         try {
-            searcher.searcher().search(query, new SimpleCollector() {
+            blIndex.searcher().search(query, new SimpleCollector() {
 
                 private int docBase;
 
@@ -186,7 +186,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 @Override
                 public void collect(int docId) throws IOException {
                     int globalDocId = docId + docBase;
-                    results.add(new DocResult(DocResults.this.searcher, null, globalDocId, 0.0f));
+                    results.add(new DocResult(DocResults.this.blIndex, null, globalDocId, 0.0f));
                 }
 
                 @Override
@@ -206,8 +206,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
     }
 
-    DocResults(BlackLabIndex searcher) {
-        this.searcher = searcher;
+    DocResults(BlackLabIndex blIndex) {
+        this.blIndex = blIndex;
     }
 
     /**
@@ -359,7 +359,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 Hit hit = sourceHitsIterator.next();
                 if (hit.doc() != doc) {
                     if (docHits != null) {
-                        Hits hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                        Hits hits = HitsImpl.fromList(blIndex, sourceHits.field(), docHits, sourceHits.settings());
                         hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                         addDocResultToList(doc, hits);
                     }
@@ -374,7 +374,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = HitsImpl.fromList(searcher, sourceHits.field(), docHits, sourceHits.settings());
+                    Hits hits = HitsImpl.fromList(blIndex, sourceHits.field(), docHits, sourceHits.settings());
                     hits.copyMaxHitsRetrieved(sourceHits); // concordance type, etc.
                     addDocResultToList(doc, hits);
                 }
@@ -469,8 +469,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return results.get(i);
     }
 
-    public BlackLabIndex getSearcher() {
-        return searcher;
+    public BlackLabIndex index() {
+        return blIndex;
     }
 
     /**

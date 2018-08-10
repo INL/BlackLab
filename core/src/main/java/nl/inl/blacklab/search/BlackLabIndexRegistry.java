@@ -13,12 +13,12 @@ public class BlackLabIndexRegistry {
         return searcherFromIndexReader.get(reader);
     }
 
-    public static void registerSearcher(IndexReader reader, BlackLabIndex searcher) {
-        searcherFromIndexReader.put(reader, searcher);
+    public static void registerSearcher(IndexReader reader, BlackLabIndex index) {
+        searcherFromIndexReader.put(reader, index);
     }
 
-    public static void removeSearcher(BlackLabIndex searcher) {
-        searcherFromIndexReader.remove(searcher.reader());
+    public static void removeSearcher(BlackLabIndex index) {
+        searcherFromIndexReader.remove(index.reader());
     }
 
 

@@ -31,10 +31,10 @@ public class DocResult {
 
     private float score;
 
-    public DocResult(BlackLabIndex searcher, AnnotatedField field, int docId, float score) {
+    public DocResult(BlackLabIndex index, AnnotatedField field, int docId, float score) {
         this.docId = docId;
         this.score = score;
-        hits = HitsImpl.emptyList(searcher, field, null);
+        hits = HitsImpl.emptyList(index, field, null);
     }
 
     /**

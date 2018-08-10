@@ -42,7 +42,7 @@ public class DocCounts implements Iterable<DocCount> {
 
     List<DocCount> orderedGroups = new ArrayList<>();
 
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
 
     private int largestGroupSize = 0;
 
@@ -63,7 +63,7 @@ public class DocCounts implements Iterable<DocCount> {
      */
     DocCounts(DocResults docResults, DocProperty countBy) {
         this.docResults = docResults;
-        searcher = docResults.getSearcher();
+        index = docResults.index();
         this.countBy = countBy;
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
@@ -71,7 +71,7 @@ public class DocCounts implements Iterable<DocCount> {
             HitPropValue groupId = countBy.get(r);
             DocCount count = counts.get(groupId);
             if (count == null) {
-                count = new DocCount(searcher, groupId);
+                count = new DocCount(index, groupId);
                 counts.put(groupId, count);
             }
             count.increment();

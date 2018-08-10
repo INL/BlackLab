@@ -40,7 +40,7 @@ public class HitPropertyLeftContext extends HitProperty {
 
     private boolean sensitive;
 
-    private BlackLabIndex searcher;
+    private BlackLabIndex index;
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
@@ -56,10 +56,10 @@ public class HitPropertyLeftContext extends HitProperty {
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
-        this.searcher = hits.index();
+        this.index = hits.index();
         this.luceneFieldName = annotation.luceneFieldPrefix();
         this.annotation = annotation;
-        this.terms = searcher.forwardIndex(annotation).terms();
+        this.terms = index.forwardIndex(annotation).terms();
         this.sensitive = sensitive;
     }
 

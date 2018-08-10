@@ -1,6 +1,8 @@
 package nl.inl.blacklab.server;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -26,6 +28,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
@@ -64,36 +67,32 @@ public class BlackLabServer extends HttpServlet {
         super.init();
         logger.info("BlackLab Server ready.");
     }
+    
+    /**
+     * Finds and opens a config file to be read.
+     */
+    private static class ConfigFileReader extends Reader {
+        
+        private static final List<String> exts = Arrays.asList("json", "yaml", "yml");
 
-    private void readConfig() throws BlsException {
-        try {
-            // load blacklab's internal config before doing anything
-            // we will later overwrite some settings from our own config
-            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
-            try {
-                ConfigReader.loadDefaultConfig();
-            } catch (Exception e) {
-                throw new BlsException(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
-                        "Error reading BlackLab configuration file", e);
-            }
+        private String configFileRead = "(none)";
+        
+        private Reader configFileReader;
 
-            File servletPath = new File(getServletContext().getRealPath("."));
-            logger.debug("Running from dir: " + servletPath);
+        private boolean configFileIsJson;
 
-            String configFileName = "blacklab-server";
-            List<String> exts = Arrays.asList("json", "yaml", "yml");
-
-            List<File> searchDirs = new ArrayList<>();
-            searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
-            searchDirs.addAll(ConfigReader.getDefaultConfigDirs());
-
-            Reader configFileReader = null;
-            boolean configFileIsJson = false;
+        public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
+            configFileIsJson = false;
 
             File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
             if (configFile != null && configFile.canRead()) {
                 logger.debug("Reading configuration file " + configFile);
-                configFileReader = FileUtil.openForReading(configFile, CONFIG_ENCODING);
+                try {
+                    configFileReader = FileUtil.openForReading(configFile, CONFIG_ENCODING);
+                    configFileRead = configFile.getAbsolutePath();
+                } catch (FileNotFoundException e) {
+                    throw new ConfigurationException("Config file not found", e);
+                }
                 configFileIsJson = configFile.getName().endsWith(".json");
             }
 
@@ -106,21 +105,14 @@ public class BlackLabServer extends HttpServlet {
                         continue;
 
                     logger.debug("Reading configuration file from classpath: " + configFileName);
-                    configFileReader = new InputStreamReader(is, CONFIG_ENCODING);
+                    configFileReader = new BufferedReader(new InputStreamReader(is, CONFIG_ENCODING));
                     configFileIsJson = ext.equals("json");
+                    configFileRead = configFileName + "." + ext + " (from classpath)";
                     break;
                 }
             }
 
-            if (configFileReader != null) {
-                try {
-                    ObjectMapper mapper = configFileIsJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-                    searchManager = new SearchManager(mapper.readTree(configFileReader));
-                } finally {
-                    configFileReader.close();
-                    configFileReader = null;
-                }
-            } else {
+            if (configFileReader == null) {
                 String descDirs = StringUtils.join(searchDirs, ", ");
                 throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
                         + ", or on classpath. Please place " +
@@ -131,6 +123,62 @@ public class BlackLabServer extends HttpServlet {
                         "  ]\n" +
                         "}\n\n" +
                         "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            configFileReader.close();
+        }
+
+        public boolean isJson() {
+            return configFileIsJson;
+        }
+
+        public String getConfigFileRead() {
+            return configFileRead;
+        }
+
+        @Override
+        public int read(char[] arg0, int arg1, int arg2) throws IOException {
+            return configFileReader.read(arg0, arg1, arg2);
+        }
+
+        /**
+         * Read JSON or YAML from config file, depending on type.
+         * 
+         * @return config structure read
+         * @throws JsonProcessingException on Json error
+         * @throws IOException on any I/O error
+         */
+        public JsonNode getConfig() throws JsonProcessingException, IOException {
+            ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+            return mapper.readTree(configFileReader);
+        }
+        
+    }
+
+    private void readConfig() throws BlsException {
+        try {
+            // load blacklab's internal config before doing anything
+            // we will later overwrite some settings from our own config
+            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
+            ConfigReader.loadDefaultConfig();
+
+            File servletPath = new File(getServletContext().getRealPath("."));
+            logger.debug("Running from dir: " + servletPath);
+
+            String configFileName = "blacklab-server";
+
+            List<File> searchDirs = new ArrayList<>();
+            searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
+            searchDirs.addAll(ConfigReader.getDefaultConfigDirs());
+            try (ConfigFileReader configFile = new ConfigFileReader(searchDirs, configFileName)) {
+                try {
+                    searchManager = new SearchManager(configFile.getConfig());
+                } catch (IOException e) {
+                    throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
+                }
             }
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);

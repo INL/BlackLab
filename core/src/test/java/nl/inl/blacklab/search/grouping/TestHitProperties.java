@@ -31,8 +31,8 @@ public class TestHitProperties {
     @BeforeClass
     public static void setUp() throws Exception {
         testIndex = new TestIndex();
-        wordAnnotation = testIndex.getSearcher().mainAnnotatedField().annotations().get("word");
-        terms = testIndex.getSearcher().forwardIndex(wordAnnotation).terms();
+        wordAnnotation = testIndex.index().mainAnnotatedField().annotations().get("word");
+        terms = testIndex.index().forwardIndex(wordAnnotation).terms();
     }
 
     private static int term(String word) {

@@ -32,11 +32,11 @@ public class RequestHandlerDocInfo extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        BlackLabIndex searcher = getSearcher();
-        int luceneDocId = BlsUtils.getDocIdFromPid(searcher, docId);
+        BlackLabIndex blIndex = blIndex();
+        int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = searcher.doc(luceneDocId).luceneDoc();
+        Document document = blIndex.doc(luceneDocId).luceneDoc();
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 25);
 
@@ -47,11 +47,11 @@ public class RequestHandlerDocInfo extends RequestHandler {
                 .entry("docPid", docId);
 
         ds.startEntry("docInfo");
-        dataStreamDocumentInfo(ds, searcher, document);
+        dataStreamDocumentInfo(ds, blIndex, document);
         ds.endEntry();
 
         ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, searcher.metadata());
+        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
         ds.endEntry();
 
         ds.endMap();

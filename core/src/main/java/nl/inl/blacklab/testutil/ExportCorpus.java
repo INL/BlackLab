@@ -2,7 +2,6 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
@@ -18,7 +17,7 @@ import nl.inl.util.LogUtil;
 /** Export the original corpus from a BlackLab index. */
 public class ExportCorpus {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -47,11 +46,11 @@ public class ExportCorpus {
         exportCorpus.export(exportDir);
     }
 
-    BlackLabIndex searcher;
+    BlackLabIndex index;
 
-    public ExportCorpus(File indexDir) throws IOException {
+    public ExportCorpus(File indexDir) {
         System.out.println("Open index " + indexDir + "...");
-        searcher = BlackLabIndex.open(indexDir);
+        index = BlackLabIndex.open(indexDir);
         System.out.println("Done.");
     }
 
@@ -63,10 +62,10 @@ public class ExportCorpus {
     private void export(final File exportDir) {
 
         System.out.println("Getting IndexReader...");
-        final IndexReader reader = searcher.reader();
+        final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        searcher.forEachDocument(new DocTask() {
+        index.forEachDocument(new DocTask() {
 
             int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 

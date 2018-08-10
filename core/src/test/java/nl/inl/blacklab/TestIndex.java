@@ -84,9 +84,9 @@ public class TestIndex {
     }
 
     /**
-     * The BlackLab searcher object.
+     * The BlackLab index object.
      */
-    BlackLabIndex searcher;
+    BlackLabIndex index;
 
     private File indexDir;
 
@@ -118,19 +118,19 @@ public class TestIndex {
             indexer.close();
         }
 
-        // Create the BlackLab searcher object
+        // Create the BlackLab index object
         HitsSettings settings = HitsSettings.defaults().withContextSize(1);
-        searcher = BlackLabIndex.open(indexDir, settings);
-        word = searcher.mainAnnotatedField().annotations().get("word");
+        index = BlackLabIndex.open(indexDir, settings);
+        word = index.mainAnnotatedField().annotations().get("word");
     }
 
-    public BlackLabIndex getSearcher() {
-        return searcher;
+    public BlackLabIndex index() {
+        return index;
     }
 
     public void close() {
-        if (searcher != null)
-            searcher.close();
+        if (index != null)
+            index.close();
         deleteTree(indexDir);
     }
 
@@ -177,7 +177,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public Hits find(String pattern, Query filter) throws ParseException {
-        return searcher.find(CorpusQueryLanguageParser.parse(pattern), searcher.mainAnnotatedField(), filter, null);
+        return index.find(CorpusQueryLanguageParser.parse(pattern), index.mainAnnotatedField(), filter, null);
     }
 
     /**
@@ -199,7 +199,7 @@ public class TestIndex {
      * @throws ParseException
      */
     public List<String> findConc(BLSpanQuery query) throws ParseException {
-        return getConcordances(searcher.find(query, null), word);
+        return getConcordances(index.find(query, null), word);
     }
 
     /**

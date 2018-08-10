@@ -1,9 +1,6 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
-import java.io.IOException;
-
-import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -19,7 +16,7 @@ import nl.inl.util.Timer;
  */
 public class BatchQuery {
 
-    public static void main(String[] args) throws CorruptIndexException, IOException {
+    public static void main(String[] args) {
 
         boolean determineTotalHits = true;
         int fileArgNumber = 0;
@@ -67,7 +64,7 @@ public class BatchQuery {
         }
 
         System.err.print("Opening index... ");
-        BlackLabIndex searcher = BlackLabIndex.open(indexDir);
+        BlackLabIndex index = BlackLabIndex.open(indexDir);
         System.err.println("done.");
 
         System.out.print("Query\tSearch Time");
@@ -84,7 +81,7 @@ public class BatchQuery {
                 Timer t = new Timer();
                 System.out.print(query + "\t");
                 TextPattern tp = CorpusQueryLanguageParser.parse(query);
-                Hits hits = searcher.find(tp, searcher.mainAnnotatedField(), null, null);
+                Hits hits = index.find(tp, index.mainAnnotatedField(), null, null);
                 System.out.print(t.elapsed());
                 if (determineTotalHits) {
                     System.out.print("\t" + hits.size() + "\t" + t.elapsed());
