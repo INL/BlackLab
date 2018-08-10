@@ -9,6 +9,8 @@ import org.apache.commons.io.IOUtils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.PluginException;
+
 public class TagPluginNoop implements TagPlugin {
 
     @Override

@@ -18,13 +18,13 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -78,8 +78,9 @@ public class HitsImpl extends HitsAbstract {
      * @param query the query to execute to get the hits
      * @param settings search settings
      * @return hits found
+     * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    public static HitsImpl fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) {
+    public static HitsImpl fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
         return new HitsImpl(index, index.annotatedField(query.getField()), query, settings);
     }
 
@@ -257,10 +258,9 @@ public class HitsImpl extends HitsAbstract {
      * @param index the index object
      * @param field field our hits came from
      * @param sourceQuery the query to execute to get the hits
-     * @throws TooManyClauses if the query is overly broad (expands to too many
-     *             terms)
+     * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    private HitsImpl(BlackLabIndex index, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws TooManyClauses {
+    private HitsImpl(BlackLabIndex index, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws WildcardTermTooBroad {
         this(index, field, (List<Hit>) null, settings);
         try {
             IndexReader reader = index.reader();

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
@@ -33,7 +34,7 @@ public class TextPatternSequence extends TextPatternAndNot {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         if (!exclude.isEmpty())
             throw new BlackLabRuntimeException("clausesNot not empty!");
         List<BLSpanQuery> chResults = new ArrayList<>();

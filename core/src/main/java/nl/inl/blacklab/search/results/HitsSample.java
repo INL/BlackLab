@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -52,8 +53,9 @@ public abstract class HitsSample extends HitsImpl {
      *            randomly chosen seed
      * @param settings settings to use, or null for defaults
      * @return the sample
+     * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, float ratio, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, float ratio, long seed, HitsSettings settings) throws WildcardTermTooBroad {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(HitsImpl.fromSpanQuery(index, query, settings), ratio, seed);
@@ -69,8 +71,9 @@ public abstract class HitsSample extends HitsImpl {
      *            randomly chosen seed
      * @param settings settings to use
      * @return the sample
+     * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
      */
-    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, int number, long seed, HitsSettings settings) {
+    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, int number, long seed, HitsSettings settings) throws WildcardTermTooBroad {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(HitsImpl.fromSpanQuery(index, query, settings), number, seed);

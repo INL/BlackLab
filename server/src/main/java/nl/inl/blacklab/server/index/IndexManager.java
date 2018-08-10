@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
@@ -208,10 +209,10 @@ public class IndexManager {
      *            See {@link DocumentFormats}
      * @throws BlsException if we're not allowed to create the index for whatever
      *             reason
-     * @throws IOException if creation failed unexpectedly
+     * @throws ErrorOpeningIndex if creation failed unexpectedly
      */
     public synchronized void createIndex(String indexId, String displayName, String formatIdentifier)
-            throws BlsException, IOException {
+            throws BlsException, ErrorOpeningIndex {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + formatIdentifier);
         if (!Index.isUserIndex(indexId))
@@ -253,7 +254,11 @@ public class IndexManager {
             // We're only creating it and closing it right away.
         }
 
-        indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));
+        try {
+            indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));
+        } catch (FileNotFoundException e) {
+            throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
+        }
     }
 
     public boolean canCreateIndex(String userId) {

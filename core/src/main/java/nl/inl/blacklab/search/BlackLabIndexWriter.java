@@ -10,6 +10,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.LockObtainFailedException;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
@@ -29,9 +30,9 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
      * @return the searcher in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if the index could not be opened
      */
-    static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws IOException {
+    static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, (File) null);
     }
 
@@ -46,10 +47,10 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param createNewIndex if true, create a new index even if one existed there
      * @param indexTemplateFile JSON template to use for index structure / metadata
      * @return the searcher in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if index couldn't be opened
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
-            throws IOException {
+            throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, indexTemplateFile);
     }
 
@@ -65,10 +66,10 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      * @return the searcher in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
-            throws IOException {
+            throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, true, createNewIndex, config);
     }
 
@@ -77,9 +78,9 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      *
      * @param indexDir where to create the index
      * @return a Searcher for the new index, in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
-    static BlackLabIndexWriter create(File indexDir) throws IOException {
+    static BlackLabIndexWriter create(File indexDir) throws ErrorOpeningIndex {
         return create(indexDir, null, null, null, false, TextDirection.LEFT_TO_RIGHT);
     }
 
@@ -90,9 +91,9 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param displayName the display name for the new index, or null to assign one
      *            automatically (based on the directory name)
      * @return a Searcher for the new index, in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
-    static BlackLabIndex create(File indexDir, String displayName) throws IOException {
+    static BlackLabIndex create(File indexDir, String displayName) throws ErrorOpeningIndex {
         return create(indexDir, null, displayName, null, false, TextDirection.LEFT_TO_RIGHT);
     }
 
@@ -109,10 +110,10 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param formatIdentifier a format identifier to store as the document format,
      *            or null for none. See {@link DocumentFormats} class.
      * @return a Searcher for the new index, in index mode
-     * @throws IOException
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     static BlackLabIndexWriter create(File indexDir, ConfigInputFormat config, String displayName,
-            String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws IOException {
+            String formatIdentifier, boolean contentViewable, TextDirection textDirection) throws ErrorOpeningIndex {
         BlackLabIndexWriter rv = openForWriting(indexDir, true, config);
         IndexMetadataWriter indexMetadata = rv.metadataWriter();
         if (!StringUtils.isEmpty(displayName))

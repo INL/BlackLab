@@ -24,6 +24,7 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpanQuery;
 import nl.inl.blacklab.resultproperty.HitPropValue;
@@ -41,7 +42,7 @@ public class TestResultsGrouper {
     int[] end = { 7, 8, 9, 10, 11, 12 };
 
     @Test
-    public void testGrouper() {
+    public void testGrouper() throws WildcardTermTooBroad {
         BLSpanQuery query = new MockSpanQuery(doc, start, end);
         MockBlackLabIndex searcher = new MockBlackLabIndex();
         

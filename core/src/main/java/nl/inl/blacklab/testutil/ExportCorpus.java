@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
@@ -17,7 +18,7 @@ import nl.inl.util.LogUtil;
 /** Export the original corpus from a BlackLab index. */
 public class ExportCorpus {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ErrorOpeningIndex {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -48,7 +49,7 @@ public class ExportCorpus {
 
     BlackLabIndex index;
 
-    public ExportCorpus(File indexDir) {
+    public ExportCorpus(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
         index = BlackLabIndex.open(indexDir);
         System.out.println("Done.");

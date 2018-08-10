@@ -12,7 +12,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 
@@ -26,7 +25,7 @@ public class TestSearches {
     List<String> expected;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         testIndex = new TestIndex();
     }
 
@@ -37,7 +36,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testSimple() throws ParseException {
+    public void testSimple() {
         expected = Arrays.asList(
                 "[The] quick",
                 "over [the] lazy",
@@ -60,13 +59,13 @@ public class TestSearches {
     }
 
     @Test
-    public void testSimpleDocFilter() throws ParseException {
+    public void testSimpleDocFilter() {
         expected = Arrays.asList("May [the] Force");
         Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(1)));
     }
 
     @Test
-    public void testFilteredQuery() throws ParseException {
+    public void testFilteredQuery() {
         expected = Arrays.asList("[The] quick", "over [the] lazy");
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
@@ -74,7 +73,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testSequences() throws ParseException {
+    public void testSequences() {
         expected = Arrays.asList(
                 "quick [brown fox] jumps",
                 "the [lazy dog]");
@@ -82,7 +81,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testMatchAll() throws ParseException {
+    public void testMatchAll() {
         expected = Arrays.asList(
                 "brown [fox jumps] over",
                 "the [Force be] with");
@@ -97,7 +96,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testOptional1() throws ParseException {
+    public void testOptional1() {
         expected = Arrays.asList(
                 "be [with you]",
                 "with [you]",
@@ -107,7 +106,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testOptional2() throws ParseException {
+    public void testOptional2() {
         expected = Arrays.asList(
                 "with [you]",
                 "find [That] is",
@@ -117,7 +116,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testOptional3() throws ParseException {
+    public void testOptional3() {
         expected = Arrays.asList(
                 "be [with] you",
                 "be [with you]",
@@ -130,7 +129,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testRepetition() throws ParseException {
+    public void testRepetition() {
         expected = Arrays.asList(
                 "The [quick brown] fox");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj']{2} "));
@@ -144,14 +143,14 @@ public class TestSearches {
     }
 
     @Test
-    public void testRepetitionNoResults() throws ParseException {
+    public void testRepetitionNoResults() {
         expected = Arrays.asList();
         Assert.assertEquals(expected, testIndex.findConc("[pos='PD.*']+ '(?i)getal'"));
 
     }
 
     @Test
-    public void testStringRegexes() throws ParseException {
+    public void testStringRegexes() {
         expected = Arrays.asList(
                 "quick [brown] fox",
                 "Force [be] with");
@@ -164,14 +163,14 @@ public class TestSearches {
     }
 
     @Test
-    public void testUniq() throws ParseException {
+    public void testUniq() {
         expected = Arrays.asList(
                 "fox [jumps] over");
         Assert.assertEquals(expected, testIndex.findConc("[word = 'jumps' | lemma = 'jump']"));
     }
 
     @Test
-    public void testOr() throws ParseException {
+    public void testOr() {
         expected = Arrays.asList(
                 "fox [jumps] over",
                 "jumps [over] the");
@@ -180,14 +179,14 @@ public class TestSearches {
 
     @Test
     @Ignore
-    public void testAnd() throws ParseException {
+    public void testAnd() {
         expected = Arrays.asList(
                 "The [quick] brown");
         Assert.assertEquals(expected, testIndex.findConc("[pos = 'adj' & lemma = '.*u.*']"));
     }
 
     @Test
-    public void testTags() throws ParseException {
+    public void testTags() {
         expected = Arrays.asList(
                 "quick [brown] fox");
         Assert.assertEquals(expected, testIndex.findConc(" 'b.*' within <entity/> "));
@@ -206,80 +205,80 @@ public class TestSearches {
     }
 
     @Test
-    public void testNfa4() throws ParseException {
+    public void testNfa4() {
         expected = Arrays.asList("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
     }
 
     @Test
-    public void testOnlyRepetition() throws ParseException {
+    public void testOnlyRepetition() {
         expected = Arrays.asList("[The] quick", "over [the] lazy", "May [the] Force", "is [the] question");
         Assert.assertEquals(expected, testIndex.findConc("[lemma='.*he']{0,10}"));
     }
 
     @Test
-    public void testConstraintSimple0() throws ParseException {
+    public void testConstraintSimple0() {
         expected = Arrays.asList("the [Force] be");
         Assert.assertEquals(expected, testIndex.findConc("a:'Force' :: a.word = 'Force'"));
     }
 
     @Test
-    public void testConstraintSimple1() throws ParseException {
+    public void testConstraintSimple1() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.word"));
     }
 
     @Test
-    public void testConstraintSimple2() throws ParseException {
+    public void testConstraintSimple2() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma"));
     }
 
     @Test
-    public void testConstraintSimple3() throws ParseException {
+    public void testConstraintSimple3() {
         expected = Arrays.asList("noot [mier aap mier mier] mier");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' 'mier' b:[] :: a.word = b.word"));
     }
 
     @Test
-    public void testConstraintSimple4() throws ParseException {
+    public void testConstraintSimple4() {
         expected = Arrays.asList("[The quick brown fox jumps over the] lazy");
         Assert.assertEquals(expected,
                 testIndex.findConc("a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma"));
     }
 
     @Test
-    public void testConstraintOr1() throws ParseException {
+    public void testConstraintOr1() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.word = b.pos"));
     }
 
     @Test
-    public void testConstraintOr2() throws ParseException {
+    public void testConstraintOr2() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.lemma = b.word"));
     }
 
     @Test
-    public void testConstraintAnd1() throws ParseException {
+    public void testConstraintAnd1() {
         expected = Arrays.asList();
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word = b.pos"));
     }
 
     @Test
-    public void testConstraintAnd2() throws ParseException {
+    public void testConstraintAnd2() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.word != b.pos"));
     }
 
     @Test
-    public void testConstraintAnd3() throws ParseException {
+    public void testConstraintAnd3() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma & a.pos = b.pos"));
     }
 
     @Test
-    public void testConstraintImplication1() throws ParseException {
+    public void testConstraintImplication1() {
         expected = Arrays.asList(
                 "[noot mier aap mier] mier", // left side matches, right side holds
                 "noot [mier aap mier] mier", // left side doesn't match
@@ -293,7 +292,7 @@ public class TestSearches {
     }
 
     @Test
-    public void testConstraintImplication2() throws ParseException {
+    public void testConstraintImplication2() {
         expected = Arrays.asList(
                 "noot [mier aap mier] mier",
                 "noot [noot aap aap] aap",
@@ -306,7 +305,7 @@ public class TestSearches {
     // Backreferences not implemented yet
     @Ignore
     @Test
-    public void testBackref() throws ParseException {
+    public void testBackref() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[word = a.word]"));
     }

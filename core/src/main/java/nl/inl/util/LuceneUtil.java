@@ -213,7 +213,7 @@ public final class LuceneUtil {
             }
             return concordanceWords;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -249,7 +249,7 @@ public final class LuceneUtil {
                 freq.put(term, n);
             }
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -372,7 +372,7 @@ public final class LuceneUtil {
             }
             return freq;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

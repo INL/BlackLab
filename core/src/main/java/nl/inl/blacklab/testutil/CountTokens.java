@@ -5,6 +5,7 @@ import java.io.File;
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
@@ -38,7 +39,7 @@ public class CountTokens {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ErrorOpeningIndex {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 1) {
@@ -63,7 +64,7 @@ public class CountTokens {
 
     BlackLabIndex index;
 
-    public CountTokens(File indexDir) {
+    public CountTokens(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
         index = BlackLabIndex.open(indexDir);
         System.out.println("Done.");

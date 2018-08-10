@@ -11,6 +11,8 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FilenameUtils;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+
 /**
  * Class for handling .tar.gz input streams. It will call the supplied handler
  * for each "normal" file in the .tar.gz file.
@@ -48,7 +50,7 @@ public class TarGzipReader {
         try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
             processTar(fileName, unzipped, fileHandler);
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -67,7 +69,7 @@ public class TarGzipReader {
             InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
             fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -95,7 +97,7 @@ public class TarGzipReader {
                     return;
             }
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -126,7 +128,7 @@ public class TarGzipReader {
                     return;
             }
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 }

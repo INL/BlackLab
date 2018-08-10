@@ -7,11 +7,15 @@ import java.util.List;
 
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
@@ -92,7 +96,7 @@ public class TestIndex {
 
     private Annotation word;
 
-    public TestIndex() throws Exception {
+    public TestIndex() {
 
         // Get a temporary directory for our test index
         indexDir = new File(System.getProperty("java.io.tmpdir"),
@@ -106,22 +110,26 @@ public class TestIndex {
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
-        Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
-        indexer.setListener(new IndexListenerDevNull()); // no output
         try {
-            // Index each of our test "documents".
-            for (int i = 0; i < testData.length; i++) {
-                indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes()));
+            Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
+            indexer.setListener(new IndexListenerDevNull()); // no output
+            try {
+                // Index each of our test "documents".
+                for (int i = 0; i < testData.length; i++) {
+                    indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes()));
+                }
+            } finally {
+                // Finalize and close the index.
+                indexer.close();
             }
-        } finally {
-            // Finalize and close the index.
-            indexer.close();
-        }
 
-        // Create the BlackLab index object
-        HitsSettings settings = HitsSettings.defaults().withContextSize(1);
-        index = BlackLabIndex.open(indexDir, settings);
-        word = index.mainAnnotatedField().annotations().get("word");
+            // Create the BlackLab index object
+            HitsSettings settings = HitsSettings.defaults().withContextSize(1);
+            index = BlackLabIndex.open(indexDir, settings);
+            word = index.mainAnnotatedField().annotations().get("word");
+        } catch (DocumentFormatException | ErrorOpeningIndex e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     public BlackLabIndex index() {
@@ -149,9 +157,8 @@ public class TestIndex {
      *
      * @param query the query to parse
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
      */
-    public List<String> findConc(String query) throws ParseException {
+    public List<String> findConc(String query) {
         Hits hits = find(query, null);
         return getConcordances(hits, word);
     }
@@ -162,9 +169,8 @@ public class TestIndex {
      * @param pattern CorpusQL pattern to find
      * @param filter how to filter the query
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
      */
-    public List<String> findConc(String pattern, Query filter) throws ParseException {
+    public List<String> findConc(String pattern, Query filter) {
         return getConcordances(find(pattern, filter), word);
     }
 
@@ -174,10 +180,13 @@ public class TestIndex {
      * @param pattern CorpusQL pattern to find
      * @param filter how to filter the query
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
      */
-    public Hits find(String pattern, Query filter) throws ParseException {
-        return index.find(CorpusQueryLanguageParser.parse(pattern), index.mainAnnotatedField(), filter, null);
+    public Hits find(String pattern, Query filter) {
+        try {
+            return index.find(CorpusQueryLanguageParser.parse(pattern), index.mainAnnotatedField(), filter, null);
+        } catch (InvalidQuery e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     /**
@@ -185,9 +194,8 @@ public class TestIndex {
      *
      * @param pattern CorpusQL pattern to find
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
      */
-    public Hits find(String pattern) throws ParseException {
+    public Hits find(String pattern) {
         return find(pattern, null);
     }
 
@@ -196,10 +204,13 @@ public class TestIndex {
      *
      * @param query what to find
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
      */
-    public List<String> findConc(BLSpanQuery query) throws ParseException {
-        return getConcordances(index.find(query, null), word);
+    public List<String> findConc(BLSpanQuery query) {
+        try {
+            return getConcordances(index.find(query, null), word);
+        } catch (WildcardTermTooBroad e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     /**

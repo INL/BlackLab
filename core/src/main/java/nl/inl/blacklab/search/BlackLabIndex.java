@@ -7,12 +7,13 @@ import java.text.Collator;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -120,7 +121,7 @@ public interface BlackLabIndex extends Closeable {
     // Search the index
     //---------------------------------------------------------------------------
     
-    BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter);
+    BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) throws RegexpTooLarge;
 
     /**
      * Find hits for a pattern in a field.
@@ -128,10 +129,10 @@ public interface BlackLabIndex extends Closeable {
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses;
+    Hits find(BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad;
 
     /**
      * Find hits for a pattern in a field.
@@ -142,11 +143,12 @@ public interface BlackLabIndex extends Closeable {
      * @param settings search settings, or null for default
      *
      * @return the hits found
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
+     * @throws RegexpTooLarge 
      */
     Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
-            throws BooleanQuery.TooManyClauses;
+            throws WildcardTermTooBroad, RegexpTooLarge;
 
     /**
      * Perform a document query only (no hits)
@@ -163,10 +165,11 @@ public interface BlackLabIndex extends Closeable {
      * @param pattern the pattern to explain
      * @param field which field to find the pattern in
      * @return the explanation
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
+     * @throws RegexpTooLarge 
      */
-    default QueryExplanation explain(TextPattern pattern, AnnotatedField field) throws BooleanQuery.TooManyClauses {
+    default QueryExplanation explain(TextPattern pattern, AnnotatedField field) throws WildcardTermTooBroad, RegexpTooLarge {
         return explain(createSpanQuery(pattern, field, null));
     }
 
@@ -176,10 +179,10 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param query the query to explain
      * @return the explanation
-     * @throws BooleanQuery.TooManyClauses if a wildcard or regular expression term
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    QueryExplanation explain(BLSpanQuery query) throws BooleanQuery.TooManyClauses;
+    QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
 
     
     // Access the different modules of the index

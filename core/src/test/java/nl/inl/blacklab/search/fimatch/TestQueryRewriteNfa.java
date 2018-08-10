@@ -22,7 +22,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -37,7 +40,7 @@ public class TestQueryRewriteNfa {
     private static BlackLabIndex index;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         testIndex = new TestIndex();
         index = testIndex.index();
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
@@ -50,9 +53,13 @@ public class TestQueryRewriteNfa {
         testIndex.close();
     }
 
-    static TextPattern getPatternFromCql(String cqlQuery) throws InvalidQuery {
+    static TextPattern getPatternFromCql(String cqlQuery) {
         cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
-        return CorpusQueryLanguageParser.parse(cqlQuery);
+        try {
+            return CorpusQueryLanguageParser.parse(cqlQuery);
+        } catch (InvalidQuery e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     void assertNoRewrite(String cql, String result) {
@@ -60,13 +67,17 @@ public class TestQueryRewriteNfa {
     }
 
     void assertRewrite(String cql, String before, String after) {
-        QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
-        if (before != null) {
-            BLSpanQuery original = explanation.getOriginalQuery();
-            Assert.assertEquals(before, original.toString());
+        try {
+            QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
+            if (before != null) {
+                BLSpanQuery original = explanation.getOriginalQuery();
+                Assert.assertEquals(before, original.toString());
+            }
+            BLSpanQuery rewritten = explanation.getRewrittenQuery();
+            Assert.assertEquals(after, rewritten.toString());
+        } catch (WildcardTermTooBroad | RegexpTooLarge e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
-        BLSpanQuery rewritten = explanation.getRewrittenQuery();
-        Assert.assertEquals(after, rewritten.toString());
     }
 
     void assertRewriteResult(String cql, String after) {

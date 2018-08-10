@@ -7,6 +7,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -22,7 +23,7 @@ import nl.inl.util.LuceneUtil;
  */
 public class TokensPerMetaValue {
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args) throws ParseException, ErrorOpeningIndex {
 
         String indexDir = "/home/jan/blacklab/gysseling/index";
         if (args.length >= 1)

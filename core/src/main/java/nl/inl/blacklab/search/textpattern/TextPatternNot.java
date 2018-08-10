@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
@@ -30,7 +31,7 @@ public class TextPatternNot extends TextPatternCombiner {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         return new SpanQueryNot(clauses.get(0).translate(context));
     }
 

@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.preprocess;
 import java.io.Reader;
 import java.io.Writer;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocIndexer;
 
 public interface TagPlugin extends Plugin {

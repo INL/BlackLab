@@ -1,6 +1,7 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,10 +14,11 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 public class GetFieldValues {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         if (args.length < 2) {
             System.err.println("Usage: GetFieldValues <indexDir> <fieldName1> <fieldName2> ...");

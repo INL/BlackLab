@@ -32,9 +32,10 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
-import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -170,7 +171,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws Exception {
+    public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
 
         // Parse use VTD-XML
@@ -181,17 +182,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
         // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
         vg.enableIgnoredWhiteSpace(true);
-        vg.parse(config.isNamespaceAware());
+        try {
+            vg.parse(config.isNamespaceAware());
 
-        nav = vg.getNav();
+            nav = vg.getNav();
 
-        // Find all documents
-        AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
-        while (documents.evalXPath() != -1) {
-            indexDocument();
+            // Find all documents
+            AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
+            while (documents.evalXPath() != -1) {
+                indexDocument();
+            }
+            releaseAutoPilot(documents);
+        } catch (VTDException e) {
+            throw new MalformedInputFile("Error indexing file: " + documentName, e);
         }
-        releaseAutoPilot(documents);
-
     }
 
     /**
@@ -673,7 +677,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(documents);
             }
         } catch (Exception e1) {
-            throw ExUtil.wrapRuntimeException(e1);
+            throw BlackLabRuntimeException.wrap(e1);
         }
     }
 

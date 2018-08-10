@@ -30,7 +30,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -39,7 +38,9 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -70,7 +71,7 @@ class IndexerImpl implements DocWriter, Indexer {
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
 
         @Override
-        public void file(String path, InputStream is, File file) throws Exception {
+        public void file(String path, InputStream is, File file) throws IOException, MalformedInputFile, PluginException {
             // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream 
             // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
             // the BOM (if present) and exposes the correct character set for this stream (if present)
@@ -88,14 +89,14 @@ class IndexerImpl implements DocWriter, Indexer {
             }
         }
 
-        public void file(String path, Reader reader) throws Exception {
+        public void file(String path, Reader reader) throws MalformedInputFile, PluginException, IOException {
             try (DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
                     reader)) {
                 impl(docIndexer, path);
             }
         }
 
-        private void impl(DocIndexer indexer, String documentName) throws Exception {
+        private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
             // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
             // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
             // meantime
@@ -116,7 +117,7 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         @Override
-        public void directory(File dir) throws Exception {
+        public void directory(File dir) {
             // ignore
         }
     }
@@ -198,12 +199,12 @@ class IndexerImpl implements DocWriter, Indexer {
      * @param directory the main BlackLab index directory
      * @param create if true, creates a new index; otherwise, appends to existing
      *            index
-     * @throws IOException
      * @throws DocumentFormatException if autodetection of the document format
      *             failed
+     * @throws ErrorOpeningIndex if we couldn't open the index
      */
     IndexerImpl(File directory, boolean create)
-            throws IOException, DocumentFormatException {
+            throws DocumentFormatException, ErrorOpeningIndex {
         this(directory, create, (String) null, null);
     }
 
@@ -229,14 +230,15 @@ class IndexerImpl implements DocWriter, Indexer {
      * @throws DocumentFormatException if no formatIdentifier was specified and
      *             autodetection failed
      * @throws IOException
+     * @throws ErrorOpeningIndex 
      */
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws DocumentFormatException, IOException {
+            throws DocumentFormatException, ErrorOpeningIndex {
         init(directory, create, formatIdentifier, indexTemplateFile);
     }
 
     protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws IOException, DocumentFormatException {
+            throws DocumentFormatException, ErrorOpeningIndex {
 
         if (create) {
             if (indexTemplateFile != null) {
@@ -453,20 +455,16 @@ class IndexerImpl implements DocWriter, Indexer {
      * Add a Lucene document to the index
      *
      * @param document the document to add
-     * @throws CorruptIndexException
      * @throws IOException
      */
     @Override
-    public void add(Document document) throws CorruptIndexException, IOException {
+    public void add(Document document) throws IOException {
         searcher.writer().addDocument(document);
         listener().luceneDocumentAdded();
     }
-
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#update(org.apache.lucene.index.Term, org.apache.lucene.document.Document)
-     */
+    
     @Override
-    public void update(Term term, Document document) throws CorruptIndexException, IOException {
+    public void update(Term term, Document document) throws IOException {
         searcher.writer().updateDocument(term, document);
         listener().luceneDocumentAdded();
     }
@@ -498,7 +496,7 @@ class IndexerImpl implements DocWriter, Indexer {
      * @see nl.inl.blacklab.index.IndexerInterface#index(java.lang.String, java.io.Reader)
      */
     @Override
-    public void index(String documentName, Reader reader) throws Exception {
+    public void index(String documentName, Reader reader) {
         try {
             docIndexerWrapper.file(documentName, reader);
         } catch (MalformedInputFile e) {
@@ -536,9 +534,6 @@ class IndexerImpl implements DocWriter, Indexer {
         index(file, "*");
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#index(java.io.File, java.lang.String)
-     */
     // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
     @Override
     public void index(File file, String fileNameGlob) {
@@ -596,17 +591,11 @@ class IndexerImpl implements DocWriter, Indexer {
         return contentAccessor == null ? null : contentAccessor.getContentStore();
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#indexLocation()
-     */
     @Override
     public File indexLocation() {
         return searcher.indexDirectory();
     }
 
-    /* (non-Javadoc)
-     * @see nl.inl.blacklab.index.IndexerInterface#setIndexerParam(java.util.Map)
-     */
     @Override
     public void setIndexerParam(Map<String, String> indexerParam) {
         this.indexerParam = indexerParam;

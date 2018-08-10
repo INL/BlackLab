@@ -8,7 +8,6 @@ import org.junit.Test;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
@@ -29,7 +28,7 @@ public class TestHitProperties {
     private static Annotation wordAnnotation;
 
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         testIndex = new TestIndex();
         wordAnnotation = testIndex.index().mainAnnotatedField().annotations().get("word");
         terms = testIndex.index().forwardIndex(wordAnnotation).terms();
@@ -46,7 +45,7 @@ public class TestHitProperties {
     }
 
     @Test
-    public void testHitPropHitText() throws ParseException {
+    public void testHitPropHitText() {
         Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(hits, true);
         HitGroups g = hits.groupedBy(p);
@@ -57,7 +56,7 @@ public class TestHitProperties {
     }
 
     @Test
-    public void testHitPropContextWords() throws ParseException {
+    public void testHitPropContextWords() {
         Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyContextWords(hits, wordAnnotation, true, "L1-1;H1-2");
         HitGroups g = hits.groupedBy(p);
@@ -78,7 +77,7 @@ public class TestHitProperties {
     }
 
     @Test
-    public void testHitPropContextWordsReverse() throws ParseException {
+    public void testHitPropContextWordsReverse() {
         Hits hits = testIndex.find(" 'the' 'lazy' ");
         HitProperty p = new HitPropertyContextWords(hits, wordAnnotation, true, "L1;H2-1;R1");
         HitGroups g = hits.groupedBy(p);

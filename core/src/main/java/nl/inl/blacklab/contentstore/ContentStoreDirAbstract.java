@@ -17,7 +17,7 @@ package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.VersionFile;
 
 /**
@@ -39,13 +39,14 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
      * 
      * @param dir directory of the content store
      * @return the contents of the store's version file
+     * @throws ErrorOpeningIndex 
      */
-    public static VersionFile getStoreTypeVersion(File dir) {
+    public static VersionFile getStoreTypeVersion(File dir) throws ErrorOpeningIndex {
         VersionFile vf = new VersionFile(dir);
         if (vf.exists())
             vf.read();
         else
-            throw new BlackLabRuntimeException("Content store directory must contain version file! (" + dir + ")");
+            throw new ErrorOpeningIndex("Content store directory must contain version file! (" + dir + ")");
         return vf;
     }
 

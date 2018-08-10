@@ -6,6 +6,8 @@ package nl.inl.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+
 /**
  * Keeps a simple pool of free resource objects.
  *
@@ -98,7 +100,7 @@ public abstract class SimpleResourcePool<T> {
             }
             return freePool.remove(0);
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

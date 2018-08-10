@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
@@ -92,7 +93,7 @@ public class ConfigReader extends YamlJsonReader {
             throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
         if (!FilenameUtils.isExtension(file.getName(), Arrays.asList("yaml", "yml", "json")))
-            throw new IllegalArgumentException("Configuration file " + file + " is of an unsupported type.");
+            throw new InvalidConfiguration("Configuration file " + file + " is of an unsupported type.");
 
         if (blacklabConfig != null)
             throw new UnsupportedOperationException("Cannot load configuration file " + file
@@ -188,7 +189,7 @@ public class ConfigReader extends YamlJsonReader {
             case "debug":
                 break;
             default:
-                throw new IllegalArgumentException("Unknown top-level key " + e.getKey());
+                throw new InvalidConfiguration("Unknown top-level key " + e.getKey());
             }
         }
     }
@@ -212,7 +213,7 @@ public class ConfigReader extends YamlJsonReader {
                 index.setHitsSettings(hitsSett.withMaxHitsToCount(integer(e)));
                 break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in search section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in search section");
             }
         }
     }
@@ -235,12 +236,12 @@ public class ConfigReader extends YamlJsonReader {
                     variant = str(e2);
                     break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey()
+                    throw new InvalidConfiguration("Unknown key " + e.getKey()
                             + " in collator (must have language, can have country and variant)");
                 }
             }
             if (language == null || country == null && variant != null)
-                throw new IllegalArgumentException(
+                throw new InvalidConfiguration(
                         "Collator must have language, language+country or language+country+variant");
             if (country == null)
                 collator = Collator.getInstance(new Locale(language));
@@ -272,7 +273,7 @@ public class ConfigReader extends YamlJsonReader {
             case "search":
                 break;
             default:
-                throw new IllegalArgumentException("Unknown top-level key " + e.getKey());
+                throw new InvalidConfiguration("Unknown top-level key " + e.getKey());
             }
         }
     }
@@ -286,7 +287,7 @@ public class ConfigReader extends YamlJsonReader {
                 readTrace(obj(e));
                 break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in debug section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in debug section");
             }
         }
     }
@@ -306,7 +307,7 @@ public class ConfigReader extends YamlJsonReader {
                 BlackLabIndexImpl.setTraceQueryExecution(bool(e));
                 break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in trace section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in trace section");
             }
         }
     }
@@ -332,7 +333,7 @@ public class ConfigReader extends YamlJsonReader {
                 ZipHandleManager.setMaxOpen(integer(e));
                 break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in indexing section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in indexing section");
             }
         }
     }

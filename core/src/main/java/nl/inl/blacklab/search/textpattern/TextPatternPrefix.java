@@ -32,7 +32,7 @@ public class TextPatternPrefix extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         try {
             return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
                     context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));

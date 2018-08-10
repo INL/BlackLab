@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
@@ -32,7 +33,7 @@ public class TextPatternExpansion extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause.translate(context), expandToLeft, min,
                 max);
         return spanQueryExpansion;

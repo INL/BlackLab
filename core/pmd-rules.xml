@@ -114,6 +114,7 @@
         <exclude name="SimplifiedTernary" />
         <exclude name="CouplingBetweenObjects" />
         <exclude name="AvoidCatchingGenericException" />
+        <exclude name="ExceptionAsFlowControl" />
 
         <!-- Might not need re-examination -->
         <exclude name="UseUtilityClass" />

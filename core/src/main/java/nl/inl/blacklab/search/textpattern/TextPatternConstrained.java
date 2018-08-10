@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -16,7 +17,7 @@ public class TextPatternConstrained extends TextPatternCombiner {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         BLSpanQuery translate = clauses.get(0).translate(context);
         ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(context.getIndex(),
                 translate.getField());

@@ -11,35 +11,37 @@ import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
-    static Indexer createNewIndex(File directory) throws IOException, DocumentFormatException {
+    static Indexer createNewIndex(File directory) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, true);
     }
     
-    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatException, IOException {
+    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, true, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory) throws IOException, DocumentFormatException {
+    static Indexer openIndex(File directory) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, false);
     }
     
-    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatException, IOException {
+    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, false, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatException, IOException {
+    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, createNewIndex, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatException, IOException {
+    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatException, ErrorOpeningIndex {
         return new IndexerImpl(directory, createNewIndex, formatIdentifier, indexTemplateFile);
     }
 
@@ -113,10 +115,9 @@ public interface Indexer {
      *
      * @param term how to find the document to update
      * @param document the updated document
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    void update(Term term, Document document) throws CorruptIndexException, IOException;
+    void update(Term term, Document document) throws IOException;
 
     /**
      * Index a document or archive from an InputStream.
@@ -138,9 +139,12 @@ public interface Indexer {
      * @param documentName some (preferably unique) name for this document (for
      *            example, the file name or path)
      * @param reader where to index from
-     * @throws Exception
+     * 
+     * @throws IOException if an I/O error occurred
+     * @throws MalformedInputFile if the input file was invalid
+     * @throws PluginException if an error in a plugin occurred 
      */
-    void index(String documentName, Reader reader) throws Exception;
+    void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
 
     /**
      * Index a document (or archive if enabled by

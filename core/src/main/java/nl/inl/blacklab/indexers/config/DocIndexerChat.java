@@ -33,7 +33,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.util.ExUtil;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
 
 /**
@@ -64,7 +64,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try {
             index();
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -127,7 +127,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws Exception {
+    public void index() throws IOException, PluginException {
         super.index();
 
         startDocument();
@@ -914,7 +914,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     private String currentFileBaseName;
 
-//    public static void main(String[] argv) throws Exception {
+//    public static void main(String[] argv) {
 //        File f = new File("D:\\werk\\mee\\chat-examples\\Adler\\adler01a.cha");
 //
 //        DocIndexerChat di = new DocIndexerChat();

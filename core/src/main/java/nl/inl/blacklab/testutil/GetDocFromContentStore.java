@@ -10,7 +10,7 @@ import nl.inl.blacklab.contentstore.ContentStoreDirZip;
  */
 public class GetDocFromContentStore {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
 
         if (args.length != 2) {
             System.err.println("Usage: GetDocFromContentStore <contentStoreDir> <docId>");

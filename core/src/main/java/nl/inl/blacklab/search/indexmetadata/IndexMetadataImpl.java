@@ -167,8 +167,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * @param createNewIndex whether we're creating a new index
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
+     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexTooOld {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -230,8 +231,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * @param createNewIndex whether we're creating a new index
      * @param indexTemplateFile JSON file to use as template for index structure /
      *            metadata (if creating new index)
+     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexTooOld {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -656,9 +658,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      *            anymore.
      * @param initTimestamps whether or not to update blacklab build time, version,
      *            and index creation/modification time
+     * @throws IndexTooOld if the index is too old to open with this BlackLab version
      */
     private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate,
-            boolean initTimestamps) {
+            boolean initTimestamps) throws IndexTooOld {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -951,7 +954,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     }
 
     private void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
-            boolean usedTemplate) {
+            boolean usedTemplate) throws IndexTooOld {
         ensureNotFrozen();
 
         // Read and interpret index metadata file

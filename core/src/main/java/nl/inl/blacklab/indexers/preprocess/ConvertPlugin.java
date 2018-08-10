@@ -6,6 +6,8 @@ import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
 import java.util.Set;
 
+import nl.inl.blacklab.exceptions.PluginException;
+
 public interface ConvertPlugin extends Plugin {
 
     /**

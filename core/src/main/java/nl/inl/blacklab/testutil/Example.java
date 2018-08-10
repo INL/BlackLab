@@ -17,14 +17,16 @@ package nl.inl.blacklab.testutil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
@@ -75,9 +77,10 @@ public class Example {
      * The main program
      * 
      * @param args command line arguments
-     * @throws IOException
+     * @throws ErrorOpeningIndex 
+     * @throws InvalidQuery 
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
 
         // Get a temporary directory for our test index, and make sure it doesn't exist
         File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");
@@ -124,7 +127,7 @@ public class Example {
             System.out.println("-----");
             findPattern(parseCorpusQL(" 'the' []{0,2} 'fo.*' "));
 
-        } catch (ParseException e) {
+        } catch (InvalidQuery e) {
 
             // Query parse error
             System.err.println(e.getMessage());
@@ -157,9 +160,9 @@ public class Example {
      *
      * @param query the query to parse
      * @return the resulting BlackLab text pattern
-     * @throws ParseException
+     * @throws InvalidQuery if query couldn't be parsed
      */
-    private static TextPattern parseCorpusQL(String query) throws ParseException {
+    private static TextPattern parseCorpusQL(String query) throws InvalidQuery {
 
         // A bit of cheating here - CorpusQL only allows double-quoting, but
         // that makes our example code look ugly (we have to add backslashes).
@@ -174,8 +177,10 @@ public class Example {
      * Find a text pattern in the contents field and display the matches.
      *
      * @param tp the text pattern to search for
+     * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
+     * @throws RegexpTooLarge 
      */
-    static void findPattern(TextPattern tp) {
+    static void findPattern(TextPattern tp) throws WildcardTermTooBroad, RegexpTooLarge {
         // Execute the search
         Hits hits = index.find(tp, index.mainAnnotatedField(), null, null);
         Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits, index.mainAnnotatedField()));

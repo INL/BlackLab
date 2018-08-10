@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
@@ -49,7 +50,7 @@ public class TextPatternAndNot extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         List<BLSpanQuery> chResults = new ArrayList<>(include.size());
         for (TextPattern cl : include) {
             chResults.add(cl.translate(context));

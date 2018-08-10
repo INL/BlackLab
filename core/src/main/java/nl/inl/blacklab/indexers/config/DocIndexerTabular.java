@@ -24,7 +24,7 @@ import org.apache.commons.io.input.BOMInputStream;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.util.ExUtil;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.FileUtil;
 
 /**
@@ -172,7 +172,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws Exception {
+    public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
 
         // If a documentPath was specified, look for that as the document tag
@@ -298,7 +298,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         try {
             index();
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

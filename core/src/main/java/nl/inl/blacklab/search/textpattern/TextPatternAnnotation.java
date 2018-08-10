@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -38,7 +39,7 @@ public class TextPatternAnnotation extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         String[] parts = annotationName.split("/", -1);
         if (parts.length > 2)
             throw new IllegalArgumentException("Annotation name contains more than one colon: " + annotationName);

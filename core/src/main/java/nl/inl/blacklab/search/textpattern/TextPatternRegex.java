@@ -39,7 +39,7 @@ public class TextPatternRegex extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         TextPattern result = rewrite();
         if (result != this)
             return result.translate(context);

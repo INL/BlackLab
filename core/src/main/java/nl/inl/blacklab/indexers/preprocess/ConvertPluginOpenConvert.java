@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.PluginException;
+
 public class ConvertPluginOpenConvert implements ConvertPlugin {
     private static final String PROP_JAR = "jarPath";
 

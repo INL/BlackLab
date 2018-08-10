@@ -38,7 +38,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.util.ExUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 
@@ -470,7 +469,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             if (docWriter != null && !indexingIntoExistingLuceneDoc)
                 docWriter.add(currentLuceneDoc);
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
 
         for (AnnotatedFieldWriter annotatedField : getAnnotatedFields().values()) {

@@ -16,9 +16,11 @@
 package nl.inl.blacklab.contentstore;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Set;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.VersionFile;
 
 /**
@@ -94,8 +96,9 @@ public abstract class ContentStore {
 
     /**
      * Clear the entire content store.
+     * @throws IOException 
      */
-    public abstract void clear();
+    public abstract void clear() throws IOException;
 
     /**
      * Returns the set of doc ids in the store. Note that the IDs of deleted
@@ -121,7 +124,7 @@ public abstract class ContentStore {
      */
     public abstract int getDocLength(int id);
 
-    public static ContentStore open(File indexXmlDir, boolean create) {
+    public static ContentStore open(File indexXmlDir, boolean create) throws ErrorOpeningIndex {
         String type;
         if (create)
             type = "fixedblock";

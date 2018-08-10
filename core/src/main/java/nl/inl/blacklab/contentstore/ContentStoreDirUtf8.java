@@ -36,7 +36,6 @@ import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.util.ExUtil;
 
 /**
  * Store string content by id in a directory of compound files with a TOC file.
@@ -418,7 +417,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                 closeMappedToc();
             }
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -441,7 +440,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                 closeMappedToc();
             }
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         tocModified = false;
     }
@@ -639,7 +638,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             }
             return currentStoreFileStream;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -770,7 +769,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             }
             return result;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

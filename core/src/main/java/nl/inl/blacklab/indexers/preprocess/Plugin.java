@@ -4,6 +4,8 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.PluginException;
+
 /**
  * Interface of converting a plugin (including using external services) Only a
  * single instance of a plugin is constructed, so plugins must be threadsafe.
@@ -11,24 +13,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * A plugin must define a no-argument constructor.
  */
 public interface Plugin {
-
-    class PluginException extends Exception {
-        public PluginException() {
-            super();
-        }
-
-        public PluginException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public PluginException(String message) {
-            super(message);
-        }
-
-        public PluginException(Throwable cause) {
-            super(cause);
-        }
-    }
 
     /**
      * Return a globally unique id for this plugin class. This ID must be constant

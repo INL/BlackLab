@@ -8,7 +8,6 @@ import java.util.function.Function;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.CorruptIndexException;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -33,10 +32,9 @@ public interface DocWriter {
      *
      * @param document
      *            the document to add
-     * @throws CorruptIndexException
      * @throws IOException
      */
-    void add(Document document) throws CorruptIndexException, IOException;
+    void add(Document document) throws IOException;
 
     /**
      * Add a list of tokens to a forward index

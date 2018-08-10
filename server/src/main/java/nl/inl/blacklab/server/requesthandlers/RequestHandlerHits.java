@@ -9,6 +9,8 @@ import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
@@ -30,6 +32,7 @@ import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.Job;
@@ -179,11 +182,17 @@ public class RequestHandlerHits extends RequestHandler {
             ds.endEntry();
             if (searchParam.getBoolean("explain")) {
                 TextPattern tp = searchParam.getPattern();
-                QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
-                ds.startEntry("explanation").startMap()
-                        .entry("originalQuery", explanation.getOriginalQuery())
-                        .entry("rewrittenQuery", explanation.getRewrittenQuery())
-                        .endMap().endEntry();
+                try {
+                    QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
+                    ds.startEntry("explanation").startMap()
+                            .entry("originalQuery", explanation.getOriginalQuery())
+                            .entry("rewrittenQuery", explanation.getRewrittenQuery())
+                            .endMap().endEntry();
+                } catch (RegexpTooLarge e) {
+                    throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
+                } catch (WildcardTermTooBroad e) {
+                    throw BlsException.wildcardTermTooBroad(e);
+                }
             }
             ds.endMap().endEntry();
 

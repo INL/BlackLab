@@ -55,7 +55,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.results.HitsSettings;
-import nl.inl.util.ExUtil;
 import nl.inl.util.StringUtil;
 
 /**
@@ -210,7 +209,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 // Add Lucene doc to indexer
                 docWriter.add(currentLuceneDoc);
             } catch (Exception e) {
-                throw ExUtil.wrapRuntimeException(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
 
             // Report progress

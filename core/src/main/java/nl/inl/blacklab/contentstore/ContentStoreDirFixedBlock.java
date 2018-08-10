@@ -38,8 +38,8 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.CollUtil;
-import nl.inl.util.ExUtil;
 import nl.inl.util.SimpleResourcePool;
 
 /**
@@ -308,22 +308,23 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     /**
      * @param dir content store dir
      * @param create if true, create a new content store
+     * @throws ErrorOpeningIndex 
      */
-    public ContentStoreDirFixedBlock(File dir, boolean create) {
+    public ContentStoreDirFixedBlock(File dir, boolean create) throws ErrorOpeningIndex {
         this.dir = dir;
         if (!dir.exists() && !dir.mkdir())
-            throw new BlackLabRuntimeException("Could not create dir: " + dir);
+            throw new ErrorOpeningIndex("Could not create dir: " + dir);
         tocFile = new File(dir, TOC_FILE_NAME);
         contentsFile = new File(dir, CONTENTS_FILE_NAME);
         if (create && tocFile.exists()) {
             // Delete the ContentStore files
             if (!tocFile.delete())
-                throw new BlackLabRuntimeException("Could not delete TOC file: " + tocFile);
+                throw new ErrorOpeningIndex("Could not delete TOC file: " + tocFile);
             File versionFile = new File(dir, VERSION_FILE_NAME);
             if (versionFile.exists() && !versionFile.delete())
-                throw new BlackLabRuntimeException("Could not delete version file: " + tocFile);
+                throw new ErrorOpeningIndex("Could not delete version file: " + tocFile);
             if (contentsFile.exists() && !contentsFile.delete())
-                throw new BlackLabRuntimeException("Could not delete contents file: " + contentsFile);
+                throw new ErrorOpeningIndex("Could not delete contents file: " + contentsFile);
 
             // Also delete old content store format files if present
             File[] dataFiles = dir.listFiles(new FilenameFilter() {
@@ -333,10 +334,10 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 }
             });
             if (dataFiles == null)
-                throw new BlackLabRuntimeException("Error finding old data files in content store dir: " + dir);
+                throw new ErrorOpeningIndex("Error finding old data files in content store dir: " + dir);
             for (File f : dataFiles) {
                 if (!f.delete())
-                    throw new BlackLabRuntimeException("Could not delete data file: " + f);
+                    throw new ErrorOpeningIndex("Could not delete data file: " + f);
             }
         }
         toc = IntObjectMaps.mutable.empty(); //Maps.mutable.empty();
@@ -344,9 +345,13 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             readToc();
         tocModified = false;
         if (create) {
-            clear();
+            try {
+                clear();
+            } catch (IOException e) {
+                throw new ErrorOpeningIndex("Could not clear content store", e);
+            }
             if (tocFile.exists() && !tocFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
+                throw new ErrorOpeningIndex("Could not delete file: " + tocFile);
             setStoreType();
         }
         blockIndicesWhileStoring = new IntArrayList();
@@ -384,14 +389,15 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
 
     /**
      * Delete all content in the document store
+     * @throws IOException 
      */
     @Override
-    public void clear() {
+    public void clear() throws IOException {
         closeContentsFile();
 
         // delete contents file and empty TOC
         if (contentsFile.exists() && !contentsFile.delete())
-            throw new BlackLabRuntimeException("Could not delete file: " + contentsFile);
+            throw new IOException("Could not delete file: " + contentsFile);
         toc.clear();
         freeBlocks.clear();
         tocModified = true;
@@ -471,7 +477,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             }
 
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -494,7 +500,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 closeMappedToc();
             }
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         tocModified = false;
     }
@@ -768,7 +774,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
             }
             return result;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -888,7 +894,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         }
     }
 
-    protected String decodeBlock(byte[] buf, int offset, int length) {
+    protected String decodeBlock(byte[] buf, int offset, int length) throws IOException {
         try {
             // unzip block
             Inflater decompresser = decompresserPool.acquire();
@@ -898,11 +904,11 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 decompresser.setInput(buf, offset, length);
                 int resultLength = decompresser.inflate(zipbuf);
                 if (resultLength <= 0) {
-                    throw new BlackLabRuntimeException("Error, inflate returned " + resultLength);
+                    throw new IOException("Error, inflate returned " + resultLength);
                 }
                 if (!decompresser.finished()) {
                     // This shouldn't happen because our max block size prevents it
-                    throw new BlackLabRuntimeException("Unzip buffer size insufficient");
+                    throw new IOException("Unzip buffer size insufficient");
                 }
                 return new String(zipbuf, 0, resultLength, DEFAULT_CHARSET);
             } finally {
@@ -910,7 +916,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 zipbufPool.release(zipbuf);
             }
         } catch (DataFormatException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw new IOException(e);
         }
     }
 

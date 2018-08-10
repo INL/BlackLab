@@ -40,7 +40,6 @@ import org.apache.lucene.index.IndexReader;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.ExUtil;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -361,7 +360,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
             }
             sortDeletedTocEntries();
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         toc.trimToSize();
         deletedTocEntries.trimToSize();
@@ -411,7 +410,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 buf.put(deleted);
             }
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
         tocModified = false;
     }
@@ -434,7 +433,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
                 writeTokensFp.close();
 
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -683,7 +682,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
 
             return result;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

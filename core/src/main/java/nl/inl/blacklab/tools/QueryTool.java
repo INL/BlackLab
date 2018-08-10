@@ -315,9 +315,9 @@ public class QueryTool {
      * The main program.
      *
      * @param args commandline arguments
-     * @throws IOException
+     * @throws ErrorOpeningIndex if index could not be opened
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws ErrorOpeningIndex {
 
         LogUtil.setupBasicLoggingConfig();
 
@@ -373,11 +373,9 @@ public class QueryTool {
      * @param indexDir the index to search
      * @param commandFile the command file to execute
      * @param encoding the output encoding
-     * @throws UnsupportedEncodingException
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex if index could not be opened
      */
-    public static void runBatch(File indexDir, File commandFile, String encoding)
-            throws UnsupportedEncodingException, CorruptIndexException {
+    public static void runBatch(File indexDir, File commandFile, String encoding) throws ErrorOpeningIndex {
         run(indexDir, commandFile, encoding);
     }
 
@@ -386,14 +384,10 @@ public class QueryTool {
      * 
      * @param indexDir the index to search
      * @param commandFile the command file to execute
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex 
      */
-    public static void runBatch(File indexDir, File commandFile) throws CorruptIndexException {
-        try {
-            run(indexDir, commandFile, Charset.defaultCharset().name());
-        } catch (UnsupportedEncodingException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+    public static void runBatch(File indexDir, File commandFile) throws ErrorOpeningIndex {
+        run(indexDir, commandFile, Charset.defaultCharset().name());
     }
 
     /**
@@ -401,11 +395,9 @@ public class QueryTool {
      * 
      * @param indexDir the index to search
      * @param encoding the output encoding
-     * @throws UnsupportedEncodingException
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex if index could not be opened
      */
-    public static void runInteractive(File indexDir, String encoding)
-            throws UnsupportedEncodingException, CorruptIndexException {
+    public static void runInteractive(File indexDir, String encoding) throws ErrorOpeningIndex {
         run(indexDir, null, encoding);
     }
 
@@ -413,14 +405,10 @@ public class QueryTool {
      * Run the QueryTool in interactive mode
      * 
      * @param indexDir the index to search
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex if index could not be opened
      */
-    public static void runInteractive(File indexDir) throws CorruptIndexException {
-        try {
-            run(indexDir, null, Charset.defaultCharset().name());
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+    public static void runInteractive(File indexDir) throws ErrorOpeningIndex {
+        run(indexDir, null, Charset.defaultCharset().name());
     }
 
     /**
@@ -432,9 +420,9 @@ public class QueryTool {
      * @param encoding the output encoding to use
      * @throws UnsupportedEncodingException
      * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex 
      */
-    private static void run(File indexDir, File inputFile, String encoding)
-            throws UnsupportedEncodingException, CorruptIndexException {
+    private static void run(File indexDir, File inputFile, String encoding) throws ErrorOpeningIndex {
         if (!indexDir.exists() || !indexDir.isDirectory()) {
             System.err.println("Index dir " + indexDir.getPath() + " doesn't exist.");
             return;
@@ -559,9 +547,9 @@ public class QueryTool {
      * @param indexDir directory our index is in
      * @param out the output writer to use
      * @param err where to write errors to
-     * @throws CorruptIndexException
+     * @throws ErrorOpeningIndex if index could not be opened
      */
-    public QueryTool(File indexDir, PrintWriter out, PrintWriter err) throws CorruptIndexException {
+    public QueryTool(File indexDir, PrintWriter out, PrintWriter err) throws ErrorOpeningIndex {
         this(indexDir, null, out, err);
     }
 

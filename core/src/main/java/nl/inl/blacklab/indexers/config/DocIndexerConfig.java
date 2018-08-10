@@ -1,11 +1,14 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
@@ -131,7 +134,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     @Override
-    public void index() throws Exception {
+    public void index() throws IOException, MalformedInputFile, PluginException {
         init();
     }
 

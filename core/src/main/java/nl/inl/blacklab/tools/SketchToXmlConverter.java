@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
@@ -42,7 +41,7 @@ import nl.inl.util.FileUtil;
  * XSLT.
  */
 public class SketchToXmlConverter {
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws IOException {
         // Read property file
         Properties properties = getPropertiesFromResource("anwcorpus.properties");
 
@@ -300,9 +299,11 @@ public class SketchToXmlConverter {
      *            basedir)
      * @param inDir basedir for the files to index
      * @param outDir where to write output files
+     * @throws IOException 
+     * @throws FileNotFoundException 
      * @throws Exception
      */
-    private static void convertList(File listFile, File inDir, File outDir) throws Exception {
+    private static void convertList(File listFile, File inDir, File outDir) throws FileNotFoundException, IOException {
         SketchToXmlConverter converter = new SketchToXmlConverter();
         List<String> filesToRead = FileUtil.readLines(listFile);
         // Contains a list of files to index
@@ -313,7 +314,7 @@ public class SketchToXmlConverter {
     }
 
     private static void convertFile(SketchToXmlConverter converter, File inFile, File outDir)
-            throws UnsupportedEncodingException, FileNotFoundException, IOException {
+            throws FileNotFoundException, IOException {
         try (Reader in = new InputStreamReader(new FileInputStream(inFile), Indexer.DEFAULT_INPUT_ENCODING)) {
             String fn = inFile.getName();
             String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";

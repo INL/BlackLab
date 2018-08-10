@@ -49,6 +49,10 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -68,7 +72,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.util.ExUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -330,32 +333,36 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *            exists.
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
-     * @throws IOException
+     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
+     * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config)
-            throws IOException {
+    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
         this();
-        this.indexMode = indexMode;
-
         try {
-            ConfigReader.applyConfig(this);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage() + " (BlackLab configuration file)", e.getCause());
+            this.indexMode = indexMode;
+
+            try {
+                ConfigReader.applyConfig(this);
+            } catch (InvalidConfiguration e) {
+                throw new InvalidConfiguration(e.getMessage() + " (BlackLab configuration file)", e.getCause());
+            }
+
+            openIndex(indexDir, indexMode, createNewIndex);
+
+            // Determine the index structure
+            if (traceIndexOpening)
+                logger.debug("  Determining index structure...");
+            IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
+            indexMetadata = indexMetadataImpl;
+            if (indexMode)
+                indexMetadataWriter = indexMetadataImpl;
+            else
+                indexMetadata.freeze();
+
+            finishOpeningIndex(indexDir, indexMode, createNewIndex);
+        } catch (IOException e) {
+            throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
-
-        openIndex(indexDir, indexMode, createNewIndex);
-
-        // Determine the index structure
-        if (traceIndexOpening)
-            logger.debug("  Determining index structure...");
-        IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
-        indexMetadata = indexMetadataImpl;
-        if (indexMode)
-            indexMetadataWriter = indexMetadataImpl;
-        else
-            indexMetadata.freeze();
-
-        finishOpeningIndex(indexDir, indexMode, createNewIndex);
     }
 
     /**
@@ -456,7 +463,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
+    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) throws RegexpTooLarge {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
         BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(field));
@@ -466,18 +473,18 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, HitsSettings settings) throws BooleanQuery.TooManyClauses {
+    public Hits find(BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
         return HitsImpl.fromSpanQuery(this, query, settings);
     }
 
     @Override
     public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
-            throws BooleanQuery.TooManyClauses {
+            throws WildcardTermTooBroad, RegexpTooLarge {
         return HitsImpl.fromSpanQuery(this, createSpanQuery(pattern, field, filter), settings);
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query) throws BooleanQuery.TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
         try {
             IndexReader indexReader = reader();
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
@@ -492,7 +499,11 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             ContentAccessor ca = contentStores.contentAccessor(field);
             if (indexMode && ca == null) {
                 // Index mode. Create new content store or open existing one.
-                openContentStore(field);
+                try {
+                    openContentStore(field);
+                } catch (ErrorOpeningIndex e) {
+                    throw BlackLabRuntimeException.wrap(e);
+                }
                 ca = contentStores.contentAccessor(field);
             }
             return ca;
@@ -613,7 +624,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
-            throws IOException, CorruptIndexException, LockObtainFailedException {
+            throws IOException, CorruptIndexException, LockObtainFailedException, ErrorOpeningIndex {
         isEmptyIndex = indexMetadata.isNewIndex();
 
         // TODO: we need to create the analyzer before opening the index, because
@@ -738,7 +749,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             BlackLabIndexRegistry.removeSearcher(this);
 
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -760,7 +771,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return reader;
     }
 
-    protected ContentStore openContentStore(Field field) {
+    protected ContentStore openContentStore(Field field) throws ErrorOpeningIndex {
         File contentStoreDir = new File(indexLocation, "cs_" + field.name());
         ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
         registerContentStore(field, contentStore);
@@ -960,7 +971,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             indexWriter.rollback();
             indexWriter = null;
         } catch (IOException e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

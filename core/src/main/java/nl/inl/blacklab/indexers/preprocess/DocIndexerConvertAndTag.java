@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -16,6 +17,8 @@ import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -71,7 +74,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws Exception {
+    public void index() throws PluginException, MalformedInputFile, IOException {
         if (this.input == null)
             throw new IllegalStateException("A document must be set before calling index()");
 

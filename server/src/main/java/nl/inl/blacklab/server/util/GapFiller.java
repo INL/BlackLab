@@ -11,8 +11,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.ParseException;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 
@@ -46,7 +46,7 @@ public class GapFiller {
 
     private static final String GAP_REGEX = "@@";
 
-    public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws ParseException {
+    public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
             // Fill in the gaps
             Iterable<CSVRecord> values = parseTsv(new BufferedReader(new StringReader(tsvValues)), VALUE_SEPARATOR,
@@ -88,10 +88,10 @@ public class GapFiller {
      * @param valueSeparator separator to use when filling in multiple values into a
      *            gap
      * @return the filled-in template
-     * @throws ParseException if the resulting CQL contains an error
+     * @throws InvalidQuery if the resulting CQL contains an error
      */
     private static TextPattern parseGapQuery(String template, String gapRegex, Iterable<CSVRecord> values,
-            String valueSeparator) throws ParseException {
+            String valueSeparator) throws InvalidQuery {
         String[] parts = template.split(gapRegex, -1);
 
         List<TextPattern> results = new ArrayList<>();

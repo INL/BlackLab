@@ -16,6 +16,7 @@
 package nl.inl.blacklab.contentstore;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirFixedBlock {
@@ -52,28 +55,32 @@ public class TestContentStoreDirFixedBlock {
         // Create new test dir
         dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
 
-        store = new ContentStoreDirFixedBlock(dir, false);
         try {
+            store = new ContentStoreDirFixedBlock(dir, false);
+            try {
 
-            // Create four different documents that span different numbers of 4K blocks.
-            Random random = new Random(12345);
-            for (int i = 0; i < doc.length; i++) {
-                StringBuilder b = new StringBuilder();
-                for (int j = 0; j < i * 2400 + 800; j++) {
-                    char c = (char) ('a' + random.nextInt(26));
-                    b.append(c);
+                // Create four different documents that span different numbers of 4K blocks.
+                Random random = new Random(12345);
+                for (int i = 0; i < doc.length; i++) {
+                    StringBuilder b = new StringBuilder();
+                    for (int j = 0; j < i * 2400 + 800; j++) {
+                        char c = (char) ('a' + random.nextInt(26));
+                        b.append(c);
+                    }
+                    doc[i] = b.toString();
                 }
-                doc[i] = b.toString();
-            }
 
-            // Store strings
-            for (int i = 0; i < doc.length; i++) {
-                Assert.assertEquals(i + 1, store.store(doc[i]));
+                // Store strings
+                for (int i = 0; i < doc.length; i++) {
+                    Assert.assertEquals(i + 1, store.store(doc[i]));
+                }
+            } finally {
+                store.close(); // close so everything is guaranteed to be written
             }
-        } finally {
-            store.close(); // close so everything is guaranteed to be written
+            store = new ContentStoreDirFixedBlock(dir, false);
+        } catch (ErrorOpeningIndex e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
-        store = new ContentStoreDirFixedBlock(dir, false);
     }
 
     @After
@@ -113,7 +120,7 @@ public class TestContentStoreDirFixedBlock {
     }
 
     @Test
-    public void testDeleteReuseMultiple() {
+    public void testDeleteReuseMultiple() throws IOException {
         // Keep track of which documents are stored under which ids
         List<Integer> storedKeys = new ArrayList<>();
         Map<Integer, String> stored = new HashMap<>();
@@ -189,14 +196,14 @@ public class TestContentStoreDirFixedBlock {
     }
 
     @Test
-    public void testCloseReopen() {
+    public void testCloseReopen() throws ErrorOpeningIndex {
         store.close();
         store = new ContentStoreDirFixedBlock(dir, false);
         Assert.assertEquals(doc[0], store.retrieve(1));
     }
 
     @Test
-    public void testCloseReopenAppend() {
+    public void testCloseReopenAppend() throws ErrorOpeningIndex {
         store.close();
         store = new ContentStoreDirFixedBlock(dir, false);
         Assert.assertEquals(5, store.store("test"));

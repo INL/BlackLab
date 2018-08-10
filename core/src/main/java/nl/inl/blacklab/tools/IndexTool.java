@@ -18,7 +18,6 @@ package nl.inl.blacklab.tools;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -30,15 +29,16 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.lucene.index.CorruptIndexException;
+import org.apache.lucene.queryparser.classic.ParseException;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.util.ExUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -51,7 +51,7 @@ public class IndexTool {
 
     static Map<String, String> indexerParam = new TreeMap<>();
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
         // If the current directory contains indexer.properties, read it
         File propFile = new File(".", "indexer.properties");
         if (propFile.canRead())
@@ -307,8 +307,7 @@ public class IndexTool {
         }
     }
 
-    private static void commandDelete(File indexDir, String deleteQuery) throws IOException,
-            org.apache.lucene.queryparser.classic.ParseException, CorruptIndexException {
+    private static void commandDelete(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
         if (deleteQuery == null) {
             System.err.println("No delete query given.");
             usage();
@@ -382,7 +381,7 @@ public class IndexTool {
                 return properties;
             }
         } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 }

@@ -38,7 +38,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.results.HitsSettings;
-import nl.inl.util.ExUtil;
 
 /**
  * Simple example indexer for plain text files. Reads a line, chops it into
@@ -277,7 +276,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 // Add Lucene doc to indexer
                 docWriter.add(currentLuceneDoc);
             } catch (Exception e) {
-                throw ExUtil.wrapRuntimeException(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
 
             // Report progress

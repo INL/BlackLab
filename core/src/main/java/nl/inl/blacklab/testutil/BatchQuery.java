@@ -2,6 +2,7 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits;
@@ -16,7 +17,7 @@ import nl.inl.util.Timer;
  */
 public class BatchQuery {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ErrorOpeningIndex {
 
         boolean determineTotalHits = true;
         int fileArgNumber = 0;

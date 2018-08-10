@@ -17,6 +17,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
+import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -50,7 +51,12 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         debug(logger, "REQ add data: " + indexName);
 
         Index index = indexMan.getIndex(indexName);
-        IndexMetadata indexMetadata = index.getIndexMetadata();
+        IndexMetadata indexMetadata;
+        try {
+            indexMetadata = index.getIndexMetadata();
+        } catch (IndexTooOld e) {
+            throw BlsException.indexTooOld(e);
+        }
 
         // Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751

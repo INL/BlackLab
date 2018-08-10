@@ -39,6 +39,8 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -78,7 +80,7 @@ public abstract class DocIndexer implements AutoCloseable {
     Set<String> numericFields = new HashSet<>();
     
     @Override
-    public abstract void close() throws BlackLabRuntimeException;
+    public abstract void close();
 
     public Document getCurrentLuceneDoc() {
         return currentLuceneDoc;
@@ -173,10 +175,12 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Index documents contained in a file.
-     *
-     * @throws Exception
+     * 
+     * @throws MalformedInputFile if the input file wasn't valid 
+     * @throws IOException if an I/O error occurred
+     * @throws PluginException if an error occurred in a plugin
      */
-    public abstract void index() throws Exception;
+    public abstract void index() throws IOException, MalformedInputFile, PluginException;
 
     /**
      * Check if the specified parameter has a value
