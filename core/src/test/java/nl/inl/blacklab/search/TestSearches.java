@@ -12,6 +12,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 
@@ -300,6 +304,21 @@ public class TestSearches {
                 "aap [aap aap aap]");
         // If left side of implication is always false, right side is ignored
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word"));
+    }
+
+    @Test
+    public void testSort() {
+        expected = Arrays.asList(
+                "aap [aap aap aap]",
+                "noot [aap aap aap] aap",
+                "noot [mier aap mier] mier",
+                "noot [noot aap aap] aap"
+                );
+        // If left side of implication is always false, right side is ignored
+        HitProperty hit = new HitPropertyHitText(testIndex.index(), false);
+        HitProperty left = new HitPropertyLeftContext(testIndex.index(), false);
+        HitProperty sortBy = new HitPropertyMultiple(hit, left);
+        Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
     }
 
     // Backreferences not implemented yet

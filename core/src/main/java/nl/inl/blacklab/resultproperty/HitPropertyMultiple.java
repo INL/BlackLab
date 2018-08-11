@@ -45,6 +45,16 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         determineContextNeeded();
     }
 
+    @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        int n = criteria.size();
+        HitProperty[] newCriteria = new HitProperty[n];
+        for (int i = 0; i < n; i++) {
+            newCriteria[i] = criteria.get(i).copyWithHits(newHits);
+        }
+        return new HitPropertyMultiple(newCriteria);
+    }
+
     /**
      * Determine what context we need for each property, and let the properties know
      * at what context index/indices they can find the context(s) they need.

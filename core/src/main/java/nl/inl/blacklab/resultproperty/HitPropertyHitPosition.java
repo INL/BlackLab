@@ -32,6 +32,11 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyHitPosition(newHits);
+    }
+
+    @Override
     public HitPropValueInt get(int hitNumber) {
         Hit result = hits.getByOriginalOrder(hitNumber);
         return new HitPropValueInt(result.start());

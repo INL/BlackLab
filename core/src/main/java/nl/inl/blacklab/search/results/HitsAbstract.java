@@ -55,6 +55,7 @@ public abstract class HitsAbstract implements Hits {
 
     @Override
     public Hits filteredBy(HitProperty property, HitPropValue value) {
+        property = property.copyWithHits(this); // we need a HitProperty with the correct Hits object
         List<Annotation> requiredContext = property.needsContext();
         property.setContexts(new Contexts(this, requiredContext, property.needsContextSize()));
 

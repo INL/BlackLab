@@ -179,6 +179,11 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyContextWords(newHits, annotation, sensitive, words);
+    }
+
+    @Override
     public HitPropValueContextWords get(int hitNumber) {
         int[] context = contexts.getHitContext(hitNumber);
         int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];

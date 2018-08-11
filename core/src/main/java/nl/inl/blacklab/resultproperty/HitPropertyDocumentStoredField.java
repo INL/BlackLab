@@ -49,6 +49,11 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyDocumentStoredField(newHits, fieldName, friendlyName);
+    }
+
+    @Override
     public HitPropValueString get(int hitNumber) {
         try {
             Hit result = hits.getByOriginalOrder(hitNumber);

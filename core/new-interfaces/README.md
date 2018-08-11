@@ -55,8 +55,19 @@ index
 + Kijk of je concsType en desiredContextSize uit HitsSettings kan verwijderen, zodat
   alleen invariante waardes overblijven en je index, field en maxStats (object is invariant, waardes niet)
   er aan toe kunt voegen.
++ sortedBy als enkele call naar constructor/factory method implementeren
++ HitProperty.copy() netter implementeren
 
-- HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
+- HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
+  HitsImpl -> HitsList
+
+- MaxStats -> HitsStats
+  Voeg hieraan stats van de originele HitsFromQuery toe, zodat je toegang tot die stats hebt ook al heb je het origineel niet meer gecached.
+  HitsFromQuery is de enige die die stats mag updaten. Apart writer-interface voor maken, zodat je 'm voor de rest read-only maakt.
+
+  Hits-object moet ook wel een eigen hit/doc count kunnen hebben, los van QueryInfo. Voor HitsFromQuery geven die methods dezelfde waarde terug, voor andere Hits-objecten niet.
+
+- moet je captured groups altijd meekopieren als je bijv. een window maakt? Eigenlijk wel, hoewel je er maar een paar nodig hebt natuurlijk. Je kunt ook alleen diegene die je nodig hebt kopieren misschien, scheelt geheugen.
   
 - (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
@@ -64,32 +75,25 @@ index
   Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
   een lijst met Hit+Context objects te instantieren en die te sorteren.
   
-  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien (o.a. sortedBy() kan naar HitsAbstract)
+  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien (o.a. sortedBy() kan naar HitsAbstract, en Results interfaces/abstract classes blijven cleaner en generieker)
 
-- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
+  HitProperty moet MatchSensitivity krijgen ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
 
+  HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
 
-OUD IDEE:
-- HitProperty vergelijkt Hits en niet Hit-original-indexes zoals nu.
-- Contexts.get(Hit) om de context van een hit te krijgen.
-- Hit krijgt een extra veld "originalIndex". Dit wordt eenmalig gezet.
-- static method Contexts.retrieve(hits, ...) kiest, afhankelijk van de hits, de geschiktste Contexts implementatie:
-  * hoogste originalIndex niet veel groter dan aantal hits: array-based, zodat lookup intern op basis van originalIndex kan gebeuren
-  * hoogste originalIndex veel groter (bijv 4x of meer) dan aantal hits: hash-based, zodat lookup intern in een Map oid gedaan wordt.
-    trager maar geheugen-efficienter, en voor kleinere sets geeft het niet zo.
-    threshold kan best hoog liggen trouwens, want we bewaren Contexts tegenwoordig niet meer, dus ze nemen slechts tijdelijk "veel" geheugen in. Aan de andere kant kan cache-efficientie een overweging zijn als het array erg sparsely populated wordt.
-
-
-- Hits.copyMaxHitsRetrieved: kunnen we deze stats niet samen met field in een soort "query info / state" objectje vatten wat we kopieren (of refereren)?
   
 results
 
+- eliminate HitsWindow, have Hits contain optional window stats..?
+  eliminate HitsSample, have Hits contain optional sample settings..?
+
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
   PROBLEM: DocResults relies on the fact that results are sorted by document.
-  Special class of grouping operation..?
-  But can we know whether Hits are doc-sorted or not...?
+  Special class of "as we go" grouping operation..?
+  If you choose to use this grouping operation, it is up to you to make sure the hits
+  are document-sorted (i.e. don't sort them by context, then apply an as-you-go grouping
+  operation)
 
-- eliminate HitsWindow, have Hits contain optional window stats
 - introduce base interface Results connecting Hits, HitGroups, GroupGroups; 
   also ResultProperty (HitProperty / GroupProperty)
   

@@ -208,10 +208,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @param newHits new Hits object to use
      * @return the new HitProperty object
      */
-    public HitProperty copyWithHits(Hits newHits) {
-        // A bit ugly, but it works..
-        return HitProperty.deserialize(newHits, serialize());
-    }
+    public abstract HitProperty copyWithHits(Hits newHits);
 
     /**
      * Is the comparison reversed?

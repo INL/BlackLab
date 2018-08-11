@@ -46,6 +46,11 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyDocumentDecade(newHits, fieldName);
+    }
+
+    @Override
     public HitPropValueDecade get(int hitNumber) {
         try {
             Hit result = hits.getByOriginalOrder(hitNumber);

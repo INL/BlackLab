@@ -36,36 +36,42 @@ public class HitPropertyHitText extends HitProperty {
 
     private boolean sensitive;
 
-    private BlackLabIndex index;
-
     private Annotation annotation;
+
+    public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
+        super(hits);
+        BlackLabIndex index = hits.queryInfo().index();
+        this.annotation = annotation == null ? hits.queryInfo().field().annotations().main() : annotation;
+        this.terms = index.forwardIndex(this.annotation).terms();
+        this.sensitive = sensitive;
+    }
 
     public HitPropertyHitText(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyHitText(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+    public HitPropertyHitText(Hits hits, boolean sensitive) {
+        this(hits, null, sensitive);
     }
 
     public HitPropertyHitText(Hits hits) {
-        this(hits, hits.queryInfo().index().mainAnnotatedField(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
-        super(hits);
-        this.index = hits.queryInfo().index();
-        this.annotation = annotation;
-        this.terms = index.forwardIndex(annotation).terms();
+    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, boolean sensitive) {
+        super(null);
+        this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
+        this.terms = index.forwardIndex(this.annotation).terms();
         this.sensitive = sensitive;
     }
 
-    public HitPropertyHitText(Hits hits, AnnotatedField field, boolean sensitive) {
-        this(hits, field.annotations().main(), sensitive);
+    public HitPropertyHitText(BlackLabIndex index, boolean sensitive) {
+        this(index, null, sensitive);
     }
 
-    public HitPropertyHitText(Hits hits, boolean sensitive) {
-        this(hits, hits.queryInfo().index().mainAnnotatedField(), sensitive);
+    @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyHitText(newHits, annotation, sensitive);
     }
 
     @Override

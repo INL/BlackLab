@@ -98,6 +98,48 @@ public class HitsImpl extends HitsAbstract {
      */
     private HitsImpl(HitsImpl copyFrom) {
         super(copyFrom.queryInfo);
+        initCopy(copyFrom);
+    }
+
+    /** Construct a copy of a hits object in sorted order.
+     * 
+     * @param hitsToSort the hits to sort
+     * @param sortProp property to sort on
+     * @param reverseSort if true, reverse the sort
+     */
+    private HitsImpl(HitsImpl hitsToSort, HitProperty sortProp, boolean reverseSort) {
+        super(hitsToSort.queryInfo);
+        initCopy(hitsToSort);
+        sortProp = sortProp.copyWithHits(this); // we need a HitProperty with the correct Hits object
+        
+        // Make sure we have a sort order array of sufficient size
+        int n = hitsToSort.size();
+        sortOrder = new Integer[n];
+        
+        // Fill the array with the original hit order (0, 1, 2, ...)
+        for (int i = 0; i < n; i++)
+            sortOrder[i] = i;
+
+        // If we need context, make sure we have it.
+        List<Annotation> requiredContext = sortProp.needsContext();
+        if (requiredContext != null)
+            sortProp.setContexts(new Contexts(hitsToSort, requiredContext, sortProp.needsContextSize()));
+
+        // Perform the actual sort.
+        Arrays.sort(sortOrder, sortProp);
+
+        if (reverseSort) {
+            // Instead of creating a new Comparator that reverses the order of the
+            // sort property (which adds an extra layer of indirection to each of the
+            // O(n log n) comparisons), just reverse the hits now (which runs
+            // in linear time).
+            for (int i = 0; i < n / 2; i++) {
+                sortOrder[i] = sortOrder[n - i - 1];
+            }
+        }
+    }
+
+    private void initCopy(HitsImpl copyFrom) {
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -110,7 +152,6 @@ public class HitsImpl extends HitsAbstract {
         docsCounted = copyFrom.docsCountedSoFar();
     }
 
-    
     // Copying hits objects (and their relevant settings)
     //--------------------------------------------------------------------
     
@@ -130,49 +171,14 @@ public class HitsImpl extends HitsAbstract {
 
     @Override
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        // Sort hits
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; don't complete the operation but return
-            // and let the caller detect and deal with the interruption.
-            Thread.currentThread().interrupt();
-            return this;
-        }
-
-        HitsImpl hits = copy();
-        sortProp = sortProp.copyWithHits(hits);
-        
-        // Make sure we have a sort order array of sufficient size
-        if (hits.sortOrder == null || hits.sortOrder.length < hits.size()) {
-            hits.sortOrder = new Integer[hits.size()];
-        }
-        // Fill the array with the original hit order (0, 1, 2, ...)
-        int n = hits.size();
-        for (int i = 0; i < n; i++)
-            hits.sortOrder[i] = i;
-
-        // If we need context, make sure we have it.
-        List<Annotation> requiredContext = sortProp.needsContext();
-        if (requiredContext != null)
-            sortProp.setContexts(new Contexts(hits, requiredContext, sortProp.needsContextSize()));
-
-        // Perform the actual sort.
-        Arrays.sort(hits.sortOrder, sortProp);
-
-        if (reverseSort) {
-            // Instead of creating a new Comparator that reverses the order of the
-            // sort property (which adds an extra layer of indirection to each of the
-            // O(n log n) comparisons), just reverse the hits now (which runs
-            // in linear time).
-            for (int i = 0; i < n / 2; i++) {
-                hits.sortOrder[i] = hits.sortOrder[n - i - 1];
-            }
-        }
-        return hits;
+        return HitsImpl.sorted(this, sortProp, reverseSort);
     }
 
     
+    private static Hits sorted(HitsImpl hits, HitProperty sortProp, boolean reverseSort) {
+        return new HitsImpl(hits, sortProp, reverseSort);
+    }
+
     // General stuff
     //--------------------------------------------------------------------
 

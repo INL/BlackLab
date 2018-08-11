@@ -35,6 +35,11 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyDoc(newHits);
+    }
+
+    @Override
     public HitPropValueDoc get(int hitNumber) {
         Hit result = hits.getByOriginalOrder(hitNumber);
         return new HitPropValueDoc(index.doc(result.doc()));

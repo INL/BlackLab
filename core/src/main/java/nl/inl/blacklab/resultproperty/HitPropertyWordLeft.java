@@ -40,35 +40,41 @@ public class HitPropertyWordLeft extends HitProperty {
 
     private boolean sensitive;
 
-    private BlackLabIndex index;
+    public HitPropertyWordLeft(Hits hits, Annotation annotation, boolean sensitive) {
+        super(hits);
+        BlackLabIndex index = hits.queryInfo().index();
+        this.annotation = annotation == null ? hits.queryInfo().field().annotations().main(): annotation;
+        this.luceneFieldName = this.annotation.luceneFieldPrefix();
+        this.terms = index.forwardIndex(this.annotation).terms();
+        this.sensitive = sensitive;
+    }
 
     public HitPropertyWordLeft(Hits hits, Annotation annotation) {
         this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyWordLeft(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+    public HitPropertyWordLeft(Hits hits, boolean sensitive) {
+        this(hits, null, sensitive);
     }
 
     public HitPropertyWordLeft(Hits hits) {
-        this(hits, hits.queryInfo().index().mainAnnotatedField(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
-    public HitPropertyWordLeft(Hits hits, Annotation annotation, boolean sensitive) {
-        super(hits);
-        this.index = hits.queryInfo().index();
-        this.luceneFieldName = annotation.luceneFieldPrefix();
-        this.annotation = annotation;
-        this.terms = index.forwardIndex(annotation).terms();
+    public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation, boolean sensitive) {
+        super(null);
+        this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
+        this.terms = index.forwardIndex(this.annotation).terms();
         this.sensitive = sensitive;
     }
 
-    public HitPropertyWordLeft(Hits hits, AnnotatedField field, boolean sensitive) {
-        this(hits, field.annotations().main(), sensitive);
+    public HitPropertyWordLeft(BlackLabIndex index, boolean sensitive) {
+        this(index, null, sensitive);
     }
 
-    public HitPropertyWordLeft(Hits hits, boolean sensitive) {
-        this(hits, hits.queryInfo().index().mainAnnotatedField(), sensitive);
+    @Override
+    public HitProperty copyWithHits(Hits newHits) {
+        return new HitPropertyWordLeft(newHits, annotation, sensitive);
     }
 
     @Override

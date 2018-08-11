@@ -16,6 +16,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListenerDevNull;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
@@ -158,6 +159,18 @@ public class TestIndex {
      */
     public List<String> findConc(String query) {
         Hits hits = find(query, null);
+        return getConcordances(hits, word);
+    }
+
+    /**
+     * Find concordances from a Corpus Query Language query.
+     *
+     * @param query the query to parse
+     * @param sortBy property to sort by
+     * @return the resulting BlackLab text pattern
+     */
+    public List<String> findConc(String query, HitProperty sortBy) {
+        Hits hits = find(query, null).sortedBy(sortBy);
         return getConcordances(hits, word);
     }
 

@@ -69,6 +69,7 @@ public class ResultsGrouper extends HitGroups {
      */
     ResultsGrouper(Hits hits, HitProperty criteria) {
         super(hits.queryInfo(), criteria);
+        criteria = criteria.copyWithHits(hits); // we need a HitProperty with the correct Hits object
         
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
