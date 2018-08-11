@@ -50,18 +50,14 @@ index
 + save() / isImmutable() toch voorlopig weg
 + get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
 + ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
-+ HitsAbstract implementaties van group, filter, etc. gegeven
-
-- Kijk of je concsType en desiredContextSize uit HitsSettings kan verwijderen, zodat
++ HitsAbstract de implementaties van group, filter, etc. gegeven
++ HitsImpl: hit fetching extracten naar apart class..?
++ Kijk of je concsType en desiredContextSize uit HitsSettings kan verwijderen, zodat
   alleen invariante waardes overblijven en je index, field en maxStats (object is invariant, waardes niet)
   er aan toe kunt voegen.
 
-- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
-
 - HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
   
-- HitsImpl: hit fetching extracten naar apart class..?
-
 - (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
@@ -69,6 +65,8 @@ index
   een lijst met Hit+Context objects te instantieren en die te sorteren.
   
   Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien (o.a. sortedBy() kan naar HitsAbstract)
+
+- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
 
 
 OUD IDEE:

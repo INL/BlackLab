@@ -267,7 +267,7 @@ public class HitsFromQuery extends HitsImpl {
                 }
                 if (!maxHitsProcessed) {
                     Hit hit = currentSourceSpans.getHit();
-                    Hit offsetHit = HitStored.create(hit.doc() + currentDocBase, hit.start(), hit.end());
+                    Hit offsetHit = HitImpl.create(hit.doc() + currentDocBase, hit.start(), hit.end());
                     if (capturedGroups != null) {
                         Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                         hitQueryContext.getCapturedGroups(groups);

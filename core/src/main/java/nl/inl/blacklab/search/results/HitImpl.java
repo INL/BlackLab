@@ -23,10 +23,10 @@ package nl.inl.blacklab.search.results;
  * This class has public members for the sake of efficiency; this makes a
  * non-trivial difference when iterating over hundreds of thousands of hits.
  */
-public final class HitStored extends HitAbstract {
+public final class HitImpl extends HitAbstract {
 
-    public static HitStored create(int doc, int start, int end) {
-        return new HitStored(doc, start, end);
+    public static HitImpl create(int doc, int start, int end) {
+        return new HitImpl(doc, start, end);
     }
 
     /** The Lucene doc this hits occurs in */
@@ -50,7 +50,7 @@ public final class HitStored extends HitAbstract {
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
      */
-    private HitStored(int doc, int start, int end) {
+    private HitImpl(int doc, int start, int end) {
         this.doc = doc;
         this.start = start;
         this.end = end;

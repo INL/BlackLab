@@ -16,7 +16,7 @@ public interface Hit extends Comparable<Hit> {
      * @return the hit
      */
     static Hit create(int doc, int start, int end) {
-        return HitStored.create(doc, start, end);
+        return HitImpl.create(doc, start, end);
     }
     
     @Override
