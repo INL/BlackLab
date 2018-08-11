@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -31,7 +32,7 @@ import nl.inl.util.ThreadPauser;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends HitsImpl {
+public class HitsFromQuery extends HitsAbstract {
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -88,7 +89,9 @@ public class HitsFromQuery extends HitsImpl {
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
     HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery) throws WildcardTermTooBroad {
-        super(queryInfo, null);
+        super(queryInfo);
+        this.hits = new ArrayList<>();
+        hitsCounted = 0;
         hitQueryContext = new HitQueryContext();
         try {
             BlackLabIndex index = queryInfo.index();
@@ -140,10 +143,6 @@ public class HitsFromQuery extends HitsImpl {
     @Override
     public String toString() {
         return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hits.size()=" + hits.size() + ")";
-    }
-    
-    protected void ensureAllHitsRead() throws InterruptedException {
-        ensureHitsRead(-1);
     }
 
     /**

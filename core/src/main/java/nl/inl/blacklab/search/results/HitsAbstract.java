@@ -21,6 +21,10 @@ public abstract class HitsAbstract implements Hits {
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
+    private static Hits sorted(HitsAbstract hits, HitProperty sortProp, boolean reverseSort) {
+        return new HitsList(hits, sortProp, reverseSort);
+    }
+
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;
 
@@ -52,6 +56,23 @@ public abstract class HitsAbstract implements Hits {
     protected CapturedGroupsImpl capturedGroups;
     
     /**
+     * The number of hits we've seen and counted so far. May be more than the number
+     * of hits we've retrieved if that exceeds maxHitsToRetrieve.
+     */
+    protected int hitsCounted = 0;
+
+    /**
+     * The number of separate documents we've seen in the hits retrieved.
+     */
+    protected int docsRetrieved = 0;
+
+    /**
+     * The number of separate documents we've counted so far (includes non-retrieved
+     * hits).
+     */
+    protected int docsCounted = 0;
+
+    /**
      * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
@@ -60,6 +81,7 @@ public abstract class HitsAbstract implements Hits {
     public HitsAbstract(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
         threadPauser = new ThreadPauser();
+        docsRetrieved = docsCounted = 0;
     }
 
     @Override
@@ -227,6 +249,23 @@ public abstract class HitsAbstract implements Hits {
         return Hits.fromList(queryInfo(), hitsInDoc);
     }
 
+    protected int indexOf(Hit hit) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // (should be detected by the client)
+        }
+        int originalIndex = hits.indexOf(hit);
+        for (int i = 0; i < sortOrder.length; i++) {
+            if (sortOrder[i] == originalIndex)
+                return i;
+        }
+        return -1;
+    }
+    
+    // Stats
+    // ---------------------------------------------------------------
+
     @Override
     public boolean hitsProcessedAtLeast(int lowerBound) {
         try {
@@ -260,18 +299,55 @@ public abstract class HitsAbstract implements Hits {
         return hits.size();
     }
 
-    protected int indexOf(Hit hit) {
+    @Override
+    public int hitsCountedTotal() {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
-            // (should be detected by the client)
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
         }
-        int originalIndex = hits.indexOf(hit);
-        for (int i = 0; i < sortOrder.length; i++) {
-            if (sortOrder[i] == originalIndex)
-                return i;
+        return hitsCounted;
+    }
+
+    @Override
+    public int docsProcessedTotal() {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
         }
-        return -1;
+        return docsRetrieved;
+    }
+
+    @Override
+    public int docsCountedTotal() {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return docsCounted;
+    }
+
+    @Override
+    public int hitsCountedSoFar() {
+        return hitsCounted;
+    }
+
+    @Override
+    public int docsCountedSoFar() {
+        return docsCounted;
+    }
+
+    @Override
+    public int docsProcessedSoFar() {
+        return docsRetrieved;
     }
 
     // Deriving other Hits / Results instances
@@ -287,10 +363,6 @@ public abstract class HitsAbstract implements Hits {
         return sorted(this, sortProp, reverseSort);
     }
     
-    private static Hits sorted(HitsAbstract hits, HitProperty sortProp, boolean reverseSort) {
-        return new HitsImpl(hits, sortProp, reverseSort);
-    }
-
     @Override
     public Hits filteredBy(HitProperty property, HitPropValue value) {
         property = property.copyWithHits(this); // we need a HitProperty with the correct Hits object
@@ -302,7 +374,7 @@ public abstract class HitsAbstract implements Hits {
             if (property.get(i).equals(value))
                 filtered.add(get(i));
         }
-        return new HitsImpl(queryInfo, filtered);
+        return Hits.fromList(queryInfo, filtered);
     }
 
     @Override

@@ -38,7 +38,7 @@ public interface Hits extends Iterable<Hit> {
      * @return hits found
      */
     static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
-        return new HitsImpl(queryInfo, hits);
+        return new HitsList(queryInfo, hits);
     }
 
     /**

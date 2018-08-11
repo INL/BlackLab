@@ -58,17 +58,20 @@ index
 + sortedBy als enkele call naar constructor/factory method implementeren
 + HitProperty.copy() netter implementeren
 + Til hits, capturedGruops, sortOrder op naar HitsAbstract
++ HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
+  HitsImpl -> HitsList
 
-- DocResults, Groups moeten ook threadPauser hebben
+
+- HitsWindow moet geen reference naar source vasthouden!
+  HitsSample moet SampleSettings class gebruiken
+  eliminate HitsWindow, have Hits contain optional window stats..?
+  eliminate HitsSample, have Hits contain optional sample settings..?
 
 - MaxStats -> HitsStats
   Voeg hieraan stats van de originele HitsFromQuery toe, zodat je toegang tot die stats hebt ook al heb je het origineel niet meer gecached.
   HitsFromQuery is de enige die die stats mag updaten. Apart writer-interface voor maken, zodat je 'm voor de rest read-only maakt.
 
   Hits-object moet ook wel een eigen hit/doc count kunnen hebben, los van QueryInfo. Voor HitsFromQuery geven die methods dezelfde waarde terug, voor andere Hits-objecten niet.
-
-- HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
-  HitsImpl -> HitsList
 
 - (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
@@ -84,9 +87,7 @@ index
 
   
 results
-
-- eliminate HitsWindow, have Hits contain optional window stats..?
-  eliminate HitsSample, have Hits contain optional sample settings..?
+- DocResults, Groups moeten ook threadPauser hebben
 
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
   PROBLEM: DocResults relies on the fact that results are sorted by document.

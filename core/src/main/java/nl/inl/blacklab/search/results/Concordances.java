@@ -141,7 +141,7 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = new HitsImpl(queryInfo, l);
+            Hits hitsInThisDoc = Hits.fromList(queryInfo, l);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

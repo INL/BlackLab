@@ -22,7 +22,7 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsImpl;
+import nl.inl.blacklab.search.results.HitsList;
 import nl.inl.blacklab.search.results.HitsSample;
 
 public class TestHitsSample {
@@ -46,7 +46,7 @@ public class TestHitsSample {
 
     private static void assertSampleNumber(int[] expected, int number, long seed) {
         MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
-        HitsImpl hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
+        HitsList hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {

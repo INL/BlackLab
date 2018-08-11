@@ -6,33 +6,11 @@ import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.ThreadPauser;
 
 /**
  * A basic Hits object implemented with a list.
  */
-public class HitsImpl extends HitsAbstract {
-    
-    /**
-     * The number of hits we've seen and counted so far. May be more than the number
-     * of hits we've retrieved if that exceeds maxHitsToRetrieve.
-     */
-    protected int hitsCounted = 0;
-
-    /**
-     * The number of separate documents we've seen in the hits retrieved.
-     */
-    protected int docsRetrieved = 0;
-
-    /**
-     * The number of separate documents we've counted so far (includes non-retrieved
-     * hits).
-     */
-    protected int docsCounted = 0;
-
-    
-    // Constructors
-    //--------------------------------------------------------------------
+public class HitsList extends HitsAbstract {
 
     /**
      * Make a wrapper Hits object for a list of Hit objects.
@@ -44,12 +22,11 @@ public class HitsImpl extends HitsAbstract {
      * @param hits the list of hits to wrap
      * @param settings settings, or null for default
      */
-    HitsImpl(QueryInfo queryInfo, List<Hit> hits) {
+    HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         int prevDoc = -1;
-        docsRetrieved = docsCounted = 0;
         for (Hit h : this.hits) {
             if (h.doc() != prevDoc) {
                 docsRetrieved++;
@@ -57,7 +34,6 @@ public class HitsImpl extends HitsAbstract {
                 prevDoc = h.doc();
             }
         }
-        threadPauser = new ThreadPauser();
     }
 
     /** Construct a copy of a hits object in sorted order.
@@ -66,7 +42,7 @@ public class HitsImpl extends HitsAbstract {
      * @param sortProp property to sort on
      * @param reverseSort if true, reverse the sort
      */
-    HitsImpl(HitsAbstract hitsToSort, HitProperty sortProp, boolean reverseSort) {
+    HitsList(HitsAbstract hitsToSort, HitProperty sortProp, boolean reverseSort) {
         super(hitsToSort.queryInfo());
         try {
             hitsToSort.ensureAllHitsRead();
@@ -107,19 +83,11 @@ public class HitsImpl extends HitsAbstract {
         }
     }
     
-
-    // General stuff
-    //--------------------------------------------------------------------
-
     @Override
     public String toString() {
         return "Hits#" + hitsObjId + " (hits.size()=" + hits.size() + ")";
     }
     
-
-    // Hits fetching
-    //--------------------------------------------------------------------
-
     /**
      * Ensure that we have read at least as many hits as specified in the parameter.
      *
@@ -131,57 +99,6 @@ public class HitsImpl extends HitsAbstract {
      */
     protected void ensureHitsRead(int number) throws InterruptedException {
         // subclasses may override
-    }
-
-    @Override
-    public int hitsCountedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
-        return hitsCounted;
-    }
-
-    @Override
-    public int docsProcessedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
-        return docsRetrieved;
-    }
-
-    @Override
-    public int docsCountedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
-        return docsCounted;
-    }
-
-    @Override
-    public int hitsCountedSoFar() {
-        return hitsCounted;
-    }
-
-    @Override
-    public int docsCountedSoFar() {
-        return docsCounted;
-    }
-
-    @Override
-    public int docsProcessedSoFar() {
-        return docsRetrieved;
     }
 
     @Override

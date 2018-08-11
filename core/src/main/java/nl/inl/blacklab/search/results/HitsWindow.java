@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Represents a subset of a Hits object, for example a page of hits.
  */
-public class HitsWindow extends HitsImpl implements ResultsWindow {
+public class HitsWindow extends HitsList implements ResultsWindow {
     /**
      * Number of hits in the window
      */

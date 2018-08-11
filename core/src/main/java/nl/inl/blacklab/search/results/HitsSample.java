@@ -1,10 +1,9 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
-public abstract class HitsSample extends HitsImpl {
+public abstract class HitsSample extends HitsList {
 
     public final static long RANDOM_SEED = Long.MIN_VALUE;
 
@@ -64,13 +63,6 @@ public abstract class HitsSample extends HitsImpl {
         super(queryInfo, new ArrayList<Hit>());
         this.numberOfHitsToSelect = number;
         exactNumberGiven = true;
-        this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
-        this.random = new Random(seed);
-    }
-
-    protected HitsSample(QueryInfo queryInfo, List<Hit> hits, float ratio, long seed) {
-        super(queryInfo, hits);
-        this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
