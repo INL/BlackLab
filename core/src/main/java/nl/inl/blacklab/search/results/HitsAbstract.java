@@ -1,10 +1,13 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -114,28 +117,59 @@ public abstract class HitsAbstract implements Hits {
     public abstract String toString();
 
     @Override
-    public abstract HitsWindow window(Hit hit);
+    public Hits filteredBy(HitProperty property, HitPropValue value) {
+        List<Annotation> requiredContext = property.needsContext();
+        property.setContexts(new Contexts(this, requiredContext));
+
+        List<Hit> filtered = new ArrayList<>();
+        for (int i = 0; i < size(); i++) {
+            if (property.get(i).equals(value))
+                filtered.add(get(i));
+        }
+        HitsImpl hits = new HitsImpl(index, field, filtered, settings);
+        hits.copyMaxHitsRetrieved(this);
+        return hits;
+    }
 
     @Override
-    public abstract HitsWindow window(int first, int windowSize, HitsSettings settings);
+    public HitGroups groupedBy(final HitProperty criteria) {
+        return ResultsGrouper.fromHits(this, criteria);
+    }
 
     @Override
-    public abstract HitsWindow window(int first, int windowSize);
+    public DocResults perDocResults() {
+        return DocResults.fromHits(index(), this);
+    }
 
     @Override
-    public abstract TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort);
+    public TermFrequencyList collocations() {
+        return TermFrequencyList.collocations(this, null, null, true);
+    }
 
     @Override
-    public abstract TermFrequencyList collocations();
+    public synchronized TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+        return TermFrequencyList.collocations(this, annotation, ctx, sort);
+    }
+    
+    @Override
+    public HitsWindow window(int first, int windowSize) {
+        return new HitsWindow(this, first, windowSize, settings());
+    }
 
     @Override
-    public abstract DocResults perDocResults();
+    public HitsWindow window(int first, int windowSize, HitsSettings settings) {
+        return new HitsWindow(this, first, windowSize, settings == null ? this.settings() : settings);
+    }
 
     @Override
-    public abstract HitGroups groupedBy(final HitProperty criteria);
+    public HitsWindow window(Hit hit) throws ResultNotFound {
+        int i = indexOf(hit);
+        if (i < 0)
+            throw new ResultNotFound("Hit not found in hits list!");
+        return window(i, 1);
+    }
 
-    @Override
-    public abstract Hits filteredBy(HitProperty property, HitPropValue value);
+    protected abstract int indexOf(Hit hit);
 
     @Override
     public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort);

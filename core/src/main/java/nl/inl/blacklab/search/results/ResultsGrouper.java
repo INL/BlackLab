@@ -73,7 +73,7 @@ public class ResultsGrouper extends HitGroups {
      * @param hits the hits to group
      * @param criteria the criteria to group on
      */
-    ResultsGrouper(HitsImpl hits, HitProperty criteria) {
+    ResultsGrouper(Hits hits, HitProperty criteria) {
         super(hits.index(), criteria);
         
         defaultConcField = hits.field();
@@ -112,7 +112,7 @@ public class ResultsGrouper extends HitGroups {
      * @param criteria criteria to group by
      * @return grouped hits
      */
-    public static ResultsGrouper fromHits(HitsImpl hits, HitProperty criteria) {
+    public static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
         return new ResultsGrouper(hits, criteria);
     }
 

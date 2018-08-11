@@ -18,11 +18,11 @@ package nl.inl.blacklab.perdocument;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
+import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitsImpl;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestDocResults {
 
@@ -33,7 +33,7 @@ public class TestDocResults {
         int[] aEnd = new int[] { 2, 3, 4, 5, 6 };
 
         MockBlackLabIndex searcher = new MockBlackLabIndex();
-        HitsImpl hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
+        Hits hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
         DocResults drs = hits.perDocResults();
 
         int[] expDoc = new int[] { 1, 2, 3 };

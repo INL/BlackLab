@@ -7,9 +7,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockForwardIndex;
 import nl.inl.blacklab.mocks.MockHits;
-import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
@@ -26,13 +26,13 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.HitsImpl;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 
     private MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
 
-    private HitsImpl hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
+    private Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
 
     private Annotation lemmaAnnotation;
 

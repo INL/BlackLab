@@ -6,6 +6,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -111,27 +113,31 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                     .entry("end", hit.end());
         }
 
-        HitsWindow singleHit = hits.window(hit);
-        if (useOrigContent) {
-            Concordances concordances = singleHit.concordances(wordsAroundHit);
-            Concordance c = concordances.get(hit);
-            if (!isFragment) {
-                ds.startEntry("left").plain(c.left()).endEntry()
-                        .startEntry("match").plain(c.match()).endEntry()
-                        .startEntry("right").plain(c.right()).endEntry();
+        try {
+            HitsWindow singleHit = hits.window(hit);
+            if (useOrigContent) {
+                Concordances concordances = singleHit.concordances(wordsAroundHit);
+                Concordance c = concordances.get(hit);
+                if (!isFragment) {
+                    ds.startEntry("left").plain(c.left()).endEntry()
+                            .startEntry("match").plain(c.match()).endEntry()
+                            .startEntry("right").plain(c.right()).endEntry();
+                } else {
+                    ds.plain(c.match());
+                }
             } else {
-                ds.plain(c.match());
+                Kwics kwics = singleHit.kwics(wordsAroundHit);
+                Kwic c = kwics.get(hit);
+                if (!isFragment) {
+                    ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
+                            .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
+                            .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
+                } else {
+                    ds.contextList(c.getProperties(), c.getTokens());
+                }
             }
-        } else {
-            Kwics kwics = singleHit.kwics(wordsAroundHit);
-            Kwic c = kwics.get(hit);
-            if (!isFragment) {
-                ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
-                        .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
-                        .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
-            } else {
-                ds.contextList(c.getProperties(), c.getTokens());
-            }
+        } catch (ResultNotFound e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
         ds.endMap();
     }

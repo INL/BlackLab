@@ -8,12 +8,13 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.CapturedGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsImpl;
+import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSettings;
 
-public class MockHits extends HitsImpl {
+public class MockHits extends HitsAbstract {
 
     private int[] doc;
     private int[] start;
@@ -22,7 +23,7 @@ public class MockHits extends HitsImpl {
     private int numberOfDocs;
 
     public MockHits(BlackLabIndex index, AnnotatedField field, int[] doc, int[] start, int[] end) {
-        super(index, field, null, null);
+        super(index, field, null);
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -166,6 +167,31 @@ public class MockHits extends HitsImpl {
             }
 
         };
+    }
+
+    @Override
+    public Iterable<Hit> originalOrder() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public CapturedGroups capturedGroups() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Hits sortedBy(HitProperty sortProp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void copyMaxHitsRetrieved(Hits copyFrom) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected int indexOf(Hit hit) {
+        throw new UnsupportedOperationException();
     }
 
 }

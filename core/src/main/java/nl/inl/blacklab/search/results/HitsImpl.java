@@ -6,12 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ThreadPauser;
@@ -81,7 +77,7 @@ public class HitsImpl extends HitsAbstract {
      * @param hits the list of hits to wrap
      * @param settings settings, or null for default
      */
-    protected HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+    HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         super(index, field, settings);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
@@ -189,58 +185,6 @@ public class HitsImpl extends HitsAbstract {
         return hits;
     }
 
-    @Override
-    public Hits filteredBy(HitProperty property, HitPropValue value) {
-        List<Annotation> requiredContext = property.needsContext();
-        property.setContexts(new Contexts(this, requiredContext));
-
-        List<Hit> filtered = new ArrayList<>();
-        for (int i = 0; i < size(); i++) {
-            if (property.get(i).equals(value))
-                filtered.add(get(i));
-        }
-        HitsImpl hits = new HitsImpl(index, field, filtered, settings);
-        hits.copyMaxHitsRetrieved(this);
-        return hits;
-    }
-
-    @Override
-    public HitGroups groupedBy(final HitProperty criteria) {
-        return ResultsGrouper.fromHits(this, criteria);
-    }
-
-    @Override
-    public DocResults perDocResults() {
-        return DocResults.fromHits(index(), this);
-    }
-
-    @Override
-    public TermFrequencyList collocations() {
-        return TermFrequencyList.collocations(this, null, null, true);
-    }
-
-    @Override
-    public synchronized TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        return TermFrequencyList.collocations(this, annotation, ctx, sort);
-    }
-    
-    @Override
-    public HitsWindow window(int first, int windowSize) {
-        return new HitsWindow(this, first, windowSize, settings());
-    }
-
-    @Override
-    public HitsWindow window(int first, int windowSize, HitsSettings settings) {
-        return new HitsWindow(this, first, windowSize, settings == null ? this.settings() : settings);
-    }
-
-    @Override
-    public HitsWindow window(Hit hit) {
-        int i = hits.indexOf(hit);
-        if (i < 0)
-            throw new BlackLabRuntimeException("Hit not found in hits list!");
-        return window(i, 1);
-    }
     
     // General stuff
     //--------------------------------------------------------------------
@@ -524,6 +468,16 @@ public class HitsImpl extends HitsAbstract {
     @Override
     public boolean hitsCountedExceededMaximum() {
         return maxHitsCounted;
+    }
+
+    @Override
+    protected int indexOf(Hit hit) {
+        int originalIndex = hits.indexOf(hit);
+        for (int i = 0; i < sortOrder.length; i++) {
+            if (sortOrder[i] == originalIndex)
+                return i;
+        }
+        return -1;
     }
 
 }

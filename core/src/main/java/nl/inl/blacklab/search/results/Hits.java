@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.Iterator;
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -358,8 +359,9 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * 
      * @param hit the hit we want (must be in this Hits object)
      * @return window
+     * @throws ResultNotFound if hit was not found in this result set
      */
-    HitsWindow window(Hit hit);
+    HitsWindow window(Hit hit) throws ResultNotFound;
 
     /**
      * Get a window into this list of hits.
