@@ -50,8 +50,10 @@ index
   
   
   
-- HitsImpl: hit fetching extracten naar apart class..?
+- HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
   
+- HitsImpl: hit fetching extracten naar apart class..?
+
 - (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?

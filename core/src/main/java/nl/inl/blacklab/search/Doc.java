@@ -7,7 +7,6 @@ import org.apache.lucene.index.CompositeReader;
 import org.apache.lucene.index.LeafReader;
 
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.XmlHighlighter;
 
@@ -23,16 +22,6 @@ public interface Doc {
     static Doc get(BlackLabIndex index, int id) {
         return new DocImpl(index, id);
     }
-
-    /**
-     * Like {@link Hit#save()}, this will return an immutable version of this instance.
-     * 
-     * An ephemeral implementation will return an immutable copy; an immutable implementation
-     * will just return itself.
-     * 
-     * @return immutable version of this instance
-     */
-    Doc save();
     
     /** @return index this document came from (may be a wrapped {@link LeafReader} or {@link CompositeReader}) */
     BlackLabIndex index();

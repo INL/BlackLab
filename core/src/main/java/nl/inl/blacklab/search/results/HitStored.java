@@ -70,10 +70,5 @@ public final class HitStored extends HitAbstract {
     public int start() {
         return start;
     }
-    
-    @Override
-    public boolean isImmutable() {
-        return true;
-    }
 
 }

@@ -35,11 +35,6 @@ public class DocImpl implements Doc {
     }
 
     @Override
-    public Doc save() {
-        return this;
-    }
-
-    @Override
     public BlackLabIndex index() {
         return index;
     }
