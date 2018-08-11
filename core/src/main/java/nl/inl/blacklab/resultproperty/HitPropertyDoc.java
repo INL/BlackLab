@@ -31,7 +31,7 @@ public class HitPropertyDoc extends HitProperty {
 
     public HitPropertyDoc(Hits hits) {
         super(hits);
-        index = hits.index();
+        index = hits.queryInfo().index();
     }
 
     @Override

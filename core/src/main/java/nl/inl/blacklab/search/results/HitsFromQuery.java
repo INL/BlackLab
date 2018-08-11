@@ -280,7 +280,7 @@ public class HitsFromQuery extends HitsImpl {
                 }
             }
         } catch (InterruptedException e) {
-            maxStats().setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
+            queryInfo().maxStats().setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -291,7 +291,7 @@ public class HitsFromQuery extends HitsImpl {
 
     @Override
     public boolean doneProcessingAndCounting() {
-        return sourceSpansFullyRead || maxStats().hitsCountedExceededMaximum();
+        return sourceSpansFullyRead || queryInfo().maxStats().hitsCountedExceededMaximum();
     }
 
 }

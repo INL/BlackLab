@@ -64,7 +64,7 @@ public abstract class HitPropValue implements Comparable<Object> {
         case 4:
             return HitPropValueString.deserialize(info);
         case 5:
-            return HitPropValueDoc.deserialize(hits.index(), info);
+            return HitPropValueDoc.deserialize(hits.queryInfo().index(), info);
         }
         logger.debug("Unknown HitPropValue '" + type + "'");
         return null;

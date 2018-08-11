@@ -12,11 +12,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.XmlHighlighter;
 
-/**
- * Methods for creating Concordances from hits.
- */
+/** Concordances for a list of hits. */
 public class Concordances {
 
     /**
@@ -81,7 +80,8 @@ public class Concordances {
             XmlHighlighter hl) {
         if (hits.size() == 0)
             return;
-        Doc doc = hits.queryInfo().index().doc(hits.get(0).doc());
+        QueryInfo queryInfo = hits.queryInfo();
+        Doc doc = queryInfo.index().doc(hits.get(0).doc());
         int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
@@ -108,10 +108,11 @@ public class Concordances {
 
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
-        doc.getCharacterOffsets(hits.queryInfo().field(), startsOfWords, endsOfWords, true);
+        AnnotatedField field = queryInfo.field();
+        doc.getCharacterOffsets(field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(hits.queryInfo().field(), startsOfWords, endsOfWords, hl);
+        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);
         for (int i = 0; i < hits.size(); i++) {
             conc.put(hits.get(i), newConcs.get(i));
         }

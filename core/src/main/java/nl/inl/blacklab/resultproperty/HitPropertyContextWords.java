@@ -133,7 +133,7 @@ public class HitPropertyContextWords extends HitProperty {
     public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
             List<ContextPart> words) {
         super(hits);
-        this.index = hits.index();
+        this.index = hits.queryInfo().index();
         if (annotation == null) {
             this.annotation = index.mainAnnotatedField().annotations().main();
         } else {
@@ -291,7 +291,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     public static HitPropertyContextWords deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
+        AnnotatedField field = hits.queryInfo().field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();

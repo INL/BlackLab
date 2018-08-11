@@ -6,21 +6,21 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 /**
  * Information about the original query.
  */
-public class QueryInfo {
+public final class QueryInfo {
     
-    public static final QueryInfo create(BlackLabIndex index) {
+    public static QueryInfo create(BlackLabIndex index) {
         return new QueryInfo(index, null, null, null);
     }
     
-    public static final QueryInfo create(BlackLabIndex index, AnnotatedField field) {
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
         return new QueryInfo(index, field, null, null);
     }
     
-    public static final QueryInfo create(BlackLabIndex index, AnnotatedField field, MaxSettings settings) {
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, MaxSettings settings) {
         return new QueryInfo(index, field, settings, null);
     }
     
-    public static final QueryInfo create(BlackLabIndex index, AnnotatedField field, MaxSettings settings, MaxStats maxStats) {
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, MaxSettings settings, MaxStats maxStats) {
         return new QueryInfo(index, field, settings, maxStats);
     }
     

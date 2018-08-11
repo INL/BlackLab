@@ -7,6 +7,7 @@ import java.util.TreeMap;
 
 import nl.inl.blacklab.search.Span;
 
+/** Captured group information for a list of hits. */
 public class CapturedGroupsImpl implements CapturedGroups {
     
     /** The captured groups per hit. */

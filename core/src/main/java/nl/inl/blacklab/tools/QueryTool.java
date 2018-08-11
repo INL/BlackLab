@@ -1386,7 +1386,7 @@ public class QueryTool {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = hits.field();
+                AnnotatedField field = hits.queryInfo().field();
                 collocAnnotation = field.annotations().main();
             }
 
@@ -1570,8 +1570,8 @@ public class QueryTool {
         } else {
             int numberRetrieved = hitsToShow.size();
             String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.docsProcessedTotal() + " documents";
-            if (hitsToShow.maxStats().hitsProcessedExceededMaximum()) {
-                if (hitsToShow.maxStats().hitsCountedExceededMaximum()) {
+            if (hitsToShow.queryInfo().maxStats().hitsProcessedExceededMaximum()) {
+                if (hitsToShow.queryInfo().maxStats().hitsCountedExceededMaximum()) {
                     msg = hitsInDocs + " retrieved, more than " + hitsToShow.hitsCountedTotal() + " ("
                             + hitsToShow.docsCountedTotal() + " docs) total";
                 } else {

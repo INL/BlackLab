@@ -373,7 +373,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                 Hit hit = sourceHitsIterator.next();
                 if (hit.doc() != doc) {
                     if (docHits != null) {
-                        Hits hits = Hits.fromList(sourceHits.queryInfo(), docHits);
+                        Hits hits = Hits.fromList(queryInfo, docHits);
                         addDocResultToList(doc, hits);
                     }
                     doc = hit.doc();
@@ -387,7 +387,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = Hits.fromList(sourceHits.queryInfo(), docHits);
+                    Hits hits = Hits.fromList(queryInfo, docHits);
                     addDocResultToList(doc, hits);
                 }
             }
@@ -409,7 +409,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     public boolean hitsProcessedExceededMaximum() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.maxStats().hitsProcessedExceededMaximum();
+        return queryInfo.maxStats().hitsProcessedExceededMaximum();
     }
 
     /**
@@ -420,7 +420,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     public boolean hitsCountedExceededMaximum() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.maxStats().hitsCountedExceededMaximum();
+        return queryInfo.maxStats().hitsCountedExceededMaximum();
     }
 
     /**

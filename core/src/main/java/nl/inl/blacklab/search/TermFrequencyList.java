@@ -40,7 +40,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
      * @return the frequency of each occurring token
      */
     public synchronized static TermFrequencyList collocations(int contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        BlackLabIndex index = hits.index();
+        BlackLabIndex index = hits.queryInfo().index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().annotations().main();
         

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+/** How many hits we want to process/count at most. */
 public final class MaxSettings {
     
     public static MaxSettings defaults() {

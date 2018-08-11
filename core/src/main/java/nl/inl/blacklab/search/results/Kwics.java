@@ -10,18 +10,14 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-/**
- * Methods for creating Kwics from hits.
- */
+/** KWICs for a list of hits. */
 public class Kwics {
     
-    /** Our hits object */
-    private final Hits hits;
-
     /**
      * The KWIC data, if it has been retrieved.
      *
@@ -35,10 +31,9 @@ public class Kwics {
     Kwics(Hits hits, int contextSize) {
         if (contextSize < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
-        this.hits = hits;
     
         // Get the concordances
-        kwics = retrieveKwics(contextSize, hits.field());
+        kwics = retrieveKwics(hits, contextSize, hits.queryInfo().field());
     }
 
     /**
@@ -73,7 +68,7 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private Map<Hit, Kwic> retrieveKwics(int contextSize, AnnotatedField field) {
+    private static Map<Hit, Kwic> retrieveKwics(Hits hits, int contextSize, AnnotatedField field) {
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {
@@ -87,13 +82,14 @@ public class Kwics {
 
         // All FIs except word and punct are attributes
         Map<Annotation, ForwardIndex> attrForwardIndices = new HashMap<>();
+        BlackLabIndex index = hits.queryInfo().index();
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                attrForwardIndices.put(annotation, hits.index().forwardIndex(annotation));
+                attrForwardIndices.put(annotation, index.forwardIndex(annotation));
             }
         }
-        ForwardIndex wordForwardIndex = hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
-        ForwardIndex punctForwardIndex = hits.index().forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
+        ForwardIndex wordForwardIndex = index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP));
+        ForwardIndex punctForwardIndex = index.forwardIndex(field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP));
         Map<Hit, Kwic> conc1 = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
             Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);

@@ -266,7 +266,7 @@ public class DocImpl implements Doc {
 
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-        AnnotatedField field = hits.field();
+        AnnotatedField field = hits.queryInfo().field();
         int[] startEndCharPos = startEndWordToCharPos(field, startAtWord, lastWord);
 
         // Get content by char positions

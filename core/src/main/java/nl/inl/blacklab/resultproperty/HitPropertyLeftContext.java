@@ -43,20 +43,20 @@ public class HitPropertyLeftContext extends HitProperty {
     private BlackLabIndex index;
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, field.annotations().main(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits) {
-        this(hits, hits.index().mainAnnotatedField().annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, hits.queryInfo().index().mainAnnotatedField().annotations().main(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyLeftContext(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
-        this.index = hits.index();
+        this.index = hits.queryInfo().index();
         this.luceneFieldName = annotation.luceneFieldPrefix();
         this.annotation = annotation;
         this.terms = index.forwardIndex(annotation).terms();
@@ -68,7 +68,7 @@ public class HitPropertyLeftContext extends HitProperty {
     }
 
     public HitPropertyLeftContext(Hits hits, boolean sensitive) {
-        this(hits, hits.index().mainAnnotatedField(), sensitive);
+        this(hits, hits.queryInfo().index().mainAnnotatedField(), sensitive);
     }
 
     @Override
@@ -156,7 +156,7 @@ public class HitPropertyLeftContext extends HitProperty {
 
     public static HitPropertyLeftContext deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
+        AnnotatedField field = hits.queryInfo().field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();

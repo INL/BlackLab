@@ -613,8 +613,8 @@ public abstract class RequestHandler {
             // We have a hits object we can query for this information
             ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
                     .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
-                    .entry("stoppedCountingHits", totalHits.maxStats().hitsCountedExceededMaximum())
-                    .entry("stoppedRetrievingHits", totalHits.maxStats().hitsProcessedExceededMaximum());
+                    .entry("stoppedCountingHits", totalHits.queryInfo().maxStats().hitsCountedExceededMaximum())
+                    .entry("stoppedRetrievingHits", totalHits.queryInfo().maxStats().hitsProcessedExceededMaximum());
             ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
                     .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
         } else if (isViewDocGroup) {

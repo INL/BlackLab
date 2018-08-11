@@ -12,7 +12,6 @@ import nl.inl.blacklab.search.results.CapturedGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
-import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class MockHits extends HitsAbstract {
@@ -47,12 +46,13 @@ public class MockHits extends HitsAbstract {
     }
 
     public MockHits(MockHits o) {
-        this(o.index(), o.field(), o.doc.clone(), o.start.clone(), o.end.clone());
+        this(o.queryInfo().index(), o.queryInfo().field(), o.doc.clone(), o.start.clone(), o.end.clone());
     }
 
     @Override
     public MockHits copy() {
-        return new MockHits(index(), field(), doc, start, end);
+        QueryInfo queryInfo = queryInfo();
+        return new MockHits(queryInfo.index(), queryInfo.field(), doc, start, end);
     }
 
     @Override
@@ -178,11 +178,6 @@ public class MockHits extends HitsAbstract {
     @Override
     protected int indexOf(Hit hit) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public MaxStats maxStats() {
-        return MaxStats.NOT_EXCEEDED;
     }
 
 }

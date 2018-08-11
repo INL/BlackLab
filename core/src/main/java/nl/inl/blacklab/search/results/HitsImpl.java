@@ -382,7 +382,7 @@ public class HitsImpl extends HitsAbstract {
         } catch (InterruptedException e) {
             // Abort operation. Result may be wrong, but
             // interrupted results shouldn't be shown to user anyway.
-            maxStats().setHitsCountedExceededMaximum(); // indicate that we've stopped counting
+            queryInfo().maxStats().setHitsCountedExceededMaximum(); // indicate that we've stopped counting
             Thread.currentThread().interrupt();
         }
         return hits.size();

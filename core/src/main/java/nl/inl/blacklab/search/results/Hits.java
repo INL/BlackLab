@@ -7,12 +7,10 @@ import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.ThreadPauser;
@@ -406,21 +404,5 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @return query info
      */
     QueryInfo queryInfo();
-    
-    default AnnotatedField field() {
-        return queryInfo().field();
-    }
-
-    default BlackLabIndex index() {
-        return queryInfo().index();
-    }
-
-    default MaxSettings settings() {
-        return queryInfo().maxSettings();
-    }
-
-    default MaxStats maxStats() {
-        return queryInfo().maxStats();
-    }
 
 }

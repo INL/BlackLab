@@ -41,20 +41,20 @@ public class HitPropertyHitText extends HitProperty {
     private Annotation annotation;
 
     public HitPropertyHitText(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits, AnnotatedField field) {
-        this(hits, field.annotations().main(), hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, field.annotations().main(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits) {
-        this(hits, hits.index().mainAnnotatedField(), hits.index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, hits.queryInfo().index().mainAnnotatedField(), hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
     }
 
     public HitPropertyHitText(Hits hits, Annotation annotation, boolean sensitive) {
         super(hits);
-        this.index = hits.index();
+        this.index = hits.queryInfo().index();
         this.annotation = annotation;
         this.terms = index.forwardIndex(annotation).terms();
         this.sensitive = sensitive;
@@ -65,7 +65,7 @@ public class HitPropertyHitText extends HitProperty {
     }
 
     public HitPropertyHitText(Hits hits, boolean sensitive) {
-        this(hits, hits.index().mainAnnotatedField(), sensitive);
+        this(hits, hits.queryInfo().index().mainAnnotatedField(), sensitive);
     }
 
     @Override
@@ -142,7 +142,7 @@ public class HitPropertyHitText extends HitProperty {
 
     public static HitPropertyHitText deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
+        AnnotatedField field = hits.queryInfo().field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();

@@ -68,7 +68,7 @@ public class ResultsGrouper extends HitGroups {
      * @param criteria the criteria to group on
      */
     ResultsGrouper(Hits hits, HitProperty criteria) {
-        super(hits.index(), criteria);
+        super(hits.queryInfo(), criteria);
         
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
@@ -92,7 +92,7 @@ public class ResultsGrouper extends HitGroups {
         for (Map.Entry<HitPropValue, List<Hit>> e : groupLists.entrySet()) {
             HitPropValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            HitGroup group = new HitGroup(hits.queryInfo(), groupId, hitList);
+            HitGroup group = new HitGroup(queryInfo, groupId, hitList);
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.Span;
 
+/** Captured group information for a list of hits. */
 public interface CapturedGroups {
 
     /**
