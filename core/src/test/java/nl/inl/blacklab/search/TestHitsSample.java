@@ -22,8 +22,8 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsList;
 import nl.inl.blacklab.search.results.HitsSample;
+import nl.inl.blacklab.search.results.SampleParameters;
 
 public class TestHitsSample {
 
@@ -31,22 +31,9 @@ public class TestHitsSample {
     private final static int[] aStart = new int[] { 1, 4, 2, 1, 3, 5 };
     private final static int[] aEnd = new int[] { 2, 5, 3, 2, 4, 7 };
 
-    private static void assertSampleRatio(int[] expected, float ratio, long seed) {
+    private static void assertSample(int[] expected, SampleParameters param) {
         MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
-        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), ratio, seed);
-        int i = 0;
-        Assert.assertEquals(expected.length, hits.size());
-        for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[expected[i]], hit.doc());
-            Assert.assertEquals(aStart[expected[i]], hit.start());
-            Assert.assertEquals(aEnd[expected[i]], hit.end());
-            i++;
-        }
-    }
-
-    private static void assertSampleNumber(int[] expected, int number, long seed) {
-        MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
-        HitsList hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), number, seed);
+        Hits hits = HitsSample.fromHits(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), param);
         int i = 0;
         Assert.assertEquals(expected.length, hits.size());
         for (Hit hit : hits) {
@@ -59,17 +46,17 @@ public class TestHitsSample {
 
     @Test
     public void testSample() {
-        assertSampleRatio(new int[0], 0, 0);
-        assertSampleRatio(new int[] { 3 }, 0.1667f, 1);
-        assertSampleRatio(new int[] { 0, 1, 5 }, 0.5f, 1337);
-        assertSampleRatio(new int[] { 0, 1, 2, 3 }, 0.6667f, 42);
-        assertSampleRatio(new int[] { 0, 1, 2, 3, 4, 5 }, 1f, Long.MAX_VALUE);
+        assertSample(new int[0], SampleParameters.percentage(0, 0));
+        assertSample(new int[] { 3 }, SampleParameters.percentage(0.1667f, 1));
+        assertSample(new int[] { 0, 1, 5 }, SampleParameters.percentage(0.5f, 1337));
+        assertSample(new int[] { 0, 1, 2, 3 }, SampleParameters.percentage(0.6667f, 42));
+        assertSample(new int[] { 0, 1, 2, 3, 4, 5 }, SampleParameters.percentage(1f, Long.MAX_VALUE));
 
-        assertSampleNumber(new int[0], 0, 0);
-        assertSampleNumber(new int[] { 3 }, 1, 1);
-        assertSampleNumber(new int[] { 0, 1, 5 }, 3, 1337);
-        assertSampleNumber(new int[] { 0, 1, 2, 3 }, 4, 42);
-        assertSampleNumber(new int[] { 0, 1, 2, 3, 4, 5 }, 6, Long.MAX_VALUE);
+        assertSample(new int[0], SampleParameters.fixedNumber(0, 0));
+        assertSample(new int[] { 3 }, SampleParameters.fixedNumber(1, 1));
+        assertSample(new int[] { 0, 1, 5 }, SampleParameters.fixedNumber(3, 1337));
+        assertSample(new int[] { 0, 1, 2, 3 }, SampleParameters.fixedNumber(4, 42));
+        assertSample(new int[] { 0, 1, 2, 3, 4, 5 }, SampleParameters.fixedNumber(6, Long.MAX_VALUE));
     }
 
 }

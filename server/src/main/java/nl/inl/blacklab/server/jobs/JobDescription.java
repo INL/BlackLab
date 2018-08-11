@@ -8,6 +8,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -103,7 +104,7 @@ public abstract class JobDescription {
         return null;
     }
 
-    public SampleSettings getSampleSettings() {
+    public SampleParameters getSampleSettings() {
         return null;
     }
 

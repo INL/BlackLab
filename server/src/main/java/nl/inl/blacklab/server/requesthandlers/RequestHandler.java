@@ -658,10 +658,10 @@ public abstract class RequestHandler {
         if (hits instanceof HitsSample) {
             HitsSample sample = ((HitsSample) hits);
             ds.entry("sampleSeed", sample.seed());
-            if (sample.exactNumberGiven())
-                ds.entry("sampleSize", sample.numberOfHitsToSelect());
+            if (sample.sampleParameters().isPercentage())
+                ds.entry("samplePercentage", Math.round(sample.sampleParameters().percentageOfHits() * 100 * 100) / 100.0);
             else
-                ds.entry("samplePercentage", Math.round(sample.ratio() * 100 * 100) / 100.0);
+                ds.entry("sampleSize", sample.sampleParameters().numberOfHitsSet());
         }
     }
 

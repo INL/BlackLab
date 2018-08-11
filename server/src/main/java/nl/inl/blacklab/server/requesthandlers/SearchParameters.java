@@ -30,8 +30,8 @@ import nl.inl.blacklab.resultproperty.GroupPropertySize;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
-import nl.inl.blacklab.search.results.HitsSample;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -59,7 +59,6 @@ import nl.inl.blacklab.server.jobs.JobHitsSample.JobDescSampleHits;
 import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
 import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
 import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
-import nl.inl.blacklab.server.jobs.SampleSettings;
 import nl.inl.blacklab.server.jobs.SearchSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -335,13 +334,23 @@ public class SearchParameters {
         return new HitFilterSettings(getString("hitfiltercrit"), getString("hitfilterval"));
     }
 
-    private SampleSettings getSampleSettings() {
+    private SampleParameters getSampleSettings() {
         if (!(containsKey("sample") || containsKey("samplenum")))
             return null;
-        float samplePercentage = containsKey("sample") ? Math.max(Math.min(getFloat("sample"), 100), 0) : -1f;
-        int sampleNum = containsKey("samplenum") ? getInteger("samplenum") : -1;
-        long sampleSeed = containsKey("sampleseed") ? getLong("sampleseed") : HitsSample.RANDOM_SEED;
-        return new SampleSettings(samplePercentage, sampleNum, sampleSeed);
+        SampleParameters p;
+        boolean withSeed = containsKey("sampleseed");
+        if (containsKey("sample")) {
+            if (withSeed)
+                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0), getLong("sampleseed"));
+            else
+                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0));
+        } else {
+            if (withSeed)
+                p = SampleParameters.fixedNumber(getInteger("samplenum"), getLong("sampleseed"));
+            else
+                p = SampleParameters.fixedNumber(getInteger("samplenum"));
+        }
+        return p;
     }
 
     private MaxSettings getMaxSettings() {
@@ -529,7 +538,7 @@ public class SearchParameters {
     }
 
     public JobDescription hitsSample() throws BlsException {
-        SampleSettings sampleSettings = getSampleSettings();
+        SampleParameters sampleSettings = getSampleSettings();
         if (sampleSettings == null)
             return hitsSorted();
         return new JobDescSampleHits(this, hitsSorted(), getSearchSettings(), sampleSettings);

@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsSample;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -14,16 +15,16 @@ public class JobHitsSample extends JobWithHits {
 
     public static class JobDescSampleHits extends JobDescription {
 
-        SampleSettings sampleSettings;
+        SampleParameters sampleSettings;
 
         public JobDescSampleHits(SearchParameters param, JobDescription hitsToSample, SearchSettings searchSettings,
-                SampleSettings settings) {
+                SampleParameters settings) {
             super(param, JobHitsSample.class, hitsToSample, searchSettings);
             this.sampleSettings = settings;
         }
 
         @Override
-        public SampleSettings getSampleSettings() {
+        public SampleParameters getSampleSettings() {
             return sampleSettings;
         }
 
@@ -52,12 +53,7 @@ public class JobHitsSample extends JobWithHits {
     @Override
     protected void performSearch() throws BlsException {
         Hits inputHits = ((JobWithHits) inputJob).getHits();
-        SampleSettings sample = jobDesc.getSampleSettings();
-        if (sample.percentage() >= 0) {
-            hits = HitsSample.fromHits(inputHits, sample.percentage() / 100f, sample.seed());
-        } else if (sample.number() >= 0) {
-            hits = HitsSample.fromHits(inputHits, sample.number(), sample.seed());
-        }
+        hits = HitsSample.fromHits(inputHits, jobDesc.getSampleSettings());
     }
 
 }

@@ -73,18 +73,16 @@ index
 
   Hits-object moet ook wel een eigen hit/doc count kunnen hebben, los van QueryInfo. Voor HitsFromQuery geven die methods dezelfde waarde terug, voor andere Hits-objecten niet.
 
-- (NB aborted attempt op stash en in ../tmp-bl-attempt/)
-  Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
+- HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
   Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
-  een lijst met Hit+Context objects te instantieren en die te sorteren.
+  een lijst met Hit+Context objects te instantieren en die direct te sorteren. Of indien mogelijk eerst de sortvalue bepalen voor elke Hit en daarop sorteren (als vergelijkingen duur zijn).
+  (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   
-  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien (o.a. sortedBy() kan naar HitsAbstract, en Results interfaces/abstract classes blijven cleaner en generieker)
+  Dan kunnen we toch sortOrder een List<Hit> maken, wat efficienter is en waarschijnlijk zorgt dat Results interfaces/classes cleaner en generieker blijven.
 
   HitProperty moet MatchSensitivity krijgen ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
-
   HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
-
   
 results
 - DocResults, Groups moeten ook threadPauser hebben
