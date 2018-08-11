@@ -173,10 +173,10 @@ public class HitsFromQuery extends HitsImpl {
 
         boolean readAllHits = number < 0;
         try {
-            MaxSettings maxSettings = queryInfo.maxSettings();
+            MaxSettings maxSettings = queryInfo().maxSettings();
             int maxHitsToCount = maxSettings.maxHitsToCount();
             int maxHitsToProcess = maxSettings.maxHitsToProcess();
-            MaxStats maxStats = queryInfo.maxStats();
+            MaxStats maxStats = queryInfo().maxStats();
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long

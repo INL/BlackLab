@@ -180,4 +180,9 @@ public class MockHits extends HitsAbstract {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    protected void ensureHitsRead(int number) throws InterruptedException {
+        // NOP
+    }
+
 }
