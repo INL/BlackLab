@@ -8,14 +8,13 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.ThreadPauser;
 
-public interface Hits extends Iterable<Hit>, Prioritizable {
+public interface Hits extends Iterable<Hit> {
 
     /**
      * Construct a Hits object from a SpanQuery.
@@ -68,26 +67,14 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     ThreadPauser threadPauser();
 
-    /**
-     * Pause or unpause this search.
-     *
-     * This can be used to stop a heavy search from consuming CPU resources
-     * when other users are waiting.
-     * 
-     * Pausing actually amounts to "proceeding very slowly".
-     *
-     * @param pause if true, pause the search; if false, unpause it
-     */
-    void pause(boolean pause);
-
-    /**
-     * Is this search currently paused?
-     *
-     * @return true if search is paused, false if not
-     */
-    @Override
-    boolean isPaused();
-
+//    public void pause(boolean pause) {
+//        threadPauser.pause(pause);
+//    }
+//
+//    public boolean isPaused() {
+//        return threadPauser.isPaused();
+//    }
+    
     /**
      * Return a copy of this Hits object.
      *

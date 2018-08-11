@@ -35,13 +35,13 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
-import nl.inl.blacklab.search.Prioritizable;
+import nl.inl.blacklab.search.Pausible;
 import nl.inl.util.ReverseComparator;
 
 /**
  * A list of DocResult objects (document-level query results).
  */
-public class DocResults implements Iterable<DocResult>, Prioritizable {
+public class DocResults implements Iterable<DocResult>, Pausible {
     /**
      * Don't use this; use Hits.perDocResults().
      *
@@ -548,13 +548,13 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
     @Override
     public void pause(boolean pause) {
         if (sourceHits != null) {
-            sourceHits.pause(pause);
+            sourceHits.threadPauser().pause(pause);
         }
     }
 
     @Override
     public boolean isPaused() {
-        return sourceHits.isPaused();
+        return sourceHits.threadPauser().isPaused();
     }
 
     public int docsCountedSoFar() {

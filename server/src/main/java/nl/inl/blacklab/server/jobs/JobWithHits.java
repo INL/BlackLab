@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -39,8 +40,8 @@ public abstract class JobWithHits extends Job {
     }
 
     @Override
-    protected Hits getObjectToPrioritize() {
-        return hits;
+    protected Pausible getObjectToPrioritize() {
+        return hits.threadPauser();
     }
 
 }

@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Prioritizable;
+import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.ExUtil;
 
-public abstract class Job implements Comparable<Job>, Prioritizable {
+public abstract class Job implements Comparable<Job>, Pausible {
 
     protected static final Logger logger = LogManager.getLogger(Job.class);
 
@@ -723,7 +723,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      *
      * @return the object to prioritize
      */
-    protected abstract Prioritizable getObjectToPrioritize();
+    protected abstract Pausible getObjectToPrioritize();
 
     @Override
     public void pause(boolean paused) {
@@ -751,7 +751,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      *
      * @param p object to set the priority of
      */
-    protected void setPaused(Prioritizable p) {
+    protected void setPaused(Pausible p) {
         if (p != null) {
             p.pause(isPaused());
         }
@@ -770,7 +770,7 @@ public abstract class Job implements Comparable<Job>, Prioritizable {
      * @return the priority level
      */
     protected boolean isResultsObjectPaused() {
-        Prioritizable p = getObjectToPrioritize();
+        Pausible p = getObjectToPrioritize();
         return p == null ? false : p.isPaused();
     }
     

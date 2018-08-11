@@ -342,16 +342,6 @@ public abstract class HitsAbstract implements Hits {
     public int resultsObjId() {
         return hitsObjId;
     }
-
-    @Override
-    public void pause(boolean pause) {
-        threadPauser.pause(pause);
-    }
-
-    @Override
-    public boolean isPaused() {
-        return threadPauser.isPaused();
-    }
     
     @Override
     public ThreadPauser threadPauser() {

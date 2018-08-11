@@ -57,6 +57,9 @@ index
   er aan toe kunt voegen.
 + sortedBy als enkele call naar constructor/factory method implementeren
 + HitProperty.copy() netter implementeren
++ Til hits, capturedGruops, sortOrder op naar HitsAbstract
+
+- HitsAbstract.pause en isPaused inlinen
 
 - HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
   HitsImpl -> HitsList

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search;
 
-public interface Prioritizable {
+public interface Pausible {
 
     /**
      * Pause or unpause this operation.
