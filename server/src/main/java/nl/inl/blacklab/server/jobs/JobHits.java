@@ -5,7 +5,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -117,10 +117,7 @@ public class JobHits extends JobWithHits {
 
             // Set the max retrieve/count value
             MaxSettings maxSettings = jobDesc.getMaxSettings();
-            HitsSettings hitsSettings = blIndex.hitsSettings()
-                    .withMaxHitsToRetrieve(maxSettings.maxRetrieve())
-                    .withMaxHitsToCount(maxSettings.maxCount());
-            hits = blIndex.find(textPattern, blIndex.mainAnnotatedField(), filter, hitsSettings);
+            hits = blIndex.find(textPattern, blIndex.mainAnnotatedField(), filter, maxSettings);
 
         } catch (WildcardTermTooBroad e) {
             throw BlsException.wildcardTermTooBroad(e);

@@ -111,7 +111,7 @@ public class Contexts {
 
         List<ForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
-            fis.add(hits.index().forwardIndex(annotation));
+            fis.add(hits.queryInfo().index().forwardIndex(annotation));
         }
 
         // Get the context

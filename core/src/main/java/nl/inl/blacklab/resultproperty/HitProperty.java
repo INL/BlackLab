@@ -24,10 +24,10 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSettings;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -244,6 +244,6 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
     public abstract List<String> getPropNames();
 
     public int needsContextSize() {
-        return HitsSettings.DEFAULT_CONTEXT_SIZE;
+        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
     }
 }

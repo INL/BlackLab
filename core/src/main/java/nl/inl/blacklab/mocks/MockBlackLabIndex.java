@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
@@ -36,7 +36,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private IndexMetadata indexMetadata;
 
-    private HitsSettings hitsSettings;
+    private MaxSettings maxSettings;
 
     private Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
 
@@ -48,7 +48,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         super();
         indexMetadata = new MockIndexMetadata();
         analyzer = new BLStandardAnalyzer();
-        hitsSettings = HitsSettings.defaults();
+        maxSettings = MaxSettings.defaults();
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
@@ -114,8 +114,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public HitsSettings hitsSettings() {
-        return hitsSettings;
+    public MaxSettings maxSettings() {
+        return maxSettings;
     }
 
     @Override
@@ -154,12 +154,12 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, HitsSettings settings) throws TooManyClauses {
+    public Hits find(BLSpanQuery query, MaxSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings) throws TooManyClauses {
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -194,7 +194,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public void setHitsSettings(HitsSettings settings) {
+    public void setHitsSettings(MaxSettings settings) {
         throw new UnsupportedOperationException();
     }
 

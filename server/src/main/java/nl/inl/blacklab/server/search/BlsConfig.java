@@ -14,7 +14,7 @@ import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -183,8 +183,8 @@ public class BlsConfig extends YamlJsonReader {
             maxSnippetSize = JsonUtil
                     .getIntProp(reqProp, "maxSnippetSize", 120);
             defaultMaxHitsToRetrieve = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToRetrieve",
-                    HitsSettings.DEFAULT_MAX_RETRIEVE);
-            defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", HitsSettings.DEFAULT_MAX_COUNT);
+                    MaxSettings.DEFAULT_MAX_PROCESS);
+            defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", MaxSettings.DEFAULT_MAX_COUNT);
             maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
                     "maxHitsToRetrieveAllowed", 10_000_000);
             maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
@@ -205,8 +205,8 @@ public class BlsConfig extends YamlJsonReader {
             defaultContextSize = 5;
             maxContextSize = 20;
             maxSnippetSize = 120;
-            defaultMaxHitsToRetrieve = HitsSettings.DEFAULT_MAX_RETRIEVE;
-            defaultMaxHitsToCount = HitsSettings.DEFAULT_MAX_COUNT;
+            defaultMaxHitsToRetrieve = MaxSettings.DEFAULT_MAX_PROCESS;
+            defaultMaxHitsToCount = MaxSettings.DEFAULT_MAX_COUNT;
             maxHitsToRetrieveAllowed = 10_000_000;
             maxHitsToCountAllowed = -1;
             overrideUserIdIps = new HashSet<>();

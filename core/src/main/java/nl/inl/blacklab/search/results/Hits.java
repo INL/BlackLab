@@ -21,42 +21,37 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     /**
      * Construct a Hits object from a SpanQuery.
-     *
-     * @param index the index object
+     * 
+     * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
-     * @param settings search settings
      * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    static Hits fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
-        return new HitsFromQuery(index, index.annotatedField(query.getField()), query, settings);
+    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query) throws WildcardTermTooBroad {
+        return new HitsFromQuery(queryInfo, query);
     }
 
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Does not copy the list, but reuses it.
-     *
-     * @param index the index object
-     * @param field field our hits are from
+     * 
+     * @param queryInfo information about the original query
      * @param hits the list of hits to wrap, or null for empty Hits object
-     * @param settings search settings, or null for default
      * @return hits found
      */
-    static Hits fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        return new HitsImpl(index, field, hits, settings);
+    static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
+        return new HitsImpl(queryInfo, hits);
     }
 
     /**
      * Construct an empty Hits object.
-     *
-     * @param index the index object
-     * @param field field our hits are from
-     * @param settings search settings, or null for default
+     * 
+     * @param queryInfo query info 
      * @return hits found
      */
-    static Hits emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
-        return Hits.fromList(index, field, (List<Hit>) null, settings);
+    static Hits emptyList(QueryInfo queryInfo) {
+        return Hits.fromList(queryInfo, (List<Hit>) null);
     }
 
     // Inherited from Results
@@ -72,15 +67,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     int size();
 
     int resultsObjId();
-
-    /**
-     * Returns the searcher object.
-     *
-     * @return the searcher object.
-     */
-    BlackLabIndex index();
-
-    AnnotatedField field();
 
     ThreadPauser threadPauser();
 
@@ -114,7 +100,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      *
      * @return a copy of this Hits object
      */
-    Hits copy(HitsSettings settings);
+    Hits copy();
 
     /**
      * Return the specified hit.
@@ -148,22 +134,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     @Override
     String toString();
-
-    /**
-     * Get a window into this list of hits.
-     *
-     * Use this if you're displaying part of the resultset, like in a paging
-     * interface. It makes sure BlackLab only works with the hits you want to
-     * display and doesn't do any unnecessary processing on the other hits.
-     *
-     * HitsWindow includes methods to assist with paging, like figuring out if there
-     * hits before or after the window.
-     *
-     * @param first first hit in the window (0-based)
-     * @param windowSize size of the window
-     * @return the window
-     */
-    HitsWindow window(int first, int windowSize);
 
     /**
      * Group these hits by a criterium (or several criteria).
@@ -317,13 +287,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     boolean doneProcessingAndCounting();
 
     /**
-     * Get whether or not the process/count limits were reached for the original query.
-     * 
-     * @return max stats
-     */
-    MaxStats maxStats();
-
-    /**
      * Get the captured group information, if any.
      *
      * @return the captured group information, or null if there were no captured groups
@@ -369,10 +332,9 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      *
      * @param first first hit in the window (0-based)
      * @param windowSize size of the window
-     * @param settings settings to use, or null to inherit
      * @return the window
      */
-    HitsWindow window(int first, int windowSize, HitsSettings settings);
+    HitsWindow window(int first, int windowSize);
 
     /**
      * Count occurrences of context words around hit.
@@ -407,17 +369,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     DocResults perDocResults();
 
     /**
-     * Copy maxHitsRetrieved/-Counted and hitQueryContext from another Hits object.
-     *
-     * NOTE: this should be phased out, and copy() or adapters should be used.
-     *
-     * @param copyFrom where to copy stuff from
-     */
-    void copyMaxHitsRetrieved(Hits copyFrom);
-
-    HitsSettings settings();
-
-    /**
      * Create concordances from the forward index or content store.
      * 
      * @param type where to create concordances from
@@ -445,5 +396,31 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @return KWICs
      */
     Kwics kwics(int contextSize);
+
+    /**
+     * Get information about the original query.
+     * 
+     * This includes the index, field, max. settings, and max. stats
+     * (whether the max. settings were reached).
+     * 
+     * @return query info
+     */
+    QueryInfo queryInfo();
+    
+    default AnnotatedField field() {
+        return queryInfo().field();
+    }
+
+    default BlackLabIndex index() {
+        return queryInfo().index();
+    }
+
+    default MaxSettings settings() {
+        return queryInfo().maxSettings();
+    }
+
+    default MaxStats maxStats() {
+        return queryInfo().maxStats();
+    }
 
 }

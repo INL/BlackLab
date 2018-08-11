@@ -46,10 +46,9 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
      * @param source the larger Hits object we would like a window into
      * @param first the first hit in our window
      * @param windowSize the size of our window
-     * @param settings settings to use
      */
-    HitsWindow(Hits source, int first, int windowSize, HitsSettings settings) {
-        super(source.index(), source.field(), (List<Hit>) null, settings == null ? source.settings() : settings);
+    HitsWindow(Hits source, int first, int windowSize) {
+        super(source.queryInfo(), (List<Hit>) null);
         this.source = source;
         this.first = first;
         this.windowSize = windowSize;
@@ -77,8 +76,6 @@ public class HitsWindow extends HitsImpl implements ResultsWindow {
                 capturedGroups.put(hit, source.capturedGroups().get(hit));
             // OPT: copy context as well..?
         }
-
-        copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
     /**

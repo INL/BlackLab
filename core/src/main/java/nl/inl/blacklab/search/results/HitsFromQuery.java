@@ -23,7 +23,6 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -88,10 +87,11 @@ public class HitsFromQuery extends HitsImpl {
      * @param sourceQuery the query to execute to get the hits
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    HitsFromQuery(BlackLabIndex index, AnnotatedField field, BLSpanQuery sourceQuery, HitsSettings settings) throws WildcardTermTooBroad {
-        super(index, field, null, settings);
+    HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery) throws WildcardTermTooBroad {
+        super(queryInfo, null);
         hitQueryContext = new HitQueryContext();
         try {
+            BlackLabIndex index = queryInfo.index();
             IndexReader reader = index.reader();
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
@@ -173,8 +173,10 @@ public class HitsFromQuery extends HitsImpl {
 
         boolean readAllHits = number < 0;
         try {
-            int maxHitsToCount = settings.maxHitsToCount();
-            int maxHitsToProcess = settings.maxHitsToProcess();
+            MaxSettings maxSettings = queryInfo.maxSettings();
+            int maxHitsToCount = maxSettings.maxHitsToCount();
+            int maxHitsToProcess = maxSettings.maxHitsToProcess();
+            MaxStats maxStats = queryInfo.maxStats();
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long

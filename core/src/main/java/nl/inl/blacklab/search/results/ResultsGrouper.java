@@ -26,7 +26,6 @@ import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -50,11 +49,6 @@ public class ResultsGrouper extends HitGroups {
     List<HitGroup> groupsOrdered = new ArrayList<>();
 
     /**
-     * Default field to make concordances from.
-     */
-    private AnnotatedField defaultConcField;
-
-    /**
      * Total number of hits.
      */
     private int totalHits = 0;
@@ -76,7 +70,6 @@ public class ResultsGrouper extends HitGroups {
     ResultsGrouper(Hits hits, HitProperty criteria) {
         super(hits.index(), criteria);
         
-        defaultConcField = hits.field();
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
             criteria.setContexts(new Contexts(hits, requiredContext, criteria.needsContextSize()));
@@ -99,7 +92,7 @@ public class ResultsGrouper extends HitGroups {
         for (Map.Entry<HitPropValue, List<Hit>> e : groupLists.entrySet()) {
             HitPropValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            HitGroup group = new HitGroup(index, groupId, defaultConcField, hitList, hits.settings());
+            HitGroup group = new HitGroup(hits.queryInfo(), groupId, hitList);
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }

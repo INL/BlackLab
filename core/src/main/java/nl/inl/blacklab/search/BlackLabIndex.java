@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -74,9 +74,11 @@ public interface BlackLabIndex extends Closeable {
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir, HitsSettings settings) throws ErrorOpeningIndex {
+    static BlackLabIndex open(File indexDir, MaxSettings settings) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
+
+    int DEFAULT_CONTEXT_SIZE = 5;
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
@@ -132,7 +134,7 @@ public interface BlackLabIndex extends Closeable {
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad;
+    Hits find(BLSpanQuery query, MaxSettings settings) throws WildcardTermTooBroad;
 
     /**
      * Find hits for a pattern in a field.
@@ -147,7 +149,7 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      * @throws RegexpTooLarge 
      */
-    Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
+    Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings)
             throws WildcardTermTooBroad, RegexpTooLarge;
 
     /**
@@ -277,7 +279,7 @@ public interface BlackLabIndex extends Closeable {
      *
      * @return settings object
      */
-    HitsSettings hitsSettings();
+    MaxSettings maxSettings();
 
     /**
      * How do we fix well-formedness for snippets of XML?
@@ -332,7 +334,7 @@ public interface BlackLabIndex extends Closeable {
 
     void setDefaultMatchSensitivity(MatchSensitivity m);
 
-    void setHitsSettings(HitsSettings withContextSize);
+    void setHitsSettings(MaxSettings withContextSize);
     
     @Override
     boolean equals(Object obj);

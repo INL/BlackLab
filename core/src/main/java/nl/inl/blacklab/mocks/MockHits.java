@@ -12,8 +12,8 @@ import nl.inl.blacklab.search.results.CapturedGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
-import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.MaxStats;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 public class MockHits extends HitsAbstract {
 
@@ -24,7 +24,7 @@ public class MockHits extends HitsAbstract {
     private int numberOfDocs;
 
     public MockHits(BlackLabIndex index, AnnotatedField field, int[] doc, int[] start, int[] end) {
-        super(index, field, null, new MaxStats());
+        super(QueryInfo.create(index, field));
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -51,7 +51,7 @@ public class MockHits extends HitsAbstract {
     }
 
     @Override
-    public MockHits copy(HitsSettings settings) {
+    public MockHits copy() {
         return new MockHits(index(), field(), doc, start, end);
     }
 
@@ -172,11 +172,6 @@ public class MockHits extends HitsAbstract {
 
     @Override
     public Hits sortedBy(HitProperty sortProp) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void copyMaxHitsRetrieved(Hits copyFrom) {
         throw new UnsupportedOperationException();
     }
 

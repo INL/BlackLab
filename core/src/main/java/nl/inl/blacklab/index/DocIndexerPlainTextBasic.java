@@ -37,7 +37,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.blacklab.search.results.HitsSettings;
 
 /**
  * Simple example indexer for plain text files. Reads a line, chops it into
@@ -69,7 +68,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        contentsField = new AnnotatedFieldWriter(HitsSettings.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;

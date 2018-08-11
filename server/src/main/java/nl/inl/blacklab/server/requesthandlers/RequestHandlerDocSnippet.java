@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -80,7 +81,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
         hit = Hit.create(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        Hits hits = Hits.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), null);
+        Hits hits = Hits.fromList(QueryInfo.create(blIndex), Arrays.asList(hit));
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }

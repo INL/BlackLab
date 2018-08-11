@@ -28,7 +28,6 @@ import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Counts the number of documents that have a certain property.
@@ -41,8 +40,6 @@ public class DocCounts implements Iterable<DocCount> {
     Map<HitPropValue, DocCount> counts = new HashMap<>();
 
     List<DocCount> orderedGroups = new ArrayList<>();
-
-    private BlackLabIndex index;
 
     private int largestGroupSize = 0;
 
@@ -63,7 +60,6 @@ public class DocCounts implements Iterable<DocCount> {
      */
     DocCounts(DocResults docResults, DocProperty countBy) {
         this.docResults = docResults;
-        index = docResults.index();
         this.countBy = countBy;
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
@@ -71,7 +67,7 @@ public class DocCounts implements Iterable<DocCount> {
             HitPropValue groupId = countBy.get(r);
             DocCount count = counts.get(groupId);
             if (count == null) {
-                count = new DocCount(index, groupId);
+                count = new DocCount(docResults.queryInfo(), groupId);
                 counts.put(groupId, count);
             }
             count.increment();

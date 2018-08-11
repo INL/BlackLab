@@ -4,11 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-
 public abstract class HitsSample extends HitsImpl {
 
     public final static long RANDOM_SEED = Long.MIN_VALUE;
@@ -43,24 +38,6 @@ public abstract class HitsSample extends HitsImpl {
         return new HitsSampleImpl(hits, number, seed);
     }
 
-    /**
-     * Take a sample of hits by executing a SpanQuery and sampling the results.
-     *
-     * @param index searcher object
-     * @param query query to sample
-     * @param number number of hits to select
-     * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
-     *            randomly chosen seed
-     * @param settings settings to use
-     * @return the sample
-     * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
-     */
-    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, int number, long seed, HitsSettings settings) throws WildcardTermTooBroad {
-        // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
-        // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(Hits.fromSpanQuery(index, query, settings), number, seed);
-    }
-
     protected static long getRandomSeed() {
         Random random = new Random();
         return random.nextLong();
@@ -76,23 +53,23 @@ public abstract class HitsSample extends HitsImpl {
 
     protected Random random;
 
-    protected HitsSample(BlackLabIndex index, AnnotatedField field, float ratio, long seed, HitsSettings settings) {
-        super(index, field, new ArrayList<Hit>(), settings);
+    protected HitsSample(QueryInfo queryInfo, float ratio, long seed) {
+        super(queryInfo, new ArrayList<Hit>());
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex index, AnnotatedField field, int number, long seed, HitsSettings settings) {
-        super(index, field, new ArrayList<Hit>(), settings);
+    protected HitsSample(QueryInfo queryInfo, int number, long seed) {
+        super(queryInfo, new ArrayList<Hit>());
         this.numberOfHitsToSelect = number;
         exactNumberGiven = true;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);
     }
 
-    protected HitsSample(BlackLabIndex index, AnnotatedField field, List<Hit> hits, float ratio, long seed, HitsSettings settings) {
-        super(index, field, hits, settings);
+    protected HitsSample(QueryInfo queryInfo, List<Hit> hits, float ratio, long seed) {
+        super(queryInfo, hits);
         this.ratioOfHitsToSelect = ratio;
         this.seed = seed == RANDOM_SEED ? getRandomSeed() : seed;
         this.random = new Random(seed);

@@ -17,9 +17,6 @@ package nl.inl.blacklab.search.results;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-
 /**
  * A document result, containing a Lucene document from the index and a
  * collection of Hit objects.
@@ -31,10 +28,10 @@ public class DocResult {
 
     private float score;
 
-    public DocResult(BlackLabIndex index, AnnotatedField field, int docId, float score) {
+    public DocResult(QueryInfo queryInfo, int docId, float score) {
         this.docId = docId;
         this.score = score;
-        hits = Hits.emptyList(index, field, null);
+        hits = Hits.emptyList(queryInfo);
     }
 
     /**

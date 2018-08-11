@@ -12,7 +12,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.XmlHighlighter;
 
 /**
@@ -42,7 +41,7 @@ public class Concordances {
         }
     
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(hits, contextSize, hits.field());
+        concordances = retrieveConcordancesFromContentStore(hits, contextSize);
     }
 
     /**
@@ -82,7 +81,7 @@ public class Concordances {
             XmlHighlighter hl) {
         if (hits.size() == 0)
             return;
-        Doc doc = hits.index().doc(hits.get(0).doc());
+        Doc doc = hits.queryInfo().index().doc(hits.get(0).doc());
         int arrayLength = hits.size() * 2;
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
@@ -109,10 +108,10 @@ public class Concordances {
 
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
-        doc.getCharacterOffsets(hits.field(), startsOfWords, endsOfWords, true);
+        doc.getCharacterOffsets(hits.queryInfo().field(), startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(hits.field(), startsOfWords, endsOfWords, hl);
+        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(hits.queryInfo().field(), startsOfWords, endsOfWords, hl);
         for (int i = 0; i < hits.size(); i++) {
             conc.put(hits.get(i), newConcs.get(i));
         }
@@ -121,13 +120,14 @@ public class Concordances {
     /**
      * Generate concordances from content store (slower).
      *
+     * @param hits hits for which to generate concordances
      * @param contextSize how many words around the hit to retrieve
-     * @param fieldName field to use for building concordances
      * @return the concordances
      */
-    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize, AnnotatedField field) {
+    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
-        hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
+        QueryInfo queryInfo = hits.queryInfo();
+        hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {
@@ -140,8 +140,7 @@ public class Concordances {
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = new HitsImpl(hits.index(), field, l, hits.settings());
-            hitsInThisDoc.copyMaxHitsRetrieved(hits);
+            Hits hitsInThisDoc = new HitsImpl(queryInfo, l);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

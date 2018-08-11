@@ -13,8 +13,8 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.HitsSettings;
 
 /**
  * Used to get the field length in tokens for a document.
@@ -60,7 +60,7 @@ class DocFieldLengthGetter implements Closeable {
         this.fieldName = fieldName;
         lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
-        if (fieldName.equals(HitsSettings.DEFAULT_CONTENTS_FIELD_NAME)) {
+        if (fieldName.equals(Indexer.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up
             try {
                 // NOTE: UninvertingReader is an IndexReader that can get docValues even when they weren't explicitly indexed

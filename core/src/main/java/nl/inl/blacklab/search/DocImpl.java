@@ -194,7 +194,7 @@ public class DocImpl implements Doc {
                                    // subtract one
         }
 
-        getCharacterOffsets(hits.field(), starts, ends, true);
+        getCharacterOffsets(hits.queryInfo().field(), starts, ends, true);
 
         List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {

@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * A group of DocResult objects, plus the "group identity". For example, if
@@ -30,14 +29,14 @@ public class DocGroup {
 
     private DocResults results;
 
-    public DocGroup(BlackLabIndex index, HitPropValue groupIdentity) {
+    public DocGroup(QueryInfo queryInfo, HitPropValue groupIdentity) {
         this.groupIdentity = groupIdentity;
-        results = new DocResults(index);
+        results = new DocResults(queryInfo);
     }
 
-    public DocGroup(BlackLabIndex index, HitPropValue groupIdentity, List<DocResult> resultList) {
+    public DocGroup(QueryInfo queryInfo, HitPropValue groupIdentity, List<DocResult> resultList) {
         this.groupIdentity = groupIdentity;
-        results = new DocResults(index, resultList);
+        results = new DocResults(queryInfo, resultList);
     }
 
     public HitPropValue getIdentity() {

@@ -11,7 +11,7 @@ public class HitsSampleImpl extends HitsSample {
     Hits source;
 
     HitsSampleImpl(Hits hits, float ratio, long seed) {
-        super(hits.index(), hits.field(), ratio, seed, hits.settings());
+        super(hits.queryInfo(), ratio, seed);
         if (ratio < 0 || ratio > 1)
             throw new IllegalArgumentException("ratio must be in the range 0-1");
         this.source = hits;
@@ -23,12 +23,10 @@ public class HitsSampleImpl extends HitsSample {
             numberOfHitsToSelect = 1; // always choose at least one hit, unless we specify ratio 0 (why..??)
 
         selectHits(hits);
-        
-        copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
     HitsSampleImpl(Hits hits, int number, long seed) {
-        super(hits.index(), hits.field(), number, seed, hits.settings());
+        super(hits.queryInfo(), number, seed);
         if (number < 0)
             throw new IllegalArgumentException("Negative sample number specified");
         if (number > hits.size())
@@ -39,8 +37,6 @@ public class HitsSampleImpl extends HitsSample {
         ratioOfHitsToSelect = (float) number / hits.size();
 
         selectHits(hits);
-        
-        copyMaxHitsRetrieved(source); // type of concordances to make, etc.
     }
 
     private void selectHits(Hits selectFrom) {
@@ -69,13 +65,13 @@ public class HitsSampleImpl extends HitsSample {
         }
     }
 
-    private HitsSampleImpl(HitsSampleImpl copyFrom, HitsSettings settings) {
-        super(copyFrom.index(), copyFrom.field(), copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed, settings == null ? copyFrom.settings() : settings);
+    private HitsSampleImpl(HitsSampleImpl copyFrom) {
+        super(copyFrom.queryInfo(), copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
     }
 
     @Override
-    public HitsSampleImpl copy(HitsSettings settings) {
-        return new HitsSampleImpl(this, settings);
+    public HitsSampleImpl copy() {
+        return new HitsSampleImpl(this);
     }
 
     @Override

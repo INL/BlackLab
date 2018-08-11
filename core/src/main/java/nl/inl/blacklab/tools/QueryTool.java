@@ -79,7 +79,6 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
@@ -502,7 +501,7 @@ public class QueryTool {
             printProgramHead();
         }
 
-        contextSize = HitsSettings.DEFAULT_CONTEXT_SIZE;
+        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -539,7 +538,7 @@ public class QueryTool {
             this.err = out; // send errors to the same output writer in web mode
         }
 
-        contextSize = HitsSettings.DEFAULT_CONTEXT_SIZE;
+        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -1515,7 +1514,7 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, null);
+        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();

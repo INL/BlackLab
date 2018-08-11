@@ -37,7 +37,7 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
      * @param numberPerPage
      */
     DocResultsWindow(DocResults source, int first, int numberPerPage) {
-        super(source.index());
+        super(source.queryInfo());
         this.source = source;
         this.first = first;
         this.numberPerPage = numberPerPage;

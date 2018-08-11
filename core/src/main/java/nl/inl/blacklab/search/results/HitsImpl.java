@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ThreadPauser;
 
@@ -73,8 +71,8 @@ public class HitsImpl extends HitsAbstract {
      * @param hits the list of hits to wrap
      * @param settings settings, or null for default
      */
-    HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        super(index, field, settings, new MaxStats());
+    HitsImpl(QueryInfo queryInfo, List<Hit> hits) {
+        super(queryInfo);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         int prevDoc = -1;
@@ -98,8 +96,8 @@ public class HitsImpl extends HitsAbstract {
      * @param copyFrom the Hits object to copy
      * @param settings settings to override, or null to copy
      */
-    private HitsImpl(HitsImpl copyFrom, HitsSettings settings) {
-        super(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings, copyFrom.maxStats);
+    private HitsImpl(HitsImpl copyFrom) {
+        super(copyFrom.queryInfo);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -117,13 +115,8 @@ public class HitsImpl extends HitsAbstract {
     //--------------------------------------------------------------------
     
     @Override
-    public HitsImpl copy(HitsSettings settings) {
-        return new HitsImpl(this, settings);
-    }
-
-    @Override
-    public void copyMaxHitsRetrieved(Hits copyFrom) {
-        this.maxStats = copyFrom.maxStats();
+    public HitsImpl copy() {
+        return new HitsImpl(this);
     }
     
 
@@ -147,7 +140,7 @@ public class HitsImpl extends HitsAbstract {
             return this;
         }
 
-        HitsImpl hits = copy(null);
+        HitsImpl hits = copy();
         sortProp = sortProp.copyWithHits(hits);
         
         // Make sure we have a sort order array of sufficient size
@@ -318,16 +311,14 @@ public class HitsImpl extends HitsAbstract {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return Hits.emptyList(index, field, settings);
+            return Hits.emptyList(queryInfo);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        Hits result = Hits.fromList(index, field, hitsInDoc, settings);
-        result.copyMaxHitsRetrieved(this);
-        return result;
+        return Hits.fromList(queryInfo, hitsInDoc);
     }
 
 
@@ -391,7 +382,7 @@ public class HitsImpl extends HitsAbstract {
         } catch (InterruptedException e) {
             // Abort operation. Result may be wrong, but
             // interrupted results shouldn't be shown to user anyway.
-            maxStats.setHitsCountedExceededMaximum(); // indicate that we've stopped counting
+            maxStats().setHitsCountedExceededMaximum(); // indicate that we've stopped counting
             Thread.currentThread().interrupt();
         }
         return hits.size();

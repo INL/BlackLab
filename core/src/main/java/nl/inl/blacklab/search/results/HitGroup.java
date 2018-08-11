@@ -18,8 +18,6 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -28,9 +26,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
+    HitGroup(QueryInfo queryInfo, HitPropValue groupIdentity) {
         super(groupIdentity);
-        results = Hits.emptyList(index, field, settings);
+        results = Hits.emptyList(queryInfo);
     }
 
     /**
@@ -38,14 +36,12 @@ public class HitGroup extends Group {
      *
      * NOTE: the list is not copied!
      *
-     * @param index the searcher that produced the hits
-     * @param groupIdentity grouping identity of this group of hits
-     * @param field concordance field
+     * @param queryInfo query info
      * @param hits the hits
      */
-    HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+    HitGroup(QueryInfo queryInfo, HitPropValue groupIdentity, List<Hit> hits) {
         super(groupIdentity);
-        results = Hits.fromList(index, field, hits, settings);
+        results = Hits.fromList(queryInfo, hits);
     }
 
     public Hits getHits() {

@@ -54,7 +54,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.util.StringUtil;
 
 /**
@@ -456,7 +455,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        contentsField = new AnnotatedFieldWriter(HitsSettings.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
+        contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.getMainAnnotation();
         propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
