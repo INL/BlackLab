@@ -67,26 +67,6 @@ public interface Hits extends Iterable<Hit> {
 
     ThreadPauser threadPauser();
 
-//    public void pause(boolean pause) {
-//        threadPauser.pause(pause);
-//    }
-//
-//    public boolean isPaused() {
-//        return threadPauser.isPaused();
-//    }
-    
-    /**
-     * Return a copy of this Hits object.
-     *
-     * NOTE: Why not use clone()/Cloneable? See
-     * http://www.artima.com/intv/bloch13.html
-     * 
-     * @param settings settings to use, or null to copy settings too
-     *
-     * @return a copy of this Hits object
-     */
-    Hits copy();
-
     /**
      * Return the specified hit.
      *

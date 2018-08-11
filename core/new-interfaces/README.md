@@ -59,10 +59,7 @@ index
 + HitProperty.copy() netter implementeren
 + Til hits, capturedGruops, sortOrder op naar HitsAbstract
 
-- HitsAbstract.pause en isPaused inlinen
-
-- HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
-  HitsImpl -> HitsList
+- DocResults, Groups moeten ook threadPauser hebben
 
 - MaxStats -> HitsStats
   Voeg hieraan stats van de originele HitsFromQuery toe, zodat je toegang tot die stats hebt ook al heb je het origineel niet meer gecached.
@@ -70,8 +67,9 @@ index
 
   Hits-object moet ook wel een eigen hit/doc count kunnen hebben, los van QueryInfo. Voor HitsFromQuery geven die methods dezelfde waarde terug, voor andere Hits-objecten niet.
 
-- moet je captured groups altijd meekopieren als je bijv. een window maakt? Eigenlijk wel, hoewel je er maar een paar nodig hebt natuurlijk. Je kunt ook alleen diegene die je nodig hebt kopieren misschien, scheelt geheugen.
-  
+- HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
+  HitsImpl -> HitsList
+
 - (NB aborted attempt op stash en in ../tmp-bl-attempt/)
   Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?

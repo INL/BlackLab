@@ -60,20 +60,6 @@ public class HitsImpl extends HitsAbstract {
         threadPauser = new ThreadPauser();
     }
 
-    /**
-     * Construct a Hits object from an existing Hits object.
-     *
-     * The same hits list is reused. Context and sort order are not copied. All
-     * other fields are.
-     *
-     * @param copyFrom the Hits object to copy
-     * @param settings settings to override, or null to copy
-     */
-    private HitsImpl(HitsImpl copyFrom) {
-        super(copyFrom.queryInfo());
-        initCopy(copyFrom);
-    }
-
     /** Construct a copy of a hits object in sorted order.
      * 
      * @param hitsToSort the hits to sort
@@ -82,7 +68,16 @@ public class HitsImpl extends HitsAbstract {
      */
     HitsImpl(HitsAbstract hitsToSort, HitProperty sortProp, boolean reverseSort) {
         super(hitsToSort.queryInfo());
-        initCopy(hitsToSort);
+        try {
+            hitsToSort.ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // (should be detected by the client)
+        }
+        hits = hitsToSort.hits;
+        capturedGroups = hitsToSort.capturedGroups;
+        hitsCounted = hitsToSort.hitsCountedSoFar();
+        docsRetrieved = hitsToSort.docsProcessedSoFar();
+        docsCounted = hitsToSort.docsCountedSoFar();
         sortProp = sortProp.copyWithHits(this); // we need a HitProperty with the correct Hits object
         
         // Make sure we have a sort order array of sufficient size
@@ -110,27 +105,6 @@ public class HitsImpl extends HitsAbstract {
                 sortOrder[i] = sortOrder[n - i - 1];
             }
         }
-    }
-
-    private void initCopy(HitsAbstract copyFrom) {
-        try {
-            copyFrom.ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // (should be detected by the client)
-        }
-        hits = copyFrom.hits;
-        capturedGroups = copyFrom.capturedGroups;
-        hitsCounted = copyFrom.hitsCountedSoFar();
-        docsRetrieved = copyFrom.docsProcessedSoFar();
-        docsCounted = copyFrom.docsCountedSoFar();
-    }
-
-    // Copying hits objects (and their relevant settings)
-    //--------------------------------------------------------------------
-    
-    @Override
-    public HitsImpl copy() {
-        return new HitsImpl(this);
     }
     
 

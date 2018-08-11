@@ -45,16 +45,6 @@ public class MockHits extends HitsAbstract {
         this(index, field, new int[0], new int[0], new int[0]);
     }
 
-    public MockHits(MockHits o) {
-        this(o.queryInfo().index(), o.queryInfo().field(), o.doc.clone(), o.start.clone(), o.end.clone());
-    }
-
-    @Override
-    public MockHits copy() {
-        QueryInfo queryInfo = queryInfo();
-        return new MockHits(queryInfo.index(), queryInfo.field(), doc, start, end);
-    }
-
     @Override
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
         throw new UnsupportedOperationException();

@@ -64,16 +64,7 @@ public class HitsSampleImpl extends HitsSample {
             hitsCounted++;
         }
     }
-
-    private HitsSampleImpl(HitsSampleImpl copyFrom) {
-        super(copyFrom.queryInfo(), copyFrom.hits, copyFrom.ratioOfHitsToSelect, copyFrom.seed);
-    }
-
-    @Override
-    public HitsSampleImpl copy() {
-        return new HitsSampleImpl(this);
-    }
-
+    
     @Override
     public String toString() {
         return "HitsSampleImpl#" + resultsObjId() + " (source=" + source + ")";
