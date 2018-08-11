@@ -79,7 +79,7 @@ public class ResultsGrouper extends HitGroups {
         defaultConcField = hits.field();
         List<Annotation> requiredContext = criteria.needsContext();
         if (requiredContext != null) {
-            criteria.setContexts(new Contexts(hits, requiredContext));
+            criteria.setContexts(new Contexts(hits, requiredContext, criteria.needsContextSize()));
         }
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();

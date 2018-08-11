@@ -29,6 +29,9 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.util.ThreadPauser;
 
+/**
+ * A Hits object that is filled from a BLSpanQuery.
+ */
 public class HitsFromQuery extends HitsImpl {
 
     /**
@@ -171,7 +174,7 @@ public class HitsFromQuery extends HitsImpl {
         boolean readAllHits = number < 0;
         try {
             int maxHitsToCount = settings.maxHitsToCount();
-            int maxHitsToRetrieve = settings.maxHitsToProcess();
+            int maxHitsToProcess = settings.maxHitsToProcess();
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long
@@ -179,7 +182,7 @@ public class HitsFromQuery extends HitsImpl {
 
                 // Stop if we're at the maximum number of hits we want to count
                 if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
-                    maxHitsCounted = true;
+                    maxStats.setHitsCountedExceededMaximum();
                     break;
                 }
 
@@ -253,13 +256,14 @@ public class HitsFromQuery extends HitsImpl {
                 // want)
                 hitsCounted++;
                 int hitDoc = currentSourceSpans.docID() + currentDocBase;
+                boolean maxHitsProcessed = maxStats.hitsProcessedExceededMaximum();
                 if (hitDoc != previousHitDoc) {
                     docsCounted++;
-                    if (!maxHitsRetrieved)
+                    if (!maxHitsProcessed)
                         docsRetrieved++;
                     previousHitDoc = hitDoc;
                 }
-                if (!maxHitsRetrieved) {
+                if (!maxHitsProcessed) {
                     Hit hit = currentSourceSpans.getHit();
                     Hit offsetHit = HitStored.create(hit.doc() + currentDocBase, hit.start(), hit.end());
                     if (capturedGroups != null) {
@@ -268,11 +272,13 @@ public class HitsFromQuery extends HitsImpl {
                         capturedGroups.put(offsetHit, groups);
                     }
                     hits.add(offsetHit);
-                    maxHitsRetrieved = maxHitsToRetrieve >= 0 && hits.size() >= maxHitsToRetrieve;
+                    if (maxHitsToProcess >= 0 && hits.size() >= maxHitsToProcess) {
+                        maxStats.setHitsProcessedExceededMaximum();
+                    }
                 }
             }
         } catch (InterruptedException e) {
-            maxHitsRetrieved = maxHitsCounted = true; // we've stopped retrieving/counting
+            maxStats().setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -283,7 +289,7 @@ public class HitsFromQuery extends HitsImpl {
 
     @Override
     public boolean doneProcessingAndCounting() {
-        return sourceSpansFullyRead || maxHitsCounted;
+        return sourceSpansFullyRead || maxStats().hitsCountedExceededMaximum();
     }
 
 }

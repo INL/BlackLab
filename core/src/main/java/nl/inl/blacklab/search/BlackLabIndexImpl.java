@@ -310,6 +310,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
 
+    private int defaultContextSize;
+
     
     // Constructors
     //---------------------------------------------------------------
@@ -661,12 +663,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 if (!indexMode) {
                     if (!isEmptyIndex)
                         throw new BlackLabRuntimeException("Could not detect main contents field");
-                }
-            } else {
-                // See if we have a punctuation forward index. If we do,
-                // default to creating concordances using that.
-                if (mainContentsField.hasPunctuationForwardIndex()) {
-                    hitsSettings = hitsSettings.withConcordanceType(ConcordanceType.FORWARD_INDEX);
                 }
             }
 
@@ -1038,6 +1034,16 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         } else if (!indexLocation.equals(other.indexLocation))
             return false;
         return true;
+    }
+
+    @Override
+    public void setDefaultContextSize(int defaultContextSize) {
+        this.defaultContextSize = defaultContextSize;
+    }
+    
+    @Override
+    public int defaultContextSize() {
+        return defaultContextSize;
     }
     
 }

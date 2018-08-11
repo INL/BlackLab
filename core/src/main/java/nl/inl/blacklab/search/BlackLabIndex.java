@@ -340,4 +340,8 @@ public interface BlackLabIndex extends Closeable {
     @Override
     int hashCode();
 
+    void setDefaultContextSize(int i);
+
+    int defaultContextSize();
+
 }

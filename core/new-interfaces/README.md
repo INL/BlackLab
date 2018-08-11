@@ -52,6 +52,12 @@ index
 + ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
 + HitsAbstract implementaties van group, filter, etc. gegeven
 
+- Kijk of je concsType en desiredContextSize uit HitsSettings kan verwijderen, zodat
+  alleen invariante waardes overblijven en je index, field en maxStats (object is invariant, waardes niet)
+  er aan toe kunt voegen.
+
+- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
+
 - HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
   
 - HitsImpl: hit fetching extracten naar apart class..?

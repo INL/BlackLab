@@ -30,6 +30,7 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -196,7 +197,7 @@ public class Example {
      */
     static void displayConcordances(Hits hits) {
         // Loop over the hits and display.
-        Concordances concs = hits.concordances(-1);
+        Concordances concs = hits.concordances(5, ConcordanceType.FORWARD_INDEX);
         for (Hit hit : hits) {
             Concordance conc = concs.get(hit);
             // Strip out XML tags for display.

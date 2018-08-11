@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsSettings;
+import nl.inl.blacklab.search.results.MaxStats;
 
 public class MockHits extends HitsAbstract {
 
@@ -23,7 +24,7 @@ public class MockHits extends HitsAbstract {
     private int numberOfDocs;
 
     public MockHits(BlackLabIndex index, AnnotatedField field, int[] doc, int[] start, int[] end) {
-        super(index, field, null);
+        super(index, field, null, new MaxStats());
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -52,16 +53,6 @@ public class MockHits extends HitsAbstract {
     @Override
     public MockHits copy(HitsSettings settings) {
         return new MockHits(index(), field(), doc, start, end);
-    }
-
-    @Override
-    public boolean hitsProcessedExceededMaximum() {
-        return false;
-    }
-
-    @Override
-    public boolean hitsCountedExceededMaximum() {
-        return false;
     }
 
     @Override
@@ -130,7 +121,7 @@ public class MockHits extends HitsAbstract {
     }
 
     @Override
-    public TermFrequencyList collocations(Annotation propName, QueryExecutionContext ctx, boolean sort) {
+    public TermFrequencyList collocations(int contextSize, Annotation propName, QueryExecutionContext ctx, boolean sort) {
         throw new UnsupportedOperationException();
     }
 
@@ -192,6 +183,11 @@ public class MockHits extends HitsAbstract {
     @Override
     protected int indexOf(Hit hit) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public MaxStats maxStats() {
+        return MaxStats.NOT_EXCEEDED;
     }
 
 }

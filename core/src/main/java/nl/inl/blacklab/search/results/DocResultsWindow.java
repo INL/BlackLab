@@ -42,15 +42,15 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
         this.first = first;
         this.numberPerPage = numberPerPage;
 
-        boolean emptyResultSet = !source.sizeAtLeast(1);
+        boolean emptyResultSet = !source.docsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
-                (!emptyResultSet && !source.sizeAtLeast(first + 1))) {
+                (!emptyResultSet && !source.docsProcessedAtLeast(first + 1))) {
             throw new BlackLabRuntimeException("First hit out of range");
         }
 
         // Auto-clamp number
         int number = numberPerPage;
-        if (!source.sizeAtLeast(first + number))
+        if (!source.docsProcessedAtLeast(first + number))
             number = source.size() - first;
 
         // Make sublist (don't use sublist because the backing list may change if not
@@ -63,7 +63,7 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
 
     @Override
     public boolean hasNext() {
-        return source.sizeAtLeast(first + numberPerPage + 1);
+        return source.docsProcessedAtLeast(first + numberPerPage + 1);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
 
     @Override
     public int sourceTotalSize() {
-        return source.totalSize();
+        return source.docsCountedTotal();
     }
 
     @Override

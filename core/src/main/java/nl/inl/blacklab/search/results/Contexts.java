@@ -104,8 +104,9 @@ public class Contexts {
      * 
      * @param hits hits to find contexts for
      * @param annotations the field and properties to use for the context
+     * @param contextSize how large the contexts need to be
      */
-    public Contexts(Hits hits, List<Annotation> annotations) {
+    public Contexts(Hits hits, List<Annotation> annotations, int contextSize) {
         hits.size(); // make sure all hits have been read
 
         List<ForwardIndex> fis = new ArrayList<>();
@@ -131,8 +132,7 @@ public class Contexts {
                     }
 
                     // Find context for the hits in the current document
-                    int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc,
-                            hits.settings().contextSize(), fis);
+                    int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
 
                     // Copy the contexts from the temporary Hits object to this one
                     for (int i = 0; i < hitsInSameDoc.size(); i++) {
@@ -149,7 +149,7 @@ public class Contexts {
         }
         if (!hitsInSameDoc.isEmpty()) {
             // Find context for the hits in the current document
-            int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, hits.settings().contextSize(), fis);
+            int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
 
             // Copy the contexts from the temporary Hits object to this one
             for (int i = 0; i < hitsInSameDoc.size(); i++) {

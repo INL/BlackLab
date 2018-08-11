@@ -12,24 +12,15 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ThreadPauser;
 
+/**
+ * A basic Hits object implemented with a list.
+ */
 public class HitsImpl extends HitsAbstract {
     
     // Instance variables
     //--------------------------------------------------------------------
 
     // Fetching information
-
-    /**
-     * If true, we've stopped retrieving hits because there are more than the
-     * maximum we've set.
-     */
-    protected boolean maxHitsRetrieved = false;
-
-    /**
-     * If true, we've stopped counting hits because there are more than the maximum
-     * we've set.
-     */
-    protected boolean maxHitsCounted = false;
 
     /**
      * The number of hits we've seen and counted so far. May be more than the number
@@ -83,7 +74,7 @@ public class HitsImpl extends HitsAbstract {
      * @param settings settings, or null for default
      */
     HitsImpl(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        super(index, field, settings);
+        super(index, field, settings, new MaxStats());
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
         int prevDoc = -1;
@@ -108,7 +99,7 @@ public class HitsImpl extends HitsAbstract {
      * @param settings settings to override, or null to copy
      */
     private HitsImpl(HitsImpl copyFrom, HitsSettings settings) {
-        super(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings);
+        super(copyFrom.index, copyFrom.field, settings == null ? copyFrom.settings : settings, copyFrom.maxStats);
         try {
             copyFrom.ensureAllHitsRead();
         } catch (InterruptedException e) {
@@ -119,7 +110,6 @@ public class HitsImpl extends HitsAbstract {
         hitsCounted = copyFrom.hitsCountedSoFar();
         docsRetrieved = copyFrom.docsProcessedSoFar();
         docsCounted = copyFrom.docsCountedSoFar();
-        copyMaxHitsRetrieved(copyFrom);
     }
 
     
@@ -133,8 +123,7 @@ public class HitsImpl extends HitsAbstract {
 
     @Override
     public void copyMaxHitsRetrieved(Hits copyFrom) {
-        this.maxHitsRetrieved = copyFrom.hitsProcessedExceededMaximum();
-        this.maxHitsCounted = copyFrom.hitsCountedExceededMaximum();
+        this.maxStats = copyFrom.maxStats();
     }
     
 
@@ -173,7 +162,7 @@ public class HitsImpl extends HitsAbstract {
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = sortProp.needsContext();
         if (requiredContext != null)
-            sortProp.setContexts(new Contexts(hits, requiredContext));
+            sortProp.setContexts(new Contexts(hits, requiredContext, sortProp.needsContextSize()));
 
         // Perform the actual sort.
         Arrays.sort(hits.sortOrder, sortProp);
@@ -336,7 +325,7 @@ public class HitsImpl extends HitsAbstract {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        HitsImpl result = Hits.fromList(index, field, hitsInDoc, settings);
+        Hits result = Hits.fromList(index, field, hitsInDoc, settings);
         result.copyMaxHitsRetrieved(this);
         return result;
     }
@@ -402,7 +391,7 @@ public class HitsImpl extends HitsAbstract {
         } catch (InterruptedException e) {
             // Abort operation. Result may be wrong, but
             // interrupted results shouldn't be shown to user anyway.
-            maxHitsCounted = true; // indicate that we've stopped counting
+            maxStats.setHitsCountedExceededMaximum(); // indicate that we've stopped counting
             Thread.currentThread().interrupt();
         }
         return hits.size();
@@ -467,16 +456,6 @@ public class HitsImpl extends HitsAbstract {
     @Override
     public boolean doneProcessingAndCounting() {
         return true;
-    }
-
-    @Override
-    public boolean hitsProcessedExceededMaximum() {
-        return maxHitsRetrieved;
-    }
-
-    @Override
-    public boolean hitsCountedExceededMaximum() {
-        return maxHitsCounted;
     }
 
     @Override

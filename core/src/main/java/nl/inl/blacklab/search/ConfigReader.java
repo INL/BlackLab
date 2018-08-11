@@ -204,7 +204,7 @@ public class ConfigReader extends YamlJsonReader {
                 readCollator(e, index);
                 break;
             case "contextSize":
-                index.setHitsSettings(hitsSett.withContextSize(integer(e)));
+                index.setDefaultContextSize(integer(e));
                 break;
             case "maxHitsToRetrieve":
                 index.setHitsSettings(hitsSett.withMaxHitsToRetrieve(integer(e)));

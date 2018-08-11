@@ -22,7 +22,7 @@ public abstract class HitsSample extends HitsImpl {
      *            randomly chosen seed
      * @return the sample
      */
-    public static HitsSample fromHits(Hits hits, float ratio, long seed) {
+    public static Hits fromHits(Hits hits, float ratio, long seed) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsSampleImpl(hits, ratio, seed);

@@ -117,12 +117,9 @@ public class JobHits extends JobWithHits {
 
             // Set the max retrieve/count value
             MaxSettings maxSettings = jobDesc.getMaxSettings();
-            ContextSettings contextSettings = jobDesc.getContextSettings();
             HitsSettings hitsSettings = blIndex.hitsSettings()
                     .withMaxHitsToRetrieve(maxSettings.maxRetrieve())
-                    .withMaxHitsToCount(maxSettings.maxCount())
-                    .withConcordanceType(contextSettings.concType())
-                    .withContextSize(contextSettings.size());
+                    .withMaxHitsToCount(maxSettings.maxCount());
             hits = blIndex.find(textPattern, blIndex.mainAnnotatedField(), filter, hitsSettings);
 
         } catch (WildcardTermTooBroad e) {

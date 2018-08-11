@@ -8,6 +8,7 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Prioritizable;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -27,7 +28,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    static HitsFromQuery fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
+    static Hits fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
         return new HitsFromQuery(index, index.annotatedField(query.getField()), query, settings);
     }
 
@@ -42,7 +43,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @param settings search settings, or null for default
      * @return hits found
      */
-    static HitsImpl fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+    static Hits fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         return new HitsImpl(index, field, hits, settings);
     }
 
@@ -54,7 +55,7 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @param settings search settings, or null for default
      * @return hits found
      */
-    static HitsImpl emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+    static Hits emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
         return Hits.fromList(index, field, (List<Hit>) null, settings);
     }
 
@@ -271,20 +272,6 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
     int hitsCountedTotal();
 
     /**
-     * Did we stop retrieving hits because we reached the maximum?
-     * 
-     * @return true if we reached the maximum and stopped retrieving hits
-     */
-    boolean hitsProcessedExceededMaximum();
-
-    /**
-     * Did we stop counting hits because we reached the maximum?
-     * 
-     * @return true if we reached the maximum and stopped counting hits
-     */
-    boolean hitsCountedExceededMaximum();
-
-    /**
      * Return the number of documents retrieved so far.
      *
      * If you're retrieving hits in a background thread, call this method from
@@ -328,6 +315,13 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      * @return true iff all hits have been retrieved/counted.
      */
     boolean doneProcessingAndCounting();
+
+    /**
+     * Get whether or not the process/count limits were reached for the original query.
+     * 
+     * @return max stats
+     */
+    MaxStats maxStats();
 
     /**
      * Get the captured group information, if any.
@@ -380,17 +374,30 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
      */
     HitsWindow window(int first, int windowSize, HitsSettings settings);
 
-    TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort);
+    /**
+     * Count occurrences of context words around hit.
+     *
+     * Uses the default contents field for collocations, and the default sensitivity
+     * settings.
+     * 
+     * @param contextSize how many words around the hits to use
+     * @param annotation what annotation to get collocations for
+     * @param ctx query execution context; contains sensitivity setting
+     * @param sort sort the resulting collocations by descending frequency?
+     * @return the frequency of each occurring token
+     */
+    TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort);
 
     /**
      * Count occurrences of context words around hit.
      *
      * Uses the default contents field for collocations, and the default sensitivity
      * settings.
-     *
+     * 
+     * @param contextSize how many words around the hits to use
      * @return the frequency of each occurring token
      */
-    TermFrequencyList collocations();
+    TermFrequencyList collocations(int contextSize);
 
     /**
      * Return a per-document view of these hits.
@@ -410,8 +417,33 @@ public interface Hits extends Iterable<Hit>, Prioritizable {
 
     HitsSettings settings();
 
-    Concordances concordances(int contextSize);
+    /**
+     * Create concordances from the forward index or content store.
+     * 
+     * @param type where to create concordances from
+     * @param contextSize desired context size
+     * @return concordances
+     */
+    Concordances concordances(int contextSize, ConcordanceType type);
 
+    /**
+     * Create concordances from the forward index.
+     * 
+     * @param contextSize desired context size
+     * @return concordances
+     */
+    default Concordances concordances(int contextSize) {
+        return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
+    }
+    
+    /**
+     * Create KWICs from the forward index.
+     * 
+     * KWIC = KeyWord In Context, essentially snippets around all the hits. 
+     * 
+     * @param contextSize desired context size
+     * @return KWICs
+     */
     Kwics kwics(int contextSize);
 
 }

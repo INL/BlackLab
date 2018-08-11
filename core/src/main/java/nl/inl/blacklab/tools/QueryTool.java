@@ -311,6 +311,9 @@ public class QueryTool {
 
     private AnnotatedField contentsField;
 
+    /** Types of concordances we want to show */
+    private ConcordanceType concType = ConcordanceType.FORWARD_INDEX;
+
     /**
      * The main program.
      *
@@ -499,7 +502,7 @@ public class QueryTool {
             printProgramHead();
         }
 
-        contextSize = index.hitsSettings().contextSize();
+        contextSize = HitsSettings.DEFAULT_CONTEXT_SIZE;
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -536,7 +539,7 @@ public class QueryTool {
             this.err = out; // send errors to the same output writer in web mode
         }
 
-        contextSize = index.hitsSettings().contextSize();
+        contextSize = HitsSettings.DEFAULT_CONTEXT_SIZE;
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -698,10 +701,7 @@ public class QueryTool {
                 showResultsPage();
             } else if (lcased.startsWith("context ")) {
                 contextSize = parseInt(lcased.substring(8), 0);
-                if (hits != null && hits.settings().contextSize() != contextSize) {
-                    hits = hits.copy(hits.settings().withContextSize(contextSize));
-                    collocations = null;
-                }
+                collocations = null;
                 showResultsPage();
             } else if (lcased.startsWith("snippet ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -710,7 +710,7 @@ public class QueryTool {
                     errprintln("Hit number out of range.");
                 } else {
                     HitsWindow singleHit = currentHitSet.window(hitId, 1);
-                    Concordances concordances = singleHit.concordances(snippetSize);
+                    Concordances concordances = singleHit.concordances(snippetSize, concType);
                     Hit h = currentHitSet.get(hitId);
                     Concordance conc = concordances.get(h);
                     String[] concParts;
@@ -758,8 +758,7 @@ public class QueryTool {
                 boolean b = false;
                 if (v.equals("on") || v.equals("yes") || v.equals("true"))
                     b = true;
-                index.setHitsSettings(index.hitsSettings()
-                        .withConcordanceType(b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE));
+                concType = b ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
             } else if (lcased.startsWith("stripxml ")) {
                 String v = lcased.substring(9);
                 boolean b = false;
@@ -1392,7 +1391,7 @@ public class QueryTool {
                 collocAnnotation = field.annotations().main();
             }
 
-            collocations = hits.collocations(collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
+            collocations = hits.collocations(contextSize, collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
         }
 
         int i = 0;
@@ -1461,7 +1460,7 @@ public class QueryTool {
         // Summarize
         String msg;
         if (determineTotalNumberOfHits) {
-            msg = docs.totalSize() + " docs";
+            msg = docs.docsCountedTotal() + " docs";
         } else {
             msg = docs.size() + " docs";
         }
@@ -1516,13 +1515,12 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsSettings settings = hitsToShow.settings().withContextSize(contextSize);
-        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, settings);
+        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage, null);
 
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
-        Concordances concordances = window.concordances(-1);
+        Concordances concordances = window.concordances(contextSize, concType);
         for (Hit hit : window) {
             Concordance conc = concordances.get(hit);
 
@@ -1573,8 +1571,8 @@ public class QueryTool {
         } else {
             int numberRetrieved = hitsToShow.size();
             String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.docsProcessedTotal() + " documents";
-            if (hitsToShow.hitsProcessedExceededMaximum()) {
-                if (hitsToShow.hitsCountedExceededMaximum()) {
+            if (hitsToShow.maxStats().hitsProcessedExceededMaximum()) {
+                if (hitsToShow.maxStats().hitsCountedExceededMaximum()) {
                     msg = hitsInDocs + " retrieved, more than " + hitsToShow.hitsCountedTotal() + " ("
                             + hitsToShow.docsCountedTotal() + " docs) total";
                 } else {

@@ -34,13 +34,15 @@ public class Concordances {
     /**
      * @param hits
      */
-    Concordances(Hits hits, int contextSize) {
-        if (hits.settings().concordanceType() == ConcordanceType.FORWARD_INDEX) {
+    Concordances(Hits hits, ConcordanceType type, int contextSize) {
+        if (contextSize < 0)
+            throw new IllegalArgumentException("contextSize cannot be negative");
+        if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
         }
     
         // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(hits, contextSize < 0 ? hits.settings().contextSize() : contextSize, hits.field());
+        concordances = retrieveConcordancesFromContentStore(hits, contextSize, hits.field());
     }
 
     /**

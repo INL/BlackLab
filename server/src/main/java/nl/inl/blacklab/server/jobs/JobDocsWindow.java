@@ -59,7 +59,7 @@ public class JobDocsWindow extends JobWithDocs {
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
         requestedWindowSize = windowSett.size();
-        if (!sourceResults.sizeAtLeast(first + 1)) {
+        if (!sourceResults.docsProcessedAtLeast(first + 1)) {
             debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
             first = 0;
         }

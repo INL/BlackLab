@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -11,6 +10,7 @@ import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -34,92 +34,47 @@ public abstract class HitsAbstract implements Hits {
     protected BlackLabIndex index;
 
     /**
-     * Settings for retrieving hits.
-     */
-    protected HitsSettings settings;
-    /**
      * The field these hits came from (will also be used as concordance field)
      */
     protected AnnotatedField field;
+    
+    /**
+     * Whether or not we exceed the max. hits to process/count.
+     */
+    protected MaxStats maxStats;
+
+    /**
+     * Settings for retrieving hits.
+     */
+    protected HitsSettings settings;
+    
     /**
      * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
     protected ThreadPauser threadPauser;
 
-    public HitsAbstract(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+    public HitsAbstract(BlackLabIndex index, AnnotatedField field, HitsSettings settings, MaxStats maxStats) {
         this.index = index;
         this.field = field;
         this.settings = settings == null ? index.hitsSettings() : settings;
+        this.maxStats = maxStats;
         threadPauser = new ThreadPauser();
     }
 
-    @Override
-    public abstract int hitsProcessedSoFar();
-
-    @Override
-    public abstract boolean hitsProcessedAtLeast(int lowerBound);
-
-    @Override
-    public abstract int hitsProcessedTotal();
-
-    @Override
-    public abstract int hitsCountedSoFar();
-
-    @Override
-    public abstract int hitsCountedTotal();
-
-    @Override
-    public abstract int docsProcessedSoFar();
-
-    @Override
-    public abstract int docsProcessedTotal();
-
-    @Override
-    public abstract int docsCountedSoFar();
-
-    @Override
-    public abstract int docsCountedTotal();
-
-    @Override
-    public abstract boolean doneProcessingAndCounting();
-
-    @Override
-    public abstract boolean hitsCountedExceededMaximum();
-
-    @Override
-    public abstract boolean hitsProcessedExceededMaximum();
-
+    public MaxStats maxStats() {
+        return maxStats;
+    }
+    
     @Override
     public int size() {
         return hitsProcessedTotal();
     }
 
     @Override
-    public abstract CapturedGroups capturedGroups();
-
-    @Override
-    public abstract boolean hasCapturedGroups();
-
-    @Override
-    public abstract Hits getHitsInDoc(int docid);
-
-    @Override
-    public abstract Hit get(int i);
-
-    @Override
-    public abstract Hit getByOriginalOrder(int i);
-
-    @Override
-    public abstract Iterator<Hit> iterator();
-
-    @Override
-    public abstract String toString();
-
-    @Override
     public Hits filteredBy(HitProperty property, HitPropValue value) {
         List<Annotation> requiredContext = property.needsContext();
-        property.setContexts(new Contexts(this, requiredContext));
+        property.setContexts(new Contexts(this, requiredContext, property.needsContextSize()));
 
         List<Hit> filtered = new ArrayList<>();
         for (int i = 0; i < size(); i++) {
@@ -142,13 +97,13 @@ public abstract class HitsAbstract implements Hits {
     }
 
     @Override
-    public TermFrequencyList collocations() {
-        return TermFrequencyList.collocations(this, null, null, true);
+    public TermFrequencyList collocations(int contextSize) {
+        return TermFrequencyList.collocations(contextSize, this, null, null, true);
     }
 
     @Override
-    public synchronized TermFrequencyList collocations(Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        return TermFrequencyList.collocations(this, annotation, ctx, sort);
+    public synchronized TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+        return TermFrequencyList.collocations(contextSize, this, annotation, ctx, sort);
     }
     
     @Override
@@ -170,18 +125,6 @@ public abstract class HitsAbstract implements Hits {
     }
 
     protected abstract int indexOf(Hit hit);
-
-    @Override
-    public abstract Hits sortedBy(HitProperty sortProp, boolean reverseSort);
-
-    @Override
-    public abstract Hits sortedBy(final HitProperty sortProp);
-
-    @Override
-    public abstract void copyMaxHitsRetrieved(Hits copyFrom);
-
-    @Override
-    public abstract HitsAbstract copy(HitsSettings settings);
 
     @Override
     public int resultsObjId() {
@@ -219,8 +162,8 @@ public abstract class HitsAbstract implements Hits {
     }
 
     @Override
-    public Concordances concordances(int contextSize) {
-        return new Concordances(this, contextSize);
+    public Concordances concordances(int contextSize, ConcordanceType type) {
+        return new Concordances(this, type, contextSize);
     }
 
     @Override

@@ -23,7 +23,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
@@ -124,8 +123,7 @@ public class TestIndex {
             }
 
             // Create the BlackLab index object
-            HitsSettings settings = HitsSettings.defaults().withContextSize(1);
-            index = BlackLabIndex.open(indexDir, settings);
+            index = BlackLabIndex.open(indexDir, null);
             word = index.mainAnnotatedField().annotations().get("word");
         } catch (DocumentFormatException | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -221,7 +219,7 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
-        Kwics kwics = hits.kwics(-1);
+        Kwics kwics = hits.kwics(1);
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtil.join(kwic.getLeft(word), " ");

@@ -78,7 +78,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 // don't set docs yet - only return docs if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(),
+                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().originalHits(),
                             viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
@@ -114,7 +114,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-            if (!docs.sizeAtLeast(first))
+            if (!docs.docsProcessedAtLeast(first))
                 first = 0;
 
             int number = searchMan.config().maxExportPageSize();
@@ -144,7 +144,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             for (DocGroup group : groups) {
                 row.clear();
                 row.addAll(group.getIdentity().getPropValues());
-                row.add(Integer.toString(group.getResults().countSoFarDocsCounted()));
+                row.add(Integer.toString(group.getResults().docsCountedSoFar()));
                 printer.printRecord(row);
             }
 

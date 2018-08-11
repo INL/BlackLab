@@ -44,6 +44,28 @@ import nl.inl.util.ReverseComparator;
  */
 public class DocResults implements Iterable<DocResult>, Prioritizable {
     /**
+     * Don't use this; use Hits.perDocResults().
+     *
+     * @param blIndex searcher object
+     * @param hits hits to get per-doc result for
+     * @return the per-document results.
+     */
+    public static DocResults fromHits(BlackLabIndex blIndex, Hits hits) {
+        return new DocResults(blIndex, hits);
+    }
+
+    /**
+     * Don't use this, use Searcher.queryDocuments().
+     *
+     * @param blIndex searcher object
+     * @param query query to execute
+     * @return per-document results
+     */
+    public static DocResults fromQuery(BlackLabIndex blIndex, Query query) {
+        return new DocResults(blIndex, query);
+    }
+
+    /**
      * (Part of) our document results
      */
     protected List<DocResult> results = new ArrayList<>();
@@ -75,17 +97,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * Hits), or -1 for no partial doc.
      */
     private int partialDocId = -1;
-
-    /**
-     * Don't use this; use Hits.perDocResults().
-     *
-     * @param blIndex searcher object
-     * @param hits hits to get per-doc result for
-     * @return the per-document results.
-     */
-    public static DocResults fromHits(BlackLabIndex blIndex, Hits hits) {
-        return new DocResults(blIndex, hits);
-    }
 
     boolean sourceHitsFullyRead() {
         if (sourceHits == null)
@@ -144,17 +155,6 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-    }
-
-    /**
-     * Don't use this, use Searcher.queryDocuments().
-     *
-     * @param blIndex searcher object
-     * @param query query to execute
-     * @return per-document results
-     */
-    public static DocResults fromQuery(BlackLabIndex blIndex, Query query) {
-        return new DocResults(blIndex, query);
     }
 
     /**
@@ -249,7 +249,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      *
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
-    public boolean sizeAtLeast(int lowerBound) {
+    public boolean docsProcessedAtLeast(int lowerBound) {
         try {
             // Try to fetch at least this many hits
             ensureResultsRead(lowerBound);
@@ -263,6 +263,8 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
 
     /**
      * Get the number of documents in this results set.
+     * 
+     * For this class, this is an alias for {@link #docsProcessedTotal()}.
      *
      * Note that this returns the number of document results available; if there
      * were so many hits that not all were retrieved (call maxHitsRetrieved()), you
@@ -271,6 +273,19 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * @return the number of documents.
      */
     public int size() {
+        return docsProcessedTotal();
+    }
+    
+    /**
+     * Get the number of documents in this results set.
+     *
+     * Note that this returns the number of document results available; if there
+     * were so many hits that not all were retrieved (call maxHitsRetrieved()), you
+     * can find the grand total of documents by calling totalSize().
+     *
+     * @return the number of documents.
+     */
+    public int docsProcessedTotal() {
         // Make sure we've collected all results and return the size of our result list.
         try {
             ensureAllResultsRead();
@@ -287,7 +302,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      *
      * @return the total number of documents.
      */
-    public int totalSize() {
+    public int docsCountedTotal() {
         if (sourceHits == null)
             return size(); // no hits, just documents
         return sourceHits.docsCountedTotal();
@@ -393,10 +408,10 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * 
      * @return true if we reached the maximum and stopped retrieving hits
      */
-    public boolean maxHitsRetrieved() {
+    public boolean hitsProcessedExceededMaximum() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.hitsProcessedExceededMaximum();
+        return sourceHits.maxStats().hitsProcessedExceededMaximum();
     }
 
     /**
@@ -404,10 +419,10 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
      * 
      * @return true if we reached the maximum and stopped counting hits
      */
-    public boolean maxHitsCounted() {
+    public boolean hitsCountedExceededMaximum() {
         if (sourceHits == null)
             return false; // no hits, only docs
-        return sourceHits.hitsCountedExceededMaximum();
+        return sourceHits.maxStats().hitsCountedExceededMaximum();
     }
 
     /**
@@ -494,7 +509,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return new DocResultsWindow(this, first, number);
     }
 
-    public Hits getOriginalHits() {
+    public Hits originalHits() {
         return sourceHits;
     }
 
@@ -548,11 +563,11 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
         return sourceHits.isPaused();
     }
 
-    public int countSoFarDocsCounted() {
+    public int docsCountedSoFar() {
         return sourceHits == null ? results.size() : sourceHits.docsCountedSoFar();
     }
 
-    public int countSoFarDocsRetrieved() {
+    public int docsProcessedSoFar() {
         return sourceHits == null ? results.size() : sourceHits.docsProcessedSoFar();
     }
 }

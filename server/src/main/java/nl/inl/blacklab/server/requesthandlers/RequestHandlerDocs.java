@@ -9,6 +9,7 @@ import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -24,6 +25,7 @@ import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
 import nl.inl.blacklab.server.jobs.JobDocsTotal;
@@ -74,7 +76,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 DocGroups groups = searchGrouped.getGroups();
 
                 HitPropValue viewGroupVal = null;
-                viewGroupVal = HitPropValue.deserialize(groups.getOriginalDocResults().getOriginalHits(), viewGroup);
+                viewGroupVal = HitPropValue.deserialize(groups.getOriginalDocResults().originalHits(), viewGroup);
                 if (viewGroupVal == null)
                     return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                             "Parameter 'viewgroup' has an illegal value: " + viewGroup);
@@ -178,17 +180,17 @@ public class RequestHandlerDocs extends RequestHandler {
                 Hits hits2 = result.getHits(5); // TODO: make num. snippets configurable
                 if (hits2.hitsProcessedAtLeast(1)) {
                     ds.startEntry("snippets").startList();
-                    boolean wantConcordances = searchParam.getString("usecontent").equals("orig");
+                    ContextSettings contextSettings = searchParam.getContextSettings();
                     Concordances concordances = null;
                     Kwics kwics = null;
-                    if (wantConcordances)
-                        concordances = hits2.concordances(-1);
+                    if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
+                        concordances = hits2.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
                     else
                         kwics = hits2.kwics(-1);
                     for (Hit hit : hits2) {
                         // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                         ds.startItem("snippet").startMap();
-                        if (wantConcordances) {
+                        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                             // Add concordance from original XML
                             Concordance c = concordances.get(hit);
                             ds.startEntry("left").plain(c.left()).endEntry()

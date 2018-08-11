@@ -587,7 +587,7 @@ public abstract class RequestHandler {
             ResultsWindow window) throws BlsException {
 
         if (hits == null && docResults != null) {
-            hits = docResults.getOriginalHits();
+            hits = docResults.originalHits();
             totalHits = hits;
         }
 
@@ -613,8 +613,8 @@ public abstract class RequestHandler {
             // We have a hits object we can query for this information
             ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
                     .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
-                    .entry("stoppedCountingHits", totalHits.hitsCountedExceededMaximum())
-                    .entry("stoppedRetrievingHits", totalHits.hitsProcessedExceededMaximum());
+                    .entry("stoppedCountingHits", totalHits.maxStats().hitsCountedExceededMaximum())
+                    .entry("stoppedRetrievingHits", totalHits.maxStats().hitsProcessedExceededMaximum());
             ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
                     .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
         } else if (isViewDocGroup) {
@@ -635,8 +635,8 @@ public abstract class RequestHandler {
                     .entry("numberOfDocsRetrieved", docResults.size());
         } else {
             // Documents-only search (no hits). Get the info from the DocResults.
-            ds.entry("numberOfDocs", docResults.countSoFarDocsCounted())
-                    .entry("numberOfDocsRetrieved", docResults.countSoFarDocsRetrieved());
+            ds.entry("numberOfDocs", docResults.docsCountedSoFar())
+                    .entry("numberOfDocsRetrieved", docResults.docsProcessedSoFar());
         }
 
         // Information about grouping operation

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.search.ConcordanceType;
-
 public final class HitsSettings {
     
     public static HitsSettings defaults() {
@@ -18,9 +16,7 @@ public final class HitsSettings {
     /** Annotated field name for default contents field */
     public static final String DEFAULT_CONTENTS_FIELD_NAME = "contents";
     
-    private static final ConcordanceType DEFAULT_CONC_TYPE = ConcordanceType.CONTENT_STORE;
-    
-    private static final int DEFAULT_CONTEXT_SIZE = 5;
+    public static final int DEFAULT_CONTEXT_SIZE = 5;
 
     /**
      * Stop retrieving hits after this number. (NO_LIMIT = -1 = don't stop
@@ -33,12 +29,6 @@ public final class HitsSettings {
      */
     private int maxHitsToCount;
 
-    /** What to use to make concordances: forward index or content store */
-    private ConcordanceType concsType;
-
-    /** Our desired context size */
-    private int desiredContextSize;
-
     /**
      * Get a (non-frozen) copy of a HitsSettings instance.
      * 
@@ -47,8 +37,6 @@ public final class HitsSettings {
     private HitsSettings(HitsSettings copyFrom) {
         maxHitsToProcess = copyFrom.maxHitsToProcess();
         maxHitsToCount = copyFrom.maxHitsToCount();
-        concsType = copyFrom.concordanceType();
-        desiredContextSize = copyFrom.contextSize();
     }
 
     /**
@@ -58,8 +46,6 @@ public final class HitsSettings {
     private HitsSettings() {
         maxHitsToProcess = DEFAULT_MAX_RETRIEVE;
         maxHitsToCount = DEFAULT_MAX_COUNT;
-        concsType = DEFAULT_CONC_TYPE;
-        desiredContextSize = DEFAULT_CONTEXT_SIZE;
     }
     
     private HitsSettings copy() {
@@ -74,21 +60,6 @@ public final class HitsSettings {
     /** @return the maximum number of hits to count. */
     public int maxHitsToCount() {
         return maxHitsToCount;
-    }
-
-    /**
-     * Are we making concordances using the forward index (true) or using the
-     * content store (false)? Forward index is more efficient but returns
-     * concordances that don't include XML tags.
-     *
-     * @return true iff we use the forward index for making concordances.
-     */
-    public ConcordanceType concordanceType() {
-        return concsType;
-    }
-
-    public int contextSize() {
-        return desiredContextSize;
     }
     
     
@@ -116,34 +87,6 @@ public final class HitsSettings {
     public HitsSettings withMaxHitsToCount(int n) {
         HitsSettings x = copy();
         x.maxHitsToCount = n;
-        return x;
-    }
-
-    /**
-     * Get settings with different context size.
-     * 
-     * @param n context size 
-     * @return settings object
-     */
-    public HitsSettings withContextSize(int n) {
-        HitsSettings x = copy();
-        x.desiredContextSize = n;
-        return x;
-    }
-    
-    /**
-     * Do we want to retrieve concordances from the forward index or from the
-     * content store? Forward index is more efficient but doesn't exactly reproduces
-     * the original XML.
-     *
-     * The default type can be set by calling Searcher.setDefaultConcordanceType().
-     *
-     * @param type the type of concordances to make
-     * @return settings object
-     */
-    public HitsSettings withConcordanceType(ConcordanceType type) {
-        HitsSettings x = copy();
-        x.concsType = type;
         return x;
     }
 

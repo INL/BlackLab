@@ -33,10 +33,12 @@ public class Kwics {
      * @param hits
      */
     Kwics(Hits hits, int contextSize) {
+        if (contextSize < 0)
+            throw new IllegalArgumentException("contextSize cannot be negative");
         this.hits = hits;
     
         // Get the concordances
-        kwics = retrieveKwics(contextSize < 0 ? hits.settings().contextSize() : contextSize, hits.field());
+        kwics = retrieveKwics(contextSize, hits.field());
     }
 
     /**

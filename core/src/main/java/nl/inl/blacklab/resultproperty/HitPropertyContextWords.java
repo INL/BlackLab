@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSettings;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -144,7 +145,7 @@ public class HitPropertyContextWords extends HitProperty {
         if (words == null) {
             // "entire hit text"
             this.words = new ArrayList<>();
-            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, hits.settings().contextSize()));
+            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, HitsSettings.DEFAULT_CONTEXT_SIZE));
         } else {
             // Determine the maximum length of each part, by limiting it to the
             // maximum possible given the anchor point, direction and first word.
@@ -163,7 +164,7 @@ public class HitPropertyContextWords extends HitProperty {
                         break;
                     default:
                         // Limit to length of left or right context.
-                        part.maxLength = Math.min(part.maxLength, hits.settings().contextSize() - part.firstWord);
+                        part.maxLength = Math.min(part.maxLength, HitsSettings.DEFAULT_CONTEXT_SIZE - part.firstWord);
                         break;
                     }
                     if (part.maxLength < 0)

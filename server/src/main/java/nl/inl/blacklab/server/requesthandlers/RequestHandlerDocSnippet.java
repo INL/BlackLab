@@ -15,8 +15,6 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsImpl;
-import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -82,9 +80,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
         hit = Hit.create(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        ConcordanceType concType = origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
-        HitsSettings settings = blIndex.hitsSettings().withConcordanceType(concType);
-        HitsImpl hits = Hits.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), settings);
+        Hits hits = Hits.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), null);
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }
@@ -103,7 +99,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      *            just returns whole fragment
      * @param docPid if not null, include doc pid, hit start and end info
      */
-    public static void getHitOrFragmentInfo(DataStream ds, HitsImpl hits, Hit hit, int wordsAroundHit,
+    public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, int wordsAroundHit,
             boolean useOrigContent, boolean isFragment, String docPid) {
         ds.startMap();
         if (docPid != null) {
@@ -116,7 +112,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         try {
             HitsWindow singleHit = hits.window(hit);
             if (useOrigContent) {
-                Concordances concordances = singleHit.concordances(wordsAroundHit);
+                Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
                 Concordance c = concordances.get(hit);
                 if (!isFragment) {
                     ds.startEntry("left").plain(c.left()).endEntry()

@@ -17,6 +17,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
@@ -35,6 +36,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobHitsGrouped;
 import nl.inl.blacklab.server.jobs.JobHitsTotal;
@@ -198,11 +200,11 @@ public class RequestHandlerHits extends RequestHandler {
 
             ds.startEntry("hits").startList();
             Map<Integer, String> pids = new HashMap<>();
-            boolean useOrigContent = searchParam.getString("usecontent").equals("orig");
+            ContextSettings contextSettings = searchParam.getContextSettings(); //getString("usecontent").equals("orig");
             Concordances concordances = null;
             Kwics kwics = null;
-            if (useOrigContent)
-                concordances = window.concordances(-1);
+            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
+                concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else
                 kwics = window.kwics(-1);
             for (Hit hit : window) {
@@ -223,7 +225,7 @@ public class RequestHandlerHits extends RequestHandler {
                 ds.entry("start", hit.start());
                 ds.entry("end", hit.end());
 
-                if (useOrigContent) {
+                if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                     // Add concordance from original XML
                     Concordance c = concordances.get(hit);
                     ds.startEntry("left").plain(c.left()).endEntry()
@@ -284,10 +286,8 @@ public class RequestHandlerHits extends RequestHandler {
 
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
         int contextSize = searchParam.getInteger("wordsaroundhit");
-        if (originalHits.settings().contextSize() != contextSize)
-            originalHits = originalHits.copy(originalHits.settings().withContextSize(contextSize));
         ds.startMap().startEntry("tokenFrequencies").startMap();
-        TermFrequencyList tfl = originalHits.collocations();
+        TermFrequencyList tfl = originalHits.collocations(contextSize);
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }

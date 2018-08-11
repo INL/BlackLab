@@ -22,8 +22,8 @@ public abstract class JobWithDocs extends Job {
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        boolean countUnknown = docResults == null || docResults.getOriginalHits() == null;
-        int countDocsRetrieved = countUnknown ? -1 : docResults.getOriginalHits().docsProcessedSoFar();
+        boolean countUnknown = docResults == null || docResults.originalHits() == null;
+        int countDocsRetrieved = countUnknown ? -1 : docResults.originalHits().docsProcessedSoFar();
         ds.entry("countDocsRetrieved", countDocsRetrieved);
     }
 

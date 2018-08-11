@@ -31,6 +31,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
     /**
      * Count occurrences of context words around hit.
      * 
+     * @param contextSize how many words around hits to use 
      * @param hits hits to get collocations for 
      * @param annotation annotation to use for the collocations, or null if default
      * @param ctx query execution context, containing the sensitivity settings
@@ -38,7 +39,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
      *
      * @return the frequency of each occurring token
      */
-    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+    public synchronized static TermFrequencyList collocations(int contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().annotations().main();
@@ -48,7 +49,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
 //            ctx = searcher.defaultExecutionContext(settings().concordanceField());
 //        ctx = ctx.withAnnotation(annotation);
         
-        Contexts contexts = new Contexts(hits, Arrays.asList(annotation));
+        Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < contexts.size(); j++) {
             int[] context = contexts.getContext(j);
