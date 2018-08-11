@@ -26,7 +26,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.AbstractSet;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -367,7 +366,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
     }
 
     private void sortDeletedTocEntries() {
-        Collections.sort(deletedTocEntries, new Comparator<TocEntry>() {
+        deletedTocEntries.sort(new Comparator<TocEntry>() {
             @Override
             public int compare(TocEntry o1, TocEntry o2) {
                 return o1.length - o2.length;
@@ -721,7 +720,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
      */
     private void mergeAdjacentDeletedEntries() {
         // Sort by offset, so we can find adjacent entries
-        Collections.sort(deletedTocEntries);
+        deletedTocEntries.sort(Comparator.naturalOrder());
 
         // Find and merge adjacent entries
         TocEntry prev = deletedTocEntries.get(0);

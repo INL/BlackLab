@@ -11,7 +11,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -284,7 +284,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 navpop();
             }
-            Collections.sort(tagsAndPunct);
+            tagsAndPunct.sort(Comparator.naturalOrder());
             Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
             InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
 

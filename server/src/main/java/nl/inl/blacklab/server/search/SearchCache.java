@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -314,7 +314,7 @@ public class SearchCache {
         // Sort the searches based on descending "worthiness"
         for (Job s : searches)
             s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
-        Collections.sort(searches);
+        searches.sort(Comparator.naturalOrder());
 
         //------------------
         // STEP 1: remove least worthy, finished searches from cache

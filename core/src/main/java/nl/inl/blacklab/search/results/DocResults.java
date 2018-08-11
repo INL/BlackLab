@@ -221,7 +221,7 @@ public class DocResults implements Iterable<DocResult>, Prioritizable {
             // Thread was interrupted; just sort the results we have.
             // Let caller detect and deal with interruption.
         }
-        Collections.sort(results, comparator);
+        results.sort(comparator);
     }
 
     /**

@@ -16,7 +16,7 @@
 package nl.inl.util;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -527,7 +527,7 @@ public class XmlHighlighter {
         // 2. Put the positions of our hits in the same list and sort it
         if (hits != null)
             addHitPositionsToTagList(tags, hits, offset, partialContent.length());
-        Collections.sort(tags);
+        tags.sort(Comparator.naturalOrder());
 
         // Add all the highlight tags in the list into the content,
         // taking care to mainting well-formedness around existing tags
@@ -559,7 +559,7 @@ public class XmlHighlighter {
     public String cutAroundTags(String elementContent, int stopAfterChars) {
         // Find all tags in the content and put their positions in a list
         List<TagLocation> tags = makeTagList(elementContent);
-        Collections.sort(tags);
+        tags.sort(Comparator.naturalOrder());
 
         // Add all the highlight tags in the list into the content,
         // taking care to mainting well-formedness around existing tags

@@ -22,8 +22,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
@@ -379,7 +379,7 @@ public class IndexManager {
         availableIndices.addAll(getAvailablePrivateIndices(userId));
         availableIndices.addAll(getAvailablePublicIndices());
 
-        Collections.sort(availableIndices, Index.COMPARATOR);
+        availableIndices.sort(Index.COMPARATOR);
         return availableIndices;
     }
 

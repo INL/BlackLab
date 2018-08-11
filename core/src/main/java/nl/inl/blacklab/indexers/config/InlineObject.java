@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +89,7 @@ class InlineObject implements Comparable<InlineObject> {
         l.add(new InlineObject("zwets", 1, InlineObjectType.OPEN_TAG, null));
         l.add(new InlineObject("zwets", 2, InlineObjectType.CLOSE_TAG, null));
         l.add(new InlineObject("bla", 3, InlineObjectType.CLOSE_TAG, null));
-        Collections.sort(l);
+        l.sort(Comparator.naturalOrder());
         System.out.println(l);
     }
 

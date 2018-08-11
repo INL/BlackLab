@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -88,7 +87,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     }
 
     protected void sortHits(Comparator<Hit> hitComparator) {
-        Collections.sort(bucket, hitComparator);
+        bucket.sort(hitComparator);
     }
 
     @Override

@@ -3,7 +3,7 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -133,7 +133,7 @@ public class ZipHandleManager {
 
         // If too many zips are open, close ones that haven't been used the longest
         if (openZips.size() > maxOpenZipFiles) {
-            Collections.sort(zl);
+            zl.sort(Comparator.naturalOrder());
             it = openZips.values().iterator();
             while (openZips.size() > maxOpenZipFiles && it.hasNext()) {
                 ZipHandle zh = it.next();

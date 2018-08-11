@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -175,7 +174,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
             return null;
         
         // Sort (so we get titleLevel1 not titleLevel2 for example)
-        Collections.sort(fieldsFound, (a, b) -> a.name().compareTo(b.name()) );
+        fieldsFound.sort( (a, b) -> a.name().compareTo(b.name()) );
         return fieldsFound.get(0);
     }
 

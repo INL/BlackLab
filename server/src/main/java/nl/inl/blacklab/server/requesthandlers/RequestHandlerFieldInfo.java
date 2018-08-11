@@ -5,7 +5,6 @@ import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -142,7 +141,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             }
             List<String> sortedLeft = new ArrayList<>(valuesLeft);
             final Collator defaultCollator = getValueSortCollator();
-            Collections.sort(sortedLeft, new Comparator<String>() {
+            sortedLeft.sort(new Comparator<String>() {
                 @Override
                 public int compare(String o1, String o2) {
                     String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;

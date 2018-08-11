@@ -47,7 +47,10 @@ struct
 index
 + separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
 + introduce Doc; replace (most) docIds with it
-  
++ save() / isImmutable() toch voorlopig weg
++ get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
++ ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
+
   
   
 - HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
@@ -62,11 +65,7 @@ index
   
   Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien.
  
-- ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
 
-- get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
-
-- save() / isImmutable() toch voorlopig weg?
 
 - HitProperty vergelijkt Hits en niet Hit-original-indexes zoals nu.
 - Contexts.get(Hit) om de context van een hit te krijgen.

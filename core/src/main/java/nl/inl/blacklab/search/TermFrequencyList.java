@@ -2,7 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -109,7 +109,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
             list.add(new TermFrequency(e.getKey(), e.getValue()));
         }
         if (sort)
-            Collections.sort(list);
+            list.sort(Comparator.naturalOrder());
     }
 
     TermFrequencyList(List<TermFrequency> list) {

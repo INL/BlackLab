@@ -2,7 +2,7 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -120,7 +120,7 @@ public class BatchContentStore {
             if (!cs.isDeleted(i))
                 docIds.add(i);
         }
-        Collections.sort(docIds);
+        docIds.sort(Comparator.naturalOrder());
 
         Timer t = new Timer();
         int docPos = first;

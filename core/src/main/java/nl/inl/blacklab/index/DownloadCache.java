@@ -7,7 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -157,7 +157,7 @@ public class DownloadCache {
 
         // If the cache is too big, remove entries that haven't been used the longest
         if (downloadFolderSize > maxDownloadFolderSize) {
-            Collections.sort(dl);
+            dl.sort(Comparator.naturalOrder());
             it = downloadedFiles.values().iterator();
             while (downloadFolderSize > maxDownloadFolderSize && it.hasNext()) {
                 Download download = it.next();
