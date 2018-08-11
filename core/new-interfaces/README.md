@@ -48,9 +48,12 @@ index
 + separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
 + introduce Doc; replace (most) docIds with it
   
-(NB aborted attempt op stash)
   
-- Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
+  
+- HitsImpl: hit fetching extracten naar apart class..?
+  
+- (NB aborted attempt op stash en in ../tmp-bl-attempt/)
+  Kunnen we niet beter HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
   Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
   een lijst met Hit+Context objects te instantieren en die te sorteren.
