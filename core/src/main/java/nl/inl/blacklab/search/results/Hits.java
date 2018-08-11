@@ -1,7 +1,9 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.Iterator;
+import java.util.List;
 
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -10,9 +12,50 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.ThreadPauser;
 
 public interface Hits extends Iterable<Hit>, Prioritizable {
+
+    /**
+     * Construct a Hits object from a SpanQuery.
+     *
+     * @param index the index object
+     * @param query the query to execute to get the hits
+     * @param settings search settings
+     * @return hits found
+     * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
+     */
+    static HitsFromQuery fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
+        return new HitsFromQuery(index, index.annotatedField(query.getField()), query, settings);
+    }
+
+    /**
+     * Make a wrapper Hits object for a list of Hit objects.
+     *
+     * Does not copy the list, but reuses it.
+     *
+     * @param index the index object
+     * @param field field our hits are from
+     * @param hits the list of hits to wrap, or null for empty Hits object
+     * @param settings search settings, or null for default
+     * @return hits found
+     */
+    static HitsImpl fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
+        return new HitsImpl(index, field, hits, settings);
+    }
+
+    /**
+     * Construct an empty Hits object.
+     *
+     * @param index the index object
+     * @param field field our hits are from
+     * @param settings search settings, or null for default
+     * @return hits found
+     */
+    static HitsImpl emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
+        return Hits.fromList(index, field, (List<Hit>) null, settings);
+    }
 
     // Inherited from Results
     //--------------------------------------------------------------------

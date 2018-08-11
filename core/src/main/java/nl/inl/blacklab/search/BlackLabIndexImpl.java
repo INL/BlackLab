@@ -69,7 +69,6 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsFromQuery;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.LuceneUtil;
@@ -474,13 +473,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public Hits find(BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
-        return HitsFromQuery.fromSpanQuery(this, query, settings);
+        return Hits.fromSpanQuery(this, query, settings);
     }
 
     @Override
     public Hits find(TextPattern pattern, AnnotatedField field, Query filter, HitsSettings settings)
             throws WildcardTermTooBroad, RegexpTooLarge {
-        return HitsFromQuery.fromSpanQuery(this, createSpanQuery(pattern, field, filter), settings);
+        return Hits.fromSpanQuery(this, createSpanQuery(pattern, field, filter), settings);
     }
 
     @Override

@@ -10,7 +10,6 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -106,7 +105,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        Hits hitsInDoc = hits == null ? HitsImpl.emptyList(blIndex, blIndex.mainAnnotatedField(), null) : hits.getHitsInDoc(docId);
+        Hits hitsInDoc = hits == null ? Hits.emptyList(blIndex, blIndex.mainAnnotatedField(), null) : hits.getHitsInDoc(docId);
         content = doc.highlightContent(hitsInDoc, startAtWord, endAtWord);
 
         boolean outputXmlDeclaration = true;

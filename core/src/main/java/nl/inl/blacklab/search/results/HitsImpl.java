@@ -18,37 +18,6 @@ import nl.inl.util.ThreadPauser;
 
 public class HitsImpl extends HitsAbstract {
     
-    // Factory methods
-    //--------------------------------------------------------------------
-
-    /**
-     * Construct an empty Hits object.
-     *
-     * @param index the index object
-     * @param field field our hits are from
-     * @param settings search settings, or null for default
-     * @return hits found
-     */
-    public static HitsImpl emptyList(BlackLabIndex index, AnnotatedField field, HitsSettings settings) {
-        return fromList(index, field, (List<Hit>) null, settings);
-    }
-
-    /**
-     * Make a wrapper Hits object for a list of Hit objects.
-     *
-     * Does not copy the list, but reuses it.
-     *
-     * @param index the index object
-     * @param field field our hits are from
-     * @param hits the list of hits to wrap, or null for empty Hits object
-     * @param settings search settings, or null for default
-     * @return hits found
-     */
-    public static HitsImpl fromList(BlackLabIndex index, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
-        return new HitsImpl(index, field, hits, settings);
-    }
-
-    
     // Instance variables
     //--------------------------------------------------------------------
 
@@ -411,14 +380,14 @@ public class HitsImpl extends HitsAbstract {
             // client should detect thread was interrupted if it
             // wants to use background threads.
             Thread.currentThread().interrupt();
-            return HitsImpl.emptyList(index, field, settings);
+            return Hits.emptyList(index, field, settings);
         }
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : hits) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        HitsImpl result = HitsImpl.fromList(index, field, hitsInDoc, settings);
+        HitsImpl result = Hits.fromList(index, field, hitsInDoc, settings);
         result.copyMaxHitsRetrieved(this);
         return result;
     }

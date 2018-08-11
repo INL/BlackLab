@@ -32,21 +32,6 @@ import nl.inl.util.ThreadPauser;
 public class HitsFromQuery extends HitsImpl {
 
     /**
-     * Construct a Hits object from a SpanQuery.
-     *
-     * @param index the index object
-     * @param query the query to execute to get the hits
-     * @param settings search settings
-     * @return hits found
-     * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
-     */
-    public static HitsFromQuery fromSpanQuery(BlackLabIndex index, BLSpanQuery query, HitsSettings settings) throws WildcardTermTooBroad {
-        return new HitsFromQuery(index, index.annotatedField(query.getField()), query, settings);
-    }
-    
-    // Low-level Lucene hit fetching
-
-    /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
      * the current one's done.
      */

@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsImpl;
 import nl.inl.blacklab.search.results.HitsSettings;
 import nl.inl.blacklab.search.results.HitsWindow;
@@ -81,7 +82,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         boolean origContent = searchParam.getString("usecontent").equals("orig");
         ConcordanceType concType = origContent ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
         HitsSettings settings = blIndex.hitsSettings().withConcordanceType(concType);
-        HitsImpl hits = HitsImpl.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), settings);
+        HitsImpl hits = Hits.fromList(blIndex, blIndex.mainAnnotatedField(), Arrays.asList(hit), settings);
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }

@@ -30,7 +30,7 @@ public class HitGroup extends Group {
 
     HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, HitsSettings settings) {
         super(groupIdentity);
-        results = HitsImpl.emptyList(index, field, settings);
+        results = Hits.emptyList(index, field, settings);
     }
 
     /**
@@ -45,7 +45,7 @@ public class HitGroup extends Group {
      */
     HitGroup(BlackLabIndex index, HitPropValue groupIdentity, AnnotatedField field, List<Hit> hits, HitsSettings settings) {
         super(groupIdentity);
-        results = HitsImpl.fromList(index, field, hits, settings);
+        results = Hits.fromList(index, field, hits, settings);
     }
 
     public Hits getHits() {

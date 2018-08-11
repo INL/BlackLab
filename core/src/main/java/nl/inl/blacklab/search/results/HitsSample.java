@@ -58,7 +58,7 @@ public abstract class HitsSample extends HitsImpl {
     public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, float ratio, long seed, HitsSettings settings) throws WildcardTermTooBroad {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(HitsFromQuery.fromSpanQuery(index, query, settings), ratio, seed);
+        return new HitsSampleImpl(Hits.fromSpanQuery(index, query, settings), ratio, seed);
     }
 
     /**
@@ -76,7 +76,7 @@ public abstract class HitsSample extends HitsImpl {
     public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, int number, long seed, HitsSettings settings) throws WildcardTermTooBroad {
         // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(HitsFromQuery.fromSpanQuery(index, query, settings), number, seed);
+        return new HitsSampleImpl(Hits.fromSpanQuery(index, query, settings), number, seed);
     }
 
     protected static long getRandomSeed() {
