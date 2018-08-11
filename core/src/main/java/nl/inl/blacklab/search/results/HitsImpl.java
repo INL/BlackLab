@@ -179,7 +179,7 @@ public class HitsImpl extends HitsAbstract {
     /**
      * Document the previous hit was in, so we can count separate documents.
      */
-    protected int previousHitDoc = -1;
+    private int previousHitDoc = -1;
 
 
     // Constructors

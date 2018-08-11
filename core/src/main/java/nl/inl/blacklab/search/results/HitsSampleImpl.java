@@ -56,12 +56,13 @@ public class HitsSampleImpl extends HitsSample {
         }
 
         // Add the hits in order of their index
+        int previousDoc = -1;
         for (Integer hitIndex : chosenHitIndices) {
             Hit hit = selectFrom.get(hitIndex);
-            if (hit.doc() != previousHitDoc) {
+            if (hit.doc() != previousDoc) {
                 docsRetrieved++;
                 docsCounted++;
-                previousHitDoc = hit.doc();
+                previousDoc = hit.doc();
             }
             this.hits.add(hit);
             hitsCounted++;

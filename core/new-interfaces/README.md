@@ -51,8 +51,6 @@ index
 + get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
 + ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
 
-  
-  
 - HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
   
 - HitsImpl: hit fetching extracten naar apart class..?
@@ -64,9 +62,9 @@ index
   een lijst met Hit+Context objects te instantieren en die te sorteren.
   
   Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien.
- 
 
 
+OUD IDEE:
 - HitProperty vergelijkt Hits en niet Hit-original-indexes zoals nu.
 - Contexts.get(Hit) om de context van een hit te krijgen.
 - Hit krijgt een extra veld "originalIndex". Dit wordt eenmalig gezet.
@@ -75,6 +73,7 @@ index
   * hoogste originalIndex veel groter (bijv 4x of meer) dan aantal hits: hash-based, zodat lookup intern in een Map oid gedaan wordt.
     trager maar geheugen-efficienter, en voor kleinere sets geeft het niet zo.
     threshold kan best hoog liggen trouwens, want we bewaren Contexts tegenwoordig niet meer, dus ze nemen slechts tijdelijk "veel" geheugen in. Aan de andere kant kan cache-efficientie een overweging zijn als het array erg sparsely populated wordt.
+
 
 - Hits.copyMaxHitsRetrieved: kunnen we deze stats niet samen met field in een soort "query info / state" objectje vatten wat we kopieren (of refereren)?
   
