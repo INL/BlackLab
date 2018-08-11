@@ -50,6 +50,7 @@ index
 + save() / isImmutable() toch voorlopig weg
 + get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
 + ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
++ HitsAbstract implementaties van group, filter, etc. gegeven
 
 - HitsStats class zodat je kunt linken naar de stats van de originele Spans zonder die in het geheugen te hoeven houden?
   
@@ -61,7 +62,7 @@ index
   Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
   een lijst met Hit+Context objects te instantieren en die te sorteren.
   
-  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien.
+  Dan kunnen we toch sortOrder een List<Hit> maken, met de voordelen van dien (o.a. sortedBy() kan naar HitsAbstract)
 
 
 OUD IDEE:

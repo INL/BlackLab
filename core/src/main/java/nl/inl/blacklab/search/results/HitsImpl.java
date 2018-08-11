@@ -62,6 +62,11 @@ public class HitsImpl extends HitsAbstract {
      * Note that, after initial creation of the Hits object, sortOrder is immutable.
      */
     private Integer[] sortOrder;
+
+    /**
+     * Our captured groups, or null if we have none.
+     */
+    CapturedGroupsImpl capturedGroups;
     
 
     // Constructors
@@ -340,8 +345,6 @@ public class HitsImpl extends HitsAbstract {
     // Captured groups
     //--------------------------------------------------------------------
     
-    CapturedGroupsImpl capturedGroups;
-    
     public CapturedGroups capturedGroups() {
         return capturedGroups;
     }
@@ -354,6 +357,12 @@ public class HitsImpl extends HitsAbstract {
     // Hits fetching
     //--------------------------------------------------------------------
 
+    /**
+     * Ensure that we have read all hits.
+     *
+     * @throws InterruptedException if the thread was interrupted during this
+     *             operation
+     */
     protected void ensureAllHitsRead() throws InterruptedException {
         ensureHitsRead(-1);
     }

@@ -48,24 +48,6 @@ public abstract class HitsSample extends HitsImpl {
      *
      * @param index searcher object
      * @param query query to sample
-     * @param ratio ratio of hits to select, from 0 (none) to 1 (all)
-     * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
-     *            randomly chosen seed
-     * @param settings settings to use, or null for defaults
-     * @return the sample
-     * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
-     */
-    public static HitsSample fromSpanQuery(BlackLabIndex index, BLSpanQuery query, float ratio, long seed, HitsSettings settings) throws WildcardTermTooBroad {
-        // We can later provide an optimized version that uses a HitsSampleSpans or somesuch
-        // (this class could save memory by only storing the hits we're interested in)
-        return new HitsSampleImpl(Hits.fromSpanQuery(index, query, settings), ratio, seed);
-    }
-
-    /**
-     * Take a sample of hits by executing a SpanQuery and sampling the results.
-     *
-     * @param index searcher object
-     * @param query query to sample
      * @param number number of hits to select
      * @param seed seed for the random generator, or HitsSample.RANDOM_SEED to use a
      *            randomly chosen seed
