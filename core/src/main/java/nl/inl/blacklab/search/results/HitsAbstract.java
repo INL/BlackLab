@@ -9,21 +9,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ResultNotFound;
-import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.ThreadPauser;
 
 public abstract class HitsAbstract implements Hits {
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
-
-    private static Hits sorted(HitsAbstract hits, HitProperty sortProp, boolean reverseSort) {
-        return new HitsList(hits, sortProp, reverseSort);
-    }
 
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;
@@ -360,48 +352,9 @@ public abstract class HitsAbstract implements Hits {
 
     @Override
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        return sorted(this, sortProp, reverseSort);
+        return new HitsList(this, sortProp, reverseSort);
     }
     
-    @Override
-    public Hits filteredBy(HitProperty property, HitPropValue value) {
-        property = property.copyWithHits(this); // we need a HitProperty with the correct Hits object
-        List<Annotation> requiredContext = property.needsContext();
-        property.setContexts(new Contexts(this, requiredContext, property.needsContextSize()));
-
-        List<Hit> filtered = new ArrayList<>();
-        for (int i = 0; i < size(); i++) {
-            if (property.get(i).equals(value))
-                filtered.add(get(i));
-        }
-        return Hits.fromList(queryInfo, filtered);
-    }
-
-    @Override
-    public HitGroups groupedBy(final HitProperty criteria) {
-        return ResultsGrouper.fromHits(this, criteria);
-    }
-
-    @Override
-    public DocResults perDocResults() {
-        return DocResults.fromHits(queryInfo(), this);
-    }
-
-    @Override
-    public TermFrequencyList collocations(int contextSize) {
-        return TermFrequencyList.collocations(contextSize, this, null, null, true);
-    }
-
-    @Override
-    public synchronized TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        return TermFrequencyList.collocations(contextSize, this, annotation, ctx, sort);
-    }
-    
-    @Override
-    public Hits window(int first, int windowSize) {
-        return new HitsList(this, first, windowSize);
-    }
-
     @Override
     public Hits window(Hit hit) throws ResultNotFound {
         int i = indexOf(hit);

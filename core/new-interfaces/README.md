@@ -65,6 +65,9 @@ index
 + eliminate HitsWindow, have Hits contain optional window stats
 + eliminate HitsSample, have Hits contain optional sample settings
 
+- Filter hits zou lazy moeten zijn
+  filtering now cancels sort, because HitProperty uses original position. Solve after HitProperty-refactor?
+
 - HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
   Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door

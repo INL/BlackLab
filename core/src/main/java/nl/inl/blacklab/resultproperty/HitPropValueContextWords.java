@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
@@ -22,6 +23,12 @@ public class HitPropValueContextWords extends HitPropValueContext {
         this.valueTokenId = value;
         this.sensitive = sensitive;
         valueSortOrder = new int[value.length];
+        terms.toSortOrder(value, valueSortOrder, sensitive);
+    }
+
+    public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, boolean sensitive, int[] value) {
+        super(index, annotation);
+        this.valueSortOrder = new int[value.length];
         terms.toSortOrder(value, valueSortOrder, sensitive);
     }
 

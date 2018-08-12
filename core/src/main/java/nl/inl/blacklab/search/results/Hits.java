@@ -120,8 +120,10 @@ public interface Hits extends Iterable<Hit> {
      * @param criteria the hit property to group on
      * @return a HitGroups object representing the grouped hits
      */
-    HitGroups groupedBy(HitProperty criteria);
-
+    default HitGroups groupedBy(final HitProperty criteria) {
+        return ResultsGrouper.fromHits(this, criteria);
+    }
+    
     /**
      * Select only the hits where the specified property has the specified value.
      * 
@@ -129,7 +131,9 @@ public interface Hits extends Iterable<Hit> {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    Hits filteredBy(HitProperty property, HitPropValue value);
+    default Hits filteredBy(HitProperty property, HitPropValue value) {
+        return new HitsFiltered(this, property, value);
+    }
 
     /**
      * Get a sorted copy of these hits.
@@ -313,7 +317,9 @@ public interface Hits extends Iterable<Hit> {
      * @param windowSize size of the window
      * @return the window
      */
-    Hits window(int first, int windowSize);
+    default Hits window(int first, int windowSize) {
+        return new HitsList(this, first, windowSize);
+    }
 
     /**
      * Count occurrences of context words around hit.
@@ -327,7 +333,9 @@ public interface Hits extends Iterable<Hit> {
      * @param sort sort the resulting collocations by descending frequency?
      * @return the frequency of each occurring token
      */
-    TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort);
+    default TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+        return TermFrequencyList.collocations(contextSize, this, annotation, ctx, sort);
+    }
 
     /**
      * Count occurrences of context words around hit.
@@ -338,14 +346,18 @@ public interface Hits extends Iterable<Hit> {
      * @param contextSize how many words around the hits to use
      * @return the frequency of each occurring token
      */
-    TermFrequencyList collocations(int contextSize);
+    default TermFrequencyList collocations(int contextSize) {
+        return TermFrequencyList.collocations(contextSize, this, null, null, true);
+    }
 
     /**
      * Return a per-document view of these hits.
      *
      * @return the per-document view.
      */
-    DocResults perDocResults();
+    default DocResults perDocResults() {
+        return DocResults.fromHits(queryInfo(), this);
+    }
 
     /**
      * Create concordances from the forward index or content store.

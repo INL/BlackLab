@@ -27,7 +27,6 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.util.ThreadPauser;
 
 /**
  * A Hits object that is filled from a BLSpanQuery.
@@ -120,7 +119,6 @@ public class HitsFromQuery extends HitsAbstract {
                 logger.debug("Hits(): createWeight");
             weight = spanQuery.createWeight(index.searcher(), false);
             weight.extractTerms(terms);
-            threadPauser = new ThreadPauser();
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): extract terms");
             for (Term term : terms) {
@@ -177,14 +175,13 @@ public class HitsFromQuery extends HitsAbstract {
             if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
                 return;
         }
-
-        boolean readAllHits = number < 0;
         try {
+            boolean readAllHits = number < 0;
             int maxHitsToCount = maxSettings.maxHitsToCount();
             int maxHitsToProcess = maxSettings.maxHitsToProcess();
             while (readAllHits || hits.size() < number) {
 
-                // Don't hog the CPU, don't take too long
+                // Pause if asked
                 threadPauser.waitIfPaused();
 
                 // Stop if we're at the maximum number of hits we want to count

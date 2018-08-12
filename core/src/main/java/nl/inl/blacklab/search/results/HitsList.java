@@ -191,7 +191,7 @@ public class HitsList extends HitsAbstract {
             }
         }
     }
-    
+
     @Override
     public String toString() {
         return "HitsList#" + hitsObjId + " (hits.size()=" + hits.size() + "; isWindow=" + isWindow() + ")";

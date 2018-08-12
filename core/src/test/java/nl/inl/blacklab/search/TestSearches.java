@@ -12,10 +12,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 
@@ -319,6 +323,21 @@ public class TestSearches {
         HitProperty left = new HitPropertyLeftContext(testIndex.index(), false);
         HitProperty sortBy = new HitPropertyMultiple(hit, left);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
+    }
+
+    @Test
+    public void testFilter() {
+        expected = Arrays.asList(
+                "noot [noot aap aap] aap"
+                );
+        // If left side of implication is always false, right side is ignored
+        BlackLabIndex index = testIndex.index();
+        HitProperty prop = new HitPropertyHitText(index, false);
+        Annotation annotation = index.mainAnnotatedField().annotations().main();
+        Terms terms = index.forwardIndex(annotation).terms();
+        int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
+        HitPropValue value = new HitPropValueContextWords(index, annotation, false, words);
+        Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 
     // Backreferences not implemented yet
