@@ -17,6 +17,13 @@ public abstract class HitsAbstract implements Hits {
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
+    /**
+     * Minimum number of hits to fetch in an ensureHitsRead() block.
+     * 
+     * This prevents locking again and again for a single hit when iterating.
+     */
+    protected static final int FETCH_HITS_MIN = 20;
+
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;
 

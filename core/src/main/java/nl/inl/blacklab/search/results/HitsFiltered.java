@@ -65,6 +65,11 @@ public class HitsFiltered extends HitsAbstract {
         // Prevent locking when not required
         if (doneFiltering || number >= 0 && hits.size() >= number)
             return;
+        
+        // At least one hit needs to be fetched.
+        // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
+        if (number >= 0 && number - hits.size() < FETCH_HITS_MIN)
+            number = hits.size() + FETCH_HITS_MIN;
 
         while (!ensureHitsReadLock.tryLock()) {
             /*

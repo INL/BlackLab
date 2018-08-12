@@ -165,6 +165,11 @@ public class HitsFromQuery extends HitsAbstract {
         if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
             return;
 
+        // At least one hit needs to be fetched.
+        // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
+        if (number >= 0 && number - hits.size() < FETCH_HITS_MIN)
+            number = hits.size() + FETCH_HITS_MIN;
+
         while (!ensureHitsReadLock.tryLock()) {
             /*
              * Another thread is already counting, we don't want to straight up block until it's done
