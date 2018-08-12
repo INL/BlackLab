@@ -60,18 +60,17 @@ index
 + Til hits, capturedGruops, sortOrder op naar HitsAbstract
 + HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
   HitsImpl -> HitsList
++ HitsSample moet SampleSettings class gebruiken
 
 
-- HitsWindow moet geen reference naar source vasthouden!
-  HitsSample moet SampleSettings class gebruiken
+- Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
+  die BLS aan het eind opvangt en er een nette boodschap voor toont.
+
+- encapsulate WindowStats
   eliminate HitsWindow, have Hits contain optional window stats..?
   eliminate HitsSample, have Hits contain optional sample settings..?
 
-- MaxStats -> HitsStats
-  Voeg hieraan stats van de originele HitsFromQuery toe, zodat je toegang tot die stats hebt ook al heb je het origineel niet meer gecached.
-  HitsFromQuery is de enige die die stats mag updaten. Apart writer-interface voor maken, zodat je 'm voor de rest read-only maakt.
-
-  Hits-object moet ook wel een eigen hit/doc count kunnen hebben, los van QueryInfo. Voor HitsFromQuery geven die methods dezelfde waarde terug, voor andere Hits-objecten niet.
+- Moet QueryInfo maxSettings/maxStats bevatten? Of moet een client gewoon een count-query runnen (die geen hits opslaat) als die totaalgegevens wil?
 
 - HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?

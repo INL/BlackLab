@@ -476,16 +476,14 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public Hits find(BLSpanQuery query, MaxSettings settings) throws WildcardTermTooBroad {
-        QueryInfo queryInfo = QueryInfo.create(this, annotatedField(query.getField()), settings == null ? maxSettings() : settings);
-        return Hits.fromSpanQuery(queryInfo, query);
+        QueryInfo queryInfo = QueryInfo.create(this, annotatedField(query.getField()));
+        return Hits.fromSpanQuery(queryInfo, query, settings == null ? maxSettings() : settings);
     }
 
     @Override
     public Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings)
             throws WildcardTermTooBroad, RegexpTooLarge {
-        BLSpanQuery query = createSpanQuery(pattern, field, filter);
-        QueryInfo queryInfo = QueryInfo.create(this, field, settings);
-        return Hits.fromSpanQuery(queryInfo, query);
+        return find(createSpanQuery(pattern, field, filter), settings);
     }
 
     @Override

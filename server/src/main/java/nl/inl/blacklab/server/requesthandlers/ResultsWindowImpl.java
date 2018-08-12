@@ -51,16 +51,6 @@ class ResultsWindowImpl implements ResultsWindow {
     }
 
     @Override
-    public int sourceSize() {
-        return -1;
-    }
-
-    @Override
-    public int sourceTotalSize() {
-        return -1;
-    }
-
-    @Override
     public int requestedWindowSize() {
         return requestedWindowSize;
     }

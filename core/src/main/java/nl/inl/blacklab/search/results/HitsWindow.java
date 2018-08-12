@@ -32,10 +32,7 @@ public class HitsWindow extends HitsList implements ResultsWindow {
      */
     private int first;
 
-    /**
-     * The source hits into which this is a window
-     */
-    private Hits source;
+    private boolean hasNext;
 
     /**
      * Construct a HitsWindow object.
@@ -49,7 +46,6 @@ public class HitsWindow extends HitsList implements ResultsWindow {
      */
     HitsWindow(Hits source, int first, int windowSize) {
         super(source.queryInfo(), (List<Hit>) null);
-        this.source = source;
         this.first = first;
         this.windowSize = windowSize;
 
@@ -76,6 +72,7 @@ public class HitsWindow extends HitsList implements ResultsWindow {
                 capturedGroups.put(hit, source.capturedGroups().get(hit));
             // OPT: copy context as well..?
         }
+        hasNext = source.hitsProcessedAtLeast(first + windowSize + 1);
     }
 
     /**
@@ -85,7 +82,7 @@ public class HitsWindow extends HitsList implements ResultsWindow {
      */
     @Override
     public boolean hasNext() {
-        return source.hitsProcessedAtLeast(first + windowSize + 1);
+        return hasNext;
     }
 
     /**
@@ -151,37 +148,6 @@ public class HitsWindow extends HitsList implements ResultsWindow {
         return hits.size();
     }
 
-    /**
-     * How many hits are available in the original source Hits object?
-     *
-     * @return total number of hits
-     */
-    @Override
-    public int sourceSize() {
-        return source.size();
-    }
-
-    /**
-     * How many total hits are in the original source Hits object?
-     *
-     * NOTE: this includes hits that were counted but not retrieved.
-     *
-     * @return total number of hits
-     */
-    @Override
-    public int sourceTotalSize() {
-        return source.hitsCountedTotal();
-    }
-
-    /**
-     * Return the Hits object we were made from
-     * 
-     * @return the original Hits object
-     */
-    public Hits getOriginalHits() {
-        return source;
-    }
-
     @Override
     public int requestedWindowSize() {
         return windowSize;
@@ -189,7 +155,7 @@ public class HitsWindow extends HitsList implements ResultsWindow {
 
     @Override
     public String toString() {
-        return "HitsWindow#" + resultsObjId() + " (first=" + first + ", number=" + windowSize + ", source=" + source + ")";
+            return "HitsWindow#" + resultsObjId() + " (first=" + first + ", number=" + windowSize + ", source=" + queryInfo().resultsObjectId() + ")";
     }
 
 }

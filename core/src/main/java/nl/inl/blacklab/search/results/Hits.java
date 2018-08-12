@@ -21,11 +21,12 @@ public interface Hits extends Iterable<Hit> {
      * 
      * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
+     * @param maxSettings max. hits to process/count
      * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query) throws WildcardTermTooBroad {
-        return new HitsFromQuery(queryInfo, query);
+    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, MaxSettings maxSettings) throws WildcardTermTooBroad {
+        return new HitsFromQuery(queryInfo, query, maxSettings);
     }
 
     /**
@@ -371,5 +372,19 @@ public interface Hits extends Iterable<Hit> {
      * @return query info
      */
     QueryInfo queryInfo();
+
+    /**
+     * Did we exceed the maximum number of hits to process/count?
+     * 
+     * NOTE: this is only valid for the original Hits instance (that 
+     * executes the query), and not for any derived Hits instance (window, sorted, filtered, ...).
+     * 
+     * The reason that this is not part of QueryInfo is that this creates a brittle
+     * link between derived Hits instances and the original Hits instances, which by now
+     * may have been aborted, leaving the max stats in a frozen, incorrect state.
+     * 
+     * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
+     */
+    MaxStats maxStats();
 
 }

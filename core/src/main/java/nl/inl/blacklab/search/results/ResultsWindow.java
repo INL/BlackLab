@@ -55,22 +55,6 @@ public interface ResultsWindow {
     int windowSize();
 
     /**
-     * How many results are available in the original source Hits object?
-     *
-     * @return total number of results
-     */
-    int sourceSize();
-
-    /**
-     * How many total results are in the original source Hits object?
-     *
-     * NOTE: this includes results that were counted but not retrieved.
-     *
-     * @return total number of results
-     */
-    int sourceTotalSize();
-
-    /**
      * How many results per page did we request?
      *
      * @return number of results per page requested

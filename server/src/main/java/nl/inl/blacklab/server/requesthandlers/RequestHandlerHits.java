@@ -146,7 +146,7 @@ public class RequestHandlerHits extends RequestHandler {
             }
 
             if (searchParam.getString("calc").equals("colloc")) {
-                dataStreamCollocations(ds, window.getOriginalHits());
+                dataStreamCollocations(ds, total);
                 return HTTP_OK;
             }
 
@@ -157,7 +157,7 @@ public class RequestHandlerHits extends RequestHandler {
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
             if (includeTokenCount) {
-                perDocResults = window.getOriginalHits().perDocResults();
+                perDocResults = total.perDocResults();
                 // Determine total number of tokens in result set
                 String fieldName = index.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
@@ -267,7 +267,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (searchParam.hasFacets()) {
                 // Now, group the docs according to the requested facets.
                 if (perDocResults == null)
-                    perDocResults = window.getOriginalHits().perDocResults();
+                    perDocResults = total.perDocResults();
                 ds.startEntry("facets");
                 dataStreamFacets(ds, perDocResults, searchParam.facets());
                 ds.endEntry();

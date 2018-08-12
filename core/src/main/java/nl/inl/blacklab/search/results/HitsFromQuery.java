@@ -34,6 +34,12 @@ import nl.inl.util.ThreadPauser;
  */
 public class HitsFromQuery extends HitsAbstract {
 
+    /** Max. hits to process/count. */
+    MaxSettings maxSettings;
+    
+    /** Did we exceed the maximums? */
+    MaxStats maxStats;
+    
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
      * the current one's done.
@@ -88,8 +94,10 @@ public class HitsFromQuery extends HitsAbstract {
      * @param sourceQuery the query to execute to get the hits
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery) throws WildcardTermTooBroad {
+    HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, MaxSettings maxSettings) throws WildcardTermTooBroad {
         super(queryInfo);
+        this.maxSettings = maxSettings;
+        this.maxStats = new MaxStats();
         this.hits = new ArrayList<>();
         hitsCounted = 0;
         hitQueryContext = new HitQueryContext();
@@ -172,10 +180,8 @@ public class HitsFromQuery extends HitsAbstract {
 
         boolean readAllHits = number < 0;
         try {
-            MaxSettings maxSettings = queryInfo().maxSettings();
             int maxHitsToCount = maxSettings.maxHitsToCount();
             int maxHitsToProcess = maxSettings.maxHitsToProcess();
-            MaxStats maxStats = queryInfo().maxStats();
             while (readAllHits || hits.size() < number) {
 
                 // Don't hog the CPU, don't take too long
@@ -279,7 +285,7 @@ public class HitsFromQuery extends HitsAbstract {
                 }
             }
         } catch (InterruptedException e) {
-            queryInfo().maxStats().setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
+            maxStats.setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
             throw e;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -290,7 +296,12 @@ public class HitsFromQuery extends HitsAbstract {
 
     @Override
     public boolean doneProcessingAndCounting() {
-        return sourceSpansFullyRead || queryInfo().maxStats().hitsCountedExceededMaximum();
+        return sourceSpansFullyRead || maxStats.hitsCountedExceededMaximum();
+    }
+    
+    @Override
+    public MaxStats maxStats() {
+        return maxStats;
     }
 
 }

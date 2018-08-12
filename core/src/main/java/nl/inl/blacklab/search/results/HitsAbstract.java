@@ -32,7 +32,7 @@ public abstract class HitsAbstract implements Hits {
         return nextHitsObjId++;
     }
 
-    /** Unique id of this Hits instance */
+    /** Unique id of this Hits instance (for debugging) */
     protected final int hitsObjId = getNextHitsObjId();
     
     /** Information about the original query: index, field, max settings, max stats. */
@@ -82,6 +82,8 @@ public abstract class HitsAbstract implements Hits {
         this.queryInfo = queryInfo;
         threadPauser = new ThreadPauser();
         docsRetrieved = docsCounted = 0;
+        if (queryInfo.resultsObjectId() < 0)
+            queryInfo.setResultsObjectId(hitsObjId); // We're the original query. set the id.
     }
 
     @Override
@@ -288,7 +290,6 @@ public abstract class HitsAbstract implements Hits {
         } catch (InterruptedException e) {
             // Abort operation. Result may be wrong, but
             // interrupted results shouldn't be shown to user anyway.
-            queryInfo().maxStats().setHitsCountedExceededMaximum(); // indicate that we've stopped counting
             Thread.currentThread().interrupt();
         }
         return hits.size();

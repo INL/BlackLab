@@ -106,4 +106,9 @@ public class HitsList extends HitsAbstract {
         return true;
     }
 
+    @Override
+    public MaxStats maxStats() {
+        return MaxStats.NOT_EXCEEDED;
+    }
+
 }

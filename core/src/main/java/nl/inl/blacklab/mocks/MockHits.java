@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.results.CapturedGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class MockHits extends HitsAbstract {
@@ -173,6 +174,11 @@ public class MockHits extends HitsAbstract {
     @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // NOP
+    }
+
+    @Override
+    public MaxStats maxStats() {
+        return MaxStats.NOT_EXCEEDED;
     }
 
 }

@@ -3,8 +3,8 @@ package nl.inl.blacklab.search.results;
 /** Information about whether we reached the limit of processing/counting */
 public class MaxStats {
     
-    public static final MaxStats NOT_EXCEEDED = new MaxStats(false, false, false);
-    
+    public static final MaxStats NOT_EXCEEDED = new MaxStats(false, false);
+
     /** If true, we've stopped retrieving hits because there are more than the
      * maximum we've set. */
     private boolean maxHitsProcessed;
@@ -13,28 +13,21 @@ public class MaxStats {
      * we've set. */
     private boolean maxHitsCounted;
 
-    private boolean mutable;
-
-    public MaxStats(boolean maxHitsProcessed, boolean maxHitsCounted, boolean mutable) {
+    public MaxStats(boolean maxHitsProcessed, boolean maxHitsCounted) {
         super();
         this.maxHitsProcessed = maxHitsProcessed;
         this.maxHitsCounted = maxHitsCounted;
-        this.mutable = mutable;
     }
 
     public MaxStats() {
-        this(false, false, true);
+        this(false, false);
     }
 
     public void setHitsProcessedExceededMaximum() {
-        if (!this.maxHitsProcessed && !this.mutable)
-            throw new UnsupportedOperationException("Cannot mutate constant MaxStats value");
         this.maxHitsProcessed = true;
     }
 
     public void setHitsCountedExceededMaximum() {
-        if (!this.maxHitsCounted && !this.mutable)
-            throw new UnsupportedOperationException("Cannot mutate constant MaxStats value");
         this.maxHitsCounted = true;
     }
 

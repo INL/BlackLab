@@ -402,28 +402,6 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     }
 
     /**
-     * Did we stop retrieving hits because we reached the maximum?
-     * 
-     * @return true if we reached the maximum and stopped retrieving hits
-     */
-    public boolean hitsProcessedExceededMaximum() {
-        if (sourceHits == null)
-            return false; // no hits, only docs
-        return queryInfo.maxStats().hitsProcessedExceededMaximum();
-    }
-
-    /**
-     * Did we stop counting hits because we reached the maximum?
-     * 
-     * @return true if we reached the maximum and stopped counting hits
-     */
-    public boolean hitsCountedExceededMaximum() {
-        if (sourceHits == null)
-            return false; // no hits, only docs
-        return queryInfo.maxStats().hitsCountedExceededMaximum();
-    }
-
-    /**
      * Return an iterator over these hits.
      *
      * @return the iterator

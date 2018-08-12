@@ -1570,8 +1570,8 @@ public class QueryTool {
         } else {
             int numberRetrieved = hitsToShow.size();
             String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.docsProcessedTotal() + " documents";
-            if (hitsToShow.queryInfo().maxStats().hitsProcessedExceededMaximum()) {
-                if (hitsToShow.queryInfo().maxStats().hitsCountedExceededMaximum()) {
+            if (hits.maxStats().hitsProcessedExceededMaximum()) {
+                if (hits.maxStats().hitsCountedExceededMaximum()) {
                     msg = hitsInDocs + " retrieved, more than " + hitsToShow.hitsCountedTotal() + " ("
                             + hitsToShow.docsCountedTotal() + " docs) total";
                 } else {

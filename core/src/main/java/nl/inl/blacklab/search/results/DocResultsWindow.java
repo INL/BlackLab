@@ -96,16 +96,6 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
     }
 
     @Override
-    public int sourceSize() {
-        return source.size();
-    }
-
-    @Override
-    public int sourceTotalSize() {
-        return source.docsCountedTotal();
-    }
-
-    @Override
     public int requestedWindowSize() {
         return numberPerPage;
     }
