@@ -174,7 +174,6 @@ public class Contexts {
             for (Hit hit: list) {
                 int[] theseWords = wordsIt.next();
     
-                // Put the concordance in the Hit object
                 int firstWordIndex = startsOfSnippets[hitNum];
     
                 if (fiNumber == 0) {

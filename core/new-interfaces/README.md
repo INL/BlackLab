@@ -64,9 +64,12 @@ index
 + encapsulate WindowStats
 + eliminate HitsWindow, have Hits contain optional window stats
 + eliminate HitsSample, have Hits contain optional sample settings
++ Filter hits zou lazy moeten zijn
 
-- Filter hits zou lazy moeten zijn
-  filtering now cancels sort, because HitProperty uses original position. Solve after HitProperty-refactor?
+- Refactor forwardindex naar multiforwardindex / forwardindexdoc
+
+- Nieuwe (multi)forward index die documenten lineair opslaat.
+  Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.
 
 - HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
@@ -78,7 +81,10 @@ index
 
   HitProperty moet MatchSensitivity krijgen ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
   HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
+  HitProperty immutable (nu niet door context, contextIndices)
   
+- filtering now cancels sort, because HitProperty uses original position. Solve after HitProperty-refactor?
+
 - Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
   die BLS aan het eind opvangt en er een nette boodschap voor toont.
   (zorg wel dat aborted jobs uit de cache verwijderd worden, zodat we geen incorrecte counts tonen!)

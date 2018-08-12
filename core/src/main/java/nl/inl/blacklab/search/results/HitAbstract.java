@@ -23,10 +23,30 @@ public abstract class HitAbstract implements Hit {
     public String toString() {
         return String.format("doc %d, words %d-%d", doc(), start(), end());
     }
-
+    
     @Override
     public int hashCode() {
         return (doc() * 17 + start()) * 31 + end();
     }
+    
+    // POSSIBLE FUTURE OPTIMIZATION
 
+//    /**
+//     * Cached hash code, or Integer.MIN_VALUE if not calculated yet.
+//     * 
+//     * Can help when using Hit as a key in HashMap, e.g. in CapturedGroups 
+//     * and possibly with Contexts in the future.
+//     * 
+//     * Does cost about 17% extra memory for Hit objects. 
+//     */
+//    private int hashCode = Integer.MIN_VALUE;
+//    
+//    @Override
+//    public int hashCode() {
+//        if (hashCode == Integer.MIN_VALUE) {
+//            hashCode = (doc() * 17 + start()) * 31 + end();
+//        }
+//        return hashCode;
+//    }
+    
 }

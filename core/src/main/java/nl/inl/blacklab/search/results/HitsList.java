@@ -1,14 +1,10 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A basic Hits object implemented with a list.
@@ -145,51 +141,21 @@ public class HitsList extends HitsAbstract {
         return windowStats;
     }
 
-    /** Construct a copy of a hits object in sorted order.
+    /**
+     * Construct a HitsList from all its components.
      * 
-     * @param hitsToSort the hits to sort
-     * @param sortProp property to sort on
-     * @param reverseSort if true, reverse the sort
+     * Should only be used internally.
      */
-    HitsList(HitsAbstract hitsToSort, HitProperty sortProp, boolean reverseSort) {
-        super(hitsToSort.queryInfo());
-        try {
-            hitsToSort.ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // (should be detected by the client)
-        }
-        hits = hitsToSort.hits;
-        capturedGroups = hitsToSort.capturedGroups;
-        hitsCounted = hitsToSort.hitsCountedSoFar();
-        docsRetrieved = hitsToSort.docsProcessedSoFar();
-        docsCounted = hitsToSort.docsCountedSoFar();
-        sortProp = sortProp.copyWithHits(this); // we need a HitProperty with the correct Hits object
-        
-        // Make sure we have a sort order array of sufficient size
-        int n = hitsToSort.size();
-        sortOrder = new Integer[n];
-        
-        // Fill the array with the original hit order (0, 1, 2, ...)
-        for (int i = 0; i < n; i++)
-            sortOrder[i] = i;
-
-        // If we need context, make sure we have it.
-        List<Annotation> requiredContext = sortProp.needsContext();
-        if (requiredContext != null)
-            sortProp.setContexts(new Contexts(hitsToSort, requiredContext, sortProp.needsContextSize()));
-
-        // Perform the actual sort.
-        Arrays.sort(sortOrder, sortProp);
-
-        if (reverseSort) {
-            // Instead of creating a new Comparator that reverses the order of the
-            // sort property (which adds an extra layer of indirection to each of the
-            // O(n log n) comparisons), just reverse the hits now (which runs
-            // in linear time).
-            for (int i = 0; i < n / 2; i++) {
-                sortOrder[i] = sortOrder[n - i - 1];
-            }
-        }
+    @SuppressWarnings("javadoc")
+    public HitsList(QueryInfo queryInfo, List<Hit> hitsList, Integer[] sortOrder, CapturedGroupsImpl capturedGroups, int hitsCounted,
+            int docsRetrieved, int docsCounted) {
+        super(queryInfo);
+        this.hits = hitsList;
+        this.sortOrder = sortOrder;
+        this.capturedGroups = capturedGroups;
+        this.hitsCounted = hitsCounted;
+        this.docsRetrieved = docsRetrieved;
+        this.docsCounted = docsCounted;
     }
 
     @Override

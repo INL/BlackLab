@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -38,11 +36,17 @@ public class HitsFiltered extends HitsAbstract {
         super(hits.queryInfo());
         this.source = hits;
         this.filterProperty = property.copyWithHits(hits);
+        
+        // If the filter property requires contexts, fetch them now.
         List<Annotation> contextsNeeded = filterProperty.needsContext();
-        Contexts contexts = new Contexts(hits, contextsNeeded, BlackLabIndex.DEFAULT_CONTEXT_SIZE);
-        filterProperty.setContexts(contexts);
-        List<Integer> contextIndices = IntStream.range(0, contextsNeeded.size()).boxed().collect(Collectors.toList());
-        filterProperty.setContextIndices(contextIndices);
+        if (contextsNeeded != null) {
+            // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
+            // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigates by
+            // implementing a ForwardIndex that stores documents linearly, making it just a single read.
+            Contexts contexts = new Contexts(hits, contextsNeeded, BlackLabIndex.DEFAULT_CONTEXT_SIZE);
+            filterProperty.setContexts(contexts);
+        }
+        
         this.filterValue = value;
         this.hits = new ArrayList<>();
     }

@@ -345,7 +345,7 @@ public abstract class HitsAbstract implements Hits {
 
     @Override
     public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        return new HitsList(this, sortProp, reverseSort);
+        return sortProp.sortHits(this, reverseSort);
     }
     
     @Override
@@ -393,7 +393,8 @@ public abstract class HitsAbstract implements Hits {
     // Captured groups
     //--------------------------------------------------------------------
     
-    public CapturedGroups capturedGroups() {
+    @Override
+    public CapturedGroupsImpl capturedGroups() {
         return capturedGroups;
     }
 
@@ -413,6 +414,21 @@ public abstract class HitsAbstract implements Hits {
     @Override
     public Kwics kwics(int contextSize) {
         return new Kwics(this, contextSize);
+    }
+
+    /**
+     * Get the raw list of hits.
+     * 
+     * Clients shouldn't use this. Used internally for certain performance-sensitive
+     * operations like sorting.
+     * 
+     * The list will only contain whatever hits have been processed; if you want all the hits,
+     * call ensureAllHitsRead(), size() or hitsProcessedTotal() first. 
+     * 
+     * @return the list of hits
+     */
+    public List<Hit> hitsList() {
+        return hits;
     }
 
 }

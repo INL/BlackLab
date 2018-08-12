@@ -20,14 +20,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.CapturedGroupsImpl;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsAbstract;
+import nl.inl.blacklab.search.results.HitsList;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -47,8 +52,6 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
 
     public HitProperty(Hits hits) {
         this.hits = hits;
-        contextIndices = new ArrayList<>();
-        contextIndices.add(0); // in case it's accidentally not set, set a default value
     }
 
     public abstract HitPropValue get(int result);
@@ -86,6 +89,9 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
 
     public void setContexts(Contexts contexts) {
         this.contexts = contexts;
+        
+        // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
+        this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
     }
 
     public abstract String getName();
@@ -185,17 +191,22 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * the context(s) they need in the result set. (in the same order as reported by
      * needsContext()).
      */
-    List<Integer> contextIndices = null;
+    List<Integer> contextIndices;
 
     /**
      * For HitProperties that need context, sets the context indices that correspond
      * to the context(s) they need in the result set.
      * 
+     * Only needed if the context indices differ from the assumed default of 0, 1, 2, ...
+     * 
      * @param contextIndices the indices, in the same order as reported by
      *            needsContext().
      */
     public void setContextIndices(List<Integer> contextIndices) {
-        this.contextIndices.clear();
+        if (this.contextIndices == null)
+            this.contextIndices = new ArrayList<>();
+        else
+            this.contextIndices.clear();
         this.contextIndices.addAll(contextIndices);
     }
 
@@ -242,5 +253,43 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
 
     public int needsContextSize() {
         return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+    }
+
+    public Hits sortHits(HitsAbstract hitsToSort, boolean reverseSort) {
+        // We need a HitProperty with the correct Hits object
+        HitProperty sortProp = copyWithHits(hitsToSort);
+        
+        // Make sure we have a sort order array of sufficient size
+        // and fill it with the original hit order (0, 1, 2, ...)
+        int n = hitsToSort.size(); // also triggers fetching all hits
+        Integer[] sortOrder = new Integer[n];
+        for (int i = 0; i < n; i++)
+            sortOrder[i] = i;
+
+        // If we need context, make sure we have it.
+        List<Annotation> requiredContext = sortProp.needsContext();
+        if (requiredContext != null) {
+            sortProp.setContexts(new Contexts(hitsToSort, requiredContext, sortProp.needsContextSize()));
+        }
+
+        // Perform the actual sort.
+        Arrays.sort(sortOrder, sortProp);
+
+        if (reverseSort) {
+            // Instead of creating a new Comparator that reverses the order of the
+            // sort property (which adds an extra layer of indirection to each of the
+            // O(n log n) comparisons), just reverse the hits now (which runs
+            // in linear time).
+            for (int i = 0; i < n / 2; i++) {
+                sortOrder[i] = sortOrder[n - i - 1];
+            }
+        }
+        
+        CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
+        int hitsCounted = hitsToSort.hitsCountedSoFar();
+        int docsRetrieved = hitsToSort.docsProcessedSoFar();
+        int docsCounted = hitsToSort.docsCountedSoFar();
+        
+        return new HitsList(hitsToSort.queryInfo(), hitsToSort.hitsList(), sortOrder, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
     }
 }
