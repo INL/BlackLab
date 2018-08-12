@@ -9,7 +9,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -50,7 +50,7 @@ public class SearcherIsBeingOpened extends BlackLabIndexImpl {
     }
 
     @Override
-    protected ForwardIndex openForwardIndex(Annotation fieldPropName) {
+    protected AnnotationForwardIndex openForwardIndex(Annotation fieldPropName) {
         throw new UnsupportedOperationException();
     }
 

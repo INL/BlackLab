@@ -48,7 +48,7 @@ class FiidLookup {
                 cachedFiids.put(rc.docBase, uninv.getNumericDocValues(fiidFieldName));
             }
 
-            int numToCheck = Math.min(ForwardIndexImplV3.NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
+            int numToCheck = Math.min(AnnotationForwardIndexImpl.NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
             if (!hasFiids(numToCheck))
                 cachedFiids = null;
         } catch (IOException e) {

@@ -53,7 +53,7 @@ import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
@@ -270,7 +270,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *
      * Indexed by annotation.
      */
-    protected Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
+    protected Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
     protected MaxSettings maxSettings;
 
@@ -532,9 +532,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public ForwardIndex forwardIndex(Annotation annotation) {
+    public AnnotationForwardIndex forwardIndex(Annotation annotation) {
         synchronized (forwardIndices) {
-            ForwardIndex forwardIndex = forwardIndices.get(annotation);
+            AnnotationForwardIndex forwardIndex = forwardIndices.get(annotation);
             if (forwardIndex == null) {
                 forwardIndex = openForwardIndex(annotation);
                 if (forwardIndex == null)
@@ -545,7 +545,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         }
     }
 
-    protected void addForwardIndex(Annotation annotation, ForwardIndex forwardIndex) {
+    protected void addForwardIndex(Annotation annotation, AnnotationForwardIndex forwardIndex) {
         forwardIndices.put(annotation, forwardIndex);
     }
 
@@ -574,7 +574,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public boolean canDoNfaMatching() {
         if (forwardIndices.isEmpty())
             return false;
-        ForwardIndex fi = forwardIndices.values().iterator().next();
+        AnnotationForwardIndex fi = forwardIndices.values().iterator().next();
         return fi.canDoNfaMatching();
     }
 
@@ -739,7 +739,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             contentStores.close();
 
             // Close the forward indices
-            for (ForwardIndex fi : forwardIndices.values()) {
+            for (AnnotationForwardIndex fi : forwardIndices.values()) {
                 fi.close();
             }
 
@@ -794,15 +794,15 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         }
     }
 
-    protected ForwardIndex openForwardIndex(Annotation annotation) {
-        ForwardIndex forwardIndex;
+    protected AnnotationForwardIndex openForwardIndex(Annotation annotation) {
+        AnnotationForwardIndex forwardIndex;
         File dir = new File(indexLocation, "fi_" + annotation.luceneFieldPrefix());
         if (!isEmptyIndex && !dir.exists()) {
             // Forward index doesn't exist
             return null;
         }
         // Open forward index
-        forwardIndex = ForwardIndex.open(dir, indexMode, collator(), isEmptyIndex);
+        forwardIndex = AnnotationForwardIndex.open(dir, indexMode, collator(), isEmptyIndex);
         forwardIndex.setIdTranslateInfo(reader, annotation); // how to translate from
                                                                 // Lucene
                                                                 // doc to fiid
@@ -946,9 +946,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected void deleteFromForwardIndices(Document d) {
         // Delete this document in all forward indices
-        for (Map.Entry<Annotation, ForwardIndex> e : forwardIndices.entrySet()) {
+        for (Map.Entry<Annotation, AnnotationForwardIndex> e : forwardIndices.entrySet()) {
             Annotation annotation = e.getKey();
-            ForwardIndex fi = e.getValue();
+            AnnotationForwardIndex fi = e.getValue();
             int fiid = Integer.parseInt(d.get(annotation.forwardIndexIdField()));
             fi.deleteDocument(fiid);
         }

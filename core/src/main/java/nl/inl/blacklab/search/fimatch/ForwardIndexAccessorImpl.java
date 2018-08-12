@@ -8,7 +8,7 @@ import java.util.Map;
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -35,7 +35,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     List<Annotation> annotationNames = new ArrayList<>();
 
     /** The forward index for each annotation */
-    List<ForwardIndex> fis = new ArrayList<>();
+    List<AnnotationForwardIndex> fis = new ArrayList<>();
 
     /** The terms object for each annotation */
     private List<Terms> terms = new ArrayList<>();
@@ -59,7 +59,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             n = annotationNumbers.size();
             annotationNumbers.put(annotation, n);
             annotationNames.add(annotation);
-            ForwardIndex fi = index.forwardIndex(annotation);
+            AnnotationForwardIndex fi = index.forwardIndex(annotation);
             fis.add(fi);
             terms.add(fi.terms());
         }

@@ -41,7 +41,7 @@ import nl.inl.blacklab.exceptions.DocumentFormatException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -451,7 +451,7 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public int addToForwardIndex(AnnotationWriter prop) {
         Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
-        ForwardIndex forwardIndex = searcher.forwardIndex(annotation);
+        AnnotationForwardIndex forwardIndex = searcher.forwardIndex(annotation);
         if (forwardIndex == null)
             throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.getName()));
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());

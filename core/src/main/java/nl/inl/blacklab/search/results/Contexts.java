@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -47,8 +47,8 @@ public class Contexts {
      * @param wordsAroundHit number of words left and right of hit to fetch
      * @param theKwics where to add the KWICs
      */
-    static void makeKwicsSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-            ForwardIndex punctForwardIndex, Map<Annotation, ForwardIndex> attrForwardIndices,
+    static void makeKwicsSingleDocForwardIndex(List<Hit> hits, AnnotationForwardIndex forwardIndex,
+            AnnotationForwardIndex punctForwardIndex, Map<Annotation, AnnotationForwardIndex> attrForwardIndices,
             int wordsAroundHit, Map<Hit, Kwic> theKwics) {
         if (hits.isEmpty())
             return;
@@ -69,11 +69,11 @@ public class Contexts {
         if (attrForwardIndices != null) {
             int n = attrForwardIndices.size();
             attrName = new Annotation[n];
-            ForwardIndex[] attrFI = new ForwardIndex[n];
+            AnnotationForwardIndex[] attrFI = new AnnotationForwardIndex[n];
             attrTerms = new Terms[n];
             attrContext = new int[n][][];
             int i = 0;
-            for (Map.Entry<Annotation, ForwardIndex> e: attrForwardIndices.entrySet()) {
+            for (Map.Entry<Annotation, AnnotationForwardIndex> e: attrForwardIndices.entrySet()) {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
@@ -141,7 +141,7 @@ public class Contexts {
      * @param contextSources forward indices to get context from
      */
     private static int[][] getContextWordsSingleDocument(List<Hit> list, int wordsAroundHit,
-            List<ForwardIndex> contextSources) {
+            List<AnnotationForwardIndex> contextSources) {
         int n = list.size();
         if (n == 0)
             return new int[0][];
@@ -157,7 +157,7 @@ public class Contexts {
         int fiNumber = 0;
         int doc = list.get(0).doc();
         int[][] contexts = new int[list.size()][];
-        for (ForwardIndex forwardIndex: contextSources) {
+        for (AnnotationForwardIndex forwardIndex: contextSources) {
             // Get all the words from the forward index
             List<int[]> words;
             if (forwardIndex != null) {
@@ -269,7 +269,7 @@ public class Contexts {
     public Contexts(Hits hits, List<Annotation> annotations, int contextSize) {
         hits.size(); // make sure all hits have been read
 
-        List<ForwardIndex> fis = new ArrayList<>();
+        List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
             fis.add(hits.queryInfo().index().forwardIndex(annotation));
         }

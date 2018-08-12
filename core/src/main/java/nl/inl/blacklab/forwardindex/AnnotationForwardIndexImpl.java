@@ -48,9 +48,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * searching.
  */
 @NotThreadSafe // in index mode
-class ForwardIndexImplV3 extends ForwardIndex {
+class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
 
-    protected static final Logger logger = LogManager.getLogger(ForwardIndexImplV3.class);
+    protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexImpl.class);
 
     /** The number of cached fiids we check to see if this field is set anywhere. */
     static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
@@ -167,7 +167,7 @@ class ForwardIndexImplV3 extends ForwardIndex {
         return (int) fiidLookup.get(docId);
     }
 
-    ForwardIndexImplV3(File dir, boolean indexMode, Collators collators, boolean create,
+    AnnotationForwardIndexImpl(File dir, boolean indexMode, Collators collators, boolean create,
             boolean largeTermsFileSupport) {
         canDoNfaMatching = collators.getVersion() != CollatorVersion.V1;
 

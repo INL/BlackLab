@@ -26,7 +26,7 @@ import org.junit.Test;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexPosIncr {
-    private ForwardIndex fi;
+    private AnnotationForwardIndex fi;
 
     // The tokens to add
     String[][] str = { { "How", "much", "many", "lots", "wood" } };
@@ -42,7 +42,7 @@ public class TestForwardIndexPosIncr {
         // Create new test dir
         File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        fi = ForwardIndex.open(dir, true, Collator.getInstance(), true);
+        fi = AnnotationForwardIndex.open(dir, true, Collator.getInstance(), true);
         try {
             // Store strings
             for (int i = 0; i < str.length; i++) {
@@ -51,7 +51,7 @@ public class TestForwardIndexPosIncr {
         } finally {
             fi.close(); // close so everything is guaranteed to be written
         }
-        fi = ForwardIndex.open(dir, false, Collator.getInstance(), false);
+        fi = AnnotationForwardIndex.open(dir, false, Collator.getInstance(), false);
     }
 
     @After

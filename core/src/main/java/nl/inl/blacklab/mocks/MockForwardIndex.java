@@ -5,11 +5,11 @@ import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-public class MockForwardIndex extends ForwardIndex {
+public class MockForwardIndex extends AnnotationForwardIndex {
 
     private Terms terms;
 

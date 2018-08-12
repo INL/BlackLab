@@ -12,7 +12,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
@@ -38,7 +38,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private MaxSettings maxSettings;
 
-    private Map<Annotation, ForwardIndex> forwardIndices = new HashMap<>();
+    private Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
     private Analyzer analyzer;
 
@@ -109,7 +109,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         this.searcher = searcher;
     }
 
-    public void setForwardIndex(Annotation fieldPropName, ForwardIndex forwardIndex) {
+    public void setForwardIndex(Annotation fieldPropName, AnnotationForwardIndex forwardIndex) {
         forwardIndices.put(fieldPropName, forwardIndex);
     }
 
@@ -174,7 +174,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public ForwardIndex forwardIndex(Annotation annotation) {
+    public AnnotationForwardIndex forwardIndex(Annotation annotation) {
         return forwardIndices.get(annotation);
     }
 

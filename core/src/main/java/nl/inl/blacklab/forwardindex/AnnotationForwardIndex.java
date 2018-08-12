@@ -15,7 +15,7 @@ import nl.inl.util.VersionFile;
  * A component that can quickly tell you what word occurs at a specific position
  * of a specific document.
  */
-public abstract class ForwardIndex {
+public abstract class AnnotationForwardIndex {
 
     /*
      * File format version history:
@@ -163,7 +163,7 @@ public abstract class ForwardIndex {
      * @param create if true, create a new forward index
      * @return the forward index object
      */
-    public static ForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create) {
+    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create) {
 
         if (!dir.exists()) {
             if (!create)
@@ -193,7 +193,7 @@ public abstract class ForwardIndex {
             VersionFile.write(dir, "fi", CURRENT_VERSION);
         }
 
-        ForwardIndex fi;
+        AnnotationForwardIndex fi;
         boolean largeTermsFileSupport = true;
         CollatorVersion collVersion = CollatorVersion.V2;
         switch (version) {
@@ -211,7 +211,7 @@ public abstract class ForwardIndex {
             break;
         }
         Collators collators = new Collators(collator, collVersion);
-        fi = new ForwardIndexImplV3(dir, indexMode, collators, create, largeTermsFileSupport);
+        fi = new AnnotationForwardIndexImpl(dir, indexMode, collators, create, largeTermsFileSupport);
         return fi;
     }
 

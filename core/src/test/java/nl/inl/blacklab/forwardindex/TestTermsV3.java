@@ -26,7 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.ForwardIndex.CollatorVersion;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTermsV3 {

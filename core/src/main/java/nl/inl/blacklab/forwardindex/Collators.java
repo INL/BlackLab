@@ -5,7 +5,7 @@ import java.text.ParseException;
 import java.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.ForwardIndex.CollatorVersion;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 
 /**
  * Collators to use for term equality testing for different sensitivity

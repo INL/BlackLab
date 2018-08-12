@@ -27,7 +27,7 @@ import org.junit.Test;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
-    private ForwardIndex fi;
+    private AnnotationForwardIndex fi;
 
     private File dir;
 
@@ -46,7 +46,7 @@ public class TestForwardIndexDelete {
         // Create new test dir
         dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new ForwardIndexImplV3(dir, true, Collators.getDefault(), true, true);
+        fi = new AnnotationForwardIndexImpl(dir, true, Collators.getDefault(), true, true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {

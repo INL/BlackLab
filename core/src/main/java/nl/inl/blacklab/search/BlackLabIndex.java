@@ -14,7 +14,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -218,7 +218,7 @@ public interface BlackLabIndex extends Closeable {
      * @return the ForwardIndex if found/created
      * @throws BlackLabRuntimeException if the annotation has no forward index
      */
-    ForwardIndex forwardIndex(Annotation annotation);
+    AnnotationForwardIndex forwardIndex(Annotation annotation);
 
     
     // Information about the index

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.interfaces.index;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +16,31 @@ public interface ForwardIndexDoc {
 	 * @return length of the document
 	 */
 	int length();
+    
+    /**
+     * Retrieve entire document, in the form of token ids, for a single annotation.
+     * 
+     * @param annotation annotation to retrieve
+     * @return document tokens
+     */
+    default int[] retrieve(Annotation annotation) {
+        return retrieve(Arrays.asList(annotation));
+    }
+    
+    /**
+     * Retrieve part of this document, in the form of token ids.
+     *
+     * NOTE: if offset and length are both -1, retrieves the whole content. This is used by the
+     * retrieve() method.
+     *
+     * @param annotation annotation to retrieve
+     * @param start first token to retrieve (0 or -1 for first word)
+     * @param end first token after the last to retrieve (or -1 for end of document)
+     * @return tokens
+     */
+    default int[] retrievePart(Annotation annotation, int start, int end) {
+        return retrievePart(Arrays.asList(annotation), start, end);
+    }
 	
 	/**
 	 * Retrieve entire document, in the form of token ids, for a single annotation.
@@ -22,7 +48,7 @@ public interface ForwardIndexDoc {
 	 * @param annotation annotation to retrieve
 	 * @return document tokens
 	 */
-	int[] retrieve(Annotation annotation);
+	int[] retrieve(List<Annotation> annotation);
 	
 	/**
 	 * Retrieve part of this document, in the form of token ids.
@@ -35,7 +61,7 @@ public interface ForwardIndexDoc {
 	 * @param end first token after the last to retrieve (or -1 for end of document)
 	 * @return tokens
 	 */
-	int[] retrievePart(Annotation annotation, int start, int end);
+	int[] retrievePart(List<Annotation annotation>, int start, int end);
 	
 	/**
 	 * Get a single token id from the forward index.
@@ -46,7 +72,7 @@ public interface ForwardIndexDoc {
 	 */
 	default int tokenAt(Annotation annotation, int pos) {
 		// Slow/naive implementation, subclasses should provide a more efficient version
-		return retrievePart(annotation, pos, pos + 1)[0];
+		return retrievePart(Arrays.asList(annotation), pos, pos + 1)[0];
 	}
 
     /**

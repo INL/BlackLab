@@ -3,7 +3,7 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.Timer;
@@ -59,7 +59,7 @@ public class BatchForwardIndex {
         }
 
         System.err.print("Opening forward index... ");
-        ForwardIndex fi = ForwardIndex.open(indexDir, false, null, false);
+        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false);
         System.err.println("done. [#docs: " + fi.getNumDocs() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");
@@ -102,7 +102,7 @@ public class BatchForwardIndex {
      * @param snippets number of random snippets to retrieve from each document
      * @return elapsed time in ms
      */
-    public static long doPerformanceTest(ForwardIndex fi, int first, int number, int skip,
+    public static long doPerformanceTest(AnnotationForwardIndex fi, int first, int number, int skip,
             int snippets) {
         Timer t = new Timer();
         int[] start = new int[snippets];
