@@ -54,6 +54,7 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
@@ -793,6 +794,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             }
         }
     }
+    
+    protected ForwardIndex openForwardIndex(AnnotatedField field) {
+        return ForwardIndex.open(this, field);
+    }
 
     protected AnnotationForwardIndex openForwardIndex(Annotation annotation) {
         AnnotationForwardIndex forwardIndex;
@@ -802,10 +807,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             return null;
         }
         // Open forward index
-        forwardIndex = AnnotationForwardIndex.open(dir, indexMode, collator(), isEmptyIndex);
-        forwardIndex.setIdTranslateInfo(reader, annotation); // how to translate from
-                                                                // Lucene
-                                                                // doc to fiid
+        forwardIndex = AnnotationForwardIndex.open(dir, this, annotation);
+//        forwardIndex.setIdTranslateInfo(fiidLookup, annotation); // how to translate from
+//                                                                // Lucene
+//                                                                // doc to fiid
         return forwardIndex;
     }
 
@@ -1048,4 +1053,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return defaultContextSize;
     }
     
+    @Override
+    public boolean indexMode() {
+        return indexMode;
+    }
+
 }

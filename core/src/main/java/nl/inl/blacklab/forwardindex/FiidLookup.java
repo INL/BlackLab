@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * Class for looking up forward index id, using DocValues or stored fields.
  */
-class FiidLookup {
+public class FiidLookup {
 
     /**
      * Index reader, for getting documents (for translating from Lucene doc id to

@@ -346,4 +346,6 @@ public interface BlackLabIndex extends Closeable {
 
     int defaultContextSize();
 
+    boolean indexMode();
+
 }

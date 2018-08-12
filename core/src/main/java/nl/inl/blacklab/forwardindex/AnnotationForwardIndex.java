@@ -5,9 +5,8 @@ import java.text.Collator;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.lucene.index.IndexReader;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 
@@ -38,7 +37,6 @@ public abstract class AnnotationForwardIndex {
      * @param reader the index
      * @param annotation annotaion for which this is the forward index
      */
-    public abstract void setIdTranslateInfo(IndexReader reader, Annotation annotation);
 
     /**
      * Convert a Lucene document id to the corresponding forward index id.
@@ -149,6 +147,10 @@ public abstract class AnnotationForwardIndex {
         V1, // ignored dash and space
         V2 // doesn't ignore dash and space
     }
+    
+    public static AnnotationForwardIndex open(File dir, BlackLabIndex index, Annotation annotation) {
+        return open(dir, index.indexMode(), index.collator(), index.indexMode() && index.isEmpty(), annotation, new FiidLookup(index.reader(), annotation));
+    }
 
     /**
      * Open a forward index.
@@ -161,9 +163,11 @@ public abstract class AnnotationForwardIndex {
      *            otherwise it will be read-only.
      * @param collator collator to use for sorting
      * @param create if true, create a new forward index
+     * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
+     * @param fiidLookup how to look up fiid given docId 
      * @return the forward index object
      */
-    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create) {
+    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup) {
 
         if (!dir.exists()) {
             if (!create)
@@ -212,6 +216,9 @@ public abstract class AnnotationForwardIndex {
         }
         Collators collators = new Collators(collator, collVersion);
         fi = new AnnotationForwardIndexImpl(dir, indexMode, collators, create, largeTermsFileSupport);
+        if (annotation != null && fiidLookup != null) {
+            fi.setIdTranslateInfo(fiidLookup, annotation);
+        }
         return fi;
     }
 
@@ -250,4 +257,6 @@ public abstract class AnnotationForwardIndex {
      * @return annotation
      */
     public abstract Annotation annotation();
+
+    public abstract void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation);
 }
