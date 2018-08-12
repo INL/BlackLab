@@ -6,6 +6,7 @@ import java.util.Set;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 /**
@@ -28,16 +29,12 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     /** The next state if a matching token was found. */
     protected NfaState nextState;
 
-    /** Match case-sensitively? */
-    private boolean caseSensitive;
-
-    /** Match diacritics-sensitively? */
-    private boolean diacSensitive;
+    /** Match case-/diacritics-sensitively? */
+    private MatchSensitivity sensitivity;
 
     public NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
         this.luceneField = luceneField;
-        this.caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(luceneField);
-        this.diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(luceneField);
+        this.sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         this.pattern = pattern;
         this.nextState = nextState;
     }
@@ -65,9 +62,9 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     }
 
     private String desensitize(String tokenString) {
-        if (!caseSensitive)
+        if (!sensitivity.isCaseSensitive())
             tokenString = tokenString.toLowerCase();
-        if (!diacSensitive)
+        if (!sensitivity.isDiacriticsSensitive())
             tokenString = StringUtil.stripAccents(tokenString);
         return tokenString;
     }

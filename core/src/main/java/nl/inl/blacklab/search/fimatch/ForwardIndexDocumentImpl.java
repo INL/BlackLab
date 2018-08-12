@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /** Source of tokens for the forward index matching process. */
 class ForwardIndexDocumentImpl extends ForwardIndexDocument {
@@ -87,8 +88,8 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     }
 
     @Override
-    public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-        return fiAccessor.termsEqual(annotIndex, termId, caseSensitive, diacSensitive);
+    public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+        return fiAccessor.termsEqual(annotIndex, termId, sensitivity);
     }
 
     @Override

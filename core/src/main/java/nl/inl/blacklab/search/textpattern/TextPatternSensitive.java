@@ -41,7 +41,9 @@ public class TextPatternSensitive extends TextPattern {
      * @param caseSensitive search case-sensitively?
      * @param diacriticsSensitive search diacritics-sensitively?
      * @param input
+     * @deprecated use {@link #TextPatternSensitive(MatchSensitivity, TextPattern)}
      */
+    @Deprecated
     public TextPatternSensitive(boolean caseSensitive, boolean diacriticsSensitive, TextPattern input) {
         this.sensitivity = MatchSensitivity.get(caseSensitive, diacriticsSensitive);
         this.input = input;

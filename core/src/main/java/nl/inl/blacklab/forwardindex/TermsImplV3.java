@@ -36,6 +36,7 @@ import org.eclipse.collections.impl.factory.Maps;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Keeps a first-come-first-serve list of unique terms. Each term gets a unique
@@ -166,8 +167,8 @@ class TermsImplV3 extends Terms {
 
     TermsImplV3(boolean indexMode, Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
         this.indexMode = indexMode;
-        this.collator = collators.get(true, true);
-        this.collatorInsensitive = collators.get(false, false);
+        this.collator = collators.get(MatchSensitivity.SENSITIVE);
+        this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
 
         if (indexMode) {
             // Index mode: create a SortedMap based on the specified Collator.
@@ -236,9 +237,10 @@ class TermsImplV3 extends Terms {
     }
 
     @Override
-    public void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive) {
+    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
+        boolean caseSensitive = sensitivity.isCaseSensitive();
         int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
         Collator coll = caseSensitive ? collator : collatorInsensitive;
 
@@ -308,10 +310,10 @@ class TermsImplV3 extends Terms {
     }
 
     @Override
-    public boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive) {
+    public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
-        int[] idLookup = caseSensitive ? sortPositionPerId : sortPositionPerIdInsensitive;
+        int[] idLookup = sensitivity.isCaseSensitive() ? sortPositionPerId : sortPositionPerIdInsensitive;
         int id0 = idLookup[termId[0]];
         for (int i = 1; i < termId.length; i++) {
             if (termId[i] == -1 || id0 != idLookup[termId[i]])

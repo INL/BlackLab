@@ -3,37 +3,34 @@ package nl.inl.blacklab.search.matchfilter;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterEquals extends MatchFilter {
 
     MatchFilter a, b;
 
-    private boolean caseSensitive;
+    private MatchSensitivity sensitivity;
 
-    private boolean diacSensitive;
-
-    public MatchFilterEquals(MatchFilter a, MatchFilter b, boolean caseSensitive, boolean diacSensitive) {
+    public MatchFilterEquals(MatchFilter a, MatchFilter b, MatchSensitivity sensitivity) {
         super();
         this.a = a;
         this.b = b;
-        this.caseSensitive = caseSensitive;
-        this.diacSensitive = diacSensitive;
+        this.sensitivity = sensitivity;
     }
 
     @Override
     public String toString() {
         return a + " = " + b;
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((a == null) ? 0 : a.hashCode());
         result = prime * result + ((b == null) ? 0 : b.hashCode());
-        result = prime * result + (caseSensitive ? 1231 : 1237);
-        result = prime * result + (diacSensitive ? 1231 : 1237);
+        result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
         return result;
     }
 
@@ -56,7 +53,7 @@ public class MatchFilterEquals extends MatchFilter {
                 return false;
         } else if (!b.equals(other.b))
             return false;
-        return caseSensitive == other.caseSensitive && diacSensitive == other.diacSensitive;
+        return sensitivity == other.sensitivity;
     }
 
     @Override
@@ -70,7 +67,7 @@ public class MatchFilterEquals extends MatchFilter {
         ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
         ConstraintValue rb = b.evaluate(fiDoc, capturedGroups);
         if (ra instanceof ConstraintValueString && rb instanceof ConstraintValueString) {
-            return ((ConstraintValueString) ra).stringEquals((ConstraintValueString) rb, caseSensitive, diacSensitive);
+            return ((ConstraintValueString) ra).stringEquals((ConstraintValueString) rb, sensitivity);
         }
         return ConstraintValue.get(ra.equals(rb));
     }
@@ -91,7 +88,7 @@ public class MatchFilterEquals extends MatchFilter {
             // Simple annotation to string comparison, e.g. a.word = "cow"
             // This can be done more efficiently without string comparisons
             String termString = ((MatchFilterString) y).getString();
-            return ((MatchFilterTokenProperty) x).matchTokenString(termString, caseSensitive, diacSensitive);
+            return ((MatchFilterTokenProperty) x).matchTokenString(termString, sensitivity);
         }
 
         if (x instanceof MatchFilterTokenProperty && y instanceof MatchFilterTokenProperty) {
@@ -100,13 +97,13 @@ public class MatchFilterEquals extends MatchFilter {
             if (xtp.getPropertyName().equals(ytp.getPropertyName())) {
                 // Expression of the form a.word = b.word;
                 // This can be done more efficiently without string comparisons
-                return xtp.matchOtherTokenSameProperty(ytp.getGroupName(), caseSensitive, diacSensitive);
+                return xtp.matchOtherTokenSameProperty(ytp.getGroupName(), sensitivity);
             }
         }
 
         // Some other comparison.
         if (x != a || y != b)
-            return new MatchFilterEquals(x, y, caseSensitive, diacSensitive);
+            return new MatchFilterEquals(x, y, sensitivity);
         return this;
     }
 

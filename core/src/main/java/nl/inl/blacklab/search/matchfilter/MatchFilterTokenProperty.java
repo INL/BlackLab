@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.matchfilter;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterTokenProperty extends MatchFilter {
@@ -84,13 +85,12 @@ public class MatchFilterTokenProperty extends MatchFilter {
         return this;
     }
 
-    public MatchFilter matchTokenString(String str, boolean caseSensitive, boolean diacSensitive) {
-        return new MatchFilterTokenPropertyEqualsString(groupName, propertyName, str, caseSensitive, diacSensitive);
+    public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
+        return new MatchFilterTokenPropertyEqualsString(groupName, propertyName, str, sensitivity);
     }
 
-    public MatchFilter matchOtherTokenSameProperty(String otherGroupName, boolean caseSensitive,
-            boolean diacSensitive) {
-        return new MatchFilterSameTokens(groupName, otherGroupName, propertyName, caseSensitive, diacSensitive);
+    public MatchFilter matchOtherTokenSameProperty(String otherGroupName, MatchSensitivity sensitivity) {
+        return new MatchFilterSameTokens(groupName, otherGroupName, propertyName, sensitivity);
     }
 
     public boolean hasProperty() {

@@ -27,6 +27,7 @@ import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * A simple analyzer based on StandardTokenizer that isn't limited to Latin.
@@ -40,15 +41,14 @@ public class BLStandardAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new StandardTokenizerFactory(Collections.<String, String>emptyMap()).create();
         TokenStream filter = source;
-        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(fieldName);
-        if (!caseSensitive) {
+        MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(fieldName);
+        if (!sensitivity.isCaseSensitive()) {
             filter = new LowerCaseFilter(filter);// lowercase all
         }
-        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(fieldName);
-        if (!diacSensitive) {
+        if (!sensitivity.isDiacriticsSensitive()) {
             filter = new RemoveAllAccentsFilter(filter); // remove accents
         }
-        if (!(caseSensitive && diacSensitive)) {
+        if (sensitivity != MatchSensitivity.SENSITIVE) {
             // Is this necessary and does it do what we want?
             // e.g. do we want "zon" to ever match "zo'n"? Or are there examples
             //      where this is useful/required?

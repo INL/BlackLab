@@ -24,6 +24,7 @@ import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.LowerCaseFilter;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * A simple analyzer that isn't limited to Latin. Designed for Dutch texts, but
@@ -39,12 +40,11 @@ public final class BLDutchAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new BLDutchTokenizer();
         TokenStream filter = new BLDutchTokenFilter(source);
-        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(fieldName);
-        if (!caseSensitive) {
+        MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(fieldName);
+        if (!sensitivity.isCaseSensitive()) {
             filter = new LowerCaseFilter(filter);// lowercase all
         }
-        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(fieldName);
-        if (!diacSensitive) {
+        if (!sensitivity.isDiacriticsSensitive()) {
             filter = new RemoveAllAccentsFilter(filter); // remove accents
         }
         return new TokenStreamComponents(source, filter);

@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -157,9 +158,9 @@ MatchFilter simpleConstraint():
 		if (b == null)
 			return v;
         if (b.toString().equals("="))
-            return new MatchFilterEquals(v, w, false, false);
+            return new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE);
 		if (b.toString().equals("!="))
-			return new MatchFilterNot(new MatchFilterEquals(v, w, false, false));
+			return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));
     }
 }
 

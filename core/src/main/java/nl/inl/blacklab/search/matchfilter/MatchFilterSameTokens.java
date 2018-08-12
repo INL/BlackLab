@@ -5,6 +5,7 @@ import java.util.Arrays;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterSameTokens extends MatchFilter {
@@ -16,18 +17,14 @@ public class MatchFilterSameTokens extends MatchFilter {
 
     private int[] groupIndex;
 
-    private boolean caseSensitive;
+    private MatchSensitivity sensitivity;
 
-    private boolean diacSensitive;
-
-    public MatchFilterSameTokens(String leftGroup, String rightGroup, String propertyName, boolean caseSensitive,
-            boolean diacSensitive) {
+    public MatchFilterSameTokens(String leftGroup, String rightGroup, String propertyName, MatchSensitivity sensitivity) {
         this.groupName = new String[] { leftGroup, rightGroup };
         this.groupIndex = new int[2];
 
         this.propertyName = propertyName;
-        this.caseSensitive = caseSensitive;
-        this.diacSensitive = diacSensitive;
+        this.sensitivity = sensitivity;
     }
 
     @Override
@@ -40,10 +37,11 @@ public class MatchFilterSameTokens extends MatchFilter {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (caseSensitive ? 1231 : 1237);
-        result = prime * result + (diacSensitive ? 1231 : 1237);
+        result = prime * result + Arrays.hashCode(groupIndex);
         result = prime * result + Arrays.hashCode(groupName);
+        result = prime * result + propIndex;
         result = prime * result + ((propertyName == null) ? 0 : propertyName.hashCode());
+        result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
         return result;
     }
 
@@ -56,18 +54,18 @@ public class MatchFilterSameTokens extends MatchFilter {
         if (getClass() != obj.getClass())
             return false;
         MatchFilterSameTokens other = (MatchFilterSameTokens) obj;
-        if (caseSensitive != other.caseSensitive)
-            return false;
-        if (diacSensitive != other.diacSensitive)
+        if (!Arrays.equals(groupIndex, other.groupIndex))
             return false;
         if (!Arrays.equals(groupName, other.groupName))
+            return false;
+        if (propIndex != other.propIndex)
             return false;
         if (propertyName == null) {
             if (other.propertyName != null)
                 return false;
         } else if (!propertyName.equals(other.propertyName))
             return false;
-        return true;
+        return sensitivity == other.sensitivity;
     }
 
     @Override
@@ -90,10 +88,10 @@ public class MatchFilterSameTokens extends MatchFilter {
             else
                 termId[i] = fiDoc.getToken(propIndex, tokenPosition);
         }
-        if (caseSensitive && diacSensitive)
+        if (sensitivity == MatchSensitivity.SENSITIVE)
             return ConstraintValue.get(termId[0] == termId[1]);
         // (Somewhat) insensitive; let Terms determine if term ids have the same sort position or not
-        return ConstraintValue.get(fiDoc.termsEqual(propIndex, termId, caseSensitive, diacSensitive));
+        return ConstraintValue.get(fiDoc.termsEqual(propIndex, termId, sensitivity));
     }
 
     @Override

@@ -5,6 +5,7 @@ import java.io.File;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockTerms extends Terms {
 
@@ -24,9 +25,9 @@ public class MockTerms extends Terms {
     }
 
     @Override
-    public void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive) {
+    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
         for (int i = 0; i < numberOfTerms(); i++) {
-            if (caseSensitive) {
+            if (sensitivity.isCaseSensitive()) {
                 if (get(i).equals(term))
                     results.add(i);
             } else {
@@ -71,7 +72,7 @@ public class MockTerms extends Terms {
     }
 
     @Override
-    public boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive) {
+    public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
         throw new UnsupportedOperationException();
     }
 

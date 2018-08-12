@@ -13,6 +13,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
@@ -72,9 +73,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     }
 
     @Override
-    public void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue, boolean caseSensitive,
-            boolean diacSensitive) {
-        terms.get(annotationNumber).indexOf(results, annotationValue, caseSensitive, diacSensitive);
+    public void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue, MatchSensitivity sensitivity) {
+        terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
     }
 
     public int getTermAtPosition(int fiid, int annotationNumber, int pos) {
@@ -87,8 +87,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     }
 
     @Override
-    public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-        return fis.get(annotIndex).terms().termsEqual(termId, caseSensitive, diacSensitive);
+    public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+        return fis.get(annotIndex).terms().termsEqual(termId, sensitivity);
     }
 
     @Override

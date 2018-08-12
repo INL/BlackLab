@@ -11,6 +11,7 @@ import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -142,11 +143,10 @@ public class NfaStateToken extends NfaState {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
         String propertyName = comp[1];
         propertyNumber = fiAccessor.getAnnotationNumber(propertyName);
-        boolean caseSensitive = AnnotatedFieldNameUtil.isCaseSensitive(luceneField);
-        boolean diacSensitive = AnnotatedFieldNameUtil.isDiacriticsSensitive(luceneField);
+        MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         inputTokens = new IntHashSet(); //new HashSet<>();
         for (String token : inputTokenStrings) {
-            fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, caseSensitive, diacSensitive);
+            fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, sensitivity);
         }
         if (nextState != null)
             nextState.lookupPropertyNumbers(fiAccessor, statesVisited);

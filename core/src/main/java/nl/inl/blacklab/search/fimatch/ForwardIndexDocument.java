@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+
 /** Source of tokens for the forward index matching process. */
 public abstract class ForwardIndexDocument {
 
@@ -26,11 +28,10 @@ public abstract class ForwardIndexDocument {
      *
      * @param annotIndex annotation we're looking at
      * @param termId term ids we're comparing
-     * @param caseSensitive whether we're comparing case-sensitively
-     * @param diacSensitive whether we're comparing diacritics-sensitively
+     * @param sensitivity whether we're comparing case-/diacritics-sensitively
      * @return true if all are equal, false if not
      */
-    public abstract boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
+    public abstract boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
 
     /**
      * Is this position valid in this document?

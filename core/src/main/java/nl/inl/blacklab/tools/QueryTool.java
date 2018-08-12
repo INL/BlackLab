@@ -766,20 +766,20 @@ public class QueryTool {
                 stripXML = b;
             } else if (lcased.startsWith("sensitive ")) {
                 String v = lcased.substring(10);
-                boolean caseSensitive = false, diacSensitive = false;
+                MatchSensitivity sensitivity;
                 if (v.equals("on") || v.equals("yes") || v.equals("true")) {
-                    caseSensitive = diacSensitive = true;
-                } else if (v.equals("off") || v.equals("no") || v.equals("false")) {
-                    // nothing to do
+                    sensitivity = MatchSensitivity.SENSITIVE;
                 } else if (v.equals("case")) {
-                    caseSensitive = true;
+                    sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
                 } else if (v.equals("diac") || v.equals("diacritics")) {
-                    diacSensitive = true;
+                    sensitivity = MatchSensitivity.CASE_INSENSITIVE;
+                } else {
+                    sensitivity = MatchSensitivity.INSENSITIVE;
                 }
-                index.setDefaultMatchSensitivity(MatchSensitivity.get(caseSensitive, diacSensitive));
+                index.setDefaultMatchSensitivity(sensitivity);
                 outprintln("Search defaults to "
-                        + (caseSensitive ? "case-sensitive" : "case-insensitive") + " and "
-                        + (diacSensitive ? "diacritics-sensitive" : "diacritics-insensitive"));
+                        + (sensitivity.isCaseSensitive() ? "case-sensitive" : "case-insensitive") + " and "
+                        + (sensitivity.isDiacriticsSensitive() ? "diacritics-sensitive" : "diacritics-insensitive"));
             } else if (lcased.startsWith("doctitle ")) {
                 String v = lcased.substring(9);
                 showDocTitle = v.equals("on") || v.equals("yes") || v.equals("true");

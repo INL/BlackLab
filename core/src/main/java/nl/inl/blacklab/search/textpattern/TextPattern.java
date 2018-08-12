@@ -65,11 +65,6 @@ public abstract class TextPattern {
 
     String optInsensitive(QueryExecutionContext context, String value) {
         return context.optDesensitize(value);
-//		if (!context.diacriticsSensitive())
-//			value = StringUtil.removeAccents(value);
-//		if (!context.caseSensitive())
-//			value = value.toLowerCase();
-//		return value;
     }
 
 }

@@ -30,7 +30,7 @@ public class TestBLDutchAnalyzer {
     public void testBasics() throws IOException {
         Reader r = new StringReader("1781 \"hond, a.u.b.: bél(len); \t [pre]cursor \t\nzo'n 'Hij zij' ex-man -");
         try (BLDutchAnalyzer analyzer = new BLDutchAnalyzer()) {
-            try (TokenStream ts = analyzer.tokenStream("contents", r)) {
+            try (TokenStream ts = analyzer.tokenStream("contents%word@i", r)) {
                 ts.reset();
                 CharTermAttribute ta = ts.addAttribute(CharTermAttribute.class);
                 Assert.assertTrue(ts.incrementToken());

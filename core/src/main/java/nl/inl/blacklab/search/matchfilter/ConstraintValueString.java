@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
 public class ConstraintValueString extends ConstraintValue {
@@ -51,14 +52,14 @@ public class ConstraintValueString extends ConstraintValue {
         return s;
     }
 
-    public ConstraintValue stringEquals(ConstraintValueString rb, boolean caseSensitive, boolean diacSensitive) {
+    public ConstraintValue stringEquals(ConstraintValueString rb, MatchSensitivity sensitivity) {
         String a = getValue();
         String b = rb.getValue();
-        if (!caseSensitive) {
+        if (!sensitivity.isCaseSensitive()) {
             a = a.toLowerCase();
             b = b.toLowerCase();
         }
-        if (!diacSensitive) {
+        if (!sensitivity.isDiacriticsSensitive()) {
             a = StringUtil.stripAccents(a);
             b = StringUtil.stripAccents(b);
         }

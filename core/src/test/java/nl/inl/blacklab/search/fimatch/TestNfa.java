@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
 
@@ -22,8 +23,7 @@ public class TestNfa {
 
         @Override
         public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
-                boolean caseSensitive,
-                boolean diacSensitive) {
+                MatchSensitivity sensitivity) {
             if (annotNumber != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
             if (annotValue.length() > 1)
@@ -56,7 +56,7 @@ public class TestNfa {
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {
@@ -97,7 +97,7 @@ public class TestNfa {
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
             for (int i = 1; i < termId.length; i++) {

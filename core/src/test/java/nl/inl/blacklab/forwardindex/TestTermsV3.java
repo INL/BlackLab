@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTermsV3 {
@@ -134,7 +135,7 @@ public class TestTermsV3 {
         int[] expected = { 0, 1, 2, 3, 4, 5, 6, 7 };
         for (int i = 0; i < expected.length; i++) {
             MutableIntSet results = new IntHashSet();
-            t.indexOf(results, input[i], false, false);
+            t.indexOf(results, input[i], MatchSensitivity.INSENSITIVE);
             Assert.assertEquals(expected[i], results.intIterator().next());
         }
     }

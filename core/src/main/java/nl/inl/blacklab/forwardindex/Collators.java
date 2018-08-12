@@ -6,6 +6,7 @@ import java.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Collators to use for term equality testing for different sensitivity
@@ -27,12 +28,12 @@ public class Collators {
         insensitive = getCollatorInsensitive((RuleBasedCollator) base.clone(), version);
     }
 
-    public Collator get(boolean caseSensitive, boolean diacSensitive) {
-        if (caseSensitive != diacSensitive) {
+    public Collator get(MatchSensitivity sensitivity) {
+        if (sensitivity.isCaseSensitive() != sensitivity.isDiacriticsSensitive()) {
             throw new UnsupportedOperationException(
                     "Different values for case- and diac-sensitive not supported here yet.");
         }
-        return caseSensitive ? sensitive : insensitive;
+        return sensitivity.isCaseSensitive() ? sensitive : insensitive;
     }
 
     /**

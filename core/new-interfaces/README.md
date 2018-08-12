@@ -66,6 +66,10 @@ index
 + eliminate HitsSample, have Hits contain optional sample settings
 + Filter hits zou lazy moeten zijn
 
+- Overal MatchSensitivity ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
+  (Terms, HitProperty, ...)
+  HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
+
 - Refactor forwardindex naar multiforwardindex / forwardindexdoc
 
 - Nieuwe (multi)forward index die documenten lineair opslaat.
@@ -79,8 +83,6 @@ index
   
   Dan kunnen we toch sortOrder een List<Hit> maken, wat efficienter is en waarschijnlijk zorgt dat Results interfaces/classes cleaner en generieker blijven.
 
-  HitProperty moet MatchSensitivity krijgen ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
-  HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
   HitProperty immutable (nu niet door context, contextIndices)
   
 - filtering now cancels sort, because HitProperty uses original position. Solve after HitProperty-refactor?

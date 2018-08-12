@@ -5,6 +5,8 @@ import java.nio.charset.Charset;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+
 /**
  * Keeps a list of unique terms and their sort positions.
  */
@@ -38,11 +40,10 @@ public abstract class Terms {
      *
      * @param results (out) index numbers for the matching term(s)
      * @param term the term to get the index number for
-     * @param caseSensitive compare case-sensitively? (currently switches both case-
+     * @param sensitivity compare sensitively? (case-sensitivity currently switches both case-
      *            and diacritics-sensitivity)
-     * @param diacSensitive compare diacritics-sensitively? (currently ignored)
      */
-    public abstract void indexOf(MutableIntSet results, String term, boolean caseSensitive, boolean diacSensitive);
+    public abstract void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
 
     /**
      * Build the index from term to term id. Depending on the terms implementation,
@@ -118,7 +119,7 @@ public abstract class Terms {
         return new TermsImplV3(indexMode, collators, termsFile, useBlockBasedTermsFile);
     }
 
-    public abstract boolean termsEqual(int[] termId, boolean caseSensitive, boolean diacSensitive);
+    public abstract boolean termsEqual(int[] termId, MatchSensitivity sensitivity);
 
     public int deserializeToken(String term) {
         int termId;

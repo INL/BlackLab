@@ -6,6 +6,7 @@ import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
@@ -23,17 +24,14 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
 
     private MutableIntSet compareToTermIds;
 
-    private boolean caseSensitive;
-
-    private boolean diacSensitive;
+    private MatchSensitivity sensitivity;
 
     public MatchFilterTokenPropertyEqualsString(String label, String propertyName, String termString,
-            boolean caseSensitive, boolean diacSensitive) {
+            MatchSensitivity sensitivity) {
         this.groupName = label;
         this.propertyName = propertyName;
         this.compareToTermString = termString;
-        this.caseSensitive = caseSensitive;
-        this.diacSensitive = diacSensitive;
+        this.sensitivity = sensitivity;
     }
 
     @Override
@@ -103,7 +101,7 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
             propIndex = fiAccessor.getAnnotationNumber(propertyName);
             compareToTermIds = new IntHashSet();
             compareToTermId = -1;
-            fiAccessor.getTermNumbers(compareToTermIds, propIndex, compareToTermString, caseSensitive, diacSensitive);
+            fiAccessor.getTermNumbers(compareToTermIds, propIndex, compareToTermString, sensitivity);
             if (compareToTermIds.size() == 1) {
                 compareToTermId = compareToTermIds.intIterator().next();
             }

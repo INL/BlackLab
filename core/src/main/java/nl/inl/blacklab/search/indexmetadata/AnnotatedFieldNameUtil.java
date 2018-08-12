@@ -445,6 +445,13 @@ public final class AnnotatedFieldNameUtil {
         return fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "s") || fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "ci");
     }
 
+    public static MatchSensitivity sensitivity(String luceneField) {
+        int i = luceneField.indexOf(SENSITIVITY_SEP);
+        if (i < 0)
+            throw new IllegalArgumentException("luceneField contains no " + SENSITIVITY_SEP);
+        return MatchSensitivity.fromLuceneFieldCode(luceneField.substring(i + 1));
+    }
+
     /**
      * Is the specified name a valid XML element name?
      * 

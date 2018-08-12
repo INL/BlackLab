@@ -5,6 +5,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -39,12 +40,11 @@ public abstract class ForwardIndexAccessor {
      * @param results (out) term number for this term in this annotation
      * @param annotationNumber which annotation to get term number for
      * @param annotationValue which term string to get term number for
-     * @param caseSensitive match case sensitively or not?
-     * @param diacSensitive match case sensitively or not? (currently ignored)
+     * @param sensitivity match sensitively or not? (currently both or neither)
      *
      */
     public abstract void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
-            boolean caseSensitive, boolean diacSensitive);
+            MatchSensitivity sensitivity);
 
     /**
      * Get the number of annotations
@@ -122,13 +122,13 @@ public abstract class ForwardIndexAccessor {
             return ForwardIndexAccessor.this.getTermString(annotIndex, termId);
         }
 
-        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-            return ForwardIndexAccessor.this.termsEqual(annotIndex, termId, caseSensitive, diacSensitive);
+        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+            return ForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
         }
 
     }
 
     public abstract String getTermString(int annotIndex, int termId);
 
-    public abstract boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive);
+    public abstract boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
 }

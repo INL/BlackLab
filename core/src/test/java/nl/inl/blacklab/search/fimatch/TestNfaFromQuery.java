@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -59,10 +60,10 @@ public class TestNfaFromQuery {
 
         @Override
         public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
-                boolean caseSensitive, boolean diacSensitive) {
+                MatchSensitivity sensitivity) {
             if (annotNumber != 0)
                 throw new IllegalArgumentException("Unknown annotation " + annotNumber);
-            if (caseSensitive) {
+            if (sensitivity.isCaseSensitive()) {
                 results.add(terms.get(annotValue));
                 return;
             }
@@ -124,7 +125,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             throw new UnsupportedOperationException();
         }
 
@@ -156,7 +157,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
+        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             throw new UnsupportedOperationException();
         }
     }
@@ -184,7 +185,7 @@ public class TestNfaFromQuery {
     }
 
     private static BLSpanTermQuery term(String w) {
-        return new BLSpanTermQuery(new Term("contents%word", w));
+        return new BLSpanTermQuery(new Term("contents%word@i", w));
     }
 
     private static SpanQuerySequence seq(BLSpanQuery... clauses) {
@@ -200,7 +201,7 @@ public class TestNfaFromQuery {
     }
 
     private static SpanQueryAnyToken any(int min, int max) {
-        return new SpanQueryAnyToken(min, max, "contents%word");
+        return new SpanQueryAnyToken(min, max, "contents%word@i");
     }
 
     private static BLSpanQuery exp(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
