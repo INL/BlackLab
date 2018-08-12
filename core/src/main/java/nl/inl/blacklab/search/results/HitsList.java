@@ -3,6 +3,9 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -15,15 +18,20 @@ public class HitsList extends HitsAbstract {
     /** Our window stats, if this is a window; null otherwise. */
     WindowStats windowStats;
     
+    private SampleParameters parameters;
+
+    @Override
+    public SampleParameters sampleParameters() {
+        return parameters;
+    }
+    
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Does not copy the list, but reuses it.
      *
-     * @param index the index object
-     * @param field field our hits came from
-     * @param hits the list of hits to wrap
-     * @param settings settings, or null for default
+     * @param queryInfo query info
+     * @param hits the list of hits to wrap, or null for a new list
      */
     HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
@@ -37,6 +45,15 @@ public class HitsList extends HitsAbstract {
                 prevDoc = h.doc();
             }
         }
+    }
+    
+    /**
+     * Make an empty list of hits.
+     *
+     * @param queryInfo query info
+     */
+    HitsList(QueryInfo queryInfo) {
+        this(queryInfo, null);
     }
     
     /**
@@ -82,6 +99,45 @@ public class HitsList extends HitsAbstract {
         }
         boolean hasNext = source.hitsProcessedAtLeast(first + windowSize + 1);
         windowStats = new WindowStats(hasNext, first, windowSize, number);
+    }
+    
+    /**
+     * Samples hits.
+     * 
+     * @param hits hits to sample from
+     * @param parameters how much to sample, and optionally, a sample seed
+     */
+    HitsList(Hits hits, SampleParameters parameters) {
+        super(hits.queryInfo());
+        this.hits = new ArrayList<>();
+        this.parameters = parameters;
+        Random random = new Random(parameters.seed());
+        int numberOfHitsToSelect = parameters.numberOfHits(hits.size());
+        if (numberOfHitsToSelect > hits.size())
+            numberOfHitsToSelect = hits.size(); // default to all hits in this case
+        // Choose the hits
+        Set<Integer> chosenHitIndices = new TreeSet<>();
+        for (int i = 0; i < numberOfHitsToSelect; i++) {
+            // Choose a hit we haven't chosen yet
+            int hitIndex;
+            do {
+                hitIndex = random.nextInt(hits.size());
+            } while (chosenHitIndices.contains(hitIndex));
+            chosenHitIndices.add(hitIndex);
+        }
+        
+        // Add the hits in order of their index
+        int previousDoc = -1;
+        for (Integer hitIndex : chosenHitIndices) {
+            Hit hit = hits.get(hitIndex);
+            if (hit.doc() != previousDoc) {
+                docsRetrieved++;
+                docsCounted++;
+                previousDoc = hit.doc();
+            }
+            this.hits.add(hit);
+            hitsCounted++;
+        }
     }
     
     @Override

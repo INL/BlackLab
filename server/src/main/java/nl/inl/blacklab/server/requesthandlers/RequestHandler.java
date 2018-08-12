@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.results.DocOrHitGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSample;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -655,13 +655,13 @@ public abstract class RequestHandler {
         }
 
         // Information about hit sampling
-        if (hits instanceof HitsSample) {
-            HitsSample sample = ((HitsSample) hits);
+        if (hits.isSample()) {
+            SampleParameters sample = hits.sampleParameters();
             ds.entry("sampleSeed", sample.seed());
-            if (sample.sampleParameters().isPercentage())
-                ds.entry("samplePercentage", Math.round(sample.sampleParameters().percentageOfHits() * 100 * 100) / 100.0);
+            if (sample.isPercentage())
+                ds.entry("samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
             else
-                ds.entry("sampleSize", sample.sampleParameters().numberOfHitsSet());
+                ds.entry("sampleSize", sample.numberOfHitsSet());
         }
     }
 

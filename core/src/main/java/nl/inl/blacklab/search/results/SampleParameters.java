@@ -40,7 +40,7 @@ public class SampleParameters {
         this.percentageOfHits = percentageOfHits;
         this.numberOfHitsSet = numberOfHitsSet;
         this.isFixedSeed = isFixedSeed;
-        this.seedValueSet = seedValueSet;
+        this.seedValueSet = isFixedSeed ? seedValueSet : random.nextLong();
         if (isPercentage && percentageOfHits < 0 || percentageOfHits > 1)
             throw new IllegalArgumentException("Sample percentage must be in the range 0-1");
         if (!isPercentage && numberOfHitsSet < 0)
@@ -55,11 +55,12 @@ public class SampleParameters {
      * Get the seed for the sample operation.
      * 
      * This may either be a fixed seed set by the user, or a randomly chosen seed.
+     * However, for an existing instance of SampleParameters, the seed won't ever change.
      * 
      * @return seed
      */
-    long seed() {
-        return isFixedSeed() ? seedValueSet() : random.nextLong(); 
+    public long seed() {
+        return seedValueSet; 
     }
     
     /**
@@ -70,7 +71,7 @@ public class SampleParameters {
      * @param totalNumberOfHits the total number of hits
      * @return number to sample
      */
-    int numberOfHits(int totalNumberOfHits) {
+    public int numberOfHits(int totalNumberOfHits) {
         return isPercentage() ? Math.round(percentageOfHits() * totalNumberOfHits) : numberOfHitsSet();
     }
     
@@ -118,23 +119,14 @@ public class SampleParameters {
     /**
      * Was a fixed seed set?
      * 
-     * If not, a random seed will be chosen each time I call {@link #seed()}.
+     * If not, a random seed was chosen. In either case, call {@link #seed()}
+     * to get the seed used. The return value will not change for an instance
+     * of SampleParameters.
      * 
      * @return true if a fixed seed value was set, false if it wasn't
      */
     public boolean isFixedSeed() {
         return isFixedSeed;
-    }
-    
-    /**
-     * What seed value was set?
-     * 
-     * Only valid if {@link #isFixedSeed()} returns true
-     * 
-     * @return fixed seed value
-     */
-    public long seedValueSet() {
-        return seedValueSet;
     }
     
 }

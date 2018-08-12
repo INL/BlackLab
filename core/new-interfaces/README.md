@@ -62,10 +62,8 @@ index
   HitsImpl -> HitsList
 + HitsSample moet SampleSettings class gebruiken
 + encapsulate WindowStats
-
-
-- eliminate HitsWindow, have Hits contain optional window stats..?
-  eliminate HitsSample, have Hits contain optional sample settings..?
++ eliminate HitsWindow, have Hits contain optional window stats
++ eliminate HitsSample, have Hits contain optional sample settings
 
 - HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?

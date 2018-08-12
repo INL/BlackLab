@@ -52,6 +52,19 @@ public interface Hits extends Iterable<Hit> {
         return Hits.fromList(queryInfo, (List<Hit>) null);
     }
 
+    /**
+     * Take a sample of hits by wrapping an existing Hits object.
+     *
+     * @param hits hits object to wrap
+     * @param parameters sample parameters 
+     * @return the sample
+     */
+    static Hits sample(Hits hits, SampleParameters parameters) {
+        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
+        // (this class could save memory by only storing the hits we're interested in)
+        return new HitsList(hits, parameters);
+    }
+
     // Inherited from Results
     //--------------------------------------------------------------------
     
@@ -402,6 +415,26 @@ public interface Hits extends Iterable<Hit> {
      * @return window stats, or null if this is not a hits window
      */
     default WindowStats windowStats() {
+        return null;
+    }
+    
+    /**
+     * Is this sampled from another instance?
+     * 
+     * @return true if it's a sample, false if not
+     */
+    default boolean isSample() {
+        return sampleParameters() != null;
+    }
+
+    /**
+     * If this is a sample, return the sample parameters.
+     * 
+     * Also includes the explicitly set or randomly chosen seed. 
+     * 
+     * @return sample parameters, or null if this is not a sample
+     */
+    default SampleParameters sampleParameters() {
         return null;
     }
 
