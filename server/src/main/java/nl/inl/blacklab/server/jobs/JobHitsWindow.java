@@ -79,7 +79,7 @@ public class JobHitsWindow extends JobWithHits {
 
         ds
                 .entry("requestedWindowSize", requestedWindowSize)
-                .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.windowSize());
+                .entry("actualWindowSize", hitsWindow == null ? -1 : hitsWindow.windowStats().windowSize());
         if (hitsWindow != null) {
             ds
                     .entry("hitsObjId", hitsWindow.queryInfo().resultsObjectId());

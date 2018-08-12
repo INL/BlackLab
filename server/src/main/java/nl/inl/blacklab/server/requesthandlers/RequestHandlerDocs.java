@@ -35,6 +35,7 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for the doc results.
  */
 public class RequestHandlerDocs extends RequestHandler {
+    
     public RequestHandlerDocs(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
@@ -53,6 +54,7 @@ public class RequestHandlerDocs extends RequestHandler {
         JobDocsGrouped searchGrouped = null;
         JobDocsWindow searchWindow = null;
         JobDocsTotal total = null;
+        DocResults totalDocResults;
         try {
             DocResultsWindow window;
             DocGroup group = null;
@@ -103,6 +105,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 int number = searchParam.getInteger("number");
                 if (number < 0 || number > searchMan.config().maxPageSize())
                     number = searchMan.config().defaultPageSize();
+                totalDocResults = docsSorted;
                 window = docsSorted.window(first, number);
 
             } else {
@@ -116,13 +119,15 @@ public class RequestHandlerDocs extends RequestHandler {
                 // (usually nonblocking, unless "waitfortotal=yes" was passed)
                 total = (JobDocsTotal) searchMan.search(user, searchParam.docsTotal(),
                         searchParam.getBoolean("waitfortotal"));
-
+                
                 // If search is not done yet, indicate this to the user
                 if (!search.finished()) {
                     return Response.busy(ds, servlet);
                 }
 
                 window = searchWindow.getDocResults();
+                
+                totalDocResults = total.getDocResults();
             }
 
             BlackLabIndex blIndex = search.blIndex();
@@ -134,7 +139,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 //TODO: use background job?
                 String fieldName = blIndex.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
-                totalTokens = window.getOriginalDocs().intSum(propTokens);
+                totalTokens = totalDocResults.intSum(propTokens);
             }
 
             // Search is done; construct the results object
@@ -147,7 +152,7 @@ public class RequestHandlerDocs extends RequestHandler {
             double totalTime = group == null ? (total.threwException() ? -1 : total.userWaitTime())
                     : searchGrouped.userWaitTime();
             addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (Hits) null, (Hits) null,
-                    group != null, docResults, (DocOrHitGroups) null, window);
+                    group != null, docResults, (DocOrHitGroups) null, window.windowStats());
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
@@ -212,7 +217,7 @@ public class RequestHandlerDocs extends RequestHandler {
             if (searchParam.hasFacets()) {
                 // Now, group the docs according to the requested facets.
                 ds.startEntry("facets");
-                dataStreamFacets(ds, window.getOriginalDocs(), searchParam.facets());
+                dataStreamFacets(ds, totalDocResults, searchParam.facets());
                 ds.endEntry();
             }
             ds.endMap();

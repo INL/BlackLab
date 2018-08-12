@@ -23,12 +23,9 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * A list of DocResult objects (document-level query results). The list may be
  * sorted by calling DocResults.sort().
  */
-public class DocResultsWindow extends DocResults implements ResultsWindow {
-    private DocResults source;
-
-    private int first;
-
-    private int numberPerPage;
+public class DocResultsWindow extends DocResults {
+    
+    private WindowStats windowStats;
 
     /**
      *
@@ -38,9 +35,6 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
      */
     DocResultsWindow(DocResults source, int first, int numberPerPage) {
         super(source.queryInfo());
-        this.source = source;
-        this.first = first;
-        this.numberPerPage = numberPerPage;
 
         boolean emptyResultSet = !source.docsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
@@ -59,50 +53,12 @@ public class DocResultsWindow extends DocResults implements ResultsWindow {
         for (int i = first; i < first + number; i++) {
             results.add(source.get(i));
         }
-    }
-
-    @Override
-    public boolean hasNext() {
-        return source.docsProcessedAtLeast(first + numberPerPage + 1);
-    }
-
-    @Override
-    public boolean hasPrevious() {
-        return first > 0;
-    }
-
-    @Override
-    public int nextFrom() {
-        return first + results.size();
-    }
-
-    @Override
-    public int prevFrom() {
-        return first - numberPerPage;
-    }
-
-    @Override
-    public int first() {
-        return first;
-    }
-
-    @Override
-    public int last() {
-        return first + results.size() - 1;
-    }
-
-    public DocResults getOriginalDocs() {
-        return source;
-    }
-
-    @Override
-    public int requestedWindowSize() {
-        return numberPerPage;
+        windowStats = new WindowStats(source.docsProcessedAtLeast(first + number + 1), first, numberPerPage, number);
     }
     
     @Override
-    public int windowSize() {
-        return results.size();
+    public WindowStats windowStats() {
+        return windowStats;
     }
 
 }

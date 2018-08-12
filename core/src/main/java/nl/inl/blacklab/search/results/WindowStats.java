@@ -1,56 +1,56 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.search.results.ResultsWindow;
-
-class ResultsWindowImpl implements ResultsWindow {
+/**
+ * Information about a results window.
+ * 
+ * For example: start and (requested/actual) size of the window 
+ * and whether there are next/previous windows.
+ */
+public class WindowStats {
+    
     private final int first;
-    private final int totalResults;
+    
     private final int actualWindowSize;
+    
     private final int requestedWindowSize;
 
-    ResultsWindowImpl(int totalResults, int first, int requestedWindowSize, int actualWindowSize) {
+    private boolean hasNext;
+
+    public WindowStats(boolean hasNext, int first, int requestedWindowSize, int actualWindowSize) {
         this.first = first;
-        this.totalResults = totalResults;
+        this.hasNext = hasNext;
         this.actualWindowSize = actualWindowSize;
         this.requestedWindowSize = requestedWindowSize;
     }
 
-    @Override
     public boolean hasNext() {
-        return first + requestedWindowSize < totalResults;
+        return hasNext;
     }
 
-    @Override
     public boolean hasPrevious() {
         return first > 0;
     }
 
-    @Override
     public int nextFrom() {
-        return -1;
+        return first + actualWindowSize;
     }
 
-    @Override
     public int prevFrom() {
-        return -1;
+        return first - 1;
     }
 
-    @Override
     public int first() {
         return first;
     }
 
-    @Override
     public int last() {
-        return -1;
+        return first + actualWindowSize - 1;
     }
 
-    @Override
     public int windowSize() {
         return actualWindowSize;
     }
 
-    @Override
     public int requestedWindowSize() {
         return requestedWindowSize;
     }

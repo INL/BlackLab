@@ -542,4 +542,12 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     public int docsProcessedSoFar() {
         return sourceHits == null ? results.size() : sourceHits.docsProcessedSoFar();
     }
+    
+    public boolean isWindow() {
+        return windowStats() != null;
+    }
+
+    public WindowStats windowStats() {
+        return null;
+    }
 }

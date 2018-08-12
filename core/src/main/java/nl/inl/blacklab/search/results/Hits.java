@@ -387,4 +387,22 @@ public interface Hits extends Iterable<Hit> {
      */
     MaxStats maxStats();
 
+    /**
+     * Is this a hits window?
+     * 
+     * @return true if it's a window, false if not
+     */
+    default boolean isWindow() {
+        return windowStats() != null;
+    }
+    
+    /**
+     * If this is a hits window, return the window stats.
+     * 
+     * @return window stats, or null if this is not a hits window
+     */
+    default WindowStats windowStats() {
+        return null;
+    }
+
 }

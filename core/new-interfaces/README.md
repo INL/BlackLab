@@ -63,14 +63,9 @@ index
 + HitsSample moet SampleSettings class gebruiken
 
 
-- Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
-  die BLS aan het eind opvangt en er een nette boodschap voor toont.
-
 - encapsulate WindowStats
   eliminate HitsWindow, have Hits contain optional window stats..?
   eliminate HitsSample, have Hits contain optional sample settings..?
-
-- Moet QueryInfo maxSettings/maxStats bevatten? Of moet een client gewoon een count-query runnen (die geen hits opslaat) als die totaalgegevens wil?
 
 - HitProperty e.d. aanpassen om meer hands-on te zijn?
   D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
@@ -83,7 +78,15 @@ index
   HitProperty moet MatchSensitivity krijgen ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
   HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
   
+- Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
+  die BLS aan het eind opvangt en er een nette boodschap voor toont.
+  (zorg wel dat aborted jobs uit de cache verwijderd worden, zodat we geen incorrecte counts tonen!)
+
 results
+- DocResults moet ook geen source hits meer vasthouden voor grand total counts. Het is aan de client om die op te vragen.
+  Alternatief: toch alle stats in MaxStats zetten. Je kunt dan alleen niet aangeven dat je het grand total wilt
+  weten, dus het kan zijn dat de total count job stopt tot iemand er om vraagt, en dat kan dus niet.
+
 - DocResults, Groups moeten ook threadPauser hebben
 
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)

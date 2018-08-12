@@ -1443,7 +1443,7 @@ public class QueryTool {
 
         // Compile hits display info and calculate necessary width of left context column
         MetadataField titleField = index.metadata().metadataFields().special(MetadataFields.TITLE);
-        int hitNr = window.first() + 1;
+        int hitNr = window.windowStats().first() + 1;
         for (DocResult result : window) {
             int id = result.getDocId();
             Document d = index.doc(id).luceneDoc();
@@ -1540,7 +1540,7 @@ public class QueryTool {
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
         MetadataField titleField = index.metadata().metadataFields().special(MetadataFields.TITLE);
-        int hitNr = window.first() + 1;
+        int hitNr = window.windowStats().first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {
                 if (currentDoc != -1)

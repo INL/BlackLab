@@ -1,6 +1,12 @@
 package nl.inl.blacklab.search.results;
 
-public interface ResultsWindow {
+/**
+ * Information about a results window.
+ * 
+ * For example: start and (requested/actual) size of the window 
+ * and whether there are next/previous windows.
+ */
+public interface WindowStatsInterface {
     /**
      * Are there more results in the original Hits object beyond our window?
      *

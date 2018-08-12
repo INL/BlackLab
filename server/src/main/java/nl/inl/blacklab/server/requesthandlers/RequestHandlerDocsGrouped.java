@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitsList;
-import nl.inl.blacklab.search.results.ResultsWindow;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -52,8 +52,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
             // The summary
             ds.startEntry("summary").startMap();
-            ResultsWindow ourWindow = new ResultsWindowImpl(groups.numberOfGroups(), first, number,
-                    numberOfGroupsInWindow);
+            WindowStats ourWindow = new WindowStats(first + number < groups.numberOfGroups(), first, number, numberOfGroupsInWindow);
             addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (HitsList) null, (HitsList) null, false,
                     docResults, groups, ourWindow);
             ds.endMap().endEntry();

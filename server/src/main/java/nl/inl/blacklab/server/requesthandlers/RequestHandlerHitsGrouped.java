@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultsWindow;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -49,7 +49,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             int totalResults = groups.numberOfGroups();
             final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                     : requestedWindowSize;
-            ResultsWindow ourWindow = new ResultsWindowImpl(totalResults, first, requestedWindowSize, actualWindowSize);
+            WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
             addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, hits, hits, false, (DocResults) null,
                     groups, ourWindow);
             ds.endMap().endEntry();

@@ -176,7 +176,7 @@ public class RequestHandlerHits extends RequestHandler {
             // TODO timing is now broken because we always retrieve total and use a window on top of it,
             // so we can no longer differentiate the total time from the time to retrieve the requested window
             addSummaryCommonFields(ds, searchParam, job.userWaitTime(), totalTime, window, total, false,
-                    (DocResults) null, (DocOrHitGroups) null, window);
+                    (DocResults) null, (DocOrHitGroups) null, window.windowStats());
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
             ds.startEntry("docFields");
