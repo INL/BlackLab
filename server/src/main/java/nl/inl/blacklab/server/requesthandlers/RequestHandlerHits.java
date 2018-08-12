@@ -28,7 +28,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -58,7 +57,7 @@ public class RequestHandlerHits extends RequestHandler {
             logger.debug("RequestHandlerHits.handle start");
 
         Hits total = null;
-        HitsWindow window = null;
+        Hits window = null;
         Job job = null;
 
         // Do we want to view a single group after grouping?

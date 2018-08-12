@@ -61,10 +61,10 @@ index
 + HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
   HitsImpl -> HitsList
 + HitsSample moet SampleSettings class gebruiken
++ encapsulate WindowStats
 
 
-- encapsulate WindowStats
-  eliminate HitsWindow, have Hits contain optional window stats..?
+- eliminate HitsWindow, have Hits contain optional window stats..?
   eliminate HitsSample, have Hits contain optional sample settings..?
 
 - HitProperty e.d. aanpassen om meer hands-on te zijn?

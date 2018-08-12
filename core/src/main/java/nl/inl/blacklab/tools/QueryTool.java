@@ -79,7 +79,6 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -708,7 +707,7 @@ public class QueryTool {
                 if (hitId >= currentHitSet.size()) {
                     errprintln("Hit number out of range.");
                 } else {
-                    HitsWindow singleHit = currentHitSet.window(hitId, 1);
+                    Hits singleHit = currentHitSet.window(hitId, 1);
                     Concordances concordances = singleHit.concordances(snippetSize, concType);
                     Hit h = currentHitSet.get(hitId);
                     Concordance conc = concordances.get(h);
@@ -1514,7 +1513,7 @@ public class QueryTool {
             return; // nothing to show
 
         // Limit results to the current page
-        HitsWindow window = hitsToShow.window(firstResult, resultsPerPage);
+        Hits window = hitsToShow.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
         List<HitToShow> toShow = new ArrayList<>();

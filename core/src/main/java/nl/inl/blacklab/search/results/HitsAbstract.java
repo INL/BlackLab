@@ -81,7 +81,6 @@ public abstract class HitsAbstract implements Hits {
     public HitsAbstract(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
         threadPauser = new ThreadPauser();
-        docsRetrieved = docsCounted = 0;
         if (queryInfo.resultsObjectId() < 0)
             queryInfo.setResultsObjectId(hitsObjId); // We're the original query. set the id.
     }
@@ -399,12 +398,12 @@ public abstract class HitsAbstract implements Hits {
     }
     
     @Override
-    public HitsWindow window(int first, int windowSize) {
-        return new HitsWindow(this, first, windowSize);
+    public Hits window(int first, int windowSize) {
+        return new HitsList(this, first, windowSize);
     }
 
     @Override
-    public HitsWindow window(Hit hit) throws ResultNotFound {
+    public Hits window(Hit hit) throws ResultNotFound {
         int i = indexOf(hit);
         if (i < 0)
             throw new ResultNotFound("Hit not found in hits list!");

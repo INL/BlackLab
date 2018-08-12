@@ -12,6 +12,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class HitsList extends HitsAbstract {
 
+    /** Our window stats, if this is a window; null otherwise. */
+    WindowStats windowStats;
+    
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
@@ -34,6 +37,56 @@ public class HitsList extends HitsAbstract {
                 prevDoc = h.doc();
             }
         }
+    }
+    
+    /**
+     * Construct a hits window from a Hits instance.
+     *
+     * @param source the larger Hits object we would like a window into
+     * @param first the first hit in our window
+     * @param windowSize the size of our window
+     */
+    HitsList(Hits source, int first, int windowSize) {
+        super(source.queryInfo());
+
+        // Error if first out of range
+        boolean emptyResultSet = !source.hitsProcessedAtLeast(1);
+        if (first < 0 || (emptyResultSet && first > 0) ||
+                (!emptyResultSet && !source.hitsProcessedAtLeast(first + 1))) {
+            throw new IllegalArgumentException("First hit out of range");
+        }
+
+        // Auto-clamp number
+        int number = windowSize;
+        if (!source.hitsProcessedAtLeast(first + number))
+            number = source.size() - first;
+
+        // Copy the hits we're interested in.
+        hits = new ArrayList<>();
+        if (source.hasCapturedGroups())
+            capturedGroups = new CapturedGroupsImpl(source.capturedGroups().names());
+        int prevDoc = -1;
+        hitsCounted = 0;
+        for (int i = first; i < first + number; i++) {
+            Hit hit = source.get(i);
+            hits.add(hit);
+            if (capturedGroups != null)
+                capturedGroups.put(hit, source.capturedGroups().get(hit));
+            // OPT: copy context as well..?
+            
+            if (hit.doc() != prevDoc) {
+                docsRetrieved++;
+                docsCounted++;
+                prevDoc = hit.doc();
+            }
+        }
+        boolean hasNext = source.hitsProcessedAtLeast(first + windowSize + 1);
+        windowStats = new WindowStats(hasNext, first, windowSize, number);
+    }
+    
+    @Override
+    public WindowStats windowStats() {
+        return windowStats;
     }
 
     /** Construct a copy of a hits object in sorted order.
@@ -85,7 +138,7 @@ public class HitsList extends HitsAbstract {
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (hits.size()=" + hits.size() + ")";
+        return "HitsList#" + hitsObjId + " (hits.size()=" + hits.size() + "; isWindow=" + isWindow() + ")";
     }
     
     /**

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -69,13 +68,13 @@ public class JobHitsWindow extends JobWithHits {
     }
 
     @Override
-    public HitsWindow getHits() {
-        return (HitsWindow) hits;
+    public Hits getHits() {
+        return hits;
     }
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        HitsWindow hitsWindow = getHits();
+        Hits hitsWindow = getHits();
 
         ds
                 .entry("requestedWindowSize", requestedWindowSize)

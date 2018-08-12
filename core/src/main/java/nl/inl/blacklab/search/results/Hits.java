@@ -284,7 +284,7 @@ public interface Hits extends Iterable<Hit> {
      * @return window
      * @throws ResultNotFound if hit was not found in this result set
      */
-    HitsWindow window(Hit hit) throws ResultNotFound;
+    Hits window(Hit hit) throws ResultNotFound;
 
     /**
      * Get a window into this list of hits.
@@ -300,7 +300,7 @@ public interface Hits extends Iterable<Hit> {
      * @param windowSize size of the window
      * @return the window
      */
-    HitsWindow window(int first, int windowSize);
+    Hits window(int first, int windowSize);
 
     /**
      * Count occurrences of context words around hit.

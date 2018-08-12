@@ -15,7 +15,6 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsWindow;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -111,7 +110,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
 
         try {
-            HitsWindow singleHit = hits.window(hit);
+            Hits singleHit = hits.window(hit);
             if (useOrigContent) {
                 Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
                 Concordance c = concordances.get(hit);
