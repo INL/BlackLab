@@ -33,7 +33,7 @@ public class HitsList extends HitsAbstract {
      * @param queryInfo query info
      * @param hits the list of hits to wrap, or null for a new list
      */
-    HitsList(QueryInfo queryInfo, List<Hit> hits) {
+    protected HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
         this.hits = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.hits.size();
@@ -52,7 +52,7 @@ public class HitsList extends HitsAbstract {
      *
      * @param queryInfo query info
      */
-    HitsList(QueryInfo queryInfo) {
+    protected HitsList(QueryInfo queryInfo) {
         this(queryInfo, null);
     }
     
