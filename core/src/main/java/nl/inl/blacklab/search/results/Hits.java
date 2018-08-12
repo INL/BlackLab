@@ -333,7 +333,7 @@ public interface Hits extends Iterable<Hit> {
      * @param sort sort the resulting collocations by descending frequency?
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(int contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+    default TermFrequencyList collocations(ContextSize contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         return TermFrequencyList.collocations(contextSize, this, annotation, ctx, sort);
     }
 
@@ -346,7 +346,7 @@ public interface Hits extends Iterable<Hit> {
      * @param contextSize how many words around the hits to use
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(int contextSize) {
+    default TermFrequencyList collocations(ContextSize contextSize) {
         return TermFrequencyList.collocations(contextSize, this, null, null, true);
     }
 
@@ -366,7 +366,7 @@ public interface Hits extends Iterable<Hit> {
      * @param contextSize desired context size
      * @return concordances
      */
-    Concordances concordances(int contextSize, ConcordanceType type);
+    Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
     /**
      * Create concordances from the forward index.
@@ -374,7 +374,7 @@ public interface Hits extends Iterable<Hit> {
      * @param contextSize desired context size
      * @return concordances
      */
-    default Concordances concordances(int contextSize) {
+    default Concordances concordances(ContextSize contextSize) {
         return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
     }
     
@@ -386,7 +386,7 @@ public interface Hits extends Iterable<Hit> {
      * @param contextSize desired context size
      * @return KWICs
      */
-    Kwics kwics(int contextSize);
+    Kwics kwics(ContextSize contextSize);
 
     /**
      * Get information about the original query.

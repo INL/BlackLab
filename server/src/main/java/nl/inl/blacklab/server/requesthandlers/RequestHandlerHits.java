@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.Concordances;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
@@ -205,7 +206,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
                 concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else
-                kwics = window.kwics(-1);
+                kwics = window.kwics(blIndex().defaultContextSize());
             for (Hit hit : window) {
                 ds.startItem("hit").startMap();
 
@@ -284,7 +285,7 @@ public class RequestHandlerHits extends RequestHandler {
     }
 
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
-        int contextSize = searchParam.getInteger("wordsaroundhit");
+        ContextSize contextSize = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
         ds.startMap().startEntry("tokenFrequencies").startMap();
         TermFrequencyList tfl = originalHits.collocations(contextSize);
         for (TermFrequency tf : tfl) {

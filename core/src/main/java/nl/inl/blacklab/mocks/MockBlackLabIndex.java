@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
@@ -194,18 +195,18 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public void setHitsSettings(MaxSettings settings) {
+    public void setMaxSettings(MaxSettings settings) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setDefaultContextSize(int i) {
+    public void setDefaultContextSize(ContextSize size) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public int defaultContextSize() {
-        throw new UnsupportedOperationException();
+    public ContextSize defaultContextSize() {
+        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
     }
 
     @Override

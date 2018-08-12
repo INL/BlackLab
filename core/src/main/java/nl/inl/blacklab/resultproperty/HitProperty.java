@@ -26,9 +26,9 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.CapturedGroupsImpl;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
@@ -251,8 +251,8 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      */
     public abstract List<String> getPropNames();
 
-    public int needsContextSize() {
-        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+    public ContextSize needsContextSize() {
+        return hits.queryInfo().index().defaultContextSize();
     }
 
     public Hits sortHits(HitsAbstract hitsToSort, boolean reverseSort) {

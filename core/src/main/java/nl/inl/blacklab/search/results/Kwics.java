@@ -28,8 +28,8 @@ public class Kwics {
     /**
      * @param hits
      */
-    Kwics(Hits hits, int contextSize) {
-        if (contextSize < 0)
+    Kwics(Hits hits, ContextSize contextSize) {
+        if (contextSize.left() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
     
         // Get the concordances
@@ -68,7 +68,7 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private static Map<Hit, Kwic> retrieveKwics(Hits hits, int contextSize, AnnotatedField field) {
+    private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
         // Group hits per document
         MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {

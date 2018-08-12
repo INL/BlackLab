@@ -49,7 +49,7 @@ public class Contexts {
      */
     static void makeKwicsSingleDocForwardIndex(List<Hit> hits, AnnotationForwardIndex forwardIndex,
             AnnotationForwardIndex punctForwardIndex, Map<Annotation, AnnotationForwardIndex> attrForwardIndices,
-            int wordsAroundHit, Map<Hit, Kwic> theKwics) {
+            ContextSize wordsAroundHit, Map<Hit, Kwic> theKwics) {
         if (hits.isEmpty())
             return;
     
@@ -137,10 +137,10 @@ public class Contexts {
     /**
      * Get context words from the forward index.
      *
-     * @param wordsAroundHit how many words of context we want
+     * @param contextSize how many words of context we want
      * @param contextSources forward indices to get context from
      */
-    private static int[][] getContextWordsSingleDocument(List<Hit> list, int wordsAroundHit,
+    private static int[][] getContextWordsSingleDocument(List<Hit> list, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources) {
         int n = list.size();
         if (n == 0)
@@ -149,8 +149,9 @@ public class Contexts {
         int[] endsOfSnippets = new int[n];
         int i = 0;
         for (Hit h: list) {
-            startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
-            endsOfSnippets[i] = h.end() + wordsAroundHit;
+            int contextSz = contextSize.left();
+            startsOfSnippets[i] = contextSz >= h.start() ? 0 : h.start() - contextSz;
+            endsOfSnippets[i] = h.end() + contextSz;
             i++;
         }
     
@@ -266,7 +267,7 @@ public class Contexts {
      * @param annotations the field and properties to use for the context
      * @param contextSize how large the contexts need to be
      */
-    public Contexts(Hits hits, List<Annotation> annotations, int contextSize) {
+    public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
         hits.size(); // make sure all hits have been read
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();

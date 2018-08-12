@@ -15,6 +15,7 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.StringUtil;
@@ -39,7 +40,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
      *
      * @return the frequency of each occurring token
      */
-    public synchronized static TermFrequencyList collocations(int contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+    public synchronized static TermFrequencyList collocations(ContextSize contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         BlackLabIndex index = hits.queryInfo().index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().annotations().main();

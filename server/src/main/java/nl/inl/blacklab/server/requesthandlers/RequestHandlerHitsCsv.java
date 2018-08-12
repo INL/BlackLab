@@ -212,7 +212,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
             // So we need to manually retrieve the documents and their data
             Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
-            Kwics kwics = hits.kwics(-1);
+            Kwics kwics = hits.kwics(blIndex().defaultContextSize());
             for (Hit hit : hits) {
                 String pid;
                 String title;

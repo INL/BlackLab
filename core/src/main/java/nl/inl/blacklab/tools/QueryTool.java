@@ -72,6 +72,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
@@ -299,7 +300,7 @@ public class QueryTool {
     private boolean commandWasQuery;
 
     /** Size of larger snippet */
-    private int snippetSize = 50;
+    private ContextSize snippetSize = ContextSize.get(50);
 
     /** Don't allow file operations in web mode */
     private boolean webSafeOperationOnly = false;
@@ -698,7 +699,7 @@ public class QueryTool {
                 firstResult = 0;
                 showResultsPage();
             } else if (lcased.startsWith("context ")) {
-                contextSize = parseInt(lcased.substring(8), 0);
+                contextSize = ContextSize.get(parseInt(lcased.substring(8), 0));
                 collocations = null;
                 showResultsPage();
             } else if (lcased.startsWith("snippet ")) {
@@ -730,7 +731,7 @@ public class QueryTool {
                     outprintln(StringUtil.wrapToString(index.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
-                snippetSize = parseInt(lcased.substring(12), 0);
+                snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));
                 outprintln("Snippets will show " + snippetSize + " words of context.");
             } else if (lcased.startsWith("doc ")) {
                 int docId = parseInt(lcased.substring(4), 0);
@@ -1174,7 +1175,7 @@ public class QueryTool {
     }
 
     /** Desired context size */
-    private int contextSize;
+    private ContextSize contextSize;
 
     /** Are we responsible for closing the Searcher? */
     private boolean shouldCloseSearcher = true;

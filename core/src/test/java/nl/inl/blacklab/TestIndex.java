@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
@@ -238,7 +239,7 @@ public class TestIndex {
      */
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
-        Kwics kwics = hits.kwics(1);
+        Kwics kwics = hits.kwics(ContextSize.get(1));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtil.join(kwic.getLeft(word), " ");

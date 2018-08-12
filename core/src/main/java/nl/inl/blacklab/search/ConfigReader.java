@@ -27,6 +27,7 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.YamlJsonReader;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -204,15 +205,15 @@ public class ConfigReader extends YamlJsonReader {
                 readCollator(e, index);
                 break;
             case "contextSize":
-                index.setDefaultContextSize(integer(e));
+                index.setDefaultContextSize(ContextSize.get(integer(e)));
                 break;
             case "maxHitsToRetrieve":
                 hitsSett = new MaxSettings(integer(e), hitsSett.maxHitsToCount());
-                index.setHitsSettings(hitsSett);
+                index.setMaxSettings(hitsSett);
                 break;
             case "maxHitsToCount":
                 hitsSett = new MaxSettings(hitsSett.maxHitsToProcess(), integer(e));
-                index.setHitsSettings(hitsSett);
+                index.setMaxSettings(hitsSett);
                 break;
             default:
                 throw new InvalidConfiguration("Unknown key " + e.getKey() + " in search section");

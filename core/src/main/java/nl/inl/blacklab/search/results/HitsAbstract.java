@@ -407,12 +407,12 @@ public abstract class HitsAbstract implements Hits {
     //--------------------------------------------------------------------
     
     @Override
-    public Concordances concordances(int contextSize, ConcordanceType type) {
+    public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
         return new Concordances(this, type, contextSize);
     }
 
     @Override
-    public Kwics kwics(int contextSize) {
+    public Kwics kwics(ContextSize contextSize) {
         return new Kwics(this, contextSize);
     }
 

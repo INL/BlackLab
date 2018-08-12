@@ -68,6 +68,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
@@ -312,7 +313,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
 
-    private int defaultContextSize;
+    private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
     
     // Constructors
@@ -429,7 +430,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
     
     @Override
-    public void setHitsSettings(MaxSettings maxSettings) {
+    public void setMaxSettings(MaxSettings maxSettings) {
         this.maxSettings = maxSettings;
     }
 
@@ -1044,12 +1045,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public void setDefaultContextSize(int defaultContextSize) {
+    public void setDefaultContextSize(ContextSize defaultContextSize) {
         this.defaultContextSize = defaultContextSize;
     }
     
     @Override
-    public int defaultContextSize() {
+    public ContextSize defaultContextSize() {
         return defaultContextSize;
     }
     

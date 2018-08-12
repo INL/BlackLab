@@ -30,6 +30,7 @@ import nl.inl.blacklab.resultproperty.GroupPropertySize;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -374,11 +375,11 @@ public class SearchParameters {
     }
 
     public ContextSettings getContextSettings() {
-        int contextSize = getInteger("wordsaroundhit");
+        ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
         int maxContextSize = searchManager.config().maxContextSize();
-        if (contextSize > maxContextSize) {
+        if (contextSize.left() > maxContextSize) {
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
-            contextSize = maxContextSize;
+            contextSize = ContextSize.get(maxContextSize);
         }
         ConcordanceType concType = getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE
                 : ConcordanceType.FORWARD_INDEX;

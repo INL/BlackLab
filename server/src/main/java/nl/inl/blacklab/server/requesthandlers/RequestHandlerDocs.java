@@ -190,7 +190,7 @@ public class RequestHandlerDocs extends RequestHandler {
                     if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
                         concordances = hits2.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
                     else
-                        kwics = hits2.kwics(-1);
+                        kwics = hits2.kwics(blIndex.defaultContextSize());
                     for (Hit hit : hits2) {
                         // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                         ds.startItem("snippet").startMap();

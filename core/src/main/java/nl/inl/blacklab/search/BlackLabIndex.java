@@ -21,6 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
@@ -78,7 +79,7 @@ public interface BlackLabIndex extends Closeable {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
 
-    int DEFAULT_CONTEXT_SIZE = 5;
+    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
@@ -334,7 +335,7 @@ public interface BlackLabIndex extends Closeable {
 
     void setDefaultMatchSensitivity(MatchSensitivity m);
 
-    void setHitsSettings(MaxSettings withContextSize);
+    void setMaxSettings(MaxSettings settings);
     
     @Override
     boolean equals(Object obj);
@@ -342,9 +343,9 @@ public interface BlackLabIndex extends Closeable {
     @Override
     int hashCode();
 
-    void setDefaultContextSize(int i);
+    void setDefaultContextSize(ContextSize size);
 
-    int defaultContextSize();
+    ContextSize defaultContextSize();
 
     boolean indexMode();
 

@@ -144,7 +144,7 @@ public class HitPropertyContextWords extends HitProperty {
         if (words == null) {
             // "entire hit text"
             this.words = new ArrayList<>();
-            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, BlackLabIndex.DEFAULT_CONTEXT_SIZE));
+            this.words.add(new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1, BlackLabIndex.DEFAULT_CONTEXT_SIZE.left()));
         } else {
             // Determine the maximum length of each part, by limiting it to the
             // maximum possible given the anchor point, direction and first word.
@@ -163,7 +163,7 @@ public class HitPropertyContextWords extends HitProperty {
                         break;
                     default:
                         // Limit to length of left or right context.
-                        part.maxLength = Math.min(part.maxLength, BlackLabIndex.DEFAULT_CONTEXT_SIZE - part.firstWord);
+                        part.maxLength = Math.min(part.maxLength, BlackLabIndex.DEFAULT_CONTEXT_SIZE.left() - part.firstWord);
                         break;
                     }
                     if (part.maxLength < 0)

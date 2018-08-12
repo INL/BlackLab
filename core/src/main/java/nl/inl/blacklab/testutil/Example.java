@@ -197,7 +197,7 @@ public class Example {
      */
     static void displayConcordances(Hits hits) {
         // Loop over the hits and display.
-        Concordances concs = hits.concordances(5, ConcordanceType.FORWARD_INDEX);
+        Concordances concs = hits.concordances(index.defaultContextSize(), ConcordanceType.FORWARD_INDEX);
         for (Hit hit : hits) {
             Concordance conc = concs.get(hit);
             // Strip out XML tags for display.

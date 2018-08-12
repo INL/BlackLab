@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
@@ -51,27 +52,27 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 24);
 
         Hit hit;
-        int wordsAroundHit;
+        ContextSize wordsAroundHit;
         int start, end;
         boolean isHit = false;
         if (searchParam.containsKey("hitstart")) {
             start = searchParam.getInteger("hitstart");
             end = searchParam.getInteger("hitend");
-            wordsAroundHit = searchParam.getInteger("wordsaroundhit");
+            wordsAroundHit = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
             isHit = true;
         } else {
             start = searchParam.getInteger("wordstart");
             end = searchParam.getInteger("wordend");
-            wordsAroundHit = 0;
+            wordsAroundHit = ContextSize.hitOnly();
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit * 2 + end - start <= 0 || end < start || wordsAroundHit < 0) {
+        if (start < 0 || end < 0 || wordsAroundHit.left() * 2 + end - start <= 0 || end < start || wordsAroundHit.left() < 0) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
         // Clamp snippet to max size
-        int snippetStart = Math.max(0, start - wordsAroundHit);
-        int snippetEnd = end + wordsAroundHit;
+        int snippetStart = Math.max(0, start - wordsAroundHit.left());
+        int snippetEnd = end + wordsAroundHit.left();
         if (snippetEnd - snippetStart > searchMan.config().maxSnippetSize()) {
             int clampedWindow = Math.max(0, (searchMan.config().maxSnippetSize() - (end - start)) / 2);
             snippetStart = Math.max(0, start - clampedWindow);
@@ -99,7 +100,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      *            just returns whole fragment
      * @param docPid if not null, include doc pid, hit start and end info
      */
-    public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, int wordsAroundHit,
+    public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
             boolean useOrigContent, boolean isFragment, String docPid) {
         ds.startMap();
         if (docPid != null) {

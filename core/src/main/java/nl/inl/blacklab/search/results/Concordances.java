@@ -32,8 +32,8 @@ public class Concordances {
     /**
      * @param hits
      */
-    Concordances(Hits hits, ConcordanceType type, int contextSize) {
-        if (contextSize < 0)
+    Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
+        if (contextSize.left() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
         if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
@@ -75,7 +75,7 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, int wordsAroundHit,
+    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize wordsAroundHit,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)
@@ -89,14 +89,15 @@ public class Concordances {
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
+        int contextSz = wordsAroundHit.left();
         for (Hit hit : hits) {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 
-            int start = hitStart - wordsAroundHit;
+            int start = hitStart - contextSz;
             if (start < 0)
                 start = 0;
-            int end = hitEnd + wordsAroundHit;
+            int end = hitEnd + contextSz;
 
             startsOfWords[startEndArrayIndex] = start;
             startsOfWords[startEndArrayIndex + 1] = hitStart;
@@ -125,7 +126,7 @@ public class Concordances {
      * @param contextSize how many words around the hit to retrieve
      * @return the concordances
      */
-    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, int contextSize) {
+    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
