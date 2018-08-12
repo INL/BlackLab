@@ -79,24 +79,24 @@ public class HitPropertyWordRight extends HitProperty {
 
     @Override
     public HitPropValueContextWord get(int hitNumber) {
-        int[] context = contexts.getHitContext(hitNumber);
-        int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
-        int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
+        int[] context = contexts.get(hitNumber);
+        int contextRightStart = context[Contexts.RIGHT_START_INDEX];
+        int contextLength = context[Contexts.LENGTH_INDEX];
 
         if (contextLength <= contextRightStart)
             return new HitPropValueContextWord(hits, annotation, -1, sensitive);
-        int contextStart = contextLength * contextIndices.get(0) + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         return new HitPropValueContextWord(hits, annotation, context[contextStart + contextRightStart], sensitive);
     }
 
     @Override
     public int compare(Object i, Object j) {
-        int[] ca = contexts.getHitContext((Integer) i);
-        int caRightStart = ca[Contexts.CONTEXTS_RIGHT_START_INDEX];
-        int caLength = ca[Contexts.CONTEXTS_LENGTH_INDEX];
-        int[] cb = contexts.getHitContext((Integer) j);
-        int cbRightStart = cb[Contexts.CONTEXTS_RIGHT_START_INDEX];
-        int cbLength = cb[Contexts.CONTEXTS_LENGTH_INDEX];
+        int[] ca = contexts.get((Integer) i);
+        int caRightStart = ca[Contexts.RIGHT_START_INDEX];
+        int caLength = ca[Contexts.LENGTH_INDEX];
+        int[] cb = contexts.get((Integer) j);
+        int cbRightStart = cb[Contexts.RIGHT_START_INDEX];
+        int cbLength = cb[Contexts.LENGTH_INDEX];
 
         if (caLength <= caRightStart)
             return cbLength <= cbRightStart ? 0 : (reverse ? 1 : -1);
@@ -105,8 +105,8 @@ public class HitPropertyWordRight extends HitProperty {
         // Compare one word to the right of the hit
         int contextIndex = contextIndices.get(0);
         int cmp = terms.compareSortPosition(
-                ca[contextIndex * caLength + caRightStart + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
-                cb[contextIndex * cbLength + cbRightStart + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS],
+                ca[contextIndex * caLength + caRightStart + Contexts.NUMBER_OF_BOOKKEEPING_INTS],
+                cb[contextIndex * cbLength + cbRightStart + Contexts.NUMBER_OF_BOOKKEEPING_INTS],
                 sensitive);
         return reverse ? -cmp : cmp;
     }

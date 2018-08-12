@@ -16,24 +16,185 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class Contexts {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
-    public final static int CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS = 3;
+    public final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
 
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
-    public final static int CONTEXTS_HIT_START_INDEX = 0;
+    public final static int HIT_START_INDEX = 0;
 
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
-    public final static int CONTEXTS_RIGHT_START_INDEX = 1;
+    public final static int RIGHT_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
-    public final static int CONTEXTS_LENGTH_INDEX = 2;
+    public final static int LENGTH_INDEX = 2;
 
     // Instance variables
     //------------------------------------------------------------------------------
+
+    /**
+     * Retrieves the KWIC information (KeyWord In Context: left, hit and right
+     * context) for a number of hits in the same document from the ContentStore.
+     * 
+     * NOTE: this destroys any existing contexts!
+     *
+     * @param forwardIndex Forward index for the words
+     * @param punctForwardIndex Forward index for the punctuation
+     * @param attrForwardIndices Forward indices for the attributes, or null if none
+     * @param wordsAroundHit number of words left and right of hit to fetch
+     * @param theKwics where to add the KWICs
+     */
+    static void makeKwicsSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
+            ForwardIndex punctForwardIndex, Map<Annotation, ForwardIndex> attrForwardIndices,
+            int wordsAroundHit, Map<Hit, Kwic> theKwics) {
+        if (hits.isEmpty())
+            return;
+    
+        // TODO: more efficient to get all contexts with one getContextWords() call!
+    
+        // Get punctuation context
+        int[][] punctContext = null;
+        if (punctForwardIndex != null) {
+            punctContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(punctForwardIndex));
+        }
+        Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
+    
+        // Get attributes context
+        Annotation[] attrName = null;
+        Terms[] attrTerms = null;
+        int[][][] attrContext = null;
+        if (attrForwardIndices != null) {
+            int n = attrForwardIndices.size();
+            attrName = new Annotation[n];
+            ForwardIndex[] attrFI = new ForwardIndex[n];
+            attrTerms = new Terms[n];
+            attrContext = new int[n][][];
+            int i = 0;
+            for (Map.Entry<Annotation, ForwardIndex> e: attrForwardIndices.entrySet()) {
+                attrName[i] = e.getKey();
+                attrFI[i] = e.getValue();
+                attrTerms[i] = attrFI[i].terms();
+                attrContext[i] = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(attrFI[i]));
+                i++;
+            }
+        }
+    
+        // Get word context
+        int[][] wordContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(forwardIndex));
+        Terms terms = forwardIndex.terms();
+    
+        // Make the concordances from the context
+        AnnotatedField field = forwardIndex.annotation().field();
+        Annotation concPunctFI = field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP);
+        Annotation concWordFI = field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP);
+        for (int i = 0; i < hits.size(); i++) {
+            Hit h = hits.get(i);
+            List<String> tokens = new ArrayList<>();
+            int[] context = wordContext[i];
+            int contextLength = context[Contexts.LENGTH_INDEX];
+            int contextRightStart = context[Contexts.RIGHT_START_INDEX];
+            int contextHitStart = context[Contexts.HIT_START_INDEX];
+            int indexInContext = Contexts.NUMBER_OF_BOOKKEEPING_INTS;
+            for (int j = 0; j < contextLength; j++, indexInContext++) {
+    
+                // Add punctuation before word
+                // (Applications may choose to ignore punctuation before the first word)
+                if (punctTerms == null) {
+                    // There is no punctuation forward index. Just put a space
+                    // between every word.
+                    tokens.add(" ");
+                } else
+                    tokens.add(punctTerms.get(punctContext[i][indexInContext]));
+    
+                // Add extra attributes (e.g. lemma, pos)
+                if (attrContext != null) {
+                    for (int k = 0; k < attrContext.length; k++) {
+                        tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
+                    }
+                }
+    
+                // Add word
+                if (terms != null)
+                    tokens.add(terms.get(context[indexInContext]));
+                else
+                    tokens.add(""); // weird, but make sure the numbers add up at the end
+    
+            }
+            List<Annotation> properties = new ArrayList<>();
+            properties.add(concPunctFI);
+            if (attrContext != null) {
+                properties.addAll(Arrays.asList(attrName));
+            }
+            properties.add(concWordFI);
+            Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
+            theKwics.put(h, kwic);
+        }
+    }
+
+    /**
+     * Get context words from the forward index.
+     *
+     * @param wordsAroundHit how many words of context we want
+     * @param contextSources forward indices to get context from
+     */
+    private static int[][] getContextWordsSingleDocument(List<Hit> list, int wordsAroundHit,
+            List<ForwardIndex> contextSources) {
+        int n = list.size();
+        if (n == 0)
+            return new int[0][];
+        int[] startsOfSnippets = new int[n];
+        int[] endsOfSnippets = new int[n];
+        int i = 0;
+        for (Hit h: list) {
+            startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
+            endsOfSnippets[i] = h.end() + wordsAroundHit;
+            i++;
+        }
+    
+        int fiNumber = 0;
+        int doc = list.get(0).doc();
+        int[][] contexts = new int[list.size()][];
+        for (ForwardIndex forwardIndex: contextSources) {
+            // Get all the words from the forward index
+            List<int[]> words;
+            if (forwardIndex != null) {
+                // We have a forward index for this field. Use it.
+                int fiid = forwardIndex.luceneDocIdToFiid(doc);
+                words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
+            } else {
+                throw new BlackLabRuntimeException("Cannot get context without a forward index");
+            }
+    
+            // Build the actual concordances
+            Iterator<int[]> wordsIt = words.iterator();
+            int hitNum = 0;
+            for (Hit hit: list) {
+                int[] theseWords = wordsIt.next();
+    
+                // Put the concordance in the Hit object
+                int firstWordIndex = startsOfSnippets[hitNum];
+    
+                if (fiNumber == 0) {
+                    // Allocate context array and set hit and right start and context length
+                    contexts[hitNum] = new int[NUMBER_OF_BOOKKEEPING_INTS
+                            + theseWords.length * contextSources.size()];
+                    contexts[hitNum][HIT_START_INDEX] = hit.start() - firstWordIndex;
+                    contexts[hitNum][RIGHT_START_INDEX] = hit.end() - firstWordIndex;
+                    contexts[hitNum][LENGTH_INDEX] = theseWords.length;
+                }
+                // Copy the context we just retrieved into the context array
+                int start = fiNumber * theseWords.length + NUMBER_OF_BOOKKEEPING_INTS;
+                System.arraycopy(theseWords, 0, contexts[hitNum], start, theseWords.length);
+                hitNum++;
+            }
+    
+            fiNumber++;
+        }
+        return contexts;
+    }
 
     /**
      * The hit contexts.
@@ -55,7 +216,7 @@ public class Contexts {
      * If we have context information, this specifies the annotation(s) (i.e. word,
      * lemma, pos) the context came from. Otherwise, it is null.
      */
-    private List<Annotation> contextAnnotations;
+    private List<Annotation> annotations;
 
     // Methods that read data
     //------------------------------------------------------------------------------
@@ -64,17 +225,17 @@ public class Contexts {
      * Return a new Contexts instance that only includes the specified annotations
      * in the specified order.
      * 
-     * @param requested annotations we want
+     * @param annotations annotations we want
      */
     @SuppressWarnings("unused")
-    private Contexts(Contexts source, List<Annotation> requested) {
+    private Contexts(Contexts source, List<Annotation> annotations) {
         // Determine which contexts we want
         List<Integer> contextsToSelect = new ArrayList<>();
-        for (int i = 0; i < source.contextAnnotations.size(); i++) {
-            if (requested.contains(source.contextAnnotations.get(i)))
+        for (int i = 0; i < source.annotations.size(); i++) {
+            if (annotations.contains(source.annotations.get(i)))
                 contextsToSelect.add(i);
         }
-        if (contextsToSelect.size() < requested.size())
+        if (contextsToSelect.size() < annotations.size())
             throw new BlackLabRuntimeException("Not all requested contexts were present");
     
         // Copy only the requested contexts
@@ -82,21 +243,21 @@ public class Contexts {
         contexts = new int[numberOfHits][];
         for (int hitIndex = 0; hitIndex < numberOfHits; hitIndex++) {
             int[] context = source.contexts[hitIndex];
-            int hitContextLength = (context.length - CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS)
-                    / source.contextAnnotations.size();
-            int[] result = contexts[hitIndex] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS
-                    + hitContextLength * requested.size()];
-            System.arraycopy(context, 0, result, 0, CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS);
+            int hitContextLength = (context.length - NUMBER_OF_BOOKKEEPING_INTS)
+                    / source.annotations.size();
+            int[] result = contexts[hitIndex] = new int[NUMBER_OF_BOOKKEEPING_INTS
+                    + hitContextLength * annotations.size()];
+            System.arraycopy(context, 0, result, 0, NUMBER_OF_BOOKKEEPING_INTS);
             int resultContextNumber = 0;
             for (Integer sourceContextNumber: contextsToSelect) {
                 System.arraycopy(context,
-                        CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS + sourceContextNumber * hitContextLength, result,
-                        CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS + resultContextNumber * hitContextLength,
-                        CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS);
+                        NUMBER_OF_BOOKKEEPING_INTS + sourceContextNumber * hitContextLength, result,
+                        NUMBER_OF_BOOKKEEPING_INTS + resultContextNumber * hitContextLength,
+                        NUMBER_OF_BOOKKEEPING_INTS);
                 resultContextNumber++;
             }
         }
-        contextAnnotations = requested;
+        this.annotations = annotations;
     }
 
     /**
@@ -157,7 +318,7 @@ public class Contexts {
             }
         }
 
-        contextAnnotations = new ArrayList<>(annotations);
+        this.annotations = new ArrayList<>(annotations);
     }
 
     /**
@@ -165,8 +326,8 @@ public class Contexts {
      *
      * @return the field name
      */
-    public synchronized List<Annotation> getContextAnnotations() {
-        return contextAnnotations;
+    public List<Annotation> annotations() {
+        return annotations;
     }
 
     /**
@@ -175,177 +336,8 @@ public class Contexts {
      * @param hitNumber which hit we want the context(s) for
      * @return the context(s)
      */
-    public synchronized int[] getHitContext(int hitNumber) {
+    public int[] get(int hitNumber) {
         return contexts[hitNumber];
-    }
-
-    public int[] getContext(int j) {
-        return contexts[j];
-    }
-
-    public boolean hasContexts() {
-        return contexts != null;
-    }
-
-    /**
-     * Retrieves the KWIC information (KeyWord In Context: left, hit and right
-     * context) for a number of hits in the same document from the ContentStore.
-     * 
-     * NOTE: this destroys any existing contexts!
-     *
-     * @param forwardIndex Forward index for the words
-     * @param punctForwardIndex Forward index for the punctuation
-     * @param attrForwardIndices Forward indices for the attributes, or null if none
-     * @param wordsAroundHit number of words left and right of hit to fetch
-     * @param theKwics where to add the KWICs
-     */
-    static synchronized void makeKwicsSingleDocForwardIndex(List<Hit> hits, ForwardIndex forwardIndex,
-            ForwardIndex punctForwardIndex, Map<Annotation, ForwardIndex> attrForwardIndices,
-            int wordsAroundHit, Map<Hit, Kwic> theKwics) {
-        if (hits.isEmpty())
-            return;
-
-        // TODO: more efficient to get all contexts with one getContextWords() call!
-
-        // Get punctuation context
-        int[][] punctContext = null;
-        if (punctForwardIndex != null) {
-            punctContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(punctForwardIndex));
-        }
-        Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
-
-        // Get attributes context
-        Annotation[] attrName = null;
-        Terms[] attrTerms = null;
-        int[][][] attrContext = null;
-        if (attrForwardIndices != null) {
-            int n = attrForwardIndices.size();
-            attrName = new Annotation[n];
-            ForwardIndex[] attrFI = new ForwardIndex[n];
-            attrTerms = new Terms[n];
-            attrContext = new int[n][][];
-            int i = 0;
-            for (Map.Entry<Annotation, ForwardIndex> e: attrForwardIndices.entrySet()) {
-                attrName[i] = e.getKey();
-                attrFI[i] = e.getValue();
-                attrTerms[i] = attrFI[i].terms();
-                attrContext[i] = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(attrFI[i]));
-                i++;
-            }
-        }
-
-        // Get word context
-        int[][] wordContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(forwardIndex));
-        Terms terms = forwardIndex.terms();
-
-        // Make the concordances from the context
-        AnnotatedField field = forwardIndex.annotation().field();
-        Annotation concPunctFI = field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP);
-        Annotation concWordFI = field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP);
-        for (int i = 0; i < hits.size(); i++) {
-            Hit h = hits.get(i);
-            List<String> tokens = new ArrayList<>();
-            int[] context = wordContext[i];
-            int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
-            int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
-            int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
-            int indexInContext = Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-            for (int j = 0; j < contextLength; j++, indexInContext++) {
-
-                // Add punctuation before word
-                // (Applications may choose to ignore punctuation before the first word)
-                if (punctTerms == null) {
-                    // There is no punctuation forward index. Just put a space
-                    // between every word.
-                    tokens.add(" ");
-                } else
-                    tokens.add(punctTerms.get(punctContext[i][indexInContext]));
-
-                // Add extra attributes (e.g. lemma, pos)
-                if (attrContext != null) {
-                    for (int k = 0; k < attrContext.length; k++) {
-                        tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
-                    }
-                }
-
-                // Add word
-                if (terms != null)
-                    tokens.add(terms.get(context[indexInContext]));
-                else
-                    tokens.add(""); // weird, but make sure the numbers add up at the end
-
-            }
-            List<Annotation> properties = new ArrayList<>();
-            properties.add(concPunctFI);
-            if (attrContext != null) {
-                properties.addAll(Arrays.asList(attrName));
-            }
-            properties.add(concWordFI);
-            Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
-            theKwics.put(h, kwic);
-        }
-    }
-
-    /**
-     * Get context words from the forward index.
-     *
-     * @param wordsAroundHit how many words of context we want
-     * @param contextSources forward indices to get context from
-     */
-    synchronized static int[][] getContextWordsSingleDocument(List<Hit> list, int wordsAroundHit,
-            List<ForwardIndex> contextSources) {
-        int n = list.size();
-        if (n == 0)
-            return new int[0][];
-        int[] startsOfSnippets = new int[n];
-        int[] endsOfSnippets = new int[n];
-        int i = 0;
-        for (Hit h: list) {
-            startsOfSnippets[i] = wordsAroundHit >= h.start() ? 0 : h.start() - wordsAroundHit;
-            endsOfSnippets[i] = h.end() + wordsAroundHit;
-            i++;
-        }
-
-        int fiNumber = 0;
-        int doc = list.get(0).doc();
-        int[][] contexts = new int[list.size()][];
-        for (ForwardIndex forwardIndex: contextSources) {
-            // Get all the words from the forward index
-            List<int[]> words;
-            if (forwardIndex != null) {
-                // We have a forward index for this field. Use it.
-                int fiid = forwardIndex.luceneDocIdToFiid(doc);
-                words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
-            } else {
-                throw new BlackLabRuntimeException("Cannot get context without a forward index");
-            }
-
-            // Build the actual concordances
-            Iterator<int[]> wordsIt = words.iterator();
-            int hitNum = 0;
-            for (Hit hit: list) {
-                int[] theseWords = wordsIt.next();
-
-                // Put the concordance in the Hit object
-                int firstWordIndex = startsOfSnippets[hitNum];
-
-                if (fiNumber == 0) {
-                    // Allocate context array and set hit and right start and context length
-                    contexts[hitNum] = new int[CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS
-                            + theseWords.length * contextSources.size()];
-                    contexts[hitNum][CONTEXTS_HIT_START_INDEX] = hit.start() - firstWordIndex;
-                    contexts[hitNum][CONTEXTS_RIGHT_START_INDEX] = hit.end() - firstWordIndex;
-                    contexts[hitNum][CONTEXTS_LENGTH_INDEX] = theseWords.length;
-                }
-                // Copy the context we just retrieved into the context array
-                int start = fiNumber * theseWords.length + CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
-                System.arraycopy(theseWords, 0, contexts[hitNum], start, theseWords.length);
-                hitNum++;
-            }
-
-            fiNumber++;
-        }
-        return contexts;
     }
 
     public int size() {

@@ -248,20 +248,6 @@ public abstract class HitsAbstract implements Hits {
         }
         return Hits.fromList(queryInfo(), hitsInDoc);
     }
-
-    protected int indexOf(Hit hit) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // (should be detected by the client)
-        }
-        int originalIndex = hits.indexOf(hit);
-        for (int i = 0; i < sortOrder.length; i++) {
-            if (sortOrder[i] == originalIndex)
-                return i;
-        }
-        return -1;
-    }
     
     // Stats
     // ---------------------------------------------------------------
@@ -364,10 +350,29 @@ public abstract class HitsAbstract implements Hits {
     
     @Override
     public Hits window(Hit hit) throws ResultNotFound {
-        int i = indexOf(hit);
-        if (i < 0)
-            throw new ResultNotFound("Hit not found in hits list!");
-        return window(i, 1);
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // (should be detected by the client)
+        }
+        int originalIndex = hits.indexOf(hit);
+        int result;
+        if (sortOrder == null) {
+            // Not sorted
+            result = originalIndex;
+        } else {
+            // Sorted; find sorted index
+            result = -1;
+            for (int i = 0; i < sortOrder.length; i++) {
+                if (sortOrder[i] == originalIndex) {
+                    result = i;
+                    break;
+                }
+            }
+            if (result < 0)
+                throw new ResultNotFound("Hit not found in hits list!");
+        }
+        return window(result, 1);
     }
 
     @Override

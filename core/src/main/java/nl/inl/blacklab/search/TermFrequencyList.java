@@ -52,13 +52,13 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int j = 0; j < contexts.size(); j++) {
-            int[] context = contexts.getContext(j);
+            int[] context = contexts.get(j);
 
             // Count words
-            int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
-            int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
-            int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
-            int indexInContent = Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+            int contextHitStart = context[Contexts.HIT_START_INDEX];
+            int contextRightStart = context[Contexts.RIGHT_START_INDEX];
+            int contextLength = context[Contexts.LENGTH_INDEX];
+            int indexInContent = Contexts.NUMBER_OF_BOOKKEEPING_INTS;
             for (int i = 0; i < contextLength; i++, indexInContent++) {
                 if (i >= contextHitStart && i < contextRightStart)
                     continue; // don't count words in hit itself, just around [option..?]
@@ -74,7 +74,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
 
         // Get the actual words from the sort positions
         MatchSensitivity sensitivity = index.defaultMatchSensitivity();
-        Terms terms = index.forwardIndex(contexts.getContextAnnotations().get(0)).terms();
+        Terms terms = index.forwardIndex(contexts.annotations().get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();

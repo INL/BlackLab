@@ -287,7 +287,9 @@ public class HitsFromQuery extends HitsAbstract {
                 }
             }
         } catch (InterruptedException e) {
-            maxStats.setHitsCountedAndProcessedExceededMaximum(); // we've stopped retrieving/counting
+            // We've stopped retrieving/counting
+            maxStats.setHitsProcessedExceededMaximum();
+            maxStats.setHitsCountedExceededMaximum();
             throw e;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);

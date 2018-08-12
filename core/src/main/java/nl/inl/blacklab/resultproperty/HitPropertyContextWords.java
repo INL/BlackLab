@@ -185,10 +185,10 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public HitPropValueContextWords get(int hitNumber) {
-        int[] context = contexts.getHitContext(hitNumber);
-        int contextHitStart = context[Contexts.CONTEXTS_HIT_START_INDEX];
-        int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
-        int contextLength = context[Contexts.CONTEXTS_LENGTH_INDEX];
+        int[] context = contexts.get(hitNumber);
+        int contextHitStart = context[Contexts.HIT_START_INDEX];
+        int contextRightStart = context[Contexts.RIGHT_START_INDEX];
+        int contextLength = context[Contexts.LENGTH_INDEX];
 
         int[] dest = new int[totalWords];
         int destIndex = 0;
@@ -235,7 +235,7 @@ public class HitPropertyContextWords extends HitProperty {
             }
             // Copy the words we want to our dest array
             int valuesCopied = 0;
-            int contextStartIndex = contextLength * contextIndices.get(0) + Contexts.CONTEXTS_NUMBER_OF_BOOKKEEPING_INTS;
+            int contextStartIndex = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
             if (valuesToCopy) {
                 for (int srcIndex = firstWordSrcIndex; srcIndex != firstInvalidSrcIndex; srcIndex += srcDirection) {
                     dest[destIndex] = context[contextStartIndex + srcIndex];

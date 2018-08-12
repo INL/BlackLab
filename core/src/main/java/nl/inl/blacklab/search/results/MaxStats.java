@@ -60,9 +60,4 @@ public class MaxStats {
         return maxHitsCounted == other.maxHitsCounted && maxHitsProcessed == other.maxHitsProcessed;
     }
 
-    public void setHitsCountedAndProcessedExceededMaximum() {
-        setHitsProcessedExceededMaximum();
-        setHitsCountedExceededMaximum();
-    }
-
 }
