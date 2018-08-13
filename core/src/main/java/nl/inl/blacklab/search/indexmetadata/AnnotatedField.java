@@ -12,6 +12,14 @@ public interface AnnotatedField extends Field {
 	 * @return the annotations
 	 */
 	Annotations annotations();
+	
+	default Annotation mainAnnotation() {
+	    return annotations().main();
+	}
+	
+	default Annotation annotation(String name) {
+	    return annotations().get(name);
+	}
 
 	boolean hasLengthTokens();
 
@@ -23,7 +31,7 @@ public interface AnnotatedField extends Field {
 
     @Override
     default String contentsFieldName() {
-        Annotation main = annotations().main();
+        Annotation main = mainAnnotation();
         AnnotationSensitivity offsetsSensitivity = main.offsetsSensitivity();
         if (offsetsSensitivity == null)
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);

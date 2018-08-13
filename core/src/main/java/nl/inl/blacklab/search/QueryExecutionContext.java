@@ -23,7 +23,7 @@ public class QueryExecutionContext {
      * @return the context
      */
     public static QueryExecutionContext simple(BlackLabIndex index, AnnotatedField field) {
-        return new QueryExecutionContext(index, field.annotations().main(), MatchSensitivity.INSENSITIVE);
+        return new QueryExecutionContext(index, field.mainAnnotation(), MatchSensitivity.INSENSITIVE);
     }
 
     /** The index object, representing the BlackLab index */
@@ -67,7 +67,7 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withXmlTagsAnnotation() {
-        Annotation annotation = sensitivity.annotation().field().annotations().get(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
+        Annotation annotation = sensitivity.annotation().field().annotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
         return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 

@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -257,16 +258,20 @@ public interface BlackLabIndex extends Closeable {
     default Field field(String fieldName) {
         Field field = annotatedField(fieldName);
         if (field == null)
-            field = metadata().metadataFields().get(fieldName);
+            field = metadataField(fieldName);
         return field;
     }
 
     default AnnotatedField annotatedField(String fieldName) {
-        return metadata().annotatedFields().get(fieldName);
+        return metadata().annotatedField(fieldName);
     }
 
     default AnnotatedField mainAnnotatedField() {
-        return metadata().annotatedFields().main();
+        return metadata().mainAnnotatedField();
+    }
+    
+    default MetadataField metadataField(String fieldName) {
+        return metadata().metadataField(fieldName);
     }
 
     

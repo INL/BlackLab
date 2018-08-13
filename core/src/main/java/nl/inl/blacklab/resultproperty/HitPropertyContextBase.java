@@ -51,7 +51,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.name = name;
         this.serializeName = serializeName;
         BlackLabIndex index = hits.queryInfo().index();
-        this.annotation = annotation == null ? hits.queryInfo().field().annotations().main() : annotation;
+        this.annotation = annotation == null ? hits.queryInfo().field().mainAnnotation() : annotation;
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
         this.terms = index.forwardIndex(this.annotation).terms();
@@ -61,7 +61,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         super(null);
         this.name = name;
         this.serializeName = serializeName;
-        this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
+        this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation(): annotation;
         this.terms = index.forwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
@@ -100,7 +100,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
         ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2])) : hits.queryInfo().index().defaultContextSize();
-        Annotation annotation = field.annotations().get(propName);
+        Annotation annotation = field.annotation(propName);
         try {
             Constructor<T> ctor = cls.getConstructor(Hits.class, Annotation.class, MatchSensitivity.class, ContextSize.class);
             return ctor.newInstance(hits, annotation, sensitivity, contextSize);

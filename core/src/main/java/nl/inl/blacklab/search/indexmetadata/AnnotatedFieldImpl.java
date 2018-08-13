@@ -331,7 +331,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     @Override
     public String offsetsField() {
-        AnnotationSensitivity offsetsSensitivity = annotations().main().offsetsSensitivity();
+        AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
 

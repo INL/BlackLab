@@ -334,7 +334,7 @@ public class TestSearches {
         // If left side of implication is always false, right side is ignored
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
-        Annotation annotation = index.mainAnnotatedField().annotations().main();
+        Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.forwardIndex(annotation).terms();
         int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
         HitPropValue value = new HitPropValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);

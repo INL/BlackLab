@@ -136,7 +136,7 @@ public class HitPropertyContextWords extends HitProperty {
         super(hits);
         this.index = hits.queryInfo().index();
         if (annotation == null) {
-            this.annotation = index.mainAnnotatedField().annotations().main();
+            this.annotation = index.mainAnnotatedField().mainAnnotation();
         } else {
             this.annotation = annotation;
         }
@@ -305,7 +305,7 @@ public class HitPropertyContextWords extends HitProperty {
         List<ContextPart> whichWords = null;
         if (parts.length > 2)
             whichWords = parseContextWordSpec(parts[2]);
-        Annotation annotation = field.annotations().get(propName);
+        Annotation annotation = field.annotation(propName);
         return new HitPropertyContextWords(hits, annotation, sensitivity, whichWords);
     }
 

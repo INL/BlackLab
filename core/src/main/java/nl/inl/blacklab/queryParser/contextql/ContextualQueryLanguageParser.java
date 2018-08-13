@@ -154,7 +154,7 @@ public class ContextualQueryLanguageParser {
     }
 
     public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = fieldName + "." + indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
+        defaultProperty = fieldName + "." + indexMetadata.annotatedField(fieldName).mainAnnotation().name();
     }
 
     public void setDefaultProperty(Annotation annotation) {

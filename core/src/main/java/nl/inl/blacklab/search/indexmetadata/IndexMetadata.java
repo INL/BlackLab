@@ -7,7 +7,19 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	
 	AnnotatedFields annotatedFields();
 	
+	default AnnotatedField mainAnnotatedField() {
+	    return annotatedFields().main();
+	}
+	
+    default AnnotatedField annotatedField(String name) {
+        return annotatedFields().get(name);
+    }
+    
 	MetadataFields metadataFields();
+	
+	default MetadataField metadataField(String name) {
+	    return metadataFields().get(name);
+	}
 
 	/**
 	 * Get the display name for the index.

@@ -39,7 +39,7 @@ public class TestHitPropertySerialize {
 
     @Before
     public void setUp() {
-        lemmaAnnotation = mockSearcher.mainAnnotatedField().annotations().get("lemma");
+        lemmaAnnotation = mockSearcher.mainAnnotatedField().annotation("lemma");
         mockSearcher.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
     }
 

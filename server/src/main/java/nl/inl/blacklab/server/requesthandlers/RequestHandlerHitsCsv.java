@@ -182,7 +182,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
-        final Annotation mainTokenProperty = blIndex().mainAnnotatedField().annotations().main();
+        final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
         List<Annotation> otherTokenProperties = new ArrayList<>();
 
         try {

@@ -1194,7 +1194,7 @@ public class QueryTool {
 
         Hits hitsToSort = getCurrentHitSet();
 
-        Annotation annotation = annotationName == null ? contentsField.annotations().main() : contentsField.annotations().get(annotationName);
+        Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
         HitProperty crit = null;
         if (sortBy.equalsIgnoreCase("doc"))
             crit = new HitPropertyDocumentId(hitsToSort);
@@ -1206,8 +1206,8 @@ public class QueryTool {
             else if (sortBy.equalsIgnoreCase("right"))
                 crit = new HitPropertyRightContext(hitsToSort, annotation);
             else if (sortBy.equalsIgnoreCase("lempos")) {
-                HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("lemma"));
-                HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotations().get("pos"));
+                HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotation("lemma"));
+                HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotation("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
             } else if (index.metadata().metadataFields().exists(sortBy)) {
                 crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
@@ -1273,7 +1273,7 @@ public class QueryTool {
         // Group results
         HitProperty crit = null;
         try {
-            Annotation annotation = annotationName == null ? contentsField.annotations().main() : contentsField.annotations().get(annotationName);
+            Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
                 crit = new HitPropertyHitText(hits, annotation);
             else if (groupBy.startsWith("left"))
@@ -1281,8 +1281,8 @@ public class QueryTool {
             else if (groupBy.startsWith("right"))
                 crit = new HitPropertyWordRight(hits, annotation);
             else if (groupBy.equals("test")) {
-                HitProperty p1 = new HitPropertyHitText(hits, contentsField.annotations().get("lemma"));
-                HitProperty p2 = new HitPropertyHitText(hits, contentsField.annotations().get("type"));
+                HitProperty p1 = new HitPropertyHitText(hits, contentsField.annotation("lemma"));
+                HitProperty p2 = new HitPropertyHitText(hits, contentsField.annotation("type"));
                 crit = new HitPropertyMultiple(p1, p2);
             }
         } catch (Exception e) {
@@ -1318,7 +1318,7 @@ public class QueryTool {
             if (showWhat.length() >= 7) {
                 String newCollocAnnot = showWhat.substring(7);
                 if (!newCollocAnnot.equals(collocAnnotation.name())) {
-                    collocAnnotation = contentsField.annotations().get(newCollocAnnot);
+                    collocAnnotation = contentsField.annotation(newCollocAnnot);
                     collocations = null;
                 }
             }
@@ -1387,7 +1387,7 @@ public class QueryTool {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
                 AnnotatedField field = hits.queryInfo().field();
-                collocAnnotation = field.annotations().main();
+                collocAnnotation = field.mainAnnotation();
             }
 
             collocations = hits.collocations(contextSize, collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);

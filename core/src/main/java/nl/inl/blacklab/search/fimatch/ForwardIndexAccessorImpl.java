@@ -69,7 +69,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
     @Override
     public int getAnnotationNumber(String annotationName) {
-        return getAnnotationNumber(annotatedField.annotations().get(annotationName));
+        return getAnnotationNumber(annotatedField.annotation(annotationName));
     }
 
     @Override

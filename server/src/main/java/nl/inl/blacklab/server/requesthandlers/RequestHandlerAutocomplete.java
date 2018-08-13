@@ -80,7 +80,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         if (annotatedFieldName != null && !annotatedFieldName.isEmpty()) {
             if (!indexMetadata.annotatedFields().exists(annotatedFieldName))
                 throw new BadRequest("UNKNOWN_FIELD", "Annotated field '" + annotatedFieldName + "' does not exist.");
-            AnnotatedField annotatedField = indexMetadata.annotatedFields().get(annotatedFieldName);
+            AnnotatedField annotatedField = indexMetadata.annotatedField(annotatedFieldName);
             Annotations annotations = annotatedField.annotations();
             if (!annotations.exists(fieldName))
                 throw new BadRequest("UNKNOWN_PROPERTY",

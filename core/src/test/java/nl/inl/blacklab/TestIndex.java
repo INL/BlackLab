@@ -127,7 +127,7 @@ public class TestIndex {
 
             // Create the BlackLab index object
             index = BlackLabIndex.open(indexDir, null);
-            word = index.mainAnnotatedField().annotations().get("word");
+            word = index.mainAnnotatedField().annotation("word");
         } catch (DocumentFormatException | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }

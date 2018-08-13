@@ -158,7 +158,7 @@ public final class AnnotatedFieldNameUtil {
     }
 
     public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
-        String annotName = structure.annotatedFields().get(fieldName).annotations().main().name();
+        String annotName = structure.annotatedField(fieldName).mainAnnotation().name();
         return forwardIndexIdField(annotationField(fieldName, annotName));
     }
 
@@ -388,14 +388,14 @@ public final class AnnotatedFieldNameUtil {
     }
 
     public static String mainAnnotationField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedFields().get(fieldName);
-        Annotation pr = cf.annotations().main();
+        AnnotatedField cf = structure.annotatedField(fieldName);
+        Annotation pr = cf.mainAnnotation();
         return annotationField(fieldName, pr.name());
     }
 
     public static String mainAnnotationOffsetsField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedFields().get(fieldName);
-        Annotation pr = cf.annotations().main();
+        AnnotatedField cf = structure.annotatedField(fieldName);
+        Annotation pr = cf.mainAnnotation();
         return pr.offsetsSensitivity().luceneField();
     }
 

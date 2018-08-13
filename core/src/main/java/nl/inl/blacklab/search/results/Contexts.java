@@ -88,8 +88,8 @@ public class Contexts {
     
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();
-        Annotation concPunctFI = field.annotations().get(Kwic.DEFAULT_CONC_PUNCT_PROP);
-        Annotation concWordFI = field.annotations().get(Kwic.DEFAULT_CONC_WORD_PROP);
+        Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
+        Annotation concWordFI = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
         for (int i = 0; i < hits.size(); i++) {
             Hit h = hits.get(i);
             List<String> tokens = new ArrayList<>();

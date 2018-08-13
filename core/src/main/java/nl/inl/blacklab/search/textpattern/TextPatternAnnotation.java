@@ -43,7 +43,7 @@ public class TextPatternAnnotation extends TextPattern {
         String[] parts = annotationName.split("/", -1);
         if (parts.length > 2)
             throw new IllegalArgumentException("Annotation name contains more than one colon: " + annotationName);
-        Annotation annotation = context.field().annotations().get(parts[0]);
+        Annotation annotation = context.field().annotation(parts[0]);
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName);
         if (parts.length > 1)

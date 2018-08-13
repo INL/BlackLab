@@ -401,7 +401,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             ObjectNode fieldInfo2 = jsonAnnotatedFields.putObject(f.name());
             fieldInfo2.put("displayName", f.displayName());
             fieldInfo2.put("description", f.description());
-            fieldInfo2.put("mainProperty", f.annotations().main().name());
+            fieldInfo2.put("mainProperty", f.mainAnnotation().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
             Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());
             ArrayNode annots = fieldInfo2.putArray("annotations");
@@ -1000,7 +1000,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         ensureNotFrozen();
         AnnotatedFieldImpl cfd = null;
         if (annotatedFields.exists(name))
-            cfd = ((AnnotatedFieldImpl) annotatedFields().get(name));
+            cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
             cfd = new AnnotatedFieldImpl(name);
             annotatedFields.put(name, cfd);

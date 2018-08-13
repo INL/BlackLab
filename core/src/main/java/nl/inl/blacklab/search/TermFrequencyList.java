@@ -43,7 +43,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
     public synchronized static TermFrequencyList collocations(ContextSize contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
         BlackLabIndex index = hits.queryInfo().index();
         if (annotation == null)
-            annotation = index.mainAnnotatedField().annotations().main();
+            annotation = index.mainAnnotatedField().mainAnnotation();
         
         // TODO: use sensitivity settings
 //        if (ctx == null)

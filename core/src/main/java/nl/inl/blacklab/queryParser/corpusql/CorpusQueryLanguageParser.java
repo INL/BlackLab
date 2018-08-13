@@ -81,7 +81,7 @@ public class CorpusQueryLanguageParser {
     }
 
     public void setDefaultAnnotation(IndexMetadata indexMetadata, String fieldName) {
-        defaultAnnotation = indexMetadata.annotatedFields().get(fieldName).annotations().main().name();
+        defaultAnnotation = indexMetadata.annotatedField(fieldName).mainAnnotation().name();
     }
 
     public void setDefaultAnnotation(String annotation) {

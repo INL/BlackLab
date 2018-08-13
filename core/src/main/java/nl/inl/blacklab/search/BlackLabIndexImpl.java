@@ -662,7 +662,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         if (!createNewIndex) {
             if (traceIndexOpening)
                 logger.debug("  Determining main contents field name...");
-            AnnotatedField mainContentsField = indexMetadata.annotatedFields().main();
+            AnnotatedField mainContentsField = indexMetadata.mainAnnotatedField();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
@@ -819,7 +819,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Unknown annotated field: null");
-        Annotation mainAnnotation = annotatedField.annotations().main();
+        Annotation mainAnnotation = annotatedField.mainAnnotation();
         if (mainAnnotation == null)
             throw new IllegalArgumentException("Main annotation not found for " + annotatedField.name());
         return new QueryExecutionContext(this, mainAnnotation, defaultMatchSensitivity);
@@ -963,7 +963,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
         if (field.annotations().exists(annotName))
-            return field.annotations().get(annotName);
+            return field.annotation(annotName);
         AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
         return fld.getOrCreateAnnotation(annotName);
     }
