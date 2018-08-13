@@ -45,8 +45,7 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitPropValueDoc get(int hitNumber) {
-        Hit result = hits.getByOriginalOrder(hitNumber);
+    public HitPropValueDoc get(Hit result) {
         return new HitPropValueDoc(index.doc(result.doc()));
     }
 
@@ -61,9 +60,7 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public int compare(Object i, Object j) {
-        Hit a = hits.getByOriginalOrder((Integer) i);
-        Hit b = hits.getByOriginalOrder((Integer) j);
+    public int compare(Hit a, Hit b) {
         return reverse ? b.doc() - a.doc() : a.doc() - b.doc();
     }
 

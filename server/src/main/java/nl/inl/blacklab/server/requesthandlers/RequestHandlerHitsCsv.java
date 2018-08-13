@@ -98,7 +98,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                         HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
                         if (sortProp == null)
                             throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-                        hits = hits.sortedBy(sortProp, sortProp.isReverse());
+                        hits = hits.sortedBy(sortProp);
                     }
                 }
             } else {

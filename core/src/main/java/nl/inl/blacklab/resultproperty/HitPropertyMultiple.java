@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -160,20 +161,20 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitPropValueMultiple get(int hitNumber) {
+    public HitPropValueMultiple get(Hit result) {
         HitPropValue[] rv = new HitPropValue[properties.size()];
         int i = 0;
         for (HitProperty crit: properties) {
-            rv[i] = crit.get(hitNumber);
+            rv[i] = crit.get(result);
             i++;
         }
         return new HitPropValueMultiple(rv);
     }
 
     @Override
-    public int compare(Object i, Object j) {
+    public int compare(Hit a, Hit b) {
         for (HitProperty crit: properties) {
-            int cmp = reverse ? crit.compare(j, i) : crit.compare(i, j);
+            int cmp = reverse ? crit.compare(b, a) : crit.compare(a, b);
             if (cmp != 0)
                 return cmp;
         }

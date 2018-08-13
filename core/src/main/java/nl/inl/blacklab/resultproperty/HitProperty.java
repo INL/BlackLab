@@ -31,6 +31,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.CapturedGroupsImpl;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsList;
@@ -39,7 +40,7 @@ import nl.inl.blacklab.search.results.HitsList;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitProperty implements Comparator<Object>, Serializable {
+public abstract class HitProperty implements Comparator<Hit>, Serializable {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
     /** The Hits object we're looking at */
@@ -130,7 +131,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         this.contextIndices.addAll(contextIndices);
     }
 
-    public abstract HitPropValue get(int result);
+    public abstract HitPropValue get(Hit hit);
 
     /**
      * Compares two hits on this property.
@@ -147,9 +148,9 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(Object a, Object b) {
-        HitPropValue hitPropValueA = get((Integer) a);
-        HitPropValue hitPropValueB = get((Integer) b);
+    public int compare(Hit a, Hit b) {
+        HitPropValue hitPropValueA = get(a);
+        HitPropValue hitPropValueB = get(b);
         return hitPropValueA.compareTo(hitPropValueB);
     }
 
@@ -320,13 +321,11 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      */
     public abstract List<String> getPropNames();
 
-    public Hits sortHits(HitsAbstract hitsToSort, boolean reverseSort) {
+    public Hits sortHits(HitsAbstract hitsToSort) {
         // Make sure we have a sort order array of sufficient size
         // and fill it with the original hit order (0, 1, 2, ...)
-        int n = hitsToSort.size(); // also triggers fetching all hits
-        Integer[] sortOrder = new Integer[n];
-        for (int i = 0; i < n; i++)
-            sortOrder[i] = i;
+        hitsToSort.size(); // fetch all
+        List<Hit> sorted = new ArrayList<>(hitsToSort.hitsList());
 
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
@@ -335,24 +334,13 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
                 requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.queryInfo().index())));
 
         // Perform the actual sort.
-        Arrays.sort(sortOrder, sortProp);
-
-        if (reverseSort) {
-            // Instead of creating a new Comparator that reverses the order of the
-            // sort property (which adds an extra layer of indirection to each of the
-            // O(n log n) comparisons), just reverse the hits now (which runs
-            // in linear time).
-            for (int i = 0; i < n / 2; i++) {
-                sortOrder[i] = sortOrder[n - i - 1];
-            }
-        }
+        sorted.sort(sortProp);
 
         CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
         int hitsCounted = hitsToSort.hitsCountedSoFar();
         int docsRetrieved = hitsToSort.docsProcessedSoFar();
         int docsCounted = hitsToSort.docsCountedSoFar();
 
-        return new HitsList(hitsToSort.queryInfo(), hitsToSort.hitsList(), sortOrder, capturedGroups, hitsCounted,
-                docsRetrieved, docsCounted);
+        return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
     }
 }

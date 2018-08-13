@@ -75,15 +75,14 @@ public class ResultsGrouper extends HitGroups {
         
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
-        for (int i = 0; i < hits.size(); i++) {
-        
-            HitPropValue identity = criteria.get(i);
+        for (Hit hit: hits) {
+            HitPropValue identity = criteria.get(hit);
             List<Hit> group = groupLists.get(identity);
             if (group == null) {
                 group = new ArrayList<>();
                 groupLists.put(identity, group);
             }
-            group.add(hits.getByOriginalOrder(i));
+            group.add(hit);
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalHits++;

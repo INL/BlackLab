@@ -96,9 +96,9 @@ public class HitsFiltered extends HitsAbstract {
                 // Advance to next hit
                 indexInSource++;
                 if (source.hitsProcessedAtLeast(indexInSource + 1)) {
-                    if (filterProperty.get(indexInSource).equals(filterValue)) {
+                    Hit hit = source.get(indexInSource);
+                    if (filterProperty.get(hit).equals(filterValue)) {
                         // Yes, keep this hit
-                        Hit hit = source.getByOriginalOrder(indexInSource);
                         hits.add(hit);
                         hitsCounted++;
                         if (hit.doc() != previousHitDoc) {

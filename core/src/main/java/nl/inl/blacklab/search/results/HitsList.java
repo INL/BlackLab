@@ -147,11 +147,10 @@ public class HitsList extends HitsAbstract {
      * Should only be used internally.
      */
     @SuppressWarnings("javadoc")
-    public HitsList(QueryInfo queryInfo, List<Hit> hitsList, Integer[] sortOrder, CapturedGroupsImpl capturedGroups, int hitsCounted,
+    public HitsList(QueryInfo queryInfo, List<Hit> hitsList, CapturedGroupsImpl capturedGroups, int hitsCounted,
             int docsRetrieved, int docsCounted) {
         super(queryInfo);
         this.hits = hitsList;
-        this.sortOrder = sortOrder;
         this.capturedGroups = capturedGroups;
         this.hitsCounted = hitsCounted;
         this.docsRetrieved = docsRetrieved;

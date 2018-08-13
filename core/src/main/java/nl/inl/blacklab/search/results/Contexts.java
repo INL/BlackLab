@@ -2,9 +2,11 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -13,7 +15,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-public class Contexts {
+public class Contexts implements Iterable<int[]> {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
     public final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
@@ -198,7 +200,7 @@ public class Contexts {
     /**
      * The hit contexts.
      *
-     * There may be multiple contexts for each hit (see contextFieldsPropName). Each
+     * There may be multiple contexts for each hit. Each
      * int array starts with three bookkeeping integers, followed by the contexts
      * information. The bookkeeping integers are: * 0 = hit start, index of the hit
      * word (and length of the left context), counted from the start the context * 1
@@ -209,7 +211,7 @@ public class Contexts {
      * The first context therefore starts at index 3.
      *
      */
-    private int[][] contexts;
+    private Map<Hit, int[]> contexts;
 
     /**
      * If we have context information, this specifies the annotation(s) (i.e. word,
@@ -238,14 +240,13 @@ public class Contexts {
             throw new BlackLabRuntimeException("Not all requested contexts were present");
     
         // Copy only the requested contexts
-        int numberOfHits = source.contexts.length;
-        contexts = new int[numberOfHits][];
-        for (int hitIndex = 0; hitIndex < numberOfHits; hitIndex++) {
-            int[] context = source.contexts[hitIndex];
+        int numberOfHits = source.contexts.size();
+        contexts = new IdentityHashMap<>(numberOfHits);
+        for (Entry<Hit, int[]> e: source.contexts.entrySet()) {
+            int[] context = e.getValue();
             int hitContextLength = (context.length - NUMBER_OF_BOOKKEEPING_INTS)
                     / source.annotations.size();
-            int[] result = contexts[hitIndex] = new int[NUMBER_OF_BOOKKEEPING_INTS
-                    + hitContextLength * annotations.size()];
+            int[] result = new int[NUMBER_OF_BOOKKEEPING_INTS + hitContextLength * annotations.size()];
             System.arraycopy(context, 0, result, 0, NUMBER_OF_BOOKKEEPING_INTS);
             int resultContextNumber = 0;
             for (Integer sourceContextNumber: contextsToSelect) {
@@ -255,6 +256,7 @@ public class Contexts {
                         NUMBER_OF_BOOKKEEPING_INTS);
                 resultContextNumber++;
             }
+            contexts.put(e.getKey(), result); 
         }
         this.annotations = annotations;
     }
@@ -278,9 +280,8 @@ public class Contexts {
         // Group hits per document
         List<Hit> hitsInSameDoc = new ArrayList<>();
         int currentDoc = -1;
-        int index = 0;
-        contexts = new int[hits.size()][];
-        for (Hit hit: hits.originalOrder()) {
+        contexts = new IdentityHashMap<>(hits.size());
+        for (Hit hit: hits) {
             if (hit.doc() != currentDoc) {
                 if (currentDoc >= 0) {
                     try {
@@ -295,8 +296,10 @@ public class Contexts {
                     int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
 
                     // Copy the contexts from the temporary Hits object to this one
-                    for (int i = 0; i < hitsInSameDoc.size(); i++) {
-                        contexts[index - hitsInSameDoc.size() + i] = docContextArray[i];
+                    int i = 0;
+                    for (Hit hitInDoc: hitsInSameDoc) {
+                        contexts.put(hitInDoc, docContextArray[i]);
+                        i++;
                     }
 
                     // Reset hits list for next doc
@@ -305,15 +308,16 @@ public class Contexts {
                 currentDoc = hit.doc(); // start a new document
             }
             hitsInSameDoc.add(hit);
-            index++;
         }
         if (!hitsInSameDoc.isEmpty()) {
             // Find context for the hits in the current document
             int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
 
             // Copy the contexts from the temporary Hits object to this one
-            for (int i = 0; i < hitsInSameDoc.size(); i++) {
-                contexts[index - hitsInSameDoc.size() + i] = docContextArray[i];
+            int i = 0;
+            for (Hit hitInDoc: hitsInSameDoc) {
+                contexts.put(hitInDoc, docContextArray[i]);
+                i++;
             }
         }
 
@@ -332,15 +336,27 @@ public class Contexts {
     /**
      * Return the context(s) for the specified hit number
      * 
-     * @param hitNumber which hit we want the context(s) for
+     * @param hit which hit we want the context(s) for
      * @return the context(s)
      */
-    public int[] get(int hitNumber) {
-        return contexts[hitNumber];
+    public int[] get(Hit hit) {
+        return contexts.get(hit);
     }
 
     public int size() {
-        return contexts.length;
+        return contexts.size();
+    }
+
+    /**
+     * Iterate over the context arrays.
+     * 
+     * Note that the order is unspecified.
+     * 
+     * @return iterator
+     */
+    @Override
+    public Iterator<int[]> iterator() {
+        return contexts.values().iterator();
     }
 
 }

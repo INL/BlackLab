@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -62,8 +63,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public HitPropValueContextWords get(int hitNumber) {
-        int[] context = contexts.get(hitNumber);
+    public HitPropValueContextWords get(Hit result) {
+        int[] context = contexts.get(result);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];
@@ -79,12 +80,12 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public int compare(Object i, Object j) {
-        int[] ca = contexts.get((Integer) i);
+    public int compare(Hit a, Hit b) {
+        int[] ca = contexts.get(a);
         int caHitStart = ca[Contexts.HIT_START_INDEX];
         int caRightStart = ca[Contexts.RIGHT_START_INDEX];
         int caLength = ca[Contexts.LENGTH_INDEX];
-        int[] cb = contexts.get((Integer) j);
+        int[] cb = contexts.get(b);
         int cbHitStart = cb[Contexts.HIT_START_INDEX];
         int cbRightStart = cb[Contexts.RIGHT_START_INDEX];
         int cbLength = cb[Contexts.LENGTH_INDEX];

@@ -44,8 +44,7 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitPropValueInt get(int hitNumber) {
-        Hit result = hits.getByOriginalOrder(hitNumber);
+    public HitPropValueInt get(Hit result) {
         return new HitPropValueInt(result.doc());
     }
 
@@ -60,9 +59,7 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public int compare(Object i, Object j) {
-        Hit a = hits.getByOriginalOrder((Integer) i);
-        Hit b = hits.getByOriginalOrder((Integer) j);
+    public int compare(Hit a, Hit b) {
         return reverse ? b.doc() - a.doc() : a.doc() - b.doc();
     }
 

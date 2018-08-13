@@ -52,9 +52,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         
         Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
-        for (int j = 0; j < contexts.size(); j++) {
-            int[] context = contexts.get(j);
-
+        for (int[] context: contexts) {
             // Count words
             int contextHitStart = context[Contexts.HIT_START_INDEX];
             int contextRightStart = context[Contexts.RIGHT_START_INDEX];

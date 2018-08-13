@@ -100,17 +100,6 @@ public interface Hits extends Iterable<Hit> {
     @Override
     Iterator<Hit> iterator();
 
-    /**
-     * Return the specified hit number, based on the order they were originally
-     * found (not the sorted order).
-     *
-     * @param i index of the desired hit
-     * @return the hit, or null if it's beyond the last hit
-     */
-    Hit getByOriginalOrder(int i);
-
-    Iterable<Hit> originalOrder();
-
     @Override
     String toString();
 
@@ -134,20 +123,6 @@ public interface Hits extends Iterable<Hit> {
     default Hits filteredBy(HitProperty property, HitPropValue value) {
         return new HitsFiltered(this, property, value);
     }
-
-    /**
-     * Get a sorted copy of these hits.
-     *
-     * Note that if the thread is interrupted during this, sort may return without
-     * the hits actually being fully read and sorted. We don't want to add throws
-     * declarations to our whole API, so we assume the calling method will check for
-     * thread interruption if the application uses it.
-     *
-     * @param sortProp the hit property to sort on
-     * @param reverseSort if true, sort in descending order
-     * @return sorted hits
-     */
-    Hits sortedBy(HitProperty sortProp, boolean reverseSort);
 
     /**
      * Return a new Hits object with these hits sorted by the given property.

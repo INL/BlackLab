@@ -61,9 +61,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitPropValueString get(int hitNumber) {
+    public HitPropValueString get(Hit result) {
         try {
-            Hit result = hits.getByOriginalOrder(hitNumber);
             Document d = reader.document(result.doc());
             String value = d.get(fieldName);
             if (value == null)
@@ -75,10 +74,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public int compare(Object i, Object j) {
+    public int compare(Hit a, Hit b) {
         try {
-            Hit a = hits.getByOriginalOrder((Integer) i);
-            Hit b = hits.getByOriginalOrder((Integer) j);
             Document d = reader.document(a.doc());
             String va = d.get(fieldName);
             if (va == null)

@@ -43,13 +43,6 @@ public abstract class HitsAbstract implements Hits {
     protected List<Hit> hits;
 
     /**
-     * The sort order, if we've sorted, or null if not.
-     * 
-     * Note that, after initial creation of the Hits object, sortOrder is immutable.
-     */
-    protected Integer[] sortOrder;
-
-    /**
      * Our captured groups, or null if we have none.
      */
     protected CapturedGroupsImpl capturedGroups;
@@ -142,7 +135,7 @@ public abstract class HitsAbstract implements Hits {
                 // Check if there is a next, taking unread hits from Spans into account
                 if (hasNext()) {
                     index++;
-                    return hits.get(sortOrder == null ? index : sortOrder[index]);
+                    return hits.get(index);
                 }
                 throw new NoSuchElementException();
             }
@@ -156,67 +149,6 @@ public abstract class HitsAbstract implements Hits {
     }
     
     @Override
-    public Iterable<Hit> originalOrder() {
-        // Construct a custom iterator that iterates over the hits in the hits
-        // list, but can also take into account the Spans object that may not have
-        // been fully read. This ensures we don't instantiate Hit objects for all hits
-        // if we just want to display the first few.
-        return new Iterable<Hit>() {
-            @Override
-            public Iterator<Hit> iterator() {
-                // TODO Auto-generated method stub
-                return new Iterator<Hit>() {
-                    int index = -1;
-                
-                    @Override
-                    public boolean hasNext() {
-                        // Do we still have hits in the hits list?
-                        try {
-                            ensureHitsRead(index + 2);
-                        } catch (InterruptedException e) {
-                            // Thread was interrupted. Don't finish reading hits and accept possibly wrong
-                            // answer.
-                            // Client must detect the interruption and stop the thread.
-                            Thread.currentThread().interrupt();
-                        }
-                        return hits.size() >= index + 2;
-                    }
-                
-                    @Override
-                    public Hit next() {
-                        // Check if there is a next, taking unread hits from Spans into account
-                        if (hasNext()) {
-                            index++;
-                            return hits.get(index);
-                        }
-                        throw new NoSuchElementException();
-                    }
-                
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                
-                };
-            }
-        };
-    }
-    
-    @Override
-    public Hit getByOriginalOrder(int i) {
-        try {
-            ensureHitsRead(i + 1);
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-            Thread.currentThread().interrupt();
-        }
-        if (i >= hits.size())
-            return null;
-        return hits.get(i);
-    }
-
-    @Override
     public synchronized Hit get(int i) {
         try {
             ensureHitsRead(i + 1);
@@ -227,7 +159,7 @@ public abstract class HitsAbstract implements Hits {
         }
         if (i >= hits.size())
             return null;
-        return hits.get(sortOrder == null ? i : sortOrder[i]);
+        return hits.get(i);
     }
     
     @Override
@@ -339,13 +271,8 @@ public abstract class HitsAbstract implements Hits {
     //--------------------------------------------------------------------
     
     @Override
-    public Hits sortedBy(final HitProperty sortProp) {
-        return sortedBy(sortProp, false);
-    }
-
-    @Override
-    public Hits sortedBy(HitProperty sortProp, boolean reverseSort) {
-        return sortProp.sortHits(this, reverseSort);
+    public Hits sortedBy(HitProperty sortProp) {
+        return sortProp.sortHits(this);
     }
     
     @Override
@@ -355,24 +282,7 @@ public abstract class HitsAbstract implements Hits {
         } catch (InterruptedException e) {
             // (should be detected by the client)
         }
-        int originalIndex = hits.indexOf(hit);
-        int result;
-        if (sortOrder == null) {
-            // Not sorted
-            result = originalIndex;
-        } else {
-            // Sorted; find sorted index
-            result = -1;
-            for (int i = 0; i < sortOrder.length; i++) {
-                if (sortOrder[i] == originalIndex) {
-                    result = i;
-                    break;
-                }
-            }
-            if (result < 0)
-                throw new ResultNotFound("Hit not found in hits list!");
-        }
-        return window(result, 1);
+        return window(hits.indexOf(hit), 1);
     }
 
     @Override

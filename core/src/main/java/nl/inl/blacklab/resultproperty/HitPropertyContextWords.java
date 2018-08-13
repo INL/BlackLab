@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
@@ -202,8 +203,8 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitPropValueContextWords get(int hitNumber) {
-        int[] context = contexts.get(hitNumber);
+    public HitPropValueContextWords get(Hit hit) {
+        int[] context = contexts.get(hit);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];

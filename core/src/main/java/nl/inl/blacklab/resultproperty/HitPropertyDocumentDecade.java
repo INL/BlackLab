@@ -58,9 +58,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitPropValueDecade get(int hitNumber) {
+    public HitPropValueDecade get(Hit result) {
         try {
-            Hit result = hits.getByOriginalOrder(hitNumber);
             Document d = reader.document(result.doc());
             String strYear = d.get(fieldName);
             int year;
@@ -77,10 +76,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public int compare(Object i, Object j) {
+    public int compare(Hit a, Hit b) {
         try {
-            Hit a = hits.getByOriginalOrder((Integer) i);
-            Hit b = hits.getByOriginalOrder((Integer) j);
             Document d = reader.document(a.doc());
             String strYearA = d.get(fieldName);
             if (strYearA == null)
