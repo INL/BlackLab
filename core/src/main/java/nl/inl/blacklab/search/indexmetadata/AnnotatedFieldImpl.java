@@ -229,7 +229,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         if (parts.length > 2) {
             if (parts[2] != null) {
                 // Alternative
-                pd.addAlternative(MatchSensitivity.fromLuceneFieldCode(parts[2]));
+                pd.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(parts[2]));
             } else {
                 // Annotation bookkeeping field
                 if (parts[3].equals(AnnotatedFieldNameUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {

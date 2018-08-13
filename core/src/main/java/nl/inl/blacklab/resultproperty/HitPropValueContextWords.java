@@ -7,6 +7,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.ArrayUtil;
@@ -16,20 +17,20 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     int[] valueSortOrder;
 
-    boolean sensitive;
+    private MatchSensitivity sensitivity;
 
-    public HitPropValueContextWords(Hits hits, Annotation annotation, int[] value, boolean sensitive) {
+    public HitPropValueContextWords(Hits hits, Annotation annotation, int[] value, MatchSensitivity sensitivity) {
         super(hits, annotation);
         this.valueTokenId = value;
-        this.sensitive = sensitive;
+        this.sensitivity = sensitivity;
         valueSortOrder = new int[value.length];
-        terms.toSortOrder(value, valueSortOrder, sensitive);
+        terms.toSortOrder(value, valueSortOrder, sensitivity);
     }
 
-    public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, boolean sensitive, int[] value) {
+    public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
         super(index, annotation);
         this.valueSortOrder = new int[value.length];
-        terms.toSortOrder(value, valueSortOrder, sensitive);
+        terms.toSortOrder(value, valueSortOrder, sensitivity);
     }
 
     @Override
@@ -57,13 +58,13 @@ public class HitPropValueContextWords extends HitPropValueContext {
         AnnotatedField field = queryInfo.field();
         String propName = parts[0];
         Annotation annotation = field.annotations().get(propName);
-        boolean sensitive = parts[1].equalsIgnoreCase("s");
+        MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         int[] ids = new int[parts.length - 2];
         Terms termsObj = queryInfo.index().forwardIndex(annotation).terms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }
-        return new HitPropValueContextWords(hits, annotation, ids, sensitive);
+        return new HitPropValueContextWords(hits, annotation, ids, sensitivity);
     }
 
     @Override
@@ -85,7 +86,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
         String[] parts = new String[valueTokenId.length + 3];
         parts[0] = "cws";
         parts[1] = annotation.name();
-        parts[2] = (sensitive ? "s" : "i");
+        parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
             parts[i + 3] = terms.serializeTerm(valueTokenId[i]);
         }

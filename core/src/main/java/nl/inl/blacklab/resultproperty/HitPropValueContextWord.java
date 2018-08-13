@@ -6,6 +6,7 @@ import java.util.List;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -14,13 +15,13 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
     int valueSortOrder;
 
-    boolean sensitive;
+    MatchSensitivity sensitivity;
 
-    public HitPropValueContextWord(Hits hits, Annotation annotation, int value, boolean sensitive) {
+    public HitPropValueContextWord(Hits hits, Annotation annotation, int value, MatchSensitivity sensitivity) {
         super(hits, annotation);
         this.valueTokenId = value;
-        this.sensitive = sensitive;
-        valueSortOrder = value < 0 ? value : terms.idToSortPosition(value, sensitive);
+        this.sensitivity = sensitivity;
+        valueSortOrder = value < 0 ? value : terms.idToSortPosition(value, sensitivity);
     }
 
     @Override
@@ -49,11 +50,11 @@ public class HitPropValueContextWord extends HitPropValueContext {
         AnnotatedField field = queryInfo.field();
         String propName = parts[0];
         Annotation annotation = field.annotations().get(propName);
-        boolean sensitive = parts[1].equalsIgnoreCase("s");
+        MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         String term = parts[2];
         Terms termsObj = queryInfo.index().forwardIndex(annotation).terms();
         int termId = termsObj.deserializeToken(term);
-        return new HitPropValueContextWord(hits, annotation, termId, sensitive);
+        return new HitPropValueContextWord(hits, annotation, termId, sensitivity);
     }
 
     @Override
@@ -66,7 +67,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
         String token = terms.serializeTerm(valueTokenId);
         return PropValSerializeUtil.combineParts(
                 "cwo", annotation.name(),
-                (sensitive ? "s" : "i"),
+                sensitivity.luceneFieldSuffix(),
                 token);
     }
 

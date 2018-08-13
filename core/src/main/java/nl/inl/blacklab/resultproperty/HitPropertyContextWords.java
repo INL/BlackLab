@@ -24,6 +24,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -118,7 +119,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     private Annotation annotation;
 
-    private boolean sensitive;
+    private MatchSensitivity sensitivity;
 
     private BlackLabIndex index;
 
@@ -126,11 +127,11 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive, String wordSpec) {
-        this(hits, annotation, sensitive, parseContextWordSpec(wordSpec));
+    public HitPropertyContextWords(Hits hits, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
+        this(hits, annotation, sensitivity, parseContextWordSpec(wordSpec));
     }
 
-    public HitPropertyContextWords(Hits hits, Annotation annotation, boolean sensitive,
+    public HitPropertyContextWords(Hits hits, Annotation annotation, MatchSensitivity sensitivity,
             List<ContextPart> words) {
         super(hits);
         this.index = hits.queryInfo().index();
@@ -139,7 +140,7 @@ public class HitPropertyContextWords extends HitProperty {
         } else {
             this.annotation = annotation;
         }
-        this.sensitive = sensitive;
+        this.sensitivity = sensitivity;
         this.words = words;
         if (words == null) {
             // "entire hit text"
@@ -180,7 +181,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyContextWords(newHits, annotation, sensitive, words);
+        return new HitPropertyContextWords(newHits, annotation, sensitivity, words);
     }
 
     @Override
@@ -249,7 +250,7 @@ public class HitPropertyContextWords extends HitProperty {
                 destIndex++;
             }
         }
-        return new HitPropValueContextWords(hits, annotation, dest, sensitive);
+        return new HitPropValueContextWords(hits, annotation, dest, sensitivity);
     }
 
     // OPT: provide specific compare() method that compares contexts in-place
@@ -275,7 +276,7 @@ public class HitPropertyContextWords extends HitProperty {
         String thePropName = parts.length > 1 ? parts[1] : "";
         String contextWordSpec = serializeContextWordSpec();
         return serializeReverse()
-                + PropValSerializeUtil.combineParts("context", thePropName, sensitive ? "s" : "i", contextWordSpec);
+                + PropValSerializeUtil.combineParts("context", thePropName, sensitivity.luceneFieldSuffix(), contextWordSpec);
     }
 
     /**
@@ -300,12 +301,12 @@ public class HitPropertyContextWords extends HitProperty {
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
+        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
         List<ContextPart> whichWords = null;
         if (parts.length > 2)
             whichWords = parseContextWordSpec(parts[2]);
         Annotation annotation = field.annotations().get(propName);
-        return new HitPropertyContextWords(hits, annotation, sensitive, whichWords);
+        return new HitPropertyContextWords(hits, annotation, sensitivity, whichWords);
     }
 
     /**

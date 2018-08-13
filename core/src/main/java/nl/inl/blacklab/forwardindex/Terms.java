@@ -82,21 +82,21 @@ public abstract class Terms {
      * Get the sort position for a term based on its term id
      * 
      * @param id the term id
-     * @param sensitive whether we want the sensitive or insensitive sort position
+     * @param sensitivity whether we want the sensitive or insensitive sort position
      * @return the sort position
      */
-    public abstract int idToSortPosition(int id, boolean sensitive);
+    public abstract int idToSortPosition(int id, MatchSensitivity sensitivity);
 
     /**
      * Convert an array of term ids to sort positions
      * 
      * @param termId the term ids
      * @param sortOrder the sort positions
-     * @param sensitive whether we want the sensitive or insensitive sort positions
+     * @param sensitivity whether we want the sensitive or insensitive sort positions
      */
-    public void toSortOrder(int[] termId, int[] sortOrder, boolean sensitive) {
+    public void toSortOrder(int[] termId, int[] sortOrder, MatchSensitivity sensitivity) {
         for (int i = 0; i < termId.length; i++) {
-            sortOrder[i] = idToSortPosition(termId[i], sensitive);
+            sortOrder[i] = idToSortPosition(termId[i], sensitivity);
         }
     }
 
@@ -105,12 +105,12 @@ public abstract class Terms {
      * 
      * @param termId1 id of the first term
      * @param termId2 id of the second term
-     * @param sensitive whether we want to compare sensitively or insensitively
+     * @param sensitivity whether we want to compare sensitively or insensitively
      * @return the comparison result (negative if term1 < term2, zero if equal,
      *         positive if term1 > term2)
      */
-    public int compareSortPosition(int termId1, int termId2, boolean sensitive) {
-        return idToSortPosition(termId1, sensitive) - idToSortPosition(termId2, sensitive);
+    public int compareSortPosition(int termId1, int termId2, MatchSensitivity sensitivity) {
+        return idToSortPosition(termId1, sensitivity) - idToSortPosition(termId2, sensitivity);
     }
 
     protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);

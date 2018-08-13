@@ -664,8 +664,8 @@ class TermsImplV3 extends Terms {
     }
 
     @Override
-    public void toSortOrder(int[] tokenId, int[] sortOrder, boolean sensitive) {
-        if (sensitive) {
+    public void toSortOrder(int[] tokenId, int[] sortOrder, MatchSensitivity sensitivity) {
+        if (sensitivity.isCaseSensitive()) {
             for (int i = 0; i < tokenId.length; i++) {
                 if (tokenId[i] == NO_TERM)
                     sortOrder[i] = NO_TERM;
@@ -683,16 +683,16 @@ class TermsImplV3 extends Terms {
     }
 
     @Override
-    public int compareSortPosition(int tokenId1, int tokenId2, boolean sensitive) {
-        if (sensitive) {
+    public int compareSortPosition(int tokenId1, int tokenId2, MatchSensitivity sensitivity) {
+        if (sensitivity.isCaseSensitive()) {
             return sortPositionPerId[tokenId1] - sortPositionPerId[tokenId2];
         }
         return sortPositionPerIdInsensitive[tokenId1] - sortPositionPerIdInsensitive[tokenId2];
     }
 
     @Override
-    public int idToSortPosition(int id, boolean sensitive) {
-        return sensitive ? sortPositionPerId[id] : sortPositionPerIdInsensitive[id];
+    public int idToSortPosition(int id, MatchSensitivity sensitivity) {
+        return sensitivity.isCaseSensitive() ? sortPositionPerId[id] : sortPositionPerIdInsensitive[id];
     }
 
     @Override

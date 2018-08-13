@@ -60,7 +60,7 @@ public class MockTerms extends Terms {
     }
 
     @Override
-    public int idToSortPosition(int id, boolean sensitive) {
+    public int idToSortPosition(int id, MatchSensitivity sensitivity) {
         //
         return id;
     }

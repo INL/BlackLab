@@ -449,7 +449,7 @@ public final class AnnotatedFieldNameUtil {
         int i = luceneField.indexOf(SENSITIVITY_SEP);
         if (i < 0)
             throw new IllegalArgumentException("luceneField contains no " + SENSITIVITY_SEP);
-        return MatchSensitivity.fromLuceneFieldCode(luceneField.substring(i + 1));
+        return MatchSensitivity.fromLuceneFieldSuffix(luceneField.substring(i + 1));
     }
 
     /**

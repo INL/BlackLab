@@ -95,7 +95,7 @@ public class TestTermsV3 {
                 "the"
         };
         for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[t.idToSortPosition(i, true)], t.get(i));
+            Assert.assertEquals(expected[t.idToSortPosition(i, MatchSensitivity.SENSITIVE)], t.get(i));
         }
     }
 
@@ -106,7 +106,7 @@ public class TestTermsV3 {
     public void testReverseOrder() {
         int[] expected = { 7, 6, 0, 2, 3, 5, 4, 1 };
         for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[i], t.idToSortPosition(i, true));
+            Assert.assertEquals(expected[i], t.idToSortPosition(i, MatchSensitivity.SENSITIVE));
         }
     }
 

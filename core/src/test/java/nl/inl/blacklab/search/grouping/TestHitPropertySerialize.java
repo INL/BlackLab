@@ -26,6 +26,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
@@ -55,7 +56,7 @@ public class TestHitPropertySerialize {
         Assert.assertEquals(exp, prop.serialize());
         Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
 
-        prop = new HitPropertyHitText(hits, lemmaAnnotation, true);
+        prop = new HitPropertyHitText(hits, lemmaAnnotation, MatchSensitivity.SENSITIVE);
         Assert.assertEquals("hit:lemma:s", prop.serialize());
 
         List<ContextPart> contextParts = Arrays.asList(
@@ -63,7 +64,7 @@ public class TestHitPropertySerialize {
                 new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
                 new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
         );
-        prop = new HitPropertyContextWords(hits, lemmaAnnotation, true, contextParts);
+        prop = new HitPropertyContextWords(hits, lemmaAnnotation, MatchSensitivity.SENSITIVE, contextParts);
         Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
     }
 
@@ -82,7 +83,7 @@ public class TestHitPropertySerialize {
     public void testHitPropValueSerialize() {
         HitPropValue val, val1;
 
-        val1 = new HitPropValueContextWord(hits, lemmaAnnotation, 2, true);
+        val1 = new HitPropValueContextWord(hits, lemmaAnnotation, 2, MatchSensitivity.SENSITIVE);
         String exp = "cwo:lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());

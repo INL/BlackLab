@@ -45,30 +45,7 @@ struct
 + use AnnotatedField / Annotation / AnnotationSensitivity everywhere
 
 index
-+ separate Searcher into read/write interfaces (including DocWriter for DocIndexers)
-+ introduce Doc; replace (most) docIds with it
-+ save() / isImmutable() toch voorlopig weg
-+ get rid of HitsImpl(BlackLabIndex index, AnnotatedField field, HitsSettings settings);
-+ ArrayList.sort is sneller dan Collections.sort, door meer kennis van interne structuur
-+ HitsAbstract de implementaties van group, filter, etc. gegeven
-+ HitsImpl: hit fetching extracten naar apart class..?
-+ Kijk of je concsType en desiredContextSize uit HitsSettings kan verwijderen, zodat
-  alleen invariante waardes overblijven en je index, field en maxStats (object is invariant, waardes niet)
-  er aan toe kunt voegen.
-+ sortedBy als enkele call naar constructor/factory method implementeren
-+ HitProperty.copy() netter implementeren
-+ Til hits, capturedGruops, sortOrder op naar HitsAbstract
-+ HitsFromQuery moet van HitsAbstract deriven, niet van HitsImpl
-  HitsImpl -> HitsList
-+ HitsSample moet SampleSettings class gebruiken
-+ encapsulate WindowStats
-+ eliminate HitsWindow, have Hits contain optional window stats
-+ eliminate HitsSample, have Hits contain optional sample settings
-+ Filter hits zou lazy moeten zijn
-
-- Overal MatchSensitivity ipv alleen sensitive (ook al ondersteunen we nu alleen nog yes/no sensitivity)
-  (Terms, HitProperty, ...)
-  HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
+- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
 
 - Refactor forwardindex naar multiforwardindex / forwardindexdoc
 

@@ -22,6 +22,7 @@ import org.apache.lucene.search.RegexpQuery;
 
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -117,10 +118,10 @@ public class TextPatternRegex extends TextPatternTerm {
 
         if (forceSensitive) {
             // Pattern started with (?-i) or (?c) to force it to be sensitive
-            result = new TextPatternSensitive(true, true, result);
+            result = new TextPatternSensitive(MatchSensitivity.SENSITIVE, result);
         } else if (forceInsensitive) {
             // Pattern started with (?i) to force it to be insensitive
-            result = new TextPatternSensitive(false, false, result);
+            result = new TextPatternSensitive(MatchSensitivity.INSENSITIVE, result);
         }
 
         return result;

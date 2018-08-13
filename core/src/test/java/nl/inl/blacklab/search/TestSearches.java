@@ -20,6 +20,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 
@@ -319,8 +320,8 @@ public class TestSearches {
                 "noot [noot aap aap] aap"
                 );
         // If left side of implication is always false, right side is ignored
-        HitProperty hit = new HitPropertyHitText(testIndex.index(), false);
-        HitProperty left = new HitPropertyLeftContext(testIndex.index(), false);
+        HitProperty hit = new HitPropertyHitText(testIndex.index(), MatchSensitivity.INSENSITIVE);
+        HitProperty left = new HitPropertyLeftContext(testIndex.index(), MatchSensitivity.INSENSITIVE);
         HitProperty sortBy = new HitPropertyMultiple(hit, left);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
     }
@@ -332,11 +333,11 @@ public class TestSearches {
                 );
         // If left side of implication is always false, right side is ignored
         BlackLabIndex index = testIndex.index();
-        HitProperty prop = new HitPropertyHitText(index, false);
+        HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().annotations().main();
         Terms terms = index.forwardIndex(annotation).terms();
         int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        HitPropValue value = new HitPropValueContextWords(index, annotation, false, words);
+        HitPropValue value = new HitPropValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 

@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -38,43 +39,43 @@ public class HitPropertyWordLeft extends HitProperty {
 
     private Terms terms;
 
-    private boolean sensitive;
+    private MatchSensitivity sensitivity;
 
-    public HitPropertyWordLeft(Hits hits, Annotation annotation, boolean sensitive) {
+    public HitPropertyWordLeft(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
         super(hits);
         BlackLabIndex index = hits.queryInfo().index();
         this.annotation = annotation == null ? hits.queryInfo().field().annotations().main(): annotation;
         this.luceneFieldName = this.annotation.luceneFieldPrefix();
         this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitive = sensitive;
+        this.sensitivity = sensitivity;
     }
 
     public HitPropertyWordLeft(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity());
     }
 
-    public HitPropertyWordLeft(Hits hits, boolean sensitive) {
-        this(hits, null, sensitive);
+    public HitPropertyWordLeft(Hits hits, MatchSensitivity sensitivity) {
+        this(hits, null, sensitivity);
     }
 
     public HitPropertyWordLeft(Hits hits) {
-        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity().isCaseSensitive());
+        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity());
     }
 
-    public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation, boolean sensitive) {
+    public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         super(null);
         this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
         this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitive = sensitive;
+        this.sensitivity = sensitivity;
     }
 
-    public HitPropertyWordLeft(BlackLabIndex index, boolean sensitive) {
-        this(index, null, sensitive);
+    public HitPropertyWordLeft(BlackLabIndex index, MatchSensitivity sensitivity) {
+        this(index, null, sensitivity);
     }
 
     @Override
     public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyWordLeft(newHits, annotation, sensitive);
+        return new HitPropertyWordLeft(newHits, annotation, sensitivity);
     }
 
     @Override
@@ -85,10 +86,10 @@ public class HitPropertyWordLeft extends HitProperty {
         int contextLength = context[Contexts.LENGTH_INDEX];
 
         if (contextHitStart <= 0)
-            return new HitPropValueContextWord(hits, annotation, -1, sensitive);
+            return new HitPropValueContextWord(hits, annotation, -1, sensitivity);
         int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         return new HitPropValueContextWord(hits, annotation, context[contextStart
-                + contextHitStart - 1], sensitive);
+                + contextHitStart - 1], sensitivity);
     }
 
     @Override
@@ -110,7 +111,7 @@ public class HitPropertyWordLeft extends HitProperty {
         int cmp = terms.compareSortPosition(
                 ca[contextIndex * caLength + caHitStart - 1 + Contexts.NUMBER_OF_BOOKKEEPING_INTS],
                 cb[contextIndex * cbLength + cbHitStart - 1 + Contexts.NUMBER_OF_BOOKKEEPING_INTS],
-                sensitive);
+                sensitivity);
         return reverse ? -cmp : cmp;
     }
 
@@ -133,7 +134,7 @@ public class HitPropertyWordLeft extends HitProperty {
     public String serialize() {
         String[] parts = AnnotatedFieldNameUtil.getNameComponents(luceneFieldName);
         String thePropName = parts.length > 1 ? parts[1] : "";
-        return serializeReverse() + PropValSerializeUtil.combineParts("wordleft", thePropName, sensitive ? "s" : "i");
+        return serializeReverse() + PropValSerializeUtil.combineParts("wordleft", thePropName, sensitivity.luceneFieldSuffix());
     }
 
     public static HitPropertyWordLeft deserialize(Hits hits, String info) {
@@ -142,9 +143,9 @@ public class HitPropertyWordLeft extends HitProperty {
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        boolean sensitive = parts.length > 1 ? parts[1].equalsIgnoreCase("s") : true;
+        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
         Annotation annotation = field.annotations().get(propName);
-        return new HitPropertyWordLeft(hits, annotation, sensitive);
+        return new HitPropertyWordLeft(hits, annotation, sensitivity);
     }
 
 }
