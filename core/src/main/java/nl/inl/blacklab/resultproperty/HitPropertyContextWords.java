@@ -134,7 +134,17 @@ public class HitPropertyContextWords extends HitProperty {
     public HitPropertyContextWords(Hits hits, Annotation annotation, MatchSensitivity sensitivity,
             List<ContextPart> words) {
         super(hits);
-        this.index = hits.queryInfo().index();
+        init(hits.queryInfo().index(), annotation, sensitivity, words);
+    }
+
+    public HitPropertyContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
+            List<ContextPart> words) {
+        super();
+        init(index, annotation, sensitivity, words);
+    }
+
+    private void init(BlackLabIndex blIndex, Annotation annotation, MatchSensitivity sensitivity, List<ContextPart> words) {
+        this.index = blIndex;
         if (annotation == null) {
             this.annotation = index.mainAnnotatedField().mainAnnotation();
         } else {
@@ -180,8 +190,8 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyContextWords(newHits, annotation, sensitivity, words);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyContextWords(newHits, annotation, sensitivity, words).setContexts(contexts);
     }
 
     @Override

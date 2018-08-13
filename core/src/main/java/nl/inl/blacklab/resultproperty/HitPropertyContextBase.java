@@ -58,7 +58,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super(null);
+        super();
         this.name = name;
         this.serializeName = serializeName;
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation(): annotation;
@@ -73,7 +73,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
     
     @Override
-    public ContextSize needsContextSize() {
+    public ContextSize needsContextSize(BlackLabIndex index) {
         return contextSize;
     }
 

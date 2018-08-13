@@ -35,16 +35,17 @@ public class HitsFiltered extends HitsAbstract {
     HitsFiltered(Hits hits, HitProperty property, HitPropValue value) {
         super(hits.queryInfo());
         this.source = hits;
-        this.filterProperty = property.copyWithHits(hits);
         
         // If the filter property requires contexts, fetch them now.
-        List<Annotation> contextsNeeded = filterProperty.needsContext();
+        List<Annotation> contextsNeeded = property.needsContext();
         if (contextsNeeded != null) {
             // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
             // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigates by
             // implementing a ForwardIndex that stores documents linearly, making it just a single read.
             Contexts contexts = new Contexts(hits, contextsNeeded, BlackLabIndex.DEFAULT_CONTEXT_SIZE);
-            filterProperty.setContexts(contexts);
+            filterProperty = property.copyWith(hits, contexts);
+        } else {
+            filterProperty = property.copyWith(hits);
         }
         
         this.filterValue = value;

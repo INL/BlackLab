@@ -61,8 +61,8 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
     }
 
     @Override
-    public HitPropertyWordRight copyWithHits(Hits newHits) {
-        return new HitPropertyWordRight(newHits, annotation, sensitivity, contextSize);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyWordRight(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
     }
 
     @Override

@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.CapturedGroupsImpl;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -49,6 +50,17 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
 
     /** Hit contexts, if any */
     protected Contexts contexts = null;
+
+    /**
+     * For HitProperties that need context, the context indices that correspond to
+     * the context(s) they need in the result set. (in the same order as reported by
+     * needsContext()).
+     */
+    List<Integer> contextIndices;
+
+    public HitProperty() {
+        this.hits = null;
+    }
 
     public HitProperty(Hits hits) {
         this.hits = hits;
@@ -87,11 +99,14 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         return null;
     }
 
-    public void setContexts(Contexts contexts) {
-        this.contexts = contexts;
-        
-        // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
-        this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
+    /**
+     * If this property need context(s), how large should they be?
+     * 
+     * @param index index, so we can find the default context size if we need to 
+     * @return required context size
+     */
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return index.defaultContextSize();
     }
 
     public abstract String getName();
@@ -187,22 +202,18 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
     }
 
     /**
-     * For HitProperties that need context, the context indices that correspond to
-     * the context(s) they need in the result set. (in the same order as reported by
-     * needsContext()).
-     */
-    List<Integer> contextIndices;
-
-    /**
      * For HitProperties that need context, sets the context indices that correspond
      * to the context(s) they need in the result set.
      * 
-     * Only needed if the context indices differ from the assumed default of 0, 1, 2, ...
+     * Only needed if the context indices differ from the assumed default of 0, 1,
+     * 2, ...
+     * 
+     * Only called from the HitPropertyMultiple constructor, so doesn't break immutability.
      * 
      * @param contextIndices the indices, in the same order as reported by
      *            needsContext().
      */
-    public void setContextIndices(List<Integer> contextIndices) {
+    protected void setContextIndices(List<Integer> contextIndices) {
         if (this.contextIndices == null)
             this.contextIndices = new ArrayList<>();
         else
@@ -211,15 +222,44 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
     }
 
     /**
-     * Produce a copy of this HitProperty object with a different Hits object.
+     * Produce a copy of this HitProperty object with a different Hits and Contexts
+     * object.
      *
-     * Used by Hits.sortedBy(), to use the specified HitProperty on a different Hits
-     * object than originally intended.
-     *
-     * @param newHits new Hits object to use
+     * @param newHits new Hits to use
+     * @param contexts new Contexts to use, or null for none
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWithHits(Hits newHits);
+    public abstract HitProperty copyWith(Hits newHits, Contexts contexts);
+
+    /**
+     * Produce a copy of this HitProperty object with a different Hits and Contexts
+     * object.
+     *
+     * @param newHits new Hits to use
+     * @param contexts new Contexts to use
+     * @return the new HitProperty object
+     */
+    public HitProperty copyWith(Hits newHits) {
+        return copyWith(newHits, null);
+    }
+
+    /**
+     * Set contexts to use.
+     * 
+     * Only ever used by {@link #copyWith(Hits, Contexts)}, so doesn't break immutability.
+     * 
+     * @param contexts contexts to use, or null for none
+     */
+    protected HitProperty setContexts(Contexts contexts) {
+        if (needsContext() != null) {
+            this.contexts = contexts;
+    
+            // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
+            if (contexts != null)
+                this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
+        }
+        return this;
+    }
 
     /**
      * Is the comparison reversed?
@@ -251,14 +291,7 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      */
     public abstract List<String> getPropNames();
 
-    public ContextSize needsContextSize() {
-        return hits.queryInfo().index().defaultContextSize();
-    }
-
     public Hits sortHits(HitsAbstract hitsToSort, boolean reverseSort) {
-        // We need a HitProperty with the correct Hits object
-        HitProperty sortProp = copyWithHits(hitsToSort);
-        
         // Make sure we have a sort order array of sufficient size
         // and fill it with the original hit order (0, 1, 2, ...)
         int n = hitsToSort.size(); // also triggers fetching all hits
@@ -266,11 +299,11 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         for (int i = 0; i < n; i++)
             sortOrder[i] = i;
 
+        // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
-        List<Annotation> requiredContext = sortProp.needsContext();
-        if (requiredContext != null) {
-            sortProp.setContexts(new Contexts(hitsToSort, requiredContext, sortProp.needsContextSize()));
-        }
+        List<Annotation> requiredContext = needsContext();
+        HitProperty sortProp = copyWith(hitsToSort,
+                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.queryInfo().index())));
 
         // Perform the actual sort.
         Arrays.sort(sortOrder, sortProp);
@@ -284,12 +317,13 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
                 sortOrder[i] = sortOrder[n - i - 1];
             }
         }
-        
+
         CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
         int hitsCounted = hitsToSort.hitsCountedSoFar();
         int docsRetrieved = hitsToSort.docsProcessedSoFar();
         int docsCounted = hitsToSort.docsCountedSoFar();
-        
-        return new HitsList(hitsToSort.queryInfo(), hitsToSort.hitsList(), sortOrder, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
+
+        return new HitsList(hitsToSort.queryInfo(), hitsToSort.hitsList(), sortOrder, capturedGroups, hitsCounted,
+                docsRetrieved, docsCounted);
     }
 }

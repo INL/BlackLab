@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -34,9 +35,13 @@ public class HitPropertyDoc extends HitProperty {
         index = hits.queryInfo().index();
     }
 
+    public HitPropertyDoc() {
+        super();
+    }
+
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyDoc(newHits);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyDoc(newHits).setContexts(contexts);
     }
 
     @Override

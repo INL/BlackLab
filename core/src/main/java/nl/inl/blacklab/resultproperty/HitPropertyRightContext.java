@@ -61,8 +61,8 @@ public class HitPropertyRightContext extends HitPropertyContextBase {
     }
 
     @Override
-    public HitPropertyRightContext copyWithHits(Hits newHits) {
-        return new HitPropertyRightContext(newHits, annotation, sensitivity, contextSize);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyRightContext(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
     }
 
     @Override

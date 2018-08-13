@@ -42,26 +42,8 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         super(criteria[0].hits);
         this.criteria = new ArrayList<>(Arrays.asList(criteria));
 
-        determineContextNeeded();
-    }
-
-    @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        int n = criteria.size();
-        HitProperty[] newCriteria = new HitProperty[n];
-        for (int i = 0; i < n; i++) {
-            newCriteria[i] = criteria.get(i).copyWithHits(newHits);
-        }
-        return new HitPropertyMultiple(newCriteria);
-    }
-
-    /**
-     * Determine what context we need for each property, and let the properties know
-     * at what context index/indices they can find the context(s) they need.
-     *
-     * Called whenever something about our criteria changes.
-     */
-    private void determineContextNeeded() {
+        // Determine what context we need for each property, and let the properties know
+        // at what context index/indices they can find the context(s) they need.
         // Figure out what context(s) we need
         List<Annotation> result = new ArrayList<>();
         for (HitProperty prop: criteria) {
@@ -74,7 +56,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             }
         }
         contextNeeded = result.isEmpty() ? null : result;
-
+        
         // Let criteria know what context number(s) they need
         for (HitProperty prop: criteria) {
             List<Annotation> requiredContext = prop.needsContext();
@@ -87,6 +69,16 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             }
         }
         contextNeeded = result.isEmpty() ? null : result;
+    }
+
+    @Override
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        int n = criteria.size();
+        HitProperty[] newCriteria = new HitProperty[n];
+        for (int i = 0; i < n; i++) {
+            newCriteria[i] = criteria.get(i).copyWith(newHits, contexts);
+        }
+        return new HitPropertyMultiple(newCriteria).setContexts(contexts);
     }
 
     @Override
@@ -126,14 +118,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     public List<Annotation> needsContext() {
         return contextNeeded;
     }
-
-    @Override
-    public void setContexts(Contexts contexts) {
-        for (HitProperty prop: criteria) {
-            prop.setContexts(contexts);
-        }
-    }
-
+    
     @Override
     public HitPropValueMultiple get(int hitNumber) {
         HitPropValue[] rv = new HitPropValue[criteria.size()];

@@ -23,6 +23,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -48,9 +49,19 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         this.friendlyName = friendlyName;
     }
 
+    public HitPropertyDocumentStoredField(String fieldName, String friendlyName) {
+        super();
+        this.fieldName = fieldName;
+        this.friendlyName = friendlyName;
+    }
+
+    public HitPropertyDocumentStoredField(String fieldName) {
+        this(fieldName, fieldName);
+    }
+
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyDocumentStoredField(newHits, fieldName, friendlyName);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyDocumentStoredField(newHits, fieldName, friendlyName).setContexts(contexts);
     }
 
     @Override

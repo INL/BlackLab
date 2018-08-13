@@ -18,6 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -30,10 +31,14 @@ public class HitPropertyHitPosition extends HitProperty {
     public HitPropertyHitPosition(Hits hits) {
         super(hits);
     }
+    
+    public HitPropertyHitPosition() {
+        super();
+    }
 
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyHitPosition(newHits);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyHitPosition(newHits).setContexts(contexts);
     }
 
     @Override

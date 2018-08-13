@@ -42,9 +42,14 @@ Reasoning behind specific design choices / implementation notes:
 
 index
 + HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
++ Refactor forwardindex naar multiforwardindex / forwardindexdoc
 
-- Refactor forwardindex naar multiforwardindex / forwardindexdoc
-
+- HitProperty immutable
+  alleen reverse is nog niet immutable - misschien gewoon een reverse() method die een kopie maakt..?
+  reverse wordt niet gekopieerd...
+  is contextIndices nog een probleem? wordt niet gekopieerd..?
+  constructor hoeft geen Hits meer te krijgen (wordt toch altijd met copyWith() gedaan)
+  
 - Nieuwe (multi)forward index die documenten lineair opslaat.
   Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.
 
@@ -56,8 +61,6 @@ index
   
   Dan kunnen we toch sortOrder een List<Hit> maken, wat efficienter is en waarschijnlijk zorgt dat Results interfaces/classes cleaner en generieker blijven.
 
-  HitProperty immutable (nu niet door context, contextIndices)
-  
 - filtering now cancels sort, because HitProperty uses original position. Solve after HitProperty-refactor?
 
 - Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)

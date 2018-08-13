@@ -31,32 +31,32 @@ import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 
-    private MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
+    private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField());
+    private Hits hits = new MockHits(mockIndex, mockIndex.mainAnnotatedField());
 
     private Annotation lemmaAnnotation;
 
     @Before
     public void setUp() {
-        lemmaAnnotation = mockSearcher.mainAnnotatedField().annotation("lemma");
-        mockSearcher.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
+        lemmaAnnotation = mockIndex.mainAnnotatedField().annotation("lemma");
+        mockIndex.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
     }
 
     @Test
     public void testHitPropertySerialize() {
         HitProperty prop;
 
-        prop = new HitPropertyDocumentDecade(hits, "decade");
+        prop = new HitPropertyDocumentDecade("decade");
         Assert.assertEquals("decade:decade", prop.serialize());
 
-        prop = new HitPropertyDocumentId(hits);
+        prop = new HitPropertyDocumentId();
         prop.setReverse(true);
         String exp = "-docid";
         Assert.assertEquals(exp, prop.serialize());
         Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
 
-        prop = new HitPropertyHitText(hits, lemmaAnnotation, MatchSensitivity.SENSITIVE);
+        prop = new HitPropertyHitText(mockIndex, lemmaAnnotation, MatchSensitivity.SENSITIVE);
         Assert.assertEquals("hit:lemma:s", prop.serialize());
 
         List<ContextPart> contextParts = Arrays.asList(
@@ -64,7 +64,7 @@ public class TestHitPropertySerialize {
                 new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
                 new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
         );
-        prop = new HitPropertyContextWords(hits, lemmaAnnotation, MatchSensitivity.SENSITIVE, contextParts);
+        prop = new HitPropertyContextWords(mockIndex, lemmaAnnotation, MatchSensitivity.SENSITIVE, contextParts);
         Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
     }
 

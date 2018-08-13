@@ -56,13 +56,17 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         super("hit text", "hit", index, annotation, sensitivity, contextSize);
     }
 
+    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        this(index, annotation, sensitivity, null);
+    }
+
     public HitPropertyHitText(BlackLabIndex index, MatchSensitivity sensitivity) {
         this(index, null, sensitivity, null);
     }
 
     @Override
-    public HitPropertyHitText copyWithHits(Hits newHits) {
-        return new HitPropertyHitText(newHits, annotation, sensitivity, contextSize);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return new HitPropertyHitText(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
     }
 
     @Override
