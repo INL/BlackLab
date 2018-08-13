@@ -39,7 +39,9 @@ public final class BLWhitespaceAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(String fieldName) {
         Tokenizer source = new WhitespaceTokenizer();
         TokenStream filter = source;
-        MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(fieldName);
+        MatchSensitivity sensitivity = MatchSensitivity.INSENSITIVE;
+        if (AnnotatedFieldNameUtil.isAnnotatedField(fieldName))
+            sensitivity = AnnotatedFieldNameUtil.sensitivity(fieldName);
         if (!sensitivity.isCaseSensitive()) {
             filter = new LowerCaseFilter(filter);// lowercase all
         }

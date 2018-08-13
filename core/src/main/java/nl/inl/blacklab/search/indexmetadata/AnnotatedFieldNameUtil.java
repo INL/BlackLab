@@ -453,6 +453,16 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
+     * Is the Lucene field name part of an annotated field or not?
+     * 
+     * @param luceneFieldName the field name
+     * @return true if it's part of an annotated field, false if not
+     */
+    public static boolean isAnnotatedField(String luceneFieldName) {
+        return luceneFieldName.contains(ANNOT_SEP) || luceneFieldName.contains(SENSITIVITY_SEP);
+    }
+    
+    /**
      * Is the specified name a valid XML element name?
      * 
      * Generally, field and annotation names should be valid XML element names, so we
