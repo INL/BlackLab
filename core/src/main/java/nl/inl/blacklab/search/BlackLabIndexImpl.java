@@ -8,13 +8,9 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
-import java.util.AbstractSet;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -272,7 +268,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *
      * Indexed by annotation.
      */
-    protected Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
+    protected Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
 
     protected MaxSettings maxSettings;
 
@@ -461,8 +457,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     
     @Override
     public void forEachDocument(DocTask task) {
-        for (Integer docId : docIdSet()) {
-            task.perform(doc(docId));
+        final int maxDoc = reader().maxDoc();
+        final Bits liveDocs = MultiFields.getLiveDocs(reader());
+        for (int docId = 0; docId < maxDoc; docId++) {
+            if (liveDocs == null || liveDocs.get(docId)) {
+                task.perform(doc(docId));
+            }
         }
     }
 
@@ -532,49 +532,26 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     protected void registerContentStore(Field field, ContentStore contentStore) {
         contentStores.put(field, contentStore);
     }
-
+    
     @Override
-    public AnnotationForwardIndex forwardIndex(Annotation annotation) {
+    public ForwardIndex forwardIndex(AnnotatedField field) {
         synchronized (forwardIndices) {
-            AnnotationForwardIndex forwardIndex = forwardIndices.get(annotation);
+            ForwardIndex forwardIndex = forwardIndices.get(field);
             if (forwardIndex == null) {
-                File dir = new File(indexLocation, "fi_" + annotation.luceneFieldPrefix());
-                forwardIndex = !isEmptyIndex && !dir.exists() ? null : AnnotationForwardIndex.open(dir, this, annotation);
-                if (forwardIndex == null)
-                    throw new IllegalArgumentException("Annotation has no forward index: " + annotation);
-                addForwardIndex(annotation, forwardIndex);
+                forwardIndex = ForwardIndex.open(this, field);
+                forwardIndices.put(field, forwardIndex);
             }
             return forwardIndex;
         }
     }
 
+    @Override
+    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
+        return forwardIndex(annotation.field()).get(annotation);
+    }
+
     protected void addForwardIndex(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        synchronized (forwardIndices) {
-            forwardIndices.put(annotation, forwardIndex);
-        }
-    }
-
-    /**
-     * Opens all the forward indices, to avoid this delay later.
-     *
-     * NOTE: used to be public; now private because it's done automatically when
-     * constructing the Searcher.
-     */
-    private void openForwardIndices() {
-        for (AnnotatedField field: annotatedFields()) {
-            for (Annotation annotation: field.annotations()) {
-                if (annotation.hasForwardIndex()) {
-                    // This annotation has a forward index. Make sure it is open.
-                    if (traceIndexOpening)
-                        logger.debug("    " + annotation.luceneFieldPrefix() + "...");
-                    forwardIndex(annotation);
-                }
-            }
-        }
-    }
-
-    protected ForwardIndex openForwardIndex(AnnotatedField field) {
-        return ForwardIndex.open(this, field);
+        forwardIndex(annotation.field()).put(annotation, forwardIndex);
     }
 
     @Override
@@ -600,7 +577,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public boolean canDoNfaMatching() {
         if (forwardIndices.isEmpty())
             return false;
-        AnnotationForwardIndex fi = forwardIndices.values().iterator().next();
+        ForwardIndex fi = forwardIndices.values().iterator().next();
         return fi.canDoNfaMatching();
     }
 
@@ -722,7 +699,16 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         if (!createNewIndex) {
             if (traceIndexOpening)
                 logger.debug("  Opening forward indices...");
-            openForwardIndices();
+            for (AnnotatedField field: annotatedFields()) {
+                for (Annotation annotation: field.annotations()) {
+                    if (annotation.hasForwardIndex()) {
+                        // This annotation has a forward index. Make sure it is open.
+                        if (traceIndexOpening)
+                            logger.debug("    " + annotation.luceneFieldPrefix() + "...");
+                        annotationForwardIndex(annotation);
+                    }
+                }
+            }
         }
     }
 
@@ -765,7 +751,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             contentStores.close();
 
             // Close the forward indices
-            for (AnnotationForwardIndex fi : forwardIndices.values()) {
+            for (ForwardIndex fi : forwardIndices.values()) {
                 fi.close();
             }
 
@@ -821,73 +807,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return indexSearcher;
     }
 
-    private Set<Integer> docIdSet() {
-
-        final int maxDoc = reader.maxDoc();
-
-        final Bits liveDocs = MultiFields.getLiveDocs(reader);
-
-        return new AbstractSet<Integer>() {
-            @Override
-            public boolean contains(Object o) {
-                Integer i = (Integer) o;
-                return i < maxDoc && !isDeleted(i);
-            }
-
-            boolean isDeleted(Integer i) {
-                return liveDocs != null && !liveDocs.get(i);
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return maxDoc == reader.numDeletedDocs() + 1;
-            }
-
-            @Override
-            public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
-                    int current = -1;
-                    int next = -1;
-
-                    @Override
-                    public boolean hasNext() {
-                        if (next < 0)
-                            findNext();
-                        return next < maxDoc;
-                    }
-
-                    private void findNext() {
-                        next = current + 1;
-                        while (next < maxDoc && isDeleted(next)) {
-                            next++;
-                        }
-                    }
-
-                    @Override
-                    public Integer next() {
-                        if (next < 0)
-                            findNext();
-                        if (next >= maxDoc)
-                            throw new NoSuchElementException();
-                        current = next;
-                        next = -1;
-                        return current;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-
-            @Override
-            public int size() {
-                return maxDoc - reader.numDeletedDocs() - 1;
-            }
-        };
-    }
-    
     // Methods for mutating the index
     //----------------------------------------------------------------
     
@@ -938,11 +857,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected void deleteFromForwardIndices(Document d) {
         // Delete this document in all forward indices
-        for (Map.Entry<Annotation, AnnotationForwardIndex> e : forwardIndices.entrySet()) {
-            Annotation annotation = e.getKey();
-            AnnotationForwardIndex fi = e.getValue();
-            int fiid = Integer.parseInt(d.get(annotation.forwardIndexIdField()));
-            fi.deleteDocument(fiid);
+        for (Map.Entry<AnnotatedField, ForwardIndex> e : forwardIndices.entrySet()) {
+            AnnotatedField field = e.getKey();
+            ForwardIndex fi = e.getValue();
+            for (Annotation annotation: field.annotations()) {
+                int fiid = Integer.parseInt(d.get(annotation.forwardIndexIdField()));
+                fi.get(annotation).deleteDocument(fiid);
+            }
         }
     }
 

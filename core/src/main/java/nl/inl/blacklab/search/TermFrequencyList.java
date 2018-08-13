@@ -75,7 +75,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
 
         // Get the actual words from the sort positions
         MatchSensitivity sensitivity = index.defaultMatchSensitivity();
-        Terms terms = index.forwardIndex(contexts.annotations().get(0)).terms();
+        Terms terms = index.annotationForwardIndex(contexts.annotations().get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
             int key = e.getOne();

@@ -335,7 +335,7 @@ public class TestSearches {
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        Terms terms = index.forwardIndex(annotation).terms();
+        Terms terms = index.annotationForwardIndex(annotation).terms();
         int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
         HitPropValue value = new HitPropValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));

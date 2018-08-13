@@ -451,7 +451,7 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public int addToForwardIndex(AnnotationWriter prop) {
         Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
-        AnnotationForwardIndex forwardIndex = searcher.forwardIndex(annotation);
+        AnnotationForwardIndex forwardIndex = searcher.annotationForwardIndex(annotation);
         if (forwardIndex == null)
             throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.getName()));
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());

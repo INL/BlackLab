@@ -52,7 +52,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
         Annotation annotation = field.annotation(propName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         String term = parts[2];
-        Terms termsObj = queryInfo.index().forwardIndex(annotation).terms();
+        Terms termsObj = queryInfo.index().annotationForwardIndex(annotation).terms();
         int termId = termsObj.deserializeToken(term);
         return new HitPropValueContextWord(hits, annotation, termId, sensitivity);
     }

@@ -85,11 +85,11 @@ public class Kwics {
         BlackLabIndex index = hits.queryInfo().index();
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                attrForwardIndices.put(annotation, index.forwardIndex(annotation));
+                attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
             }
         }
-        AnnotationForwardIndex wordForwardIndex = index.forwardIndex(field.annotation(Kwic.DEFAULT_CONC_WORD_PROP));
-        AnnotationForwardIndex punctForwardIndex = index.forwardIndex(field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP));
+        AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(field.annotation(Kwic.DEFAULT_CONC_WORD_PROP));
+        AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP));
         Map<Hit, Kwic> conc1 = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
             Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);

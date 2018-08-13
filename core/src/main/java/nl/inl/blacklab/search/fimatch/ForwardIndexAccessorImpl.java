@@ -60,7 +60,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             n = annotationNumbers.size();
             annotationNumbers.put(annotation, n);
             annotationNames.add(annotation);
-            AnnotationForwardIndex fi = index.forwardIndex(annotation);
+            AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
             fis.add(fi);
             terms.add(fi.terms());
         }

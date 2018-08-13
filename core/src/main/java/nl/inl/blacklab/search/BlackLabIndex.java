@@ -15,6 +15,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -86,6 +87,12 @@ public interface BlackLabIndex extends Closeable {
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
+    
+    @Override
+    boolean equals(Object obj);
+    
+    @Override
+    int hashCode();
     
     /**
      * Finalize the Searcher object. This closes the IndexSearcher and (depending on
@@ -222,7 +229,16 @@ public interface BlackLabIndex extends Closeable {
      * @return the ForwardIndex if found/created
      * @throws BlackLabRuntimeException if the annotation has no forward index
      */
-    AnnotationForwardIndex forwardIndex(Annotation annotation);
+    AnnotationForwardIndex annotationForwardIndex(Annotation annotation);
+
+    /**
+     * Get forward index for the specified annotated field.
+     * 
+     * @param field field to get forward index for
+     * @return forward index
+     */
+    ForwardIndex forwardIndex(AnnotatedField field);
+
 
     
     // Information about the index
@@ -328,6 +344,18 @@ public interface BlackLabIndex extends Closeable {
      */
     Analyzer analyzer();
     
+    /**
+     * Get the default context size.
+     * @return default context size
+     */
+    ContextSize defaultContextSize();
+
+    /**
+     * Are we running in index mode?
+     * @return true if we are, false if not
+     */
+    boolean indexMode();
+
 
     // Methods that mutate settings
     //---------------------------------------------------------------------------
@@ -348,20 +376,22 @@ public interface BlackLabIndex extends Closeable {
      */
     void setCollator(Collator collator);
 
+    /**
+     * Set the default sensitivity for queries.
+     * @param m default match sensitivity
+     */
     void setDefaultMatchSensitivity(MatchSensitivity m);
 
+    /**
+     * Set the maximum number of hits to process/count.
+     * @param settings desired settings
+     */
     void setMaxSettings(MaxSettings settings);
     
-    @Override
-    boolean equals(Object obj);
-    
-    @Override
-    int hashCode();
-
+    /**
+     * Set the default context size.
+     * @param size default context size
+     */
     void setDefaultContextSize(ContextSize size);
-
-    ContextSize defaultContextSize();
-
-    boolean indexMode();
 
 }

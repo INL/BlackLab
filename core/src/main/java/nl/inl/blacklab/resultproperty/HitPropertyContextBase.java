@@ -54,7 +54,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.annotation = annotation == null ? hits.queryInfo().field().mainAnnotation() : annotation;
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
-        this.terms = index.forwardIndex(this.annotation).terms();
+        this.terms = index.annotationForwardIndex(this.annotation).terms();
     }
 
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
@@ -62,7 +62,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.name = name;
         this.serializeName = serializeName;
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation(): annotation;
-        this.terms = index.forwardIndex(this.annotation).terms();
+        this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
     }

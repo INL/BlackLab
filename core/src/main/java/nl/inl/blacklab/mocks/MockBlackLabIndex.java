@@ -13,6 +13,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
@@ -175,8 +176,14 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public AnnotationForwardIndex forwardIndex(Annotation annotation) {
+    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
         return forwardIndices.get(annotation);
+    }
+
+    @Override
+    public ForwardIndex forwardIndex(AnnotatedField field) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @Override
