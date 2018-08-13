@@ -172,6 +172,7 @@ public class HitsList extends HitsAbstract {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
+    @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // subclasses may override
     }

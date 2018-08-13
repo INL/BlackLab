@@ -160,6 +160,7 @@ public class HitsFromQuery extends HitsAbstract {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
+    @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // Prevent locking when not required
         if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))

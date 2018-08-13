@@ -40,10 +40,6 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
-struct
-+ use the new struct interfaces (IndexMetadata, etc.)
-+ use AnnotatedField / Annotation / AnnotationSensitivity everywhere
-
 index
 - HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
 
