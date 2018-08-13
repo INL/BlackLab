@@ -67,12 +67,14 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)
-        final AnnotationWriter propMain = getMainProperty();
-        final AnnotationWriter propPunct = getPropPunct();
+        final AnnotationWriter propMain = mainAnnotation();
+        final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
         final AnnotationWriter propLemma = addProperty("lemma");
         final AnnotationWriter propPartOfSpeech = addProperty("pos");
+
+        registerContentsField();
 
         // Doc element: the individual documents to index
         addHandler("/FoLiA", new DocumentElementHandler());

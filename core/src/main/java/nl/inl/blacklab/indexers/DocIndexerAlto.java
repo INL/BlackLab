@@ -57,7 +57,8 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
     @SuppressWarnings("deprecation")
     public DocIndexerAlto(DocWriter indexer, final String fileName, Reader reader) {
         super(indexer, fileName, reader);
-
+        registerContentsField();
+        
         // Document element
         addHandler("/alto", new DocumentElementHandler());
 

@@ -32,21 +32,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;
-            AnnotationForwardIndex afi;
-            File afiDir = determineAfiDir(index.indexDirectory(), annotation);
-            if (!index.isEmpty() && !afiDir.exists()) {
-                if (index.indexMode()) {
-                    // We're in index mode, an one annotation that should have a forward index
-                    // doesn't have one. Create it now.
-                    createAfi(annotation);
-                } else {
-                    // Forward index doesn't yet exist. Probably an empty index in search mode.
-                }
-            } else {
-                // Open forward index
-                afi = AnnotationForwardIndex.open(afiDir, index, annotation);
-                fis.put(annotation, afi);
-            }
+            get(annotation);
         }
     }
 
@@ -54,12 +40,21 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         return new File(indexDir, "fi_" + annotation.luceneFieldPrefix());
     }
 
+    /**
+     * Get any annotation forward index, doesn't matter which.
+     * @return an annotation forward index
+     */
+    private AnnotationForwardIndex anyAnnotationForwardIndex() {
+        synchronized (fis) {
+            return fis.values().iterator().next();
+        }
+    }
+
     @Override
     public boolean canDoNfaMatching() {
-        if (fis.isEmpty())
+        if (!hasAnyForwardIndices())
             return false;
-        AnnotationForwardIndex fi = fis.values().iterator().next();
-        return fi.canDoNfaMatching();
+        return anyAnnotationForwardIndex().canDoNfaMatching();
     }
 
     @Override
@@ -67,29 +62,38 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         return new FIDoc() {
             @Override
             public void delete() {
-                for (AnnotationForwardIndex afi: fis.values()) {
-                    afi.deleteDocument(afi.luceneDocIdToFiid(docId));
+                synchronized (fis) {
+                    for (AnnotationForwardIndex afi: fis.values()) {
+                        afi.deleteDocument(afi.luceneDocIdToFiid(docId));
+                    }
                 }
             }
 
             @Override
             public List<int[]> retrievePartsInt(Annotation annotation, int[] start, int[] end) {
-                AnnotationForwardIndex afi = fis.get(annotation);
-                return afi.retrievePartsInt(afi.luceneDocIdToFiid(docId), start, end);
+                synchronized (fis) {
+                    AnnotationForwardIndex afi = fis.get(annotation);
+                    return afi.retrievePartsInt(afi.luceneDocIdToFiid(docId), start, end);
+                }
             }
 
             @Override
             public int docLength() {
-                AnnotationForwardIndex afi = fis.values().iterator().next();
-                return afi.getDocLength(afi.luceneDocIdToFiid(docId));
+                synchronized (fis) {
+                    AnnotationForwardIndex afi = anyAnnotationForwardIndex();
+                    return afi.getDocLength(afi.luceneDocIdToFiid(docId));
+                }
             }
         };
     }
 
     @Override
     public void close() {
-        for (AnnotationForwardIndex fi: fis.values()) {
-            fi.close();
+        synchronized (fis) {
+            for (AnnotationForwardIndex fi: fis.values()) {
+                fi.close();
+            }
+            fis.clear();
         }
     }
 
@@ -108,23 +112,29 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     @Override
     public int numDocs() {
-        if (fis.isEmpty())
-            return 0;
-        return fis.values().iterator().next().getNumDocs();
+        synchronized (fis) {
+            if (fis.isEmpty())
+                return 0;
+            return anyAnnotationForwardIndex().getNumDocs();
+        }
     }
 
     @Override
     public long freeSpace() {
-        if (fis.isEmpty())
-            return 0;
-        return fis.values().stream().mapToLong(afi -> afi.getFreeSpace()).sum();
+        synchronized (fis) {
+            if (fis.isEmpty())
+                return 0;
+            return fis.values().stream().mapToLong(afi -> afi.getFreeSpace()).sum();
+        }
     }
 
     @Override
     public long totalSize() {
-        if (fis.isEmpty())
-            return 0;
-        return fis.values().stream().mapToLong(afi -> afi.getTotalSize()).sum();
+        synchronized (fis) {
+            if (fis.isEmpty())
+                return 0;
+            return fis.values().stream().mapToLong(afi -> afi.getTotalSize()).sum();
+        }
     }
 
     @Override
@@ -134,7 +144,9 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     @Override
     public Iterator<AnnotationForwardIndex> iterator() {
-        return fis.values().iterator();
+        synchronized (fis) {
+            return fis.values().iterator();
+        }
     }
 
     @Override
@@ -151,33 +163,36 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     public AnnotationForwardIndex get(Annotation annotation) {
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
-        AnnotationForwardIndex afi = fis.get(annotation);
-        if (afi == null) {
-            if (index.indexMode() && index.isEmpty()) {
-                afi = createAfi(annotation);
-            } else {
-                throw new IllegalArgumentException(
-                        "Annotation should have forward index but directory is missing: " + annotation);
-            }
+        AnnotationForwardIndex afi;
+        synchronized (fis) {
+            afi = fis.get(annotation);
         }
+        if (afi == null)
+            afi = openAnnotationForwardIndex(annotation);
         return afi;
     }
 
-    private AnnotationForwardIndex createAfi(Annotation annotation) {
+    private AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
         AnnotationForwardIndex afi = AnnotationForwardIndex.open(determineAfiDir(index.indexDirectory(), annotation),
                 index, annotation);
-        fis.put(annotation, afi);
+        synchronized (fis) {
+            fis.put(annotation, afi);
+        }
         return afi;
     }
 
     @Override
     public void put(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        fis.put(annotation, forwardIndex);
+        synchronized (fis) {
+            fis.put(annotation, forwardIndex);
+        }
     }
 
     @Override
     public boolean hasAnyForwardIndices() {
-        return !fis.isEmpty();
+        synchronized (fis) {
+            return !fis.isEmpty();
+        }
     }
 
 }

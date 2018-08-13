@@ -38,6 +38,7 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
@@ -1031,14 +1032,28 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         ensureNotFrozen();
         
         String fieldName = fieldWriter.getName();
-        String mainAnnotName = fieldWriter.getMainAnnotation().getName();
+        AnnotatedFieldImpl cf;
+        if (annotatedFields.exists(fieldName)) {
+            cf = annotatedFields.get(fieldName);
+        } else {
+            // Not registered yet; do so now. Note that we only add the main annotation,
+            // not the other annotations, but that's okay; they're not needed at index
+            // time and will be detected at search time.
+            cf = getOrCreateAnnotatedField(fieldName);
+        }
         
-        if (annotatedFields.exists(fieldName))
-            return annotatedFields.get(fieldName);
-        // Not registered yet; do so now. Note that we only add the main annotation,
-        // not the other annotations, but that's okay; they're not needed at index
-        // time and will be detected at search time.
-        AnnotatedFieldImpl cf = getOrCreateAnnotatedField(fieldName);
+        // Make sure all the annotations, their sensitivities, the offset sensitivity, whether 
+        // they have a forward index, and the main annotation are all registered correctly.  
+        for (AnnotationWriter annotationWriter: fieldWriter.getAnnotations()) {
+            AnnotationImpl ann = cf.getOrCreateAnnotation(annotationWriter.getName());
+            for (String suffix: annotationWriter.getSensitivitySuffixes()) {
+                ann.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
+            }
+            if (annotationWriter.isIncludeOffsets())
+                ann.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.getMainAlternative()));
+            ann.setForwardIndex(annotationWriter.hasForwardIndex());
+        }
+        String mainAnnotName = fieldWriter.getMainAnnotation().getName();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
         cf.setMainAnnotationName(mainAnnotName); // set main annotation
         fieldWriter.setAnnotatedField(cf);

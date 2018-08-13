@@ -13,7 +13,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.IndexListenerDevNull;
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropValue;
@@ -31,6 +31,18 @@ import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
 
 public class TestIndex {
+    
+    private static final class IndexListenerThrowOnError extends IndexListener {
+        @Override
+        public boolean errorOccurred(Throwable e, String path, File f) {
+            // FileProcessor doesn't like when we re-throw the exception.
+            //throw new BlackLabRuntimeException("Error in indexer, path=" + path + ", file=" + f, e);
+            System.err.println("Error while indexing. path=" + path + ", file=" + f);
+            e.printStackTrace();
+            return false; // don't continue
+        }
+    }
+
     /**
      * Some test XML data to index.
      */
@@ -114,7 +126,7 @@ public class TestIndex {
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
             Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
-            indexer.setListener(new IndexListenerDevNull()); // no output
+            indexer.setListener(new IndexListenerThrowOnError()); // throw on error
             try {
                 // Index each of our test "documents".
                 for (int i = 0; i < testData.length; i++) {

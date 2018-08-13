@@ -16,11 +16,13 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -262,12 +264,20 @@ public interface BlackLabIndex extends Closeable {
         return field;
     }
 
+    default AnnotatedFields annotatedFields() {
+        return metadata().annotatedFields();
+    }
+
     default AnnotatedField annotatedField(String fieldName) {
         return metadata().annotatedField(fieldName);
     }
 
     default AnnotatedField mainAnnotatedField() {
         return metadata().mainAnnotatedField();
+    }
+    
+    default MetadataFields metadataFields() {
+        return metadata().metadataFields();
     }
     
     default MetadataField metadataField(String fieldName) {

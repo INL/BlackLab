@@ -31,7 +31,6 @@ import nl.inl.blacklab.exceptions.MaxDocsReachedException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -74,8 +73,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
         propPunct = contentsField.addAnnotation(propName, getSensitivitySetting(propName), false);
         IndexMetadataWriter indexMetadata = indexer.indexWriter().metadataWriter();
-        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
-        contentsField.setAnnotatedField(f);
+        indexMetadata.registerAnnotatedField(contentsField);
     }
 
     /**

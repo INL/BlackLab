@@ -49,7 +49,6 @@ import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -445,13 +444,13 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads);
     }
 
-    public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
         return contentsField.addProperty(propName, sensitivity);
     }
 
     @SuppressWarnings("deprecation")
-    public DocIndexerXmlHandlers(DocWriter indexer, String fileName, Reader reader) {
-        super(indexer, fileName, reader);
+    public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
+        super(docWriter, fileName, reader);
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
@@ -462,9 +461,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
         // positions
         propStartTag.setForwardIndex(false);
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) indexer.indexWriter().metadataWriter();
-        AnnotatedField f = indexMetadata.registerAnnotatedField(contentsField);
-        contentsField.setAnnotatedField(f);
+    }
+    
+    public void registerContentsField() {
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadataWriter();
+        indexMetadata.registerAnnotatedField(contentsField);
     }
 
     /**
@@ -578,7 +579,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return metadataFetcher;
     }
 
-    public AnnotationWriter getPropPunct() {
+    public AnnotationWriter punctAnnotation() {
         return propPunct;
     }
 
@@ -586,7 +587,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return propStartTag;
     }
 
-    public AnnotationWriter getMainProperty() {
+    public AnnotationWriter mainAnnotation() {
         return propMain;
     }
 

@@ -59,7 +59,7 @@ public class AnnotatedFieldWriter {
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
 
-    private Map<String, AnnotationWriter> properties = new HashMap<>();
+    private Map<String, AnnotationWriter> annotations = new HashMap<>();
 
     private IntArrayList start = new IntArrayList();
 
@@ -67,40 +67,40 @@ public class AnnotatedFieldWriter {
 
     private String fieldName;
 
-    private AnnotationWriter mainProperty;
+    private AnnotationWriter mainAnnotation;
 
-    private Set<String> noForwardIndexProps = new HashSet<>();
+    private Set<String> noForwardIndexAnnotations = new HashSet<>();
 
     private AnnotatedField field;
 
-    public void setNoForwardIndexProps(Set<String> noForwardIndexProps) {
-        this.noForwardIndexProps.clear();
-        this.noForwardIndexProps.addAll(noForwardIndexProps);
+    public void setNoForwardIndexProps(Set<String> noForwardIndexAnnotations) {
+        this.noForwardIndexAnnotations.clear();
+        this.noForwardIndexAnnotations.addAll(noForwardIndexAnnotations);
     }
 
     /**
      * Construct a AnnotatedFieldWriter object with a main annotation
      * 
      * @param name field name
-     * @param mainPropertyName main annotation name (e.g. "word")
+     * @param mainAnnotationName main annotation name (e.g. "word")
      * @param sensitivity ways to index main annotation, with respect to case- and
      *            diacritics-sensitivity.
      * @param mainPropHasPayloads does the main annotation have payloads?
      */
-    public AnnotatedFieldWriter(String name, String mainPropertyName, SensitivitySetting sensitivity,
+    public AnnotatedFieldWriter(String name, String mainAnnotationName, SensitivitySetting sensitivity,
             boolean mainPropHasPayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
-        if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainPropertyName))
-            logger.warn("Annotation name '" + mainPropertyName
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainAnnotationName))
+            logger.warn("Annotation name '" + mainAnnotationName
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
-        if (mainPropertyName == null)
-            mainPropertyName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        mainProperty = new AnnotationWriter(this, mainPropertyName, sensitivity, includeOffsets, mainPropHasPayloads);
-        properties.put(mainPropertyName, mainProperty);
+        if (mainAnnotationName == null)
+            mainAnnotationName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+        mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets, mainPropHasPayloads);
+        annotations.put(mainAnnotationName, mainAnnotation);
     }
 
     public int numberOfTokens() {
@@ -112,10 +112,10 @@ public class AnnotatedFieldWriter {
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
-        if (noForwardIndexProps.contains(name)) {
+        if (noForwardIndexAnnotations.contains(name)) {
             p.setForwardIndex(false);
         }
-        properties.put(name, p);
+        annotations.put(name, p);
         return p;
     }
 
@@ -132,7 +132,7 @@ public class AnnotatedFieldWriter {
     }
 
     public void addToLuceneDoc(Document doc) {
-        for (AnnotationWriter p : properties.values()) {
+        for (AnnotationWriter p : annotations.values()) {
             p.addToLuceneDoc(doc, fieldName, start, end);
         }
 
@@ -165,24 +165,24 @@ public class AnnotatedFieldWriter {
             end = new IntArrayList();
         }
 
-        for (AnnotationWriter p : properties.values()) {
+        for (AnnotationWriter p : annotations.values()) {
             p.clear(reuseBuffers);
         }
     }
 
     public AnnotationWriter getProperty(String name) {
-        AnnotationWriter p = properties.get(name);
+        AnnotationWriter p = annotations.get(name);
         if (p == null)
             throw new IllegalArgumentException("Undefined annotation '" + name + "'");
         return p;
     }
 
     public boolean hasProperty(String name) {
-        return properties.containsKey(name);
+        return annotations.containsKey(name);
     }
 
     public AnnotationWriter getMainAnnotation() {
-        return mainProperty;
+        return mainAnnotation;
     }
 
     public AnnotationWriter getTagProperty() {
@@ -198,7 +198,7 @@ public class AnnotatedFieldWriter {
     }
 
     public Collection<AnnotationWriter> getAnnotations() {
-        return properties.values();
+        return annotations.values();
     }
 
     public void setAnnotatedField(AnnotatedField field) {

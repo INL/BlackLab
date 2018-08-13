@@ -38,6 +38,8 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
 
     public DocIndexerPageXml(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
+        
+        registerContentsField();
 
         addNumericFields(Arrays.asList("yearFrom", "yearTo"));
 

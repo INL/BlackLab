@@ -32,12 +32,14 @@ public class DocIndexerExample extends DocIndexerXmlHandlers {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)
-        final AnnotationWriter propMain = getMainProperty();
-        final AnnotationWriter propPunct = getPropPunct();
+        final AnnotationWriter propMain = mainAnnotation();
+        final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
-        final AnnotationWriter propLemma = addProperty("lemma", SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
-        final AnnotationWriter propPartOfSpeech = addProperty("pos", SensitivitySetting.ONLY_INSENSITIVE);
+        final AnnotationWriter propLemma = addAnnotation("lemma", SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
+        final AnnotationWriter propPartOfSpeech = addAnnotation("pos", SensitivitySetting.ONLY_INSENSITIVE);
+        
+        registerContentsField();
 
         // Doc element: the individual documents to index
         addHandler("/doc", new DocumentElementHandler());

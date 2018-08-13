@@ -55,13 +55,15 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
         super(indexer, fileName, reader);
 
         // Get handles to the default properties (the main one & punct)
-        final AnnotationWriter propMain = getMainProperty();
-        final AnnotationWriter propPunct = getPropPunct();
+        final AnnotationWriter propMain = mainAnnotation();
+        final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
         final AnnotationWriter propLemma = addProperty("lemma");
         final AnnotationWriter propPartOfSpeech = addProperty("pos");
         final AnnotationWriter propWordClass = addProperty("class");
+
+        registerContentsField();
 
         // Doc element: the individual documents to index (one or more per file)
         addHandler("/docs/doc", new DocumentElementHandler() {

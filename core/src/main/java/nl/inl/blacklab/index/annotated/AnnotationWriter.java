@@ -16,6 +16,7 @@
 package nl.inl.blacklab.index.annotated;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +106,10 @@ public class AnnotationWriter {
 
     protected boolean includeOffsets;
 
+    public boolean isIncludeOffsets() {
+        return includeOffsets;
+    }
+
     /**
      * Term values for this annotation.
      */
@@ -131,12 +136,16 @@ public class AnnotationWriter {
      * names and filters for each way.
      */
     private Map<String, TokenFilterAdder> alternatives = new HashMap<>();
-
+    
     /** The main alternative (the one that gets character offsets if desired) */
     private String mainAlternative;
 
+    public String getMainAlternative() {
+        return mainAlternative;
+    }
+
     /** The annotation name */
-    private String propName;
+    private String annotationName;
 
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
@@ -162,7 +171,7 @@ public class AnnotationWriter {
             boolean includeOffsets, boolean includePayloads) {
         super();
         this.fieldWriter = fieldWriter;
-        propName = name;
+        annotationName = name;
 
         mainAlternative = null;
         if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
@@ -185,6 +194,10 @@ public class AnnotationWriter {
         this.includeOffsets = includeOffsets;
         if (includePayloads)
             payloads = new ArrayList<>();
+    }
+
+    public Collection<String> getSensitivitySuffixes() {
+        return Collections.unmodifiableCollection(alternatives.keySet());
     }
 
     TokenStream getTokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
@@ -213,7 +226,7 @@ public class AnnotationWriter {
     public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String altName : alternatives.keySet()) {
-            doc.add(new Field(AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName),
+            doc.add(new Field(AnnotatedFieldNameUtil.annotationField(fieldName, annotationName, altName),
                     getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
         }
     }
@@ -231,7 +244,7 @@ public class AnnotationWriter {
     }
 
     public String getName() {
-        return propName;
+        return annotationName;
     }
 
     public boolean hasForwardIndex() {

@@ -13,7 +13,6 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 
@@ -104,13 +103,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     getSensitivitySetting(mainAnnotation), false);
             addAnnotatedField(fieldWriter);
 
-            IndexMetadataImpl indexMetadata;
-            if (docWriter != null) {
-                indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
-                AnnotatedField fieldDesc = indexMetadata.registerAnnotatedField(fieldWriter);
-                fieldWriter.setAnnotatedField(fieldDesc);
-            }
-
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
                     getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME), true);
             annotStartTag.setForwardIndex(false);
@@ -130,6 +122,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
+            if (docWriter != null) {
+                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
+                indexMetadata.registerAnnotatedField(fieldWriter);
+            }
+
         }
     }
 

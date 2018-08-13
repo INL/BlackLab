@@ -43,7 +43,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      * What sensitivity alternatives (sensitive/insensitive for case & diacritics)
      * are present
      */
-    private SensitivitySetting sensitivitySetting = SensitivitySetting.ONLY_SENSITIVE;
+    private SensitivitySetting sensitivitySetting = null;
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -53,6 +53,10 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      * present)
      */
     private AnnotationSensitivity offsetsAlternative;
+
+    public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
+        this.offsetsAlternative = sensitivity(offsetsAlternative);
+    }
 
     private boolean frozen;
 
@@ -78,22 +82,26 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     @Override
     public String toString() {
-        String sensitivityDesc;
-        switch (sensitivitySetting) {
-        case ONLY_SENSITIVE:
-            sensitivityDesc = "sensitive only";
-            break;
-        case ONLY_INSENSITIVE:
-            sensitivityDesc = "insensitive only";
-            break;
-        case SENSITIVE_AND_INSENSITIVE:
-            sensitivityDesc = "sensitive and insensitive";
-            break;
-        case CASE_AND_DIACRITICS_SEPARATE:
-            sensitivityDesc = "case/diacritics sensitivity separate";
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown sensitivity " + sensitivitySetting.toString());
+        String sensitivityDesc = "";
+        if (sensitivitySetting == null) {
+            sensitivityDesc = "(null)";
+        } else {
+            switch (sensitivitySetting) {
+            case ONLY_SENSITIVE:
+                sensitivityDesc = "sensitive only";
+                break;
+            case ONLY_INSENSITIVE:
+                sensitivityDesc = "insensitive only";
+                break;
+            case SENSITIVE_AND_INSENSITIVE:
+                sensitivityDesc = "sensitive and insensitive";
+                break;
+            case CASE_AND_DIACRITICS_SEPARATE:
+                sensitivityDesc = "case/diacritics sensitivity separate";
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown sensitivity " + sensitivitySetting.toString());
+            }
         }
         return name + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
     }

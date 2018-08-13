@@ -46,7 +46,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     }
 
     @Override
-    public AnnotatedField get(String fieldName) {
+    public AnnotatedFieldImpl get(String fieldName) {
         if (!annotatedFields.containsKey(fieldName))
             throw new IllegalArgumentException("Annotated field '" + fieldName + "' not found!");
         return annotatedFields.get(fieldName);

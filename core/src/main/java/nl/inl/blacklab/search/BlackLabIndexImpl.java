@@ -538,7 +538,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         synchronized (forwardIndices) {
             AnnotationForwardIndex forwardIndex = forwardIndices.get(annotation);
             if (forwardIndex == null) {
-                forwardIndex = openForwardIndex(annotation);
+                File dir = new File(indexLocation, "fi_" + annotation.luceneFieldPrefix());
+                forwardIndex = !isEmptyIndex && !dir.exists() ? null : AnnotationForwardIndex.open(dir, this, annotation);
                 if (forwardIndex == null)
                     throw new IllegalArgumentException("Annotation has no forward index: " + annotation);
                 addForwardIndex(annotation, forwardIndex);
@@ -548,10 +549,33 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     protected void addForwardIndex(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        forwardIndices.put(annotation, forwardIndex);
+        synchronized (forwardIndices) {
+            forwardIndices.put(annotation, forwardIndex);
+        }
     }
 
-//    protected abstract ForwardIndex openForwardIndex(Annotation annotation);
+    /**
+     * Opens all the forward indices, to avoid this delay later.
+     *
+     * NOTE: used to be public; now private because it's done automatically when
+     * constructing the Searcher.
+     */
+    private void openForwardIndices() {
+        for (AnnotatedField field: annotatedFields()) {
+            for (Annotation annotation: field.annotations()) {
+                if (annotation.hasForwardIndex()) {
+                    // This annotation has a forward index. Make sure it is open.
+                    if (traceIndexOpening)
+                        logger.debug("    " + annotation.luceneFieldPrefix() + "...");
+                    forwardIndex(annotation);
+                }
+            }
+        }
+    }
+
+    protected ForwardIndex openForwardIndex(AnnotatedField field) {
+        return ForwardIndex.open(this, field);
+    }
 
     @Override
     public MatchSensitivity defaultMatchSensitivity() {
@@ -777,44 +801,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return contentStore;
     }
 
-    /**
-     * Opens all the forward indices, to avoid this delay later.
-     *
-     * NOTE: used to be public; now private because it's done automatically when
-     * constructing the Searcher.
-     */
-    private void openForwardIndices() {
-        for (AnnotatedField field: indexMetadata.annotatedFields()) {
-            for (Annotation annotation: field.annotations()) {
-                if (annotation.hasForwardIndex()) {
-                    // This annotation has a forward index. Make sure it is open.
-                    if (traceIndexOpening)
-                        logger.debug("    " + annotation.luceneFieldPrefix() + "...");
-                    forwardIndex(annotation);
-                }
-            }
-        }
-    }
-    
-    protected ForwardIndex openForwardIndex(AnnotatedField field) {
-        return ForwardIndex.open(this, field);
-    }
-
-    protected AnnotationForwardIndex openForwardIndex(Annotation annotation) {
-        AnnotationForwardIndex forwardIndex;
-        File dir = new File(indexLocation, "fi_" + annotation.luceneFieldPrefix());
-        if (!isEmptyIndex && !dir.exists()) {
-            // Forward index doesn't exist
-            return null;
-        }
-        // Open forward index
-        forwardIndex = AnnotationForwardIndex.open(dir, this, annotation);
-//        forwardIndex.setIdTranslateInfo(fiidLookup, annotation); // how to translate from
-//                                                                // Lucene
-//                                                                // doc to fiid
-        return forwardIndex;
-    }
-
     @Override
     public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField) {
         if (annotatedField == null)
@@ -962,6 +948,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
+        if (field == null || field.annotations() == null) {
+            System.out.println("BLA");
+        }
         if (field.annotations().exists(annotName))
             return field.annotation(annotName);
         AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;

@@ -120,7 +120,7 @@ public class BlsUtils {
      * @return the document id, or -1 if it doesn't exist
      */
     public static int getDocIdFromPid(BlackLabIndex index, String pid) {
-        MetadataField pidField = index.metadata().metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
         if (pidField == null) {
             int luceneDocId;
             try {

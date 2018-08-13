@@ -169,9 +169,12 @@ public abstract class AnnotationForwardIndex {
      */
     public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup) {
 
+        if (annotation != null && !annotation.hasForwardIndex())
+            throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
+        
         if (!dir.exists()) {
             if (!create)
-                throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
+                throw new IllegalArgumentException("Annotation should have forward index but directory is missing: " + annotation);
             if (!dir.mkdir())
                 throw new BlackLabRuntimeException("Could not create dir: " + dir);
         }

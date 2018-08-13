@@ -86,12 +86,14 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
     public void init() {
 
         // Get handles to the default properties (the main one & punct)
-        final AnnotationWriter propMain = getMainProperty();
-        final AnnotationWriter propPunct = getPropPunct();
+        final AnnotationWriter propMain = mainAnnotation();
+        final AnnotationWriter propPunct = punctAnnotation();
 
         final AnnotationWriter propLemma = hasLemma ? addProperty(indexLemmaAs) : null;
         final AnnotationWriter propType = hasType ? addProperty(indexTypeAs) : null;
         final AnnotationWriter propFunction = hasFunction ? addProperty(indexFunctionAs) : null;
+        
+        registerContentsField();
 
         // Doc element: the individual documents to index
         // Note that we add handlers for both TEI and TEI.2, to
