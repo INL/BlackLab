@@ -30,8 +30,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyDocumentId extends HitProperty {
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits) {
-        super(prop, hits);
+    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, boolean invert) {
+        super(prop, hits, null, invert);
     }
 
     public HitPropertyDocumentId() {
@@ -39,8 +39,8 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDocumentId(this, newHits);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyDocumentId(this, newHits, invert);
     }
 
     @Override

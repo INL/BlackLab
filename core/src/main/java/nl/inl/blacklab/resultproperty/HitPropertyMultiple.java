@@ -17,8 +17,10 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Contexts;
@@ -28,31 +30,50 @@ import nl.inl.blacklab.search.results.Hits;
  * A collection of GroupProperty's identifying a particular group.
  */
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
-    List<HitProperty> criteria;
+    
+    /** The properties we're combining */
+    List<HitProperty> properties;
 
+    /** All the contexts needed by the criteria */
     List<Annotation> contextNeeded;
     
-    public HitPropertyMultiple(HitPropertyMultiple prop, List<HitProperty> criteria) {
-        super(prop);
-        this.criteria = criteria;
+    /** Which of the contexts do the individual properties need? */
+    Map<HitProperty, List<Integer>> contextIndicesPerProperty;
+    
+    public HitPropertyMultiple(HitPropertyMultiple prop, List<HitProperty> criteria, boolean invert) {
+        super(prop, null, null, invert);
+        this.properties = criteria;
         this.contextNeeded = prop.contextNeeded;
+        this.contextIndicesPerProperty = prop.contextIndicesPerProperty;
     }
 
     /**
      * Quick way to create group criteria. Just call this method with the
      * GroupCriterium object(s) you want.
      *
-     * @param criteria the desired criteria
+     * @param properties the desired criteria
      */
-    public HitPropertyMultiple(HitProperty... criteria) {
+    public HitPropertyMultiple(HitProperty... properties) {
+        this(false, properties);
+    }
+    
+    /**
+     * Quick way to create group criteria. Just call this method with the
+     * GroupCriterium object(s) you want.
+     * 
+     * @param reverse reverse sort? 
+     * @param properties the desired criteria
+     */
+    public HitPropertyMultiple(boolean reverse, HitProperty... properties) {
         super();
-        this.criteria = new ArrayList<>(Arrays.asList(criteria));
+        this.properties = new ArrayList<>(Arrays.asList(properties));
+        this.reverse = reverse;
 
         // Determine what context we need for each property, and let the properties know
         // at what context index/indices they can find the context(s) they need.
         // Figure out what context(s) we need
         List<Annotation> result = new ArrayList<>();
-        for (HitProperty prop: criteria) {
+        for (HitProperty prop: properties) {
             List<Annotation> requiredContext = prop.needsContext();
             if (requiredContext != null) {
                 for (Annotation c: requiredContext) {
@@ -64,27 +85,32 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         contextNeeded = result.isEmpty() ? null : result;
         
         // Let criteria know what context number(s) they need
-        for (HitProperty prop: criteria) {
+        contextIndicesPerProperty = new HashMap<>();
+        for (HitProperty prop: properties) {
             List<Annotation> requiredContext = prop.needsContext();
             if (requiredContext != null) {
                 List<Integer> contextNumbers = new ArrayList<>();
                 for (Annotation c: requiredContext) {
                     contextNumbers.add(contextNeeded.indexOf(c));
                 }
-                prop.setContextIndices(contextNumbers);
+                contextIndicesPerProperty.put(prop, contextNumbers);
             }
         }
         contextNeeded = result.isEmpty() ? null : result;
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        int n = criteria.size();
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        int n = properties.size();
         HitProperty[] newCriteria = new HitProperty[n];
         for (int i = 0; i < n; i++) {
-            newCriteria[i] = criteria.get(i).copyWith(newHits, contexts);
+            HitProperty prop = properties.get(i);
+            newCriteria[i] = prop.copyWith(newHits, contexts);
+            List<Integer> indices = contextIndicesPerProperty.get(prop);
+            if (indices != null)
+                newCriteria[i].setContextIndices(indices);
         }
-        return new HitPropertyMultiple(newCriteria);
+        return new HitPropertyMultiple(invert ? !reverse : reverse, newCriteria);
     }
 
     @Override
@@ -92,21 +118,21 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         if (this == obj)
             return true;
         if (obj instanceof HitPropertyMultiple) {
-            return ((HitPropertyMultiple) obj).criteria.equals(criteria);
+            return ((HitPropertyMultiple) obj).properties.equals(properties);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return criteria.hashCode();
+        return properties.hashCode();
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
         int i = 0;
-        for (HitProperty prop: criteria) {
+        for (HitProperty prop: properties) {
             if (i > 0)
                 str.append(",");
             str.append(prop.toString());
@@ -117,7 +143,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public Iterator<HitProperty> iterator() {
-        return criteria.iterator();
+        return properties.iterator();
     }
 
     @Override
@@ -127,9 +153,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     
     @Override
     public HitPropValueMultiple get(int hitNumber) {
-        HitPropValue[] rv = new HitPropValue[criteria.size()];
+        HitPropValue[] rv = new HitPropValue[properties.size()];
         int i = 0;
-        for (HitProperty crit: criteria) {
+        for (HitProperty crit: properties) {
             rv[i] = crit.get(hitNumber);
             i++;
         }
@@ -138,7 +164,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public int compare(Object i, Object j) {
-        for (HitProperty crit: criteria) {
+        for (HitProperty crit: properties) {
             int cmp = reverse ? crit.compare(j, i) : crit.compare(i, j);
             if (cmp != 0)
                 return cmp;
@@ -149,7 +175,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public String getName() {
         StringBuilder b = new StringBuilder();
-        for (HitProperty crit: criteria) {
+        for (HitProperty crit: properties) {
             if (b.length() > 0)
                 b.append(", ");
             b.append(crit.getName());
@@ -160,16 +186,16 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public List<String> getPropNames() {
         List<String> names = new ArrayList<>();
-        for (HitProperty prop: criteria)
+        for (HitProperty prop: properties)
             names.addAll(prop.getPropNames());
         return names;
     }
 
     @Override
     public String serialize() {
-        String[] values = new String[criteria.size()];
-        for (int i = 0; i < criteria.size(); i++) {
-            values[i] = criteria.get(i).serialize();
+        String[] values = new String[properties.size()];
+        for (int i = 0; i < properties.size(); i++) {
+            values[i] = properties.get(i).serialize();
         }
         return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }

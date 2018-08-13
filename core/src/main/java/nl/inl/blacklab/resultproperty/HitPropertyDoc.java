@@ -30,8 +30,8 @@ public class HitPropertyDoc extends HitProperty {
 
     private BlackLabIndex index;
 
-    HitPropertyDoc(HitPropertyDoc prop, Hits hits) {
-        super(prop, hits);
+    HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
+        super(prop, hits, null, invert);
         this.index = hits.queryInfo().index();
     }
 
@@ -40,8 +40,8 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDoc(this, newHits).setContexts(contexts);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyDoc(this, newHits, invert);
     }
 
     @Override

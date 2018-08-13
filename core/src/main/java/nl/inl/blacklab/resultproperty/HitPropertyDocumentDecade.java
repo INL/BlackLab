@@ -41,8 +41,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     String fieldName;
 
-    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits) {
-        super(prop, hits);
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
+        super(prop, hits, null, invert);
         this.reader = hits.queryInfo().index().reader();
         this.fieldName = prop.fieldName;
     }
@@ -53,8 +53,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDocumentDecade(this, newHits);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyDocumentDecade(this, newHits, invert);
     }
 
     @Override

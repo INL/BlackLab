@@ -38,8 +38,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private String friendlyName;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits) {
-        super(prop, hits);
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
+        super(prop, hits, null, invert);
         this.reader = hits.queryInfo().index().reader();
         this.fieldName = prop.fieldName;
         this.friendlyName = prop.friendlyName;
@@ -56,8 +56,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDocumentStoredField(this, newHits);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 
     @Override

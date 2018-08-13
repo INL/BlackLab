@@ -327,6 +327,21 @@ public class TestSearches {
     }
 
     @Test
+    public void testSortReverse() {
+        expected = Arrays.asList(
+                "noot [noot aap aap] aap",
+                "noot [mier aap mier] mier",
+                "noot [aap aap aap] aap",
+                "aap [aap aap aap]"
+                );
+        // If left side of implication is always false, right side is ignored
+        HitProperty hit = new HitPropertyHitText(testIndex.index(), MatchSensitivity.INSENSITIVE);
+        HitProperty left = new HitPropertyLeftContext(testIndex.index(), MatchSensitivity.INSENSITIVE);
+        HitProperty sortBy = new HitPropertyMultiple(hit, left).reverse();
+        Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", sortBy));
+    }
+
+    @Test
     public void testFilter() {
         expected = Arrays.asList(
                 "noot [noot aap aap] aap"

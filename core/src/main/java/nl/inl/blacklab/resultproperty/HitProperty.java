@@ -62,20 +62,72 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         this.hits = null;
     }
 
-    HitProperty(HitProperty prop, Hits hits, Contexts contexts) {
+    /**
+     * Copy a HitProperty, with some optional changes.
+     * 
+     * @param prop property to copy
+     * @param hits new hits to use, or null to inherit
+     * @param contexts new contexts to use, or null to inherit
+     * @param invert true to invert the previous sort order; false to keep it the same
+     */
+    HitProperty(HitProperty prop, Hits hits, Contexts contexts, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
+        if (invert)
+            this.reverse = !this.reverse;
         this.setContexts(contexts); // this will initialize contextIndices to default value...
         if (prop.contextIndices != null)
             this.contextIndices = prop.contextIndices; // ...but if we already had different values, use those
     }
 
+    HitProperty(HitProperty prop, Hits hits, Contexts contexts) {
+        this(prop, hits, contexts, false);
+    }
+    
     HitProperty(HitProperty prop, Hits hits) {
-        this(prop, hits, null);
+        this(prop, hits, null, false);
     }
 
-    public HitProperty(HitProperty prop) {
-        this(prop, null, null);
+    HitProperty(HitProperty prop) {
+        this(prop, null, null, false);
+    }
+
+    /**
+     * Set contexts to use.
+     * 
+     * Only ever used by constructor, so doesn't break immutability.
+     * 
+     * @param contexts contexts to use, or null for none
+     */
+    protected HitProperty setContexts(Contexts contexts) {
+        if (needsContext() != null) {
+            this.contexts = contexts;
+    
+            // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
+            if (contexts != null)
+                this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
+        }
+        return this;
+    }
+
+    /**
+     * For HitProperties that need context, sets the context indices that correspond
+     * to the context(s) they need in the result set.
+     * 
+     * Only needed if the context indices differ from the assumed default of 0, 1,
+     * 2, ...
+     * 
+     * Only called from the {@link HitPropertyMultiple#copyWith(Hits, Contexts, boolean)}, so doesn't break immutability.
+     * 
+     * @param contextIndices the indices, in the same order as reported by
+     *            needsContext().
+     */
+    protected void setContextIndices(List<Integer> contextIndices) {
+        if (this.contextIndices == null)
+            this.contextIndices = new ArrayList<>();
+        else
+            this.contextIndices.clear();
+        this.contextIndices.addAll(contextIndices);
     }
 
     public abstract HitPropValue get(int result);
@@ -154,8 +206,9 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
                 reverse = true;
                 serialized = serialized.substring(2, serialized.length() - 1);
             }
-            HitPropertyMultiple result = HitPropertyMultiple.deserialize(hits, serialized);
-            result.setReverse(reverse);
+            HitProperty result = HitPropertyMultiple.deserialize(hits, serialized);
+            if (reverse)
+                result = result.reverse();
             return result;
         }
 
@@ -209,28 +262,18 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
             logger.debug("Unknown HitProperty '" + type + "'");
             return null;
         }
-        result.setReverse(reverse);
+        if (reverse)
+            result = result.reverse();
         return result;
     }
 
     /**
-     * For HitProperties that need context, sets the context indices that correspond
-     * to the context(s) they need in the result set.
+     * Reverse the sort order of this hit property.
      * 
-     * Only needed if the context indices differ from the assumed default of 0, 1,
-     * 2, ...
-     * 
-     * Only called from the HitPropertyMultiple constructor, so doesn't break immutability.
-     * 
-     * @param contextIndices the indices, in the same order as reported by
-     *            needsContext().
+     * @return a new hit property with the sort order reversed
      */
-    protected void setContextIndices(List<Integer> contextIndices) {
-        if (this.contextIndices == null)
-            this.contextIndices = new ArrayList<>();
-        else
-            this.contextIndices.clear();
-        this.contextIndices.addAll(contextIndices);
+    public HitProperty reverse() {
+        return copyWith(null, null, true);
     }
 
     /**
@@ -241,25 +284,20 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @param contexts new Contexts to use, or null for none
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Hits newHits, Contexts contexts);
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+        return copyWith(newHits, contexts, false);
+    }
 
     /**
-     * Set contexts to use.
-     * 
-     * Only ever used by {@link #copyWith(Hits, Contexts)}, so doesn't break immutability.
-     * 
-     * @param contexts contexts to use, or null for none
+     * Produce a copy of this HitProperty object with a different Hits and Contexts
+     * object.
+     *
+     * @param newHits new Hits to use, or null to inherit
+     * @param contexts new Contexts to use, or null to inherit
+     * @param invert true if we should invert the previous sort order; false to keep it the same
+     * @return the new HitProperty object
      */
-    protected HitProperty setContexts(Contexts contexts) {
-        if (needsContext() != null) {
-            this.contexts = contexts;
-    
-            // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
-            if (contexts != null)
-                this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
-        }
-        return this;
-    }
+    public abstract HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert);
 
     /**
      * Is the comparison reversed?
@@ -268,15 +306,6 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      */
     public boolean isReverse() {
         return reverse;
-    }
-
-    /**
-     * Set whether to reverse the comparison.
-     * 
-     * @param reverse if true, reverses comparison
-     */
-    public void setReverse(boolean reverse) {
-        this.reverse = reverse;
     }
 
     @Override

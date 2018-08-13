@@ -127,8 +127,8 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts) {
-        super(prop, hits, contexts);
+    HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts, boolean invert) {
+        super(prop, hits, contexts, invert);
         this.annotation = prop.annotation;
         if (!hits.queryInfo().field().equals(this.annotation.field())) {
             throw new IllegalArgumentException(
@@ -197,8 +197,8 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyContextWords(this, newHits, contexts);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyContextWords(this, newHits, contexts, invert);
     }
 
     @Override

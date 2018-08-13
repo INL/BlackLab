@@ -32,8 +32,8 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
         return deserialize(HitPropertyWordRight.class, hits, info);
     }
 
-    HitPropertyWordRight(HitPropertyWordRight prop, Hits hits, Contexts contexts) {
-        super(prop, hits, contexts);
+    HitPropertyWordRight(HitPropertyWordRight prop, Hits hits, Contexts contexts, boolean invert) {
+        super(prop, hits, contexts, invert);
     }
 
     public HitPropertyWordRight(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
@@ -53,8 +53,8 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyWordRight(this, newHits, contexts);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyWordRight(this, newHits, contexts, invert);
     }
 
     @Override

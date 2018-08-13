@@ -48,11 +48,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected String serializeName;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts) {
-        super(prop, hits, contexts);
+    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts, boolean invert) {
+        super(prop, hits, contexts, invert);
         this.terms = prop.terms;
         this.annotation = prop.annotation;
-        if (!hits.queryInfo().field().equals(this.annotation.field())) {
+        if (hits != null && !hits.queryInfo().field().equals(this.annotation.field())) {
             throw new IllegalArgumentException(
                     "Hits passed to HitProperty must be in the field it was declared with! (declared with "
                             + this.annotation.field().name() + ", hits has " + hits.queryInfo().field().name() + "; class=" + getClass().getName() + ")");

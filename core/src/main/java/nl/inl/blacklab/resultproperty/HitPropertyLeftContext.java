@@ -32,8 +32,8 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         return deserialize(HitPropertyLeftContext.class, hits, info);
     }
 
-    HitPropertyLeftContext(HitPropertyLeftContext prop, Hits hits, Contexts contexts) {
-        super(prop, hits, contexts);
+    HitPropertyLeftContext(HitPropertyLeftContext prop, Hits hits, Contexts contexts, boolean invert) {
+        super(prop, hits, contexts, invert);
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
@@ -53,8 +53,8 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyLeftContext(this, newHits, contexts);
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+        return new HitPropertyLeftContext(this, newHits, contexts, invert);
     }
 
     @Override
