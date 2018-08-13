@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
@@ -88,6 +90,16 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     @Override
+    public FIDoc doc(Doc doc) {
+        return doc(doc.id());
+    }
+
+    @Override
+    public FIDoc doc(Document doc) {
+        throw new UnsupportedOperationException(); // doesn't play well with our fiidLookups...
+    }
+
+    @Override
     public void close() {
         synchronized (fis) {
             for (AnnotationForwardIndex fi: fis.values()) {
@@ -98,10 +110,13 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     @Override
-    public void addDocument(Map<Annotation, List<String>> content, List<Integer> posIncr) {
+    public void addDocument(Map<Annotation, List<String>> content, Map<Annotation, List<Integer>> posIncr, Document document) {
         for (Entry<Annotation, List<String>> e: content.entrySet()) {
-            AnnotationForwardIndex afi = get(e.getKey());
-            afi.addDocument(e.getValue(), posIncr);
+            Annotation annotation = e.getKey();
+            AnnotationForwardIndex afi = get(annotation);
+            List<Integer> posIncrThisAnnot = posIncr.get(annotation);
+            int fiid = afi.addDocument(e.getValue(), posIncrThisAnnot);
+            document.add(new IntField(annotation.forwardIndexIdField(), fiid, Store.YES));
         }
     }
 
@@ -147,16 +162,6 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             return fis.values().iterator();
         }
-    }
-
-    @Override
-    public FIDoc doc(Doc doc) {
-        return doc(doc.id());
-    }
-
-    @Override
-    public FIDoc doc(Document doc) {
-        throw new UnsupportedOperationException(); // doesn't play well with our fiidLookups...
     }
 
     @Override

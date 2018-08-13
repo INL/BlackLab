@@ -109,7 +109,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop: contentsField.getAnnotations()) {
+            for (AnnotationWriter prop: contentsField.annotationsWriters()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -121,7 +121,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop: contentsField.getAnnotations()) {
+            for (AnnotationWriter prop: contentsField.annotationsWriters()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -148,20 +148,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // lists while parsing.
             contentsField.addToLuceneDoc(currentLuceneDoc);
 
-            // Add all properties to forward index
-            for (AnnotationWriter prop: contentsField.getAnnotations()) {
-                if (!prop.hasForwardIndex())
-                    continue;
-
-                // Add annotation (case-sensitive tokens) to forward index and add
-                // id to Lucene doc
-                String propName = prop.getName();
-                String fieldName = AnnotatedFieldNameUtil.annotationField(
-                        contentsField.getName(), propName);
-                int fiid = docWriter.addToForwardIndex(prop);
-                currentLuceneDoc
-                        .add(new IntField(AnnotatedFieldNameUtil.forwardIndexIdField(fieldName), fiid, Store.YES));
-            }
+            // Add field with all its annotations to the forward index
+            addToForwardIndex(contentsField);
 
             // If there's an external metadata fetcher, call it now so it can
             // add the metadata for this document and (optionally) store the

@@ -75,17 +75,9 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      * @param content the content to store
      * @param posIncr the associated position increments, or null if position
      *            increment is always 1.
+     * @param currentLuceneDoc Lucene document
      */
-    void addDocument(Map<Annotation, List<String>> content, List<Integer> posIncr);
-
-    /**
-     * Store the given content and assign an id to it
-     *
-     * @param content the content to store
-     */
-    default void addDocument(Map<Annotation, List<String>> content) {
-        addDocument(content, null);
-    }
+    void addDocument(Map<Annotation, List<String>> content, Map<Annotation, List<Integer>> posIncr, Document currentLuceneDoc);
 
     /**
      * Get the Terms object in order to translate ids to token strings

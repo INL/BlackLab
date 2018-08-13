@@ -197,7 +197,7 @@ public class AnnotatedFieldWriter {
         return fieldName;
     }
 
-    public Collection<AnnotationWriter> getAnnotations() {
+    public Collection<AnnotationWriter> annotationsWriters() {
         return annotations.values();
     }
 
@@ -211,6 +211,11 @@ public class AnnotatedFieldWriter {
 
     public AnnotatedField field() {
         return field;
+    }
+    
+    @Override
+    public String toString() {
+        return "AnnotatedFieldWriter(" + fieldName + ")";
     }
     
 }

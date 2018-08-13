@@ -41,6 +41,7 @@ import org.apache.lucene.document.IntField;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -446,6 +447,15 @@ public abstract class DocIndexer implements AutoCloseable {
 
         // Unrecognized; default to only insensitive
         return SensitivitySetting.ONLY_INSENSITIVE;
+    }
+
+    /**
+     * Add the field, with all its properties, to the forward index.
+     * 
+     * @param field field to add to the forward index
+     */
+    protected void addToForwardIndex(AnnotatedFieldWriter field) {
+        docWriter.addToForwardIndex(field, currentLuceneDoc);
     }
 
     protected abstract int getCharacterPosition();

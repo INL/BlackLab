@@ -367,12 +367,12 @@ public abstract class DocIndexerBase extends DocIndexer {
         for (AnnotatedFieldWriter field : getAnnotatedFields().values()) {
             AnnotationWriter propMain = field.getMainAnnotation();
 
-            // Make sure all the properties have an equal number of values.
+            // Make sure all the annotations have an equal number of values.
             // See what annotation has the highest position
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop : field.getAnnotations()) {
+            for (AnnotationWriter prop : field.annotationsWriters()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -383,8 +383,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             if (propMain.lastValuePosition() == lastValuePos)
                 lastValuePos++;
 
-            // Add empty values to all lagging properties
-            for (AnnotationWriter prop : field.getAnnotations()) {
+            // Add empty values to all lagging annotations
+            for (AnnotationWriter prop : field.annotationsWriters()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -395,26 +395,12 @@ public abstract class DocIndexerBase extends DocIndexer {
                     }
                 }
             }
-            // Store the different properties of the annotated field that
+            // Store the different annotations of the annotated field that
             // were gathered in lists while parsing.
             field.addToLuceneDoc(currentLuceneDoc);
 
-            // Add all properties to forward index
-            for (AnnotationWriter annotation : field.getAnnotations()) {
-                if (!annotation.hasForwardIndex())
-                    continue;
-
-                // Add annotation (case-sensitive tokens) to forward index and add
-                // id to Lucene doc
-                String propName = annotation.getName();
-                String fieldName = AnnotatedFieldNameUtil.annotationField(
-                        field.getName(), propName);
-                if (docWriter != null) {
-                    int fiid = docWriter.addToForwardIndex(annotation);
-                    currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
-                            .forwardIndexIdField(fieldName), fiid, Store.YES));
-                }
-            }
+            // Add the field with all its annotations to the forward index
+            addToForwardIndex(field);
 
         }
 

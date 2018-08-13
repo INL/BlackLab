@@ -10,6 +10,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
@@ -86,6 +87,20 @@ public interface DocWriter {
 
     Optional<Function<String, File>> linkedFileResolver();
 
+    /**
+     * Get the content store for the specified field.
+     * 
+     * @param captureContentFieldName field name
+     * @return content store
+     */
     ContentStore contentStore(String captureContentFieldName);
+
+    /**
+     * Add a field with its annotations to the forward index
+     * 
+     * @param field field to add
+     * @param currentLuceneDoc Lucene doc, for storing the fiid
+     */
+    void addToForwardIndex(AnnotatedFieldWriter field, Document currentLuceneDoc);
 
 }

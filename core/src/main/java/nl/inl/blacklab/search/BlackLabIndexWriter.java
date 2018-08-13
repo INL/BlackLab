@@ -159,6 +159,13 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     void delete(Query q);
 
+    /**
+     * Get existing annotation or create new one.
+     * 
+     * @param field field for which this annotation is
+     * @param annotName annotation name
+     * @return annotation
+     */
     Annotation getOrCreateAnnotation(AnnotatedField field, String annotName);
 
 }

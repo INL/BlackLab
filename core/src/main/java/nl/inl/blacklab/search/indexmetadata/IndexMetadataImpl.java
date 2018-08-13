@@ -1044,14 +1044,15 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         
         // Make sure all the annotations, their sensitivities, the offset sensitivity, whether 
         // they have a forward index, and the main annotation are all registered correctly.  
-        for (AnnotationWriter annotationWriter: fieldWriter.getAnnotations()) {
-            AnnotationImpl ann = cf.getOrCreateAnnotation(annotationWriter.getName());
+        for (AnnotationWriter annotationWriter: fieldWriter.annotationsWriters()) {
+            AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.getName());
             for (String suffix: annotationWriter.getSensitivitySuffixes()) {
-                ann.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
+                annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
             if (annotationWriter.isIncludeOffsets())
-                ann.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.getMainAlternative()));
-            ann.setForwardIndex(annotationWriter.hasForwardIndex());
+                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.getMainAlternative()));
+            annotation.setForwardIndex(annotationWriter.hasForwardIndex());
+            annotationWriter.setAnnotation(annotation);
         }
         String mainAnnotName = fieldWriter.getMainAnnotation().getName();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation

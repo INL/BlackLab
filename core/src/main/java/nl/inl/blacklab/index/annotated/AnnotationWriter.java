@@ -32,6 +32,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.CollUtil;
 
 /**
@@ -146,6 +147,17 @@ public class AnnotationWriter {
 
     /** The annotation name */
     private String annotationName;
+    
+    /** The annotation descriptor */
+    private Annotation annotation;
+
+    public void setAnnotation(Annotation annotation) {
+        this.annotation = annotation;
+    }
+
+    public Annotation annotation() {
+        return annotation;
+    }
 
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
@@ -172,6 +184,9 @@ public class AnnotationWriter {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
+        if (fieldWriter.field() != null) {
+            annotation = fieldWriter.field().annotation(annotationName);
+        }
 
         mainAlternative = null;
         if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
@@ -390,6 +405,11 @@ public class AnnotationWriter {
     
     public AnnotatedField field() {
         return fieldWriter.field();
+    }
+    
+    @Override
+    public String toString() {
+        return "AnnotationWriter(" + field() + "." + annotationName + ")";
     }
     
 }

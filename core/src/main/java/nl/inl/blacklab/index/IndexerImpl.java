@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -43,6 +44,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -443,18 +445,34 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     /**
-     * Add a list of tokens to a forward index
+     * Add a list of tokens to an annotation forward index
      *
      * @param prop the annotation to get values and position increments from
      * @return the id assigned to the content
+     * @deprecated add a whole field at a time using {@link #addToForwardIndex(AnnotatedFieldWriter, Document)}
      */
     @Override
+    @Deprecated
     public int addToForwardIndex(AnnotationWriter prop) {
         Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
         AnnotationForwardIndex forwardIndex = searcher.annotationForwardIndex(annotation);
         if (forwardIndex == null)
             throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.getName()));
         return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
+    }
+
+    @Override
+    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, Document currentLuceneDoc) {
+        Map<Annotation, List<String>> annotations = new HashMap<>();
+        Map<Annotation, List<Integer>> posIncr = new HashMap<>();
+        for (AnnotationWriter annotationWriter: fieldWriter.annotationsWriters()) {
+            if (annotationWriter.hasForwardIndex()) {
+                Annotation annotation = annotationWriter.annotation();
+                annotations.put(annotation, annotationWriter.getValues());
+                posIncr.put(annotation, annotationWriter.getPositionIncrements());
+            }
+        }
+        indexWriter().forwardIndex(fieldWriter.field()).addDocument(annotations, posIncr, currentLuceneDoc);
     }
 
     @Override
