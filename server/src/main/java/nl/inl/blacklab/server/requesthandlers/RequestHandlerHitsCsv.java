@@ -172,13 +172,13 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
-        row.add(StringUtils.join(interleave(kwic.getLeft(punct), kwic.getLeft(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(kwic.getMatch(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
-        row.add(StringUtils.join(interleave(kwic.getRight(punct), kwic.getRight(mainTokenProperty)).toArray()));
+        row.add(StringUtils.join(interleave(kwic.left(punct), kwic.left(mainTokenProperty)).toArray()));
+        row.add(StringUtils.join(kwic.match(mainTokenProperty), " ")); // what to do about punctuation and whitespace?
+        row.add(StringUtils.join(interleave(kwic.right(punct), kwic.right(mainTokenProperty)).toArray()));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
-            row.add(StringUtils.join(kwic.getMatch(otherProp), " "));
+            row.add(StringUtils.join(kwic.match(otherProp), " "));
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {

@@ -126,11 +126,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                 Kwics kwics = singleHit.kwics(wordsAroundHit);
                 Kwic c = kwics.get(hit);
                 if (!isFragment) {
-                    ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
-                            .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
-                            .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
+                    ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
+                            .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
+                            .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
                 } else {
-                    ds.contextList(c.getProperties(), c.getTokens());
+                    ds.contextList(c.annotations(), c.tokens());
                 }
             }
         } catch (ResultNotFound e) {

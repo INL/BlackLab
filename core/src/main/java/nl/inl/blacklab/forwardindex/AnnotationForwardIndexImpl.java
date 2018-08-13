@@ -168,7 +168,7 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
 
     AnnotationForwardIndexImpl(File dir, boolean indexMode, Collators collators, boolean create,
             boolean largeTermsFileSupport) {
-        canDoNfaMatching = collators.getVersion() != CollatorVersion.V1;
+        canDoNfaMatching = collators.version() != CollatorVersion.V1;
 
         if (!indexMode && create) {
             throw new IllegalArgumentException("Tried to create new forward index, but not in index mode");
@@ -690,12 +690,12 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public int getNumDocs() {
+    public int numDocs() {
         return toc.size();
     }
 
     @Override
-    public int getDocLengthByFiid(int fiid) {
+    public int docLengthByFiid(int fiid) {
         return toc.get(fiid).length;
     }
 
@@ -765,7 +765,7 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public long getTotalSize() {
+    public long totalSize() {
         return tokenFileEndPosition;
     }
 

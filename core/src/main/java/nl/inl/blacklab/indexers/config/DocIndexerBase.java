@@ -149,7 +149,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
-        annotatedFields.put(field.getName(), field);
+        annotatedFields.put(field.name(), field);
     }
 
     protected AnnotatedFieldWriter getMainAnnotatedField() {
@@ -162,7 +162,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             for (AnnotatedFieldWriter field : annotatedFields.values()) {
                 if (mainAnnotatedField == null)
                     mainAnnotatedField = field;
-                else if (field.getName().equals("contents"))
+                else if (field.name().equals("contents"))
                     mainAnnotatedField = field;
             }
         }
@@ -182,9 +182,9 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (currentAnnotatedField == null)
             throw new InvalidInputFormatConfig("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
-        annotStartTag = currentAnnotatedField.getTagProperty();
+        annotStartTag = currentAnnotatedField.getTagAnnotation();
         annotMain = currentAnnotatedField.getMainAnnotation();
-        annotPunct = currentAnnotatedField.getPunctProperty();
+        annotPunct = currentAnnotatedField.getPunctAnnotation();
     }
 
     protected void addStartChar(int pos) {
@@ -196,7 +196,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     protected AnnotationWriter getAnnotation(String name) {
-        return currentAnnotatedField.getProperty(name);
+        return currentAnnotatedField.annotation(name);
     }
 
     protected int getCurrentTokenPosition() {
@@ -372,7 +372,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop : field.annotationsWriters()) {
+            for (AnnotationWriter prop : field.annotationWriters()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -384,7 +384,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                 lastValuePos++;
 
             // Add empty values to all lagging annotations
-            for (AnnotationWriter prop : field.annotationsWriters()) {
+            for (AnnotationWriter prop : field.annotationWriters()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -504,8 +504,8 @@ public abstract class DocIndexerBase extends DocIndexer {
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
             } else {
-                contentStoreName = main.getName();
-                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.getName());
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
             }
         } else {
             contentIdFieldName = contentStoreName + "Cid";
@@ -547,7 +547,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             int posIncrement = currentPos - lastStartTagPos;
             propTags().addValue(tagName, posIncrement);
             propTags().addPayload(null);
-            int startTagIndex = propTags().getLastValueIndex();
+            int startTagIndex = propTags().lastValueIndex();
             openInlineTags.add(new OpenTagInfo(tagName, startTagIndex));
 
             for (Entry<String, String> e : attributes.entrySet()) {

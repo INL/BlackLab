@@ -47,14 +47,14 @@ public class Kwic {
     /**
      * Construct a Kwic object
      *
-     * @param properties What properties are stored in what order for this Kwic
+     * @param annotations What annotations are stored in what order for this Kwic
      *            (e.g. word, lemma, pos)
      * @param tokens the contents
      * @param matchStart where the match starts, in word positions
      * @param matchEnd where the match ends, in word positions
      */
-    public Kwic(List<Annotation> properties, List<String> tokens, int matchStart, int matchEnd) {
-        fragment = new DocContentsFromForwardIndex(properties, tokens);
+    public Kwic(List<Annotation> annotations, List<String> tokens, int matchStart, int matchEnd) {
+        fragment = new DocContentsFromForwardIndex(annotations, tokens);
         this.hitStart = matchStart;
         this.hitEnd = matchEnd;
     }
@@ -72,8 +72,8 @@ public class Kwic {
         this.hitEnd = matchEnd;
     }
 
-    public List<String> getLeft() {
-        return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.properties.size()));
+    public List<String> left() {
+        return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
     }
 
     /**
@@ -82,13 +82,13 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getLeft(Annotation annotation) {
-        return getSinglePropertyContext(annotation, 0, hitStart);
+    public List<String> left(Annotation annotation) {
+        return singlePropertyContext(annotation, 0, hitStart);
     }
 
-    public List<String> getMatch() {
+    public List<String> match() {
         return Collections.unmodifiableList(
-                fragment.tokens.subList(hitStart * fragment.properties.size(), hitEnd * fragment.properties.size()));
+                fragment.tokens.subList(hitStart * fragment.annotations.size(), hitEnd * fragment.annotations.size()));
     }
 
     /**
@@ -97,13 +97,13 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getMatch(Annotation annotation) {
-        return getSinglePropertyContext(annotation, hitStart, hitEnd);
+    public List<String> match(Annotation annotation) {
+        return singlePropertyContext(annotation, hitStart, hitEnd);
     }
 
-    public List<String> getRight() {
+    public List<String> right() {
         return Collections
-                .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.properties.size(), fragment.tokens.size()));
+                .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.annotations.size(), fragment.tokens.size()));
     }
 
     /**
@@ -112,17 +112,17 @@ public class Kwic {
      * @param annotation the annotation to get the context for
      * @return the context
      */
-    public List<String> getRight(Annotation annotation) {
-        return getSinglePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.properties.size());
+    public List<String> right(Annotation annotation) {
+        return singlePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.annotations.size());
     }
 
     /**
-     * Get all the properties of all the tokens in the hit's context fragment.
+     * Get all the annotations of all the tokens in the hit's context fragment.
      * 
-     * @return the token properties
+     * @return the token annotations
      */
-    public List<String> getTokens() {
-        return fragment.getTokens();
+    public List<String> tokens() {
+        return fragment.tokens();
     }
 
     /**
@@ -132,8 +132,8 @@ public class Kwic {
      * @param annotation the annotation to get
      * @return the values of this annotation for all tokens
      */
-    public List<String> getTokens(Annotation annotation) {
-        return fragment.getTokens(annotation);
+    public List<String> tokens(Annotation annotation) {
+        return fragment.tokens(annotation);
     }
 
     /**
@@ -144,10 +144,10 @@ public class Kwic {
      * @param end word position after the last to get the annotation context for
      * @return the context for this annotation
      */
-    private List<String> getSinglePropertyContext(Annotation annotation, int start, int end) {
-        final int nProp = fragment.properties.size();
+    private List<String> singlePropertyContext(Annotation annotation, int start, int end) {
+        final int nProp = fragment.annotations.size();
         final int size = end - start;
-        final int propIndex = fragment.properties.indexOf(annotation);
+        final int propIndex = fragment.annotations.indexOf(annotation);
         final int startIndex = start * nProp + propIndex;
         if (propIndex == -1)
             return null;
@@ -171,7 +171,7 @@ public class Kwic {
      *
      * This produces XML consisting of &lt;w&gt; tags. The words are the text
      * content of the tags. The punctuation is between the tags. The other
-     * properties are attributes of the tags.
+     * annotations are attributes of the tags.
      *
      * @return the Concordance object
      */
@@ -183,7 +183,7 @@ public class Kwic {
      * Convert this Kwic object to a Concordance object.
      *
      * This may either consist of only words and punctuation, or include the XML
-     * tags containing the other properties as well, depending on the parameter.
+     * tags containing the other annotations as well, depending on the parameter.
      *
      * @param produceXml if true, produces XML. If false, produces human-readable
      *            text.
@@ -191,11 +191,11 @@ public class Kwic {
      */
     public Concordance toConcordance(boolean produceXml) {
         String[] conc = new String[3];
-        List<String> match = getMatch();
+        List<String> match = match();
         String addPunctAfter = !match.isEmpty() ? match.get(0) : "";
-        conc[0] = xmlString(getLeft(), addPunctAfter, true, produceXml);
+        conc[0] = xmlString(left(), addPunctAfter, true, produceXml);
         conc[1] = xmlString(match, null, true, produceXml);
-        conc[2] = xmlString(getRight(), null, false, produceXml);
+        conc[2] = xmlString(right(), null, false, produceXml);
         return new Concordance(conc);
     }
 
@@ -212,7 +212,7 @@ public class Kwic {
      * @return the XML string
      */
     private String xmlString(List<String> context, String addPunctAfter, boolean leavePunctBefore, boolean produceXml) {
-        int valuesPerWord = fragment.properties.size();
+        int valuesPerWord = fragment.annotations.size();
         int numberOfWords = context.size() / valuesPerWord;
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < numberOfWords; i++) {
@@ -227,14 +227,14 @@ public class Kwic {
             if (produceXml) {
                 b.append("<w");
                 for (int k = 1; k < valuesPerWord - 1; k++) {
-                    String name = fragment.properties.get(k).name();
+                    String name = fragment.annotations.get(k).name();
                     String value = context.get(vIndex + 1 + j);
                     b.append(" ").append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append("\"");
                     j++;
                 }
                 b.append(">");
             } else {
-                // We're skipping the other properties besides word and punct. Advance j.
+                // We're skipping the other annotations besides word and punct. Advance j.
                 if (valuesPerWord > 2)
                     j += valuesPerWord - 2;
             }
@@ -249,12 +249,12 @@ public class Kwic {
     }
 
     /**
-     * Get the properties in the order they occur in the context array.
+     * Get the annotations in the order they occur in the context array.
      * 
-     * @return the properties
+     * @return the annotations
      */
-    public List<Annotation> getProperties() {
-        return fragment.getProperties();
+    public List<Annotation> annotations() {
+        return fragment.annotations();
     }
 
     /**
@@ -263,7 +263,7 @@ public class Kwic {
      * 
      * @return the hit end index
      */
-    public int getHitEnd() {
+    public int hitEnd() {
         return hitEnd;
     }
 
@@ -272,15 +272,15 @@ public class Kwic {
      * 
      * @return the hit start index
      */
-    public int getHitStart() {
+    public int hitStart() {
         return hitStart;
     }
 
-    public String getFullXml() {
-        return fragment.getXml();
+    public String fullXml() {
+        return fragment.xml();
     }
 
-    public DocContentsFromForwardIndex getDocContents() {
+    public DocContentsFromForwardIndex docContents() {
         return fragment;
     }
 

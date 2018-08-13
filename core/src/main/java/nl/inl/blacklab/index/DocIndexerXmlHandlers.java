@@ -88,7 +88,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) {
-            startCaptureContent(contentsField.getName());
+            startCaptureContent(contentsField.name());
 
             currentLuceneDoc = new Document();
             // Store attribute values from the tag as metadata fields
@@ -109,7 +109,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop: contentsField.annotationsWriters()) {
+            for (AnnotationWriter prop: contentsField.annotationWriters()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -121,7 +121,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop: contentsField.annotationsWriters()) {
+            for (AnnotationWriter prop: contentsField.annotationWriters()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -140,7 +140,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // positions for the dummy token still make (some) sense)
             int contentId = storeCapturedContent();
             currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
-                    .contentIdField(contentsField.getName()), contentId,
+                    .contentIdField(contentsField.name()), contentId,
                     Store.YES));
 
             // Store the different properties of the annotated contents field that
@@ -294,7 +294,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             int posIncrement = currentPos - lastStartTagPos;
             propStartTag.addValue(localName, posIncrement);
             propStartTag.addPayload(null);
-            int startTagIndex = propStartTag.getLastValueIndex();
+            int startTagIndex = propStartTag.lastValueIndex();
             openTagIndexes.add(startTagIndex);
             for (int i = 0; i < attributes.getLength(); i++) {
                 // Index element attribute values
@@ -448,7 +448,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
         // positions
-        propStartTag.setForwardIndex(false);
+        propStartTag.setHasForwardIndex(false);
     }
     
     public void registerContentsField() {

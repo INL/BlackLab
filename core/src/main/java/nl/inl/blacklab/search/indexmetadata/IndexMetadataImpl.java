@@ -1031,7 +1031,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     public AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         ensureNotFrozen();
         
-        String fieldName = fieldWriter.getName();
+        String fieldName = fieldWriter.name();
         AnnotatedFieldImpl cf;
         if (annotatedFields.exists(fieldName)) {
             cf = annotatedFields.get(fieldName);
@@ -1044,17 +1044,17 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         
         // Make sure all the annotations, their sensitivities, the offset sensitivity, whether 
         // they have a forward index, and the main annotation are all registered correctly.  
-        for (AnnotationWriter annotationWriter: fieldWriter.annotationsWriters()) {
-            AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.getName());
-            for (String suffix: annotationWriter.getSensitivitySuffixes()) {
+        for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
+            AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.name());
+            for (String suffix: annotationWriter.sensitivitySuffixes()) {
                 annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
-            if (annotationWriter.isIncludeOffsets())
-                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.getMainAlternative()));
+            if (annotationWriter.includeOffsets())
+                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotationWriter.setAnnotation(annotation);
         }
-        String mainAnnotName = fieldWriter.getMainAnnotation().getName();
+        String mainAnnotName = fieldWriter.getMainAnnotation().name();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
         cf.setMainAnnotationName(mainAnnotName); // set main annotation
         fieldWriter.setAnnotatedField(cf);

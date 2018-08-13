@@ -130,7 +130,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return anyAnnotationForwardIndex().getNumDocs();
+            return anyAnnotationForwardIndex().numDocs();
         }
     }
 
@@ -148,7 +148,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.getTotalSize()).sum();
+            return fis.values().stream().mapToLong(afi -> afi.totalSize()).sum();
         }
     }
 

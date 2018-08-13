@@ -203,9 +203,9 @@ public class RequestHandlerDocs extends RequestHandler {
                         } else {
                             // Add KWIC info
                             Kwic c = kwics.get(hit);
-                            ds.startEntry("left").contextList(c.getProperties(), c.getLeft()).endEntry()
-                                    .startEntry("match").contextList(c.getProperties(), c.getMatch()).endEntry()
-                                    .startEntry("right").contextList(c.getProperties(), c.getRight()).endEntry();
+                            ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
+                                    .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
+                                    .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
                         }
                         ds.endMap().endItem();
                     }

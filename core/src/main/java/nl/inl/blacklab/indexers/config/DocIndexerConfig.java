@@ -105,7 +105,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
                     getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME), true);
-            annotStartTag.setForwardIndex(false);
+            annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
@@ -117,7 +117,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     fieldWriter.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
-            if (!fieldWriter.hasProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
+            if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
                 fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);

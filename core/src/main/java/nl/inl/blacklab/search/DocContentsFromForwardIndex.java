@@ -9,35 +9,35 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
- * (Part of) the contents of a document, in separate properties read from the
+ * (Part of) the contents of a document, in separate annotations read from the
  * forward indices.
  *
- * The tokens list in this class stores all the properties for each word, in
+ * The tokens list in this class stores all the annotations for each word, in
  * this order:
  * 
  * <ul>
  * <li>punctuation before this word ("punct")
- * <li>all other properties except punctuation and word (e.g. "lemma", "pos")
+ * <li>all other annotations except punctuation and word (e.g. "lemma", "pos")
  * <li>the word itself ("word")
  * </ul>
  *
- * So if you had "lemma" and "pos" as extra properties in addition to "punct"
+ * So if you had "lemma" and "pos" as extra annotations in addition to "punct"
  * and "word", and you had 10 words of context, the List size would be 40.
  *
  * (The reason for the specific ordering is ease of converting it to XML, with
- * the extra properties being attributes and the word itself being the element
+ * the extra annotations being attributes and the word itself being the element
  * content of the word tags)
  */
 public class DocContentsFromForwardIndex extends DocContents {
 
     /**
-     * What properties are stored in what order for this Kwic (e.g. word, lemma,
+     * What annotations are stored in what order for this Kwic (e.g. word, lemma,
      * pos)
      */
-    List<Annotation> properties;
+    List<Annotation> annotations;
 
     /**
-     * Word properties for context left of match (properties.size() values per word;
+     * Word annotations for context left of match (annotations.size() values per word;
      * e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.)
      */
     List<String> tokens;
@@ -45,19 +45,19 @@ public class DocContentsFromForwardIndex extends DocContents {
     /**
      * Construct DocContentsFromForwardIndex object.
      *
-     * @param properties the order of properties in the tokens list
+     * @param annotations the order of annotations in the tokens list
      * @param tokens the tokens
      */
-    public DocContentsFromForwardIndex(List<Annotation> properties, List<String> tokens) {
-        this.properties = properties;
+    public DocContentsFromForwardIndex(List<Annotation> annotations, List<String> tokens) {
+        this.annotations = annotations;
         this.tokens = tokens;
     }
 
-    public List<Annotation> getProperties() {
-        return Collections.unmodifiableList(properties);
+    public List<Annotation> annotations() {
+        return Collections.unmodifiableList(annotations);
     }
 
-    public List<String> getTokens() {
+    public List<String> tokens() {
         return Collections.unmodifiableList(tokens);
     }
 
@@ -67,13 +67,13 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param annotation annotation to get the tokens for
      * @return the tokens
      */
-    public List<String> getTokens(Annotation annotation) {
-        return getSinglePropertyContext(annotation);
+    public List<String> tokens(Annotation annotation) {
+        return singlePropertyContext(annotation);
     }
 
     @Override
-    public String getXml() {
-        int valuesPerWord = properties.size();
+    public String xml() {
+        int valuesPerWord = annotations.size();
         int numberOfWords = tokens.size() / valuesPerWord;
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < numberOfWords; i++) {
@@ -82,8 +82,8 @@ public class DocContentsFromForwardIndex extends DocContents {
             if (i > 0)
                 b.append(StringEscapeUtils.escapeXml10(tokens.get(vIndex)));
             b.append("<w");
-            for (int k = 1; k < properties.size() - 1; k++) {
-                String name = properties.get(k).name();
+            for (int k = 1; k < annotations.size() - 1; k++) {
+                String name = annotations.get(k).name();
                 String value = tokens.get(vIndex + 1 + j);
                 b.append(' ').append(name).append("=\"").append(StringEscapeUtils.escapeXml10(value)).append('"');
                 j++;
@@ -101,10 +101,10 @@ public class DocContentsFromForwardIndex extends DocContents {
      * @param annotation the annotation to get the context for
      * @return the context for this annotation
      */
-    private List<String> getSinglePropertyContext(Annotation annotation) {
-        final int nProp = properties.size();
+    private List<String> singlePropertyContext(Annotation annotation) {
+        final int nProp = annotations.size();
         final int size = tokens.size() / nProp;
-        final int propIndex = properties.indexOf(annotation);
+        final int propIndex = annotations.indexOf(annotation);
         if (propIndex == -1)
             return null;
         return new AbstractList<String>() {

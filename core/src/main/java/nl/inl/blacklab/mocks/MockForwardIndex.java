@@ -59,7 +59,7 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public int getNumDocs() {
+    public int numDocs() {
         //
         return 0;
     }
@@ -77,13 +77,13 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public long getTotalSize() {
+    public long totalSize() {
         //
         return 0;
     }
 
     @Override
-    public int getDocLengthByFiid(int fiid) {
+    public int docLengthByFiid(int fiid) {
         //
         return 0;
     }

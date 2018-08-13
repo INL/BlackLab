@@ -25,7 +25,7 @@ public class Collators {
         this.version = version;
         sensitive = (Collator) base.clone();
         sensitive.setStrength(Collator.TERTIARY);
-        insensitive = getCollatorInsensitive((RuleBasedCollator) base.clone(), version);
+        insensitive = desensitize((RuleBasedCollator) base.clone(), version);
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -47,7 +47,7 @@ public class Collators {
      * @param collatorVersion version of the insensitive collator we want
      * @return insensitive collator
      */
-    private static Collator getCollatorInsensitive(RuleBasedCollator coll, CollatorVersion collatorVersion) {
+    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) {
         switch (collatorVersion) {
         case V1:
             // Basic case- and accent-insensitive collator
@@ -73,11 +73,11 @@ public class Collators {
         }
     }
 
-    public static Collators getDefault() {
+    public static Collators defaultCollator() {
         return new Collators(Collator.getInstance(), CollatorVersion.V2);
     }
 
-    public CollatorVersion getVersion() {
+    public CollatorVersion version() {
         return version;
     }
 }

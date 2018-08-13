@@ -454,22 +454,22 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     @Deprecated
     public int addToForwardIndex(AnnotationWriter prop) {
-        Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.getName());
+        Annotation annotation = searcher.getOrCreateAnnotation(prop.field(), prop.name());
         AnnotationForwardIndex forwardIndex = searcher.annotationForwardIndex(annotation);
         if (forwardIndex == null)
-            throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.getName()));
-        return forwardIndex.addDocument(prop.getValues(), prop.getPositionIncrements());
+            throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.name()));
+        return forwardIndex.addDocument(prop.values(), prop.positionIncrements());
     }
 
     @Override
     public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, Document currentLuceneDoc) {
         Map<Annotation, List<String>> annotations = new HashMap<>();
         Map<Annotation, List<Integer>> posIncr = new HashMap<>();
-        for (AnnotationWriter annotationWriter: fieldWriter.annotationsWriters()) {
+        for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
             if (annotationWriter.hasForwardIndex()) {
                 Annotation annotation = annotationWriter.annotation();
-                annotations.put(annotation, annotationWriter.getValues());
-                posIncr.put(annotation, annotationWriter.getPositionIncrements());
+                annotations.put(annotation, annotationWriter.values());
+                posIncr.put(annotation, annotationWriter.positionIncrements());
             }
         }
         indexWriter().forwardIndex(fieldWriter.field()).addDocument(annotations, posIncr, currentLuceneDoc);

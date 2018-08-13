@@ -131,7 +131,7 @@ public abstract class AnnotationForwardIndex {
     /**
      * @return the number of documents in the forward index
      */
-    public abstract int getNumDocs();
+    public abstract int numDocs();
 
     /**
      * @return the amount of space in free blocks in the forward index.
@@ -146,7 +146,7 @@ public abstract class AnnotationForwardIndex {
     /**
      * @return total size in bytes of the tokens file.
      */
-    public abstract long getTotalSize();
+    public abstract long totalSize();
 
     /**
      * Gets the length (in tokens) of a document
@@ -154,10 +154,10 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public abstract int getDocLengthByFiid(int fiid);
+    public abstract int docLengthByFiid(int fiid);
 
     public int getDocLength(int docId) {
-        return getDocLengthByFiid(luceneDocIdToFiid(docId));
+        return docLengthByFiid(luceneDocIdToFiid(docId));
     }
 
     /** Different versions of insensitive collator */

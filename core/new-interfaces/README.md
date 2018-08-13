@@ -40,26 +40,7 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
-index
-
-- Nieuwe (multi)forward index die documenten lineair opslaat.
-  Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.
-
-- HitProperty e.d. aanpassen om meer hands-on te zijn?
-  D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
-  Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
-  een lijst met Hit+Context objects te instantieren en die direct te sorteren. Of indien mogelijk eerst de sortvalue bepalen voor elke Hit en daarop sorteren (als vergelijkingen duur zijn).
-  (NB aborted attempt op stash en in ../tmp-bl-attempt/)
-  
-  Dan kunnen we toch sortOrder een List<Hit> maken, wat efficienter is en waarschijnlijk zorgt dat Results interfaces/classes cleaner en generieker blijven.
-
-- filtering now cancels sort, because HitProperty uses original position.
-
-- Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
-  die BLS aan het eind opvangt en er een nette boodschap voor toont.
-  (zorg wel dat aborted jobs uit de cache verwijderd worden, zodat we geen incorrecte counts tonen!)
-
-results
+Results
 - DocResults moet ook geen source hits meer vasthouden voor grand total counts. Het is aan de client om die op te vragen.
   Alternatief: toch alle stats in MaxStats zetten. Je kunt dan alleen niet aangeven dat je het grand total wilt
   weten, dus het kan zijn dat de total count job stopt tot iemand er om vraagt, en dat kan dus niet.
@@ -80,9 +61,23 @@ search
 - introduce new Search interface for building searches
 - update caching in BLS
 
+
+POSSIBLE OPTIMIZATIONS
+- Nieuwe (multi)forward index die documenten lineair opslaat.
+  Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.
+  performancevoordelen: forward index matching; lazy filtering (which we don't do right now...)
+
+- HitProperty evt. aanpassen om meer hands-on te zijn?
+  D.w.z. niet alleen maar get/compare, maar echt de sort/group/filter operatie uitvoeren?
+  Dan kan die de efficientste aanpak voor de specifieke situatie bepalen, bijv. door
+  een lijst met Hit+Context objects te instantieren en die direct te sorteren. Of indien mogelijk eerst de sortvalue bepalen voor elke Hit en 
+  daarop sorteren (als vergelijkingen duur zijn).
+  
+
 MISC
-- replace separate ForwardIndexes with single ForwardIndex / AnnotationForwardIndex
-  use ContentStoreDoc / ForwardIndexDoc
+- Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
+  die BLS aan het eind opvangt en er een nette boodschap voor toont.
+  (zorg wel dat aborted jobs uit de cache verwijderd worden, zodat we geen incorrecte counts tonen!)
 - NOTE: right now, IndexStructure needs IndexReader because it detects certain things from the index.
         this implementation needs to stay supported, but become legacy. For new indexes, all metadata
         should be in the metadata file, so the new implementation will be decoupled from the index.

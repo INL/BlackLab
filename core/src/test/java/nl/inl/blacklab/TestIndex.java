@@ -254,9 +254,9 @@ public class TestIndex {
         Kwics kwics = hits.kwics(ContextSize.get(1));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
-            String left = StringUtil.join(kwic.getLeft(word), " ");
-            String match = StringUtil.join(kwic.getMatch(word), " ");
-            String right = StringUtil.join(kwic.getRight(word), " ");
+            String left = StringUtil.join(kwic.left(word), " ");
+            String match = StringUtil.join(kwic.match(word), " ");
+            String right = StringUtil.join(kwic.right(word), " ");
             String conc = left + " [" + match + "] " + right;
             results.add(conc.trim());
         }

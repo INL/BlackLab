@@ -20,7 +20,7 @@ public class DocContentsString extends DocContents {
     }
 
     @Override
-    public String getXml() {
+    public String xml() {
         return contents;
     }
 

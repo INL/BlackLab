@@ -113,7 +113,7 @@ public class AnnotatedFieldWriter {
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
         if (noForwardIndexAnnotations.contains(name)) {
-            p.setForwardIndex(false);
+            p.setHasForwardIndex(false);
         }
         annotations.put(name, p);
         return p;
@@ -170,14 +170,14 @@ public class AnnotatedFieldWriter {
         }
     }
 
-    public AnnotationWriter getProperty(String name) {
+    public AnnotationWriter annotation(String name) {
         AnnotationWriter p = annotations.get(name);
         if (p == null)
             throw new IllegalArgumentException("Undefined annotation '" + name + "'");
         return p;
     }
 
-    public boolean hasProperty(String name) {
+    public boolean hasAnnotation(String name) {
         return annotations.containsKey(name);
     }
 
@@ -185,25 +185,25 @@ public class AnnotatedFieldWriter {
         return mainAnnotation;
     }
 
-    public AnnotationWriter getTagProperty() {
-        return getProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
+    public AnnotationWriter getTagAnnotation() {
+        return annotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
     }
 
-    public AnnotationWriter getPunctProperty() {
-        return getProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+    public AnnotationWriter getPunctAnnotation() {
+        return annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 
-    public String getName() {
+    public String name() {
         return fieldName;
     }
 
-    public Collection<AnnotationWriter> annotationsWriters() {
+    public Collection<AnnotationWriter> annotationWriters() {
         return annotations.values();
     }
 
     public void setAnnotatedField(AnnotatedField field) {
         this.field = field;
-        // If the indexmetadata file specified a list of properties that shouldn't get a forward
+        // If the indexmetadata file specified a list of annotations that shouldn't get a forward
         // index, we need to know.
         AnnotatedFieldImpl fieldImpl = (AnnotatedFieldImpl)field;
         setNoForwardIndexProps(fieldImpl.getNoForwardIndexAnnotations());

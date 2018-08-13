@@ -60,7 +60,7 @@ public class BatchForwardIndex {
 
         System.err.print("Opening forward index... ");
         AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, null);
-        System.err.println("done. [#docs: " + fi.getNumDocs() + "]");
+        System.err.println("done. [#docs: " + fi.numDocs() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");
 
@@ -111,12 +111,12 @@ public class BatchForwardIndex {
         for (int i = 0; i < number; i++) {
             int length;
             do {
-                if (docPos >= fi.getNumDocs())
+                if (docPos >= fi.numDocs())
                     throw new BlackLabRuntimeException("Performance test went beyond end of forward index ("
-                            + fi.getNumDocs() + " docs)");
+                            + fi.numDocs() + " docs)");
 
                 // Choose random snippets
-                length = fi.getDocLengthByFiid(docPos);
+                length = fi.docLengthByFiid(docPos);
                 if (length == 0) // can't get snippet from empty doc
                     docPos++;
             } while (length == 0);

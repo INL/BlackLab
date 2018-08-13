@@ -52,11 +52,11 @@ public class TestKwic {
     public void testKwicNewConstructor() {
         Kwic kwic = new Kwic(annots, tokens, 2, 3);
     
-        Assert.assertEquals(expLeft + expMatch + expRight, kwic.getFullXml());
-        Assert.assertEquals(left, kwic.getLeft());
-        Assert.assertEquals(match, kwic.getMatch());
-        Assert.assertEquals(right, kwic.getRight());
-        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.getLeft(annots.get(3)));
+        Assert.assertEquals(expLeft + expMatch + expRight, kwic.fullXml());
+        Assert.assertEquals(left, kwic.left());
+        Assert.assertEquals(match, kwic.match());
+        Assert.assertEquals(right, kwic.right());
+        Assert.assertEquals(Arrays.asList("De", "snelle"), kwic.left(annots.get(3)));
     }
 
 }

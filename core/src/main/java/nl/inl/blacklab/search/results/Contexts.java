@@ -125,13 +125,13 @@ public class Contexts implements Iterable<int[]> {
                     tokens.add(""); // weird, but make sure the numbers add up at the end
     
             }
-            List<Annotation> properties = new ArrayList<>();
-            properties.add(concPunctFI);
+            List<Annotation> annotations = new ArrayList<>();
+            annotations.add(concPunctFI);
             if (attrContext != null) {
-                properties.addAll(Arrays.asList(attrName));
+                annotations.addAll(Arrays.asList(attrName));
             }
-            properties.add(concWordFI);
-            Kwic kwic = new Kwic(properties, tokens, contextHitStart, contextRightStart);
+            annotations.add(concWordFI);
+            Kwic kwic = new Kwic(annotations, tokens, contextHitStart, contextRightStart);
             theKwics.put(h, kwic);
         }
     }
@@ -265,7 +265,7 @@ public class Contexts implements Iterable<int[]> {
      * Retrieve context words for the hits.
      * 
      * @param hits hits to find contexts for
-     * @param annotations the field and properties to use for the context
+     * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
     public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {

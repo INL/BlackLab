@@ -180,7 +180,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // (in practice, only starttags and endtags should be able to have
             // a position one higher than the rest)
             int lastValuePos = 0;
-            for (AnnotationWriter prop : contentsField.annotationsWriters()) {
+            for (AnnotationWriter prop : contentsField.annotationWriters()) {
                 if (prop.lastValuePosition() > lastValuePos)
                     lastValuePos = prop.lastValuePosition();
             }
@@ -192,7 +192,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 lastValuePos++;
 
             // Add empty values to all lagging properties
-            for (AnnotationWriter prop : contentsField.annotationsWriters()) {
+            for (AnnotationWriter prop : contentsField.annotationWriters()) {
                 while (prop.lastValuePosition() < lastValuePos) {
                     prop.addValue("");
                     if (prop.hasPayload())
@@ -211,7 +211,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // positions for the dummy token still make (some) sense)
             int contentId = storeCapturedContent();
             currentLuceneDoc
-                    .add(new IntField(AnnotatedFieldNameUtil.contentIdField(contentsField.getName()), contentId, Store.YES));
+                    .add(new IntField(AnnotatedFieldNameUtil.contentIdField(contentsField.name()), contentId, Store.YES));
 
             // Store the different properties of the annotated contents field that
             // were gathered in lists while parsing.

@@ -43,11 +43,11 @@ public class AnnotationWriter {
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
-    /** The field type for properties without character offsets */
+    /** The field type for annotations without character offsets */
     private static FieldType tokenStreamFieldNoOffsets;
 
     /**
-     * The field type for properties with character offsets (the main alternative)
+     * The field type for annotations with character offsets (on the main sensitivity variant)
      */
     private static FieldType tokenStreamFieldWithOffsets;
 
@@ -107,10 +107,6 @@ public class AnnotationWriter {
 
     protected boolean includeOffsets;
 
-    public boolean isIncludeOffsets() {
-        return includeOffsets;
-    }
-
     /**
      * Term values for this annotation.
      */
@@ -133,31 +129,19 @@ public class AnnotationWriter {
     protected int lastValuePosition = -1;
 
     /**
-     * A annotation may be indexed in different ways (alternatives). This specifies
+     * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
      */
-    private Map<String, TokenFilterAdder> alternatives = new HashMap<>();
+    private Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
     
-    /** The main alternative (the one that gets character offsets if desired) */
-    private String mainAlternative;
-
-    public String getMainAlternative() {
-        return mainAlternative;
-    }
+    /** The main sensitivity (the one that gets character offsets if desired) */
+    private String mainSensitivity;
 
     /** The annotation name */
     private String annotationName;
-    
+
     /** The annotation descriptor */
     private Annotation annotation;
-
-    public void setAnnotation(Annotation annotation) {
-        this.annotation = annotation;
-    }
-
-    public Annotation annotation() {
-        return annotation;
-    }
 
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
@@ -168,15 +152,31 @@ public class AnnotationWriter {
      */
     private Map<String, String> storedValues = new HashMap<>();
 
+    public String mainSensitivity() {
+        return mainSensitivity;
+    }
+
+    public void setAnnotation(Annotation annotation) {
+        this.annotation = annotation;
+    }
+
+    public Annotation annotation() {
+        return annotation;
+    }
+
+    public boolean includeOffsets() {
+        return includeOffsets;
+    }
+
     /**
-     * Construct a AnnotationWriter object with the default alternative
+     * Construct a AnnotationWriter object
      * 
      * @param fieldWriter fieldwriter for our field
      * @param name annotation name
      * @param sensitivity ways to index this annotation, with respect to case- and
      *            diacritics-sensitivity.
      * @param includeOffsets whether to include character offsets in the main
-     *            alternative
+     *            sensitivity variant
      * @param includePayloads will this annotation include payloads?
      */
     public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, SensitivitySetting sensitivity,
@@ -188,22 +188,22 @@ public class AnnotationWriter {
             annotation = fieldWriter.field().annotation(annotationName);
         }
 
-        mainAlternative = null;
+        mainSensitivity = null;
         if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
-            // Add sensitive alternative
-            alternatives.put(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, null);
-            mainAlternative = AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME;
+            // Add sensitive sensitivity
+            sensitivities.put(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, null);
+            mainSensitivity = AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME;
         }
         if (sensitivity != SensitivitySetting.ONLY_SENSITIVE) {
-            // Add insensitive alternative
-            alternatives.put(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
-            if (mainAlternative == null)
-                mainAlternative = AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME;
+            // Add insensitive sensitivity
+            sensitivities.put(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
+            if (mainSensitivity == null)
+                mainSensitivity = AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME;
         }
         if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE) {
-            // Add case-insensitive and diacritics-insensitive alternatives
-            alternatives.put(AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
-            alternatives.put(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
+            // Add case-insensitive and diacritics-insensitive sensitivity
+            sensitivities.put(AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
+            sensitivities.put(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
         }
 
         this.includeOffsets = includeOffsets;
@@ -211,46 +211,46 @@ public class AnnotationWriter {
             payloads = new ArrayList<>();
     }
 
-    public Collection<String> getSensitivitySuffixes() {
-        return Collections.unmodifiableCollection(alternatives.keySet());
+    public Collection<String> sensitivitySuffixes() {
+        return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream getTokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
+    TokenStream tokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
         TokenStream ts;
         if (includeOffsets) {
             ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
         } else {
             ts = new TokenStreamFromList(values, increments, payloads);
         }
-        TokenFilterAdder filterAdder = alternatives.get(altName);
+        TokenFilterAdder filterAdder = sensitivities.get(altName);
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
         return ts;
     }
 
-    FieldType getTermVectorOptionFieldType(String altName) {
-        // Main alternative of a annotation may get character offsets
+    FieldType termVectorOptionFieldType(String altName) {
+        // Main sensitivity of a annotation may get character offsets
         // (if it's the main annotation of an annotated field)
-        if (includeOffsets && altName.equals(mainAlternative))
+        if (includeOffsets && altName.equals(mainSensitivity))
             return tokenStreamFieldWithOffsets;
 
-        // Named alternatives and additional properties don't get character offsets
+        // Named sensitivities and additional annotations don't get character offsets
         return tokenStreamFieldNoOffsets;
     }
 
     public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
             IntArrayList endChars) {
-        for (String altName : alternatives.keySet()) {
+        for (String altName : sensitivities.keySet()) {
             doc.add(new Field(AnnotatedFieldNameUtil.annotationField(fieldName, annotationName, altName),
-                    getTokenStream(altName, startChars, endChars), getTermVectorOptionFieldType(altName)));
+                    tokenStream(altName, startChars, endChars), termVectorOptionFieldType(altName)));
         }
     }
 
-    public List<String> getValues() {
+    public List<String> values() {
         return Collections.unmodifiableList(values);
     }
 
-    public List<Integer> getPositionIncrements() {
+    public List<Integer> positionIncrements() {
         return CollUtil.toList(increments);
     }
 
@@ -258,7 +258,7 @@ public class AnnotationWriter {
         return lastValuePosition;
     }
 
-    public String getName() {
+    public String name() {
         return annotationName;
     }
 
@@ -266,7 +266,7 @@ public class AnnotationWriter {
         return hasForwardIndex;
     }
 
-    public void setForwardIndex(boolean b) {
+    public void setHasForwardIndex(boolean b) {
         hasForwardIndex = b;
     }
 
@@ -300,7 +300,7 @@ public class AnnotationWriter {
         }
 
         // Special case: if previous value was the empty string and position increment is 0,
-        // replace the previous value. This is convenient to keep all the properties synched
+        // replace the previous value. This is convenient to keep all the annotations synched
         // up while indexing (by adding a dummy empty string if we don't have a value for a
         // annotation), while still being able to add a value to this position later (for example,
         // when we encounter an XML close tag.
@@ -375,7 +375,7 @@ public class AnnotationWriter {
         payloads.add(payload);
     }
 
-    public int getLastValueIndex() {
+    public int lastValueIndex() {
         return values.size() - 1;
     }
 

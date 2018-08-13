@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
 
 /**
- * AND (NOT) query for combining different properties from an annotated field.
+ * AND (NOT) query for combining different annotations from an annotated field.
  *
  * Note that when generating a SpanQuery, the Span start and end are also
  * matched! Therefore only two hits in the same document at the same start and
