@@ -116,7 +116,7 @@ public class BatchForwardIndex {
                             + fi.getNumDocs() + " docs)");
 
                 // Choose random snippets
-                length = fi.getDocLength(docPos);
+                length = fi.getDocLengthByFiid(docPos);
                 if (length == 0) // can't get snippet from empty doc
                     docPos++;
             } while (length == 0);
@@ -127,7 +127,7 @@ public class BatchForwardIndex {
             }
 
             // Retrieve snippets
-            fi.retrievePartsInt(docPos, start, end);
+            fi.retrievePartsIntByFiid(docPos, start, end);
 
             // Go to next doc
             docPos += skip + 1;

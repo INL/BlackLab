@@ -41,13 +41,13 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public void deleteDocument(int fiid) {
+    public void deleteDocumentByFiid(int fiid) {
         //
 
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+    public List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
         //
         return null;
     }
@@ -83,7 +83,7 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public int getDocLength(int fiid) {
+    public int getDocLengthByFiid(int fiid) {
         //
         return 0;
     }

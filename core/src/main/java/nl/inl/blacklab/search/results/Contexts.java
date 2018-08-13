@@ -163,8 +163,7 @@ public class Contexts {
             List<int[]> words;
             if (forwardIndex != null) {
                 // We have a forward index for this field. Use it.
-                int fiid = forwardIndex.luceneDocIdToFiid(doc);
-                words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
+                words = forwardIndex.retrievePartsInt(doc, startsOfSnippets, endsOfSnippets);
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
             }

@@ -588,7 +588,7 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+    public synchronized List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
         try {
             TocEntry e = toc.get(fiid);
             if (e == null || e.deleted)
@@ -695,12 +695,12 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public int getDocLength(int fiid) {
+    public int getDocLengthByFiid(int fiid) {
         return toc.get(fiid).length;
     }
 
     @Override
-    public void deleteDocument(int fiid) {
+    public void deleteDocumentByFiid(int fiid) {
         if (!indexMode)
             throw new BlackLabRuntimeException("Cannot delete document, not in index mode");
         TocEntry tocEntry = toc.get(fiid);

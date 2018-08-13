@@ -861,8 +861,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             AnnotatedField field = e.getKey();
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
-                int fiid = Integer.parseInt(d.get(annotation.forwardIndexIdField()));
-                fi.get(annotation).deleteDocument(fiid);
+                fi.get(annotation).deleteDocumentByLuceneDoc(d);
             }
         }
     }

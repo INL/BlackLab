@@ -63,7 +63,7 @@ public class TestForwardIndexPosIncr {
     }
 
     public int[] retrievePart(int id, int start, int end) {
-        return fi.retrievePartsInt(id, new int[] { start }, new int[] { end }).get(0);
+        return fi.retrievePartsIntByFiid(id, new int[] { start }, new int[] { end }).get(0);
     }
 
     @Test

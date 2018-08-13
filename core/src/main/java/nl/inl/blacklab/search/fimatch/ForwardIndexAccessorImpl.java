@@ -138,7 +138,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         public int getDocLength(int docId) {
             // NOTE: we subtract one because we always have a closing token at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return fis.get(0).getDocLength(getFiid(0, docId)) - 1;
+            return fis.get(0).getDocLengthByFiid(getFiid(0, docId)) - 1;
         }
 
         int[] starts = { 0 };
@@ -149,7 +149,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             starts[0] = start;
             ends[0] = end;
             int fiid = fiidGetter(annotIndex).getFieldValue(docId);
-            return fis.get(annotIndex).retrievePartsInt(fiid, starts, ends).get(0);
+            return fis.get(annotIndex).retrievePartsIntByFiid(fiid, starts, ends).get(0);
         }
 
         @Override

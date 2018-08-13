@@ -5,6 +5,8 @@ import java.text.Collator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -44,7 +46,7 @@ public abstract class AnnotationForwardIndex {
      * @param docId the Lucene doc id
      * @return the forward index id
      */
-    public abstract int luceneDocIdToFiid(int docId);
+    protected abstract int luceneDocIdToFiid(int docId);
 
     /**
      * Close the forward index. Writes the table of contents to disk if modified.
@@ -79,8 +81,16 @@ public abstract class AnnotationForwardIndex {
      *
      * @param fiid id of the document to delete
      */
-    public abstract void deleteDocument(int fiid);
+    public abstract void deleteDocumentByFiid(int fiid);
 
+    public void deleteDocument(int docId) {
+        deleteDocumentByFiid(luceneDocIdToFiid(docId));
+    }
+
+    public void deleteDocumentByLuceneDoc(Document d) {
+        deleteDocumentByFiid(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
+    }
+    
     /**
      * Retrieve one or more parts from the specified content, in the form of token
      * ids.
@@ -105,7 +115,11 @@ public abstract class AnnotationForwardIndex {
      *            (in words) (-1 for end of document)
      * @return the parts
      */
-    public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
+    public abstract List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end);
+
+    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
+        return retrievePartsIntByFiid(luceneDocIdToFiid(docId), start, end);
+    }
 
     /**
      * Get the Terms object in order to translate ids to token strings
@@ -140,7 +154,11 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public abstract int getDocLength(int fiid);
+    public abstract int getDocLengthByFiid(int fiid);
+
+    public int getDocLength(int docId) {
+        return getDocLengthByFiid(luceneDocIdToFiid(docId));
+    }
 
     /** Different versions of insensitive collator */
     public enum CollatorVersion {
@@ -242,14 +260,14 @@ public abstract class AnnotationForwardIndex {
      */
     public void forEachDocument(ForwardIndexDocTask task) {
         for (Integer fiid: idSet()) {
-            int[] tokenIds = retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
+            int[] tokenIds = retrievePartsIntByFiid(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
             task.perform(fiid, tokenIds);
         }
     }
 
     public int getToken(int fiid, int pos) {
         // Slow/naive implementation, subclasses should override
-        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
+        return retrievePartsIntByFiid(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
     }
 
     public abstract boolean canDoNfaMatching();
@@ -262,4 +280,5 @@ public abstract class AnnotationForwardIndex {
     public abstract Annotation annotation();
 
     public abstract void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation);
+
 }
