@@ -62,8 +62,20 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
         this.hits = null;
     }
 
-    public HitProperty(Hits hits) {
-        this.hits = hits;
+    HitProperty(HitProperty prop, Hits hits, Contexts contexts) {
+        this.hits = hits == null ? prop.hits : hits;
+        this.reverse = prop.reverse;
+        this.setContexts(contexts); // this will initialize contextIndices to default value...
+        if (prop.contextIndices != null)
+            this.contextIndices = prop.contextIndices; // ...but if we already had different values, use those
+    }
+
+    HitProperty(HitProperty prop, Hits hits) {
+        this(prop, hits, null);
+    }
+
+    public HitProperty(HitProperty prop) {
+        this(prop, null, null);
     }
 
     public abstract HitPropValue get(int result);
@@ -230,18 +242,6 @@ public abstract class HitProperty implements Comparator<Object>, Serializable {
      * @return the new HitProperty object
      */
     public abstract HitProperty copyWith(Hits newHits, Contexts contexts);
-
-    /**
-     * Produce a copy of this HitProperty object with a different Hits and Contexts
-     * object.
-     *
-     * @param newHits new Hits to use
-     * @param contexts new Contexts to use
-     * @return the new HitProperty object
-     */
-    public HitProperty copyWith(Hits newHits) {
-        return copyWith(newHits, null);
-    }
 
     /**
      * Set contexts to use.

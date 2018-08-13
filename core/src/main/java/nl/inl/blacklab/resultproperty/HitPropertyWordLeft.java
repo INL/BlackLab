@@ -32,37 +32,29 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
         return deserialize(HitPropertyWordLeft.class, hits, info);
     }
 
-    public HitPropertyWordLeft(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("word left", "wordleft", hits, annotation, sensitivity, contextSize);
-    }
-
-    public HitPropertyWordLeft(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        this(hits, annotation, sensitivity, null);
-    }
-
-    public HitPropertyWordLeft(Hits hits, Annotation annotation) {
-        this(hits, annotation, null, null);
-    }
-
-    public HitPropertyWordLeft(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity, null);
-    }
-
-    public HitPropertyWordLeft(Hits hits) {
-        this(hits, null, null, null);
+    HitPropertyWordLeft(HitPropertyWordLeft prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
     }
 
     public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
         super("word left", "wordleft", index, annotation, sensitivity, contextSize);
     }
 
-    public HitPropertyWordLeft(BlackLabIndex index, MatchSensitivity sensitivity) {
-        this(index, null, sensitivity, null);
+    public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        this(index, annotation, sensitivity, null);
+    }
+
+    public HitPropertyWordLeft(BlackLabIndex index, Annotation annotation) {
+        this(index, annotation, null, null);
+    }
+
+    public HitPropertyWordLeft(BlackLabIndex index) {
+        this(index, null, null);
     }
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyWordLeft(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
+        return new HitPropertyWordLeft(this, newHits, contexts);
     }
 
     @Override

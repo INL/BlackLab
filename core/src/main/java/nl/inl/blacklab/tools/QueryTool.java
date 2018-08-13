@@ -1197,20 +1197,20 @@ public class QueryTool {
         Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
         HitProperty crit = null;
         if (sortBy.equalsIgnoreCase("doc"))
-            crit = new HitPropertyDocumentId(hitsToSort);
+            crit = new HitPropertyDocumentId();
         else {
             if (sortBy.equalsIgnoreCase("match") || sortBy.equalsIgnoreCase("word"))
-                crit = new HitPropertyHitText(hitsToSort, annotation);
+                crit = new HitPropertyHitText(index, annotation);
             else if (sortBy.equalsIgnoreCase("left"))
-                crit = new HitPropertyLeftContext(hitsToSort, annotation);
+                crit = new HitPropertyLeftContext(index, annotation);
             else if (sortBy.equalsIgnoreCase("right"))
-                crit = new HitPropertyRightContext(hitsToSort, annotation);
+                crit = new HitPropertyRightContext(index, annotation);
             else if (sortBy.equalsIgnoreCase("lempos")) {
-                HitProperty p1 = new HitPropertyHitText(hitsToSort, contentsField.annotation("lemma"));
-                HitProperty p2 = new HitPropertyHitText(hitsToSort, contentsField.annotation("pos"));
+                HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
+                HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
             } else if (index.metadataFields().exists(sortBy)) {
-                crit = new HitPropertyDocumentStoredField(hitsToSort, sortBy);
+                crit = new HitPropertyDocumentStoredField(sortBy);
             }
 
         }
@@ -1275,14 +1275,14 @@ public class QueryTool {
         try {
             Annotation annotation = annotationName == null ? contentsField.mainAnnotation() : contentsField.annotation(annotationName);
             if (groupBy.equals("word") || groupBy.equals("match") || groupBy.equals("hit"))
-                crit = new HitPropertyHitText(hits, annotation);
+                crit = new HitPropertyHitText(index, annotation);
             else if (groupBy.startsWith("left"))
-                crit = new HitPropertyWordLeft(hits, annotation);
+                crit = new HitPropertyWordLeft(index, annotation);
             else if (groupBy.startsWith("right"))
-                crit = new HitPropertyWordRight(hits, annotation);
+                crit = new HitPropertyWordRight(index, annotation);
             else if (groupBy.equals("test")) {
-                HitProperty p1 = new HitPropertyHitText(hits, contentsField.annotation("lemma"));
-                HitProperty p2 = new HitPropertyHitText(hits, contentsField.annotation("type"));
+                HitProperty p1 = new HitPropertyHitText(index, contentsField.annotation("lemma"));
+                HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("type"));
                 crit = new HitPropertyMultiple(p1, p2);
             }
         } catch (Exception e) {

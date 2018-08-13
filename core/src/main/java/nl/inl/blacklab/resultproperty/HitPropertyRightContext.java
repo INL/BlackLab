@@ -32,37 +32,33 @@ public class HitPropertyRightContext extends HitPropertyContextBase {
         return deserialize(HitPropertyRightContext.class, hits, info);
     }
 
-    public HitPropertyRightContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("right context", "right", hits, annotation, sensitivity, contextSize);
-    }
-
-    public HitPropertyRightContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        this(hits, annotation, sensitivity, null);
-    }
-
-    public HitPropertyRightContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, null, null);
-    }
-
-    public HitPropertyRightContext(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity, null);
-    }
-
-    public HitPropertyRightContext(Hits hits) {
-        this(hits, null, null, null);
+    HitPropertyRightContext(HitPropertyRightContext prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
     }
 
     public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
         super("right context", "right", index, annotation, sensitivity, contextSize);
     }
 
+    public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        this(index, annotation, sensitivity, null);
+    }
+
+    public HitPropertyRightContext(BlackLabIndex index, Annotation annotation) {
+        this(index, annotation, null, null);
+    }
+
     public HitPropertyRightContext(BlackLabIndex index, MatchSensitivity sensitivity) {
         this(index, null, sensitivity, null);
     }
 
+    public HitPropertyRightContext(BlackLabIndex index) {
+        this(index, null, null, null);
+    }
+
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyRightContext(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
+        return new HitPropertyRightContext(this, newHits, contexts);
     }
 
     @Override

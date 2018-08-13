@@ -52,7 +52,7 @@ public class TestResultsGrouper {
 
         searcher.setIndexSearcher(indexSearcher);
         Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.maxSettings());
-        HitProperty crit = new HitPropertyDocumentId(hits);
+        HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.groupedBy(crit);
         Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();
 

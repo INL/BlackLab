@@ -30,9 +30,9 @@ public class HitPropertyDoc extends HitProperty {
 
     private BlackLabIndex index;
 
-    public HitPropertyDoc(Hits hits) {
-        super(hits);
-        index = hits.queryInfo().index();
+    HitPropertyDoc(HitPropertyDoc prop, Hits hits) {
+        super(prop, hits);
+        this.index = hits.queryInfo().index();
     }
 
     public HitPropertyDoc() {
@@ -41,7 +41,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDoc(newHits).setContexts(contexts);
+        return new HitPropertyDoc(this, newHits).setContexts(contexts);
     }
 
     @Override
@@ -73,6 +73,6 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     public static HitPropertyDoc deserialize(Hits hits) {
-        return new HitPropertyDoc(hits);
+        return new HitPropertyDoc();
     }
 }

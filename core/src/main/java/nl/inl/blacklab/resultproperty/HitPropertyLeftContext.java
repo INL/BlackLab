@@ -32,37 +32,29 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         return deserialize(HitPropertyLeftContext.class, hits, info);
     }
 
-    public HitPropertyLeftContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("left context", "left", hits, annotation, sensitivity, contextSize);
-    }
-
-    public HitPropertyLeftContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        this(hits, annotation, sensitivity, null);
-    }
-
-    public HitPropertyLeftContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, null, null);
-    }
-
-    public HitPropertyLeftContext(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity, null);
-    }
-
-    public HitPropertyLeftContext(Hits hits) {
-        this(hits, null, null, null);
+    HitPropertyLeftContext(HitPropertyLeftContext prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
         super("left context", "left", index, annotation, sensitivity, contextSize);
     }
 
+    public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        super("left context", "left", index, annotation, sensitivity, null);
+    }
+
     public HitPropertyLeftContext(BlackLabIndex index, MatchSensitivity sensitivity) {
-        this(index, null, sensitivity, null);
+        super("left context", "left", index, null, sensitivity, null);
+    }
+
+    public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation) {
+        super("left context", "left", index, annotation, null, null);
     }
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyLeftContext(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
+        return new HitPropertyLeftContext(this, newHits, contexts);
     }
 
     @Override

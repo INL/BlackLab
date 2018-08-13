@@ -868,9 +868,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
-        if (field == null || field.annotations() == null) {
-            System.out.println("BLA");
-        }
         if (field.annotations().exists(annotName))
             return field.annotation(annotName);
         AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;

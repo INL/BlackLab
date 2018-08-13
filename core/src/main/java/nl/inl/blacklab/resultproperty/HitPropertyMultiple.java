@@ -31,6 +31,12 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     List<HitProperty> criteria;
 
     List<Annotation> contextNeeded;
+    
+    public HitPropertyMultiple(HitPropertyMultiple prop, List<HitProperty> criteria) {
+        super(prop);
+        this.criteria = criteria;
+        this.contextNeeded = prop.contextNeeded;
+    }
 
     /**
      * Quick way to create group criteria. Just call this method with the
@@ -39,7 +45,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
      * @param criteria the desired criteria
      */
     public HitPropertyMultiple(HitProperty... criteria) {
-        super(criteria[0].hits);
+        super();
         this.criteria = new ArrayList<>(Arrays.asList(criteria));
 
         // Determine what context we need for each property, and let the properties know
@@ -78,7 +84,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         for (int i = 0; i < n; i++) {
             newCriteria[i] = criteria.get(i).copyWith(newHits, contexts);
         }
-        return new HitPropertyMultiple(newCriteria).setContexts(contexts);
+        return new HitPropertyMultiple(newCriteria);
     }
 
     @Override

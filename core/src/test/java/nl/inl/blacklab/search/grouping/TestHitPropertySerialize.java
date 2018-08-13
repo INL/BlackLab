@@ -27,9 +27,12 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
+    
+    private MetadataField decadeField = new MockMetadataField("decade");
 
     private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
@@ -47,7 +50,7 @@ public class TestHitPropertySerialize {
     public void testHitPropertySerialize() {
         HitProperty prop;
 
-        prop = new HitPropertyDocumentDecade("decade");
+        prop = new HitPropertyDocumentDecade(decadeField);
         Assert.assertEquals("decade:decade", prop.serialize());
 
         prop = new HitPropertyDocumentId();

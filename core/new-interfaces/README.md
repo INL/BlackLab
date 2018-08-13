@@ -49,6 +49,7 @@ index
   reverse wordt niet gekopieerd...
   is contextIndices nog een probleem? wordt niet gekopieerd..?
   constructor hoeft geen Hits meer te krijgen (wordt toch altijd met copyWith() gedaan)
+  hitpropmultiple moet contextsizes combineren
   
 - Nieuwe (multi)forward index die documenten lineair opslaat.
   Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.

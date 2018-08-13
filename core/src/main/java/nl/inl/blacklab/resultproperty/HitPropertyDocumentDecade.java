@@ -23,6 +23,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -40,20 +41,20 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     String fieldName;
 
-    public HitPropertyDocumentDecade(Hits hits, String fieldName) {
-        super(hits);
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits) {
+        super(prop, hits);
         this.reader = hits.queryInfo().index().reader();
-        this.fieldName = fieldName;
+        this.fieldName = prop.fieldName;
     }
 
-    public HitPropertyDocumentDecade(String fieldName) {
+    public HitPropertyDocumentDecade(MetadataField field) {
         super();
-        this.fieldName = fieldName;
+        this.fieldName = field.name();
     }
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDocumentDecade(newHits, fieldName).setContexts(contexts);
+        return new HitPropertyDocumentDecade(this, newHits);
     }
 
     @Override
@@ -130,6 +131,6 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {
-        return new HitPropertyDocumentDecade(hits, info);
+        return new HitPropertyDocumentDecade(hits.queryInfo().index().metadataField(info));
     }
 }

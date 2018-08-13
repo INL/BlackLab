@@ -28,8 +28,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyHitPosition extends HitProperty {
 
-    public HitPropertyHitPosition(Hits hits) {
-        super(hits);
+    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits) {
+        super(prop, hits);
     }
     
     public HitPropertyHitPosition() {
@@ -38,7 +38,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyHitPosition(newHits).setContexts(contexts);
+        return new HitPropertyHitPosition(this, newHits);
     }
 
     @Override
@@ -72,6 +72,6 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     public static HitPropertyHitPosition deserialize(Hits hits) {
-        return new HitPropertyHitPosition(hits);
+        return new HitPropertyHitPosition();
     }
 }

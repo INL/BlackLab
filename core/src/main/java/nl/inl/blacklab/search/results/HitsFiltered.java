@@ -45,7 +45,7 @@ public class HitsFiltered extends HitsAbstract {
             Contexts contexts = new Contexts(hits, contextsNeeded, BlackLabIndex.DEFAULT_CONTEXT_SIZE);
             filterProperty = property.copyWith(hits, contexts);
         } else {
-            filterProperty = property.copyWith(hits);
+            filterProperty = property.copyWith(hits, null);
         }
         
         this.filterValue = value;

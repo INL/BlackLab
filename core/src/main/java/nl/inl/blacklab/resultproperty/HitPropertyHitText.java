@@ -32,24 +32,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         return deserialize(HitPropertyHitText.class, hits, info);
     }
 
-    public HitPropertyHitText(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("hit text", "hit", hits, annotation, sensitivity, contextSize);
-    }
-
-    public HitPropertyHitText(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        this(hits, annotation, sensitivity, null);
-    }
-
-    public HitPropertyHitText(Hits hits, Annotation annotation) {
-        this(hits, annotation, null, null);
-    }
-
-    public HitPropertyHitText(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity, null);
-    }
-
-    public HitPropertyHitText(Hits hits) {
-        this(hits, null, null, null);
+    HitPropertyHitText(HitPropertyHitText prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
     }
 
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
@@ -64,9 +48,17 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         this(index, null, sensitivity, null);
     }
 
+    public HitPropertyHitText(BlackLabIndex index, Annotation annotation) {
+        this(index, annotation, null, null);
+    }
+
+    public HitPropertyHitText(BlackLabIndex index) {
+        this(index, null, null, null);
+    }
+
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyHitText(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
+        return new HitPropertyHitText(this, newHits, contexts);
     }
 
     @Override

@@ -127,18 +127,25 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    public HitPropertyContextWords(Hits hits, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
-        this(hits, annotation, sensitivity, parseContextWordSpec(wordSpec));
+    HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
+        this.annotation = prop.annotation;
+        if (!hits.queryInfo().field().equals(this.annotation.field())) {
+            throw new IllegalArgumentException(
+                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
+                            + this.annotation.field().name() + ", hits has " + hits.queryInfo().field().name() + "; class=" + getClass().getName() + ")");
+        }
+        this.sensitivity = prop.sensitivity;
+        this.index = hits.queryInfo().index();
+        this.words = prop.words;
+        this.totalWords = prop.totalWords;
     }
 
-    public HitPropertyContextWords(Hits hits, Annotation annotation, MatchSensitivity sensitivity,
-            List<ContextPart> words) {
-        super(hits);
-        init(hits.queryInfo().index(), annotation, sensitivity, words);
+    public HitPropertyContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String wordSpec) {
+        this(index, annotation, sensitivity, parseContextWordSpec(wordSpec));
     }
 
-    public HitPropertyContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
-            List<ContextPart> words) {
+    public HitPropertyContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, List<ContextPart> words) {
         super();
         init(index, annotation, sensitivity, words);
     }
@@ -191,7 +198,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyContextWords(newHits, annotation, sensitivity, words).setContexts(contexts);
+        return new HitPropertyContextWords(this, newHits, contexts);
     }
 
     @Override
@@ -316,7 +323,7 @@ public class HitPropertyContextWords extends HitProperty {
         if (parts.length > 2)
             whichWords = parseContextWordSpec(parts[2]);
         Annotation annotation = field.annotation(propName);
-        return new HitPropertyContextWords(hits, annotation, sensitivity, whichWords);
+        return new HitPropertyContextWords(hits.queryInfo().index(), annotation, sensitivity, whichWords);
     }
 
     /**

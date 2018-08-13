@@ -184,7 +184,7 @@ public class Example {
     static void findPattern(TextPattern tp) throws WildcardTermTooBroad, RegexpTooLarge {
         // Execute the search
         Hits hits = index.find(tp, index.mainAnnotatedField(), null, null);
-        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(hits));
+        Hits sortedHits = hits.sortedBy(new HitPropertyHitText(index));
 
         // Display the concordances
         displayConcordances(sortedHits);

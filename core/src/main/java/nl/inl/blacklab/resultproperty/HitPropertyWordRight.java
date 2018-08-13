@@ -32,37 +32,29 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
         return deserialize(HitPropertyWordRight.class, hits, info);
     }
 
-    public HitPropertyWordRight(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("word right", "wordright", hits, annotation, sensitivity, contextSize);
-    }
-
-    public HitPropertyWordRight(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        this(hits, annotation, sensitivity, null);
-    }
-
-    public HitPropertyWordRight(Hits hits, Annotation annotation) {
-        this(hits, annotation, null, null);
-    }
-
-    public HitPropertyWordRight(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity, null);
-    }
-
-    public HitPropertyWordRight(Hits hits) {
-        this(hits, null, null, null);
+    HitPropertyWordRight(HitPropertyWordRight prop, Hits hits, Contexts contexts) {
+        super(prop, hits, contexts);
     }
 
     public HitPropertyWordRight(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
         super("word right", "wordright", index, annotation, sensitivity, contextSize);
     }
 
-    public HitPropertyWordRight(BlackLabIndex index, MatchSensitivity sensitivity) {
-        this(index, null, sensitivity, null);
+    public HitPropertyWordRight(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+        this(index, annotation, sensitivity, null);
+    }
+
+    public HitPropertyWordRight(BlackLabIndex index, Annotation annotation) {
+        this(index, annotation, null, null);
+    }
+
+    public HitPropertyWordRight(BlackLabIndex index) {
+        this(index, null, null, null);
     }
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyWordRight(newHits, annotation, sensitivity, contextSize).setContexts(contexts);
+        return new HitPropertyWordRight(this, newHits, contexts);
     }
 
     @Override

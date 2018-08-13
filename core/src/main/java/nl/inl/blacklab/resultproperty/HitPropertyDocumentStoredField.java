@@ -38,15 +38,11 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private String friendlyName;
 
-    public HitPropertyDocumentStoredField(Hits hits, String fieldName) {
-        this(hits, fieldName, fieldName);
-    }
-
-    public HitPropertyDocumentStoredField(Hits hits, String fieldName, String friendlyName) {
-        super(hits);
-        reader = hits.queryInfo().index().reader();
-        this.fieldName = fieldName;
-        this.friendlyName = friendlyName;
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits) {
+        super(prop, hits);
+        this.reader = hits.queryInfo().index().reader();
+        this.fieldName = prop.fieldName;
+        this.friendlyName = prop.friendlyName;
     }
 
     public HitPropertyDocumentStoredField(String fieldName, String friendlyName) {
@@ -61,7 +57,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts) {
-        return new HitPropertyDocumentStoredField(newHits, fieldName, friendlyName).setContexts(contexts);
+        return new HitPropertyDocumentStoredField(this, newHits);
     }
 
     @Override
@@ -118,6 +114,6 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {
-        return new HitPropertyDocumentStoredField(hits, info);
+        return new HitPropertyDocumentStoredField(info);
     }
 }
