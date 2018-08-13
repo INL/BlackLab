@@ -41,7 +41,7 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 index
-- HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
++ HitProperty moet een context size parameter krijgen (indien relevant uiteraard)
 
 - Refactor forwardindex naar multiforwardindex / forwardindexdoc
 

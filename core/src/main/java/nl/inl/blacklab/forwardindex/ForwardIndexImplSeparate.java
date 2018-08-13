@@ -15,7 +15,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
- * Multi-forward index implemented by combining several separate annotation forward indexes.
+ * Multi-forward index implemented by combining several separate annotation
+ * forward indexes.
  */
 public class ForwardIndexImplSeparate implements ForwardIndex {
 
@@ -39,20 +40,20 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
                     // doesn't have one. Create it now.
                     createAfi(annotation);
                 } else {
-                    // Forward index doesn't yet exist
-                    continue;
+                    // Forward index doesn't yet exist. Probably an empty index in search mode.
                 }
+            } else {
+                // Open forward index
+                afi = AnnotationForwardIndex.open(afiDir, index, annotation);
+                fis.put(annotation, afi);
             }
-            // Open forward index
-            afi = AnnotationForwardIndex.open(afiDir, index, annotation);
-            fis.put(annotation, afi);
         }
     }
 
     private static File determineAfiDir(File indexDir, Annotation annotation) {
         return new File(indexDir, "fi_" + annotation.luceneFieldPrefix());
     }
-    
+
     @Override
     public boolean canDoNfaMatching() {
         if (fis.isEmpty())
@@ -60,7 +61,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         AnnotationForwardIndex fi = fis.values().iterator().next();
         return fi.canDoNfaMatching();
     }
-    
+
     @Override
     public FIDoc doc(int docId) {
         return new FIDoc() {
@@ -84,7 +85,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             }
         };
     }
-    
+
     @Override
     public void close() {
         for (AnnotationForwardIndex fi: fis.values()) {
@@ -155,14 +156,16 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             if (index.indexMode() && index.isEmpty()) {
                 afi = createAfi(annotation);
             } else {
-                throw new IllegalArgumentException("Annotation should have forward index but directory is missing: " + annotation);
+                throw new IllegalArgumentException(
+                        "Annotation should have forward index but directory is missing: " + annotation);
             }
         }
         return afi;
     }
 
     private AnnotationForwardIndex createAfi(Annotation annotation) {
-        AnnotationForwardIndex afi = AnnotationForwardIndex.open(determineAfiDir(index.indexDirectory(), annotation), index, annotation);
+        AnnotationForwardIndex afi = AnnotationForwardIndex.open(determineAfiDir(index.indexDirectory(), annotation),
+                index, annotation);
         fis.put(annotation, afi);
         return afi;
     }
