@@ -409,8 +409,14 @@ public class FileProcessor implements AutoCloseable {
             e = e.getCause();
 
         // Only report the first fatal exception
-        if (!aborted && !errorHandler.errorOccurred(e, path, f)) {
-            abort();
+        if (!aborted) {
+            if (errorHandler == null) {
+                System.err.println("WARNING: No errorHandler set for FileProcessor!");
+                e.printStackTrace(System.err);
+            }
+            if (errorHandler == null || !errorHandler.errorOccurred(e, path, f)) {
+                abort();
+            }
         }
 
         return null;
@@ -484,7 +490,6 @@ public class FileProcessor implements AutoCloseable {
             try {
                 c.call();
             } catch (Exception e) {
-                //e.printStackTrace(); // FIXME: Exception will be eaten otherwise...
                 rethrowUnchecked(e);
             }
         };

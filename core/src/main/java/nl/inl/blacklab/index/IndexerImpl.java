@@ -485,7 +485,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 this.processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener);
+            proc.setErrorHandler(listener());
             proc.processInputStream(fileName, input, null);
         }
     }
@@ -502,7 +502,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 this.processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener);
+            proc.setErrorHandler(listener());
             proc.processFile(file);
         } catch (FileNotFoundException e) {
             throw BlackLabRuntimeException.wrap(e);
