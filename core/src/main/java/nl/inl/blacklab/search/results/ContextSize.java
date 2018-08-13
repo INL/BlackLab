@@ -52,6 +52,21 @@ public class ContextSize {
 	    return left;
 	}
 
+    /**
+     * Return the minimal context size that encompasses both parameters. 
+     * 
+     * @param a first context size
+     * @param b second context size
+     * @return union of both context sizes
+     */
+    public static ContextSize union(ContextSize a, ContextSize b) {
+        int left = Math.max(a.left, b.left);
+        return ContextSize.get(left);
+//        int right = Math.max(a.right, b.right);
+//        boolean includeHit = a.includeHit || b.includeHit;
+//        return ContextSize.get(left, right, includeHit);
+    }
+
 //	public int right() {
 //	    return right;
 //	}

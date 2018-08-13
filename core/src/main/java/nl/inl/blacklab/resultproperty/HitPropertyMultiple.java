@@ -22,7 +22,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -151,6 +153,12 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         return contextNeeded;
     }
     
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        // Get ContextSize that's large enough for all our properties
+        return properties.stream().map(p -> p.needsContextSize(index)).reduce( (a, b) -> ContextSize.union(a, b) ).orElse(index.defaultContextSize());
+    }
+
     @Override
     public HitPropValueMultiple get(int hitNumber) {
         HitPropValue[] rv = new HitPropValue[properties.size()];
