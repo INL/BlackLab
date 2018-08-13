@@ -15,15 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -31,51 +26,43 @@ import nl.inl.blacklab.search.results.Hits;
  * A hit property for grouping on the context of the hit. Requires
  * HitConcordances as input (so we have the hit text available).
  */
-public class HitPropertyRightContext extends HitProperty {
+public class HitPropertyRightContext extends HitPropertyContextBase {
 
-    private String luceneFieldName;
+    public static HitPropertyRightContext deserialize(Hits hits, String info) {
+        return deserialize(HitPropertyRightContext.class, hits, info);
+    }
 
-    private Annotation annotation;
-
-    private Terms terms;
-
-    private MatchSensitivity sensitivity;
+    public HitPropertyRightContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
+        super("right context", "right", hits, annotation, sensitivity, contextSize);
+    }
 
     public HitPropertyRightContext(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        super(hits);
-        BlackLabIndex index = hits.queryInfo().index();
-        this.annotation = annotation == null ? hits.queryInfo().field().annotations().main() : annotation;
-        this.luceneFieldName = this.annotation.luceneFieldPrefix();
-        this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitivity = sensitivity;
+        this(hits, annotation, sensitivity, null);
     }
 
     public HitPropertyRightContext(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity());
+        this(hits, annotation, null, null);
     }
 
     public HitPropertyRightContext(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity);
+        this(hits, null, sensitivity, null);
     }
 
     public HitPropertyRightContext(Hits hits) {
-        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity());
+        this(hits, null, null, null);
     }
 
-    public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        super(null);
-        this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
-        this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitivity = sensitivity;
+    public HitPropertyRightContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
+        super("right context", "right", index, annotation, sensitivity, contextSize);
     }
 
     public HitPropertyRightContext(BlackLabIndex index, MatchSensitivity sensitivity) {
-        this(index, null, sensitivity);
+        this(index, null, sensitivity, null);
     }
 
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyRightContext(newHits, annotation, sensitivity);
+    public HitPropertyRightContext copyWithHits(Hits newHits) {
+        return new HitPropertyRightContext(newHits, annotation, sensitivity, contextSize);
     }
 
     @Override
@@ -126,39 +113,6 @@ public class HitPropertyRightContext extends HitProperty {
             return 0; // same length; a == b
         }
         return reverse ? -1 : 1; // a longer than b => a > b
-    }
-
-    @Override
-    public List<Annotation> needsContext() {
-        return Arrays.asList(annotation);
-    }
-
-    @Override
-    public String getName() {
-        return "right context";
-    }
-
-    @Override
-    public List<String> getPropNames() {
-        return Arrays.asList("right context: " + annotation.name());
-    }
-
-    @Override
-    public String serialize() {
-        String[] parts = AnnotatedFieldNameUtil.getNameComponents(luceneFieldName);
-        String thePropName = parts.length > 1 ? parts[1] : "";
-        return serializeReverse() + PropValSerializeUtil.combineParts("right", thePropName, sensitivity.luceneFieldSuffix());
-    }
-
-    public static HitPropertyRightContext deserialize(Hits hits, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.queryInfo().field();
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotations().get(propName);
-        return new HitPropertyRightContext(hits, annotation, sensitivity);
     }
 
 }

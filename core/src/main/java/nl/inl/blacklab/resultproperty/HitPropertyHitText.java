@@ -15,15 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -31,48 +26,43 @@ import nl.inl.blacklab.search.results.Hits;
  * A hit property for grouping on the text actually matched. Requires
  * HitConcordances as input (so we have the hit text available).
  */
-public class HitPropertyHitText extends HitProperty {
+public class HitPropertyHitText extends HitPropertyContextBase {
 
-    private Terms terms;
+    public static HitPropertyHitText deserialize(Hits hits, String info) {
+        return deserialize(HitPropertyHitText.class, hits, info);
+    }
 
-    private Annotation annotation;
-
-    private MatchSensitivity sensitivity;
+    public HitPropertyHitText(Hits hits, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
+        super("hit text", "hit", hits, annotation, sensitivity, contextSize);
+    }
 
     public HitPropertyHitText(Hits hits, Annotation annotation, MatchSensitivity sensitivity) {
-        super(hits);
-        BlackLabIndex index = hits.queryInfo().index();
-        this.annotation = annotation == null ? hits.queryInfo().field().annotations().main() : annotation;
-        this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitivity = sensitivity;
+        this(hits, annotation, sensitivity, null);
     }
 
     public HitPropertyHitText(Hits hits, Annotation annotation) {
-        this(hits, annotation, hits.queryInfo().index().defaultMatchSensitivity());
+        this(hits, annotation, null, null);
     }
 
     public HitPropertyHitText(Hits hits, MatchSensitivity sensitivity) {
-        this(hits, null, sensitivity);
+        this(hits, null, sensitivity, null);
     }
 
     public HitPropertyHitText(Hits hits) {
-        this(hits, null, hits.queryInfo().index().defaultMatchSensitivity());
+        this(hits, null, null, null);
     }
 
-    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        super(null);
-        this.annotation = annotation == null ? index.mainAnnotatedField().annotations().main(): annotation;
-        this.terms = index.forwardIndex(this.annotation).terms();
-        this.sensitivity = sensitivity;
+    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
+        super("hit text", "hit", index, annotation, sensitivity, contextSize);
     }
 
     public HitPropertyHitText(BlackLabIndex index, MatchSensitivity sensitivity) {
-        this(index, null, sensitivity);
+        this(index, null, sensitivity, null);
     }
 
     @Override
-    public HitProperty copyWithHits(Hits newHits) {
-        return new HitPropertyHitText(newHits, annotation, sensitivity);
+    public HitPropertyHitText copyWithHits(Hits newHits) {
+        return new HitPropertyHitText(newHits, annotation, sensitivity, contextSize);
     }
 
     @Override
@@ -126,35 +116,5 @@ public class HitPropertyHitText extends HitProperty {
         }
         return reverse ? -1 : 1; // a longer than b => a > b
     }
-
-    @Override
-    public List<Annotation> needsContext() {
-        return Arrays.asList(annotation);
-    }
-
-    @Override
-    public String getName() {
-        return "hit text";
-    }
-
-    @Override
-    public List<String> getPropNames() {
-        return Arrays.asList("hit: " + annotation.name());
-    }
-
-    @Override
-    public String serialize() {
-        return serializeReverse() + PropValSerializeUtil.combineParts("hit", annotation.name(), sensitivity.luceneFieldSuffix());
-    }
-
-    public static HitPropertyHitText deserialize(Hits hits, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.queryInfo().field();
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
-        Annotation annotation = field.annotations().get(propName);
-        return new HitPropertyHitText(hits, annotation, sensitivity);
-    }
+    
 }
