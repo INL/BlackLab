@@ -47,10 +47,7 @@ public class DocCounts implements Iterable<DocCount> {
 
     private DocProperty countBy;
 
-    /**
-     * The DocResults we were created from
-     */
-    private DocResults docResults;
+    private QueryInfo queryInfo;
 
     /**
      * Constructor. Fills the groups from the given document results.
@@ -59,7 +56,7 @@ public class DocCounts implements Iterable<DocCount> {
      * @param countBy the criterium to group on.
      */
     DocCounts(DocResults docResults, DocProperty countBy) {
-        this.docResults = docResults;
+        this.queryInfo = docResults.queryInfo();
         this.countBy = countBy;
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
@@ -78,6 +75,10 @@ public class DocCounts implements Iterable<DocCount> {
         for (DocCount c : counts.values()) {
             orderedGroups.add(c);
         }
+    }
+    
+    public QueryInfo queryInfo() {
+        return queryInfo;
     }
 
     public Collection<DocCount> getCounts() {
@@ -116,10 +117,6 @@ public class DocCounts implements Iterable<DocCount> {
 
     public DocProperty getGroupCriteria() {
         return countBy;
-    }
-
-    public DocResults getOriginalDocResults() {
-        return docResults;
     }
 
 }

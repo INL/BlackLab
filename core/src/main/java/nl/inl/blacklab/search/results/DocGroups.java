@@ -43,10 +43,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 
     private DocProperty groupBy;
 
-    /**
-     * The DocResults we were created from
-     */
-    private DocResults docResults;
+    private QueryInfo queryInfo;
 
     /**
      * Constructor. Fills the groups from the given document results.
@@ -55,7 +52,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
      * @param groupBy the criterium to group on.
      */
     DocGroups(DocResults docResults, DocProperty groupBy) {
-        this.docResults = docResults;
+        this.queryInfo = docResults.queryInfo();
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
         Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
@@ -80,7 +77,7 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 
     @Override
     public QueryInfo queryInfo() {
-        return docResults.queryInfo();
+        return queryInfo;
     }
 
     public Collection<DocGroup> getGroups() {
@@ -128,10 +125,6 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
 
     public DocProperty getGroupCriteria() {
         return groupBy;
-    }
-
-    public DocResults getOriginalDocResults() {
-        return docResults;
     }
 
 }
