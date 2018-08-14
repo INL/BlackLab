@@ -53,4 +53,9 @@ public class GroupPropertyIdentity extends GroupProperty {
         return new GroupPropertyIdentity(this, true);
     }
 
+    @Override
+    public String getName() {
+        return "group: identity";
+    }
+
 }

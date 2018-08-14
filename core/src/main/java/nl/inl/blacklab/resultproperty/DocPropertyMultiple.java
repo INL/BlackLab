@@ -30,16 +30,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
     DocPropertyMultiple(DocPropertyMultiple mprop, boolean invert) {
         super(mprop, invert);
-        int n = mprop.criteria.size();
-        if (invert) {
-            this.criteria = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                DocProperty prop = mprop.criteria.get(i).reverse();
-                this.criteria.add(prop);
-            }
-        } else {
-            this.criteria = mprop.criteria;
-        }
+        this.criteria = mprop.criteria;
     }
 
     /**

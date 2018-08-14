@@ -15,10 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -41,7 +39,7 @@ import nl.inl.blacklab.search.results.HitsList;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitProperty implements Comparator<Hit>, Serializable {
+public abstract class HitProperty implements ResultProperty<Hit> {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
     public static HitProperty deserialize(Hits hits, String serialized) {
@@ -212,22 +210,9 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
         this.contextIndices.addAll(contextIndices);
     }
 
+    @Override
     public abstract HitPropValue get(Hit hit);
 
-    /**
-     * Compares two hits on this property.
-     *
-     * The default implementation uses get() to compare the two hits. Subclasses may
-     * override this method to provide a more efficient implementation.
-     *
-     * Note that we use Object as the type instead of Hit to save on run-time type
-     * checking. We know (slash hope :-) that this method is only ever called to
-     * compare Hits.
-     *
-     * @param a first hit
-     * @param b second hit
-     * @return 0 if equal, negative if a < b, positive if a > b.
-     */
     @Override
     public int compare(Hit a, Hit b) {
         HitPropValue hitPropValueA = get(a);
@@ -255,14 +240,10 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
         return index.defaultContextSize();
     }
 
+    @Override
     public abstract String getName();
 
-    /**
-     * Serialize this HitProperty so we can deserialize it later (to pass it via
-     * URL, for example)
-     * 
-     * @return the String representation of this HitProperty
-     */
+    @Override
     public abstract String serialize();
 
     /**
@@ -274,11 +255,7 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
         return reverse ? "-" : "";
     }
     
-    /**
-     * Reverse the sort order of this hit property.
-     * 
-     * @return a new hit property with the sort order reversed
-     */
+    @Override
     public HitProperty reverse() {
         return copyWith(null, null, true);
     }
@@ -306,11 +283,7 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
      */
     public abstract HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert);
 
-    /**
-     * Is the comparison reversed?
-     * 
-     * @return true if it is, false if not
-     */
+    @Override
     public boolean isReverse() {
         return reverse;
     }
@@ -319,13 +292,11 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
     public String toString() {
         return serialize();
     }
-
-    /**
-     * Get the names of all (sub-)properties separately.
-     * 
-     * @return the list
-     */
-    public abstract List<String> getPropNames();
+    
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList(getName());
+    }
 
     public Hits sortHits(HitsAbstract hitsToSort) {
         // Make sure we have a sort order array of sufficient size

@@ -59,4 +59,9 @@ public class GroupPropertySize extends GroupProperty {
         return new GroupPropertySize(this, true);
     }
 
+    @Override
+    public String getName() {
+        return "group: size";
+    }
+
 }

@@ -16,8 +16,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -119,12 +117,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     @Override
     public String getName() {
-        return "decade";
-    }
-
-    @Override
-    public List<String> getPropNames() {
-        return Arrays.asList("document: decade");
+        return "document: decade";
     }
 
     @Override

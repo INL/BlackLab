@@ -64,8 +64,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         for (int i = 0; i < n; i++) {
             HitProperty prop = mprop.properties.get(i);
             HitProperty nprop = prop.copyWith(newHits, contexts);
-            if (invert)
-                nprop = nprop.reverse();
             List<Integer> indices = mprop.contextIndicesPerProperty.get(prop);
             if (indices != null) {
                 contextIndicesPerProperty.put(nprop, indices);

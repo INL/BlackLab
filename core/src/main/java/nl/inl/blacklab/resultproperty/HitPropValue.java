@@ -14,27 +14,14 @@ import nl.inl.util.StringUtil;
 
 /**
  * A concrete value of a HitProperty of a Hit
- *
- * Implements <code>Comparable&lt;Object&gt;</code> as opposed to something more
- * specific for performance reasons (preventing lots of runtime type checking
- * during sorting of large results sets)
  */
-public abstract class HitPropValue implements Comparable<Object> {
+public abstract class HitPropValue implements ResultPropValue {
     protected static final Logger logger = LogManager.getLogger(HitPropValue.class);
 
     /**
      * Collator to use for string comparison while sorting/grouping
      */
     static Collator collator = StringUtil.getDefaultCollator();
-
-    @Override
-    public abstract int compareTo(Object o);
-
-    @Override
-    public abstract int hashCode();
-
-    @Override
-    public abstract boolean equals(Object obj);
 
     /**
      * Convert the String representation of a HitPropValue back into the
@@ -84,16 +71,4 @@ public abstract class HitPropValue implements Comparable<Object> {
         logger.debug("Unknown HitPropValue '" + type + "'");
         return null;
     }
-
-    /**
-     * Convert the object to a String representation, for use in e.g. URLs.
-     * 
-     * @return the serialized object
-     */
-    public abstract String serialize();
-
-    @Override
-    public abstract String toString();
-
-    public abstract List<String> getPropValues();
 }

@@ -343,12 +343,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public String getName() {
-        return "left context";
-    }
-
-    @Override
-    public List<String> getPropNames() {
-        return Arrays.asList("left context: " + annotation.name());
+        return "left context: " + annotation.name();
     }
 
     @Override

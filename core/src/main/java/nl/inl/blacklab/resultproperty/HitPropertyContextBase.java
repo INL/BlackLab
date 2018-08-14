@@ -109,12 +109,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     @Override
     public String getName() {
-        return name;
-    }
-
-    @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(name + ": " + annotation.name());
+        return name + ": " + annotation.name();
     }
 
     @Override

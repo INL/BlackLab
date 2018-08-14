@@ -15,13 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.results.Group;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class GroupProperty {
+public abstract class GroupProperty implements ResultProperty<Group> {
 
     static GroupPropertyIdentity propIdentity = new GroupPropertyIdentity();
 
@@ -46,14 +49,17 @@ public abstract class GroupProperty {
         this.reverse = false;
     }
 
+    @Override
     public abstract HitPropValue get(Group result);
 
+    @Override
     public abstract int compare(Group a, Group b);
 
     public boolean defaultSortDescending() {
         return reverse;
     }
 
+    @Override
     public abstract String serialize();
 
     /**
@@ -86,6 +92,7 @@ public abstract class GroupProperty {
      * 
      * @return true if it is, false if not
      */
+    @Override
     public boolean isReverse() {
         return reverse;
     }
@@ -94,11 +101,17 @@ public abstract class GroupProperty {
      * Reverse the comparison.
      * @return reversed group property 
      */
+    @Override
     public abstract GroupProperty reverse();
 
     @Override
     public String toString() {
         return serialize();
+    }
+    
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList(getName());
     }
 
 }
