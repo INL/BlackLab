@@ -21,6 +21,10 @@ public enum MatchSensitivity {
             return diacriticsSensitive ? CASE_INSENSITIVE : INSENSITIVE;
     }
     
+    public static MatchSensitivity caseAndDiacriticsSensitive(boolean b) {
+        return b ? SENSITIVE : INSENSITIVE;
+    }
+
     public static MatchSensitivity fromLuceneFieldSuffix(String code) {
         switch(code) {
         case AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME:

@@ -9,10 +9,10 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.ThreadPauser;
 
@@ -300,31 +300,42 @@ public interface Hits extends Iterable<Hit> {
 
     /**
      * Count occurrences of context words around hit.
-     *
-     * Uses the default contents field for collocations, and the default sensitivity
-     * settings.
-     * 
-     * @param contextSize how many words around the hits to use
      * @param annotation what annotation to get collocations for
-     * @param ctx query execution context; contains sensitivity setting
+     * @param contextSize how many words around the hits to use
+     * @param sensitivity what sensitivity to use
      * @param sort sort the resulting collocations by descending frequency?
+     *
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(ContextSize contextSize, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
-        return TermFrequencyList.collocations(contextSize, this, annotation, ctx, sort);
+    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+        return TermFrequencyList.collocations(this, annotation, contextSize, sensitivity, sort);
     }
 
     /**
      * Count occurrences of context words around hit.
      *
-     * Uses the default contents field for collocations, and the default sensitivity
-     * settings.
-     * 
+     * Sorts the results from most to least frequent.
+     * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
+     * @param sensitivity what sensitivity to use
+     * 
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(ContextSize contextSize) {
-        return TermFrequencyList.collocations(contextSize, this, null, null, true);
+    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
+        return collocations(annotation, contextSize, sensitivity, true);
+    }
+
+    /**
+     * Count occurrences of context words around hit.
+     *
+     * Matches case- and diacritics-sensitively, and sorts the results from most to least frequent.
+     * @param annotation what annotation to get collocations for
+     * @param contextSize how many words around the hits to use
+     * 
+     * @return the frequency of each occurring token
+     */
+    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize) {
+        return collocations(annotation, contextSize, MatchSensitivity.SENSITIVE, true);
     }
 
     /**

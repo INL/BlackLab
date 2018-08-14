@@ -1390,7 +1390,7 @@ public class QueryTool {
                 collocAnnotation = field.mainAnnotation();
             }
 
-            collocations = hits.collocations(contextSize, collocAnnotation, index.defaultExecutionContext(collocAnnotation.field()), true);
+            collocations = hits.collocations(collocAnnotation, contextSize, index.defaultMatchSensitivity(), true);
         }
 
         int i = 0;

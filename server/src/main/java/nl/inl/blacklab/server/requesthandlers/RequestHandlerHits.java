@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocOrHitGroups;
@@ -287,7 +288,8 @@ public class RequestHandlerHits extends RequestHandler {
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
         ContextSize contextSize = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
         ds.startMap().startEntry("tokenFrequencies").startMap();
-        TermFrequencyList tfl = originalHits.collocations(contextSize);
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
+        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize, sensitivity);
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }

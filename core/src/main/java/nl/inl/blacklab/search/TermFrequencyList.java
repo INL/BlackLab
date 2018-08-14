@@ -31,24 +31,19 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
     
     /**
      * Count occurrences of context words around hit.
-     * 
-     * @param contextSize how many words around hits to use 
      * @param hits hits to get collocations for 
      * @param annotation annotation to use for the collocations, or null if default
-     * @param ctx query execution context, containing the sensitivity settings
+     * @param contextSize how many words around hits to use 
+     * @param sensitivity what sensitivity to use
      * @param sort whether or not to sort the list by descending frequency
-     *
+     * @param ctx query execution context, containing the sensitivity settings
+     * 
      * @return the frequency of each occurring token
      */
-    public synchronized static TermFrequencyList collocations(ContextSize contextSize, Hits hits, Annotation annotation, QueryExecutionContext ctx, boolean sort) {
+    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
         BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();
-        
-        // TODO: use sensitivity settings
-//        if (ctx == null)
-//            ctx = searcher.defaultExecutionContext(settings().concordanceField());
-//        ctx = ctx.withAnnotation(annotation);
         
         Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
@@ -72,7 +67,6 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         }
 
         // Get the actual words from the sort positions
-        MatchSensitivity sensitivity = index.defaultMatchSensitivity();
         Terms terms = index.annotationForwardIndex(contexts.annotations().get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
         for (IntIntPair e : coll.keyValuesView()) {
