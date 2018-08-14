@@ -24,8 +24,8 @@ import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -118,16 +118,6 @@ public class HitGroupsImpl extends HitGroups {
     }
 
     /**
-     * Get all groups as a map
-     *
-     * @return a map of groups indexed by group property
-     */
-    @Override
-    public Map<PropertyValue, HitGroup> getGroupMap() {
-        return Collections.unmodifiableMap(groups);
-    }
-
-    /**
      * Get all groups as a list
      *
      * @return the list of groups
@@ -173,6 +163,16 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public String toString() {
         return "ResultsGrouper with " + numberOfGroups() + " groups";
+    }
+
+    @Override
+    public HitGroup get(int i) {
+        return groupsOrdered.get(i);
+    }
+
+    @Override
+    public HitGroup get(PropertyValue identity) {
+        return groups.get(identity);
     }
 
 }

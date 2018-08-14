@@ -81,7 +81,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-                    DocGroup group = groups.getGroup(groupId);
+                    DocGroup group = groups.get(groupId);
                     if (group == null)
                         throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 

@@ -1414,10 +1414,9 @@ public class QueryTool {
      * Show the current page of group results.
      */
     private void showGroupsPage() {
-        List<HitGroup> listGroups = groups.getGroups();
         int i;
         for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
-            HitGroup g = listGroups.get(i);
+            HitGroup g = groups.get(i);
             outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
         }
 
@@ -1611,7 +1610,7 @@ public class QueryTool {
     private Hits getCurrentHitSet() {
         Hits hitsToShow = hits;
         if (showWhichGroup >= 0) {
-            HitGroup g = groups.getGroups().get(showWhichGroup);
+            HitGroup g = groups.get(showWhichGroup);
             hitsToShow = g.getHits();
         }
         return hitsToShow;

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -52,5 +53,9 @@ public interface ResultGroups<T> extends Iterable<T> {
     default AnnotatedField field() {
         return queryInfo().field();
     }
+    
+    T get(PropertyValue prop);
+    
+    T get(int i);
 
 }

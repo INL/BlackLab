@@ -84,7 +84,8 @@ public class DocGroups implements ResultGroups<DocGroup> {
         return Collections.unmodifiableCollection(orderedGroups);
     }
 
-    public DocGroup getGroup(PropertyValue groupId) {
+    @Override
+    public DocGroup get(PropertyValue groupId) {
         return groups.get(groupId);
     }
 
@@ -125,6 +126,11 @@ public class DocGroups implements ResultGroups<DocGroup> {
 
     public DocProperty getGroupCriteria() {
         return groupBy;
+    }
+
+    @Override
+    public DocGroup get(int i) {
+        return orderedGroups.get(i);
     }
 
 }

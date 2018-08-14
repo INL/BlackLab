@@ -84,7 +84,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     PropertyValue groupId = PropertyValue.deserialize(searchGrouped.getHits(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-                    HitGroup group = groups.getGroup(groupId);
+                    HitGroup group = groups.get(groupId);
                     if (group == null)
                         throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 

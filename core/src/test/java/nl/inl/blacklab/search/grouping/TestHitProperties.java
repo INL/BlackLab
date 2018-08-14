@@ -54,9 +54,9 @@ public class TestHitProperties {
         Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(index, MatchSensitivity.SENSITIVE);
         HitGroups g = hits.groupedBy(p);
-        HitGroup group = g.getGroup(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("the") }));
+        HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("the") }));
         Assert.assertEquals(3, group.size());
-        group = g.getGroup(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("The") }));
+        group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("The") }));
         Assert.assertEquals(1, group.size());
     }
 
@@ -67,16 +67,16 @@ public class TestHitProperties {
         HitGroups g = hits.groupedBy(p);
         Assert.assertEquals(4, g.numberOfGroups());
         HitGroup group;
-        group = g.getGroup(
+        group = g.get(
                 new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { NO_TERM, term("The"), NO_TERM }));
         Assert.assertEquals(1, group.size());
-        group = g.getGroup(
+        group = g.get(
                 new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("over"), term("the"), NO_TERM }));
         Assert.assertEquals(1, group.size());
-        group = g.getGroup(
+        group = g.get(
                 new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("May"), term("the"), NO_TERM }));
         Assert.assertEquals(1, group.size());
-        group = g.getGroup(
+        group = g.get(
                 new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { term("is"), term("the"), NO_TERM }));
         Assert.assertEquals(1, group.size());
     }
@@ -88,7 +88,7 @@ public class TestHitProperties {
         HitGroups g = hits.groupedBy(p);
         Assert.assertEquals(1, g.numberOfGroups());
         HitGroup group;
-        group = g.getGroup(new PropertyValueContextWords(index, wordAnnotation,
+        group = g.get(new PropertyValueContextWords(index, wordAnnotation,
                 MatchSensitivity.SENSITIVE, new int[] { term("over"), term("lazy"), term("the"), term("dog") }));
         Assert.assertEquals(1, group.size());
     }

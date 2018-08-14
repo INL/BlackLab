@@ -17,11 +17,9 @@ package nl.inl.blacklab.search.results;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -44,8 +42,6 @@ public abstract class HitGroups implements ResultGroups<HitGroup> {
     public QueryInfo queryInfo() {
         return queryInfo;
     }
-
-    public abstract Map<PropertyValue, HitGroup> getGroupMap();
 
     public abstract List<HitGroup> getGroups();
 
@@ -70,10 +66,6 @@ public abstract class HitGroups implements ResultGroups<HitGroup> {
      *            property.
      */
     public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
-
-    public HitGroup getGroup(PropertyValue identity) {
-        return getGroupMap().get(identity);
-    }
 
     @Override
     public Iterator<HitGroup> iterator() {

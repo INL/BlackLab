@@ -35,6 +35,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.util.ReverseComparator;
@@ -467,6 +468,7 @@ public class DocResults implements ResultGroups<DocResult> {
         };
     }
 
+    @Override
     public DocResult get(int i) {
         try {
             ensureResultsRead(i);
@@ -554,11 +556,28 @@ public class DocResults implements ResultGroups<DocResult> {
 
     @Override
     public int getLargestGroupSize() {
+        try {
+            ensureAllResultsRead();
+        } catch (InterruptedException e) {
+            // Thread was interrupted. Required hit hasn't been gathered;
+            // we will just return null.
+        }
         return mostHitsInDocument;
     }
 
     @Override
     public int numberOfGroups() {
         return docsProcessedTotal();
+    }
+
+    @Override
+    public DocResult get(PropertyValue prop) {
+        try {
+            ensureAllResultsRead();
+        } catch (InterruptedException e) {
+            // Thread was interrupted. Required hit hasn't been gathered;
+            // we will just return null.
+        }
+        return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
     }
 }

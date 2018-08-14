@@ -110,7 +110,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                         "Parameter 'viewgroup' has an illegal value: " + viewGroup);
         
-            DocGroup group = groups.getGroup(viewGroupVal);
+            DocGroup group = groups.get(viewGroupVal);
             if (group == null)
                 return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
         

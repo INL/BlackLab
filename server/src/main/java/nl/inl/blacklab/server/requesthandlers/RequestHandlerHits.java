@@ -88,7 +88,7 @@ public class RequestHandlerHits extends RequestHandler {
                     return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                             "Cannot deserialize group value: " + viewGroup);
 
-                group = jobGrouped.getGroups().getGroup(viewGroupVal);
+                group = jobGrouped.getGroups().get(viewGroupVal);
                 if (group == null)
                     return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
