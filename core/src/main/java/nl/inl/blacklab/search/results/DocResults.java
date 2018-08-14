@@ -213,7 +213,7 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     }
     
     boolean sourceHitsFullyRead() {
-        return sourceHitsIterator == null ? true : !sourceHitsIterator.hasNext();
+        return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
 
     public QueryInfo queryInfo() {
@@ -388,6 +388,8 @@ public class DocResults implements Iterable<DocResult>, Pausible {
                 } else {
                     Hits hits = Hits.fromList(queryInfo, docHits);
                     addDocResultToList(doc, hits);
+                    sourceHitsIterator = null; // allow this to be GC'ed
+                    partialDocHits = null;
                 }
             }
         } finally {

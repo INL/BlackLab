@@ -109,6 +109,7 @@ public class HitsFiltered extends HitsAbstract {
                     }
                 } else {
                     doneFiltering = true;
+                    source = null; // allow this to be GC'ed
                 }
             }
         } finally {

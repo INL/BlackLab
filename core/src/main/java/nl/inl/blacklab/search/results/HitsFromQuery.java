@@ -204,7 +204,7 @@ public class HitsFromQuery extends HitsAbstract {
 
                         atomicReaderContextIndex++;
                         if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
-                            sourceSpansFullyRead = true;
+                            setFinished();
                             return;
                         }
                         if (atomicReaderContexts != null) {
@@ -217,7 +217,7 @@ public class HitsFromQuery extends HitsAbstract {
                             // TESTING
                             currentDocBase = 0;
                             if (atomicReaderContextIndex > 0) {
-                                sourceSpansFullyRead = true;
+                                setFinished();
                                 return;
                             }
                             BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
@@ -297,6 +297,17 @@ public class HitsFromQuery extends HitsAbstract {
         } finally {
             ensureHitsReadLock.unlock();
         }
+    }
+
+    private void setFinished() {
+        sourceSpansFullyRead = true;
+        
+        // We no longer need these; allow them to be GC'ed
+        weight = null;
+        atomicReaderContexts = null;
+        termContexts = null;
+        currentSourceSpans = null;
+        hitQueryContext = null;
     }
 
     @Override
