@@ -19,6 +19,8 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
         super(index, annotation);
+        this.sensitivity = sensitivity;
+        this.valueTokenId = value;
         this.valueSortOrder = new int[value.length];
         terms.toSortOrder(value, valueSortOrder, sensitivity);
     }

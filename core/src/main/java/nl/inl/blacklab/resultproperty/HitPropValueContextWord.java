@@ -16,7 +16,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
     MatchSensitivity sensitivity;
 
-    public HitPropValueContextWord(BlackLabIndex index, Annotation annotation, int value, MatchSensitivity sensitivity) {
+    public HitPropValueContextWord(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int value) {
         super(index, annotation);
         this.valueTokenId = value;
         this.sensitivity = sensitivity;
@@ -51,7 +51,7 @@ public class HitPropValueContextWord extends HitPropValueContext {
         String term = parts[2];
         Terms termsObj = index.annotationForwardIndex(annotation).terms();
         int termId = termsObj.deserializeToken(term);
-        return new HitPropValueContextWord(index, annotation, termId, sensitivity);
+        return new HitPropValueContextWord(index, annotation, sensitivity, termId);
     }
 
     @Override

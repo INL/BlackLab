@@ -36,7 +36,6 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
      * @param contextSize how many words around hits to use 
      * @param sensitivity what sensitivity to use
      * @param sort whether or not to sort the list by descending frequency
-     * @param ctx query execution context, containing the sensitivity settings
      * 
      * @return the frequency of each occurring token
      */

@@ -48,7 +48,7 @@ public class DocResults implements Iterable<DocResult> {
         private final QueryInfo queryInfo;
         private int docBase;
 
-        private SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
+        SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
             this.results = results;
             this.queryInfo = queryInfo;
         }
