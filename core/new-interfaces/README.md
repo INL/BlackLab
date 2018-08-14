@@ -45,6 +45,8 @@ Results
   DocResultsWindow elimineren;
   mogelijkheid om te sampelen/filteren toevoegen aan docresultswindow
   window/sample/filteren/groeperen toevoegen aan groups
+  waarom bestaat ComparatorGroupProperty?
+  wat moeten we met ComparatorGroupProperty.defaultSortDescending?
 
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
   PROBLEM: DocResults relies on the fact that results are sorted by document.
