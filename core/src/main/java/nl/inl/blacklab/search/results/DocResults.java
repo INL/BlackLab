@@ -43,6 +43,7 @@ import nl.inl.util.ThreadPauser;
  * A list of DocResult objects (document-level query results).
  */
 public class DocResults implements Iterable<DocResult>, Pausible {
+    
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
         private final QueryInfo queryInfo;

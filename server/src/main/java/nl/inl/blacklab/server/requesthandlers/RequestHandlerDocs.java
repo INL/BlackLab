@@ -77,7 +77,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 DocGroups groups = searchGrouped.getGroups();
 
                 HitPropValue viewGroupVal = null;
-                viewGroupVal = HitPropValue.deserialize(groups.getOriginalDocResults().originalHits(), viewGroup);
+                viewGroupVal = HitPropValue.deserialize(groups.index(), groups.field(), viewGroup);
                 if (viewGroupVal == null)
                     return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                             "Parameter 'viewgroup' has an illegal value: " + viewGroup);

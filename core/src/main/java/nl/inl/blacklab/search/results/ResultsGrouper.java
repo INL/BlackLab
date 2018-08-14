@@ -39,14 +39,25 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class ResultsGrouper extends HitGroups {
     /**
+     * Don't use this; use Hits.groupedBy().
+     * 
+     * @param hits hits to group
+     * @param criteria criteria to group by
+     * @return grouped hits
+     */
+    static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
+        return new ResultsGrouper(hits, criteria);
+    }
+
+    /**
      * The groups.
      */
-    Map<HitPropValue, HitGroup> groups = new HashMap<>();
+    private Map<HitPropValue, HitGroup> groups = new HashMap<>();
 
     /**
      * The groups, in sorted order.
      */
-    List<HitGroup> groupsOrdered = new ArrayList<>();
+    private List<HitGroup> groupsOrdered = new ArrayList<>();
 
     /**
      * Total number of hits.
@@ -94,17 +105,6 @@ public class ResultsGrouper extends HitGroups {
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }
-    }
-
-    /**
-     * Don't use this; use Hits.groupedBy().
-     * 
-     * @param hits hits to group
-     * @param criteria criteria to group by
-     * @return grouped hits
-     */
-    public static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
-        return new ResultsGrouper(hits, criteria);
     }
 
     /**

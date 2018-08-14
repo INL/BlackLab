@@ -78,8 +78,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 // don't set docs yet - only return docs if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    HitPropValue groupId = HitPropValue.deserialize(groups.getOriginalDocResults().originalHits(),
-                            viewGroup);
+                    HitPropValue groupId = HitPropValue.deserialize(groups.index(), groups.field(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     DocGroup group = groups.getGroup(groupId);

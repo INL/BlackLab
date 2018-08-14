@@ -38,6 +38,11 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 
         this.queryInfo = queryInfo;
     }
+    
+    @Override
+    public QueryInfo queryInfo() {
+        return queryInfo;
+    }
 
     public abstract Map<HitPropValue, HitGroup> getGroupMap();
 

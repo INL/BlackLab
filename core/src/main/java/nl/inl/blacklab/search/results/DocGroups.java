@@ -78,6 +78,11 @@ public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
         }
     }
 
+    @Override
+    public QueryInfo queryInfo() {
+        return docResults.queryInfo();
+    }
+
     public Collection<DocGroup> getGroups() {
         return Collections.unmodifiableCollection(orderedGroups);
     }
