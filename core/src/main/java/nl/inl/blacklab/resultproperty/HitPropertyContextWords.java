@@ -131,13 +131,13 @@ public class HitPropertyContextWords extends HitProperty {
     HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.annotation = prop.annotation;
-        if (!hits.queryInfo().field().equals(this.annotation.field())) {
+        if (!hits.field().equals(this.annotation.field())) {
             throw new IllegalArgumentException(
                     "Hits passed to HitProperty must be in the field it was declared with! (declared with "
-                            + this.annotation.field().name() + ", hits has " + hits.queryInfo().field().name() + "; class=" + getClass().getName() + ")");
+                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
         }
         this.sensitivity = prop.sensitivity;
-        this.index = hits.queryInfo().index();
+        this.index = hits.index();
         this.words = prop.words;
         this.totalWords = prop.totalWords;
     }
@@ -315,7 +315,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     public static HitPropertyContextWords deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.queryInfo().field();
+        AnnotatedField field = hits.field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
@@ -324,7 +324,7 @@ public class HitPropertyContextWords extends HitProperty {
         if (parts.length > 2)
             whichWords = parseContextWordSpec(parts[2]);
         Annotation annotation = field.annotation(propName);
-        return new HitPropertyContextWords(hits.queryInfo().index(), annotation, sensitivity, whichWords);
+        return new HitPropertyContextWords(hits.index(), annotation, sensitivity, whichWords);
     }
 
     /**

@@ -194,7 +194,7 @@ public class DocImpl implements Doc {
                                    // subtract one
         }
 
-        getCharacterOffsets(hits.queryInfo().field(), starts, ends, true);
+        getCharacterOffsets(hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -266,7 +266,7 @@ public class DocImpl implements Doc {
 
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-        AnnotatedField field = hits.queryInfo().field();
+        AnnotatedField field = hits.field();
         int[] startEndCharPos = startEndWordToCharPos(field, startAtWord, lastWord);
 
         // Get content by char positions

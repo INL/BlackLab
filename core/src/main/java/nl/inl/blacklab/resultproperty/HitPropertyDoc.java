@@ -32,7 +32,7 @@ public class HitPropertyDoc extends HitProperty {
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.index = hits.queryInfo().index();
+        this.index = hits.index();
     }
 
     public HitPropertyDoc() {

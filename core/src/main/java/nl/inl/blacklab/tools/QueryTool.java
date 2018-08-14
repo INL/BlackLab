@@ -1386,7 +1386,7 @@ public class QueryTool {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = hits.queryInfo().field();
+                AnnotatedField field = hits.field();
                 collocAnnotation = field.mainAnnotation();
             }
 

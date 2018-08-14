@@ -40,7 +40,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.reader = hits.queryInfo().index().reader();
+        this.reader = hits.index().reader();
         this.fieldName = prop.fieldName;
         this.friendlyName = prop.friendlyName;
     }

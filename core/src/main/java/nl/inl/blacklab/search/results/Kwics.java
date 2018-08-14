@@ -33,7 +33,7 @@ public class Kwics {
             throw new IllegalArgumentException("contextSize cannot be negative");
     
         // Get the concordances
-        kwics = retrieveKwics(hits, contextSize, hits.queryInfo().field());
+        kwics = retrieveKwics(hits, contextSize, hits.field());
     }
 
     /**
@@ -82,7 +82,7 @@ public class Kwics {
 
         // All FIs except word and punct are attributes
         Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();
-        BlackLabIndex index = hits.queryInfo().index();
+        BlackLabIndex index = hits.index();
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
                 attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));

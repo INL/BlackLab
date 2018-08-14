@@ -152,7 +152,7 @@ public class RequestHandlerHits extends RequestHandler {
 
             DocResults perDocResults = null;
 
-            BlackLabIndex index = total.queryInfo().index();
+            BlackLabIndex index = total.index();
 
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;

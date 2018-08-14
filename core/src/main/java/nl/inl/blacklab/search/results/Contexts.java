@@ -273,7 +273,7 @@ public class Contexts implements Iterable<int[]> {
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
-            fis.add(hits.queryInfo().index().annotationForwardIndex(annotation));
+            fis.add(hits.index().annotationForwardIndex(annotation));
         }
 
         // Get the context

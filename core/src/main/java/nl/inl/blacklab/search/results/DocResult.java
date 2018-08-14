@@ -47,7 +47,7 @@ public class DocResult {
     }
 
     public Document getDocument() {
-        return hits.queryInfo().index().doc(docId).luceneDoc();
+        return hits.index().doc(docId).luceneDoc();
     }
 
     /**

@@ -43,7 +43,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.reader = hits.queryInfo().index().reader();
+        this.reader = hits.index().reader();
         this.fieldName = prop.fieldName;
     }
 
@@ -128,6 +128,6 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {
-        return new HitPropertyDocumentDecade(hits.queryInfo().index().metadataField(info));
+        return new HitPropertyDocumentDecade(hits.index().metadataField(info));
     }
 }

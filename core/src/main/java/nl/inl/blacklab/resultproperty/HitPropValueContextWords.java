@@ -9,7 +9,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValueContext {
@@ -54,13 +53,12 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     public static HitPropValue deserialize(Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        QueryInfo queryInfo = hits.queryInfo();
-        AnnotatedField field = queryInfo.field();
+        AnnotatedField field = hits.field();
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         int[] ids = new int[parts.length - 2];
-        Terms termsObj = queryInfo.index().annotationForwardIndex(annotation).terms();
+        Terms termsObj = hits.index().annotationForwardIndex(annotation).terms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }

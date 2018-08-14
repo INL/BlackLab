@@ -52,10 +52,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
         super(prop, hits, contexts, invert);
         this.terms = prop.terms;
         this.annotation = prop.annotation;
-        if (hits != null && !hits.queryInfo().field().equals(this.annotation.field())) {
+        if (hits != null && !hits.field().equals(this.annotation.field())) {
             throw new IllegalArgumentException(
                     "Hits passed to HitProperty must be in the field it was declared with! (declared with "
-                            + this.annotation.field().name() + ", hits has " + hits.queryInfo().field().name() + "; class=" + getClass().getName() + ")");
+                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
         }
         this.sensitivity = prop.sensitivity;
         this.contextSize = prop.contextSize;
@@ -102,14 +102,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     public static <T extends HitPropertyContextBase> T deserialize(Class<T> cls, Hits hits, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.queryInfo().field();
+        AnnotatedField field = hits.field();
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
                 : MatchSensitivity.SENSITIVE;
         ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
-                : hits.queryInfo().index().defaultContextSize();
+                : hits.index().defaultContextSize();
         Annotation annotation = field.annotation(propName);
         try {
             Constructor<T> ctor = cls.getConstructor(Hits.class, Annotation.class, MatchSensitivity.class,

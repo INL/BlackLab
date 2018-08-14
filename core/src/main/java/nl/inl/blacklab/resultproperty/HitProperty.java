@@ -331,7 +331,7 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = needsContext();
         HitProperty sortProp = copyWith(hitsToSort,
-                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.queryInfo().index())));
+                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.index())));
 
         // Perform the actual sort.
         sorted.sort(sortProp);
