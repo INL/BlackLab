@@ -875,7 +875,7 @@ public class QueryTool {
     }
 
     private void showMetadata(int docId) {
-        if (index.docExists(docId)) {
+        if (!index.docExists(docId)) {
             outprintln("Document " + docId + " was deleted.");
             return;
         }
