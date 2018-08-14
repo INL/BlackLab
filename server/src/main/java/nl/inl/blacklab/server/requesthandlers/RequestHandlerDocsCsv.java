@@ -143,7 +143,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             for (DocGroup group : groups) {
                 row.clear();
                 row.addAll(group.getIdentity().getPropValues());
-                row.add(Integer.toString(group.getResults().docsCountedSoFar()));
+                row.add(Integer.toString(group.getResults().size()));
                 printer.printRecord(row);
             }
 

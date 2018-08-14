@@ -163,7 +163,7 @@ public class HitsFromQuery extends HitsAbstract {
     @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // Prevent locking when not required
-        if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
+        if (sourceSpansFullyRead || (number >= 0 && hits.size() > number))
             return;
 
         // At least one hit needs to be fetched.

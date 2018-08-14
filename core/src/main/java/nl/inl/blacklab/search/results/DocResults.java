@@ -138,11 +138,6 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     protected List<DocResult> results;
 
     /**
-     * Our source hits object
-     */
-    private Hits sourceHits;
-
-    /**
      * Iterator in our source hits object
      */
     private Iterator<Hit> sourceHitsIterator;
@@ -178,7 +173,6 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      */
     DocResults(QueryInfo queryInfo, Hits hits) {
         this(queryInfo);
-        this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
         partialDocHits = null;
     }
@@ -219,10 +213,7 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     }
     
     boolean sourceHitsFullyRead() {
-        if (sourceHits == null)
-            return true;
-    
-        return !sourceHitsIterator.hasNext();
+        return sourceHitsIterator == null ? true : !sourceHitsIterator.hasNext();
     }
 
     public QueryInfo queryInfo() {
@@ -355,7 +346,7 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * @throws InterruptedException
      */
     void ensureResultsRead(int index) throws InterruptedException {
-        if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
+        if (sourceHitsFullyRead() || (index >= 0 && results.size() > index))
             return;
 
         while (!ensureResultsReadLock.tryLock()) {
@@ -543,29 +534,5 @@ public class DocResults implements Iterable<DocResult>, Pausible {
     @Override
     public boolean isPaused() {
         return threadPauser.isPaused();
-    }
-
-    public Hits originalHits() {
-        return sourceHits;
-    }
-
-    /**
-     * Get the total number of documents. This even counts documents that weren't
-     * retrieved because the set of hits was too large.
-     *
-     * @return the total number of documents.
-     */
-    public int docsCountedTotal() {
-        if (sourceHits == null)
-            return size(); // no hits, just documents
-        return sourceHits.docsCountedTotal();
-    }
-
-    public int docsCountedSoFar() {
-        return sourceHits == null ? results.size() : sourceHits.docsCountedSoFar();
-    }
-
-    public int docsProcessedSoFar() {
-        return sourceHits == null ? results.size() : sourceHits.docsProcessedSoFar();
     }
 }

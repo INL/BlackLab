@@ -571,25 +571,18 @@ public abstract class RequestHandler {
      * @param searchParam original search parameters
      * @param searchTime time the search took
      * @param countTime time the count took
-     * @param hits hits found (may be null for certain searches)
-     * @param totalHits hits instance used for calculating total (unfortunately, may
-     *            be different instance than hits because of how cache works now -
-     *            should be improved)
-     * @param isViewDocGroup are we viewing single document group?
-     * @param docResults document results, if this is a document search
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
      * @throws BlsException
      */
-    protected void addSummaryCommonFields(DataStream ds, SearchParameters searchParam, double searchTime,
+    protected void addSummaryCommonFields(
+            DataStream ds,
+            SearchParameters searchParam,
+            double searchTime,
             double countTime,
-            Hits hits, Hits totalHits, boolean isViewDocGroup, DocResults docResults, DocOrHitGroups groups,
-            WindowStats window) throws BlsException {
-
-        if (hits == null && docResults != null) {
-            hits = docResults.originalHits();
-            totalHits = hits;
-        }
+            DocOrHitGroups groups,
+            WindowStats window
+            ) throws BlsException {
 
         // Our search parameters
         ds.startEntry("searchParam");
@@ -600,45 +593,22 @@ public abstract class RequestHandler {
         if (status != IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", status.toString());
         }
+        
+        // Information about hit sampling
+        SampleParameters sample = searchParam.getSampleSettings();
+        if (sample != null) {
+            ds.entry("sampleSeed", sample.seed());
+            if (sample.isPercentage())
+                ds.entry("samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
+            else
+                ds.entry("sampleSize", sample.numberOfHitsSet());
+        }
 
         // Information about search progress
         ds.entry("searchTime", (int) (searchTime * 1000));
-        boolean countFailed = countTime < 0;
         if (countTime != 0)
-            ds.entry("countTime", (int) (countTime * 1000));
-        ds.entry("stillCounting", totalHits == null ? false : !totalHits.doneProcessingAndCounting());
-
-        // Information about the number of hits/docs, and whether there were too many to retrieve/count
-        if (totalHits != null) {
-            // We have a hits object we can query for this information
-            ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
-                    .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
-                    .entry("stoppedCountingHits", totalHits.maxStats().hitsCountedExceededMaximum())
-                    .entry("stoppedRetrievingHits", totalHits.maxStats().hitsProcessedExceededMaximum());
-            ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
-                    .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
-        } else if (isViewDocGroup) {
-            // Viewing single group of documents, possibly based on a hits search.
-            // group.getResults().getOriginalHits() returns null in this case,
-            // so we have to iterate over the DocResults and sum up the hits ourselves.
-            int numberOfHits = 0;
-            for (DocResult dr : docResults) {
-                numberOfHits += dr.getNumberOfHits();
-            }
-            ds.entry("numberOfHits", numberOfHits)
-                    .entry("numberOfHitsRetrieved", numberOfHits);
-
-            int numberOfDocsCounted = docResults.size();
-            if (countFailed)
-                numberOfDocsCounted = -1;
-            ds.entry("numberOfDocs", numberOfDocsCounted)
-                    .entry("numberOfDocsRetrieved", docResults.size());
-        } else {
-            // Documents-only search (no hits). Get the info from the DocResults.
-            ds.entry("numberOfDocs", docResults.docsCountedSoFar())
-                    .entry("numberOfDocsRetrieved", docResults.docsProcessedSoFar());
-        }
-
+            ds.entry("countTime", (int)(countTime < 0 ? countTime : (countTime * 1000)));
+        
         // Information about grouping operation
         if (groups != null) {
             ds.entry("numberOfGroups", groups.numberOfGroups())
@@ -653,15 +623,43 @@ public abstract class RequestHandler {
                     .entry("windowHasPrevious", window.hasPrevious())
                     .entry("windowHasNext", window.hasNext());
         }
+    }
 
-        // Information about hit sampling
-        if (hits.isSample()) {
-            SampleParameters sample = hits.sampleParameters();
-            ds.entry("sampleSeed", sample.seed());
-            if (sample.isPercentage())
-                ds.entry("samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
-            else
-                ds.entry("sampleSize", sample.numberOfHitsSet());
+    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, Hits totalHits, boolean countFailed) {
+        // Information about the number of hits/docs, and whether there were too many to retrieve/count
+        // We have a hits object we can query for this information
+        ds.entry("stillCounting", !totalHits.doneProcessingAndCounting());
+        ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
+                .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
+                .entry("stoppedCountingHits", totalHits.maxStats().hitsCountedExceededMaximum())
+                .entry("stoppedRetrievingHits", totalHits.maxStats().hitsProcessedExceededMaximum());
+        ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
+                .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
+    }
+
+    protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed) {
+        // Information about the number of hits/docs, and whether there were too many to retrieve/count
+        ds.entry("stillCounting", false);
+        if (isViewDocGroup) {
+            // Viewing single group of documents, possibly based on a hits search.
+            // group.getResults().getOriginalHits() returns null in this case,
+            // so we have to iterate over the DocResults and sum up the hits ourselves.
+            int numberOfHits = 0;
+            for (DocResult dr : docResults) {
+                numberOfHits += dr.getNumberOfHits();
+            }
+            ds.entry("numberOfHits", numberOfHits)
+                    .entry("numberOfHitsRetrieved", numberOfHits);
+   
+            int numberOfDocsCounted = docResults.size();
+            if (countFailed)
+                numberOfDocsCounted = -1;
+            ds.entry("numberOfDocs", numberOfDocsCounted)
+                    .entry("numberOfDocsRetrieved", docResults.size());
+        } else {
+            // Documents-only search (no hits). Get the info from the DocResults.
+            ds.entry("numberOfDocs", docResults.size())
+                    .entry("numberOfDocsRetrieved", docResults.size());
         }
     }
 

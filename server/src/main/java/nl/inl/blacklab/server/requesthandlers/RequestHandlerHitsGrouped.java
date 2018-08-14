@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -50,8 +49,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                     : requestedWindowSize;
             WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
-            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, hits, hits, false, (DocResults) null,
-                    groups, ourWindow);
+            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, groups, ourWindow);
+            addNumberOfResultsSummaryTotalHits(ds, hits, false);
             ds.endMap().endEntry();
 
             // The list of groups found

@@ -69,7 +69,7 @@ public class HitsFiltered extends HitsAbstract {
     @Override
     protected void ensureHitsRead(int number) throws InterruptedException {
         // Prevent locking when not required
-        if (doneFiltering || number >= 0 && hits.size() >= number)
+        if (doneFiltering || number >= 0 && hits.size() > number)
             return;
         
         // At least one hit needs to be fetched.

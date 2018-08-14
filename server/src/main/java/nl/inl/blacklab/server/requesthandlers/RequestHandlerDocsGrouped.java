@@ -5,12 +5,13 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitsList;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
+import nl.inl.blacklab.server.jobs.JobHits;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -24,10 +25,18 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        // Get the window we're interested in
-        JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(),
-                isBlockingOperation());
+
+        // Make sure we have the hits search, so we can later determine totals.
+        JobHits originalHitsSearch = null;
+        JobDocsGrouped search = null;
+        if (searchParam.hasPattern()) {
+            originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits(), false);
+        }
         try {
+            // Get the window we're interested in
+            search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(),
+                    isBlockingOperation());
+            
             // If search is not done yet, indicate this to the user
             if (!search.finished()) {
                 return Response.busy(ds, servlet);
@@ -53,8 +62,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             // The summary
             ds.startEntry("summary").startMap();
             WindowStats ourWindow = new WindowStats(first + number < groups.numberOfGroups(), first, number, numberOfGroupsInWindow);
-            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (HitsList) null, (HitsList) null, false,
-                    docResults, groups, ourWindow);
+            Hits totalHits = originalHitsSearch.getHits(); //docResults.originalHits();
+            addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, groups, ourWindow);
+            if (totalHits == null)
+                addNumberOfResultsSummaryDocResults(ds, false, docResults, false);
+            else
+                addNumberOfResultsSummaryTotalHits(ds, totalHits, false);
+            
             ds.endMap().endEntry();
 
             // The list of groups found
@@ -76,7 +90,10 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
             return HTTP_OK;
         } finally {
-            search.decrRef();
+            if (search != null)
+                search.decrRef();
+            if (originalHitsSearch != null)
+                originalHitsSearch.decrRef();
         }
     }
 

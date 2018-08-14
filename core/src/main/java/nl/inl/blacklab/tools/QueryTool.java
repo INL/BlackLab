@@ -1426,8 +1426,8 @@ public class QueryTool {
     }
 
     private void showDocsPage() {
+        Hits currentHitSet = getCurrentHitSet();
         if (docs == null) {
-            Hits currentHitSet = getCurrentHitSet();
             if (currentHitSet != null)
                 docs = currentHitSet.perDocResults();
             else if (filterQuery != null) {
@@ -1457,13 +1457,10 @@ public class QueryTool {
         }
 
         // Summarize
-        String msg;
-        if (determineTotalNumberOfHits) {
-            msg = docs.docsCountedTotal() + " docs";
-        } else {
-            msg = docs.size() + " docs";
-        }
-        outprintln(msg);
+        int docsCounted = docs.size();
+        if (determineTotalNumberOfHits && currentHitSet != null)
+            docsCounted = currentHitSet.docsCountedTotal();
+        outprintln(docsCounted + " docs");
     }
 
     /**

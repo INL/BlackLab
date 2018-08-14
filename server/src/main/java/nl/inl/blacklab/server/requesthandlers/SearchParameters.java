@@ -335,7 +335,7 @@ public class SearchParameters {
         return new HitFilterSettings(getString("hitfiltercrit"), getString("hitfilterval"));
     }
 
-    private SampleParameters getSampleSettings() {
+    public SampleParameters getSampleSettings() {
         if (!(containsKey("sample") || containsKey("samplenum")))
             return null;
         SampleParameters p;
