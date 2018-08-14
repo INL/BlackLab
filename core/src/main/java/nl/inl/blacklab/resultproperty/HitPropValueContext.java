@@ -12,8 +12,7 @@ public abstract class HitPropValueContext extends HitPropValue {
     protected Annotation annotation;
 
     public HitPropValueContext(Hits hits, Annotation annotation) {
-        this.annotation = annotation;
-        this.terms = hits.index().annotationForwardIndex(annotation).terms();
+        this(hits.index(), annotation);
     }
 
     public HitPropValueContext(BlackLabIndex index, Annotation annotation) {

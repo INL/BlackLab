@@ -67,6 +67,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected String serializeName;
 
+    protected BlackLabIndex index;
+
     public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.terms = prop.terms;
@@ -80,6 +82,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.contextSize = prop.contextSize;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
+        this.index = hits == null ? prop.index : hits.index();
     }
 
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
@@ -87,6 +90,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         super();
         this.name = name;
         this.serializeName = serializeName;
+        this.index = index;
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
         this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;

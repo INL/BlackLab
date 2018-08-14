@@ -4,10 +4,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.Hits;
 
 public class HitPropValueContextWord extends HitPropValueContext {
     int valueTokenId;
@@ -16,8 +16,8 @@ public class HitPropValueContextWord extends HitPropValueContext {
 
     MatchSensitivity sensitivity;
 
-    public HitPropValueContextWord(Hits hits, Annotation annotation, int value, MatchSensitivity sensitivity) {
-        super(hits, annotation);
+    public HitPropValueContextWord(BlackLabIndex index, Annotation annotation, int value, MatchSensitivity sensitivity) {
+        super(index, annotation);
         this.valueTokenId = value;
         this.sensitivity = sensitivity;
         valueSortOrder = value < 0 ? value : terms.idToSortPosition(value, sensitivity);
@@ -43,16 +43,15 @@ public class HitPropValueContextWord extends HitPropValueContext {
         return false;
     }
 
-    public static HitPropValue deserialize(Hits hits, String info) {
+    public static HitPropValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         String term = parts[2];
-        Terms termsObj = hits.index().annotationForwardIndex(annotation).terms();
+        Terms termsObj = index.annotationForwardIndex(annotation).terms();
         int termId = termsObj.deserializeToken(term);
-        return new HitPropValueContextWord(hits, annotation, termId, sensitivity);
+        return new HitPropValueContextWord(index, annotation, termId, sensitivity);
     }
 
     @Override

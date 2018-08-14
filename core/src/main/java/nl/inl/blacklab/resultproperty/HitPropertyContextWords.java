@@ -331,7 +331,7 @@ public class HitPropertyContextWords extends HitProperty {
                 destIndex++;
             }
         }
-        return new HitPropValueContextWords(hits, annotation, dest, sensitivity);
+        return new HitPropValueContextWords(index, annotation, sensitivity, dest);
     }
 
     // OPT: provide specific compare() method that compares contexts in-place

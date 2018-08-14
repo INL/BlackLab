@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.util.ArrayUtil;
 
 public class HitPropValueContextWords extends HitPropValueContext {
@@ -17,14 +16,6 @@ public class HitPropValueContextWords extends HitPropValueContext {
     int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
-
-    public HitPropValueContextWords(Hits hits, Annotation annotation, int[] value, MatchSensitivity sensitivity) {
-        super(hits, annotation);
-        this.valueTokenId = value;
-        this.sensitivity = sensitivity;
-        valueSortOrder = new int[value.length];
-        terms.toSortOrder(value, valueSortOrder, sensitivity);
-    }
 
     public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
         super(index, annotation);
@@ -51,18 +42,17 @@ public class HitPropValueContextWords extends HitPropValueContext {
         return false;
     }
 
-    public static HitPropValue deserialize(Hits hits, String info) {
+    public static HitPropValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         int[] ids = new int[parts.length - 2];
-        Terms termsObj = hits.index().annotationForwardIndex(annotation).terms();
+        Terms termsObj = index.annotationForwardIndex(annotation).terms();
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }
-        return new HitPropValueContextWords(hits, annotation, ids, sensitivity);
+        return new HitPropValueContextWords(index, annotation, sensitivity, ids);
     }
 
     @Override
