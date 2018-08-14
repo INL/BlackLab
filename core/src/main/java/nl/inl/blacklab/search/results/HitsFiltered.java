@@ -5,15 +5,15 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsAbstract {
+public class HitsFiltered extends Hits {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
     

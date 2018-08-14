@@ -9,7 +9,7 @@ import java.util.TreeSet;
 /**
  * A basic Hits object implemented with a list.
  */
-public class HitsList extends HitsAbstract {
+public class HitsList extends Hits {
 
     /** Our window stats, if this is a window; null otherwise. */
     WindowStats windowStats;

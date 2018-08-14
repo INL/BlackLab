@@ -32,7 +32,6 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsAbstract;
 import nl.inl.blacklab.search.results.HitsList;
 
 /**
@@ -298,7 +297,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         return Arrays.asList(getName());
     }
 
-    public Hits sortHits(HitsAbstract hitsToSort) {
+    public Hits sortHits(Hits hitsToSort) {
         // Make sure we have a sort order array of sufficient size
         // and fill it with the original hit order (0, 1, 2, ...)
         hitsToSort.size(); // fetch all

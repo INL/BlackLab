@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends HitsAbstract {
+public class HitsFromQuery extends Hits {
 
     /** Max. hits to process/count. */
     MaxSettings maxSettings;

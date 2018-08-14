@@ -1,22 +1,25 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
-import nl.inl.blacklab.exceptions.ResultNotFound;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.util.ThreadPauser;
 
-public interface Hits extends Iterable<Hit> {
+public abstract class Hits extends Results<Hit> {
+
+    protected static final Logger logger = LogManager.getLogger(Hits.class);
 
     /**
      * Construct a Hits object from a SpanQuery.
@@ -27,7 +30,7 @@ public interface Hits extends Iterable<Hit> {
      * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, MaxSettings maxSettings) throws WildcardTermTooBroad {
+    public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, MaxSettings maxSettings) throws WildcardTermTooBroad {
         return new HitsFromQuery(queryInfo, query, maxSettings);
     }
 
@@ -40,7 +43,7 @@ public interface Hits extends Iterable<Hit> {
      * @param hits the list of hits to wrap, or null for empty Hits object
      * @return hits found
      */
-    static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
+    public static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
         return new HitsList(queryInfo, hits);
     }
 
@@ -50,7 +53,7 @@ public interface Hits extends Iterable<Hit> {
      * @param queryInfo query info 
      * @return hits found
      */
-    static Hits emptyList(QueryInfo queryInfo) {
+    public static Hits emptyList(QueryInfo queryInfo) {
         return Hits.fromList(queryInfo, (List<Hit>) null);
     }
 
@@ -61,225 +64,63 @@ public interface Hits extends Iterable<Hit> {
      * @param parameters sample parameters 
      * @return the sample
      */
-    static Hits sample(Hits hits, SampleParameters parameters) {
+    public static Hits sample(Hits hits, SampleParameters parameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         return new HitsList(hits, parameters);
     }
 
+    /**
+     * Minimum number of hits to fetch in an ensureHitsRead() block.
+     * 
+     * This prevents locking again and again for a single hit when iterating.
+     */
+    protected static final int FETCH_HITS_MIN = 20;
+
+    /** Id the next Hits instance will get */
+    private static int nextHitsObjId = 0;
+
+    private static synchronized int getNextHitsObjId() {
+        return nextHitsObjId++;
+    }
+
+    /** Unique id of this Hits instance (for debugging) */
+    protected final int hitsObjId = getNextHitsObjId();
+    
+    /**
+     * The hits.
+     */
+    protected List<Hit> hits;
+
+    /**
+     * Our captured groups, or null if we have none.
+     */
+    protected CapturedGroupsImpl capturedGroups;
+    
+    /**
+     * The number of hits we've seen and counted so far. May be more than the number
+     * of hits we've retrieved if that exceeds maxHitsToRetrieve.
+     */
+    protected int hitsCounted = 0;
+
+    /**
+     * The number of separate documents we've seen in the hits retrieved.
+     */
+    protected int docsRetrieved = 0;
+
+    /**
+     * The number of separate documents we've counted so far (includes non-retrieved
+     * hits).
+     */
+    protected int docsCounted = 0;
+    
+    public Hits(QueryInfo queryInfo) {
+        super(queryInfo);
+    }
+
     // Inherited from Results
     //--------------------------------------------------------------------
     
-    /**
-     * For Hits, this is an alias of hitsProcessedTotal.
-     * 
-     * Other Results classes each have size(), but the meaning depends on the type of results.
-     * 
-     * @return number of hits processed total
-     */
-    int size();
-
-    int resultsObjId();
-
-    ThreadPauser threadPauser();
-
-    /**
-     * Return the specified hit.
-     *
-     * @param i index of the desired hit
-     * @return the hit, or null if it's beyond the last hit
-     */
-    Hit get(int i);
-
-    /**
-     * Return an iterator over these hits.
-     *
-     * The order is the sorted order, not the original order. Use
-     * hitsInOriginalOrder() to iterate in the original order.
-     *
-     * @return the iterator
-     */
-    @Override
-    Iterator<Hit> iterator();
-
-    @Override
-    String toString();
-
-    /**
-     * Group these hits by a criterium (or several criteria).
-     *
-     * @param criteria the hit property to group on
-     * @return a HitGroups object representing the grouped hits
-     */
-    default HitGroups groupedBy(final HitProperty criteria) {
-        return HitGroupsImpl.fromHits(this, criteria);
-    }
-    
-    /**
-     * Select only the hits where the specified property has the specified value.
-     * 
-     * @param property property to select on, e.g. "word left of hit"
-     * @param value value to select on, e.g. 'the'
-     * @return filtered hits
-     */
-    default Hits filteredBy(HitProperty property, PropertyValue value) {
-        return new HitsFiltered(this, property, value);
-    }
-
-    /**
-     * Return a new Hits object with these hits sorted by the given property.
-     *
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. The hits themselves are reused between
-     * the two Hits instances, so not too much additional memory is used.
-     *
-     * @param sortProp the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
-     */
-    Hits sortedBy(HitProperty sortProp);
-    
-    // Specific to Hits
-    //--------------------------------------------------------------------
-
-    /**
-     * Return the number of hits retrieved so far.
-     *
-     * If you're retrieving hits in a background thread, call this method from
-     * another thread to get an update of the count so far.
-     *
-     * @return the current total hit count
-     */
-    int hitsProcessedSoFar();
-
-    /**
-     * Determines if there are at least a certain number of hits
-     *
-     * This may be used if we don't want to process all hits (which may be a lot)
-     * but we do need to know something about the size of the result set (such as
-     * for paging).
-     *
-     * Note that this method applies to the hits retrieved, which may be less than
-     * the total number of hits (depending on maxHitsToRetrieve).
-     *
-     * @param lowerBound the number we're testing against
-     *
-     * @return true if the size of this set is at least lowerBound, false otherwise.
-     */
-    boolean hitsProcessedAtLeast(int lowerBound);
-
-    /**
-     * Return the number of hits available.
-     *
-     * Note that this method applies to the hits retrieved, which may be less than
-     * the total number of hits (depending on maxHitsToRetrieve). Use totalSize() to
-     * find the total hit count (which may also be limited depending on
-     * maxHitsToCount).
-     *
-     * @return number of hits processed total
-     */
-    int hitsProcessedTotal();
-
-    /**
-     * Return the number of hits counted so far.
-     *
-     * If you're retrieving hit in a background thread, call this method from
-     * another thread to get an update of the count so far.
-     *
-     * @return the current total hit count
-     */
-    int hitsCountedSoFar();
-
-    /**
-     * Return the total number of hits.
-     *
-     * NOTE: Depending on maxHitsToRetrieve, hit retrieval may stop before all hits
-     * are seen. We do keep counting hits though (until we reach maxHitsToCount, or
-     * that value is negative). This method returns our total hit count. Some of
-     * these hits may not be available.
-     *
-     * @return the total hit count
-     */
-    int hitsCountedTotal();
-
-    /**
-     * Return the number of documents retrieved so far.
-     *
-     * If you're retrieving hits in a background thread, call this method from
-     * another thread to get an update of the count so far.
-     *
-     * @return the current total hit count
-     */
-    int docsProcessedSoFar();
-
-    /**
-     * Return the number of documents in the hits we've retrieved.
-     *
-     * @return the number of documents.
-     */
-    int docsProcessedTotal();
-
-    /**
-     * Return the number of documents counted so far.
-     *
-     * If you're retrieving hit in a background thread, call this method from
-     * another thread to get an update of the count so far.
-     *
-     * @return the current total hit count
-     */
-    int docsCountedSoFar();
-
-    /**
-     * Return the total number of documents in all hits. This counts documents even
-     * in hits that are not stored, only counted.
-     *
-     * @return the total number of documents.
-     */
-    int docsCountedTotal();
-
-    /**
-     * Check if we're done retrieving/counting hits.
-     *
-     * If you're retrieving hits in a background thread, call this method from
-     * another thread to check if all hits have been processed.
-     *
-     * @return true iff all hits have been retrieved/counted.
-     */
-    boolean doneProcessingAndCounting();
-
-    /**
-     * Get the captured group information, if any.
-     *
-     * @return the captured group information, or null if there were no captured groups
-     */
-    CapturedGroups capturedGroups();
-
-    /**
-     * Do we have captured groups?
-     * 
-     * @return true if we do, false if we don't
-     */
-    boolean hasCapturedGroups();
-
-    /**
-     * Convenience method to get all hits in a single doc from a larger hitset.
-     *
-     * Don't use this for grouping or per-document results as it's relatively
-     * inefficient.
-     *
-     * @param docid the doc id to get hits for
-     * @return the list of hits in this doc (if any)
-     */
-    Hits getHitsInDoc(int docid);
-
-    /**
-     * Get a window with a single hit in it.
-     * 
-     * @param hit the hit we want (must be in this Hits object)
-     * @return window
-     * @throws ResultNotFound if hit was not found in this result set
-     */
-    Hits window(Hit hit) throws ResultNotFound;
-
     /**
      * Get a window into this list of hits.
      *
@@ -294,7 +135,8 @@ public interface Hits extends Iterable<Hit> {
      * @param windowSize size of the window
      * @return the window
      */
-    default Hits window(int first, int windowSize) {
+    @Override
+    public Hits window(int first, int windowSize) {
         return new HitsList(this, first, windowSize);
     }
 
@@ -307,7 +149,7 @@ public interface Hits extends Iterable<Hit> {
      *
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+    public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
         return TermFrequencyList.collocations(this, annotation, contextSize, sensitivity, sort);
     }
 
@@ -321,7 +163,7 @@ public interface Hits extends Iterable<Hit> {
      * 
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
+    public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
         return collocations(annotation, contextSize, sensitivity, true);
     }
 
@@ -334,7 +176,7 @@ public interface Hits extends Iterable<Hit> {
      * 
      * @return the frequency of each occurring token
      */
-    default TermFrequencyList collocations(Annotation annotation, ContextSize contextSize) {
+    public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize) {
         return collocations(annotation, contextSize, MatchSensitivity.SENSITIVE, true);
     }
 
@@ -343,66 +185,284 @@ public interface Hits extends Iterable<Hit> {
      *
      * @return the per-document view.
      */
-    default DocResults perDocResults() {
+    public DocResults perDocResults() {
         return DocResults.fromHits(queryInfo(), this);
     }
 
     /**
-     * Create concordances from the forward index or content store.
-     * 
-     * @param type where to create concordances from
-     * @param contextSize desired context size
-     * @return concordances
+     * Group these hits by a criterium (or several criteria).
+     *
+     * @param criteria the hit property to group on
+     * @return a HitGroups object representing the grouped hits
      */
-    Concordances concordances(ContextSize contextSize, ConcordanceType type);
-
+    public HitGroups groupedBy(final HitProperty criteria) {
+        return HitGroupsImpl.fromHits(this, criteria);
+    }
+    
+    /**
+     * Select only the hits where the specified property has the specified value.
+     * 
+     * @param property property to select on, e.g. "word left of hit"
+     * @param value value to select on, e.g. 'the'
+     * @return filtered hits
+     */
+    public Hits filteredBy(HitProperty property, PropertyValue value) {
+        return new HitsFiltered(this, property, value);
+    }
+    
     /**
      * Create concordances from the forward index.
      * 
      * @param contextSize desired context size
      * @return concordances
      */
-    default Concordances concordances(ContextSize contextSize) {
+    public Concordances concordances(ContextSize contextSize) {
         return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
     }
     
-    /**
-     * Create KWICs from the forward index.
-     * 
-     * KWIC = KeyWord In Context, essentially snippets around all the hits. 
-     * 
-     * @param contextSize desired context size
-     * @return KWICs
-     */
-    Kwics kwics(ContextSize contextSize);
-
-    /**
-     * Get information about the original query.
-     * 
-     * This includes the index, field, max. settings, and max. stats
-     * (whether the max. settings were reached).
-     * 
-     * @return query info
-     */
-    QueryInfo queryInfo();
+    @Override
+    public int size() {
+        return hitsProcessedTotal();
+    }
     
     /**
-     * Get the field these hits are from.
-     * 
-     * @return field
+     * Ensure that we have read all hits.
+     *
+     * @throws InterruptedException if the thread was interrupted during this
+     *             operation
      */
-    default AnnotatedField field() {
-        return queryInfo().field();
+    protected void ensureAllHitsRead() throws InterruptedException {
+        ensureHitsRead(-1);
     }
 
     /**
-     * Get the index these hits are from.
-     * 
-     * @return index
+     * Ensure that we have read at least as many hits as specified in the parameter.
+     *
+     * @param number the minimum number of hits that will have been read when this
+     *            method returns (unless there are fewer hits than this); if
+     *            negative, reads all hits
+     * @throws InterruptedException if the thread was interrupted during this
+     *             operation
      */
-    default BlackLabIndex index() {
-        return queryInfo().index();
+    protected abstract void ensureHitsRead(int number) throws InterruptedException;
+    
+    // Getting / iterating over the hits
+    //--------------------------------------------------------------------
+
+    @Override
+    public Iterator<Hit> iterator() {
+        // Construct a custom iterator that iterates over the hits in the hits
+        // list, but can also take into account the Spans object that may not have
+        // been fully read. This ensures we don't instantiate Hit objects for all hits
+        // if we just want to display the first few.
+        return new Iterator<Hit>() {
+        
+            int index = -1;
+        
+            @Override
+            public boolean hasNext() {
+                // Do we still have hits in the hits list?
+                try {
+                    ensureHitsRead(index + 2);
+                } catch (InterruptedException e) {
+                    // Thread was interrupted. Don't finish reading hits and accept possibly wrong
+                    // answer.
+                    // Client must detect the interruption and stop the thread.
+                    Thread.currentThread().interrupt();
+                }
+                return hits.size() >= index + 2;
+            }
+        
+            @Override
+            public Hit next() {
+                // Check if there is a next, taking unread hits from Spans into account
+                if (hasNext()) {
+                    index++;
+                    return hits.get(index);
+                }
+                throw new NoSuchElementException();
+            }
+        
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        
+        };
     }
+    
+    @Override
+    public synchronized Hit get(int i) {
+        try {
+            ensureHitsRead(i + 1);
+        } catch (InterruptedException e) {
+            // Thread was interrupted. Required hit hasn't been gathered;
+            // we will just return null.
+            Thread.currentThread().interrupt();
+        }
+        if (i >= hits.size())
+            return null;
+        return hits.get(i);
+    }
+    
+    public Hits getHitsInDoc(int docid) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Interrupted. Just return no hits;
+            // client should detect thread was interrupted if it
+            // wants to use background threads.
+            Thread.currentThread().interrupt();
+            return Hits.emptyList(queryInfo());
+        }
+        List<Hit> hitsInDoc = new ArrayList<>();
+        for (Hit hit : hits) {
+            if (hit.doc() == docid)
+                hitsInDoc.add(hit);
+        }
+        return Hits.fromList(queryInfo(), hitsInDoc);
+    }
+    
+    // Stats
+    // ---------------------------------------------------------------
+
+    public boolean hitsProcessedAtLeast(int lowerBound) {
+        try {
+            // Try to fetch at least this many hits
+            ensureHitsRead(lowerBound);
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
+        }
+
+        return hits.size() >= lowerBound;
+    }
+
+    public int hitsProcessedTotal() {
+        try {
+            // Probably not all hits have been seen yet. Collect them all.
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return hits.size();
+    }
+
+    public int hitsProcessedSoFar() {
+        return hits.size();
+    }
+
+    public int hitsCountedTotal() {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return hitsCounted;
+    }
+
+    public int docsProcessedTotal() {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return docsRetrieved;
+    }
+
+    public int docsCountedTotal() {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return docsCounted;
+    }
+
+    public int hitsCountedSoFar() {
+        return hitsCounted;
+    }
+
+    public int docsCountedSoFar() {
+        return docsCounted;
+    }
+
+    public int docsProcessedSoFar() {
+        return docsRetrieved;
+    }
+
+    // Deriving other Hits / Results instances
+    //--------------------------------------------------------------------
+    
+    public Hits sortedBy(HitProperty sortProp) {
+        return sortProp.sortHits(this);
+    }
+    
+    public Hits window(Hit hit) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // (should be detected by the client)
+        }
+        return window(hits.indexOf(hit), 1);
+    }
+    
+    // Captured groups
+    //--------------------------------------------------------------------
+    
+    public CapturedGroupsImpl capturedGroups() {
+        return capturedGroups;
+    }
+
+    public boolean hasCapturedGroups() {
+        return capturedGroups != null;
+    }
+
+    // Hits display
+    //--------------------------------------------------------------------
+    
+    public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
+        return new Concordances(this, type, contextSize);
+    }
+
+    public Kwics kwics(ContextSize contextSize) {
+        return new Kwics(this, contextSize);
+    }
+
+    /**
+     * Get the raw list of hits.
+     * 
+     * Clients shouldn't use this. Used internally for certain performance-sensitive
+     * operations like sorting.
+     * 
+     * The list will only contain whatever hits have been processed; if you want all the hits,
+     * call ensureAllHitsRead(), size() or hitsProcessedTotal() first. 
+     * 
+     * @return the list of hits
+     */
+    public List<Hit> hitsList() {
+        return hits;
+    }
+
+    /**
+     * Check if we're done retrieving/counting hits.
+     *
+     * If you're retrieving hits in a background thread, call this method from
+     * another thread to check if all hits have been processed.
+     *
+     * @return true iff all hits have been retrieved/counted.
+     */
+    public abstract boolean doneProcessingAndCounting();
+
 
     /**
      * Did we exceed the maximum number of hits to process/count?
@@ -416,44 +476,6 @@ public interface Hits extends Iterable<Hit> {
      * 
      * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
      */
-    MaxStats maxStats();
-
-    /**
-     * Is this a hits window?
-     * 
-     * @return true if it's a window, false if not
-     */
-    default boolean isWindow() {
-        return windowStats() != null;
-    }
-    
-    /**
-     * If this is a hits window, return the window stats.
-     * 
-     * @return window stats, or null if this is not a hits window
-     */
-    default WindowStats windowStats() {
-        return null;
-    }
-    
-    /**
-     * Is this sampled from another instance?
-     * 
-     * @return true if it's a sample, false if not
-     */
-    default boolean isSample() {
-        return sampleParameters() != null;
-    }
-
-    /**
-     * If this is a sample, return the sample parameters.
-     * 
-     * Also includes the explicitly set or randomly chosen seed. 
-     * 
-     * @return sample parameters, or null if this is not a sample
-     */
-    default SampleParameters sampleParameters() {
-        return null;
-    }
+    public abstract MaxStats maxStats();
 
 }

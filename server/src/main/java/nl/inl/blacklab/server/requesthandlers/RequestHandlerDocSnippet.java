@@ -6,8 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -110,31 +108,27 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                     .entry("end", hit.end());
         }
 
-        try {
-            Hits singleHit = hits.window(hit);
-            if (useOrigContent) {
-                Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
-                Concordance c = concordances.get(hit);
-                if (!isFragment) {
-                    ds.startEntry("left").plain(c.left()).endEntry()
-                            .startEntry("match").plain(c.match()).endEntry()
-                            .startEntry("right").plain(c.right()).endEntry();
-                } else {
-                    ds.plain(c.match());
-                }
+        Hits singleHit = hits.window(hit);
+        if (useOrigContent) {
+            Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
+            Concordance c = concordances.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").plain(c.left()).endEntry()
+                        .startEntry("match").plain(c.match()).endEntry()
+                        .startEntry("right").plain(c.right()).endEntry();
             } else {
-                Kwics kwics = singleHit.kwics(wordsAroundHit);
-                Kwic c = kwics.get(hit);
-                if (!isFragment) {
-                    ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
-                            .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
-                            .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
-                } else {
-                    ds.contextList(c.annotations(), c.tokens());
-                }
+                ds.plain(c.match());
             }
-        } catch (ResultNotFound e) {
-            throw BlackLabRuntimeException.wrap(e);
+        } else {
+            Kwics kwics = singleHit.kwics(wordsAroundHit);
+            Kwic c = kwics.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
+            } else {
+                ds.contextList(c.annotations(), c.tokens());
+            }
         }
         ds.endMap();
     }
