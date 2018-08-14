@@ -32,7 +32,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups implements Iterable<DocGroup>, ResultGroups {
+public class DocGroups implements ResultGroups<DocGroup> {
     Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     List<DocGroup> orderedGroups = new ArrayList<>();

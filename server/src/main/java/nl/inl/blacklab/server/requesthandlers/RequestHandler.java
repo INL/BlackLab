@@ -574,12 +574,12 @@ public abstract class RequestHandler {
      * @param window our viewing window
      * @throws BlsException
      */
-    protected void addSummaryCommonFields(
+    protected <T> void addSummaryCommonFields(
             DataStream ds,
             SearchParameters searchParam,
             double searchTime,
             double countTime,
-            ResultGroups groups,
+            ResultGroups<T> groups,
             WindowStats window
             ) throws BlsException {
 

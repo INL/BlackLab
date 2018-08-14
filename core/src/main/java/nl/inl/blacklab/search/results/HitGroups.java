@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.GroupProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -30,7 +30,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * access to the hits. Note that this means that all hits found must be
  * retrieved, which may be unfeasible for large results sets.
  */
-public abstract class HitGroups implements Iterable<HitGroup>, ResultGroups {
+public abstract class HitGroups implements ResultGroups<HitGroup> {
     QueryInfo queryInfo;
 
     protected HitProperty criteria;

@@ -43,7 +43,7 @@ import nl.inl.util.ThreadPauser;
 /**
  * A list of DocResult objects (document-level query results).
  */
-public class DocResults implements Iterable<DocResult> {
+public class DocResults implements ResultGroups<DocResult> {
     
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
@@ -163,6 +163,11 @@ public class DocResults implements Iterable<DocResult> {
     private HitPropertyDoc groupByDoc;
 
     Lock ensureResultsReadLock;
+
+    /** Largest number of hits in a single document */ 
+    private int mostHitsInDocument = 0;
+
+    private int totalHits = 0;
     
     DocResults(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
@@ -227,6 +232,7 @@ public class DocResults implements Iterable<DocResult> {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
 
+    @Override
     public QueryInfo queryInfo() {
         return queryInfo;
     }
@@ -410,6 +416,9 @@ public class DocResults implements Iterable<DocResult> {
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits) {
         DocResult docResult = new DocResult(doc, docHits);
         results.add(docResult);
+        if (docHits.size() > mostHitsInDocument)
+            mostHitsInDocument = docHits.size();
+        totalHits += docHits.size();
     }
 
     /**
@@ -536,5 +545,20 @@ public class DocResults implements Iterable<DocResult> {
 
     public WindowStats windowStats() {
         return null;
+    }
+
+    @Override
+    public int getTotalResults() {
+        return totalHits;
+    }
+
+    @Override
+    public int getLargestGroupSize() {
+        return mostHitsInDocument;
+    }
+
+    @Override
+    public int numberOfGroups() {
+        return docsProcessedTotal();
     }
 }

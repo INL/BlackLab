@@ -42,6 +42,9 @@ Reasoning behind specific design choices / implementation notes:
 
 Results
 - DocResults, Groups moeten ook threadPauser hebben
+  DocResultsWindow elimineren;
+  mogelijkheid om te sampelen/filteren toevoegen aan docresultswindow
+  window/sample/filteren/groeperen toevoegen aan groups
 
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
   PROBLEM: DocResults relies on the fact that results are sorted by document.

@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -201,7 +200,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
         Hits totalHits = originalHitsSearch == null ? null : originalHitsSearch.getHits(); //docResults.originalHits();
-        addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (ResultGroups) null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);

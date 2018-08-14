@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.results;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
-public interface ResultGroups {
+public interface ResultGroups<T> extends Iterable<T> {
     /**
      * Get the total number of results that were grouped
      *

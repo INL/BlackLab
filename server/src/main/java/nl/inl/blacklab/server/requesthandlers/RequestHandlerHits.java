@@ -13,8 +13,8 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -25,7 +25,6 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -176,7 +175,7 @@ public class RequestHandlerHits extends RequestHandler {
 
             // TODO timing is now broken because we always retrieve total and use a window on top of it,
             // so we can no longer differentiate the total time from the time to retrieve the requested window
-            addSummaryCommonFields(ds, searchParam, job.userWaitTime(), totalTime, (ResultGroups) null, window.windowStats());
+            addSummaryCommonFields(ds, searchParam, job.userWaitTime(), totalTime, null, window.windowStats());
             addNumberOfResultsSummaryTotalHits(ds, total, totalTime < 0);
             if (includeTokenCount)
                 ds.entry("tokensInMatchingDocuments", totalTokens);
