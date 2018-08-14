@@ -6,7 +6,7 @@ import nl.inl.util.StringUtil;
  * Takes care of serializing/deserializing Hit/DocProperties and -Values with
  * proper escaping.
  */
-public final class PropValSerializeUtil {
+public final class PropertySerializeUtil {
 
     private final static String PART_SEPARATOR = ":";
 
@@ -16,7 +16,7 @@ public final class PropValSerializeUtil {
 
     private final static String MULTIPLE_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(MULTIPLE_SEPARATOR);
 
-    private PropValSerializeUtil() {
+    private PropertySerializeUtil() {
     }
 
     public static String escapePart(String part) {
@@ -68,7 +68,7 @@ public final class PropValSerializeUtil {
     }
 
     public static boolean isMultiple(String serialized) {
-        return serialized.contains(PropValSerializeUtil.MULTIPLE_SEPARATOR);
+        return serialized.contains(PropertySerializeUtil.MULTIPLE_SEPARATOR);
     }
 
 }

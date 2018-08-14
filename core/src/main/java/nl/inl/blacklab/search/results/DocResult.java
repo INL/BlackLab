@@ -15,23 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import org.apache.lucene.document.Document;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 
 /**
  * A document result, containing a Lucene document from the index and a
  * collection of Hit objects.
  */
-public class DocResult {
-    private int docId;
-
-    private Hits hits;
-
+public class DocResult extends HitGroup {
+    
     private float score;
 
-    public DocResult(QueryInfo queryInfo, int docId, float score) {
-        this.docId = docId;
+    public DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score) {
+        super(queryInfo, doc);
         this.score = score;
-        hits = Hits.emptyList(queryInfo);
     }
 
     /**
@@ -40,47 +36,18 @@ public class DocResult {
      * @param doc the Lucene document id
      * @param docHits hits in the document
      */
-    public DocResult(int doc, Hits docHits) {
-        this.docId = doc;
+    public DocResult(PropertyValueDoc doc, Hits docHits) {
+        super(doc, docHits);
         this.score = 0.0f;
-        hits = docHits;
-    }
-
-    public Document getDocument() {
-        return hits.index().doc(docId).luceneDoc();
-    }
-
-    /**
-     * Get the number of hits in this document.
-     * 
-     * @return the number of hits in the document
-     */
-    public int getNumberOfHits() {
-        return hits.size();
-    }
-
-    /**
-     * Get some or all hits in this document.
-     * 
-     * @param max the maximum number of hits we want, or 0 if we want all hits. Only
-     *            use 0 if you really want all the hits. For example, if making
-     *            concordances, it is more efficient to retrieve only some of the
-     *            hits, so BlackLab won't fetch context for all the hits, even the
-     *            ones you don't want concordances for.
-     * @return the hits
-     */
-    public Hits getHits(int max) {
-        if (max <= 0)
-            return hits;
-        return hits.window(0, max);
-    }
-
-    public int getDocId() {
-        return docId;
     }
 
     public float getScore() {
         return score;
+    }
+    
+    @Override
+    public PropertyValueDoc getIdentity() {
+        return (PropertyValueDoc)super.getIdentity();
     }
 
 }

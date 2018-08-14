@@ -44,6 +44,19 @@ public class HitGroup extends Group {
         results = Hits.fromList(queryInfo, hits);
     }
 
+    /**
+     * Wraps a list of Hit objects with the HitGroup interface.
+     *
+     * NOTE: the list is not copied!
+     *
+     * @param queryInfo query info
+     * @param hits the hits
+     */
+    HitGroup(PropertyValue groupIdentity, Hits hits) {
+        super(groupIdentity);
+        results = hits;
+    }
+
     public Hits getHits() {
         return results;
     }

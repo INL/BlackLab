@@ -14,13 +14,13 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -220,12 +220,12 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.startItem("doc").startMap();
 
             // Find pid
-            Document document = result.getDocument();
-            String pid = getDocumentPid(blIndex, result.getDocId(), document);
+            Document document = result.getIdentity().getValue().luceneDoc();
+            String pid = getDocumentPid(blIndex, result.getIdentity().getValue().id(), document);
 
             // Combine all
             ds.entry("docPid", pid);
-            int numHits = result.getNumberOfHits();
+            int numHits = result.size();
             if (numHits > 0)
                 ds.entry("numberOfHits", numHits);
 
@@ -235,7 +235,7 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.endEntry();
 
             // Snippets
-            Hits hits2 = result.getHits(5); // TODO: make num. snippets configurable
+            Hits hits2 = result.getHits().window(0, 5); // TODO: make num. snippets configurable
             if (hits2.hitsProcessedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
                 ContextSettings contextSettings = searchParam.getContextSettings();

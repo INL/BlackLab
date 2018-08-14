@@ -55,7 +55,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @return the HitProperty object, or null if it could not be deserialized
      */
     public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
-        if (PropValSerializeUtil.isMultiple(serialized)) {
+        if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {
                 reverse = true;
@@ -67,7 +67,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             return result;
         }
     
-        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
+        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         boolean reverse = false;
         if (type.length() > 0 && type.charAt(0) == '-') {
@@ -111,7 +111,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             result = HitPropertyHitPosition.deserializeProp();
             break;
         case 10:
-            result = HitPropertyDoc.deserializeProp();
+            result = HitPropertyDoc.deserializeProp(index);
             break;
         default:
             logger.debug("Unknown HitProperty '" + type + "'");

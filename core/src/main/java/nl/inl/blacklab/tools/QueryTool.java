@@ -60,6 +60,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -1445,13 +1446,13 @@ public class QueryTool {
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.windowStats().first() + 1;
         for (DocResult result : window) {
-            int id = result.getDocId();
-            Document d = index.doc(id).luceneDoc();
+            Doc doc = result.getIdentity().getValue();
+            Document d = doc.luceneDoc();
             String title = d.get(titleField.name());
             if (title == null)
-                title = "(doc #" + id + ", no " + titleField.name() + " given)";
+                title = "(doc #" + doc.id() + ", no " + titleField.name() + " given)";
             else
-                title = title + " (doc #" + id + ")";
+                title = title + " (doc #" + doc.id() + ")";
             outprintf("%4d. %s\n", hitNr, title);
             hitNr++;
         }

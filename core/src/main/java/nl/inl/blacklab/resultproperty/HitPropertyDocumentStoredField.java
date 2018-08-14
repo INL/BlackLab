@@ -105,6 +105,6 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropValSerializeUtil.combineParts("field", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts("field", fieldName);
     }
 }

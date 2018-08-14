@@ -44,7 +44,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
     }
 
     public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
+        String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
@@ -62,7 +62,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
     @Override
     public String serialize() {
         String token = terms.serializeTerm(valueTokenId);
-        return PropValSerializeUtil.combineParts(
+        return PropertySerializeUtil.combineParts(
                 "cwo", annotation.name(),
                 sensitivity.luceneFieldSuffix(),
                 token);

@@ -41,7 +41,7 @@ public class PropertyValueString extends PropertyValue {
 
     @Override
     public String serialize() {
-        return PropValSerializeUtil.combineParts("str", value);
+        return PropertySerializeUtil.combineParts("str", value);
     }
 
     @Override

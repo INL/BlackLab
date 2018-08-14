@@ -34,6 +34,8 @@ import org.apache.lucene.search.SimpleCollector;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPauser;
@@ -63,7 +65,7 @@ public class DocResults implements Iterable<DocResult> {
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
-            results.add(new DocResult(queryInfo, globalDocId, 0.0f));
+            results.add(new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f));
         }
 
         @Override
@@ -121,7 +123,7 @@ public class DocResults implements Iterable<DocResult> {
                     if (docId == DocIdSetIterator.NO_MORE_DOCS)
                         break;
     
-                    DocResult dr = new DocResult(queryInfo, docId, scorer.score());
+                    DocResult dr = new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(docId)), scorer.score());
                     results.add(dr);
                 }
             } catch (IOException e) {
@@ -152,22 +154,23 @@ public class DocResults implements Iterable<DocResult> {
      * id of the partial doc we've done (because we stopped iterating through the
      * Hits), or -1 for no partial doc.
      */
-    private int partialDocId = -1;
+    private PropertyValueDoc partialDocId = null;
 
     private QueryInfo queryInfo;
 
     private ThreadPauser threadPauser;
 
+    private HitPropertyDoc groupByDoc;
+
+    Lock ensureResultsReadLock;
+    
     DocResults(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
         results = new ArrayList<>();
         threadPauser = new ThreadPauser();
+        groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
     
-    public ThreadPauser threadPauser() {
-        return threadPauser;
-    }
-
     /**
      * Construct per-document results objects from a Hits object
      * 
@@ -178,6 +181,7 @@ public class DocResults implements Iterable<DocResult> {
         this(queryInfo);
         this.sourceHitsIterator = hits.iterator();
         partialDocHits = null;
+        ensureResultsReadLock = new ReentrantLock();
     }
 
     /**
@@ -214,7 +218,11 @@ public class DocResults implements Iterable<DocResult> {
     DocResults(QueryInfo queryInfo, Query query) {
         this(queryInfo, resultsFromQuery(queryInfo, query));
     }
-    
+
+    public ThreadPauser threadPauser() {
+        return threadPauser;
+    }
+
     boolean sourceHitsFullyRead() {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
@@ -338,8 +346,6 @@ public class DocResults implements Iterable<DocResult> {
         ensureResultsRead(-1);
     }
 
-    Lock ensureResultsReadLock = new ReentrantLock();
-
     /**
      * If we still have only partially read our Hits object, read some more of it
      * and add the hits.
@@ -365,20 +371,21 @@ public class DocResults implements Iterable<DocResult> {
 
         try {
             // Fill list of document results
-            int doc = partialDocId;
+            PropertyValueDoc doc = partialDocId;
             List<Hit> docHits = partialDocHits;
-            partialDocId = -1;
+            partialDocId = null;
             partialDocHits = null;
 
             while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
                 Hit hit = sourceHitsIterator.next();
-                if (hit.doc() != doc) {
+                PropertyValueDoc val = groupByDoc.get(hit);
+                if (!val.equals(doc)) {
                     if (docHits != null) {
                         Hits hits = Hits.fromList(queryInfo, docHits);
                         addDocResultToList(doc, hits);
                     }
-                    doc = hit.doc();
+                    doc = val;
                     docHits = new ArrayList<>();
                 }
                 docHits.add(hit);
@@ -400,7 +407,7 @@ public class DocResults implements Iterable<DocResult> {
         }
     }
 
-    private void addDocResultToList(int doc, Hits docHits) {
+    private void addDocResultToList(PropertyValueDoc doc, Hits docHits) {
         DocResult docResult = new DocResult(doc, docHits);
         results.add(docResult);
     }

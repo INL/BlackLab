@@ -51,7 +51,7 @@ public class PropertyValueInt extends PropertyValue {
 
     @Override
     public String serialize() {
-        return PropValSerializeUtil.combineParts("int", Integer.toString(value));
+        return PropertySerializeUtil.combineParts("int", Integer.toString(value));
     }
 
     @Override

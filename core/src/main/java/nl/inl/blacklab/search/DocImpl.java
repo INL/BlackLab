@@ -29,7 +29,7 @@ public class DocImpl implements Doc {
     /** Lucene document (if cached) */
     private Document document;
     
-    DocImpl(BlackLabIndex index, int id) {
+    public DocImpl(BlackLabIndex index, int id) {
         this.index = index;
         this.id = id;
     }

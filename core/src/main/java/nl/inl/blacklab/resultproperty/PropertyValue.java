@@ -46,10 +46,10 @@ public abstract class PropertyValue implements Comparable<Object> {
      */
     public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
 
-        if (PropValSerializeUtil.isMultiple(serialized))
+        if (PropertySerializeUtil.isMultiple(serialized))
             return PropertyValueMultiple.deserialize(index, field, serialized);
 
-        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
+        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
         List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str", "doc");

@@ -34,7 +34,7 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     public static PropertyValueMultiple deserialize(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] strValues = PropValSerializeUtil.splitMultiple(info);
+        String[] strValues = PropertySerializeUtil.splitMultiple(info);
         PropertyValue[] values = new PropertyValue[strValues.length];
         int i = 0;
         for (String strValue : strValues) {
@@ -63,7 +63,7 @@ public class PropertyValueMultiple extends PropertyValue {
         for (int i = 0; i < value.length; i++) {
             valuesSerialized[i] = value[i].serialize();
         }
-        return PropValSerializeUtil.combineMultiple(valuesSerialized);
+        return PropertySerializeUtil.combineMultiple(valuesSerialized);
     }
 
     @Override

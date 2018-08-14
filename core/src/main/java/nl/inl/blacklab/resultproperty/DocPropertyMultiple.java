@@ -125,7 +125,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         for (int i = 0; i < criteria.size(); i++) {
             values[i] = criteria.get(i).serialize();
         }
-        return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
 
     @Override
@@ -138,7 +138,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     public static DocPropertyMultiple deserialize(String info) {
-        String[] strValues = PropValSerializeUtil.splitMultiple(info);
+        String[] strValues = PropertySerializeUtil.splitMultiple(info);
         DocProperty[] values = new DocProperty[strValues.length];
         int i = 0;
         for (String strValue : strValues) {

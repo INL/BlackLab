@@ -39,7 +39,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        return new PropertyValueInt(result.getNumberOfHits());
+        return new PropertyValueInt(result.size());
     }
 
     /**
@@ -52,8 +52,8 @@ public class DocPropertyNumberOfHits extends DocProperty {
     @Override
     public int compare(DocResult a, DocResult b) {
         if (reverse)
-            return b.getNumberOfHits() - a.getNumberOfHits();
-        return a.getNumberOfHits() - b.getNumberOfHits();
+            return b.size() - a.size();
+        return a.size() - b.size();
     }
 
     @Override

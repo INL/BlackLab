@@ -27,10 +27,10 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocCount;
 import nl.inl.blacklab.search.results.DocCounts;
-import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -556,8 +556,7 @@ public abstract class RequestHandler {
      * @return the pid string (or Lucene doc id in string form if index has no pid
      *         field)
      */
-    public static String getDocumentPid(BlackLabIndex index, int luceneDocId,
-            Document document) {
+    public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
         MetadataField pidField = index.metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
         if (pidField == null)
             return Integer.toString(luceneDocId);
@@ -646,7 +645,7 @@ public abstract class RequestHandler {
             // so we have to iterate over the DocResults and sum up the hits ourselves.
             int numberOfHits = 0;
             for (DocResult dr : docResults) {
-                numberOfHits += dr.getNumberOfHits();
+                numberOfHits += dr.size();
             }
             ds.entry("numberOfHits", numberOfHits)
                     .entry("numberOfHitsRetrieved", numberOfHits);

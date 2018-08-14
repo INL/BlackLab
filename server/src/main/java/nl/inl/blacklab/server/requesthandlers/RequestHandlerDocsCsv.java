@@ -182,16 +182,16 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
             int subtractClosingToken = 1;
             for (DocResult docResult : docs) {
-                Document doc = docResult.getDocument();
+                Document doc = docResult.getIdentity().getValue().luceneDoc();
                 row.clear();
 
                 // Pid field, use lucene doc id if not provided
                 if (pidField != null && doc.get(pidField.name()) != null)
                     row.add(doc.get(pidField.name()));
                 else
-                    row.add(Integer.toString(docResult.getDocId()));
+                    row.add(Integer.toString(docResult.getIdentity().getValue().id()));
 
-                row.add(Integer.toString(docResult.getNumberOfHits()));
+                row.add(Integer.toString(docResult.size()));
 
                 // Length field, if applicable
                 if (tokenLengthField != null)

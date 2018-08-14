@@ -119,7 +119,7 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     static HitPropertyContextWords deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
+        String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
@@ -352,7 +352,7 @@ public class HitPropertyContextWords extends HitProperty {
         String thePropName = parts.length > 1 ? parts[1] : "";
         String contextWordSpec = serializeContextWordSpec();
         return serializeReverse()
-                + PropValSerializeUtil.combineParts("context", thePropName, sensitivity.luceneFieldSuffix(), contextWordSpec);
+                + PropertySerializeUtil.combineParts("context", thePropName, sensitivity.luceneFieldSuffix(), contextWordSpec);
     }
 
     /**

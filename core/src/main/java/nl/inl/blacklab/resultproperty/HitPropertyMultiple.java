@@ -36,7 +36,7 @@ import nl.inl.blacklab.search.results.Hits;
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
     
     static HitPropertyMultiple deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
-        String[] strValues = PropValSerializeUtil.splitMultiple(info);
+        String[] strValues = PropertySerializeUtil.splitMultiple(info);
         HitProperty[] values = new HitProperty[strValues.length];
         int i = 0;
         for (String strValue: strValues) {
@@ -219,6 +219,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         for (int i = 0; i < properties.size(); i++) {
             values[i] = properties.get(i).serialize();
         }
-        return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
 }

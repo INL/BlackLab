@@ -25,8 +25,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyDoc extends HitProperty {
 
-    static HitPropertyDoc deserializeProp() {
-        return new HitPropertyDoc();
+    static HitPropertyDoc deserializeProp(BlackLabIndex index) {
+        return new HitPropertyDoc(index);
     }
 
     private BlackLabIndex index;
@@ -36,8 +36,9 @@ public class HitPropertyDoc extends HitProperty {
         this.index = hits.index();
     }
 
-    public HitPropertyDoc() {
+    public HitPropertyDoc(BlackLabIndex index) {
         super();
+        this.index = index;
     }
 
     @Override

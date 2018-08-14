@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -69,7 +70,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public Doc doc(int docId) {
-        throw new UnsupportedOperationException();
+        return new DocImpl(this, docId);
     }
 
     @Override

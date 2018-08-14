@@ -80,7 +80,7 @@ public abstract class DocProperty {
     }
 
     public static DocProperty deserialize(String serialized) {
-        if (PropValSerializeUtil.isMultiple(serialized)) {
+        if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {
                 reverse = true;
@@ -98,7 +98,7 @@ public abstract class DocProperty {
             serialized = serialized.substring(1);
         }
 
-        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
+        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
         List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");

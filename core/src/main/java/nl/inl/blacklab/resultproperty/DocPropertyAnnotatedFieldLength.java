@@ -50,7 +50,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     public PropertyValueInt get(DocResult result) {
         try {
             int subtractClosingToken = 1;
-            int length = Integer.parseInt(result.getDocument().get(fieldName)) - subtractClosingToken;
+            int length = Integer.parseInt(result.getIdentity().getValue().luceneDoc().get(fieldName)) - subtractClosingToken;
             return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
             return new PropertyValueInt(0);
@@ -67,8 +67,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     @Override
     public int compare(DocResult a, DocResult b) {
         try {
-            int ia = Integer.parseInt(a.getDocument().get(fieldName));
-            int ib = Integer.parseInt(b.getDocument().get(fieldName));
+            int ia = Integer.parseInt(a.getIdentity().getValue().luceneDoc().get(fieldName));
+            int ib = Integer.parseInt(b.getIdentity().getValue().luceneDoc().get(fieldName));
             return reverse ? ib - ia : ia - ib;
         } catch (NumberFormatException e) {
             return 0;
@@ -86,7 +86,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropValSerializeUtil.combineParts("fieldlen", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts("fieldlen", fieldName);
     }
 
     @Override

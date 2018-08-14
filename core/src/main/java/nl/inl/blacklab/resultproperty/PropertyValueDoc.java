@@ -33,7 +33,7 @@ public class PropertyValueDoc extends PropertyValue {
         if (obj == this)
             return true;
         if (obj instanceof PropertyValueDoc) {
-            return value == ((PropertyValueDoc) obj).value;
+            return value.id() == ((PropertyValueDoc) obj).value.id();
         }
         return false;
     }
@@ -55,7 +55,7 @@ public class PropertyValueDoc extends PropertyValue {
 
     @Override
     public String serialize() {
-        return PropValSerializeUtil.combineParts("doc", Integer.toString(value.id()));
+        return PropertySerializeUtil.combineParts("doc", Integer.toString(value.id()));
     }
 
     @Override

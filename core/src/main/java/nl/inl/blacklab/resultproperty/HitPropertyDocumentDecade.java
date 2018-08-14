@@ -122,6 +122,6 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts("decade", fieldName);
     }
 }

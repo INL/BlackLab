@@ -156,7 +156,7 @@ public class BlsUtils {
                 break;
             }
         }
-        return docResults.get(0).getDocId();
+        return docResults.get(0).getIdentity().getValue().id();
     }
 
     // Copied from Apache Commons

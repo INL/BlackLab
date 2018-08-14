@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.results.Hits;
 public abstract class HitPropertyContextBase extends HitProperty {
 
     protected static <T extends HitPropertyContextBase> T deserializeProp(Class<T> cls, BlackLabIndex index, AnnotatedField field, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
+        String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         if (propName.length() == 0)
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
@@ -115,6 +115,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
     @Override
     public String serialize() {
         return serializeReverse()
-                + PropValSerializeUtil.combineParts(serializeName, annotation.name(), sensitivity.luceneFieldSuffix());
+                + PropertySerializeUtil.combineParts(serializeName, annotation.name(), sensitivity.luceneFieldSuffix());
     }
 }
