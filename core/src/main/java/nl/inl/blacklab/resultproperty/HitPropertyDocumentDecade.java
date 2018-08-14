@@ -23,6 +23,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -36,6 +37,10 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     /** The value we store when the decade is unknown */
     public static final int UNKNOWN_VALUE = 10000000;
+
+    static HitPropertyDocumentDecade deserializeProp(BlackLabIndex index, String info) {
+        return new HitPropertyDocumentDecade(index.metadataField(info));
+    }
 
     IndexReader reader;
 
@@ -125,9 +130,5 @@ public class HitPropertyDocumentDecade extends HitProperty {
     @Override
     public String serialize() {
         return serializeReverse() + PropValSerializeUtil.combineParts("decade", fieldName);
-    }
-
-    public static HitPropertyDocumentDecade deserialize(Hits hits, String info) {
-        return new HitPropertyDocumentDecade(hits.index().metadataField(info));
     }
 }

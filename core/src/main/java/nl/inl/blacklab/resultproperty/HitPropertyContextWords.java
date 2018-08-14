@@ -118,6 +118,69 @@ public class HitPropertyContextWords extends HitProperty {
         }
     }
 
+    static HitPropertyContextWords deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+        String[] parts = PropValSerializeUtil.splitParts(info);
+        String propName = parts[0];
+        if (propName.length() == 0)
+            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
+        List<ContextPart> whichWords = null;
+        if (parts.length > 2)
+            whichWords = parseContextWordSpec(parts[2]);
+        Annotation annotation = field.annotation(propName);
+        return new HitPropertyContextWords(index, annotation, sensitivity, whichWords);
+    }
+
+    /**
+     * Parse context word specification such as "L1-3,R1-3"
+     * 
+     * @param contextWordSpec specification string
+     * @return stretches of context words indicated in the string
+     */
+    private static List<ContextPart> parseContextWordSpec(String contextWordSpec) {
+        List<ContextPart> result = new ArrayList<>();
+        for (String part : contextWordSpec.split("\\s*;\\s*")) {
+            if (part.length() == 0)
+                continue;
+            ContextStart startFrom;
+            switch (part.charAt(0)) {
+            case 'L':
+                startFrom = ContextStart.LEFT_OF_HIT;
+                break;
+            case 'E':
+                startFrom = ContextStart.HIT_TEXT_FROM_END;
+                break;
+            case 'R':
+                startFrom = ContextStart.RIGHT_OF_HIT;
+                break;
+            case 'H':
+            default:
+                startFrom = ContextStart.HIT_TEXT_FROM_START;
+                break;
+            }
+            int firstWord = 0;
+            int lastWord = Integer.MAX_VALUE; // == "as much as possible"
+            if (part.length() > 1) {
+                if (part.contains("-")) {
+                    // Two numbers, or a number followed by a dash ("until end of part")
+                    String[] numbers = part.substring(1).split("\\-");
+                    try {
+                        firstWord = Integer.parseInt(numbers[0]) - 1;
+                        if (numbers.length > 1)
+                            lastWord = Integer.parseInt(numbers[1]) - 1;
+                    } catch (NumberFormatException e) {
+                        // ignore and accept the defaults
+                    }
+                } else {
+                    // Single number: single word
+                    firstWord = lastWord = Integer.parseInt(part.substring(1)) - 1;
+                }
+            }
+            result.add(new ContextPart(startFrom, firstWord, lastWord));
+        }
+        return result;
+    }
+
     private Annotation annotation;
 
     private MatchSensitivity sensitivity;
@@ -311,70 +374,6 @@ public class HitPropertyContextWords extends HitProperty {
             result.append(contextWordPart.toString());
         }
         return result.toString();
-    }
-
-    public static HitPropertyContextWords deserialize(Hits hits, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
-        List<ContextPart> whichWords = null;
-        if (parts.length > 2)
-            whichWords = parseContextWordSpec(parts[2]);
-        Annotation annotation = field.annotation(propName);
-        return new HitPropertyContextWords(hits.index(), annotation, sensitivity, whichWords);
-    }
-
-    /**
-     * Parse context word specification such as "L1-3,R1-3"
-     * 
-     * @param contextWordSpec specification string
-     * @return stretches of context words indicated in the string
-     */
-    private static List<ContextPart> parseContextWordSpec(String contextWordSpec) {
-        List<ContextPart> result = new ArrayList<>();
-        for (String part : contextWordSpec.split("\\s*;\\s*")) {
-            if (part.length() == 0)
-                continue;
-            ContextStart startFrom;
-            switch (part.charAt(0)) {
-            case 'L':
-                startFrom = ContextStart.LEFT_OF_HIT;
-                break;
-            case 'E':
-                startFrom = ContextStart.HIT_TEXT_FROM_END;
-                break;
-            case 'R':
-                startFrom = ContextStart.RIGHT_OF_HIT;
-                break;
-            case 'H':
-            default:
-                startFrom = ContextStart.HIT_TEXT_FROM_START;
-                break;
-            }
-            int firstWord = 0;
-            int lastWord = Integer.MAX_VALUE; // == "as much as possible"
-            if (part.length() > 1) {
-                if (part.contains("-")) {
-                    // Two numbers, or a number followed by a dash ("until end of part")
-                    String[] numbers = part.substring(1).split("\\-");
-                    try {
-                        firstWord = Integer.parseInt(numbers[0]) - 1;
-                        if (numbers.length > 1)
-                            lastWord = Integer.parseInt(numbers[1]) - 1;
-                    } catch (NumberFormatException e) {
-                        // ignore and accept the defaults
-                    }
-                } else {
-                    // Single number: single word
-                    firstWord = lastWord = Integer.parseInt(part.substring(1)) - 1;
-                }
-            }
-            result.add(new ContextPart(startFrom, firstWord, lastWord));
-        }
-        return result;
     }
 
 }

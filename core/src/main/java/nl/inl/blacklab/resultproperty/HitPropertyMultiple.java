@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
@@ -34,6 +35,17 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
     
+    static HitPropertyMultiple deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+        String[] strValues = PropValSerializeUtil.splitMultiple(info);
+        HitProperty[] values = new HitProperty[strValues.length];
+        int i = 0;
+        for (String strValue: strValues) {
+            values[i] = HitProperty.deserialize(index, field, strValue);
+            i++;
+        }
+        return new HitPropertyMultiple(values);
+    }
+
     /** The properties we're combining */
     List<HitProperty> properties;
 
@@ -207,16 +219,5 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             values[i] = properties.get(i).serialize();
         }
         return (reverse ? "-(" : "") + PropValSerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
-    }
-
-    public static HitPropertyMultiple deserialize(Hits hits, String info) {
-        String[] strValues = PropValSerializeUtil.splitMultiple(info);
-        HitProperty[] values = new HitProperty[strValues.length];
-        int i = 0;
-        for (String strValue: strValues) {
-            values[i] = HitProperty.deserialize(hits, strValue);
-            i++;
-        }
-        return new HitPropertyMultiple(values);
     }
 }

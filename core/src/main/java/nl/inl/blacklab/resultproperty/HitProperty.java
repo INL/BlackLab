@@ -27,6 +27,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.CapturedGroupsImpl;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -42,6 +43,86 @@ import nl.inl.blacklab.search.results.HitsList;
  */
 public abstract class HitProperty implements Comparator<Hit>, Serializable {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
+
+    public static HitProperty deserialize(Hits hits, String serialized) {
+        return deserialize(hits.index(), hits.field(), serialized);
+    }
+
+    /**
+     * Convert the String representation of a HitProperty back into the HitProperty
+     * 
+     * @param index our index
+     * @param field field we're searching
+     * @param serialized the serialized object
+     * @return the HitProperty object, or null if it could not be deserialized
+     */
+    public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
+        if (PropValSerializeUtil.isMultiple(serialized)) {
+            boolean reverse = false;
+            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+                reverse = true;
+                serialized = serialized.substring(2, serialized.length() - 1);
+            }
+            HitProperty result = HitPropertyMultiple.deserializeProp(index, field, serialized);
+            if (reverse)
+                result = result.reverse();
+            return result;
+        }
+    
+        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
+        String type = parts[0].toLowerCase();
+        boolean reverse = false;
+        if (type.length() > 0 && type.charAt(0) == '-') {
+            reverse = true;
+            type = type.substring(1);
+        }
+        String info = parts.length > 1 ? parts[1] : "";
+        List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright",
+                "context", "hitposition", "doc");
+        int typeNum = types.indexOf(type);
+        HitProperty result;
+        switch (typeNum) {
+        case 0:
+            result = HitPropertyDocumentDecade.deserializeProp(index, info);
+            break;
+        case 1:
+            result = HitPropertyDocumentId.deserializeProp();
+            break;
+        case 2:
+            result = HitPropertyDocumentStoredField.deserializeProp(info);
+            break;
+        case 3:
+            result = HitPropertyHitText.deserializeProp(index, field, info);
+            break;
+        case 4:
+            result = HitPropertyLeftContext.deserializeProp(index, field, info);
+            break;
+        case 5:
+            result = HitPropertyRightContext.deserializeProp(index, field, info);
+            break;
+        case 6:
+            result = HitPropertyWordLeft.deserializeProp(index, field, info);
+            break;
+        case 7:
+            result = HitPropertyWordRight.deserializeProp(index, field, info);
+            break;
+        case 8:
+            result = HitPropertyContextWords.deserializeProp(index, field, info);
+            break;
+        case 9:
+            result = HitPropertyHitPosition.deserializeProp();
+            break;
+        case 10:
+            result = HitPropertyDoc.deserializeProp();
+            break;
+        default:
+            logger.debug("Unknown HitProperty '" + type + "'");
+            return null;
+        }
+        if (reverse)
+            result = result.reverse();
+        return result;
+    }
 
     /** The Hits object we're looking at */
     protected Hits hits;
@@ -192,82 +273,7 @@ public abstract class HitProperty implements Comparator<Hit>, Serializable {
     protected String serializeReverse() {
         return reverse ? "-" : "";
     }
-
-    /**
-     * Convert the String representation of a HitProperty back into the HitProperty
-     * 
-     * @param hits our hits object (i.e. what we're trying to sort or group)
-     * @param serialized the serialized object
-     * @return the HitProperty object, or null if it could not be deserialized
-     */
-    public static HitProperty deserialize(Hits hits, String serialized) {
-        if (PropValSerializeUtil.isMultiple(serialized)) {
-            boolean reverse = false;
-            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
-                reverse = true;
-                serialized = serialized.substring(2, serialized.length() - 1);
-            }
-            HitProperty result = HitPropertyMultiple.deserialize(hits, serialized);
-            if (reverse)
-                result = result.reverse();
-            return result;
-        }
-
-        String[] parts = PropValSerializeUtil.splitPartFirstRest(serialized);
-        String type = parts[0].toLowerCase();
-        boolean reverse = false;
-        if (type.length() > 0 && type.charAt(0) == '-') {
-            reverse = true;
-            type = type.substring(1);
-        }
-        String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright",
-                "context", "hitposition", "doc");
-        int typeNum = types.indexOf(type);
-        HitProperty result;
-        switch (typeNum) {
-        case 0:
-            result = HitPropertyDocumentDecade.deserialize(hits, info);
-            break;
-        case 1:
-            result = HitPropertyDocumentId.deserialize(hits);
-            break;
-        case 2:
-            result = HitPropertyDocumentStoredField.deserialize(hits, info);
-            break;
-        case 3:
-            result = HitPropertyHitText.deserialize(hits, info);
-            break;
-        case 4:
-            result = HitPropertyLeftContext.deserialize(hits, info);
-            break;
-        case 5:
-            result = HitPropertyRightContext.deserialize(hits, info);
-            break;
-        case 6:
-            result = HitPropertyWordLeft.deserialize(hits, info);
-            break;
-        case 7:
-            result = HitPropertyWordRight.deserialize(hits, info);
-            break;
-        case 8:
-            result = HitPropertyContextWords.deserialize(hits, info);
-            break;
-        case 9:
-            result = HitPropertyHitPosition.deserialize(hits);
-            break;
-        case 10:
-            result = HitPropertyDoc.deserialize(hits);
-            break;
-        default:
-            logger.debug("Unknown HitProperty '" + type + "'");
-            return null;
-        }
-        if (reverse)
-            result = result.reverse();
-        return result;
-    }
-
+    
     /**
      * Reverse the sort order of this hit property.
      * 

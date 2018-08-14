@@ -36,6 +36,25 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public abstract class HitPropertyContextBase extends HitProperty {
 
+    protected static <T extends HitPropertyContextBase> T deserializeProp(Class<T> cls, BlackLabIndex index, AnnotatedField field, String info) {
+        String[] parts = PropValSerializeUtil.splitParts(info);
+        String propName = parts[0];
+        if (propName.length() == 0)
+            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
+                : MatchSensitivity.SENSITIVE;
+        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
+                : index.defaultContextSize();
+        Annotation annotation = field.annotation(propName);
+        try {
+            Constructor<T> ctor = cls.getConstructor(Hits.class, Annotation.class, MatchSensitivity.class,
+                    ContextSize.class);
+            return ctor.newInstance(index, annotation, sensitivity, contextSize);
+        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
+            throw new BlackLabRuntimeException("Couldn't deserialize hit property: " + cls.getName() + ":" + info, e);
+        }
+    }
+
     protected Terms terms;
 
     protected Annotation annotation;
@@ -98,25 +117,5 @@ public abstract class HitPropertyContextBase extends HitProperty {
     public String serialize() {
         return serializeReverse()
                 + PropValSerializeUtil.combineParts(serializeName, annotation.name(), sensitivity.luceneFieldSuffix());
-    }
-
-    public static <T extends HitPropertyContextBase> T deserialize(Class<T> cls, Hits hits, String info) {
-        String[] parts = PropValSerializeUtil.splitParts(info);
-        AnnotatedField field = hits.field();
-        String propName = parts[0];
-        if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
-        MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
-                : MatchSensitivity.SENSITIVE;
-        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
-                : hits.index().defaultContextSize();
-        Annotation annotation = field.annotation(propName);
-        try {
-            Constructor<T> ctor = cls.getConstructor(Hits.class, Annotation.class, MatchSensitivity.class,
-                    ContextSize.class);
-            return ctor.newInstance(hits, annotation, sensitivity, contextSize);
-        } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
-            throw new BlackLabRuntimeException("Couldn't deserialize hit property: " + cls.getName() + ":" + info, e);
-        }
     }
 }

@@ -28,6 +28,10 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyDoc extends HitProperty {
 
+    static HitPropertyDoc deserializeProp() {
+        return new HitPropertyDoc();
+    }
+
     private BlackLabIndex index;
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
@@ -67,9 +71,5 @@ public class HitPropertyDoc extends HitProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "doc";
-    }
-
-    public static HitPropertyDoc deserialize(Hits hits) {
-        return new HitPropertyDoc();
     }
 }

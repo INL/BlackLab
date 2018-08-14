@@ -32,6 +32,11 @@ import nl.inl.blacklab.search.results.Hits;
  * document.
  */
 public class HitPropertyDocumentStoredField extends HitProperty {
+    
+    static HitPropertyDocumentStoredField deserializeProp(String info) {
+        return new HitPropertyDocumentStoredField(info);
+    }
+
     IndexReader reader;
 
     String fieldName;
@@ -108,9 +113,5 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     @Override
     public String serialize() {
         return serializeReverse() + PropValSerializeUtil.combineParts("field", fieldName);
-    }
-
-    public static HitPropertyDocumentStoredField deserialize(Hits hits, String info) {
-        return new HitPropertyDocumentStoredField(info);
     }
 }

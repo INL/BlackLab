@@ -28,6 +28,10 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyHitPosition extends HitProperty {
 
+    static HitPropertyHitPosition deserializeProp() {
+        return new HitPropertyHitPosition();
+    }
+
     HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
     }
@@ -66,9 +70,5 @@ public class HitPropertyHitPosition extends HitProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "hitposition";
-    }
-
-    public static HitPropertyHitPosition deserialize(Hits hits) {
-        return new HitPropertyHitPosition();
     }
 }

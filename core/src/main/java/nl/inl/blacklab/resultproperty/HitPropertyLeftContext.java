@@ -16,6 +16,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -29,8 +30,8 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyLeftContext extends HitPropertyContextBase {
 
-    public static HitPropertyLeftContext deserialize(Hits hits, String info) {
-        return deserialize(HitPropertyLeftContext.class, hits, info);
+    static HitPropertyLeftContext deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+        return deserializeProp(HitPropertyLeftContext.class, index, field, info);
     }
 
     HitPropertyLeftContext(HitPropertyLeftContext prop, Hits hits, Contexts contexts, boolean invert) {

@@ -56,7 +56,7 @@ public class JobHitsFiltered extends JobWithHits {
         // Now, filter the hits.
         Hits hitsUnfiltered = ((JobWithHits) inputJob).getHits();
         HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
-        HitProperty prop = HitProperty.deserialize(hitsUnfiltered, filterSett.getProperty());
+        HitProperty prop = HitProperty.deserialize(hits, filterSett.getProperty());
         HitPropValue value = HitPropValue.deserialize(hitsUnfiltered, filterSett.getValue());
         if (prop == null || value == null) {
             throw new BadRequest("ERROR_IN_HITFILTER", "Incorrect hit filter property of value specified.");
