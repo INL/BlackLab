@@ -18,6 +18,15 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.DocGroup;
 
 public class DocGroupPropertySize extends DocGroupProperty {
+    
+    DocGroupPropertySize(DocGroupPropertySize prop, boolean invert) {
+        super(prop, invert);
+    }
+    
+    public DocGroupPropertySize() {
+        super();
+    }
+    
     @Override
     public HitPropValueInt get(DocGroup result) {
         return new HitPropValueInt(result.size());
@@ -36,5 +45,10 @@ public class DocGroupPropertySize extends DocGroupProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "size";
+    }
+
+    @Override
+    public DocGroupProperty reverse() {
+        return new DocGroupPropertySize(this, true);
     }
 }

@@ -18,6 +18,15 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.DocGroup;
 
 public class DocGroupPropertyIdentity extends DocGroupProperty {
+    
+    DocGroupPropertyIdentity(DocGroupPropertyIdentity prop, boolean invert) {
+        super(prop, invert);
+    }
+    
+    public DocGroupPropertyIdentity() {
+        super();
+    }
+    
     @Override
     public HitPropValue get(DocGroup result) {
         return result.getIdentity();
@@ -33,5 +42,10 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "identity";
+    }
+
+    @Override
+    public DocGroupProperty reverse() {
+        return new DocGroupPropertyIdentity(this, true);
     }
 }

@@ -36,7 +36,15 @@ public abstract class DocGroupProperty {
     }
 
     /** Reverse comparison result or not? */
-    protected boolean reverse = false;
+    protected boolean reverse;
+    
+    DocGroupProperty(DocGroupProperty prop, boolean invert) {
+        this.reverse = invert ? !prop.reverse : prop.reverse;
+    }
+    
+    public DocGroupProperty() {
+        this.reverse = false;
+    }
 
     public abstract HitPropValue get(DocGroup result);
 
@@ -75,7 +83,8 @@ public abstract class DocGroupProperty {
             result = propIdentity;
         else
             result = propSize;
-        result.setReverse(reverse);
+        if (reverse)
+            result = result.reverse();
         return result;
     }
 
@@ -89,13 +98,11 @@ public abstract class DocGroupProperty {
     }
 
     /**
-     * Set whether to reverse the comparison.
+     * Reverse the comparison.
      * 
-     * @param reverse if true, reverses comparison
+     * @return doc group property with reversed comparison 
      */
-    public void setReverse(boolean reverse) {
-        this.reverse = reverse;
-    }
+    public abstract DocGroupProperty reverse();
 
     @Override
     public String toString() {
