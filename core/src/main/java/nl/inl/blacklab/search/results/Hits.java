@@ -112,7 +112,7 @@ public interface Hits extends Iterable<Hit> {
      * @return a HitGroups object representing the grouped hits
      */
     default HitGroups groupedBy(final HitProperty criteria) {
-        return ResultsGrouper.fromHits(this, criteria);
+        return HitGroupsImpl.fromHits(this, criteria);
     }
     
     /**

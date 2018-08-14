@@ -35,14 +35,13 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
-import nl.inl.blacklab.search.Pausible;
 import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPauser;
 
 /**
  * A list of DocResult objects (document-level query results).
  */
-public class DocResults implements Iterable<DocResult>, Pausible {
+public class DocResults implements Iterable<DocResult> {
     
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
@@ -163,6 +162,10 @@ public class DocResults implements Iterable<DocResult>, Pausible {
         this.queryInfo = queryInfo;
         results = new ArrayList<>();
         threadPauser = new ThreadPauser();
+    }
+    
+    public ThreadPauser threadPauser() {
+        return threadPauser;
     }
 
     /**
@@ -526,15 +529,5 @@ public class DocResults implements Iterable<DocResult>, Pausible {
 
     public WindowStats windowStats() {
         return null;
-    }
-
-    @Override
-    public void pause(boolean pause) {
-        threadPauser.pause(pause);
-    }
-
-    @Override
-    public boolean isPaused() {
-        return threadPauser.isPaused();
     }
 }

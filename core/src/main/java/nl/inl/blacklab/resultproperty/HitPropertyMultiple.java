@@ -55,11 +55,23 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** Which of the contexts do the individual properties need? */
     Map<HitProperty, List<Integer>> contextIndicesPerProperty;
     
-    public HitPropertyMultiple(HitPropertyMultiple prop, List<HitProperty> criteria, boolean invert) {
-        super(prop, null, null, invert);
-        this.properties = criteria;
-        this.contextNeeded = prop.contextNeeded;
-        this.contextIndicesPerProperty = prop.contextIndicesPerProperty;
+    HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
+        super(mprop, null, null, invert);
+        int n = mprop.properties.size();
+        this.contextNeeded = mprop.contextNeeded;
+        this.properties = new ArrayList<>();
+        this.contextIndicesPerProperty = new HashMap<>();
+        for (int i = 0; i < n; i++) {
+            HitProperty prop = mprop.properties.get(i);
+            HitProperty nprop = prop.copyWith(newHits, contexts);
+            if (invert)
+                nprop = nprop.reverse();
+            List<Integer> indices = mprop.contextIndicesPerProperty.get(prop);
+            if (indices != null) {
+                contextIndicesPerProperty.put(nprop, indices);
+            }
+            this.properties.add(nprop);
+        }
     }
 
     /**
@@ -116,16 +128,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
-        int n = properties.size();
-        HitProperty[] newCriteria = new HitProperty[n];
-        for (int i = 0; i < n; i++) {
-            HitProperty prop = properties.get(i);
-            newCriteria[i] = prop.copyWith(newHits, contexts);
-            List<Integer> indices = contextIndicesPerProperty.get(prop);
-            if (indices != null)
-                newCriteria[i].setContextIndices(indices);
-        }
-        return new HitPropertyMultiple(invert ? !reverse : reverse, newCriteria);
+        return new HitPropertyMultiple(this, newHits, contexts, invert);
     }
 
     @Override

@@ -74,8 +74,7 @@ public class TestHitPropertySerialize {
     public void testDocPropertySerialize() {
         DocProperty prop;
 
-        prop = new DocPropertyDecade("decade");
-        prop.setReverse(true);
+        prop = new DocPropertyDecade("decade").reverse();
         String exp = "-decade:decade";
         Assert.assertEquals(exp, prop.serialize());
         Assert.assertEquals(exp, DocProperty.deserialize(exp).serialize());

@@ -41,10 +41,6 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
-- DocResults moet ook geen source hits meer vasthouden voor grand total counts. Het is aan de client om die op te vragen.
-  Alternatief: toch alle stats in MaxStats zetten. Je kunt dan alleen niet aangeven dat je het grand total wilt
-  weten, dus het kan zijn dat de total count job stopt tot iemand er om vraagt, en dat kan dus niet.
-
 - DocResults, Groups moeten ook threadPauser hebben
 
 - replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)

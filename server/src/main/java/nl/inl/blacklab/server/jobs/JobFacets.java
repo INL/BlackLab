@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.DocCounts;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -100,8 +101,8 @@ public class JobFacets extends Job {
     }
 
     @Override
-    protected DocResults getObjectToPrioritize() {
-        return docResults;
+    protected Pausible getObjectToPrioritize() {
+        return docResults.threadPauser();
     }
 
 }

@@ -32,7 +32,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups implements Iterable<DocGroup>, DocOrHitGroups {
+public class DocGroups implements Iterable<DocGroup>, ResultGroups {
     Map<HitPropValue, DocGroup> groups = new HashMap<>();
 
     List<DocGroup> orderedGroups = new ArrayList<>();

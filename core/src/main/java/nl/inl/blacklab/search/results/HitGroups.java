@@ -30,13 +30,14 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * access to the hits. Note that this means that all hits found must be
  * retrieved, which may be unfeasible for large results sets.
  */
-public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGroup>, DocOrHitGroups {
+public abstract class HitGroups implements Iterable<HitGroup>, ResultGroups {
     QueryInfo queryInfo;
 
-    public HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
-        super(groupCriteria);
+    protected HitProperty criteria;
 
+    public HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
         this.queryInfo = queryInfo;
+        this.criteria = groupCriteria;
     }
     
     @Override
@@ -48,6 +49,10 @@ public abstract class HitGroups extends GroupsAbstract implements Iterable<HitGr
 
     public abstract List<HitGroup> getGroups();
 
+    public HitProperty getGroupCriteria() {
+        return criteria;
+    }
+    
     /**
      * Sort groups by some property.
      * 

@@ -25,6 +25,18 @@ import nl.inl.blacklab.search.results.DocResult;
  * documents with 1 hit in a group, documents with 2 hits in another group, etc.
  */
 public class DocPropertyNumberOfHits extends DocProperty {
+    public static DocPropertyNumberOfHits deserialize() {
+        return new DocPropertyNumberOfHits();
+    }
+    
+    DocPropertyNumberOfHits(DocPropertyNumberOfHits prop, boolean invert) {
+        super(prop, invert);
+    }
+    
+    public DocPropertyNumberOfHits() {
+        // NOP
+    }
+
     @Override
     public HitPropValueInt get(DocResult result) {
         return new HitPropValueInt(result.getNumberOfHits());
@@ -54,10 +66,6 @@ public class DocPropertyNumberOfHits extends DocProperty {
         return "number of hits";
     }
 
-    public static DocPropertyNumberOfHits deserialize() {
-        return new DocPropertyNumberOfHits();
-    }
-
     @Override
     public String serialize() {
         return serializeReverse() + "numhits";
@@ -66,6 +74,11 @@ public class DocPropertyNumberOfHits extends DocProperty {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(serializeReverse() + getName());
+    }
+
+    @Override
+    public DocProperty reverse() {
+        return new DocPropertyNumberOfHits(this, true);
     }
 
 }

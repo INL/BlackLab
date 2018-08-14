@@ -27,9 +27,15 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
+    private String fieldName;
+    
     private String friendlyName;
 
-    private String fieldName;
+    DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, boolean invert) {
+        super(prop, invert);
+        fieldName = prop.fieldName;
+        friendlyName = prop.friendlyName;
+    }
 
     public DocPropertyAnnotatedFieldLength(String fieldName, String friendlyName) {
         this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
@@ -86,6 +92,11 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(serializeReverse() + getName());
+    }
+
+    @Override
+    public DocProperty reverse() {
+        return new DocPropertyAnnotatedFieldLength(this, true);
     }
 
 }

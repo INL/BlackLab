@@ -28,6 +28,12 @@ import nl.inl.blacklab.search.results.DocResult;
 public class DocPropertyStoredField extends DocProperty {
     private String fieldName;
     private String friendlyName;
+    
+    public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
+        super(prop, invert);
+        this.fieldName = prop.fieldName;
+        this.friendlyName = prop.friendlyName;
+    }
 
     public DocPropertyStoredField(String fieldName) {
         this(fieldName, fieldName);
@@ -86,6 +92,11 @@ public class DocPropertyStoredField extends DocProperty {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(serializeReverse() + getName());
+    }
+
+    @Override
+    public DocProperty reverse() {
+        return new DocPropertyStoredField(this, true);
     }
 
 }

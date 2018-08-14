@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocOrHitGroups;
+import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
@@ -201,7 +201,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
         Hits totalHits = originalHitsSearch == null ? null : originalHitsSearch.getHits(); //docResults.originalHits();
-        addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (DocOrHitGroups) null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, (ResultGroups) null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);

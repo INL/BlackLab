@@ -28,6 +28,20 @@ import nl.inl.blacklab.search.results.DocResult;
 public class DocPropertyMultiple extends DocProperty implements Iterable<DocProperty> {
     List<DocProperty> criteria;
 
+    DocPropertyMultiple(DocPropertyMultiple mprop, boolean invert) {
+        super(mprop, invert);
+        int n = mprop.criteria.size();
+        if (invert) {
+            this.criteria = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                DocProperty prop = mprop.criteria.get(i).reverse();
+                this.criteria.add(prop);
+            }
+        } else {
+            this.criteria = mprop.criteria;
+        }
+    }
+
     /**
      * Quick way to create group criteria. Just call this method with the
      * GroupCriterium object(s) you want.
@@ -141,5 +155,10 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
             i++;
         }
         return new DocPropertyMultiple(values);
+    }
+
+    @Override
+    public DocProperty reverse() {
+        return new DocPropertyMultiple(this, true);
     }
 }

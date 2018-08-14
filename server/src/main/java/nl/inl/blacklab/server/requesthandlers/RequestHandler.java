@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocCount;
 import nl.inl.blacklab.search.results.DocCounts;
-import nl.inl.blacklab.search.results.DocOrHitGroups;
+import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -580,7 +580,7 @@ public abstract class RequestHandler {
             SearchParameters searchParam,
             double searchTime,
             double countTime,
-            DocOrHitGroups groups,
+            ResultGroups groups,
             WindowStats window
             ) throws BlsException {
 

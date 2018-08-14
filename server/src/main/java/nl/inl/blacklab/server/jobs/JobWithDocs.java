@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -32,7 +33,7 @@ public abstract class JobWithDocs extends Job {
     }
 
     @Override
-    protected DocResults getObjectToPrioritize() {
-        return docResults;
+    protected Pausible getObjectToPrioritize() {
+        return docResults.threadPauser();
     }
 }

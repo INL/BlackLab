@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * and time than if the spans to be grouped are sequential (in which case you
  * should use ResultsGrouperSequential).
  */
-public class ResultsGrouper extends HitGroups {
+public class HitGroupsImpl extends HitGroups {
     /**
      * Don't use this; use Hits.groupedBy().
      * 
@@ -45,8 +45,8 @@ public class ResultsGrouper extends HitGroups {
      * @param criteria criteria to group by
      * @return grouped hits
      */
-    static ResultsGrouper fromHits(Hits hits, HitProperty criteria) {
-        return new ResultsGrouper(hits, criteria);
+    static HitGroups fromHits(Hits hits, HitProperty criteria) {
+        return new HitGroupsImpl(hits, criteria);
     }
 
     /**
@@ -78,7 +78,7 @@ public class ResultsGrouper extends HitGroups {
      * @param hits the hits to group
      * @param criteria the criteria to group on
      */
-    ResultsGrouper(Hits hits, HitProperty criteria) {
+    HitGroupsImpl(Hits hits, HitProperty criteria) {
         super(hits.queryInfo(), criteria);
         
         List<Annotation> requiredContext = criteria.needsContext();

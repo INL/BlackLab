@@ -34,6 +34,13 @@ public abstract class DocProperty {
 
     /** Reverse comparison result or not? */
     protected boolean reverse = false;
+    
+    DocProperty(DocProperty prop, boolean invert) {
+        reverse = invert ? !prop.reverse : prop.reverse;
+    }
+    
+    DocProperty() {
+    }
 
     /**
      * Get the desired grouping/sorting property from the DocResult object
@@ -79,8 +86,9 @@ public abstract class DocProperty {
                 reverse = true;
                 serialized = serialized.substring(2, serialized.length() - 1);
             }
-            DocPropertyMultiple result = DocPropertyMultiple.deserialize(serialized);
-            result.setReverse(reverse);
+            DocProperty result = DocPropertyMultiple.deserialize(serialized);
+            if (reverse)
+                result = result.reverse();
             return result;
         }
 
@@ -113,7 +121,8 @@ public abstract class DocProperty {
             logger.debug("Unknown DocProperty '" + type + "'");
             return null;
         }
-        result.setReverse(reverse);
+        if (reverse)
+            result = result.reverse();
         return result;
     }
 
@@ -127,13 +136,11 @@ public abstract class DocProperty {
     }
 
     /**
-     * Set whether to reverse the comparison.
+     * Reverse the comparison.
      * 
-     * @param reverse if true, reverses comparison
+     * @return document property with the comparison reversed
      */
-    public void setReverse(boolean reverse) {
-        this.reverse = reverse;
-    }
+    public abstract DocProperty reverse();
 
     @Override
     public String toString() {

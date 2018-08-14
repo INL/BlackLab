@@ -28,6 +28,11 @@ public class DocPropertyDecade extends DocProperty {
 
     private String fieldName;
 
+    DocPropertyDecade(DocPropertyDecade prop, boolean invert) {
+        super(prop, invert);
+        fieldName = prop.fieldName;
+    }
+
     public DocPropertyDecade(String fieldName) {
         this.fieldName = fieldName;
     }
@@ -103,6 +108,11 @@ public class DocPropertyDecade extends DocProperty {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(serializeReverse() + getName());
+    }
+
+    @Override
+    public DocProperty reverse() {
+        return new DocPropertyDecade(this, true);
     }
 
 }
