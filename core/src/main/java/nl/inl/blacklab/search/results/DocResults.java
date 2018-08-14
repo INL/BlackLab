@@ -37,11 +37,46 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropValueInt;
 import nl.inl.blacklab.search.Pausible;
 import nl.inl.util.ReverseComparator;
+import nl.inl.util.ThreadPauser;
 
 /**
  * A list of DocResult objects (document-level query results).
  */
 public class DocResults implements Iterable<DocResult>, Pausible {
+    private static final class SimpleDocCollector extends SimpleCollector {
+        private final List<DocResult> results;
+        private final QueryInfo queryInfo;
+        private int docBase;
+
+        private SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
+            this.results = results;
+            this.queryInfo = queryInfo;
+        }
+
+        @Override
+        protected void doSetNextReader(LeafReaderContext context)
+                throws IOException {
+            docBase = context.docBase;
+            super.doSetNextReader(context);
+        }
+
+        @Override
+        public void collect(int docId) throws IOException {
+            int globalDocId = docId + docBase;
+            results.add(new DocResult(queryInfo, globalDocId, 0.0f));
+        }
+
+        @Override
+        public void setScorer(Scorer scorer) {
+            // (ignore)
+        }
+
+        @Override
+        public boolean needsScores() {
+            return false;
+        }
+    }
+
     /**
      * Don't use this; use Hits.perDocResults().
      *
@@ -64,10 +99,42 @@ public class DocResults implements Iterable<DocResult>, Pausible {
         return new DocResults(queryInfo, query);
     }
 
+    private static List<DocResult> resultsFromQuery(QueryInfo queryInfo, Query query) {
+        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+        List<DocResult> results = new ArrayList<>();
+        try {
+            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+        return results;
+    }
+
+    private static List<DocResult> resultsFromScorer(QueryInfo queryInfo, Scorer scorer) {
+        List<DocResult> results = new ArrayList<>();
+        if (scorer != null) {
+            try {
+                DocIdSetIterator it = scorer.iterator();
+                while (true) {
+                    int docId = it.nextDoc();
+                    if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                        break;
+    
+                    DocResult dr = new DocResult(queryInfo, docId, scorer.score());
+                    results.add(dr);
+                }
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        return results;
+    }
+
     /**
      * (Part of) our document results
      */
-    protected List<DocResult> results = new ArrayList<>();
+    protected List<DocResult> results;
 
     /**
      * Our source hits object
@@ -84,7 +151,7 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private List<Hit> partialDocHits = null;
+    private List<Hit> partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -94,11 +161,12 @@ public class DocResults implements Iterable<DocResult>, Pausible {
 
     private QueryInfo queryInfo;
 
-    boolean sourceHitsFullyRead() {
-        if (sourceHits == null)
-            return true;
+    private ThreadPauser threadPauser;
 
-        return !sourceHitsIterator.hasNext();
+    DocResults(QueryInfo queryInfo) {
+        this.queryInfo = queryInfo;
+        results = new ArrayList<>();
+        threadPauser = new ThreadPauser();
     }
 
     /**
@@ -108,9 +176,10 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * @param hits the hits to view per-document
      */
     DocResults(QueryInfo queryInfo, Hits hits) {
-        this.queryInfo = queryInfo;
+        this(queryInfo);
         this.sourceHits = hits;
         this.sourceHitsIterator = hits.iterator();
+        partialDocHits = null;
     }
 
     /**
@@ -124,7 +193,7 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * @param results the list of results
      */
     DocResults(QueryInfo queryInfo, List<DocResult> results) {
-        this.queryInfo = queryInfo;
+        this(queryInfo);
         this.results = results;
     }
 
@@ -135,28 +204,9 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * @param scorer the scorer to read document results from
      */
     DocResults(QueryInfo queryInfo, Scorer scorer) {
-        this.queryInfo = queryInfo;
-        if (scorer == null)
-            return; // no matches, empty result set
-        try {
-            DocIdSetIterator it = scorer.iterator();
-            while (true) {
-                int docId = it.nextDoc();
-                if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                    break;
-
-                DocResult dr = new DocResult(queryInfo, docId, scorer.score());
-                results.add(dr);
-            }
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        this(queryInfo, resultsFromScorer(queryInfo, scorer));
     }
-
-    public QueryInfo queryInfo() {
-        return queryInfo;
-    }
-
+    
     /**
      * Find documents whose metadata matches the specified query
      * 
@@ -164,49 +214,18 @@ public class DocResults implements Iterable<DocResult>, Pausible {
      * @param query metadata query, or null to match all documents
      */
     DocResults(QueryInfo queryInfo, Query query) {
-
-        this.queryInfo = queryInfo;
-
-        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
-        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-
-        try {
-            queryInfo.index().searcher().search(query, new SimpleCollector() {
-
-                private int docBase;
-
-                @Override
-                protected void doSetNextReader(LeafReaderContext context)
-                        throws IOException {
-                    docBase = context.docBase;
-                    super.doSetNextReader(context);
-                }
-
-                @Override
-                public void collect(int docId) throws IOException {
-                    int globalDocId = docId + docBase;
-                    results.add(new DocResult(queryInfo, globalDocId, 0.0f));
-                }
-
-                @Override
-                public void setScorer(Scorer scorer) {
-                    // (ignore)
-                }
-
-                @Override
-                public boolean needsScores() {
-                    return false;
-                }
-            });
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-
-        //this(searcher, searcher.findDocScores(query == null ? new MatchAllDocsQuery(): query));
+        this(queryInfo, resultsFromQuery(queryInfo, query));
+    }
+    
+    boolean sourceHitsFullyRead() {
+        if (sourceHits == null)
+            return true;
+    
+        return !sourceHitsIterator.hasNext();
     }
 
-    DocResults(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;
+    public QueryInfo queryInfo() {
+        return queryInfo;
     }
 
     /**
@@ -294,18 +313,6 @@ public class DocResults implements Iterable<DocResult>, Pausible {
             // Let caller detect and deal with interruption.
         }
         return results.size();
-    }
-
-    /**
-     * Get the total number of documents. This even counts documents that weren't
-     * retrieved because the set of hits was too large.
-     *
-     * @return the total number of documents.
-     */
-    public int docsCountedTotal() {
-        if (sourceHits == null)
-            return size(); // no hits, just documents
-        return sourceHits.docsCountedTotal();
     }
 
     /**
@@ -481,10 +488,6 @@ public class DocResults implements Iterable<DocResult>, Pausible {
         return new DocResultsWindow(this, first, number);
     }
 
-    public Hits originalHits() {
-        return sourceHits;
-    }
-
     /**
      * Count the number of results that have the same value for the specified
      * property. Basically a grouping operation without storing the results. Used
@@ -523,16 +526,38 @@ public class DocResults implements Iterable<DocResult>, Pausible {
         return sum;
     }
 
+    public boolean isWindow() {
+        return windowStats() != null;
+    }
+
+    public WindowStats windowStats() {
+        return null;
+    }
+
     @Override
     public void pause(boolean pause) {
-        if (sourceHits != null) {
-            sourceHits.threadPauser().pause(pause);
-        }
+        threadPauser.pause(pause);
     }
 
     @Override
     public boolean isPaused() {
-        return sourceHits.threadPauser().isPaused();
+        return threadPauser.isPaused();
+    }
+
+    public Hits originalHits() {
+        return sourceHits;
+    }
+
+    /**
+     * Get the total number of documents. This even counts documents that weren't
+     * retrieved because the set of hits was too large.
+     *
+     * @return the total number of documents.
+     */
+    public int docsCountedTotal() {
+        if (sourceHits == null)
+            return size(); // no hits, just documents
+        return sourceHits.docsCountedTotal();
     }
 
     public int docsCountedSoFar() {
@@ -541,13 +566,5 @@ public class DocResults implements Iterable<DocResult>, Pausible {
 
     public int docsProcessedSoFar() {
         return sourceHits == null ? results.size() : sourceHits.docsProcessedSoFar();
-    }
-    
-    public boolean isWindow() {
-        return windowStats() != null;
-    }
-
-    public WindowStats windowStats() {
-        return null;
     }
 }
