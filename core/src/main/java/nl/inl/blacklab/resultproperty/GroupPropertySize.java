@@ -23,6 +23,15 @@ import nl.inl.blacklab.search.results.HitGroup;
  * right context, etc.
  */
 public class GroupPropertySize extends GroupProperty {
+    
+    GroupPropertySize(GroupPropertySize prop, boolean invert) {
+        super(prop, invert);
+    }
+    
+    public GroupPropertySize() {
+        // NOP
+    }
+    
     @Override
     public HitPropValueInt get(Group result) {
         return new HitPropValueInt(((HitGroup) result).size());
@@ -43,6 +52,11 @@ public class GroupPropertySize extends GroupProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "size";
+    }
+
+    @Override
+    public GroupProperty reverse() {
+        return new GroupPropertySize(this, true);
     }
 
 }

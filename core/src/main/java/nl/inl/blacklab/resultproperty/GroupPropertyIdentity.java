@@ -22,6 +22,15 @@ import nl.inl.blacklab.search.results.Group;
  * right context, etc.
  */
 public class GroupPropertyIdentity extends GroupProperty {
+    
+    GroupPropertyIdentity(GroupPropertyIdentity prop, boolean invert) {
+        super(prop, invert);
+    }
+    
+    public GroupPropertyIdentity() {
+        // NOP
+    }
+    
     @Override
     public HitPropValue get(Group result) {
         return result.getIdentity();
@@ -37,6 +46,11 @@ public class GroupPropertyIdentity extends GroupProperty {
     @Override
     public String serialize() {
         return serializeReverse() + "identity";
+    }
+
+    @Override
+    public GroupProperty reverse() {
+        return new GroupPropertyIdentity(this, true);
     }
 
 }

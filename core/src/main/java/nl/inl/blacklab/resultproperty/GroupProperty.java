@@ -36,7 +36,15 @@ public abstract class GroupProperty {
     }
 
     /** Reverse comparison result or not? */
-    protected boolean reverse = false;
+    protected boolean reverse;
+    
+    GroupProperty(GroupProperty prop, boolean invert) {
+        this.reverse = invert ? !prop.reverse : prop.reverse;
+    }
+    
+    public GroupProperty() {
+        this.reverse = false;
+    }
 
     public abstract HitPropValue get(Group result);
 
@@ -68,7 +76,8 @@ public abstract class GroupProperty {
             result = new GroupPropertyIdentity();
         else
             result = new GroupPropertySize();
-        result.setReverse(reverse);
+        if (reverse)
+            result = result.reverse();
         return result;
     }
 
@@ -82,13 +91,10 @@ public abstract class GroupProperty {
     }
 
     /**
-     * Set whether to reverse the comparison.
-     * 
-     * @param reverse if true, reverses comparison
+     * Reverse the comparison.
+     * @return reversed group property 
      */
-    public void setReverse(boolean reverse) {
-        this.reverse = reverse;
-    }
+    public abstract GroupProperty reverse();
 
     @Override
     public String toString() {
