@@ -27,7 +27,7 @@ import java.util.Map;
 import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Counts the number of documents that have a certain property.
@@ -37,7 +37,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
  * Useful for faceted search.
  */
 public class DocCounts implements Iterable<DocCount> {
-    Map<HitPropValue, DocCount> counts = new HashMap<>();
+    Map<PropertyValue, DocCount> counts = new HashMap<>();
 
     List<DocCount> orderedGroups = new ArrayList<>();
 
@@ -61,7 +61,7 @@ public class DocCounts implements Iterable<DocCount> {
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
 
-            HitPropValue groupId = countBy.get(r);
+            PropertyValue groupId = countBy.get(r);
             DocCount count = counts.get(groupId);
             if (count == null) {
                 count = new DocCount(docResults.queryInfo(), groupId);
@@ -85,7 +85,7 @@ public class DocCounts implements Iterable<DocCount> {
         return Collections.unmodifiableCollection(orderedGroups);
     }
 
-    public Integer getCount(HitPropValue groupId) {
+    public Integer getCount(PropertyValue groupId) {
         return counts.get(groupId).size();
     }
 

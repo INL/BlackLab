@@ -3,20 +3,20 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-public class HitPropValueInt extends HitPropValue {
+public class PropertyValueInt extends PropertyValue {
     int value;
 
     public int getValue() {
         return value;
     }
 
-    public HitPropValueInt(int value) {
+    public PropertyValueInt(int value) {
         this.value = value;
     }
 
     @Override
     public int compareTo(Object o) {
-        return value - ((HitPropValueInt) o).value;
+        return value - ((PropertyValueInt) o).value;
     }
 
     @Override
@@ -28,20 +28,20 @@ public class HitPropValueInt extends HitPropValue {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (obj instanceof HitPropValueInt) {
-            return value == ((HitPropValueInt) obj).value;
+        if (obj instanceof PropertyValueInt) {
+            return value == ((PropertyValueInt) obj).value;
         }
         return false;
     }
 
-    public static HitPropValue deserialize(String info) {
+    public static PropertyValue deserialize(String info) {
         int v;
         try {
             v = Integer.parseInt(info);
         } catch (NumberFormatException e) {
             v = 0;
         }
-        return new HitPropValueInt(v);
+        return new PropertyValueInt(v);
     }
 
     @Override

@@ -60,16 +60,16 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
     }
 
     @Override
-    public HitPropValueContextWord get(Hit result) {
+    public PropertyValueContextWord get(Hit result) {
         int[] context = contexts.get(result);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         //int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];
 
         if (contextHitStart <= 0)
-            return new HitPropValueContextWord(index, annotation, sensitivity, -1);
+            return new PropertyValueContextWord(index, annotation, sensitivity, -1);
         int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-        return new HitPropValueContextWord(index, annotation, sensitivity, context[contextStart
+        return new PropertyValueContextWord(index, annotation, sensitivity, context[contextStart
                         + contextHitStart - 1]);
     }
 

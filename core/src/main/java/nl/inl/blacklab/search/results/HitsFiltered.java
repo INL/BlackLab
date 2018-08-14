@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -26,13 +26,13 @@ public class HitsFiltered extends HitsAbstract {
 
     private HitProperty filterProperty;
 
-    private HitPropValue filterValue;
+    private PropertyValue filterValue;
     
     private boolean doneFiltering = false;
     
     private int indexInSource = -1;
 
-    HitsFiltered(Hits hits, HitProperty property, HitPropValue value) {
+    HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo());
         this.source = hits;
         

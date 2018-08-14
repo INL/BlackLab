@@ -38,8 +38,8 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public HitPropValueInt get(DocResult result) {
-        return new HitPropValueInt(result.getNumberOfHits());
+    public PropertyValueInt get(DocResult result) {
+        return new PropertyValueInt(result.getNumberOfHits());
     }
 
     /**

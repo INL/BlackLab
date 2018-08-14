@@ -6,7 +6,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -105,8 +105,8 @@ public class RequestHandlerDocs extends RequestHandler {
             // Search is done; construct the results object
             DocGroups groups = searchGrouped.getGroups();
         
-            HitPropValue viewGroupVal = null;
-            viewGroupVal = HitPropValue.deserialize(groups.index(), groups.field(), viewGroup);
+            PropertyValue viewGroupVal = null;
+            viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
             if (viewGroupVal == null)
                 return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                         "Parameter 'viewgroup' has an illegal value: " + viewGroup);

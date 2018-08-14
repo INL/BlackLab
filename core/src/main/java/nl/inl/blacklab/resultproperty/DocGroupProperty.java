@@ -46,7 +46,7 @@ public abstract class DocGroupProperty {
         this.reverse = false;
     }
 
-    public abstract HitPropValue get(DocGroup result);
+    public abstract PropertyValue get(DocGroup result);
 
     /**
      * Compares two groups on this property

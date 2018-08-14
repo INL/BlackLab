@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -57,7 +57,7 @@ public class JobHitsFiltered extends JobWithHits {
         Hits hitsUnfiltered = ((JobWithHits) inputJob).getHits();
         HitFilterSettings filterSett = jobDesc.getHitFilterSettings();
         HitProperty prop = HitProperty.deserialize(hits, filterSett.getProperty());
-        HitPropValue value = HitPropValue.deserialize(hitsUnfiltered, filterSett.getValue());
+        PropertyValue value = PropertyValue.deserialize(hitsUnfiltered, filterSett.getValue());
         if (prop == null || value == null) {
             throw new BadRequest("ERROR_IN_HITFILTER", "Incorrect hit filter property of value specified.");
         }

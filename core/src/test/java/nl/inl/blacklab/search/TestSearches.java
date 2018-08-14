@@ -13,8 +13,8 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.resultproperty.HitPropValueContextWords;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
@@ -352,7 +352,7 @@ public class TestSearches {
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.annotationForwardIndex(annotation).terms();
         int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        HitPropValue value = new HitPropValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);
+        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 

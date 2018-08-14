@@ -47,13 +47,13 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public HitPropValueInt get(DocResult result) {
+    public PropertyValueInt get(DocResult result) {
         try {
             int subtractClosingToken = 1;
             int length = Integer.parseInt(result.getDocument().get(fieldName)) - subtractClosingToken;
-            return new HitPropValueInt(length);
+            return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
-            return new HitPropValueInt(0);
+            return new PropertyValueInt(0);
         }
     }
 

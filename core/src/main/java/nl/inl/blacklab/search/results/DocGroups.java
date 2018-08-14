@@ -27,13 +27,13 @@ import java.util.Map;
 import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups implements Iterable<DocGroup>, ResultGroups {
-    Map<HitPropValue, DocGroup> groups = new HashMap<>();
+    Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     List<DocGroup> orderedGroups = new ArrayList<>();
 
@@ -55,9 +55,9 @@ public class DocGroups implements Iterable<DocGroup>, ResultGroups {
         this.queryInfo = docResults.queryInfo();
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
-        Map<HitPropValue, List<DocResult>> groupLists = new HashMap<>();
+        Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
-            HitPropValue groupId = groupBy.get(r);
+            PropertyValue groupId = groupBy.get(r);
             List<DocResult> group = groupLists.get(groupId);
             if (group == null) {
                 group = new ArrayList<>();
@@ -68,7 +68,7 @@ public class DocGroups implements Iterable<DocGroup>, ResultGroups {
                 largestGroupSize = group.size();
             totalResults++;
         }
-        for (Map.Entry<HitPropValue, List<DocResult>> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
             DocGroup docGroup = new DocGroup(docResults.queryInfo(), e.getKey(), e.getValue());
             groups.put(e.getKey(), docGroup);
             orderedGroups.add(docGroup);
@@ -84,7 +84,7 @@ public class DocGroups implements Iterable<DocGroup>, ResultGroups {
         return Collections.unmodifiableCollection(orderedGroups);
     }
 
-    public DocGroup getGroup(HitPropValue groupId) {
+    public DocGroup getGroup(PropertyValue groupId) {
         return groups.get(groupId);
     }
 

@@ -1,21 +1,21 @@
 package nl.inl.blacklab.resultproperty;
 
-public class HitPropValueDecade extends HitPropValueInt {
+public class PropertyValueDecade extends PropertyValueInt {
 
-    public HitPropValueDecade(int value) {
+    public PropertyValueDecade(int value) {
         super(value);
     }
 
-    public static HitPropValue deserialize(String info) {
+    public static PropertyValue deserialize(String info) {
         if (info.equals("unknown"))
-            return new HitPropValueDecade(HitPropertyDocumentDecade.UNKNOWN_VALUE);
+            return new PropertyValueDecade(HitPropertyDocumentDecade.UNKNOWN_VALUE);
         int decade;
         try {
             decade = Integer.parseInt(info);
         } catch (NumberFormatException e) {
             decade = 0;
         }
-        return new HitPropValueDecade(decade);
+        return new PropertyValueDecade(decade);
     }
 
     @Override

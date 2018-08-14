@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.List;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * A group of DocResult objects, plus the "group identity". For example, if
@@ -25,21 +25,21 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
  * Mulisch".
  */
 public class DocGroup {
-    protected HitPropValue groupIdentity;
+    protected PropertyValue groupIdentity;
 
     private DocResults results;
 
-    public DocGroup(QueryInfo queryInfo, HitPropValue groupIdentity) {
+    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
         this.groupIdentity = groupIdentity;
         results = new DocResults(queryInfo);
     }
 
-    public DocGroup(QueryInfo queryInfo, HitPropValue groupIdentity, List<DocResult> resultList) {
+    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> resultList) {
         this.groupIdentity = groupIdentity;
         results = new DocResults(queryInfo, resultList);
     }
 
-    public HitPropValue getIdentity() {
+    public PropertyValue getIdentity() {
         return groupIdentity;
     }
 

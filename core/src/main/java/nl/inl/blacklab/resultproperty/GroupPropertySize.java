@@ -33,8 +33,8 @@ public class GroupPropertySize extends GroupProperty {
     }
     
     @Override
-    public HitPropValueInt get(Group result) {
-        return new HitPropValueInt(((HitGroup) result).size());
+    public PropertyValueInt get(Group result) {
+        return new PropertyValueInt(((HitGroup) result).size());
     }
 
     @Override

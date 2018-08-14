@@ -81,14 +81,14 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public HitPropValueMultiple get(DocResult result) {
-        HitPropValue[] rv = new HitPropValue[criteria.size()];
+    public PropertyValueMultiple get(DocResult result) {
+        PropertyValue[] rv = new PropertyValue[criteria.size()];
         int i = 0;
         for (DocProperty crit : criteria) {
             rv[i] = crit.get(result);
             i++;
         }
-        return new HitPropValueMultiple(rv);
+        return new PropertyValueMultiple(rv);
     }
 
     /**

@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -81,7 +81,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 // don't set hits yet - only return hits if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    HitPropValue groupId = HitPropValue.deserialize(searchGrouped.getHits(), viewGroup);
+                    PropertyValue groupId = PropertyValue.deserialize(searchGrouped.getHits(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     HitGroup group = groups.getGroup(groupId);

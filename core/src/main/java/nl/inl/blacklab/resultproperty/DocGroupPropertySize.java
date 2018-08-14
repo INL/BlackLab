@@ -28,8 +28,8 @@ public class DocGroupPropertySize extends DocGroupProperty {
     }
     
     @Override
-    public HitPropValueInt get(DocGroup result) {
-        return new HitPropValueInt(result.size());
+    public PropertyValueInt get(DocGroup result) {
+        return new PropertyValueInt(result.size());
     }
 
     @Override

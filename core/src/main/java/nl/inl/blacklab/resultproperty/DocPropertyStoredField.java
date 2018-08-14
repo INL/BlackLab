@@ -45,8 +45,8 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public HitPropValueString get(DocResult result) {
-        return new HitPropValueString(result.getDocument().get(fieldName));
+    public PropertyValueString get(DocResult result) {
+        return new PropertyValueString(result.getDocument().get(fieldName));
     }
 
     /**

@@ -14,7 +14,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -78,7 +78,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 // don't set docs yet - only return docs if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    HitPropValue groupId = HitPropValue.deserialize(groups.index(), groups.field(), viewGroup);
+                    PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     DocGroup group = groups.getGroup(groupId);

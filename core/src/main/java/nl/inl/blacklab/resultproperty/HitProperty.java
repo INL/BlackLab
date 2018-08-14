@@ -211,12 +211,12 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     @Override
-    public abstract HitPropValue get(Hit hit);
+    public abstract PropertyValue get(Hit hit);
 
     @Override
     public int compare(Hit a, Hit b) {
-        HitPropValue hitPropValueA = get(a);
-        HitPropValue hitPropValueB = get(b);
+        PropertyValue hitPropValueA = get(a);
+        PropertyValue hitPropValueB = get(b);
         return hitPropValueA.compareTo(hitPropValueB);
     }
 

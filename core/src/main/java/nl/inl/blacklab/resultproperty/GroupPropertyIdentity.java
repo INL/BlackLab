@@ -32,7 +32,7 @@ public class GroupPropertyIdentity extends GroupProperty {
     }
     
     @Override
-    public HitPropValue get(Group result) {
+    public PropertyValue get(Group result) {
         return result.getIdentity();
     }
 

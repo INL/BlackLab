@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.GroupProperty;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
@@ -45,7 +45,7 @@ public abstract class HitGroups implements Iterable<HitGroup>, ResultGroups {
         return queryInfo;
     }
 
-    public abstract Map<HitPropValue, HitGroup> getGroupMap();
+    public abstract Map<PropertyValue, HitGroup> getGroupMap();
 
     public abstract List<HitGroup> getGroups();
 
@@ -71,7 +71,7 @@ public abstract class HitGroups implements Iterable<HitGroup>, ResultGroups {
      */
     public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
-    public HitGroup getGroup(HitPropValue identity) {
+    public HitGroup getGroup(PropertyValue identity) {
         return getGroupMap().get(identity);
     }
 

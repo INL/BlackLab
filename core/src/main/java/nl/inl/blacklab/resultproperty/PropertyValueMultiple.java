@@ -7,16 +7,16 @@ import java.util.List;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
-public class HitPropValueMultiple extends HitPropValue {
-    HitPropValue[] value;
+public class PropertyValueMultiple extends PropertyValue {
+    PropertyValue[] value;
 
-    public HitPropValueMultiple(HitPropValue[] value) {
+    public PropertyValueMultiple(PropertyValue[] value) {
         this.value = value;
     }
 
     @Override
     public int compareTo(Object o) {
-        return compareHitPropValueArrays(value, ((HitPropValueMultiple) o).value);
+        return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
     }
 
     @Override
@@ -28,27 +28,27 @@ public class HitPropValueMultiple extends HitPropValue {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof HitPropValueMultiple)
-            return Arrays.equals(value, ((HitPropValueMultiple) obj).value);
+        if (obj instanceof PropertyValueMultiple)
+            return Arrays.equals(value, ((PropertyValueMultiple) obj).value);
         return false;
     }
 
-    public static HitPropValueMultiple deserialize(BlackLabIndex index, AnnotatedField field, String info) {
+    public static PropertyValueMultiple deserialize(BlackLabIndex index, AnnotatedField field, String info) {
         String[] strValues = PropValSerializeUtil.splitMultiple(info);
-        HitPropValue[] values = new HitPropValue[strValues.length];
+        PropertyValue[] values = new PropertyValue[strValues.length];
         int i = 0;
         for (String strValue : strValues) {
-            values[i] = HitPropValue.deserialize(index, field, strValue);
+            values[i] = PropertyValue.deserialize(index, field, strValue);
             i++;
         }
-        return new HitPropValueMultiple(values);
+        return new PropertyValueMultiple(values);
     }
 
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         int i = 0;
-        for (HitPropValue v : value) {
+        for (PropertyValue v : value) {
             if (i > 0)
                 b.append(" / ");
             i++;
@@ -69,7 +69,7 @@ public class HitPropValueMultiple extends HitPropValue {
     @Override
     public List<String> getPropValues() {
         List<String> l = new ArrayList<>();
-        for (HitPropValue v : value)
+        for (PropertyValue v : value)
             l.addAll(v.getPropValues());
         return l;
     }
@@ -86,7 +86,7 @@ public class HitPropValueMultiple extends HitPropValue {
      * @param b second array
      * @return 0 if equal, negative if a &lt; b, positive if a &gt; b
      */
-    private static int compareHitPropValueArrays(HitPropValue[] a, HitPropValue[] b) {
+    private static int compareHitPropValueArrays(PropertyValue[] a, PropertyValue[] b) {
         int n = a.length;
         if (b.length < n)
             n = b.length;

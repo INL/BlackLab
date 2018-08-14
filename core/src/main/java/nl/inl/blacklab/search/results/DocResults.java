@@ -34,7 +34,7 @@ import org.apache.lucene.search.SimpleCollector;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitPropValueInt;
+import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.util.ReverseComparator;
 import nl.inl.util.ThreadPauser;
 
@@ -518,7 +518,7 @@ public class DocResults implements Iterable<DocResult> {
         }
         int sum = 0;
         for (DocResult result : results) {
-            sum += ((HitPropValueInt) numProp.get(result)).getValue();
+            sum += ((PropertyValueInt) numProp.get(result)).getValue();
         }
         return sum;
     }

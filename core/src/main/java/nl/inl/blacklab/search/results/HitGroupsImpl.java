@@ -24,7 +24,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -52,7 +52,7 @@ public class HitGroupsImpl extends HitGroups {
     /**
      * The groups.
      */
-    private Map<HitPropValue, HitGroup> groups = new HashMap<>();
+    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /**
      * The groups, in sorted order.
@@ -85,9 +85,9 @@ public class HitGroupsImpl extends HitGroups {
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index())));
         
         //Thread currentThread = Thread.currentThread();
-        Map<HitPropValue, List<Hit>> groupLists = new HashMap<>();
+        Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
         for (Hit hit: hits) {
-            HitPropValue identity = criteria.get(hit);
+            PropertyValue identity = criteria.get(hit);
             List<Hit> group = groupLists.get(identity);
             if (group == null) {
                 group = new ArrayList<>();
@@ -98,8 +98,8 @@ public class HitGroupsImpl extends HitGroups {
                 largestGroupSize = group.size();
             totalHits++;
         }
-        for (Map.Entry<HitPropValue, List<Hit>> e : groupLists.entrySet()) {
-            HitPropValue groupId = e.getKey();
+        for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
+            PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
             HitGroup group = new HitGroup(queryInfo, groupId, hitList);
             groups.put(groupId, group);
@@ -123,7 +123,7 @@ public class HitGroupsImpl extends HitGroups {
      * @return a map of groups indexed by group property
      */
     @Override
-    public Map<HitPropValue, HitGroup> getGroupMap() {
+    public Map<PropertyValue, HitGroup> getGroupMap() {
         return Collections.unmodifiableMap(groups);
     }
 

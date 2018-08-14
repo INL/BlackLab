@@ -13,7 +13,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
@@ -83,8 +83,8 @@ public class RequestHandlerHits extends RequestHandler {
                     return Response.busy(ds, servlet);
                 }
 
-                HitPropValue viewGroupVal = null;
-                viewGroupVal = HitPropValue.deserialize(jobGrouped.getHits(), viewGroup);
+                PropertyValue viewGroupVal = null;
+                viewGroupVal = PropertyValue.deserialize(jobGrouped.getHits(), viewGroup);
                 if (viewGroupVal == null)
                     return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                             "Cannot deserialize group value: " + viewGroup);

@@ -60,15 +60,15 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
     }
 
     @Override
-    public HitPropValueContextWord get(Hit result) {
+    public PropertyValueContextWord get(Hit result) {
         int[] context = contexts.get(result);
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];
 
         if (contextLength <= contextRightStart)
-            return new HitPropValueContextWord(index, annotation, sensitivity, -1);
+            return new PropertyValueContextWord(index, annotation, sensitivity, -1);
         int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-        return new HitPropValueContextWord(index, annotation, sensitivity, context[contextStart + contextRightStart]);
+        return new PropertyValueContextWord(index, annotation, sensitivity, context[contextStart + contextRightStart]);
     }
 
     @Override

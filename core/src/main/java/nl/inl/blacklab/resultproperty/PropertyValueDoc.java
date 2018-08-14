@@ -7,20 +7,20 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 
 /** Property value that represents a BlackLab document */
-public class HitPropValueDoc extends HitPropValue {
+public class PropertyValueDoc extends PropertyValue {
     Doc value;
 
     public Doc getValue() {
         return value;
     }
 
-    public HitPropValueDoc(Doc doc) {
+    public PropertyValueDoc(Doc doc) {
         this.value = doc;
     }
 
     @Override
     public int compareTo(Object o) {
-        return value.id() - ((HitPropValueDoc) o).value.id();
+        return value.id() - ((PropertyValueDoc) o).value.id();
     }
 
     @Override
@@ -32,20 +32,20 @@ public class HitPropValueDoc extends HitPropValue {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (obj instanceof HitPropValueDoc) {
-            return value == ((HitPropValueDoc) obj).value;
+        if (obj instanceof PropertyValueDoc) {
+            return value == ((PropertyValueDoc) obj).value;
         }
         return false;
     }
 
-    public static HitPropValue deserialize(BlackLabIndex index, String info) {
+    public static PropertyValue deserialize(BlackLabIndex index, String info) {
         Doc v;
         try {
             v = index.doc(Integer.parseInt(info));
         } catch (NumberFormatException e) {
             v = null;
         }
-        return new HitPropValueDoc(v);
+        return new PropertyValueDoc(v);
     }
 
     @Override

@@ -17,7 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.List;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -26,7 +26,7 @@ import nl.inl.blacklab.resultproperty.HitPropValue;
 public class HitGroup extends Group {
     Hits results;
 
-    HitGroup(QueryInfo queryInfo, HitPropValue groupIdentity) {
+    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
         super(groupIdentity);
         results = Hits.emptyList(queryInfo);
     }
@@ -39,7 +39,7 @@ public class HitGroup extends Group {
      * @param queryInfo query info
      * @param hits the hits
      */
-    HitGroup(QueryInfo queryInfo, HitPropValue groupIdentity, List<Hit> hits) {
+    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> hits) {
         super(groupIdentity);
         results = Hits.fromList(queryInfo, hits);
     }

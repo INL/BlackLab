@@ -10,14 +10,14 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.ArrayUtil;
 
-public class HitPropValueContextWords extends HitPropValueContext {
+public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueTokenId;
 
     int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
 
-    public HitPropValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
+    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
         super(index, annotation);
         this.sensitivity = sensitivity;
         this.valueTokenId = value;
@@ -27,7 +27,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
 
     @Override
     public int compareTo(Object o) {
-        return ArrayUtil.compareArrays(valueSortOrder, ((HitPropValueContextWords) o).valueSortOrder);
+        return ArrayUtil.compareArrays(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
     }
 
     @Override
@@ -39,12 +39,12 @@ public class HitPropValueContextWords extends HitPropValueContext {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof HitPropValueContextWords)
-            return Arrays.equals(valueSortOrder, ((HitPropValueContextWords) obj).valueSortOrder);
+        if (obj instanceof PropertyValueContextWords)
+            return Arrays.equals(valueSortOrder, ((PropertyValueContextWords) obj).valueSortOrder);
         return false;
     }
 
-    public static HitPropValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
+    public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
         String[] parts = PropValSerializeUtil.splitParts(info);
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
@@ -54,7 +54,7 @@ public class HitPropValueContextWords extends HitPropValueContext {
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }
-        return new HitPropValueContextWords(index, annotation, sensitivity, ids);
+        return new PropertyValueContextWords(index, annotation, sensitivity, ids);
     }
 
     @Override

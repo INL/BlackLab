@@ -64,13 +64,13 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitPropValueString get(Hit result) {
+    public PropertyValueString get(Hit result) {
         try {
             Document d = reader.document(result.doc());
             String value = d.get(fieldName);
             if (value == null)
                 value = "";
-            return new HitPropValueString(value);
+            return new PropertyValueString(value);
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -92,7 +92,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
             if (vb.length() == 0) // sort empty string at the end
                 return reverse ? 1 : -1;
 
-            return reverse ? HitPropValue.collator.compare(vb, va) : HitPropValue.collator.compare(va, vb);
+            return reverse ? PropertyValue.collator.compare(vb, va) : PropertyValue.collator.compare(va, vb);
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

@@ -15,7 +15,7 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * @param hit result to get property value for
      * @return property value
      */
-    HitPropValue get(T hit);
+    PropertyValue get(T hit);
 
     /**
      * Compares two hits on this property.

@@ -174,14 +174,14 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitPropValueMultiple get(Hit result) {
-        HitPropValue[] rv = new HitPropValue[properties.size()];
+    public PropertyValueMultiple get(Hit result) {
+        PropertyValue[] rv = new PropertyValue[properties.size()];
         int i = 0;
         for (HitProperty crit: properties) {
             rv[i] = crit.get(result);
             i++;
         }
-        return new HitPropValueMultiple(rv);
+        return new PropertyValueMultiple(rv);
     }
 
     @Override

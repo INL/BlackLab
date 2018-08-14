@@ -49,7 +49,7 @@ public abstract class DocProperty {
      * @return the grouping property. e.g. this might be "Harry Mulisch" when
      *         grouping on author.
      */
-    public abstract HitPropValue get(DocResult result);
+    public abstract PropertyValue get(DocResult result);
 
     /**
      * Compares two docs on this property

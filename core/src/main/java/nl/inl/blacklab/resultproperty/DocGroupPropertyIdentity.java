@@ -28,7 +28,7 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     }
     
     @Override
-    public HitPropValue get(DocGroup result) {
+    public PropertyValue get(DocGroup result) {
         return result.getIdentity();
     }
 

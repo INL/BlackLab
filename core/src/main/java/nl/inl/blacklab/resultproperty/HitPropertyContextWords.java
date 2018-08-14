@@ -266,7 +266,7 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitPropValueContextWords get(Hit hit) {
+    public PropertyValueContextWords get(Hit hit) {
         int[] context = contexts.get(hit);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
@@ -331,7 +331,7 @@ public class HitPropertyContextWords extends HitProperty {
                 destIndex++;
             }
         }
-        return new HitPropValueContextWords(index, annotation, sensitivity, dest);
+        return new PropertyValueContextWords(index, annotation, sensitivity, dest);
     }
 
     // OPT: provide specific compare() method that compares contexts in-place

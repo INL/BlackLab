@@ -3,16 +3,16 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-public class HitPropValueString extends HitPropValue {
+public class PropertyValueString extends PropertyValue {
     String value;
 
-    public HitPropValueString(String value) {
+    public PropertyValueString(String value) {
         this.value = value == null ? "" : value;
     }
 
     @Override
     public int compareTo(Object o) {
-        return HitPropValue.collator.compare(value, ((HitPropValueString) o).value);
+        return PropertyValue.collator.compare(value, ((PropertyValueString) o).value);
     }
 
     @Override
@@ -24,14 +24,14 @@ public class HitPropValueString extends HitPropValue {
     public boolean equals(Object obj) {
         if (obj == this)
             return true;
-        if (obj instanceof HitPropValueString) {
-            return value.equals(((HitPropValueString) obj).value);
+        if (obj instanceof PropertyValueString) {
+            return value.equals(((PropertyValueString) obj).value);
         }
         return false;
     }
 
-    public static HitPropValue deserialize(String info) {
-        return new HitPropValueString(info);
+    public static PropertyValue deserialize(String info) {
+        return new PropertyValueString(info);
     }
 
     @Override

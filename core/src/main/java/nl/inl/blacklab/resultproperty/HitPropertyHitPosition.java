@@ -43,8 +43,8 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitPropValueInt get(Hit result) {
-        return new HitPropValueInt(result.start());
+    public PropertyValueInt get(Hit result) {
+        return new PropertyValueInt(result.start());
     }
 
     @Override

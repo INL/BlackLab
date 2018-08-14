@@ -38,7 +38,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public HitPropValueDecade get(DocResult result) {
+    public PropertyValueDecade get(DocResult result) {
         String strYear = result.getDocument().get(fieldName);
         int year;
         try {
@@ -47,7 +47,7 @@ public class DocPropertyDecade extends DocProperty {
         } catch (NumberFormatException e) {
             year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
         }
-        return new HitPropValueDecade(year);
+        return new PropertyValueDecade(year);
     }
 
     /**

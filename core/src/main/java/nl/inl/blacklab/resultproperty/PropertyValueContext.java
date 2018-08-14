@@ -5,17 +5,17 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 
-public abstract class HitPropValueContext extends HitPropValue {
+public abstract class PropertyValueContext extends PropertyValue {
 
     protected Terms terms;
 
     protected Annotation annotation;
 
-    public HitPropValueContext(Hits hits, Annotation annotation) {
+    public PropertyValueContext(Hits hits, Annotation annotation) {
         this(hits.index(), annotation);
     }
 
-    public HitPropValueContext(BlackLabIndex index, Annotation annotation) {
+    public PropertyValueContext(BlackLabIndex index, Annotation annotation) {
         this.annotation = annotation;
         this.terms = index.annotationForwardIndex(annotation).terms();
     }

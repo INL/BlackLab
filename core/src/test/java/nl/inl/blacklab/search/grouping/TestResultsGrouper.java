@@ -27,8 +27,8 @@ import org.mockito.Mockito;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpanQuery;
-import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.resultproperty.HitPropValueInt;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -54,19 +54,19 @@ public class TestResultsGrouper {
         Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.maxSettings());
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.groupedBy(crit);
-        Map<HitPropValue, HitGroup> groups = grouper.getGroupMap();
+        Map<PropertyValue, HitGroup> groups = grouper.getGroupMap();
 
         Assert.assertEquals(3, groups.size());
-        HitPropValueInt one = new HitPropValueInt(1);
+        PropertyValueInt one = new PropertyValueInt(1);
         HitGroup group1 = groups.get(one);
         Assert.assertEquals(one, group1.getIdentity());
         Assert.assertEquals(3, group1.size());
         Assert.assertEquals(1, group1.getHits().get(0).doc());
         Assert.assertEquals(1, group1.getHits().get(1).doc());
         Assert.assertEquals(1, group1.getHits().get(2).doc());
-        HitPropValueInt two = new HitPropValueInt(2);
+        PropertyValueInt two = new PropertyValueInt(2);
         Assert.assertEquals(2, groups.get(two).size());
-        HitPropValueInt three = new HitPropValueInt(3);
+        PropertyValueInt three = new PropertyValueInt(3);
         Assert.assertEquals(1, groups.get(three).size());
     }
 }

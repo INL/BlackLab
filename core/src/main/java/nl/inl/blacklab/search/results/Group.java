@@ -15,19 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * A group of results, with its group identity and the results themselves.
  */
 public abstract class Group {
-    protected HitPropValue groupIdentity;
+    protected PropertyValue groupIdentity;
 
-    public Group(HitPropValue groupIdentity) {
+    public Group(PropertyValue groupIdentity) {
         this.groupIdentity = groupIdentity;
     }
 
-    public HitPropValue getIdentity() {
+    public PropertyValue getIdentity() {
         return groupIdentity;
     }
 

@@ -50,7 +50,7 @@ public abstract class GroupProperty implements ResultProperty<Group> {
     }
 
     @Override
-    public abstract HitPropValue get(Group result);
+    public abstract PropertyValue get(Group result);
 
     @Override
     public abstract int compare(Group a, Group b);

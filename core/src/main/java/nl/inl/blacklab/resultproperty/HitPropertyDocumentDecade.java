@@ -61,7 +61,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitPropValueDecade get(Hit result) {
+    public PropertyValueDecade get(Hit result) {
         try {
             Document d = reader.document(result.doc());
             String strYear = d.get(fieldName);
@@ -72,7 +72,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
             } catch (NumberFormatException e) {
                 year = UNKNOWN_VALUE;
             }
-            return new HitPropValueDecade(year);
+            return new PropertyValueDecade(year);
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

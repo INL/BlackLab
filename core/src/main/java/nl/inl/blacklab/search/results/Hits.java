@@ -5,7 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.ResultNotFound;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -122,7 +122,7 @@ public interface Hits extends Iterable<Hit> {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    default Hits filteredBy(HitProperty property, HitPropValue value) {
+    default Hits filteredBy(HitProperty property, PropertyValue value) {
         return new HitsFiltered(this, property, value);
     }
 

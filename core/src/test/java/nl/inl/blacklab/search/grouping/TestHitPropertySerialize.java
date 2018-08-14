@@ -13,11 +13,11 @@ import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
-import nl.inl.blacklab.resultproperty.HitPropValue;
-import nl.inl.blacklab.resultproperty.HitPropValueContextWord;
-import nl.inl.blacklab.resultproperty.HitPropValueDecade;
-import nl.inl.blacklab.resultproperty.HitPropValueMultiple;
-import nl.inl.blacklab.resultproperty.HitPropValueString;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
+import nl.inl.blacklab.resultproperty.PropertyValueDecade;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
@@ -82,26 +82,26 @@ public class TestHitPropertySerialize {
 
     @Test
     public void testHitPropValueSerialize() {
-        HitPropValue val, val1;
+        PropertyValue val, val1;
 
-        val1 = new HitPropValueContextWord(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, 2);
+        val1 = new PropertyValueContextWord(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, 2);
         String exp = "cwo:lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
-        Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val1 = new HitPropValueDecade(1980);
+        val1 = new PropertyValueDecade(1980);
         exp = "dec:1980";
         Assert.assertEquals(exp, val1.serialize());
-        Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val = new HitPropValueMultiple(new HitPropValue[] { val1, new HitPropValueString("blabla") });
+        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("blabla") });
         exp = "dec:1980,str:blabla";
         Assert.assertEquals(exp, val.serialize());
-        Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val = new HitPropValueMultiple(new HitPropValue[] { val1, new HitPropValueString("$bl:ab,la") });
+        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("$bl:ab,la") });
         exp = "dec:1980,str:$DLbl$CLab$CMla";
         Assert.assertEquals(exp, val.serialize());
-        Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
     }
 }

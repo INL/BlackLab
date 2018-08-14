@@ -16,7 +16,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.resultproperty.HitPropValue;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConfigReader;
@@ -188,7 +188,7 @@ public class TestIndex {
         return getConcordances(hits, word);
     }
     
-    public List<String> findConc(String query, HitProperty prop, HitPropValue value) {
+    public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
         Hits hits = find(query, null).filteredBy(prop, value);
         return getConcordances(hits, word);
     }

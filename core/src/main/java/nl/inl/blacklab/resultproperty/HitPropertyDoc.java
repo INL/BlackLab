@@ -46,8 +46,8 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitPropValueDoc get(Hit result) {
-        return new HitPropValueDoc(index.doc(result.doc()));
+    public PropertyValueDoc get(Hit result) {
+        return new PropertyValueDoc(index.doc(result.doc()));
     }
 
     @Override
