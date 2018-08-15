@@ -19,7 +19,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
@@ -47,10 +48,10 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public PropertyValueInt get(DocResult result) {
+    public PropertyValueInt get(Group<Hit> result) {
         try {
             int subtractClosingToken = 1;
-            int length = Integer.parseInt(result.getIdentity().getValue().luceneDoc().get(fieldName)) - subtractClosingToken;
+            int length = Integer.parseInt(((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName)) - subtractClosingToken;
             return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
             return new PropertyValueInt(0);
@@ -65,10 +66,10 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(DocResult a, DocResult b) {
+    public int compare(Group<Hit> a, Group<Hit> b) {
         try {
-            int ia = Integer.parseInt(a.getIdentity().getValue().luceneDoc().get(fieldName));
-            int ib = Integer.parseInt(b.getIdentity().getValue().luceneDoc().get(fieldName));
+            int ia = Integer.parseInt(((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName));
+            int ib = Integer.parseInt(((PropertyValueDoc)b.getIdentity()).getValue().luceneDoc().get(fieldName));
             return reverse ? ib - ia : ia - ib;
         } catch (NumberFormatException e) {
             return 0;

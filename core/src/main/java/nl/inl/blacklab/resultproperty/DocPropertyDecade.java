@@ -18,7 +18,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * For grouping DocResult objects by decade based on a stored field containing a
@@ -38,8 +39,8 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public PropertyValueDecade get(DocResult result) {
-        String strYear = result.getIdentity().getValue().luceneDoc().get(fieldName);
+    public PropertyValueDecade get(Group<Hit> result) {
+        String strYear = ((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName);
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -58,11 +59,11 @@ public class DocPropertyDecade extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(DocResult a, DocResult b) {
-        String strYearA = a.getIdentity().getValue().luceneDoc().get(fieldName);
+    public int compare(Group<Hit> a, Group<Hit> b) {
+        String strYearA = ((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (strYearA == null)
             strYearA = "";
-        String strYearB = b.getIdentity().getValue().luceneDoc().get(fieldName);
+        String strYearB = ((PropertyValueDoc)b.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (strYearB == null)
             strYearB = "";
         if (strYearA.length() == 0) { // sort missing year at the end

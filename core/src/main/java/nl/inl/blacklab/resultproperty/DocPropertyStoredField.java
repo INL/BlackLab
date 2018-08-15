@@ -18,7 +18,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene
@@ -45,8 +46,8 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public PropertyValueString get(DocResult result) {
-        return new PropertyValueString(result.getIdentity().getValue().luceneDoc().get(fieldName));
+    public PropertyValueString get(Group<Hit> result) {
+        return new PropertyValueString(((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName));
     }
 
     /**
@@ -57,11 +58,11 @@ public class DocPropertyStoredField extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(DocResult a, DocResult b) {
-        String sa = a.getIdentity().getValue().luceneDoc().get(fieldName);
+    public int compare(Group<Hit> a, Group<Hit> b) {
+        String sa = ((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (sa == null)
             sa = "";
-        String sb = b.getIdentity().getValue().luceneDoc().get(fieldName);
+        String sb = ((PropertyValueDoc)b.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (sb == null)
             sb = "";
         if (sa.length() == 0) { // sort empty string at the end

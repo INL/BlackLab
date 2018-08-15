@@ -72,4 +72,6 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      */
     List<String> getPropNames();
 
+    boolean defaultSortDescending();
+
 }

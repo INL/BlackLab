@@ -101,7 +101,7 @@ public class HitGroupsImpl extends HitGroups {
         for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            HitGroup group = new HitGroup(queryInfo, groupId, hitList);
+            HitGroup group = new HitGroup(queryInfo(), groupId, hitList);
             groups.put(groupId, group);
             groupsOrdered.add(group);
         }
@@ -134,9 +134,8 @@ public class HitGroupsImpl extends HitGroups {
      * @param sortReverse whether to sort in descending order
      */
     @Override
-    public void sortGroups(GroupProperty prop, boolean sortReverse) {
-        Comparator<Group> comparator = new ComparatorGroupProperty(prop, sortReverse);
-
+    public void sortGroups(GroupProperty<Hit> prop, boolean sortReverse) {
+        Comparator<Group<Hit>> comparator = new ComparatorGroupProperty<>(prop, sortReverse);
         groupsOrdered.sort(comparator);
     }
 
@@ -173,6 +172,27 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public HitGroup get(PropertyValue identity) {
         return groups.get(identity);
+    }
+
+    @Override
+    public int size() {
+        return groups.size();
+    }
+
+//    @Override
+//    public void sort(GroupProperty<Hit> sortBy, boolean reverse) {
+//        sortGroups(sortBy, reverse);
+//    }
+
+    @Override
+    public <G extends Group<Hit>> void add(G obj) {
+        throw new UnsupportedOperationException();
+        
+    }
+
+    @Override
+    public Results<HitGroup> window(int first, int windowSize) {
+        throw new UnsupportedOperationException();
     }
 
 }

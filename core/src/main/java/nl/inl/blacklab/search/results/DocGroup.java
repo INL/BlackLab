@@ -24,29 +24,28 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * you're grouping on author name, the group identity might be the string "Harry
  * Mulisch".
  */
-public class DocGroup {
+public class DocGroup extends Group<DocResult> {
     protected PropertyValue groupIdentity;
 
     private DocResults results;
 
     public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
-        this.groupIdentity = groupIdentity;
+        super(groupIdentity);
         results = new DocResults(queryInfo);
     }
 
     public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> resultList) {
-        this.groupIdentity = groupIdentity;
+        super(groupIdentity);
         results = new DocResults(queryInfo, resultList);
     }
 
-    public PropertyValue getIdentity() {
-        return groupIdentity;
-    }
-
+    @Override
+    @SuppressWarnings("unchecked")
     public DocResults getResults() {
         return results;
     }
 
+    @Override
     public int size() {
         return results.size();
     }
@@ -54,6 +53,11 @@ public class DocGroup {
     @Override
     public String toString() {
         return groupIdentity + " (" + size() + ")";
+    }
+
+    @Override
+    public void add(DocResult obj) {
+        throw new UnsupportedOperationException();
     }
 
 }

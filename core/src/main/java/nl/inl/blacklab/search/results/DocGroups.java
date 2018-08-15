@@ -32,7 +32,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups implements ResultGroups<DocGroup> {
+public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
     Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     List<DocGroup> orderedGroups = new ArrayList<>();
@@ -52,7 +52,7 @@ public class DocGroups implements ResultGroups<DocGroup> {
      * @param groupBy the criterium to group on.
      */
     DocGroups(DocResults docResults, DocProperty groupBy) {
-        this.queryInfo = docResults.queryInfo();
+        super(docResults.queryInfo());
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
@@ -131,6 +131,30 @@ public class DocGroups implements ResultGroups<DocGroup> {
     @Override
     public DocGroup get(int i) {
         return orderedGroups.get(i);
+    }
+
+//    @Override
+//    public void add(DocGroup obj) {
+//        groups.put(obj.getIdentity(), obj);
+//        orderedGroups.add(obj);
+//    }
+
+    @Override
+    public int size() {
+        return groups.size();
+    }
+
+    @Override
+    public Results<DocGroup> window(int first, int windowSize) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <G extends Group<DocResult>> void add(G obj) {
+//        DocGroup docGroup = (DocGroup)obj;
+//        groups.put(obj.getIdentity(), docGroup);
+//        orderedGroups.add(docGroup);
+        throw new UnsupportedOperationException();
     }
 
 }

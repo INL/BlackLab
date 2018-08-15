@@ -38,13 +38,13 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.util.ReverseComparator;
-import nl.inl.util.ThreadPauser;
 
 /**
  * A list of DocResult objects (document-level query results).
  */
-public class DocResults implements ResultGroups<DocResult> {
+public class DocResults extends Results<DocResult> implements ResultGroups<Hit> {
     
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
@@ -157,10 +157,6 @@ public class DocResults implements ResultGroups<DocResult> {
      */
     private PropertyValueDoc partialDocId = null;
 
-    private QueryInfo queryInfo;
-
-    private ThreadPauser threadPauser;
-
     private HitPropertyDoc groupByDoc;
 
     Lock ensureResultsReadLock;
@@ -171,9 +167,8 @@ public class DocResults implements ResultGroups<DocResult> {
     private int totalHits = 0;
     
     DocResults(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;
+        super(queryInfo);
         results = new ArrayList<>();
-        threadPauser = new ThreadPauser();
         groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
     
@@ -225,17 +220,8 @@ public class DocResults implements ResultGroups<DocResult> {
         this(queryInfo, resultsFromQuery(queryInfo, query));
     }
 
-    public ThreadPauser threadPauser() {
-        return threadPauser;
-    }
-
     boolean sourceHitsFullyRead() {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
-    }
-
-    @Override
-    public QueryInfo queryInfo() {
-        return queryInfo;
     }
 
     /**
@@ -243,7 +229,7 @@ public class DocResults implements ResultGroups<DocResult> {
      *
      * @param comparator how to sort the results
      */
-    void sort(Comparator<DocResult> comparator) {
+    void sort(Comparator<Group<Hit>> comparator) {
         try {
             ensureAllResultsRead();
         } catch (InterruptedException e) {
@@ -260,7 +246,7 @@ public class DocResults implements ResultGroups<DocResult> {
      * @param sortReverse true iff we want to sort in reverse.
      */
     public void sort(DocProperty prop, boolean sortReverse) {
-        Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
+        Comparator<Group<Hit>> comparator = new ComparatorDocProperty(prop);
         if (sortReverse) {
             comparator = new ReverseComparator<>(comparator);
         }
@@ -301,6 +287,7 @@ public class DocResults implements ResultGroups<DocResult> {
      *
      * @return the number of documents.
      */
+    @Override
     public int size() {
         return docsProcessedTotal();
     }
@@ -389,7 +376,7 @@ public class DocResults implements ResultGroups<DocResult> {
                 PropertyValueDoc val = groupByDoc.get(hit);
                 if (!val.equals(doc)) {
                     if (docHits != null) {
-                        Hits hits = Hits.fromList(queryInfo, docHits);
+                        Hits hits = Hits.fromList(queryInfo(), docHits);
                         addDocResultToList(doc, hits);
                     }
                     doc = val;
@@ -403,7 +390,7 @@ public class DocResults implements ResultGroups<DocResult> {
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = Hits.fromList(queryInfo, docHits);
+                    Hits hits = Hits.fromList(queryInfo(), docHits);
                     addDocResultToList(doc, hits);
                     sourceHitsIterator = null; // allow this to be GC'ed
                     partialDocHits = null;
@@ -414,7 +401,7 @@ public class DocResults implements ResultGroups<DocResult> {
         }
     }
 
-    private void addDocResultToList(PropertyValueDoc doc, Hits docHits) {
+    private void addDocResultToList(PropertyValue doc, Hits docHits) {
         DocResult docResult = new DocResult(doc, docHits);
         results.add(docResult);
         if (docHits.size() > mostHitsInDocument)
@@ -499,6 +486,7 @@ public class DocResults implements ResultGroups<DocResult> {
      * @param number maximum number of document results to include
      * @return the window
      */
+    @Override
     public DocResultsWindow window(int first, int number) {
         return new DocResultsWindow(this, first, number);
     }
@@ -527,7 +515,7 @@ public class DocResults implements ResultGroups<DocResult> {
      * @param numProp a numeric property to sum
      * @return the sum
      */
-    public int intSum(DocProperty numProp) {
+    public int intSum(ResultProperty<Group<Hit>> numProp) {
         try {
             ensureAllResultsRead();
         } catch (InterruptedException e) {
@@ -535,16 +523,18 @@ public class DocResults implements ResultGroups<DocResult> {
             // Let caller detect and deal with interruption.
         }
         int sum = 0;
-        for (DocResult result : results) {
+        for (Group<Hit> result : results) {
             sum += ((PropertyValueInt) numProp.get(result)).getValue();
         }
         return sum;
     }
 
+    @Override
     public boolean isWindow() {
         return windowStats() != null;
     }
 
+    @Override
     public WindowStats windowStats() {
         return null;
     }
@@ -571,7 +561,7 @@ public class DocResults implements ResultGroups<DocResult> {
     }
 
     @Override
-    public DocResult get(PropertyValue prop) {
+    public Group<Hit> get(PropertyValue prop) {
         try {
             ensureAllResultsRead();
         } catch (InterruptedException e) {
@@ -579,5 +569,10 @@ public class DocResults implements ResultGroups<DocResult> {
             // we will just return null.
         }
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
+    }
+
+    @Override
+    public <G extends Group<Hit>> void add(G obj) {
+        throw new UnsupportedOperationException();
     }
 }

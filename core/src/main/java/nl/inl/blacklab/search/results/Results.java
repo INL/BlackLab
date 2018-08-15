@@ -143,9 +143,6 @@ public abstract class Results<T> implements Iterable<T> {
     @Override
     public abstract Iterator<T> iterator();
 
-    @Override
-    public abstract String toString();
-
 //    /**
 //     * Group these hits by a criterium (or several criteria).
 //     *
@@ -190,5 +187,10 @@ public abstract class Results<T> implements Iterable<T> {
      * @return the window
      */
     public abstract Results<T> window(int first, int windowSize);
+    
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(#" + hitsObjId + ")";
+    }
 
 }

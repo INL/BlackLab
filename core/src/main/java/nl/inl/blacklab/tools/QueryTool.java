@@ -56,6 +56,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -74,11 +75,10 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.DocResultsWindow;
+import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -1234,11 +1234,11 @@ public class QueryTool {
      * @param sortBy property to sort by
      */
     private void sortGroups(String sortBy) {
-        GroupProperty crit = null;
+        GroupProperty<Hit> crit = null;
         if (sortBy.equals("identity") || sortBy.equals("id"))
-            crit = new GroupPropertyIdentity();
+            crit = new GroupPropertyIdentity<Hit>();
         else if (sortBy.startsWith("size"))
-            crit = new GroupPropertySize();
+            crit = new GroupPropertySize<Hit>();
         if (crit == null) {
             errprintln("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");
@@ -1416,7 +1416,7 @@ public class QueryTool {
     private void showGroupsPage() {
         int i;
         for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
-            HitGroup g = groups.get(i);
+            Group<Hit> g = groups.get(i);
             outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
         }
 
@@ -1444,8 +1444,8 @@ public class QueryTool {
         // Compile hits display info and calculate necessary width of left context column
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.windowStats().first() + 1;
-        for (DocResult result : window) {
-            Doc doc = result.getIdentity().getValue();
+        for (Group<Hit> result : window) {
+            Doc doc = ((PropertyValueDoc)result.getIdentity()).getValue();
             Document d = doc.luceneDoc();
             String title = d.get(titleField.name());
             if (title == null)
@@ -1610,8 +1610,8 @@ public class QueryTool {
     private Hits getCurrentHitSet() {
         Hits hitsToShow = hits;
         if (showWhichGroup >= 0) {
-            HitGroup g = groups.get(showWhichGroup);
-            hitsToShow = g.getHits();
+            Group<Hit> g = groups.get(showWhichGroup);
+            hitsToShow = (Hits)g.getResults();
         }
         return hitsToShow;
     }

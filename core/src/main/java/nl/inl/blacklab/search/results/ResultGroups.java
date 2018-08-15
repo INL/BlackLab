@@ -4,7 +4,12 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
-public interface ResultGroups<T> extends Iterable<T> {
+/**
+ * Grouped results of some type
+ * 
+ * @param <T> result type, e.g. Hit for groups of hits
+ */
+public interface ResultGroups<T> {
     /**
      * Get the total number of results that were grouped
      *
@@ -54,8 +59,12 @@ public interface ResultGroups<T> extends Iterable<T> {
         return queryInfo().field();
     }
     
-    T get(PropertyValue prop);
+    Group<T> get(PropertyValue prop);
     
-    T get(int i);
+    Group<T> get(int i);
+
+    <G extends Group<T>> void add(G obj);
+
+    int size();
 
 }

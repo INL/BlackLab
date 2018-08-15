@@ -19,8 +19,10 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * A group of results, with its group identity and the results themselves.
+ * 
+ * @param <T> result type, e.g. Hit 
  */
-public abstract class Group {
+public abstract class Group<T> {
     protected PropertyValue groupIdentity;
 
     public Group(PropertyValue groupIdentity) {
@@ -30,5 +32,11 @@ public abstract class Group {
     public PropertyValue getIdentity() {
         return groupIdentity;
     }
+
+    public abstract void add(T obj);
+
+    public abstract int size();
+
+    public abstract <R extends Results<T>> R getResults();
 
 }

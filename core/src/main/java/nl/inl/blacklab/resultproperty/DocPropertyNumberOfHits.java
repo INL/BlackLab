@@ -18,7 +18,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * For grouping DocResult objects on the number of hits. This would put
@@ -38,7 +39,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public PropertyValueInt get(DocResult result) {
+    public PropertyValueInt get(Group<Hit> result) {
         return new PropertyValueInt(result.size());
     }
 
@@ -50,7 +51,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(DocResult a, DocResult b) {
+    public int compare(Group<Hit> a, Group<Hit> b) {
         if (reverse)
             return b.size() - a.size();
         return a.size() - b.size();

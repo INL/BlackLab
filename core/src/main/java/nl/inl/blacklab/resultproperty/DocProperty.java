@@ -22,14 +22,15 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
  * Subclasses implement specific grouping criteria (number of hits, the value of
  * a stored field in the Lucene document, ...)
  */
-public abstract class DocProperty {
+public abstract class DocProperty implements ResultProperty<Group<Hit>> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */
@@ -49,7 +50,8 @@ public abstract class DocProperty {
      * @return the grouping property. e.g. this might be "Harry Mulisch" when
      *         grouping on author.
      */
-    public abstract PropertyValue get(DocResult result);
+    @Override
+    public abstract PropertyValue get(Group<Hit> result);
 
     /**
      * Compares two docs on this property
@@ -58,16 +60,20 @@ public abstract class DocProperty {
      * @param b second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
-    public int compare(DocResult a, DocResult b) {
+    @Override
+    public int compare(Group<Hit> a, Group<Hit> b) {
         return get(a).compareTo(get(b));
     }
 
+    @Override
     public boolean defaultSortDescending() {
         return false;
     }
 
+    @Override
     public abstract String getName();
 
+    @Override
     public abstract String serialize();
 
     /**
@@ -131,6 +137,7 @@ public abstract class DocProperty {
      * 
      * @return true if it is, false if not
      */
+    @Override
     public boolean isReverse() {
         return reverse;
     }
@@ -140,6 +147,7 @@ public abstract class DocProperty {
      * 
      * @return document property with the comparison reversed
      */
+    @Override
     public abstract DocProperty reverse();
 
     @Override
@@ -152,6 +160,7 @@ public abstract class DocProperty {
      * 
      * @return the list
      */
+    @Override
     public abstract List<String> getPropNames();
 
     public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {

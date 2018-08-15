@@ -28,6 +28,7 @@ import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * Counts the number of documents that have a certain property.
@@ -36,7 +37,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  *
  * Useful for faceted search.
  */
-public class DocCounts implements Iterable<DocCount> {
+public class DocCounts extends Results<DocCount> {
     Map<PropertyValue, DocCount> counts = new HashMap<>();
 
     List<DocCount> orderedGroups = new ArrayList<>();
@@ -47,8 +48,6 @@ public class DocCounts implements Iterable<DocCount> {
 
     private DocProperty countBy;
 
-    private QueryInfo queryInfo;
-
     /**
      * Constructor. Fills the groups from the given document results.
      *
@@ -56,7 +55,7 @@ public class DocCounts implements Iterable<DocCount> {
      * @param countBy the criterium to group on.
      */
     DocCounts(DocResults docResults, DocProperty countBy) {
-        this.queryInfo = docResults.queryInfo();
+        super(docResults.queryInfo());
         this.countBy = countBy;
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
@@ -67,7 +66,7 @@ public class DocCounts implements Iterable<DocCount> {
                 count = new DocCount(docResults.queryInfo(), groupId);
                 counts.put(groupId, count);
             }
-            count.increment();
+            count.add(r);
             if (count.size() > largestGroupSize)
                 largestGroupSize = count.size();
             totalResults++;
@@ -77,10 +76,6 @@ public class DocCounts implements Iterable<DocCount> {
         }
     }
     
-    public QueryInfo queryInfo() {
-        return queryInfo;
-    }
-
     public Collection<DocCount> getCounts() {
         return Collections.unmodifiableCollection(orderedGroups);
     }
@@ -115,8 +110,23 @@ public class DocCounts implements Iterable<DocCount> {
         return totalResults;
     }
 
-    public DocProperty getGroupCriteria() {
+    public ResultProperty<Group<Hit>> getGroupCriteria() {
         return countBy;
+    }
+
+    @Override
+    public int size() {
+        return numberOfGroups();
+    }
+
+    @Override
+    public DocCount get(int i) {
+        return orderedGroups.get(i);
+    }
+
+    @Override
+    public Results<DocCount> window(int first, int windowSize) {
+        throw new UnsupportedOperationException();
     }
 
 }

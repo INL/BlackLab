@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 
 /**
@@ -36,7 +37,7 @@ public class DocResult extends HitGroup {
      * @param doc the Lucene document id
      * @param docHits hits in the document
      */
-    public DocResult(PropertyValueDoc doc, Hits docHits) {
+    public DocResult(PropertyValue doc, Hits docHits) {
         super(doc, docHits);
         this.score = 0.0f;
     }
@@ -49,5 +50,5 @@ public class DocResult extends HitGroup {
     public PropertyValueDoc getIdentity() {
         return (PropertyValueDoc)super.getIdentity();
     }
-
+    
 }

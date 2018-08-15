@@ -20,10 +20,12 @@ import nl.inl.blacklab.search.results.Group;
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
+ * 
+ * @param <T> result type, e.g. Hit
  */
-public class GroupPropertyIdentity extends GroupProperty {
+public class GroupPropertyIdentity<T> extends GroupProperty<T> {
     
-    GroupPropertyIdentity(GroupPropertyIdentity prop, boolean invert) {
+    GroupPropertyIdentity(GroupPropertyIdentity<T> prop, boolean invert) {
         super(prop, invert);
     }
     
@@ -32,12 +34,12 @@ public class GroupPropertyIdentity extends GroupProperty {
     }
     
     @Override
-    public PropertyValue get(Group result) {
+    public PropertyValue get(Group<T> result) {
         return result.getIdentity();
     }
 
     @Override
-    public int compare(Group a, Group b) {
+    public int compare(Group<T> a, Group<T> b) {
         if (reverse)
             return b.getIdentity().compareTo(a.getIdentity());
         return a.getIdentity().compareTo(b.getIdentity());
@@ -49,8 +51,8 @@ public class GroupPropertyIdentity extends GroupProperty {
     }
 
     @Override
-    public GroupProperty reverse() {
-        return new GroupPropertyIdentity(this, true);
+    public GroupPropertyIdentity<T> reverse() {
+        return new GroupPropertyIdentity<>(this, true);
     }
 
     @Override

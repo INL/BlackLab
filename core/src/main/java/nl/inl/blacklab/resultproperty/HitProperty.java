@@ -319,4 +319,9 @@ public abstract class HitProperty implements ResultProperty<Hit> {
 
         return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
     }
+
+    @Override
+    public boolean defaultSortDescending() {
+        return false;
+    }
 }

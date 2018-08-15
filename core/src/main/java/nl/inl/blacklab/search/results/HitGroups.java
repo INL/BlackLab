@@ -20,6 +20,7 @@ import java.util.List;
 
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -28,22 +29,22 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * access to the hits. Note that this means that all hits found must be
  * retrieved, which may be unfeasible for large results sets.
  */
-public abstract class HitGroups implements ResultGroups<HitGroup> {
-    QueryInfo queryInfo;
+public abstract class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
 
     protected HitProperty criteria;
 
     public HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
-        this.queryInfo = queryInfo;
+        super(queryInfo);
         this.criteria = groupCriteria;
-    }
-    
-    @Override
-    public QueryInfo queryInfo() {
-        return queryInfo;
     }
 
     public abstract List<HitGroup> getGroups();
+    
+    @Override
+    public abstract HitGroup get(int i);
+
+    @Override
+    public abstract HitGroup get(PropertyValue identity);
 
     public HitProperty getGroupCriteria() {
         return criteria;
@@ -54,7 +55,7 @@ public abstract class HitGroups implements ResultGroups<HitGroup> {
      * 
      * @param prop the property to sort on
      */
-    public void sortGroups(GroupProperty prop) {
+    public void sortGroups(GroupProperty<Hit> prop) {
         sortGroups(prop, false);
     }
 
@@ -65,7 +66,7 @@ public abstract class HitGroups implements ResultGroups<HitGroup> {
      * @param sortReverse if true, reverse the natural sort of the specified
      *            property.
      */
-    public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
+    public abstract void sortGroups(GroupProperty<Hit> prop, boolean sortReverse);
 
     @Override
     public Iterator<HitGroup> iterator() {

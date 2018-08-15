@@ -23,7 +23,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * A group of results, with its group identity and the results themselves, that
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
-public class HitGroup extends Group {
+public class HitGroup extends Group<Hit> {
     Hits results;
 
     HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
@@ -61,6 +61,7 @@ public class HitGroup extends Group {
         return results;
     }
 
+    @Override
     public int size() {
         return results.size();
     }
@@ -68,5 +69,16 @@ public class HitGroup extends Group {
     @Override
     public String toString() {
         return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
+    }
+
+    @Override
+    public void add(Hit obj) {
+        throw new UnsupportedOperationException();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Hits getResults() {
+        return results;
     }
 }
