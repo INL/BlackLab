@@ -41,7 +41,7 @@ public abstract class JobWithHits extends Job {
 
     @Override
     protected Pausible getObjectToPrioritize() {
-        return hits.threadPauser();
+        return hits == null ? null : hits.threadPauser();
     }
 
 }

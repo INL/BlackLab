@@ -47,7 +47,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 : index.defaultContextSize();
         Annotation annotation = field.annotation(propName);
         try {
-            Constructor<T> ctor = cls.getConstructor(Hits.class, Annotation.class, MatchSensitivity.class,
+            Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class,
                     ContextSize.class);
             return ctor.newInstance(index, annotation, sensitivity, contextSize);
         } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {

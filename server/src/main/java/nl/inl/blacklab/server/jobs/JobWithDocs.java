@@ -34,6 +34,6 @@ public abstract class JobWithDocs extends Job {
 
     @Override
     protected Pausible getObjectToPrioritize() {
-        return docResults.threadPauser();
+        return docResults == null ? null : docResults.threadPauser();
     }
 }
