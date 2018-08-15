@@ -24,9 +24,9 @@ import nl.inl.blacklab.search.results.HitGroup;
  * 
  * @param <T> result type, e.g. Hit 
  */
-public class GroupPropertySize<T> extends GroupProperty<T> {
+public class GroupPropertySize extends GroupProperty {
     
-    GroupPropertySize(GroupPropertySize<T> prop, boolean invert) {
+    GroupPropertySize(GroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
     
@@ -35,12 +35,12 @@ public class GroupPropertySize<T> extends GroupProperty<T> {
     }
     
     @Override
-    public PropertyValueInt get(Group<T> result) {
+    public PropertyValueInt get(Group<?> result) {
         return new PropertyValueInt(((HitGroup) result).size());
     }
 
     @Override
-    public int compare(Group<T> a, Group<T> b) {
+    public int compare(Group<?> a, Group<?> b) {
         if (reverse)
             return ((HitGroup) b).size() - ((HitGroup) a).size();
         return ((HitGroup) a).size() - ((HitGroup) b).size();
@@ -57,8 +57,8 @@ public class GroupPropertySize<T> extends GroupProperty<T> {
     }
 
     @Override
-    public GroupProperty<T> reverse() {
-        return new GroupPropertySize<T>(this, true);
+    public GroupProperty reverse() {
+        return new GroupPropertySize(this, true);
     }
 
     @Override

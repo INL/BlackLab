@@ -134,8 +134,8 @@ public class HitGroupsImpl extends HitGroups {
      * @param sortReverse whether to sort in descending order
      */
     @Override
-    public void sortGroups(GroupProperty<Hit> prop, boolean sortReverse) {
-        Comparator<Group<Hit>> comparator = new ComparatorGroupProperty<>(prop, sortReverse);
+    public void sortGroups(GroupProperty prop, boolean sortReverse) {
+        Comparator<Group<?>> comparator = new ComparatorGroupProperty(prop, sortReverse);
         groupsOrdered.sort(comparator);
     }
 

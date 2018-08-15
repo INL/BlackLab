@@ -25,20 +25,20 @@ import nl.inl.blacklab.search.results.Group;
  * 
  * @param <T> type of result, e.g. Hit
  */
-public abstract class GroupProperty<T> implements ResultProperty<Group<T>> {
+public abstract class GroupProperty implements ResultProperty<Group<?>> {
 
-    public static <T> GroupPropertyIdentity<T> identity() {
-        return new GroupPropertyIdentity<>();
+    public static GroupPropertyIdentity identity() {
+        return new GroupPropertyIdentity();
     }
 
-    public static <T> GroupPropertySize<T> size() {
-        return new GroupPropertySize<>();
+    public static GroupPropertySize size() {
+        return new GroupPropertySize();
     }
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
     
-    GroupProperty(GroupProperty<T> prop, boolean invert) {
+    GroupProperty(GroupProperty prop, boolean invert) {
         this.reverse = invert ? !prop.reverse : prop.reverse;
     }
     
@@ -47,10 +47,10 @@ public abstract class GroupProperty<T> implements ResultProperty<Group<T>> {
     }
 
     @Override
-    public abstract PropertyValue get(Group<T> result);
+    public abstract PropertyValue get(Group<?> result);
 
     @Override
-    public abstract int compare(Group<T> a, Group<T> b);
+    public abstract int compare(Group<?> a, Group<?> b);
 
     @Override
     public boolean defaultSortDescending() {
@@ -69,17 +69,17 @@ public abstract class GroupProperty<T> implements ResultProperty<Group<T>> {
         return reverse ? "-" : "";
     }
 
-    public static <T> GroupProperty<T> deserialize(String serialized) {
+    public static GroupProperty deserialize(String serialized) {
         boolean reverse = false;
         if (serialized.length() > 0 && serialized.charAt(0) == '-') {
             reverse = true;
             serialized = serialized.substring(1);
         }
-        GroupProperty<T> result;
+        GroupProperty result;
         if (serialized.equalsIgnoreCase("identity"))
-            result = new GroupPropertyIdentity<>();
+            result = new GroupPropertyIdentity();
         else
-            result = new GroupPropertySize<>();
+            result = new GroupPropertySize();
         if (reverse)
             result = result.reverse();
         return result;
@@ -100,7 +100,7 @@ public abstract class GroupProperty<T> implements ResultProperty<Group<T>> {
      * @return reversed group property 
      */
     @Override
-    public abstract GroupProperty<T> reverse();
+    public abstract GroupProperty reverse();
 
     @Override
     public String toString() {

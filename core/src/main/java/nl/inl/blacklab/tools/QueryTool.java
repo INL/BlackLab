@@ -1234,11 +1234,11 @@ public class QueryTool {
      * @param sortBy property to sort by
      */
     private void sortGroups(String sortBy) {
-        GroupProperty<Hit> crit = null;
+        GroupProperty crit = null;
         if (sortBy.equals("identity") || sortBy.equals("id"))
-            crit = new GroupPropertyIdentity<Hit>();
+            crit = new GroupPropertyIdentity();
         else if (sortBy.startsWith("size"))
-            crit = new GroupPropertySize<Hit>();
+            crit = new GroupPropertySize();
         if (crit == null) {
             errprintln("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");

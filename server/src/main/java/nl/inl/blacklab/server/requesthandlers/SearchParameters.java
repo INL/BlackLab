@@ -31,7 +31,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -468,7 +467,7 @@ public class SearchParameters {
     }
 
     private HitGroupSortSettings hitGroupSortSettings() {
-        GroupProperty<Hit> sortProp = null;
+        GroupProperty sortProp = null;
         boolean reverse = false;
         if (!isDocsOperation) {
             // not grouping, so no group sort
@@ -485,7 +484,7 @@ public class SearchParameters {
         }
         if (sortProp == null) {
             // By default, show largest group first
-            sortProp = new GroupPropertySize<>();
+            sortProp = new GroupPropertySize();
         }
         return new HitGroupSortSettings(sortProp, reverse);
     }

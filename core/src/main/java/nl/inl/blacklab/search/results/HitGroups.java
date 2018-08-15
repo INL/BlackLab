@@ -55,7 +55,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * 
      * @param prop the property to sort on
      */
-    public void sortGroups(GroupProperty<Hit> prop) {
+    public void sortGroups(GroupProperty prop) {
         sortGroups(prop, false);
     }
 
@@ -66,7 +66,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @param sortReverse if true, reverse the natural sort of the specified
      *            property.
      */
-    public abstract void sortGroups(GroupProperty<Hit> prop, boolean sortReverse);
+    public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
     @Override
     public Iterator<HitGroup> iterator() {
