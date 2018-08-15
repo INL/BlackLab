@@ -36,11 +36,6 @@ public class DocCount extends DocGroup {
     }
 
     @Override
-    public DocResults getResults() {
-        throw new UnsupportedOperationException("DocCount has no results objects!");
-    }
-
-    @Override
     public int size() {
         return count;
     }

@@ -21,24 +21,36 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * A group of results, with its group identity and the results themselves.
  * 
  * @param <T> result type, e.g. Hit 
+ * @param <S> results type, e.g. Hits
  */
 public abstract class Group<T> implements Result<Group<T>> {
+    
     protected PropertyValue groupIdentity;
 
-    public Group(PropertyValue groupIdentity) {
+    private Results<T> results;
+
+    public Group(PropertyValue groupIdentity, Results<T> results) {
         this.groupIdentity = groupIdentity;
+        this.results = results;
     }
 
     public PropertyValue getIdentity() {
         return groupIdentity;
     }
-
-    public abstract void add(T obj);
-
-    public abstract int size();
-
-    public abstract <R extends Results<T>> R getResults();
     
+    public Results<T> getResults() {
+        return results;
+    }
+
+    public int size() {
+        return results.size();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "(id=" + getIdentity() + ", size=" + size() + ")";
+    }
+
     @Override
     public int compareTo(Group<T> o) {
         return getIdentity().compareTo(o.getIdentity());

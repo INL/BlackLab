@@ -25,39 +25,18 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * Mulisch".
  */
 public class DocGroup extends Group<DocResult> {
-    protected PropertyValue groupIdentity;
-
-    private DocResults results;
-
+    
     public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
-        super(groupIdentity);
-        results = new DocResults(queryInfo);
+        super(groupIdentity, new DocResults(queryInfo));
     }
 
     public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> resultList) {
-        super(groupIdentity);
-        results = new DocResults(queryInfo, resultList);
+        super(groupIdentity, new DocResults(queryInfo, resultList));
     }
-
+    
     @Override
-    @SuppressWarnings("unchecked")
     public DocResults getResults() {
-        return results;
-    }
-
-    @Override
-    public int size() {
-        return results.size();
-    }
-
-    @Override
-    public String toString() {
-        return groupIdentity + " (" + size() + ")";
-    }
-
-    @Override
-    public void add(DocResult obj) {
-        throw new UnsupportedOperationException();
+        return (DocResults) super.getResults();
     }
 
 }

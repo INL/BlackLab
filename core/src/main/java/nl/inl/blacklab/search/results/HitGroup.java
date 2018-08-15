@@ -24,11 +24,9 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
 public class HitGroup extends Group<Hit> {
-    Hits results;
 
     HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
-        super(groupIdentity);
-        results = Hits.emptyList(queryInfo);
+        super(groupIdentity, Hits.emptyList(queryInfo));
     }
 
     /**
@@ -40,8 +38,7 @@ public class HitGroup extends Group<Hit> {
      * @param hits the hits
      */
     HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> hits) {
-        super(groupIdentity);
-        results = Hits.fromList(queryInfo, hits);
+        super(groupIdentity, Hits.fromList(queryInfo, hits));
     }
 
     /**
@@ -53,32 +50,11 @@ public class HitGroup extends Group<Hit> {
      * @param hits the hits
      */
     HitGroup(PropertyValue groupIdentity, Hits hits) {
-        super(groupIdentity);
-        results = hits;
+        super(groupIdentity, hits);
     }
-
-    public Hits getHits() {
-        return results;
-    }
-
-    @Override
-    public int size() {
-        return results.size();
-    }
-
-    @Override
-    public String toString() {
-        return "GroupOfHits, identity = " + groupIdentity + ", size = " + results.size();
-    }
-
-    @Override
-    public void add(Hit obj) {
-        throw new UnsupportedOperationException();
-    }
-
-    @SuppressWarnings("unchecked")
+    
     @Override
     public Hits getResults() {
-        return results;
+        return (Hits)super.getResults();
     }
 }

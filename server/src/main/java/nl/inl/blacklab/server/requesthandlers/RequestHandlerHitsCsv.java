@@ -15,8 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -88,7 +88,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     if (group == null)
                         throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                    hits = group.getHits();
+                    hits = group.getResults();
 
                     // NOTE: sortBy is automatically applied to regular results, but not to results within groups
                     // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
@@ -146,7 +146,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.getIdentity().getPropValues());
-                row.add(Integer.toString(group.getHits().hitsCountedSoFar()));
+                row.add(Integer.toString(group.getResults().hitsCountedSoFar()));
                 printer.printRecord(row);
             }
 

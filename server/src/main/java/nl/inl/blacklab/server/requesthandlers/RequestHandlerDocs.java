@@ -234,7 +234,7 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.endEntry();
 
             // Snippets
-            Hits hits2 = result.getHits().window(0, 5); // TODO: make num. snippets configurable
+            Hits hits2 = result.getResults().window(0, 5); // TODO: make num. snippets configurable
             if (hits2.hitsProcessedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
                 ContextSettings contextSettings = searchParam.getContextSettings();

@@ -59,14 +59,13 @@ public class DocCounts extends Results<DocCount> {
         this.countBy = countBy;
         //Thread currentThread = Thread.currentThread();
         for (DocResult r : docResults) {
-
             PropertyValue groupId = countBy.get(r);
             DocCount count = counts.get(groupId);
             if (count == null) {
                 count = new DocCount(docResults.queryInfo(), groupId);
                 counts.put(groupId, count);
             }
-            count.add(r);
+            count.increment();
             if (count.size() > largestGroupSize)
                 largestGroupSize = count.size();
             totalResults++;
