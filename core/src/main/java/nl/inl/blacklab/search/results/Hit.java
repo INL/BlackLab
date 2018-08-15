@@ -5,7 +5,7 @@ package nl.inl.blacklab.search.results;
  * but in some places, it makes sense to place hits in separate objects: when
  * caching or sorting hits, or just for convenience in client code.
  */
-public interface Hit extends Comparable<Hit> {
+public interface Hit extends Result<Hit> {
     
     /**
      * Create a hit.
@@ -20,9 +20,6 @@ public interface Hit extends Comparable<Hit> {
     }
     
     @Override
-    boolean equals(Object with);
-
-    @Override
     default int compareTo(Hit o) {
         if (this == o)
             return 0;
@@ -34,12 +31,6 @@ public interface Hit extends Comparable<Hit> {
         }
         return doc() - o.doc();
     }
-
-    @Override
-    String toString();
-
-    @Override
-    int hashCode();
 
     /**
      * Get the document this hit occurs in.

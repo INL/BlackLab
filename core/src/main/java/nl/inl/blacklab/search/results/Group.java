@@ -22,7 +22,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * 
  * @param <T> result type, e.g. Hit 
  */
-public abstract class Group<T> {
+public abstract class Group<T> implements Result<Group<T>> {
     protected PropertyValue groupIdentity;
 
     public Group(PropertyValue groupIdentity) {
@@ -38,5 +38,10 @@ public abstract class Group<T> {
     public abstract int size();
 
     public abstract <R extends Results<T>> R getResults();
+    
+    @Override
+    public int compareTo(Group<T> o) {
+        return getIdentity().compareTo(o.getIdentity());
+    }
 
 }
