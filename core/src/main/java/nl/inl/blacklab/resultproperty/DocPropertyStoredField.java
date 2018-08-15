@@ -18,8 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene
@@ -46,7 +45,7 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public PropertyValueString get(Group<Hit> result) {
+    public PropertyValueString get(DocResult result) {
         return new PropertyValueString(((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName));
     }
 
@@ -58,7 +57,7 @@ public class DocPropertyStoredField extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(Group<Hit> a, Group<Hit> b) {
+    public int compare(DocResult a, DocResult b) {
         String sa = ((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (sa == null)
             sa = "";

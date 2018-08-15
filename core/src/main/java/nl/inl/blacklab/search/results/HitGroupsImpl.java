@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -53,11 +52,6 @@ public class HitGroupsImpl extends HitGroups {
      * The groups.
      */
     private Map<PropertyValue, HitGroup> groups = new HashMap<>();
-
-    /**
-     * The groups, in sorted order.
-     */
-    private List<HitGroup> groupsOrdered = new ArrayList<>();
 
     /**
      * Total number of hits.
@@ -103,7 +97,18 @@ public class HitGroupsImpl extends HitGroups {
             List<Hit> hitList = e.getValue();
             HitGroup group = new HitGroup(queryInfo(), groupId, hitList);
             groups.put(groupId, group);
-            groupsOrdered.add(group);
+            results.add(group);
+        }
+    }
+
+    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> sorted, HitProperty groupCriteria) {
+        super(queryInfo, groupCriteria);
+        for (HitGroup group: sorted) {
+            if (group.size() > largestGroupSize)
+                largestGroupSize = group.size();
+            totalHits += group.size();
+            results.add(group);
+            groups.put(group.getIdentity(), group);
         }
     }
 
@@ -118,16 +123,6 @@ public class HitGroupsImpl extends HitGroups {
     }
 
     /**
-     * Get all groups as a list
-     *
-     * @return the list of groups
-     */
-    @Override
-    public List<HitGroup> getGroups() {
-        return Collections.unmodifiableList(groupsOrdered);
-    }
-
-    /**
      * Sort groups
      *
      * @param prop the property to sort on
@@ -136,7 +131,7 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public void sortGroups(GroupProperty prop, boolean sortReverse) {
         Comparator<Group<?>> comparator = new ComparatorGroupProperty(prop, sortReverse);
-        groupsOrdered.sort(comparator);
+        results.sort(comparator);
     }
 
     /**
@@ -149,24 +144,9 @@ public class HitGroupsImpl extends HitGroups {
         return largestGroupSize;
     }
 
-    /**
-     * Return the number of groups
-     *
-     * @return number of groups
-     */
-    @Override
-    public int numberOfGroups() {
-        return groups.size();
-    }
-
     @Override
     public String toString() {
-        return "ResultsGrouper with " + numberOfGroups() + " groups";
-    }
-
-    @Override
-    public HitGroup get(int i) {
-        return groupsOrdered.get(i);
+        return "ResultsGrouper with " + size() + " groups";
     }
 
     @Override
@@ -183,12 +163,6 @@ public class HitGroupsImpl extends HitGroups {
 //    public void sort(GroupProperty<Hit> sortBy, boolean reverse) {
 //        sortGroups(sortBy, reverse);
 //    }
-
-    @Override
-    public <G extends Group<Hit>> void add(G obj) {
-        throw new UnsupportedOperationException();
-        
-    }
 
     @Override
     public Results<HitGroup> window(int first, int windowSize) {

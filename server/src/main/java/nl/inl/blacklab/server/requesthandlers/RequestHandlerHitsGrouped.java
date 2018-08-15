@@ -45,7 +45,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             final int requestedWindowSize = windowSettings.size() < 0
                     || windowSettings.size() > searchMan.config().maxPageSize() ? searchMan.config().defaultPageSize()
                             : windowSettings.size();
-            int totalResults = groups.numberOfGroups();
+            int totalResults = groups.size();
             final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                     : requestedWindowSize;
             WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);

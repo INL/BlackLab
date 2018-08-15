@@ -1,7 +1,11 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
 
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.ThreadPauser;
@@ -32,11 +36,17 @@ public abstract class Results<T> implements Iterable<T> {
      */
     protected ThreadPauser threadPauser;
     
+    /**
+     * The results.
+     */
+    protected List<T> results;
+
     public Results(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
         if (queryInfo.resultsObjectId() < 0)
             queryInfo.setResultsObjectId(hitsObjId); // We're the original query. set the id.
         threadPauser = new ThreadPauser();
+        results = new ArrayList<>();
     }
 
     /**
@@ -116,23 +126,6 @@ public abstract class Results<T> implements Iterable<T> {
     }
 
     /**
-     * For Hits, this is an alias of hitsProcessedTotal.
-     * 
-     * Other Results classes each have size(), but the meaning depends on the type of results.
-     * 
-     * @return number of hits processed total
-     */
-    public abstract int size();
-
-    /**
-     * Return the specified hit.
-     *
-     * @param i index of the desired hit
-     * @return the hit, or null if it's beyond the last hit
-     */
-    public abstract T get(int i);
-
-    /**
      * Return an iterator over these hits.
      *
      * The order is the sorted order, not the original order. Use
@@ -141,8 +134,67 @@ public abstract class Results<T> implements Iterable<T> {
      * @return the iterator
      */
     @Override
-    public abstract Iterator<T> iterator();
-
+    public Iterator<T> iterator() {
+        // Construct a custom iterator that iterates over the hits in the hits
+        // list, but can also take into account the Spans object that may not have
+        // been fully read. This ensures we don't instantiate Hit objects for all hits
+        // if we just want to display the first few.
+        return new Iterator<T>() {
+        
+            int index = -1;
+        
+            @Override
+            public boolean hasNext() {
+                // Do we still have hits in the hits list?
+                try {
+                    ensureResultsRead(index + 2);
+                } catch (InterruptedException e) {
+                    // Thread was interrupted. Don't finish reading hits and accept possibly wrong
+                    // answer.
+                    // Client must detect the interruption and stop the thread.
+                    Thread.currentThread().interrupt();
+                }
+                return results.size() >= index + 2;
+            }
+        
+            @Override
+            public T next() {
+                // Check if there is a next, taking unread hits from Spans into account
+                if (hasNext()) {
+                    index++;
+                    return results.get(index);
+                }
+                throw new NoSuchElementException();
+            }
+        
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        
+        };
+    }
+    
+    /**
+     * Return the specified hit.
+     *
+     * @param i index of the desired hit
+     * @return the hit, or null if it's beyond the last hit
+     */
+    public synchronized T get(int i) {
+        try {
+            ensureResultsRead(i + 1);
+        } catch (InterruptedException e) {
+            // Thread was interrupted. Required hit hasn't been gathered;
+            // we will just return null.
+            Thread.currentThread().interrupt();
+        }
+        if (i >= results.size())
+            return null;
+        return results.get(i);
+    }
+    
+    
 //    /**
 //     * Group these hits by a criterium (or several criteria).
 //     *
@@ -159,18 +211,27 @@ public abstract class Results<T> implements Iterable<T> {
 //     * @return filtered hits
 //     */
 //    public abstract Results<T> filteredBy(ResultProperty<T> property, PropertyValue value);
-//
-//    /**
-//     * Return a new Hits object with these hits sorted by the given property.
-//     *
-//     * This keeps the existing sort (or lack of one) intact and allows you to cache
-//     * different sorts of the same resultset. The hits themselves are reused between
-//     * the two Hits instances, so not too much additional memory is used.
-//     *
-//     * @param sortProp the hit property to sort on
-//     * @return a new Hits object with the same hits, sorted in the specified way
-//     */
-//    public abstract Results<T> sortedBy(ResultProperty<T> sortProp);
+
+    /**
+     * Return a new Hits object with these hits sorted by the given property.
+     *
+     * This keeps the existing sort (or lack of one) intact and allows you to cache
+     * different sorts of the same resultset. The hits themselves are reused between
+     * the two Hits instances, so not too much additional memory is used.
+     *
+     * @param sortProp the hit property to sort on
+     * @return a new Hits object with the same hits, sorted in the specified way
+     */
+    public <P extends ResultProperty<T>> Results<T> sortedBy(P sortProp) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
+        }
+        return sortProp.sortResults(this);
+    }
 
     /**
      * Get a window into this list of hits.
@@ -193,4 +254,79 @@ public abstract class Results<T> implements Iterable<T> {
         return getClass().getSimpleName() + "(#" + hitsObjId + ")";
     }
 
+    /**
+     * Ensure that we have read at least as many results as specified in the parameter.
+     *
+     * @param number the minimum number of results that will have been read when this
+     *            method returns (unless there are fewer hits than this); if
+     *            negative, reads all hits
+     * @throws InterruptedException if the thread was interrupted during this
+     *             operation
+     */
+    protected abstract void ensureResultsRead(int number) throws InterruptedException;
+
+    /**
+     * Ensure that we have read all results.
+     *
+     * @throws InterruptedException if the thread was interrupted during this
+     *             operation
+     */
+    protected void ensureAllHitsRead() throws InterruptedException {
+        ensureResultsRead(-1);
+    }
+    
+    public boolean resultsProcessedAtLeast(int lowerBound) {
+        try {
+            // Try to fetch at least this many hits
+            ensureResultsRead(lowerBound);
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
+        }
+
+        return results.size() >= lowerBound;
+    }
+
+    /**
+     * This is an alias of resultsProcessedTotal().
+     * 
+     * @return number of hits processed total
+     */
+    public int size() {
+        return resultsProcessedTotal();
+    }
+
+    public int resultsProcessedTotal() {
+        try {
+            // Probably not all hits have been seen yet. Collect them all.
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Abort operation. Result may be wrong, but
+            // interrupted results shouldn't be shown to user anyway.
+            Thread.currentThread().interrupt();
+        }
+        return results.size();
+    }
+
+    public int resultsProcessedSoFar() {
+        return results.size();
+    }
+
+    /**
+     * Get the raw list of results.
+     * 
+     * Clients shouldn't use this. Used internally for certain performance-sensitive
+     * operations like sorting.
+     * 
+     * The list will only contain whatever hits have been processed; if you want all the hits,
+     * call ensureAllHitsRead(), size() or hitsProcessedTotal() first. 
+     * 
+     * @return the list of hits
+     */
+    public List<T> resultsList() {
+        return results;
+    }
+
+    
 }

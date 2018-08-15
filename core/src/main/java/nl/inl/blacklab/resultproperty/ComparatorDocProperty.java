@@ -17,21 +17,20 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.DocResult;
 
-public class ComparatorDocProperty implements Comparator<Group<Hit>> {
-    private ResultProperty<Group<Hit>> prop;
+public class ComparatorDocProperty implements Comparator<DocResult> {
+    private DocProperty prop;
 
     boolean sortReverse;
 
-    public ComparatorDocProperty(ResultProperty<Group<Hit>> prop) {
+    public ComparatorDocProperty(DocProperty prop) {
         this.prop = prop;
         sortReverse = prop.defaultSortDescending();
     }
 
     @Override
-    public int compare(Group<Hit> first, Group<Hit> second) {
+    public int compare(DocResult first, DocResult second) {
         return sortReverse ? prop.compare(second, first) : prop.compare(first, second);
     }
 }

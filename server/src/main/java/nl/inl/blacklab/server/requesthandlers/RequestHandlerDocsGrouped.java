@@ -54,14 +54,14 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                 number = searchMan.config().defaultPageSize();
             int numberOfGroupsInWindow = 0;
             numberOfGroupsInWindow = number;
-            if (first + number > groups.numberOfGroups())
-                numberOfGroupsInWindow = groups.numberOfGroups() - first;
+            if (first + number > groups.size())
+                numberOfGroupsInWindow = groups.size() - first;
 
             ds.startMap();
 
             // The summary
             ds.startEntry("summary").startMap();
-            WindowStats ourWindow = new WindowStats(first + number < groups.numberOfGroups(), first, number, numberOfGroupsInWindow);
+            WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
             Hits totalHits = originalHitsSearch.getHits(); //docResults.originalHits();
             addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, groups, ourWindow);
             if (totalHits == null)

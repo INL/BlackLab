@@ -268,7 +268,7 @@ public class Contexts implements Iterable<int[]> {
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
+    public Contexts(Results<Hit> hits, List<Annotation> annotations, ContextSize contextSize) {
         hits.size(); // make sure all hits have been read
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();

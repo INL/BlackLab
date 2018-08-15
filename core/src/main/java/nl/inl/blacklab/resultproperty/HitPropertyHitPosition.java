@@ -17,7 +17,7 @@ package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -29,7 +29,7 @@ public class HitPropertyHitPosition extends HitProperty {
         return new HitPropertyHitPosition();
     }
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, boolean invert) {
+    HitPropertyHitPosition(HitPropertyHitPosition prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
     }
     
@@ -38,7 +38,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyHitPosition(this, newHits, invert);
     }
 

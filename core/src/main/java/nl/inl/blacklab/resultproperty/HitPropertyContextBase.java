@@ -28,7 +28,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Base class for HitPropertyHitText, LeftContext, RightContext, WordLeft and
@@ -69,7 +70,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected BlackLabIndex index;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts, boolean invert) {
+    public HitPropertyContextBase(HitPropertyContextBase prop, Results<Hit> hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.terms = prop.terms;
         this.annotation = prop.annotation;

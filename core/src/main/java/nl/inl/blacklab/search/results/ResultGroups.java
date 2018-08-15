@@ -29,7 +29,7 @@ public interface ResultGroups<T> {
      *
      * @return number of groups
      */
-    int numberOfGroups();
+    int size();
     
     /**
      * Get our original query info.
@@ -62,9 +62,5 @@ public interface ResultGroups<T> {
     Group<T> get(PropertyValue prop);
     
     Group<T> get(int i);
-
-    <G extends Group<T>> void add(G obj);
-
-    int size();
 
 }

@@ -33,6 +33,7 @@ import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsList;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -41,7 +42,7 @@ import nl.inl.blacklab.search.results.HitsList;
 public abstract class HitProperty implements ResultProperty<Hit> {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(Hits hits, String serialized) {
+    public static HitProperty deserialize(Results<Hit> hits, String serialized) {
         return deserialize(hits.index(), hits.field(), serialized);
     }
 
@@ -122,7 +123,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     /** The Hits object we're looking at */
-    protected Hits hits;
+    protected Results<Hit> hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse = false;
@@ -149,7 +150,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param contexts new contexts to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, Hits hits, Contexts contexts, boolean invert) {
+    HitProperty(HitProperty prop, Results<Hit> hits, Contexts contexts, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
         if (invert)
@@ -267,7 +268,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param contexts new Contexts to use, or null for none
      * @return the new HitProperty object
      */
-    public HitProperty copyWith(Hits newHits, Contexts contexts) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts) {
         return copyWith(newHits, contexts, false);
     }
 
@@ -280,7 +281,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param invert true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert);
+    public abstract HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert);
 
     @Override
     public boolean isReverse() {
@@ -296,12 +297,33 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     public List<String> getPropNames() {
         return Arrays.asList(getName());
     }
+    
+//    public Hits sort(List<Hit> hitsToSort) {
+//        // Make sure we have a sort order array of sufficient size
+//        // and fill it with the original hit order (0, 1, 2, ...)
+//        hitsToSort.size(); // fetch all
+//        List<Hit> sorted = new ArrayList<>(hitsToSort);
+//
+//        // We need a HitProperty with the correct Hits object
+//        // If we need context, make sure we have it.
+//        List<Annotation> requiredContext = needsContext();
+//        HitProperty sortProp = copyWith(hitsToSort,
+//                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.index())));
+//
+//        // Perform the actual sort.
+//        sorted.sort(sortProp);
+//
+//        CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
+//        int hitsCounted = hitsToSort.hitsCountedSoFar();
+//        int docsRetrieved = hitsToSort.docsProcessedSoFar();
+//        int docsCounted = hitsToSort.docsCountedSoFar();
+//
+//        return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
+//    }
 
-    public Hits sortHits(Hits hitsToSort) {
-        // Make sure we have a sort order array of sufficient size
-        // and fill it with the original hit order (0, 1, 2, ...)
-        hitsToSort.size(); // fetch all
-        List<Hit> sorted = new ArrayList<>(hitsToSort.hitsList());
+    @Override
+    public Hits sortResults(Results<Hit> hitsToSort) {
+        List<Hit> sorted = new ArrayList<>(hitsToSort.resultsList());
 
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
@@ -312,12 +334,15 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         // Perform the actual sort.
         sorted.sort(sortProp);
 
-        CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
-        int hitsCounted = hitsToSort.hitsCountedSoFar();
-        int docsRetrieved = hitsToSort.docsProcessedSoFar();
-        int docsCounted = hitsToSort.docsCountedSoFar();
-
-        return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
+        if (hitsToSort instanceof Hits) {
+            Hits hits2 = (Hits)hitsToSort;
+            CapturedGroupsImpl capturedGroups = hits2.capturedGroups();
+            int hitsCounted = hits2.hitsCountedSoFar();
+            int docsRetrieved = hits2.docsProcessedSoFar();
+            int docsCounted = hits2.docsCountedSoFar();
+            return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
+        }
+        return new HitsList(hitsToSort.queryInfo(), sorted);
     }
 
     @Override

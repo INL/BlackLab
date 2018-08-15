@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the
@@ -44,7 +44,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     String fieldName;
 
-    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
         this.reader = hits.index().reader();
         this.fieldName = prop.fieldName;
@@ -56,7 +56,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDocumentDecade(this, newHits, invert);
     }
 

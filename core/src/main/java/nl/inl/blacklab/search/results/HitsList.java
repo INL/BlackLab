@@ -29,12 +29,12 @@ public class HitsList extends Hits {
      * @param queryInfo query info
      * @param hits the list of hits to wrap, or null for a new list
      */
-    protected HitsList(QueryInfo queryInfo, List<Hit> hits) {
+    public HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
-        this.hits = hits == null ? new ArrayList<>() : hits;
-        hitsCounted = this.hits.size();
+        this.results = hits == null ? new ArrayList<>() : hits;
+        hitsCounted = this.results.size();
         int prevDoc = -1;
-        for (Hit h : this.hits) {
+        for (Hit h : this.results) {
             if (h.doc() != prevDoc) {
                 docsRetrieved++;
                 docsCounted++;
@@ -75,14 +75,13 @@ public class HitsList extends Hits {
             number = source.size() - first;
 
         // Copy the hits we're interested in.
-        hits = new ArrayList<>();
         if (source.hasCapturedGroups())
             capturedGroups = new CapturedGroupsImpl(source.capturedGroups().names());
         int prevDoc = -1;
         hitsCounted = 0;
         for (int i = first; i < first + number; i++) {
             Hit hit = source.get(i);
-            hits.add(hit);
+            results.add(hit);
             if (capturedGroups != null)
                 capturedGroups.put(hit, source.capturedGroups().get(hit));
             // OPT: copy context as well..?
@@ -105,7 +104,6 @@ public class HitsList extends Hits {
      */
     HitsList(Hits hits, SampleParameters parameters) {
         super(hits.queryInfo());
-        this.hits = new ArrayList<>();
         this.parameters = parameters;
         Random random = new Random(parameters.seed());
         int numberOfHitsToSelect = parameters.numberOfHits(hits.size());
@@ -131,7 +129,7 @@ public class HitsList extends Hits {
                 docsCounted++;
                 previousDoc = hit.doc();
             }
-            this.hits.add(hit);
+            this.results.add(hit);
             hitsCounted++;
         }
     }
@@ -150,7 +148,7 @@ public class HitsList extends Hits {
     public HitsList(QueryInfo queryInfo, List<Hit> hitsList, CapturedGroupsImpl capturedGroups, int hitsCounted,
             int docsRetrieved, int docsCounted) {
         super(queryInfo);
-        this.hits = hitsList;
+        this.results = hitsList;
         this.capturedGroups = capturedGroups;
         this.hitsCounted = hitsCounted;
         this.docsRetrieved = docsRetrieved;
@@ -159,7 +157,7 @@ public class HitsList extends Hits {
 
     @Override
     public String toString() {
-        return "HitsList#" + hitsObjId + " (hits.size()=" + hits.size() + "; isWindow=" + isWindow() + ")";
+        return "HitsList#" + hitsObjId + " (hits.size()=" + results.size() + "; isWindow=" + isWindow() + ")";
     }
     
     /**
@@ -172,7 +170,7 @@ public class HitsList extends Hits {
      *             operation
      */
     @Override
-    protected void ensureHitsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) throws InterruptedException {
         // subclasses may override
     }
 

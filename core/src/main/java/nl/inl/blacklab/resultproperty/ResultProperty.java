@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
+import nl.inl.blacklab.search.results.Results;
+
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
  * @param <T> type of result
@@ -73,5 +75,13 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
     List<String> getPropNames();
 
     boolean defaultSortDescending();
+    
+    /**
+     * Sort the results.
+     * 
+     * @param results results to sort
+     * @return sorted results object
+     */
+    Results<T> sortResults(Results<T> results);
 
 }

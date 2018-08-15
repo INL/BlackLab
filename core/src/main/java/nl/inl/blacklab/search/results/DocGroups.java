@@ -28,14 +28,13 @@ import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
     Map<PropertyValue, DocGroup> groups = new HashMap<>();
-
-    List<DocGroup> orderedGroups = new ArrayList<>();
 
     private int largestGroupSize = 0;
 
@@ -51,7 +50,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      * @param docResults the results to group.
      * @param groupBy the criterium to group on.
      */
-    DocGroups(DocResults docResults, DocProperty groupBy) {
+    public DocGroups(DocResults docResults, DocProperty groupBy) {
         super(docResults.queryInfo());
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
@@ -71,7 +70,19 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
             DocGroup docGroup = new DocGroup(docResults.queryInfo(), e.getKey(), e.getValue());
             groups.put(e.getKey(), docGroup);
-            orderedGroups.add(docGroup);
+            results.add(docGroup);
+        }
+    }
+
+    private DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, DocProperty groupBy) {
+        super(queryInfo);
+        this.groupBy = groupBy;
+        for (DocGroup group: sorted) {
+            if (group.size() > largestGroupSize)
+                largestGroupSize = group.size();
+            totalResults += group.size();
+            results.add(group);
+            groups.put(group.getIdentity(), group);
         }
     }
 
@@ -81,7 +92,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     public Collection<DocGroup> getGroups() {
-        return Collections.unmodifiableCollection(orderedGroups);
+        return Collections.unmodifiableCollection(results);
     }
 
     @Override
@@ -97,7 +108,31 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      */
     public void sort(DocGroupProperty prop, boolean sortReverse) {
         Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
-        orderedGroups.sort(comparator);
+        results.sort(comparator);
+    }
+
+    /**
+     * Return a new Hits object with these hits sorted by the given property.
+     *
+     * This keeps the existing sort (or lack of one) intact and allows you to cache
+     * different sorts of the same resultset. The hits themselves are reused between
+     * the two Hits instances, so not too much additional memory is used.
+     *
+     * @param sortProp the hit property to sort on
+     * @return a new Hits object with the same hits, sorted in the specified way
+     */
+    @Override
+    public <P extends ResultProperty<DocGroup>> Results<DocGroup> sortedBy(P sortProp) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
+        }
+        List<DocGroup> sorted = new ArrayList<>(results);
+        sorted.sort(sortProp);
+        return new DocGroups(queryInfo, sorted, groupBy);
     }
 
     public void sort(DocGroupProperty prop) {
@@ -107,11 +142,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     public Iterator<DocGroup> iterator() {
         return getGroups().iterator();
-    }
-
-    @Override
-    public int numberOfGroups() {
-        return groups.size();
     }
 
     @Override
@@ -130,7 +160,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     @Override
     public DocGroup get(int i) {
-        return orderedGroups.get(i);
+        return results.get(i);
     }
 
 //    @Override
@@ -150,11 +180,8 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public <G extends Group<DocResult>> void add(G obj) {
-//        DocGroup docGroup = (DocGroup)obj;
-//        groups.put(obj.getIdentity(), docGroup);
-//        orderedGroups.add(docGroup);
-        throw new UnsupportedOperationException();
+    protected void ensureResultsRead(int number) throws InterruptedException {
+        // NOP
     }
 
 }

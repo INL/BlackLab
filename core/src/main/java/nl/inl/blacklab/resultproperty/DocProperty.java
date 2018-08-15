@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -22,15 +23,16 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
  * Subclasses implement specific grouping criteria (number of hits, the value of
  * a stored field in the Lucene document, ...)
  */
-public abstract class DocProperty implements ResultProperty<Group<Hit>> {
+public abstract class DocProperty implements ResultProperty<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */
@@ -51,7 +53,7 @@ public abstract class DocProperty implements ResultProperty<Group<Hit>> {
      *         grouping on author.
      */
     @Override
-    public abstract PropertyValue get(Group<Hit> result);
+    public abstract PropertyValue get(DocResult result);
 
     /**
      * Compares two docs on this property
@@ -61,7 +63,7 @@ public abstract class DocProperty implements ResultProperty<Group<Hit>> {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(Group<Hit> a, Group<Hit> b) {
+    public int compare(DocResult a, DocResult b) {
         return get(a).compareTo(get(b));
     }
 
@@ -166,6 +168,15 @@ public abstract class DocProperty implements ResultProperty<Group<Hit>> {
     public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
         DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
         param.put("facets", f.serialize());
+    }
+    
+    @Override
+    public DocResults sortResults(Results<DocResult> results) {
+        ArrayList<DocResult> sorted = new ArrayList<>(results.resultsList());
+
+        // Perform the actual sort.
+        sorted.sort(this);
+        return new DocResults(results.queryInfo(), sorted);
     }
 
 }

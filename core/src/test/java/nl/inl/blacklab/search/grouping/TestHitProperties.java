@@ -8,10 +8,10 @@ import org.junit.Test;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -65,7 +65,7 @@ public class TestHitProperties {
         Hits hits = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1-1;H1-2");
         HitGroups g = hits.groupedBy(p);
-        Assert.assertEquals(4, g.numberOfGroups());
+        Assert.assertEquals(4, g.size());
         HitGroup group;
         group = g.get(
                 new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, new int[] { NO_TERM, term("The"), NO_TERM }));
@@ -86,7 +86,7 @@ public class TestHitProperties {
         Hits hits = testIndex.find(" 'the' 'lazy' ");
         HitProperty p = new HitPropertyContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1;H2-1;R1");
         HitGroups g = hits.groupedBy(p);
-        Assert.assertEquals(1, g.numberOfGroups());
+        Assert.assertEquals(1, g.size());
         HitGroup group;
         group = g.get(new PropertyValueContextWords(index, wordAnnotation,
                 MatchSensitivity.SENSITIVE, new int[] { term("over"), term("lazy"), term("the"), term("dog") }));

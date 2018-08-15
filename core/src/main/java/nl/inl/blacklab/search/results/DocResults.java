@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -135,11 +134,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * (Part of) our document results
-     */
-    protected List<DocResult> results;
-
-    /**
      * Iterator in our source hits object
      */
     private Iterator<Hit> sourceHitsIterator;
@@ -168,7 +162,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     
     DocResults(QueryInfo queryInfo) {
         super(queryInfo);
-        results = new ArrayList<>();
         groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
     
@@ -195,7 +188,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param queryInfo query info
      * @param results the list of results
      */
-    DocResults(QueryInfo queryInfo, List<DocResult> results) {
+    public DocResults(QueryInfo queryInfo, List<DocResult> results) {
         this(queryInfo);
         this.results = results;
     }
@@ -229,9 +222,9 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      *
      * @param comparator how to sort the results
      */
-    void sort(Comparator<Group<Hit>> comparator) {
+    void sort(Comparator<DocResult> comparator) {
         try {
-            ensureAllResultsRead();
+            ensureAllHitsRead();
         } catch (InterruptedException e) {
             // Thread was interrupted; just sort the results we have.
             // Let caller detect and deal with interruption.
@@ -246,7 +239,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param sortReverse true iff we want to sort in reverse.
      */
     public void sort(DocProperty prop, boolean sortReverse) {
-        Comparator<Group<Hit>> comparator = new ComparatorDocProperty(prop);
+        Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
         if (sortReverse) {
             comparator = new ReverseComparator<>(comparator);
         }
@@ -265,31 +258,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
     public boolean docsProcessedAtLeast(int lowerBound) {
-        try {
-            // Try to fetch at least this many hits
-            ensureResultsRead(lowerBound);
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-        }
-
-        return results.size() >= lowerBound;
+        return resultsProcessedAtLeast(lowerBound);
     }
 
-    /**
-     * Get the number of documents in this results set.
-     * 
-     * For this class, this is an alias for {@link #docsProcessedTotal()}.
-     *
-     * Note that this returns the number of document results available; if there
-     * were so many hits that not all were retrieved (call maxHitsRetrieved()), you
-     * can find the grand total of documents by calling totalSize().
-     *
-     * @return the number of documents.
-     */
-    @Override
-    public int size() {
-        return docsProcessedTotal();
+    public int docsProcessedSoFar() {
+        return resultsProcessedSoFar();
     }
     
     /**
@@ -302,14 +275,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the number of documents.
      */
     public int docsProcessedTotal() {
-        // Make sure we've collected all results and return the size of our result list.
-        try {
-            ensureAllResultsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; return size of the results we have.
-            // Let caller detect and deal with interruption.
-        }
-        return results.size();
+        return size();
     }
 
     /**
@@ -331,16 +297,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * If we still have only partially read our Hits object, read the rest of it and
-     * add all the hits.
-     * 
-     * @throws InterruptedException
-     */
-    private void ensureAllResultsRead() throws InterruptedException {
-        ensureResultsRead(-1);
-    }
-
-    /**
      * If we still have only partially read our Hits object, read some more of it
      * and add the hits.
      *
@@ -348,7 +304,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      *            negative for all results
      * @throws InterruptedException
      */
-    void ensureResultsRead(int index) throws InterruptedException {
+    @Override
+    protected void ensureResultsRead(int index) throws InterruptedException {
         if (sourceHitsFullyRead() || (index >= 0 && results.size() > index))
             return;
 
@@ -410,65 +367,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * Return an iterator over these hits.
-     *
-     * @return the iterator
-     */
-    @Override
-    public Iterator<DocResult> iterator() {
-        // Construct a custom iterator that iterates over the hits in the hits
-        // list, but can also take into account the Spans object that may not have
-        // been fully read. This ensures we don't instantiate Hit objects for all hits
-        // if we just want to display the first few.
-        return new Iterator<DocResult>() {
-
-            int index = -1;
-
-            @Override
-            public boolean hasNext() {
-                // Do we still have hits in the hits list?
-                try {
-                    ensureResultsRead(index + 1);
-                } catch (InterruptedException e) {
-                    // Thread was interrupted. Act like we're done.
-                    // Let caller detect and deal with interruption.
-                    return false;
-                }
-                return index + 1 < results.size();
-            }
-
-            @Override
-            public DocResult next() {
-                // Check if there is a next, taking unread hits from Spans into account
-                if (hasNext()) {
-                    index++;
-                    return results.get(index);
-                }
-                throw new NoSuchElementException();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-        };
-    }
-
-    @Override
-    public DocResult get(int i) {
-        try {
-            ensureResultsRead(i);
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-        }
-        if (i >= results.size())
-            return null;
-        return results.get(i);
-    }
-
-    /**
      * Group these results by the specified document property
      * 
      * @param docProp the document property to group on (i.e. number of hits in doc,
@@ -515,15 +413,15 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param numProp a numeric property to sum
      * @return the sum
      */
-    public int intSum(ResultProperty<Group<Hit>> numProp) {
+    public int intSum(ResultProperty<DocResult> numProp) {
         try {
-            ensureAllResultsRead();
+            ensureAllHitsRead();
         } catch (InterruptedException e) {
             // Thread was interrupted; just process the results we have.
             // Let caller detect and deal with interruption.
         }
         int sum = 0;
-        for (Group<Hit> result : results) {
+        for (DocResult result : results) {
             sum += ((PropertyValueInt) numProp.get(result)).getValue();
         }
         return sum;
@@ -547,7 +445,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public int getLargestGroupSize() {
         try {
-            ensureAllResultsRead();
+            ensureAllHitsRead();
         } catch (InterruptedException e) {
             // Thread was interrupted. Required hit hasn't been gathered;
             // we will just return null.
@@ -556,23 +454,13 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public int numberOfGroups() {
-        return docsProcessedTotal();
-    }
-
-    @Override
     public Group<Hit> get(PropertyValue prop) {
         try {
-            ensureAllResultsRead();
+            ensureAllHitsRead();
         } catch (InterruptedException e) {
             // Thread was interrupted. Required hit hasn't been gathered;
             // we will just return null.
         }
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
-    }
-
-    @Override
-    public <G extends Group<Hit>> void add(G obj) {
-        throw new UnsupportedOperationException();
     }
 }

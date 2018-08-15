@@ -15,10 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for a property of a group op results.
@@ -110,6 +112,16 @@ public abstract class GroupProperty implements ResultProperty<Group<?>> {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(getName());
+    }
+    
+    @Override
+    public Results<Group<?>> sortResults(Results<Group<?>> results) {
+        ArrayList<Group<?>> sorted = new ArrayList<>(results.resultsList());
+
+        // Perform the actual sort.
+        sorted.sort(this);
+        
+        throw new UnsupportedOperationException();
     }
 
 }

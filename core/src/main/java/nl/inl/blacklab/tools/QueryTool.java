@@ -1116,7 +1116,7 @@ public class QueryTool {
                     totalResults = collocations.size();
                     break;
                 case GROUPS:
-                    totalResults = groups.numberOfGroups();
+                    totalResults = groups.size();
                     break;
                 default:
                     totalResults = hits.size();
@@ -1327,7 +1327,7 @@ public class QueryTool {
             showSetting = ShowSetting.GROUPS;
         } else if (showWhat.startsWith("group ") && groups != null) {
             showWhichGroup = parseInt(showWhat.substring(6), 1) - 1;
-            if (showWhichGroup < 0 || showWhichGroup >= groups.numberOfGroups()) {
+            if (showWhichGroup < 0 || showWhichGroup >= groups.size()) {
                 errprintln("Group doesn't exist");
                 showWhichGroup = -1;
             } else
@@ -1415,13 +1415,13 @@ public class QueryTool {
      */
     private void showGroupsPage() {
         int i;
-        for (i = firstResult; i < groups.numberOfGroups() && i < firstResult + resultsPerPage; i++) {
+        for (i = firstResult; i < groups.size() && i < firstResult + resultsPerPage; i++) {
             Group<Hit> g = groups.get(i);
             outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
         }
 
         // Summarize
-        String msg = groups.numberOfGroups() + " groups";
+        String msg = groups.size() + " groups";
         outprintln(msg);
     }
 

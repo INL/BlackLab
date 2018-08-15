@@ -18,7 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for grouping per document.
@@ -31,7 +31,7 @@ public class HitPropertyDoc extends HitProperty {
 
     private BlackLabIndex index;
 
-    HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
+    HitPropertyDoc(HitPropertyDoc prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
         this.index = hits.index();
     }
@@ -42,7 +42,7 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDoc(this, newHits, invert);
     }
 

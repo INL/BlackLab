@@ -15,12 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -37,12 +38,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
         super(queryInfo);
         this.criteria = groupCriteria;
     }
-
-    public abstract List<HitGroup> getGroups();
     
-    @Override
-    public abstract HitGroup get(int i);
-
     @Override
     public abstract HitGroup get(PropertyValue identity);
 
@@ -68,28 +64,28 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      */
     public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
 
+    /**
+     * Return a new Hits object with these hits sorted by the given property.
+     *
+     * This keeps the existing sort (or lack of one) intact and allows you to cache
+     * different sorts of the same resultset. The hits themselves are reused between
+     * the two Hits instances, so not too much additional memory is used.
+     *
+     * @param sortProp the hit property to sort on
+     * @return a new Hits object with the same hits, sorted in the specified way
+     */
     @Override
-    public Iterator<HitGroup> iterator() {
-        final Iterator<HitGroup> currentIt = getGroups().iterator();
-
-        return new Iterator<HitGroup>() {
-
-            @Override
-            public boolean hasNext() {
-                return currentIt.hasNext();
-            }
-
-            @Override
-            public HitGroup next() {
-                return currentIt.next();
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-        };
+    public <P extends ResultProperty<HitGroup>> Results<HitGroup> sortedBy(P sortProp) {
+        try {
+            ensureAllHitsRead();
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
+        }
+        List<HitGroup> sorted = new ArrayList<>(results);
+        sorted.sort(sortProp);
+        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria());
     }
 
     /**
@@ -107,12 +103,9 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      */
     @Override
     public abstract int getLargestGroupSize();
-
-    /**
-     * Return the number of groups
-     *
-     * @return number of groups
-     */
+    
     @Override
-    public abstract int numberOfGroups();
+    protected void ensureResultsRead(int number) throws InterruptedException {
+        // NOP
+    }
 }

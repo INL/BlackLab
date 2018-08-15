@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -34,7 +34,7 @@ public class HitPropertyRightContext extends HitPropertyContextBase {
         return deserializeProp(HitPropertyRightContext.class, index, field, info);
     }
 
-    HitPropertyRightContext(HitPropertyRightContext prop, Hits hits, Contexts contexts, boolean invert) {
+    HitPropertyRightContext(HitPropertyRightContext prop, Results<Hit> hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
     }
 
@@ -59,7 +59,7 @@ public class HitPropertyRightContext extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyRightContext(this, newHits, contexts, invert);
     }
 

@@ -28,7 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -55,7 +55,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** Which of the contexts do the individual properties need? */
     Map<HitProperty, List<Integer>> contextIndicesPerProperty;
     
-    HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
+    HitPropertyMultiple(HitPropertyMultiple mprop, Results<Hit> newHits, Contexts contexts, boolean invert) {
         super(mprop, null, null, invert);
         int n = mprop.properties.size();
         this.contextNeeded = mprop.contextNeeded;
@@ -125,7 +125,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyMultiple(this, newHits, contexts, invert);
     }
 

@@ -109,7 +109,7 @@ public class DocCounts extends Results<DocCount> {
         return totalResults;
     }
 
-    public ResultProperty<Group<Hit>> getGroupCriteria() {
+    public ResultProperty<DocResult> getGroupCriteria() {
         return countBy;
     }
 
@@ -126,6 +126,11 @@ public class DocCounts extends Results<DocCount> {
     @Override
     public Results<DocCount> window(int first, int windowSize) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected void ensureResultsRead(int number) throws InterruptedException {
+        // NOP
     }
 
 }

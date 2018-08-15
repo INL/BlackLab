@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -191,7 +191,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts, boolean invert) {
+    HitPropertyContextWords(HitPropertyContextWords prop, Results<Hit> hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.annotation = prop.annotation;
         if (!hits.field().equals(this.annotation.field())) {
@@ -261,7 +261,7 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyContextWords(this, newHits, contexts, invert);
     }
 

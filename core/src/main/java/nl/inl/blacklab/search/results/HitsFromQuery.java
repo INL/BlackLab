@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -97,7 +96,6 @@ public class HitsFromQuery extends Hits {
         super(queryInfo);
         this.maxSettings = maxSettings;
         this.maxStats = new MaxStats();
-        this.hits = new ArrayList<>();
         hitsCounted = 0;
         hitQueryContext = new HitQueryContext();
         try {
@@ -148,7 +146,7 @@ public class HitsFromQuery extends Hits {
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hits.size()=" + hits.size() + ")";
+        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hits.size()=" + results.size() + ")";
     }
 
     /**
@@ -161,15 +159,15 @@ public class HitsFromQuery extends Hits {
      *             operation
      */
     @Override
-    protected void ensureHitsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) throws InterruptedException {
         // Prevent locking when not required
-        if (sourceSpansFullyRead || (number >= 0 && hits.size() > number))
+        if (sourceSpansFullyRead || (number >= 0 && results.size() > number))
             return;
 
         // At least one hit needs to be fetched.
         // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-        if (number >= 0 && number - hits.size() < FETCH_HITS_MIN)
-            number = hits.size() + FETCH_HITS_MIN;
+        if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
+            number = results.size() + FETCH_HITS_MIN;
 
         while (!ensureHitsReadLock.tryLock()) {
             /*
@@ -178,14 +176,14 @@ public class HitsFromQuery extends Hits {
              * So instead poll our own state, then if we're still missing results after that just count them ourselves
              */
             Thread.sleep(50);
-            if (sourceSpansFullyRead || (number >= 0 && hits.size() >= number))
+            if (sourceSpansFullyRead || (number >= 0 && results.size() >= number))
                 return;
         }
         try {
             boolean readAllHits = number < 0;
             int maxHitsToCount = maxSettings.maxHitsToCount();
             int maxHitsToProcess = maxSettings.maxHitsToProcess();
-            while (readAllHits || hits.size() < number) {
+            while (readAllHits || results.size() < number) {
 
                 // Pause if asked
                 threadPauser.waitIfPaused();
@@ -281,8 +279,8 @@ public class HitsFromQuery extends Hits {
                         hitQueryContext.getCapturedGroups(groups);
                         capturedGroups.put(offsetHit, groups);
                     }
-                    hits.add(offsetHit);
-                    if (maxHitsToProcess >= 0 && hits.size() >= maxHitsToProcess) {
+                    results.add(offsetHit);
+                    if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
                         maxStats.setHitsProcessedExceededMaximum();
                     }
                 }

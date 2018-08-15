@@ -20,8 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -82,7 +81,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public PropertyValueMultiple get(Group<Hit> result) {
+    public PropertyValueMultiple get(DocResult result) {
         PropertyValue[] rv = new PropertyValue[criteria.size()];
         int i = 0;
         for (DocProperty crit : criteria) {
@@ -100,7 +99,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(Group<Hit> a, Group<Hit> b) {
+    public int compare(DocResult a, DocResult b) {
         for (DocProperty crit : criteria) {
             int cmp = reverse ? crit.compare(b, a) : crit.compare(a, b);
             if (cmp != 0)

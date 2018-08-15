@@ -18,8 +18,7 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * For grouping DocResult objects by decade based on a stored field containing a
@@ -39,7 +38,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public PropertyValueDecade get(Group<Hit> result) {
+    public PropertyValueDecade get(DocResult result) {
         String strYear = ((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName);
         int year;
         try {
@@ -59,7 +58,7 @@ public class DocPropertyDecade extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public int compare(Group<Hit> a, Group<Hit> b) {
+    public int compare(DocResult a, DocResult b) {
         String strYearA = ((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName);
         if (strYearA == null)
             strYearA = "";

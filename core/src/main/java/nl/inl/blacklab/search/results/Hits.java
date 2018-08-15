@@ -1,9 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -74,23 +73,10 @@ public abstract class Hits extends Results<Hit> {
      * Minimum number of hits to fetch in an ensureHitsRead() block.
      * 
      * This prevents locking again and again for a single hit when iterating.
+     * 
+     * See {@link HitsFromQuery} and {@link HitsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
-
-    /** Id the next Hits instance will get */
-    private static int nextHitsObjId = 0;
-
-    private static synchronized int getNextHitsObjId() {
-        return nextHitsObjId++;
-    }
-
-    /** Unique id of this Hits instance (for debugging) */
-    protected final int hitsObjId = getNextHitsObjId();
-    
-    /**
-     * The hits.
-     */
-    protected List<Hit> hits;
 
     /**
      * Our captured groups, or null if we have none.
@@ -225,86 +211,9 @@ public abstract class Hits extends Results<Hit> {
         return hitsProcessedTotal();
     }
     
-    /**
-     * Ensure that we have read all hits.
-     *
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
-     */
-    protected void ensureAllHitsRead() throws InterruptedException {
-        ensureHitsRead(-1);
-    }
-
-    /**
-     * Ensure that we have read at least as many hits as specified in the parameter.
-     *
-     * @param number the minimum number of hits that will have been read when this
-     *            method returns (unless there are fewer hits than this); if
-     *            negative, reads all hits
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
-     */
-    protected abstract void ensureHitsRead(int number) throws InterruptedException;
-    
     // Getting / iterating over the hits
     //--------------------------------------------------------------------
 
-    @Override
-    public Iterator<Hit> iterator() {
-        // Construct a custom iterator that iterates over the hits in the hits
-        // list, but can also take into account the Spans object that may not have
-        // been fully read. This ensures we don't instantiate Hit objects for all hits
-        // if we just want to display the first few.
-        return new Iterator<Hit>() {
-        
-            int index = -1;
-        
-            @Override
-            public boolean hasNext() {
-                // Do we still have hits in the hits list?
-                try {
-                    ensureHitsRead(index + 2);
-                } catch (InterruptedException e) {
-                    // Thread was interrupted. Don't finish reading hits and accept possibly wrong
-                    // answer.
-                    // Client must detect the interruption and stop the thread.
-                    Thread.currentThread().interrupt();
-                }
-                return hits.size() >= index + 2;
-            }
-        
-            @Override
-            public Hit next() {
-                // Check if there is a next, taking unread hits from Spans into account
-                if (hasNext()) {
-                    index++;
-                    return hits.get(index);
-                }
-                throw new NoSuchElementException();
-            }
-        
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        
-        };
-    }
-    
-    @Override
-    public synchronized Hit get(int i) {
-        try {
-            ensureHitsRead(i + 1);
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-            Thread.currentThread().interrupt();
-        }
-        if (i >= hits.size())
-            return null;
-        return hits.get(i);
-    }
-    
     public Hits getHitsInDoc(int docid) {
         try {
             ensureAllHitsRead();
@@ -316,7 +225,7 @@ public abstract class Hits extends Results<Hit> {
             return Hits.emptyList(queryInfo());
         }
         List<Hit> hitsInDoc = new ArrayList<>();
-        for (Hit hit : hits) {
+        for (Hit hit : results) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
@@ -327,32 +236,15 @@ public abstract class Hits extends Results<Hit> {
     // ---------------------------------------------------------------
 
     public boolean hitsProcessedAtLeast(int lowerBound) {
-        try {
-            // Try to fetch at least this many hits
-            ensureHitsRead(lowerBound);
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
-        }
-
-        return hits.size() >= lowerBound;
+        return resultsProcessedAtLeast(lowerBound);
     }
 
     public int hitsProcessedTotal() {
-        try {
-            // Probably not all hits have been seen yet. Collect them all.
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
-        return hits.size();
+        return resultsProcessedTotal();
     }
 
     public int hitsProcessedSoFar() {
-        return hits.size();
+        return resultsProcessedSoFar();
     }
 
     public int hitsCountedTotal() {
@@ -403,17 +295,29 @@ public abstract class Hits extends Results<Hit> {
     // Deriving other Hits / Results instances
     //--------------------------------------------------------------------
     
-    public Hits sortedBy(HitProperty sortProp) {
-        return sortProp.sortHits(this);
-    }
-    
     public Hits window(Hit hit) {
         try {
             ensureAllHitsRead();
         } catch (InterruptedException e) {
             // (should be detected by the client)
+            Thread.currentThread().interrupt();
         }
-        return window(hits.indexOf(hit), 1);
+        return window(results.indexOf(hit), 1);
+    }
+    
+    /**
+     * Return a new Hits object with these hits sorted by the given property.
+     *
+     * This keeps the existing sort (or lack of one) intact and allows you to cache
+     * different sorts of the same resultset. The hits themselves are reused between
+     * the two Hits instances, so not too much additional memory is used.
+     *
+     * @param sortProp the hit property to sort on
+     * @return a new Hits object with the same hits, sorted in the specified way
+     */
+    @Override
+    public <P extends ResultProperty<Hit>> Hits sortedBy(P sortProp) {
+        return (Hits)super.sortedBy(sortProp);
     }
     
     // Captured groups
@@ -436,21 +340,6 @@ public abstract class Hits extends Results<Hit> {
 
     public Kwics kwics(ContextSize contextSize) {
         return new Kwics(this, contextSize);
-    }
-
-    /**
-     * Get the raw list of hits.
-     * 
-     * Clients shouldn't use this. Used internally for certain performance-sensitive
-     * operations like sorting.
-     * 
-     * The list will only contain whatever hits have been processed; if you want all the hits,
-     * call ensureAllHitsRead(), size() or hitsProcessedTotal() first. 
-     * 
-     * @return the list of hits
-     */
-    public List<Hit> hitsList() {
-        return hits;
     }
 
     /**

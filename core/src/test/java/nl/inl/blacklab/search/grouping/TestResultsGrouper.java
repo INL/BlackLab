@@ -52,7 +52,7 @@ public class TestResultsGrouper {
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.groupedBy(crit);
 
-        Assert.assertEquals(3, grouper.numberOfGroups());
+        Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);
         HitGroup group1 = grouper.get(one);
         Assert.assertEquals(one, group1.getIdentity());

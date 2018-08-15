@@ -85,7 +85,7 @@ public class JobDocsGrouped extends JobWithDocs {
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
         ds.entry("numberOfDocResults", docResults == null ? -1 : docResults.size())
-                .entry("numberOfGroups", groups == null ? -1 : groups.numberOfGroups());
+                .entry("numberOfGroups", groups == null ? -1 : groups.size());
     }
 
     @Override

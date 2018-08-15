@@ -23,7 +23,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene
@@ -41,7 +41,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private String friendlyName;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
         this.reader = hits.index().reader();
         this.fieldName = prop.fieldName;
@@ -59,7 +59,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 
