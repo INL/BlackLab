@@ -16,11 +16,8 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +31,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
+    
     Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     private int largestGroupSize = 0;
@@ -41,8 +39,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     private int totalResults = 0;
 
     private DocProperty groupBy;
-
-    private QueryInfo queryInfo;
 
     /**
      * Constructor. Fills the groups from the given document results.
@@ -87,15 +83,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public QueryInfo queryInfo() {
-        return queryInfo;
-    }
-
-    public Collection<DocGroup> getGroups() {
-        return Collections.unmodifiableCollection(results);
-    }
-
-    @Override
     public DocGroup get(PropertyValue groupId) {
         return groups.get(groupId);
     }
@@ -132,16 +119,11 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         }
         List<DocGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
-        return new DocGroups(queryInfo, sorted, groupBy);
+        return new DocGroups(queryInfo(), sorted, groupBy);
     }
 
     public void sort(DocGroupProperty prop) {
         sort(prop, false);
-    }
-
-    @Override
-    public Iterator<DocGroup> iterator() {
-        return getGroups().iterator();
     }
 
     @Override
@@ -158,21 +140,11 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         return groupBy;
     }
 
-    @Override
-    public DocGroup get(int i) {
-        return results.get(i);
-    }
-
 //    @Override
 //    public void add(DocGroup obj) {
 //        groups.put(obj.getIdentity(), obj);
 //        orderedGroups.add(obj);
 //    }
-
-    @Override
-    public int size() {
-        return groups.size();
-    }
 
     @Override
     public Results<DocGroup> window(int first, int windowSize) {
