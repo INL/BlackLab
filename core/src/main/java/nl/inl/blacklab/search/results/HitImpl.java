@@ -23,7 +23,7 @@ package nl.inl.blacklab.search.results;
  * This class has public members for the sake of efficiency; this makes a
  * non-trivial difference when iterating over hundreds of thousands of hits.
  */
-public final class HitImpl extends HitAbstract {
+public final class HitImpl implements Hit {
 
     public static HitImpl create(int doc, int start, int end) {
         return new HitImpl(doc, start, end);
@@ -71,4 +71,46 @@ public final class HitImpl extends HitAbstract {
         return start;
     }
 
+    @Override
+    public boolean equals(Object with) {
+        if (this == with)
+            return true;
+        if (with instanceof Hit) {
+            Hit o = (Hit) with;
+            return doc() == o.doc() && start() == o.start() && end() == o.end();
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("doc %d, words %d-%d", doc(), start(), end());
+    }
+    
+    @Override
+    public int hashCode() {
+        return (doc() * 17 + start()) * 31 + end();
+    }
+    
+    // POSSIBLE FUTURE OPTIMIZATION
+
+//    /**
+//     * Cached hash code, or Integer.MIN_VALUE if not calculated yet.
+//     * 
+//     * Can help when using Hit as a key in HashMap, e.g. in CapturedGroups 
+//     * and possibly with Contexts in the future.
+//     * 
+//     * Does cost about 17% extra memory for Hit objects. 
+//     */
+//    private int hashCode = Integer.MIN_VALUE;
+//    
+//    @Override
+//    public int hashCode() {
+//        if (hashCode == Integer.MIN_VALUE) {
+//            hashCode = (doc() * 17 + start()) * 31 + end();
+//        }
+//        return hashCode;
+//    }
+    
+    
 }
