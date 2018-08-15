@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -195,22 +196,26 @@ public abstract class Results<T> implements Iterable<T> {
     }
     
     
-//    /**
-//     * Group these hits by a criterium (or several criteria).
-//     *
-//     * @param criteria the hit property to group on
-//     * @return a HitGroups object representing the grouped hits
-//     */
-//    public abstract ResultGroups<T> groupedBy(ResultProperty<T> criteria);
-//
-//    /**
-//     * Select only the hits where the specified property has the specified value.
-//     * 
-//     * @param property property to select on, e.g. "word left of hit"
-//     * @param value value to select on, e.g. 'the'
-//     * @return filtered hits
-//     */
-//    public abstract Results<T> filteredBy(ResultProperty<T> property, PropertyValue value);
+    /**
+     * Group these hits by a criterium (or several criteria).
+     *
+     * @param criteria the hit property to group on
+     * @return a HitGroups object representing the grouped hits
+     */
+    public ResultGroups<T> groupedBy(ResultProperty<T> criteria) {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Select only the hits where the specified property has the specified value.
+     * 
+     * @param property property to select on, e.g. "word left of hit"
+     * @param value value to select on, e.g. 'the'
+     * @return filtered hits
+     */
+    public Results<T> filteredBy(ResultProperty<T> property, PropertyValue value) {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Return a new Hits object with these hits sorted by the given property.

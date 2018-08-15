@@ -181,8 +181,9 @@ public abstract class Hits extends Results<Hit> {
      * @param criteria the hit property to group on
      * @return a HitGroups object representing the grouped hits
      */
-    public HitGroups groupedBy(final HitProperty criteria) {
-        return HitGroupsImpl.fromHits(this, criteria);
+    @Override
+    public HitGroups groupedBy(ResultProperty<Hit> criteria) {
+        return HitGroupsImpl.fromHits(this, (HitProperty)criteria);
     }
     
     /**
@@ -192,8 +193,9 @@ public abstract class Hits extends Results<Hit> {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    public Hits filteredBy(HitProperty property, PropertyValue value) {
-        return new HitsFiltered(this, property, value);
+    @Override
+    public Hits filteredBy(ResultProperty<Hit> property, PropertyValue value) {
+        return new HitsFiltered(this, (HitProperty)property, value);
     }
     
     /**
