@@ -340,7 +340,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             int hitsCounted = hits2.hitsCountedSoFar();
             int docsRetrieved = hits2.docsProcessedSoFar();
             int docsCounted = hits2.docsCountedSoFar();
-            return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
+            return new HitsList(hitsToSort.queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
         }
         return Hits.list(hitsToSort.queryInfo(), sorted);
     }

@@ -2,6 +2,9 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,13 +78,52 @@ public abstract class Hits extends Results<Hit> {
      * Take a sample of hits by wrapping an existing Hits object.
      *
      * @param hits hits object to wrap
-     * @param parameters sample parameters 
+     * @param sampleParameters sample parameters 
      * @return the sample
      */
-    public static Hits sample(Hits hits, SampleParameters parameters) {
+    public Hits sample(SampleParameters sampleParameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        return new HitsList(hits, parameters);
+        
+        List<Hit> results = new ArrayList<>();
+        int hitsCounted = 0;
+        int docsRetrieved = 0;
+        int docsCounted = 0;
+        CapturedGroupsImpl capturedGroups = null;
+
+        Random random = new Random(sampleParameters.seed());
+        int numberOfHitsToSelect = sampleParameters.numberOfHits(size());
+        if (numberOfHitsToSelect > size())
+            numberOfHitsToSelect = size(); // default to all hits in this case
+        // Choose the hits
+        Set<Integer> chosenHitIndices = new TreeSet<>();
+        for (int i = 0; i < numberOfHitsToSelect; i++) {
+            // Choose a hit we haven't chosen yet
+            int hitIndex;
+            do {
+                hitIndex = random.nextInt(size());
+            } while (chosenHitIndices.contains(hitIndex));
+            chosenHitIndices.add(hitIndex);
+        }
+        
+        // Add the hits in order of their index
+        int previousDoc = -1;
+        if (hasCapturedGroups())
+            capturedGroups = new CapturedGroupsImpl(capturedGroups().names());
+        for (Integer hitIndex : chosenHitIndices) {
+            Hit hit = get(hitIndex);
+            if (hit.doc() != previousDoc) {
+                docsRetrieved++;
+                docsCounted++;
+                previousDoc = hit.doc();
+            }
+            results.add(hit);
+            if (capturedGroups != null)
+                capturedGroups.put(hit, this.capturedGroups.get(hit));
+            hitsCounted++;
+        }
+        
+        return new HitsList(queryInfo(), results, null, sampleParameters, hitsCounted, docsRetrieved, docsCounted, null);
     }
 
     /**
@@ -138,7 +180,46 @@ public abstract class Hits extends Results<Hit> {
      */
     @Override
     public Hits window(int first, int windowSize) {
-        return new HitsList(this, first, windowSize);
+        CapturedGroupsImpl capturedGroups = null;
+        int hitsCounted = 0;
+        int docsRetrieved = 0;
+        int docsCounted = 0;
+
+        // Error if first out of range
+        List<Hit> results = new ArrayList<>();
+        WindowStats windowStats;
+        boolean emptyResultSet = !hitsProcessedAtLeast(1);
+        if (first < 0 || (emptyResultSet && first > 0) ||
+                (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
+            throw new IllegalArgumentException("First hit out of range");
+        }
+
+        // Auto-clamp number
+        int number = windowSize;
+        if (!hitsProcessedAtLeast(first + number))
+            number = size() - first;
+
+        // Copy the hits we're interested in.
+        if (hasCapturedGroups())
+            capturedGroups = new CapturedGroupsImpl(capturedGroups().names());
+        int prevDoc = -1;
+        hitsCounted = 0;
+        for (int i = first; i < first + number; i++) {
+            Hit hit = get(i);
+            results.add(hit);
+            if (capturedGroups != null)
+                capturedGroups.put(hit, capturedGroups().get(hit));
+            // OPT: copy context as well..?
+            
+            if (hit.doc() != prevDoc) {
+                docsRetrieved++;
+                docsCounted++;
+                prevDoc = hit.doc();
+            }
+        }
+        boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
+        windowStats = new WindowStats(hasNext, first, windowSize, number);
+        return new HitsList(queryInfo(), results, windowStats, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
 
     /**

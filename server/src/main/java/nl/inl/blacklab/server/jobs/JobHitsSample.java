@@ -52,7 +52,7 @@ public class JobHitsSample extends JobWithHits {
     @Override
     protected void performSearch() throws BlsException {
         Hits inputHits = ((JobWithHits) inputJob).getHits();
-        hits = Hits.sample(inputHits, jobDesc.getSampleSettings());
+        hits = inputHits.sample(jobDesc.getSampleSettings());
     }
 
 }
