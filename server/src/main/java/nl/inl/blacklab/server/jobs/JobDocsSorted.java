@@ -56,7 +56,8 @@ public class JobDocsSorted extends JobWithDocs {
         DocSortSettings docSortSett = jobDesc.getDocSortSettings();
         if (docSortSett.sortBy() != null) {
             // Be lenient of clients passing wrong sortBy values; ignore bad sort requests
-            unsorted.sort(docSortSett.sortBy(), docSortSett.reverse()); // TODO: add .sortedBy() same as in Hits
+            docResults = unsorted.sortedBy(docSortSett.sortBy());
+            //unsorted.sort(docSortSett.sortBy(), docSortSett.reverse()); // TODO: add .sortedBy() same as in Hits
         }
         docResults = unsorted; // now that we sorted them we can make them available
     }

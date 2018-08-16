@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -294,7 +295,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @return the list of hits
      */
     public List<T> resultsList() {
-        return results;
+        return Collections.unmodifiableList(results);
     }
 
     

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -10,19 +11,26 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * @param <T> result type, e.g. Hit for groups of hits
  */
 public interface ResultGroups<T> {
+
+    /**
+     * What were these results grouped on?
+     * @return group criteria
+     */
+    ResultProperty<T> getGroupCriteria();
+    
     /**
      * Get the total number of results that were grouped
      *
      * @return the number of results that were grouped
      */
-    int getTotalResults();
+    int sumOfGroupSizes();
 
     /**
      * Return the size of the largest group
      *
      * @return size of the largest group
      */
-    int getLargestGroupSize();
+    int largestGroupSize();
 
     /**
      * Return the number of groups

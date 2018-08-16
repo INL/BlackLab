@@ -95,7 +95,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                         DocProperty sortProp = DocProperty.deserialize(sortBy);
                         if (sortProp == null)
                             throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-                        docs.sort(sortProp, sortProp.isReverse());
+                        docs = docs.sortedBy(sortProp);
                     }
                 }
             } else {

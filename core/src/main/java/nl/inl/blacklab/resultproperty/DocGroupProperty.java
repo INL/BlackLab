@@ -15,13 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class DocGroupProperty {
+public abstract class DocGroupProperty implements ResultProperty<DocGroup> {
 
     static DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
 
@@ -46,6 +54,7 @@ public abstract class DocGroupProperty {
         this.reverse = false;
     }
 
+    @Override
     public abstract PropertyValue get(DocGroup result);
 
     /**
@@ -55,12 +64,15 @@ public abstract class DocGroupProperty {
      * @param b second group
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
+    @Override
     public abstract int compare(DocGroup a, DocGroup b);
 
+    @Override
     public boolean defaultSortDescending() {
         return reverse;
     }
 
+    @Override
     public abstract String serialize();
 
     /**
@@ -93,6 +105,7 @@ public abstract class DocGroupProperty {
      * 
      * @return true if it is, false if not
      */
+    @Override
     public boolean isReverse() {
         return reverse;
     }
@@ -102,10 +115,24 @@ public abstract class DocGroupProperty {
      * 
      * @return doc group property with reversed comparison 
      */
+    @Override
     public abstract DocGroupProperty reverse();
 
     @Override
     public String toString() {
         return serialize();
+    }
+
+    @Override
+    public List<String> getPropNames() {
+        return Arrays.asList(getName());
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Results<DocGroup> sortResults(Results<DocGroup> results) {
+        List<DocGroup> list = new ArrayList<>(results.resultsList());
+        list.sort(this);
+        return new DocGroups(results.queryInfo(), list, (ResultProperty<DocResult>)((ResultGroups<DocResult>)results).getGroupCriteria());
     }
 }

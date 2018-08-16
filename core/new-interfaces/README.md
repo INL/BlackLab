@@ -41,23 +41,11 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
-- DocResults, Groups moeten ook threadPauser hebben
-  DocResultsWindow elimineren;
-  mogelijkheid om te sampelen/filteren toevoegen aan docresultswindow
+- mogelijkheid om te sampelen/filteren toevoegen aan docresults/...
   window/sample/filteren/groeperen toevoegen aan groups
   waarom bestaat ComparatorGroupProperty?
   wat moeten we met ComparatorGroupProperty.defaultSortDescending?
 
-- replace DocResults with grouping by HitPropertyDoc (that has a Doc internally)
-  PROBLEM: DocResults relies on the fact that results are sorted by document.
-  Special class of "as we go" grouping operation..?
-  If you choose to use this grouping operation, it is up to you to make sure the hits
-  are document-sorted (i.e. don't sort them by context, then apply an as-you-go grouping
-  operation)
-
-- introduce base interface Results connecting Hits, HitGroups, GroupGroups; 
-  also ResultProperty (HitProperty / GroupProperty)
-  
 search
 - introduce new Search interface for building searches
 - update caching in BLS

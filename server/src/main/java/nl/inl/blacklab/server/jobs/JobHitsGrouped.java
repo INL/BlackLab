@@ -77,7 +77,7 @@ public class JobHitsGrouped extends JobWithHits {
 
         HitGroupSortSettings sortSett = jobDesc.getHitGroupSortSettings();
         if (sortSett != null)
-            theGroups.sortGroups(sortSett.sortBy(), sortSett.reverse());
+            theGroups = theGroups.sortedBy(sortSett.sortBy());
 
         groups = theGroups; // we're done, caller can use the groups now
     }

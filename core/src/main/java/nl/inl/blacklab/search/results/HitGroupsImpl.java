@@ -16,13 +16,10 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.resultproperty.ComparatorGroupProperty;
-import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -118,20 +115,8 @@ public class HitGroupsImpl extends HitGroups {
      * @return the number of hits
      */
     @Override
-    public int getTotalResults() {
+    public int sumOfGroupSizes() {
         return totalHits;
-    }
-
-    /**
-     * Sort groups
-     *
-     * @param prop the property to sort on
-     * @param sortReverse whether to sort in descending order
-     */
-    @Override
-    public void sortGroups(GroupProperty prop, boolean sortReverse) {
-        Comparator<Group<?>> comparator = new ComparatorGroupProperty(prop, sortReverse);
-        results.sort(comparator);
     }
 
     /**
@@ -140,7 +125,7 @@ public class HitGroupsImpl extends HitGroups {
      * @return size of the largest group
      */
     @Override
-    public int getLargestGroupSize() {
+    public int largestGroupSize() {
         return largestGroupSize;
     }
 

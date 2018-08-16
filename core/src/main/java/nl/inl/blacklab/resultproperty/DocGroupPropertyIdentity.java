@@ -48,4 +48,9 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     public DocGroupProperty reverse() {
         return new DocGroupPropertyIdentity(this, true);
     }
+
+    @Override
+    public String getName() {
+        return "group: identity";
+    }
 }

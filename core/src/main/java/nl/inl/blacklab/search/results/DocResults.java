@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
@@ -30,14 +29,12 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.resultproperty.ComparatorDocProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.util.ReverseComparator;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -256,27 +253,19 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * Sort the results using the given comparator.
+     * Return a new Results object with these results sorted by the given property.
      *
-     * @param comparator how to sort the results
+     * This keeps the existing sort (or lack of one) intact and allows you to cache
+     * different sorts of the same resultset. The result objects are reused between
+     * the two Results instances, so not too much additional memory is used.
+     *
+     * @param sortProp the property to sort on
+     * @return a new Results object with the same results, sorted in the specified way
      */
-    void sort(Comparator<DocResult> comparator) {
+    @Override
+    public <P extends ResultProperty<DocResult>> DocResults sortedBy(P sortProp) {
         ensureAllHitsRead();
-        results.sort(comparator);
-    }
-
-    /**
-     * Sort documents based on a document property.
-     * 
-     * @param prop the property to sort on
-     * @param sortReverse true iff we want to sort in reverse.
-     */
-    public void sort(DocProperty prop, boolean sortReverse) {
-        Comparator<DocResult> comparator = new ComparatorDocProperty(prop);
-        if (sortReverse) {
-            comparator = new ReverseComparator<>(comparator);
-        }
-        sort(comparator);
+        return (DocResults)sortProp.sortResults(this);
     }
 
     /**
@@ -456,12 +445,12 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public int getTotalResults() {
+    public int sumOfGroupSizes() {
         return totalHits;
     }
 
     @Override
-    public int getLargestGroupSize() {
+    public int largestGroupSize() {
         ensureAllHitsRead();
         return mostHitsInDocument;
     }
@@ -471,7 +460,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         ensureAllHitsRead();
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
     }
-    
-    
+
+    @Override
+    public ResultProperty<Hit> getGroupCriteria() {
+        return groupByDoc;
+    }
     
 }

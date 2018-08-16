@@ -120,12 +120,9 @@ public class RequestHandlerDocs extends RequestHandler {
             // some more testing to see if everything is correct if we change this
             String sortBy = searchParam.getString("sort");
             DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
-            DocResults docsSorted;
-            if (sortProp != null) {
-                docsSorted = group.getResults();
-                docsSorted.sort(sortProp, false);
-            } else
-                docsSorted = group.getResults();
+            DocResults docsSorted = group.getResults();
+            if (sortProp != null)
+                docsSorted = docsSorted.sortedBy(sortProp);
         
             int first = searchParam.getInteger("first");
             if (first < 0)

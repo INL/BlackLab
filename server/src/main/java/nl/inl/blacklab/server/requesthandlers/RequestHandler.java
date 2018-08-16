@@ -611,7 +611,7 @@ public abstract class RequestHandler {
         // Information about grouping operation
         if (groups != null) {
             ds.entry("numberOfGroups", groups.size())
-                    .entry("largestGroupSize", groups.getLargestGroupSize());
+                    .entry("largestGroupSize", groups.largestGroupSize());
         }
 
         // Information about our viewing window

@@ -16,14 +16,10 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.resultproperty.ComparatorDocGroupProperty;
-import nl.inl.blacklab.resultproperty.DocGroupProperty;
-import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
@@ -38,7 +34,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     private int totalResults = 0;
 
-    private DocProperty groupBy;
+    private ResultProperty<DocResult> groupBy;
 
     /**
      * Constructor. Fills the groups from the given document results.
@@ -46,7 +42,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      * @param docResults the results to group.
      * @param groupBy the criterium to group on.
      */
-    public DocGroups(DocResults docResults, DocProperty groupBy) {
+    public DocGroups(DocResults docResults, ResultProperty<DocResult> groupBy) {
         super(docResults.queryInfo());
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
@@ -70,7 +66,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         }
     }
 
-    private DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, DocProperty groupBy) {
+    public DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, ResultProperty<DocResult> groupBy) {
         super(queryInfo);
         this.groupBy = groupBy;
         for (DocGroup group: sorted) {
@@ -87,16 +83,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         return groups.get(groupId);
     }
 
-    /**
-     * Order the groups based on the specified group property.
-     *
-     * @param prop the property to sort on
-     * @param sortReverse if true, perform reverse sort
-     */
-    public void sort(DocGroupProperty prop, boolean sortReverse) {
-        Comparator<DocGroup> comparator = new ComparatorDocGroupProperty(prop, sortReverse);
-        results.sort(comparator);
-    }
 
     /**
      * Return a new Hits object with these hits sorted by the given property.
@@ -109,36 +95,27 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public <P extends ResultProperty<DocGroup>> Results<DocGroup> sortedBy(P sortProp) {
+    public <P extends ResultProperty<DocGroup>> DocGroups sortedBy(P sortProp) {
         ensureAllHitsRead();
         List<DocGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
         return new DocGroups(queryInfo(), sorted, groupBy);
     }
 
-    public void sort(DocGroupProperty prop) {
-        sort(prop, false);
-    }
-
     @Override
-    public int getLargestGroupSize() {
+    public int largestGroupSize() {
         return largestGroupSize;
     }
 
     @Override
-    public int getTotalResults() {
+    public int sumOfGroupSizes() {
         return totalResults;
     }
 
-    public DocProperty getGroupCriteria() {
+    @Override
+    public ResultProperty<DocResult> getGroupCriteria() {
         return groupBy;
     }
-
-//    @Override
-//    public void add(DocGroup obj) {
-//        groups.put(obj.getIdentity(), obj);
-//        orderedGroups.add(obj);
-//    }
 
     @Override
     public Results<DocGroup> window(int first, int windowSize) {

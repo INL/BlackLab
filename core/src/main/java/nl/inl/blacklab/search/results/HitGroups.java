@@ -18,7 +18,6 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -42,28 +41,11 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     @Override
     public abstract HitGroup get(PropertyValue identity);
 
+    @Override
     public HitProperty getGroupCriteria() {
         return criteria;
     }
     
-    /**
-     * Sort groups by some property.
-     * 
-     * @param prop the property to sort on
-     */
-    public void sortGroups(GroupProperty prop) {
-        sortGroups(prop, false);
-    }
-
-    /**
-     * Sort groups by some property, ascending or descending.
-     * 
-     * @param prop the property to sort on
-     * @param sortReverse if true, reverse the natural sort of the specified
-     *            property.
-     */
-    public abstract void sortGroups(GroupProperty prop, boolean sortReverse);
-
     /**
      * Return a new Hits object with these hits sorted by the given property.
      *
@@ -75,7 +57,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public <P extends ResultProperty<HitGroup>> Results<HitGroup> sortedBy(P sortProp) {
+    public <P extends ResultProperty<HitGroup>> HitGroups sortedBy(P sortProp) {
         ensureAllHitsRead();
         List<HitGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
@@ -88,7 +70,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @return the number of hits
      */
     @Override
-    public abstract int getTotalResults();
+    public abstract int sumOfGroupSizes();
 
     /**
      * Return the size of the largest group
@@ -96,7 +78,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @return size of the largest group
      */
     @Override
-    public abstract int getLargestGroupSize();
+    public abstract int largestGroupSize();
     
     @Override
     protected void ensureResultsRead(int number) {
