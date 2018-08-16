@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -126,12 +128,27 @@ public abstract class Results<T> implements Iterable<T> {
     public SampleParameters sampleParameters() {
         return null;
     }
+    
+    /**
+     * Return a stream of these hits.
+     * 
+     * @return stream
+     */
+    public Stream<T> stream() {
+        return StreamSupport.stream(this.spliterator(), false);
+    }
+    
+    /**
+     * Return a parallel stream of these hits.
+     * 
+     * @return stream
+     */
+    public Stream<T> parallelStream() {
+        return StreamSupport.stream(this.spliterator(), true);
+    }
 
     /**
      * Return an iterator over these hits.
-     *
-     * The order is the sorted order, not the original order. Use
-     * hitsInOriginalOrder() to iterate in the original order.
      *
      * @return the iterator
      */
