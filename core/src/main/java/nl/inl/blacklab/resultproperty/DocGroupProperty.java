@@ -133,6 +133,6 @@ public abstract class DocGroupProperty implements ResultProperty<DocGroup> {
     public Results<DocGroup> sortResults(Results<DocGroup> results) {
         List<DocGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return new DocGroups(results.queryInfo(), list, (ResultProperty<DocResult>)((ResultGroups<DocResult>)results).getGroupCriteria());
+        return new DocGroups(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria());
     }
 }

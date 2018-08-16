@@ -16,7 +16,6 @@ import org.apache.lucene.search.TermQuery;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -157,7 +156,7 @@ public class BlsUtils {
                 break;
             }
         }
-        return ((PropertyValueDoc)docResults.get(0).getIdentity()).getValue().id();
+        return docResults.get(0).getIdentity().getValue().id();
     }
 
     // Copied from Apache Commons

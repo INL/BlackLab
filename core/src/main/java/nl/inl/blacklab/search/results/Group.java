@@ -21,7 +21,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * A group of results, with its group identity and the results themselves.
  * 
  * @param <T> result type, e.g. Hit 
- * @param <S> results type, e.g. Hits
  */
 public abstract class Group<T> implements Result<Group<T>> {
     

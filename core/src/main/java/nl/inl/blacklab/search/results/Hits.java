@@ -77,7 +77,6 @@ public abstract class Hits extends Results<Hit> {
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param hits hits object to wrap
      * @param sampleParameters sample parameters 
      * @return the sample
      */

@@ -46,7 +46,7 @@ public class DocPropertyStoredField extends DocProperty {
 
     @Override
     public PropertyValueString get(DocResult result) {
-        return new PropertyValueString(((PropertyValueDoc)result.getIdentity()).getValue().luceneDoc().get(fieldName));
+        return new PropertyValueString(result.getIdentity().getValue().luceneDoc().get(fieldName));
     }
 
     /**
@@ -58,10 +58,10 @@ public class DocPropertyStoredField extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        String sa = ((PropertyValueDoc)a.getIdentity()).getValue().luceneDoc().get(fieldName);
+        String sa = a.getIdentity().getValue().luceneDoc().get(fieldName);
         if (sa == null)
             sa = "";
-        String sb = ((PropertyValueDoc)b.getIdentity()).getValue().luceneDoc().get(fieldName);
+        String sb = b.getIdentity().getValue().luceneDoc().get(fieldName);
         if (sb == null)
             sb = "";
         if (sa.length() == 0) { // sort empty string at the end
