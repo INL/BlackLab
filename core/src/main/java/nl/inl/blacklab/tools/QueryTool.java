@@ -44,7 +44,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.resultproperty.GroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
@@ -55,7 +55,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
-import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -77,7 +76,6 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -1233,11 +1231,11 @@ public class QueryTool {
      * @param sortBy property to sort by
      */
     private void sortGroups(String sortBy) {
-        ResultProperty<HitGroup> crit = null;
+        HitGroupProperty crit = null;
         if (sortBy.equals("identity") || sortBy.equals("id"))
-            crit = GroupProperty.identity();
+            crit = HitGroupProperty.identity();
         else if (sortBy.startsWith("size"))
-            crit = GroupProperty.size();
+            crit = HitGroupProperty.size();
         if (crit == null) {
             errprintln("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");

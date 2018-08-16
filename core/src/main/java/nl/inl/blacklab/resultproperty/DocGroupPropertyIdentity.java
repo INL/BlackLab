@@ -45,7 +45,7 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     }
 
     @Override
-    public DocGroupProperty reverse() {
+    public DocGroupPropertyIdentity reverse() {
         return new DocGroupPropertyIdentity(this, true);
     }
 

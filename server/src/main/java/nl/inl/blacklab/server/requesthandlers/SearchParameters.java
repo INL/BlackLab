@@ -25,13 +25,11 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
-import nl.inl.blacklab.resultproperty.GroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -468,7 +466,7 @@ public class SearchParameters {
     }
 
     private HitGroupSortSettings hitGroupSortSettings() {
-        GroupProperty<Hit, HitGroup> sortProp = null;
+        HitGroupProperty sortProp = null;
         boolean reverse = false;
         if (!isDocsOperation) {
             // not grouping, so no group sort
@@ -479,13 +477,13 @@ public class SearchParameters {
                         reverse = true;
                         sortBy = sortBy.substring(1);
                     }
-                    sortProp = GroupProperty.deserialize(sortBy);
+                    sortProp = HitGroupProperty.deserialize(sortBy);
                 }
             }
         }
         if (sortProp == null) {
             // By default, show largest group first
-            sortProp = GroupProperty.size();
+            sortProp = HitGroupProperty.size();
         }
         return new HitGroupSortSettings(sortProp, reverse);
     }

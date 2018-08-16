@@ -19,9 +19,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.HitGroupsImpl;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.Results;
 
@@ -29,46 +30,30 @@ import nl.inl.blacklab.search.results.Results;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup> {
+public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
-    static DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
+    static HitGroupPropertyIdentity propIdentity = new HitGroupPropertyIdentity();
 
-    static DocGroupPropertySize propSize = new DocGroupPropertySize();
+    static HitGroupPropertySize propSize = new HitGroupPropertySize();
 
-    public static DocGroupPropertyIdentity identity() {
+    public static HitGroupPropertyIdentity identity() {
         return propIdentity;
     }
 
-    public static DocGroupPropertySize size() {
+    public static HitGroupPropertySize size() {
         return propSize;
     }
     
-    public static DocGroupProperty deserialize(String serialized) {
-        boolean reverse = false;
-        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
-            reverse = true;
-            serialized = serialized.substring(1);
-        }
-        DocGroupProperty result;
-        if (serialized.equalsIgnoreCase("identity"))
-            result = propIdentity;
-        else
-            result = propSize;
-        if (reverse)
-            result = result.reverse();
-        return result;
-    }
-
-    DocGroupProperty(DocGroupProperty prop, boolean invert) {
+    HitGroupProperty(HitGroupProperty prop, boolean invert) {
         super(prop, invert);
     }
     
-    public DocGroupProperty() {
+    public HitGroupProperty() {
         super();
     }
 
     @Override
-    public abstract PropertyValue get(DocGroup result);
+    public abstract PropertyValue get(HitGroup result);
 
     /**
      * Compares two groups on this property
@@ -78,7 +63,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     @Override
-    public abstract int compare(DocGroup a, DocGroup b);
+    public abstract int compare(HitGroup a, HitGroup b);
 
     @Override
     public boolean defaultSortDescending() {
@@ -98,6 +83,22 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
         return reverse ? "-" : "";
     }
 
+    public static HitGroupProperty deserialize(String serialized) {
+        boolean reverse = false;
+        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
+            reverse = true;
+            serialized = serialized.substring(1);
+        }
+        HitGroupProperty result;
+        if (serialized.equalsIgnoreCase("identity"))
+            result = propIdentity;
+        else
+            result = propSize;
+        if (reverse)
+            result = result.reverse();
+        return result;
+    }
+
     /**
      * Is the comparison reversed?
      * 
@@ -114,7 +115,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
      * @return doc group property with reversed comparison 
      */
     @Override
-    public abstract DocGroupProperty reverse();
+    public abstract HitGroupProperty reverse();
 
     @Override
     public String toString() {
@@ -128,9 +129,9 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
 
     @SuppressWarnings("unchecked")
     @Override
-    public Results<DocGroup> sortResults(Results<DocGroup> results) {
-        List<DocGroup> list = new ArrayList<>(results.resultsList());
+    public HitGroups sortResults(Results<HitGroup> results) {
+        List<HitGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return new DocGroups(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria());
+        return new HitGroupsImpl(results.queryInfo(), list, (HitProperty)((ResultGroups<Hit>)results).getGroupCriteria());
     }
 }

@@ -15,36 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.HitGroup;
 
-/**
- * Abstract base class for a property of a hit, like document title, hit text,
- * right context, etc.
- * 
- * @param <T> result type, e.g. Hit 
- * @param <G> group type, e.g. HitGroup
- */
-public class GroupPropertySize<T, G extends Group<T>> extends GroupProperty<T, G> {
+public class HitGroupPropertySize extends HitGroupProperty {
     
-    GroupPropertySize(GroupPropertySize<T, G> prop, boolean invert) {
+    HitGroupPropertySize(HitGroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
     
-    public GroupPropertySize() {
-        // NOP
+    public HitGroupPropertySize() {
+        super();
     }
     
     @Override
-    public PropertyValueInt get(G result) {
-        return new PropertyValueInt(((HitGroup) result).size());
-    }
-
-    @Override
-    public int compare(G a, G b) {
-        if (reverse)
-            return ((HitGroup) b).size() - ((HitGroup) a).size();
-        return ((HitGroup) a).size() - ((HitGroup) b).size();
+    public PropertyValueInt get(HitGroup result) {
+        return new PropertyValueInt(result.size());
     }
 
     @Override
@@ -53,18 +38,22 @@ public class GroupPropertySize<T, G extends Group<T>> extends GroupProperty<T, G
     }
 
     @Override
+    public int compare(HitGroup a, HitGroup b) {
+        return reverse ? b.size() - a.size() : a.size() - b.size();
+    }
+
+    @Override
     public String serialize() {
         return serializeReverse() + "size";
     }
 
     @Override
-    public GroupProperty<T, G> reverse() {
-        return new GroupPropertySize<>(this, true);
+    public HitGroupPropertySize reverse() {
+        return new HitGroupPropertySize(this, true);
     }
 
     @Override
     public String getName() {
         return "group: size";
     }
-
 }

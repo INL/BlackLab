@@ -15,32 +15,25 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.HitGroup;
 
-/**
- * Abstract base class for a property of a hit, like document title, hit text,
- * right context, etc.
- * 
- * @param <T> result type, e.g. Hit
- * @param <G> group type, e.g. HitGroup
- */
-public class GroupPropertyIdentity<T, G extends Group<T>> extends GroupProperty<T, G> {
+public class HitGroupPropertyIdentity extends HitGroupProperty {
     
-    GroupPropertyIdentity(GroupPropertyIdentity<T, G> prop, boolean invert) {
+    HitGroupPropertyIdentity(HitGroupPropertyIdentity prop, boolean invert) {
         super(prop, invert);
     }
     
-    public GroupPropertyIdentity() {
-        // NOP
+    public HitGroupPropertyIdentity() {
+        super();
     }
     
     @Override
-    public PropertyValue get(G result) {
+    public PropertyValue get(HitGroup result) {
         return result.getIdentity();
     }
 
     @Override
-    public int compare(G a, G b) {
+    public int compare(HitGroup a, HitGroup b) {
         if (reverse)
             return b.getIdentity().compareTo(a.getIdentity());
         return a.getIdentity().compareTo(b.getIdentity());
@@ -52,13 +45,12 @@ public class GroupPropertyIdentity<T, G extends Group<T>> extends GroupProperty<
     }
 
     @Override
-    public GroupPropertyIdentity<T, G> reverse() {
-        return new GroupPropertyIdentity<>(this, true);
+    public HitGroupPropertyIdentity reverse() {
+        return new HitGroupPropertyIdentity(this, true);
     }
 
     @Override
     public String getName() {
         return "group: identity";
     }
-
 }

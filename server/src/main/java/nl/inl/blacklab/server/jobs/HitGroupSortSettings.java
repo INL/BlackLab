@@ -2,22 +2,21 @@ package nl.inl.blacklab.server.jobs;
 
 import java.util.Map;
 
-import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.resultproperty.HitGroupProperty;
 
 public class HitGroupSortSettings {
 
-    private ResultProperty<HitGroup> sortBy;
+    private HitGroupProperty sortBy;
 
     private boolean reverse;
 
-    public HitGroupSortSettings(ResultProperty<HitGroup> sortBy, boolean reverse) {
+    public HitGroupSortSettings(HitGroupProperty sortBy, boolean reverse) {
         super();
         this.sortBy = sortBy;
         this.reverse = reverse;
     }
 
-    public ResultProperty<HitGroup> sortBy() {
+    public HitGroupProperty sortBy() {
         return sortBy;
     }
 

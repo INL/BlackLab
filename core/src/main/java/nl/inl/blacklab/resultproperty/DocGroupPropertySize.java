@@ -48,7 +48,7 @@ public class DocGroupPropertySize extends DocGroupProperty {
     }
 
     @Override
-    public DocGroupProperty reverse() {
+    public DocGroupPropertySize reverse() {
         return new DocGroupPropertySize(this, true);
     }
 
