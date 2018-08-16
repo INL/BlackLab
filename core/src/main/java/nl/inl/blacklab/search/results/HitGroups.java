@@ -76,13 +76,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      */
     @Override
     public <P extends ResultProperty<HitGroup>> Results<HitGroup> sortedBy(P sortProp) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         List<HitGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
         return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria());
@@ -105,7 +99,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     public abstract int getLargestGroupSize();
     
     @Override
-    protected void ensureResultsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) {
         // NOP
     }
 }

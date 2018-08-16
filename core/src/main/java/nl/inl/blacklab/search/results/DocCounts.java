@@ -129,7 +129,7 @@ public class DocCounts extends Results<DocCount> {
     }
 
     @Override
-    protected void ensureResultsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) {
         // NOP
     }
 

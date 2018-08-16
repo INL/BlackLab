@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -116,11 +115,6 @@ public abstract class GroupProperty implements ResultProperty<Group<?>> {
     
     @Override
     public Results<Group<?>> sortResults(Results<Group<?>> results) {
-        ArrayList<Group<?>> sorted = new ArrayList<>(results.resultsList());
-
-        // Perform the actual sort.
-        sorted.sort(this);
-        
         throw new UnsupportedOperationException();
     }
 

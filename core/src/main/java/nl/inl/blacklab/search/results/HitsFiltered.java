@@ -65,53 +65,59 @@ public class HitsFiltered extends Hits {
      *             operation
      */
     @Override
-    protected void ensureResultsRead(int number) throws InterruptedException {
-        // Prevent locking when not required
-        if (doneFiltering || number >= 0 && results.size() > number)
-            return;
-        
-        // At least one hit needs to be fetched.
-        // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-        if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
-            number = results.size() + FETCH_HITS_MIN;
-
-        while (!ensureHitsReadLock.tryLock()) {
-            /*
-             * Another thread is already counting, we don't want to straight up block until it's done
-             * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
-             * So instead poll our own state, then if we're still missing results after that just count them ourselves
-             */
-            Thread.sleep(50);
-            if (doneFiltering || number >= 0 && results.size() >= number)
-                return;
-        }
+    protected void ensureResultsRead(int number) {
         try {
-            boolean readAllHits = number < 0;
-            while (!doneFiltering && (readAllHits || results.size() < number)) {
-                // Pause if asked
-                threadPauser.waitIfPaused();
-
-                // Advance to next hit
-                indexInSource++;
-                if (source.hitsProcessedAtLeast(indexInSource + 1)) {
-                    Hit hit = source.get(indexInSource);
-                    if (filterProperty.get(hit).equals(filterValue)) {
-                        // Yes, keep this hit
-                        results.add(hit);
-                        hitsCounted++;
-                        if (hit.doc() != previousHitDoc) {
-                            docsCounted++;
-                            docsRetrieved++;
-                            previousHitDoc = hit.doc();
-                        }
-                    }
-                } else {
-                    doneFiltering = true;
-                    source = null; // allow this to be GC'ed
-                }
+            // Prevent locking when not required
+            if (doneFiltering || number >= 0 && results.size() > number)
+                return;
+            
+            // At least one hit needs to be fetched.
+            // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
+            if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
+                number = results.size() + FETCH_HITS_MIN;
+    
+            while (!ensureHitsReadLock.tryLock()) {
+                /*
+                 * Another thread is already counting, we don't want to straight up block until it's done
+                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                 */
+                Thread.sleep(50);
+                if (doneFiltering || number >= 0 && results.size() >= number)
+                    return;
             }
-        } finally {
-            ensureHitsReadLock.unlock();
+            try {
+                boolean readAllHits = number < 0;
+                while (!doneFiltering && (readAllHits || results.size() < number)) {
+                    // Pause if asked
+                    threadPauser.waitIfPaused();
+    
+                    // Advance to next hit
+                    indexInSource++;
+                    if (source.hitsProcessedAtLeast(indexInSource + 1)) {
+                        Hit hit = source.get(indexInSource);
+                        if (filterProperty.get(hit).equals(filterValue)) {
+                            // Yes, keep this hit
+                            results.add(hit);
+                            hitsCounted++;
+                            if (hit.doc() != previousHitDoc) {
+                                docsCounted++;
+                                docsRetrieved++;
+                                previousHitDoc = hit.doc();
+                            }
+                        }
+                    } else {
+                        doneFiltering = true;
+                        source = null; // allow this to be GC'ed
+                    }
+                }
+            } finally {
+                ensureHitsReadLock.unlock();
+            }
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
         }
     }
 

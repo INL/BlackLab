@@ -173,8 +173,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     @Override
     public DocResults sortResults(Results<DocResult> results) {
         ArrayList<DocResult> sorted = new ArrayList<>(results.resultsList());
-
-        // Perform the actual sort.
         sorted.sort(this);
         return new DocResults(results.queryInfo(), sorted);
     }

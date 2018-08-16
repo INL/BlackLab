@@ -100,7 +100,7 @@ public class HitsList extends Hits {
      *             operation
      */
     @Override
-    protected void ensureResultsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) {
         // subclasses may override
     }
 

@@ -147,14 +147,7 @@ public abstract class Results<T> implements Iterable<T> {
             @Override
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
-                try {
-                    ensureResultsRead(index + 2);
-                } catch (InterruptedException e) {
-                    // Thread was interrupted. Don't finish reading hits and accept possibly wrong
-                    // answer.
-                    // Client must detect the interruption and stop the thread.
-                    Thread.currentThread().interrupt();
-                }
+                ensureResultsRead(index + 2);
                 return results.size() >= index + 2;
             }
         
@@ -183,13 +176,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @return the hit, or null if it's beyond the last hit
      */
     public synchronized T get(int i) {
-        try {
-            ensureResultsRead(i + 1);
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-            Thread.currentThread().interrupt();
-        }
+        ensureResultsRead(i + 1);
         if (i >= results.size())
             return null;
         return results.get(i);
@@ -218,23 +205,17 @@ public abstract class Results<T> implements Iterable<T> {
     }
 
     /**
-     * Return a new Hits object with these hits sorted by the given property.
+     * Return a new Results object with these results sorted by the given property.
      *
      * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. The hits themselves are reused between
-     * the two Hits instances, so not too much additional memory is used.
+     * different sorts of the same resultset. The result objects are reused between
+     * the two Results instances, so not too much additional memory is used.
      *
-     * @param sortProp the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
+     * @param sortProp the property to sort on
+     * @return a new Results object with the same results, sorted in the specified way
      */
     public <P extends ResultProperty<T>> Results<T> sortedBy(P sortProp) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return sortProp.sortResults(this);
     }
 
@@ -265,10 +246,8 @@ public abstract class Results<T> implements Iterable<T> {
      * @param number the minimum number of results that will have been read when this
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
      */
-    protected abstract void ensureResultsRead(int number) throws InterruptedException;
+    protected abstract void ensureResultsRead(int number);
 
     /**
      * Ensure that we have read all results.
@@ -276,20 +255,12 @@ public abstract class Results<T> implements Iterable<T> {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
-    protected void ensureAllHitsRead() throws InterruptedException {
+    protected void ensureAllHitsRead() {
         ensureResultsRead(-1);
     }
     
     public boolean resultsProcessedAtLeast(int lowerBound) {
-        try {
-            // Try to fetch at least this many hits
-            ensureResultsRead(lowerBound);
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
-        }
-
+        ensureResultsRead(lowerBound);
         return results.size() >= lowerBound;
     }
 
@@ -303,14 +274,7 @@ public abstract class Results<T> implements Iterable<T> {
     }
 
     public int resultsProcessedTotal() {
-        try {
-            // Probably not all hits have been seen yet. Collect them all.
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return results.size();
     }
 

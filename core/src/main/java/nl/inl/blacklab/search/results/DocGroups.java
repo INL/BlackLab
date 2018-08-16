@@ -110,13 +110,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      */
     @Override
     public <P extends ResultProperty<DocGroup>> Results<DocGroup> sortedBy(P sortProp) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         List<DocGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
         return new DocGroups(queryInfo(), sorted, groupBy);
@@ -152,7 +146,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    protected void ensureResultsRead(int number) throws InterruptedException {
+    protected void ensureResultsRead(int number) {
         // NOP
     }
 

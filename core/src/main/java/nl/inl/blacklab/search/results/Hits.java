@@ -313,15 +313,7 @@ public abstract class Hits extends Results<Hit> {
     //--------------------------------------------------------------------
 
     public Hits getHitsInDoc(int docid) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Interrupted. Just return no hits;
-            // client should detect thread was interrupted if it
-            // wants to use background threads.
-            Thread.currentThread().interrupt();
-            return Hits.emptyList(queryInfo());
-        }
+        ensureAllHitsRead();
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : results) {
             if (hit.doc() == docid)
@@ -346,35 +338,17 @@ public abstract class Hits extends Results<Hit> {
     }
 
     public int hitsCountedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return hitsCounted;
     }
 
     public int docsProcessedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return docsRetrieved;
     }
 
     public int docsCountedTotal() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Abort operation. Result may be wrong, but
-            // interrupted results shouldn't be shown to user anyway.
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return docsCounted;
     }
 
@@ -394,12 +368,7 @@ public abstract class Hits extends Results<Hit> {
     //--------------------------------------------------------------------
     
     public Hits window(Hit hit) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // (should be detected by the client)
-            Thread.currentThread().interrupt();
-        }
+        ensureAllHitsRead();
         return window(results.indexOf(hit), 1);
     }
     

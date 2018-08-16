@@ -17,7 +17,6 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -262,12 +261,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param comparator how to sort the results
      */
     void sort(Comparator<DocResult> comparator) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; just sort the results we have.
-            // Let caller detect and deal with interruption.
-        }
+        ensureAllHitsRead();
         results.sort(comparator);
     }
 
@@ -325,13 +319,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the sublist
      */
     public List<DocResult> subList(int fromIndex, int toIndex) {
-        try {
-            ensureResultsRead(toIndex - 1);
-        } catch (InterruptedException e) {
-            // Thread was interrupted. We may not even have read
-            // the first result in the sublist, so just return an empty list.
-            return Collections.emptyList();
-        }
+        ensureResultsRead(toIndex - 1);
         return results.subList(fromIndex, toIndex);
     }
 
@@ -344,56 +332,62 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @throws InterruptedException
      */
     @Override
-    protected void ensureResultsRead(int index) throws InterruptedException {
-        if (sourceHitsFullyRead() || (index >= 0 && results.size() > index))
-            return;
-
-        while (!ensureResultsReadLock.tryLock()) {
-            /*
-            * Another thread is already counting, we don't want to straight up block until it's done
-            * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
-            * So instead poll our own state, then if we're still missing results after that just count them ourselves
-            */
-            Thread.sleep(50);
-            if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
-                return;
-        }
-
+    protected void ensureResultsRead(int index) {
         try {
-            // Fill list of document results
-            PropertyValueDoc doc = partialDocId;
-            List<Hit> docHits = partialDocHits;
-            partialDocId = null;
-            partialDocHits = null;
-
-            while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
-
-                Hit hit = sourceHitsIterator.next();
-                PropertyValueDoc val = groupByDoc.get(hit);
-                if (!val.equals(doc)) {
-                    if (docHits != null) {
+            if (sourceHitsFullyRead() || (index >= 0 && results.size() > index))
+                return;
+    
+            while (!ensureResultsReadLock.tryLock()) {
+                /*
+                * Another thread is already counting, we don't want to straight up block until it's done
+                * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+                * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                */
+                Thread.sleep(50);
+                if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
+                    return;
+            }
+    
+            try {
+                // Fill list of document results
+                PropertyValueDoc doc = partialDocId;
+                List<Hit> docHits = partialDocHits;
+                partialDocId = null;
+                partialDocHits = null;
+    
+                while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
+    
+                    Hit hit = sourceHitsIterator.next();
+                    PropertyValueDoc val = groupByDoc.get(hit);
+                    if (!val.equals(doc)) {
+                        if (docHits != null) {
+                            Hits hits = Hits.list(queryInfo(), docHits);
+                            addDocResultToList(doc, hits);
+                        }
+                        doc = val;
+                        docHits = new ArrayList<>();
+                    }
+                    docHits.add(hit);
+                }
+                // add the final dr instance to the results collection
+                if (docHits != null) {
+                    if (sourceHitsIterator.hasNext()) {
+                        partialDocId = doc;
+                        partialDocHits = docHits; // not done, continue from here later
+                    } else {
                         Hits hits = Hits.list(queryInfo(), docHits);
                         addDocResultToList(doc, hits);
+                        sourceHitsIterator = null; // allow this to be GC'ed
+                        partialDocHits = null;
                     }
-                    doc = val;
-                    docHits = new ArrayList<>();
                 }
-                docHits.add(hit);
+            } finally {
+                ensureResultsReadLock.unlock();
             }
-            // add the final dr instance to the results collection
-            if (docHits != null) {
-                if (sourceHitsIterator.hasNext()) {
-                    partialDocId = doc;
-                    partialDocHits = docHits; // not done, continue from here later
-                } else {
-                    Hits hits = Hits.list(queryInfo(), docHits);
-                    addDocResultToList(doc, hits);
-                    sourceHitsIterator = null; // allow this to be GC'ed
-                    partialDocHits = null;
-                }
-            }
-        } finally {
-            ensureResultsReadLock.unlock();
+        } catch (InterruptedException e) {
+            // Thread was interrupted; abort operation
+            // and let client decide what to do
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -453,12 +447,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the sum
      */
     public int intSum(ResultProperty<DocResult> numProp) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted; just process the results we have.
-            // Let caller detect and deal with interruption.
-        }
+        ensureAllHitsRead();
         int sum = 0;
         for (DocResult result : results) {
             sum += ((PropertyValueInt) numProp.get(result)).getValue();
@@ -473,23 +462,13 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     @Override
     public int getLargestGroupSize() {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-        }
+        ensureAllHitsRead();
         return mostHitsInDocument;
     }
 
     @Override
     public Group<Hit> get(PropertyValue prop) {
-        try {
-            ensureAllHitsRead();
-        } catch (InterruptedException e) {
-            // Thread was interrupted. Required hit hasn't been gathered;
-            // we will just return null.
-        }
+        ensureAllHitsRead();
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
     }
     
