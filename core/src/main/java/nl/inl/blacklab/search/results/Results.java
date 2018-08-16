@@ -201,9 +201,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    public Results<T> filteredBy(ResultProperty<T> property, PropertyValue value) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract Results<T> filteredBy(ResultProperty<T> property, PropertyValue value);
 
     /**
      * Return a new Results object with these results sorted by the given property.

@@ -41,6 +41,18 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
+
+- 
+
+- docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
+
+- doccounts / hitcounts generaliseren: grouping hoeft niet alle results in group te bewaren
+  kun je gebruiken voor docs/snippets maar ook voor andere groupings: bewaar de eerste 25 en toon die
+  als mensen groep openklikken; zoek en toon de rest pas als ze de hele groep willen zien.
+  groups classes een 'truncate' operatie geven die een equivalente groups teruggeeft die minder results opslaat.
+
+- streams
+
 - mogelijkheid om te sampelen/filteren toevoegen aan docresults/...
   window/sample/filteren/groeperen toevoegen aan groups
   waarom bestaat ComparatorGroupProperty?

@@ -6,7 +6,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.Pausible;
-import nl.inl.blacklab.search.results.DocCounts;
+import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -57,7 +57,7 @@ public class JobFacets extends Job {
 
     }
 
-    private Map<String, DocCounts> counts;
+    private Map<String, DocGroups> counts;
 
     private DocResults docResults;
 
@@ -71,15 +71,15 @@ public class JobFacets extends Job {
         docResults = ((JobWithDocs) inputJob).getDocResults();
         List<DocProperty> props = jobDesc.getFacets();
 
-        Map<String, DocCounts> theCounts = new HashMap<>();
+        Map<String, DocGroups> theCounts = new HashMap<>();
         for (DocProperty facetBy : props) {
-            DocCounts facetCounts = docResults.countBy(facetBy);
+            DocGroups facetCounts = docResults.groupedBy(facetBy); //TODO: don't store all the results!
             theCounts.put(facetBy.getName(), facetCounts);
         }
         counts = theCounts; // we're done, caller can use the groups now
     }
 
-    public Map<String, DocCounts> getCounts() {
+    public Map<String, DocGroups> getCounts() {
         return counts;
     }
 

@@ -412,18 +412,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * Count the number of results that have the same value for the specified
-     * property. Basically a grouping operation without storing the results. Used
-     * for e.g. faceted search.
-     *
-     * @param countBy property to count
-     * @return the counts
-     */
-    public DocCounts countBy(DocProperty countBy) {
-        return new DocCounts(this, countBy);
-    }
-
-    /**
      * Sum a property for all the documents.
      *
      * Can be used to calculate the total number of tokens in a subcorpus, for
@@ -464,6 +452,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public ResultProperty<Hit> getGroupCriteria() {
         return groupByDoc;
+    }
+
+    @Override
+    public Results<DocResult> filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
+        throw new UnsupportedOperationException();
     }
     
 }

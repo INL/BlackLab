@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -83,17 +84,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         return groups.get(groupId);
     }
 
-
-    /**
-     * Return a new Hits object with these hits sorted by the given property.
-     *
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. The hits themselves are reused between
-     * the two Hits instances, so not too much additional memory is used.
-     *
-     * @param sortProp the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
-     */
     @Override
     public <P extends ResultProperty<DocGroup>> DocGroups sortedBy(P sortProp) {
         ensureAllHitsRead();
@@ -125,6 +115,12 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     protected void ensureResultsRead(int number) {
         // NOP
+    }
+
+    @Override
+    public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
+        List<DocGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        return new DocGroups(queryInfo(), list, getGroupCriteria());
     }
 
 }

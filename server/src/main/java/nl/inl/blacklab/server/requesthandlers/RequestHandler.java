@@ -25,8 +25,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.results.DocCount;
-import nl.inl.blacklab.search.results.DocCounts;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -481,18 +481,18 @@ public abstract class RequestHandler {
             throws BlsException {
 
         JobFacets facets = (JobFacets) searchMan.search(user, facetDesc, true);
-        Map<String, DocCounts> counts = facets.getCounts();
+        Map<String, DocGroups> counts = facets.getCounts();
 
         ds.startMap();
-        for (Entry<String, DocCounts> e : counts.entrySet()) {
+        for (Entry<String, DocGroups> e : counts.entrySet()) {
             String facetBy = e.getKey();
-            DocCounts facetCounts = e.getValue();
-            facetCounts.sort(DocGroupProperty.size());
+            DocGroups facetCounts = e.getValue();
+            facetCounts = facetCounts.sortedBy(DocGroupProperty.size());
             ds.startAttrEntry("facet", "name", facetBy)
                     .startList();
             int n = 0, maxFacetValues = 10;
             int totalSize = 0;
-            for (DocCount count : facetCounts) {
+            for (DocGroup count : facetCounts) {
                 ds.startItem("item").startMap()
                         .entry("value", count.getIdentity().toString())
                         .entry("size", count.size())
@@ -502,11 +502,11 @@ public abstract class RequestHandler {
                 if (n >= maxFacetValues)
                     break;
             }
-            if (totalSize < facetCounts.getTotalResults()) {
+            if (totalSize < facetCounts.sumOfGroupSizes()) {
                 ds.startItem("item")
                         .startMap()
                         .entry("value", "[REST]")
-                        .entry("size", facetCounts.getTotalResults() - totalSize)
+                        .entry("size", facetCounts.sumOfGroupSizes() - totalSize)
                         .endMap()
                         .endItem();
             }

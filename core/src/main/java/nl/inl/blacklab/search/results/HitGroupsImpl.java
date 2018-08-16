@@ -19,9 +19,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -152,6 +154,12 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public Results<HitGroup> window(int first, int windowSize) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public HitGroupsImpl filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
+        List<HitGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria());
     }
 
 }
