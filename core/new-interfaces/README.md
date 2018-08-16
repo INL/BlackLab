@@ -41,22 +41,17 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
-
-- 
-
 - docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
 
-- doccounts / hitcounts generaliseren: grouping hoeft niet alle results in group te bewaren
+- DocGroups / HitGroups / DocResults moeten...
+  * mogelijkheid krijgen aantal resultaten op te slaan per groep te limiteren
+  * moeten een withTruncatedGroups() operatie krijgen om een object met kleinere limiet te retourneren
+
   kun je gebruiken voor docs/snippets maar ook voor andere groupings: bewaar de eerste 25 en toon die
   als mensen groep openklikken; zoek en toon de rest pas als ze de hele groep willen zien.
-  groups classes een 'truncate' operatie geven die een equivalente groups teruggeeft die minder results opslaat.
+  je kunt de volledige grouping evt. korter in de cache bewaren (of helemaal niet) en de truncated grouping langer
 
-- streams
-
-- mogelijkheid om te sampelen/filteren toevoegen aan docresults/...
-  window/sample/filteren/groeperen toevoegen aan groups
-  waarom bestaat ComparatorGroupProperty?
-  wat moeten we met ComparatorGroupProperty.defaultSortDescending?
+- sample overal implementeren
 
 search
 - introduce new Search interface for building searches

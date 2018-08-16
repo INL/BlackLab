@@ -66,11 +66,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     public abstract int compare(HitGroup a, HitGroup b);
 
     @Override
-    public boolean defaultSortDescending() {
-        return reverse;
-    }
-
-    @Override
     public abstract String serialize();
 
     /**
@@ -132,6 +127,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     public HitGroups sortResults(Results<HitGroup> results) {
         List<HitGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return new HitGroupsImpl(results.queryInfo(), list, (HitProperty)((ResultGroups<Hit>)results).getGroupCriteria());
+        return new HitGroupsImpl(results.queryInfo(), list, (HitProperty)((ResultGroups<Hit>)results).getGroupCriteria(), null);
     }
 }

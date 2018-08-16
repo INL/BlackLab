@@ -80,6 +80,7 @@ public abstract class Hits extends Results<Hit> {
      * @param sampleParameters sample parameters 
      * @return the sample
      */
+    @Override
     public Hits sample(SampleParameters sampleParameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)

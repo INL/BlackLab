@@ -33,11 +33,6 @@ public class HitGroupPropertySize extends HitGroupProperty {
     }
 
     @Override
-    public boolean defaultSortDescending() {
-        return !reverse;
-    }
-
-    @Override
     public int compare(HitGroup a, HitGroup b) {
         return reverse ? b.size() - a.size() : a.size() - b.size();
     }

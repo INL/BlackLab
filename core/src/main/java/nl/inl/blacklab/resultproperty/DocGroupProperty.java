@@ -81,11 +81,6 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     public abstract int compare(DocGroup a, DocGroup b);
 
     @Override
-    public boolean defaultSortDescending() {
-        return reverse;
-    }
-
-    @Override
     public abstract String serialize();
 
     /**
@@ -131,6 +126,6 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     public Results<DocGroup> sortResults(Results<DocGroup> results) {
         List<DocGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return new DocGroups(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria());
+        return new DocGroups(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria(), null);
     }
 }

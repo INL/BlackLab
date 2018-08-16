@@ -61,7 +61,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
         ensureAllHitsRead();
         List<HitGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
-        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria());
+        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria(), null);
     }
 
     /**

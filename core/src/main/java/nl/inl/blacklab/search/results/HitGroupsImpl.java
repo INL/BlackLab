@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -62,6 +63,8 @@ public class HitGroupsImpl extends HitGroups {
      */
     private int largestGroupSize = 0;
 
+    private WindowStats windowStats = null;
+    
     /**
      * Construct a ResultsGrouper object, by grouping the supplied hits.
      *
@@ -100,8 +103,9 @@ public class HitGroupsImpl extends HitGroups {
         }
     }
 
-    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> sorted, HitProperty groupCriteria) {
+    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> sorted, HitProperty groupCriteria, WindowStats windowStats) {
         super(queryInfo, groupCriteria);
+        this.windowStats = windowStats;
         for (HitGroup group: sorted) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
@@ -146,20 +150,34 @@ public class HitGroupsImpl extends HitGroups {
         return groups.size();
     }
 
-//    @Override
-//    public void sort(GroupProperty<Hit> sortBy, boolean reverse) {
-//        sortGroups(sortBy, reverse);
-//    }
-
     @Override
-    public Results<HitGroup> window(int first, int windowSize) {
-        throw new UnsupportedOperationException();
+    public WindowStats windowStats() {
+        return windowStats;
     }
 
     @Override
-    public HitGroupsImpl filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
+    public Results<HitGroup> window(int first, int windowSize) {
+        int to = first + windowSize;
+        if (to >= 0)
+            ensureResultsRead(to + 1);
+        if (first < 0 || first >= results.size())
+            throw new BlackLabRuntimeException("First hit out of range");
+        if (results.size() < to)
+            to = results.size();
+        List<HitGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
+        boolean hasNext = results.size() > to;
+        return new HitGroupsImpl(queryInfo(), list, criteria, new WindowStats(hasNext, first, windowSize, list.size()));
+    }
+
+    @Override
+    public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria());
+        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria(), null);
+    }
+
+    @Override
+    public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria) {
+        throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 
 }

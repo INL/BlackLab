@@ -57,11 +57,6 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public boolean defaultSortDescending() {
-        return !reverse;
-    }
-
-    @Override
     public String getName() {
         return "number of hits";
     }

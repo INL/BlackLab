@@ -68,11 +68,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     }
 
     @Override
-    public boolean defaultSortDescending() {
-        return false;
-    }
-
-    @Override
     public abstract String getName();
 
     @Override

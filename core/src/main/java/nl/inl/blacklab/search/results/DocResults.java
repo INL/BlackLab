@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -29,7 +30,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
@@ -223,9 +223,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
    DocResults(DocResults source, int first, int numberPerPage) {
        super(source.queryInfo());
 
-       boolean emptyResultSet = !source.docsProcessedAtLeast(1);
-       if (first < 0 || (emptyResultSet && first > 0) ||
-               (!emptyResultSet && !source.docsProcessedAtLeast(first + 1))) {
+       if (first < 0 || !source.docsProcessedAtLeast(first + 1)) {
            throw new BlackLabRuntimeException("First hit out of range");
        }
 
@@ -234,11 +232,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
        if (!source.docsProcessedAtLeast(first + number))
            number = source.size() - first;
 
-       // Make sublist (don't use sublist because the backing list may change if not
-       // all hits have been read yet)
-       for (int i = first; i < first + number; i++) {
-           results.add(source.get(i));
-       }
+       // Make sublist (copy results from List.subList() to avoid lingering references large lists)
+       results.addAll(source.resultsList().subList(first, first + number));
        windowStats = new WindowStats(source.docsProcessedAtLeast(first + number + 1), first, numberPerPage, number);
    }
    
@@ -298,18 +293,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      */
     public int docsProcessedTotal() {
         return size();
-    }
-
-    /**
-     * Retrieve a sublist of hits.
-     * 
-     * @param fromIndex first hit to include in the resulting list
-     * @param toIndex first hit not to include in the resulting list
-     * @return the sublist
-     */
-    public List<DocResult> subList(int fromIndex, int toIndex) {
-        ensureResultsRead(toIndex - 1);
-        return results.subList(fromIndex, toIndex);
     }
 
     /**
@@ -391,12 +374,13 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     /**
      * Group these results by the specified document property
      * 
-     * @param docProp the document property to group on (i.e. number of hits in doc,
+     * @param criteria the document property to group on (i.e. number of hits in doc,
      *            value of metadata field, etc.)
      * @return the grouped results
      */
-    public DocGroups groupedBy(DocProperty docProp) {
-        return new DocGroups(this, docProp);
+    @Override
+    public DocGroups groupedBy(ResultProperty<DocResult> criteria) {
+        return new DocGroups(this, criteria);
     }
 
     /**
@@ -455,8 +439,9 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public Results<DocResult> filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
-        throw new UnsupportedOperationException();
+    public DocResults filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
+        List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        return new DocResults(queryInfo(), list);
     }
     
 }

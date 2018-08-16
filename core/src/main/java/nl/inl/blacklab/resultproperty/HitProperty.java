@@ -345,8 +345,4 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         return Hits.list(hitsToSort.queryInfo(), sorted);
     }
 
-    @Override
-    public boolean defaultSortDescending() {
-        return false;
-    }
 }

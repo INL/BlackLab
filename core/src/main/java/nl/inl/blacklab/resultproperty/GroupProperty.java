@@ -55,11 +55,6 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     public abstract int compare(G a, G b);
 
     @Override
-    public boolean defaultSortDescending() {
-        return reverse;
-    }
-
-    @Override
     public abstract String serialize();
 
     /**
@@ -115,8 +110,6 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     }
     
     @Override
-    public Results<G> sortResults(Results<G> results) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract Results<G> sortResults(Results<G> results);
 
 }

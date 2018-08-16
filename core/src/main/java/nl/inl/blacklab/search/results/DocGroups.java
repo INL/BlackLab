@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
@@ -29,13 +30,20 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  */
 public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
     
-    Map<PropertyValue, DocGroup> groups = new HashMap<>();
+    private Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     private int largestGroupSize = 0;
 
     private int totalResults = 0;
 
     private ResultProperty<DocResult> groupBy;
+    
+    private WindowStats windowStats;
+    
+    @Override
+    public WindowStats windowStats() {
+        return windowStats;
+    }
 
     /**
      * Constructor. Fills the groups from the given document results.
@@ -45,6 +53,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      */
     public DocGroups(DocResults docResults, ResultProperty<DocResult> groupBy) {
         super(docResults.queryInfo());
+        this.windowStats = null;
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
@@ -67,9 +76,10 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         }
     }
 
-    public DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, ResultProperty<DocResult> groupBy) {
+    public DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
         super(queryInfo);
         this.groupBy = groupBy;
+        this.windowStats = windowStats;
         for (DocGroup group: sorted) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
@@ -89,7 +99,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         ensureAllHitsRead();
         List<DocGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
-        return new DocGroups(queryInfo(), sorted, groupBy);
+        return new DocGroups(queryInfo(), sorted, groupBy, null);
     }
 
     @Override
@@ -109,7 +119,16 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     @Override
     public Results<DocGroup> window(int first, int windowSize) {
-        throw new UnsupportedOperationException();
+        int to = first + windowSize;
+        if (to >= 0)
+            ensureResultsRead(to + 1);
+        if (first < 0 || first >= results.size())
+            throw new BlackLabRuntimeException("First hit out of range");
+        if (results.size() < to)
+            to = results.size();
+        List<DocGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
+        boolean hasNext = results.size() > to;
+        return new DocGroups(queryInfo(), list, groupBy, new WindowStats(hasNext, first, windowSize, list.size()));
     }
 
     @Override
@@ -119,8 +138,13 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     @Override
     public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
-        List<DocGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new DocGroups(queryInfo(), list, getGroupCriteria());
+        List<DocGroup> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        return new DocGroups(queryInfo(), list, getGroupCriteria(), null);
+    }
+
+    @Override
+    public ResultGroups<DocGroup> groupedBy(ResultProperty<DocGroup> criteria) {
+        throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 
 }

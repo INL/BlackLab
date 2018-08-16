@@ -207,9 +207,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @param criteria the hit property to group on
      * @return a HitGroups object representing the grouped hits
      */
-    public ResultGroups<T> groupedBy(ResultProperty<T> criteria) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract ResultGroups<T> groupedBy(ResultProperty<T> criteria);
 
     /**
      * Select only the hits where the specified property has the specified value.
@@ -311,6 +309,16 @@ public abstract class Results<T> implements Iterable<T> {
      */
     public List<T> resultsList() {
         return Collections.unmodifiableList(results);
+    }
+
+    /**
+     * Take a sample of results.
+     *
+     * @param sampleParameters sample parameters 
+     * @return the sample
+     */
+    public Hits sample(SampleParameters sampleParameters) {
+        throw new UnsupportedOperationException();
     }
 
     
