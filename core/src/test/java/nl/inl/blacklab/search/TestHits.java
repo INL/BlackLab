@@ -22,7 +22,6 @@ import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.Hit;
@@ -35,15 +34,16 @@ public class TestHits {
         int[] aDoc = new int[] { 1, 2 };
         int[] aStart = new int[] { 1, 2 };
         int[] aEnd = new int[] { 2, 3 };
-        MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
-        Hits hits = new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd);
-
-        int i = 0;
-        for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[i], hit.doc());
-            Assert.assertEquals(aStart[i], hit.start());
-            Assert.assertEquals(aEnd[i], hit.end());
-            i++;
+        try (MockBlackLabIndex index = new MockBlackLabIndex()) {
+            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+    
+            int i = 0;
+            for (Hit hit : hits) {
+                Assert.assertEquals(aDoc[i], hit.doc());
+                Assert.assertEquals(aStart[i], hit.start());
+                Assert.assertEquals(aEnd[i], hit.end());
+                i++;
+            }
         }
     }
 

@@ -342,7 +342,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             int docsCounted = hits2.docsCountedSoFar();
             return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
         }
-        return new HitsList(hitsToSort.queryInfo(), sorted);
+        return Hits.list(hitsToSort.queryInfo(), sorted);
     }
 
     @Override

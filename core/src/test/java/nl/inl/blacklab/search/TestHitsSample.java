@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -31,15 +30,16 @@ public class TestHitsSample {
     private final static int[] aEnd = new int[] { 2, 5, 3, 2, 4, 7 };
 
     private static void assertSample(int[] expected, SampleParameters param) {
-        MockBlackLabIndex mockSearcher = new MockBlackLabIndex();
-        Hits hits = Hits.sample(new MockHits(mockSearcher, mockSearcher.mainAnnotatedField(), aDoc, aStart, aEnd), param);
-        int i = 0;
-        Assert.assertEquals(expected.length, hits.size());
-        for (Hit hit : hits) {
-            Assert.assertEquals(aDoc[expected[i]], hit.doc());
-            Assert.assertEquals(aStart[expected[i]], hit.start());
-            Assert.assertEquals(aEnd[expected[i]], hit.end());
-            i++;
+        try (MockBlackLabIndex index = new MockBlackLabIndex()) {
+            Hits hits = Hits.sample(Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd), param);
+            int i = 0;
+            Assert.assertEquals(expected.length, hits.size());
+            for (Hit hit : hits) {
+                Assert.assertEquals(aDoc[expected[i]], hit.doc());
+                Assert.assertEquals(aStart[expected[i]], hit.start());
+                Assert.assertEquals(aEnd[expected[i]], hit.end());
+                i++;
+            }
         }
     }
 

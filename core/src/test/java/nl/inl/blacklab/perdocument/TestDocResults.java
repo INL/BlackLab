@@ -19,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -32,17 +31,18 @@ public class TestDocResults {
         int[] aStart = new int[] { 1, 2, 3, 4, 5 };
         int[] aEnd = new int[]   { 2, 3, 4, 5, 6 };
 
-        MockBlackLabIndex searcher = new MockBlackLabIndex();
-        Hits hits = new MockHits(searcher, searcher.mainAnnotatedField(), aDoc, aStart, aEnd);
-        DocResults drs = hits.perDocResults();
-
-        int[] expDoc = new int[]  { 1, 2, 3 };
-        int[] expHits = new int[] { 2, 1, 2 };
-        int i = 0;
-        for (DocResult dr : drs) {
-            Assert.assertEquals(expDoc[i], dr.getIdentity().getValue().id());
-            Assert.assertEquals(expHits[i], dr.size());
-            i++;
+        try (MockBlackLabIndex index = new MockBlackLabIndex()) {
+            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+            DocResults drs = hits.perDocResults();
+    
+            int[] expDoc = new int[]  { 1, 2, 3 };
+            int[] expHits = new int[] { 2, 1, 2 };
+            int i = 0;
+            for (DocResult dr : drs) {
+                Assert.assertEquals(expDoc[i], dr.getIdentity().getValue().id());
+                Assert.assertEquals(expHits[i], dr.size());
+                i++;
+            }
         }
     }
 

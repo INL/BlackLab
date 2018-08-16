@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
@@ -44,7 +43,7 @@ public class RequestHandlerDocs extends RequestHandler {
     Job search;
     JobHits originalHitsSearch;
     DocResults totalDocResults;
-    DocResultsWindow window;
+    DocResults window;
     private DocResults docResults;
     private double totalTime;
     

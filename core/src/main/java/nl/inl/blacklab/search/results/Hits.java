@@ -42,8 +42,23 @@ public abstract class Hits extends Results<Hit> {
      * @param hits the list of hits to wrap, or null for empty Hits object
      * @return hits found
      */
-    public static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
+    public static Hits list(QueryInfo queryInfo, List<Hit> hits) {
         return new HitsList(queryInfo, hits);
+    }
+
+    /**
+     * Make a wrapper Hits object for a list of Hit objects.
+     *
+     * Will create Hit objects from the arrays. Mainly useful for testing.
+     * 
+     * @param queryInfo information about the original query
+     * @param doc doc ids
+     * @param start hit starts
+     * @param end hit ends
+     * @return hits found
+     */
+    public static Hits list(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
+        return new HitsList(queryInfo, doc, start, end);
     }
 
     /**
@@ -53,7 +68,7 @@ public abstract class Hits extends Results<Hit> {
      * @return hits found
      */
     public static Hits emptyList(QueryInfo queryInfo) {
-        return Hits.fromList(queryInfo, (List<Hit>) null);
+        return Hits.list(queryInfo, (List<Hit>) null);
     }
 
     /**
@@ -231,7 +246,7 @@ public abstract class Hits extends Results<Hit> {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        return Hits.fromList(queryInfo(), hitsInDoc);
+        return Hits.list(queryInfo(), hitsInDoc);
     }
     
     // Stats

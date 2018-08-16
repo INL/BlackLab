@@ -79,7 +79,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
         hit = Hit.create(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        Hits hits = Hits.fromList(QueryInfo.create(blIndex), Arrays.asList(hit));
+        Hits hits = Hits.list(QueryInfo.create(blIndex), Arrays.asList(hit));
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
         return HTTP_OK;
     }

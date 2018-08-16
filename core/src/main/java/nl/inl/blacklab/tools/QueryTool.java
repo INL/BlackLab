@@ -76,7 +76,6 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -1439,7 +1438,7 @@ public class QueryTool {
         }
 
         // Limit results to the current page
-        DocResultsWindow window = docs.window(firstResult, resultsPerPage);
+        DocResults window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);

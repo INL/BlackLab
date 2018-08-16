@@ -160,6 +160,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     private int totalHits = 0;
     
+    private WindowStats windowStats;
+
+    
+    
     DocResults(QueryInfo queryInfo) {
         super(queryInfo);
         groupByDoc = new HitPropertyDoc(queryInfo.index());
@@ -213,6 +217,41 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         this(queryInfo, resultsFromQuery(queryInfo, query));
     }
 
+    /**
+    * Get a window of results.
+    * 
+    * @param source results to get window from
+    * @param first first result in window
+    * @param numberPerPage size of window (if enough results available)
+    */
+   DocResults(DocResults source, int first, int numberPerPage) {
+       super(source.queryInfo());
+
+       boolean emptyResultSet = !source.docsProcessedAtLeast(1);
+       if (first < 0 || (emptyResultSet && first > 0) ||
+               (!emptyResultSet && !source.docsProcessedAtLeast(first + 1))) {
+           throw new BlackLabRuntimeException("First hit out of range");
+       }
+
+       // Auto-clamp number
+       int number = numberPerPage;
+       if (!source.docsProcessedAtLeast(first + number))
+           number = source.size() - first;
+
+       // Make sublist (don't use sublist because the backing list may change if not
+       // all hits have been read yet)
+       for (int i = first; i < first + number; i++) {
+           results.add(source.get(i));
+       }
+       windowStats = new WindowStats(source.docsProcessedAtLeast(first + number + 1), first, numberPerPage, number);
+   }
+   
+   @Override
+   public WindowStats windowStats() {
+       return windowStats;
+   }
+
+    
     boolean sourceHitsFullyRead() {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
@@ -333,7 +372,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 PropertyValueDoc val = groupByDoc.get(hit);
                 if (!val.equals(doc)) {
                     if (docHits != null) {
-                        Hits hits = Hits.fromList(queryInfo(), docHits);
+                        Hits hits = Hits.list(queryInfo(), docHits);
                         addDocResultToList(doc, hits);
                     }
                     doc = val;
@@ -347,7 +386,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                     partialDocId = doc;
                     partialDocHits = docHits; // not done, continue from here later
                 } else {
-                    Hits hits = Hits.fromList(queryInfo(), docHits);
+                    Hits hits = Hits.list(queryInfo(), docHits);
                     addDocResultToList(doc, hits);
                     sourceHitsIterator = null; // allow this to be GC'ed
                     partialDocHits = null;
@@ -385,8 +424,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the window
      */
     @Override
-    public DocResultsWindow window(int first, int number) {
-        return new DocResultsWindow(this, first, number);
+    public DocResults window(int first, int number) {
+        return new DocResults(this, first, number);
     }
 
     /**
@@ -428,16 +467,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public boolean isWindow() {
-        return windowStats() != null;
-    }
-
-    @Override
-    public WindowStats windowStats() {
-        return null;
-    }
-
-    @Override
     public int getTotalResults() {
         return totalHits;
     }
@@ -463,4 +492,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         }
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
     }
+    
+    
+    
 }

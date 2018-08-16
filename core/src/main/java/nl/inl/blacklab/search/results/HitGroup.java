@@ -38,7 +38,7 @@ public class HitGroup extends Group<Hit> {
      * @param hits the hits
      */
     HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> hits) {
-        super(groupIdentity, Hits.fromList(queryInfo, hits));
+        super(groupIdentity, Hits.list(queryInfo, hits));
     }
 
     /**

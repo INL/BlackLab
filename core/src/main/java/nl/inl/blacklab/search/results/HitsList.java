@@ -11,16 +11,19 @@ import java.util.TreeSet;
  */
 public class HitsList extends Hits {
 
+    private static List<Hit> createHitList(int[] doc, int[] start, int[] end) {
+        List<Hit> hits = new ArrayList<>();
+        for (int i = 0; i < doc.length; i++) {
+            hits.add(Hit.create(doc[i], start[i], end[i]));
+        }
+        return hits;
+    }
+
     /** Our window stats, if this is a window; null otherwise. */
     WindowStats windowStats;
     
     private SampleParameters parameters;
 
-    @Override
-    public SampleParameters sampleParameters() {
-        return parameters;
-    }
-    
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
@@ -29,7 +32,7 @@ public class HitsList extends Hits {
      * @param queryInfo query info
      * @param hits the list of hits to wrap, or null for a new list
      */
-    public HitsList(QueryInfo queryInfo, List<Hit> hits) {
+    protected HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
         this.results = hits == null ? new ArrayList<>() : hits;
         hitsCounted = this.results.size();
@@ -43,6 +46,20 @@ public class HitsList extends Hits {
         }
     }
     
+    /**
+     * Create a list of hits from three arrays.
+     *
+     * Mainly useful for testing.
+     *
+     * @param queryInfo query info
+     * @param doc document ids
+     * @param start hit starts
+     * @param end hit ends
+     */
+    HitsList(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
+        this(queryInfo, createHitList(doc, start, end));
+    }
+
     /**
      * Make an empty list of hits.
      *
@@ -134,6 +151,11 @@ public class HitsList extends Hits {
         }
     }
     
+    @Override
+    public SampleParameters sampleParameters() {
+        return parameters;
+    }
+
     @Override
     public WindowStats windowStats() {
         return windowStats;

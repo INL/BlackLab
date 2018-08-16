@@ -9,15 +9,9 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockForwardIndex;
-import nl.inl.blacklab.mocks.MockHits;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
-import nl.inl.blacklab.resultproperty.PropertyValueDecade;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
-import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
@@ -25,6 +19,11 @@ import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
+import nl.inl.blacklab.resultproperty.PropertyValueDecade;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -36,7 +35,7 @@ public class TestHitPropertySerialize {
 
     private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private Hits hits = new MockHits(mockIndex, mockIndex.mainAnnotatedField());
+    private Hits hits = Hits.emptyList(mockIndex.createDefaultQueryInfo());
 
     private Annotation lemmaAnnotation;
 

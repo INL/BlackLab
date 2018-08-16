@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.DocResultsWindow;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -68,13 +67,13 @@ public class JobDocsWindow extends JobWithDocs {
     }
 
     @Override
-    public DocResultsWindow getDocResults() {
-        return (DocResultsWindow) docResults;
+    public DocResults getDocResults() {
+        return docResults;
     }
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        DocResultsWindow window = getDocResults();
+        DocResults window = getDocResults();
         ds.entry("requestedWindowSize", requestedWindowSize)
                 .entry("actualWindowSize", window == null ? -1 : window.size());
     }

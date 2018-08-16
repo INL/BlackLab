@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
@@ -56,6 +57,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
         BlackLabIndexRegistry.registerSearcher(null, this);
+    }
+    
+    public QueryInfo createDefaultQueryInfo() {
+        return QueryInfo.create(this, mainAnnotatedField());
     }
 
     @Override
