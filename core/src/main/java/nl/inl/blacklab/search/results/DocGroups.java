@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
@@ -107,19 +105,13 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public ResultProperty<DocResult> getGroupCriteria() {
         return groupBy;
     }
-
+    
     @Override
-    public Results<DocGroup> window(int first, int windowSize) {
-        int to = first + windowSize;
-        if (to >= 0)
-            ensureResultsRead(to + 1);
-        if (first < 0 || first >= results.size())
-            throw new BlackLabRuntimeException("First hit out of range");
-        if (results.size() < to)
-            to = results.size();
-        List<DocGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
-        boolean hasNext = results.size() > to;
-        return DocGroups.fromList(queryInfo(), list, groupBy, (SampleParameters)null, new WindowStats(hasNext, first, windowSize, list.size()));
+    public DocGroups window(int first, int number) {
+        List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
+        boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
+        WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
+        return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, (SampleParameters)null, windowStats);
     }
 
     @Override
@@ -129,7 +121,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     @Override
     public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
-        List<DocGroup> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        List<DocGroup> list = Results.doFilter(this, property, value);
         return new DocGroups(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 

@@ -8,9 +8,11 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -59,6 +61,24 @@ public abstract class Results<T> implements Iterable<T> {
             results.add(hit);
         }
         return results;
+    }
+
+    protected static <T> List<T> doWindow(Results<T> results, int first, int number) {
+        if (first < 0 || !results.resultsProcessedAtLeast(first + 1)) {
+            throw new BlackLabRuntimeException("First hit out of range");
+        }
+    
+        // Auto-clamp number
+        int actualSize = number;
+        if (!results.resultsProcessedAtLeast(first + actualSize))
+            actualSize = results.size() - first;
+    
+        // Make sublist (copy results from List.subList() to avoid lingering references large lists)
+        return new ArrayList<T>(results.resultsList().subList(first, first + actualSize));
+    }
+
+    protected static <T> List<T> doFilter(Results<T> results, ResultProperty<T> property, PropertyValue value) {
+        return results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
     }
 
     /** Unique id of this Hits instance (for debugging) */
@@ -268,17 +288,17 @@ public abstract class Results<T> implements Iterable<T> {
     }
 
     /**
-     * Get a window into this list of hits.
+     * Get a window into this list of results.
      *
      * Use this if you're displaying part of the resultset, like in a paging
-     * interface. It makes sure BlackLab only works with the hits you want to
+     * interface. It makes sure BlackLab only works with the results you want to
      * display and doesn't do any unnecessary processing on the other hits.
      *
-     * HitsWindow includes methods to assist with paging, like figuring out if there
-     * hits before or after the window.
+     * The resulting instance will has "window stats" to assist with paging, 
+     * like figuring out if there hits before or after the window.
      *
-     * @param first first hit in the window (0-based)
-     * @param windowSize size of the window
+     * @param first first result in the window (0-based)
+     * @param windowSize desired size of the window (if there's enough results)
      * @return the window
      */
     public abstract Results<T> window(int first, int windowSize);

@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -162,24 +160,18 @@ public class HitGroupsImpl extends HitGroups {
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
-
+    
     @Override
-    public Results<HitGroup> window(int first, int windowSize) {
-        int to = first + windowSize;
-        if (to >= 0)
-            ensureResultsRead(to + 1);
-        if (first < 0 || first >= results.size())
-            throw new BlackLabRuntimeException("First hit out of range");
-        if (results.size() < to)
-            to = results.size();
-        List<HitGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
-        boolean hasNext = results.size() > to;
-        return new HitGroupsImpl(queryInfo(), list, criteria, (SampleParameters)null, new WindowStats(hasNext, first, windowSize, list.size()));
+    public HitGroups window(int first, int number) {
+        List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
+        boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
+        WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
+        return HitGroupsImpl.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats);
     }
 
     @Override
     public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
-        List<HitGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        List<HitGroup> list = Results.doFilter(this, property, value);
         return new HitGroupsImpl(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 

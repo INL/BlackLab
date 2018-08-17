@@ -382,18 +382,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      */
     @Override
     public DocResults window(int first, int number) {
-        if (first < 0 || !docsProcessedAtLeast(first + 1)) {
-            throw new BlackLabRuntimeException("First hit out of range");
-        }
-
-        // Auto-clamp number
-        int actualSize = number;
-        if (!docsProcessedAtLeast(first + actualSize))
-            actualSize = size() - first;
-
-        // Make sublist (copy results from List.subList() to avoid lingering references large lists)
-        List<DocResult> resultsWindow = new ArrayList<DocResult>(results.subList(first, first + actualSize));
-        boolean hasNext = docsProcessedAtLeast(first + actualSize + 1);
+        List<DocResult> resultsWindow = Results.doWindow(this, first, number);
+        boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocResults.fromList(queryInfo(), resultsWindow, (SampleParameters)null, windowStats);
     }
