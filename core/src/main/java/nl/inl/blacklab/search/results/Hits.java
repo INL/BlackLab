@@ -268,7 +268,7 @@ public abstract class Hits extends Results<Hit> {
      * @return the per-document view.
      */
     public DocResults perDocResults() {
-        return DocResults.fromHits(queryInfo(), this);
+        return new DocResults(queryInfo(), this);
     }
     
     @Override

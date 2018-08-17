@@ -29,14 +29,6 @@ import nl.inl.blacklab.search.results.Results;
  */
 public abstract class GroupProperty<T, G extends Group<T>> implements ResultProperty<G> {
 
-//    public static <T, G extends Group<T>> GroupPropertyIdentity<T, G> identity() {
-//        return new GroupPropertyIdentity<>();
-//    }
-//
-//    public static <T, G extends Group<T>> GroupPropertySize<T, G> size() {
-//        return new GroupPropertySize<>();
-//    }
-
     /** Reverse comparison result or not? */
     protected boolean reverse;
     
@@ -65,22 +57,6 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     protected String serializeReverse() {
         return reverse ? "-" : "";
     }
-
-//    public static <T, G extends Group<T>> GroupProperty<T, G> deserialize(String serialized) {
-//        boolean reverse = false;
-//        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
-//            reverse = true;
-//            serialized = serialized.substring(1);
-//        }
-//        GroupProperty<T, G> result;
-//        if (serialized.equalsIgnoreCase("identity"))
-//            result = new GroupPropertyIdentity<T, G>();
-//        else
-//            result = new GroupPropertySize<T, G>();
-//        if (reverse)
-//            result = result.reverse();
-//        return result;
-//    }
 
     /**
      * Is the comparison reversed?

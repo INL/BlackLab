@@ -70,5 +70,16 @@ public interface ResultGroups<T> {
     Group<T> get(PropertyValue prop);
     
     Group<T> get(int i);
+    
+    /**
+     * Get an instance of this grouping with fewer stored results per group.
+     * 
+     * This won't affect the group sizes, just the number of results that are
+     * stored per group.
+     * 
+     * @param maximumNumberOfResultsPerGroup maximum number of results to store, or -1 for the same
+     * @return new grouping with fewer stored results
+     */
+    ResultGroups<T> withFewerStoredResults(int maximumNumberOfResultsPerGroup);
 
 }

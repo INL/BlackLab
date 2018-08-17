@@ -156,4 +156,16 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 
+    @Override
+    public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
+        if (maximumNumberOfResultsPerGroup < 0)
+            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+        List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
+        for (DocGroup group: results) {
+            List<DocResult> truncatedList = group.getStoredResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
+            DocGroup newGroup = new DocGroup(queryInfo(), group.getIdentity(), truncatedList, group.size());
+            truncatedGroups.add(newGroup);
+        }
+        return new DocGroups(queryInfo(), truncatedGroups, groupBy, windowStats);
+    }
 }

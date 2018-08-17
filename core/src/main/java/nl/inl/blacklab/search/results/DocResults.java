@@ -24,7 +24,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
@@ -76,17 +75,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * Don't use this; use Hits.perDocResults().
-     *
-     * @param queryInfo query info
-     * @param hits hits to get per-doc result for
-     * @return the per-document results.
-     */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits) {
-        return new DocResults(queryInfo, hits);
-    }
-
-    /**
      * Don't use this, use Searcher.queryDocuments().
      *
      * @param queryInfo query info
@@ -94,10 +82,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return per-document results
      */
     public static DocResults fromQuery(QueryInfo queryInfo, Query query) {
-        return new DocResults(queryInfo, query);
-    }
-
-    private static List<DocResult> resultsFromQuery(QueryInfo queryInfo, Query query) {
         // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
         List<DocResult> results = new ArrayList<>();
@@ -106,27 +90,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-        return results;
-    }
-
-    private static List<DocResult> resultsFromScorer(QueryInfo queryInfo, Scorer scorer) {
-        List<DocResult> results = new ArrayList<>();
-        if (scorer != null) {
-            try {
-                DocIdSetIterator it = scorer.iterator();
-                while (true) {
-                    int docId = it.nextDoc();
-                    if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                        break;
-    
-                    DocResult dr = new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(docId)), scorer.score(), 0);
-                    results.add(dr);
-                }
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
-        return results;
+        return new DocResults(queryInfo, results);
     }
 
     /**
@@ -158,7 +122,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     
     private WindowStats windowStats;
 
-    DocResults(QueryInfo queryInfo) {
+    /**
+     * Construct an empty DocResults.
+     * @param queryInfo
+     */
+    public DocResults(QueryInfo queryInfo) {
         super(queryInfo);
         groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
@@ -169,7 +137,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param queryInfo query info
      * @param hits the hits to view per-document
      */
-    DocResults(QueryInfo queryInfo, Hits hits) {
+    public DocResults(QueryInfo queryInfo, Hits hits) {
         this(queryInfo);
         this.sourceHitsIterator = hits.iterator();
         partialDocHits = null;
@@ -187,59 +155,30 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param results the list of results
      */
     public DocResults(QueryInfo queryInfo, List<DocResult> results) {
-        this(queryInfo);
-        this.results = results;
-    }
-
-    /**
-     * Construct DocResults from a Scorer (Lucene document results).
-     *
-     * @param queryInfo query info
-     * @param scorer the scorer to read document results from
-     */
-    DocResults(QueryInfo queryInfo, Scorer scorer) {
-        this(queryInfo, resultsFromScorer(queryInfo, scorer));
+        this(queryInfo, results, null);
     }
     
     /**
-     * Find documents whose metadata matches the specified query
-     * 
+     * Wraps a list of DocResult objects with the DocResults interface.
+     *
+     * NOTE: the list is not copied but referenced!
+     *
+     * Used by DocGroups constructor.
+     *
      * @param queryInfo query info
-     * @param query metadata query, or null to match all documents
+     * @param results the list of results
+     * @param windowStats window stats
      */
-    DocResults(QueryInfo queryInfo, Query query) {
-        this(queryInfo, resultsFromQuery(queryInfo, query));
+    public DocResults(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
+        this(queryInfo);
+        this.results = results;
+        this.windowStats = windowStats;
     }
-
-    /**
-    * Get a window of results.
-    * 
-    * @param source results to get window from
-    * @param first first result in window
-    * @param numberPerPage size of window (if enough results available)
-    */
-   DocResults(DocResults source, int first, int numberPerPage) {
-       super(source.queryInfo());
-
-       if (first < 0 || !source.docsProcessedAtLeast(first + 1)) {
-           throw new BlackLabRuntimeException("First hit out of range");
-       }
-
-       // Auto-clamp number
-       int number = numberPerPage;
-       if (!source.docsProcessedAtLeast(first + number))
-           number = source.size() - first;
-
-       // Make sublist (copy results from List.subList() to avoid lingering references large lists)
-       results.addAll(source.resultsList().subList(first, first + number));
-       windowStats = new WindowStats(source.docsProcessedAtLeast(first + number + 1), first, numberPerPage, number);
-   }
    
-   @Override
-   public WindowStats windowStats() {
-       return windowStats;
-   }
-
+    @Override
+    public WindowStats windowStats() {
+        return windowStats;
+    }
     
     boolean sourceHitsFullyRead() {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
@@ -391,7 +330,20 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      */
     @Override
     public DocResults window(int first, int number) {
-        return new DocResults(this, first, number);
+        if (first < 0 || !docsProcessedAtLeast(first + 1)) {
+            throw new BlackLabRuntimeException("First hit out of range");
+        }
+
+        // Auto-clamp number
+        int actualSize = number;
+        if (!docsProcessedAtLeast(first + actualSize))
+            actualSize = size() - first;
+
+        // Make sublist (copy results from List.subList() to avoid lingering references large lists)
+        List<DocResult> resultsWindow = new ArrayList<DocResult>(results.subList(first, first + actualSize));
+        boolean hasNext = docsProcessedAtLeast(first + actualSize + 1);
+        WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
+        return new DocResults(queryInfo(), resultsWindow, windowStats);
     }
 
     /**
@@ -441,6 +393,18 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public DocResults filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
         return new DocResults(queryInfo(), list);
+    }
+
+    @Override
+    public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
+        if (maximumNumberOfResultsPerGroup < 0)
+            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+        List<DocResult> truncatedGroups = new ArrayList<DocResult>();
+        for (DocResult group: results) {
+            DocResult newGroup = new DocResult(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            truncatedGroups.add(newGroup);
+        }
+        return new DocResults(queryInfo(), truncatedGroups, windowStats);
     }
     
 }

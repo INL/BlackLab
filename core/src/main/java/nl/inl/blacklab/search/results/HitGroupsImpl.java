@@ -114,15 +114,15 @@ public class HitGroupsImpl extends HitGroups {
         }
     }
 
-    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> sorted, HitProperty groupCriteria, WindowStats windowStats) {
+    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, WindowStats windowStats) {
         super(queryInfo, groupCriteria);
         this.windowStats = windowStats;
-        for (HitGroup group: sorted) {
+        for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalHits += group.size();
             results.add(group);
-            groups.put(group.getIdentity(), group);
+            this.groups.put(group.getIdentity(), group);
         }
     }
 
@@ -189,6 +189,18 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
+    }
+
+    @Override
+    public HitGroupsImpl withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
+        if (maximumNumberOfResultsPerGroup < 0)
+            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+        List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
+        for (HitGroup group: results) {
+            HitGroup newGroup = new HitGroup(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            truncatedGroups.add(newGroup);
+        }
+        return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, windowStats);
     }
 
 }
