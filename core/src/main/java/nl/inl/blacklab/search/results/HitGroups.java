@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -71,25 +70,13 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     public HitProperty getGroupCriteria() {
         return criteria;
     }
-    
-    /**
-     * Return a new Hits object with these hits sorted by the given property.
-     *
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. The hits themselves are reused between
-     * the two Hits instances, so not too much additional memory is used.
-     *
-     * @param sortProp the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
-     */
+
     @Override
     public <P extends ResultProperty<HitGroup>> HitGroups sortedBy(P sortProp) {
-        ensureAllHitsRead();
-        List<HitGroup> sorted = new ArrayList<>(results);
-        sorted.sort(sortProp);
-        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
+        List<HitGroup> sorted = Results.doSort(this, sortProp);
+        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null);
     }
-
+    
     /**
      * Get the total number of hits
      *
@@ -119,6 +106,6 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
-        return new HitGroupsImpl(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
+        return HitGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
     }
 }

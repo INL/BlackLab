@@ -85,10 +85,8 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
 
     @Override
     public <P extends ResultProperty<DocGroup>> DocGroups sortedBy(P sortProp) {
-        ensureAllHitsRead();
-        List<DocGroup> sorted = new ArrayList<>(results);
-        sorted.sort(sortProp);
-        return new DocGroups(queryInfo(), sorted, groupBy, (SampleParameters)null, (WindowStats)null);
+        List<DocGroup> sorted = Results.doSort(this, sortProp);
+        return DocGroups.fromList(queryInfo(), sorted, groupBy, (SampleParameters)null, (WindowStats)null);
     }
 
     @Override

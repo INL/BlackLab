@@ -213,20 +213,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
 
-    /**
-     * Return a new Results object with these results sorted by the given property.
-     *
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. The result objects are reused between
-     * the two Results instances, so not too much additional memory is used.
-     *
-     * @param sortProp the property to sort on
-     * @return a new Results object with the same results, sorted in the specified way
-     */
     @Override
     public <P extends ResultProperty<DocResult>> DocResults sortedBy(P sortProp) {
-        ensureAllHitsRead();
-        return (DocResults)sortProp.sortResults(this);
+        List<DocResult> sorted = Results.doSort(this, sortProp);
+        return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
     }
 
     /**
@@ -299,7 +289,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                     PropertyValueDoc val = groupByDoc.get(hit);
                     if (!val.equals(doc)) {
                         if (docHits != null) {
-                            Hits hits = Hits.list(queryInfo(), docHits);
+                            Hits hits = Hits.fromList(queryInfo(), docHits);
                             addDocResultToList(doc, hits, hits.size());
                         }
                         doc = val;
@@ -313,7 +303,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                         partialDocId = doc;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
-                        Hits hits = Hits.list(queryInfo(), docHits);
+                        Hits hits = Hits.fromList(queryInfo(), docHits);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
@@ -401,7 +391,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the sum
      */
     public int intSum(ResultProperty<DocResult> numProp) {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         int sum = 0;
         for (DocResult result : results) {
             sum += ((PropertyValueInt) numProp.get(result)).getValue();
@@ -416,13 +406,13 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     @Override
     public int largestGroupSize() {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return mostHitsInDocument;
     }
 
     @Override
     public Group<Hit> get(PropertyValue prop) {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
     }
 

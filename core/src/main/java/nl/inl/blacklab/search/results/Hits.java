@@ -45,7 +45,7 @@ public abstract class Hits extends Results<Hit> {
      * @param hits the list of hits to wrap, or null for empty Hits object
      * @return hits found
      */
-    public static Hits list(QueryInfo queryInfo, List<Hit> hits) {
+    public static Hits fromList(QueryInfo queryInfo, List<Hit> hits) {
         return new HitsList(queryInfo, hits);
     }
 
@@ -60,8 +60,13 @@ public abstract class Hits extends Results<Hit> {
      * @param end hit ends
      * @return hits found
      */
-    public static Hits list(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
+    public static Hits fromArrays(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
         return new HitsList(queryInfo, doc, start, end);
+    }
+    
+    public static Hits fromList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
+            int hitsCounted, int docsRetrieved, int docsCounted, CapturedGroupsImpl capturedGroups) {
+        return new HitsList(queryInfo, results, windowStats, sampleParameters, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
 
     /**
@@ -71,7 +76,7 @@ public abstract class Hits extends Results<Hit> {
      * @return hits found
      */
     public static Hits emptyList(QueryInfo queryInfo) {
-        return Hits.list(queryInfo, (List<Hit>) null);
+        return Hits.fromList(queryInfo, (List<Hit>) null);
     }
 
     /**
@@ -123,7 +128,7 @@ public abstract class Hits extends Results<Hit> {
             hitsCounted++;
         }
         
-        return new HitsList(queryInfo(), results, null, sampleParameters, hitsCounted, docsRetrieved, docsCounted, null);
+        return Hits.fromList(queryInfo(), results, null, sampleParameters, hitsCounted, docsRetrieved, docsCounted, null);
     }
 
     /**
@@ -219,7 +224,7 @@ public abstract class Hits extends Results<Hit> {
         }
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
         windowStats = new WindowStats(hasNext, first, windowSize, number);
-        return new HitsList(queryInfo(), results, windowStats, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
+        return Hits.fromList(queryInfo(), results, windowStats, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
 
     /**
@@ -307,13 +312,13 @@ public abstract class Hits extends Results<Hit> {
     //--------------------------------------------------------------------
 
     public Hits getHitsInDoc(int docid) {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         List<Hit> hitsInDoc = new ArrayList<>();
         for (Hit hit : results) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
-        return Hits.list(queryInfo(), hitsInDoc);
+        return Hits.fromList(queryInfo(), hitsInDoc);
     }
     
     // Stats
@@ -332,17 +337,17 @@ public abstract class Hits extends Results<Hit> {
     }
 
     public int hitsCountedTotal() {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return hitsCounted;
     }
 
     public int docsProcessedTotal() {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return docsRetrieved;
     }
 
     public int docsCountedTotal() {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return docsCounted;
     }
 
@@ -362,7 +367,7 @@ public abstract class Hits extends Results<Hit> {
     //--------------------------------------------------------------------
     
     public Hits window(Hit hit) {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return window(results.indexOf(hit), 1);
     }
     
@@ -378,7 +383,26 @@ public abstract class Hits extends Results<Hit> {
      */
     @Override
     public <P extends ResultProperty<Hit>> Hits sortedBy(P sortProp) {
-        return (Hits)super.sortedBy(sortProp);
+        if (!(sortProp instanceof HitProperty))
+            throw new UnsupportedOperationException("Can only sort Hits by an instance of HitProperty!");
+        HitProperty hitProp = (HitProperty)sortProp;
+        
+        List<Hit> sorted = new ArrayList<>(resultsList());
+
+        // We need a HitProperty with the correct Hits object
+        // If we need context, make sure we have it.
+        List<Annotation> requiredContext = hitProp.needsContext();
+        hitProp = hitProp.copyWith(this,
+                requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index())));
+
+        // Perform the actual sort.
+        sorted.sort(hitProp);
+
+        CapturedGroupsImpl capturedGroups = capturedGroups();
+        int hitsCounted = hitsCountedSoFar();
+        int docsRetrieved = docsProcessedSoFar();
+        int docsCounted = docsCountedSoFar();
+        return Hits.fromList(queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
     
     // Captured groups

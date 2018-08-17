@@ -32,7 +32,7 @@ public class TestDocResults {
         int[] aEnd = new int[]   { 2, 3, 4, 5, 6 };
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+            Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
             DocResults drs = hits.perDocResults();
     
             int[] expDoc = new int[]  { 1, 2, 3 };

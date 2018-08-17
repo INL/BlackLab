@@ -71,8 +71,7 @@ public class HitsList extends Hits {
      * 
      * Should only be used internally.
      */
-    @SuppressWarnings("javadoc")
-    public HitsList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
+    protected HitsList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
             int hitsCounted, int docsRetrieved, int docsCounted, CapturedGroupsImpl capturedGroups) {
         super(queryInfo);
         this.results = results;

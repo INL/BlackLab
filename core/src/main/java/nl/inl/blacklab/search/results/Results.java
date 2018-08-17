@@ -81,6 +81,13 @@ public abstract class Results<T> implements Iterable<T> {
         return results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
     }
 
+    protected static <P extends ResultProperty<T>, T> List<T> doSort(Results<T> results, P sortProp) {
+        results.ensureAllResultsRead();
+        List<T> sorted = new ArrayList<>(results.resultsList());
+        sorted.sort(sortProp);
+        return sorted;
+    }
+
     /** Unique id of this Hits instance (for debugging) */
     protected final int hitsObjId = getNextHitsObjId();
     
@@ -282,10 +289,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @param sortProp the property to sort on
      * @return a new Results object with the same results, sorted in the specified way
      */
-    public <P extends ResultProperty<T>> Results<T> sortedBy(P sortProp) {
-        ensureAllHitsRead();
-        return sortProp.sortResults(this);
-    }
+    public abstract <P extends ResultProperty<T>> Results<T> sortedBy(P sortProp);
 
     /**
      * Get a window into this list of results.
@@ -323,7 +327,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @throws InterruptedException if the thread was interrupted during this
      *             operation
      */
-    protected void ensureAllHitsRead() {
+    protected void ensureAllResultsRead() {
         ensureResultsRead(-1);
     }
     
@@ -342,7 +346,7 @@ public abstract class Results<T> implements Iterable<T> {
     }
 
     public int resultsProcessedTotal() {
-        ensureAllHitsRead();
+        ensureAllResultsRead();
         return results.size();
     }
 
@@ -362,6 +366,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @return the list of hits
      */
     public List<T> resultsList() {
+        ensureAllResultsRead();
         return Collections.unmodifiableList(results);
     }
 

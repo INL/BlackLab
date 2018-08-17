@@ -51,7 +51,7 @@ public class HitGroup extends Group<Hit> {
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
-        super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
+        super(groupIdentity, Hits.fromList(queryInfo, storedResults), totalSize);
     }
 
     /**

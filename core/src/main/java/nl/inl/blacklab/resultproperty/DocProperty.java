@@ -15,7 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -24,10 +23,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Results;
-import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.blacklab.search.results.WindowStats;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
@@ -165,13 +160,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
         DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
         param.put("facets", f.serialize());
-    }
-    
-    @Override
-    public DocResults sortResults(Results<DocResult> results) {
-        ArrayList<DocResult> sorted = new ArrayList<>(results.resultsList());
-        sorted.sort(this);
-        return DocResults.fromList(results.queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
     }
 
 }

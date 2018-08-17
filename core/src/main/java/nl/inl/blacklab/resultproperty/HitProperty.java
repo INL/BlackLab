@@ -27,12 +27,10 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.CapturedGroupsImpl;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsList;
 import nl.inl.blacklab.search.results.Results;
 
 /**
@@ -296,53 +294,6 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(getName());
-    }
-    
-//    public Hits sort(List<Hit> hitsToSort) {
-//        // Make sure we have a sort order array of sufficient size
-//        // and fill it with the original hit order (0, 1, 2, ...)
-//        hitsToSort.size(); // fetch all
-//        List<Hit> sorted = new ArrayList<>(hitsToSort);
-//
-//        // We need a HitProperty with the correct Hits object
-//        // If we need context, make sure we have it.
-//        List<Annotation> requiredContext = needsContext();
-//        HitProperty sortProp = copyWith(hitsToSort,
-//                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.index())));
-//
-//        // Perform the actual sort.
-//        sorted.sort(sortProp);
-//
-//        CapturedGroupsImpl capturedGroups = hitsToSort.capturedGroups();
-//        int hitsCounted = hitsToSort.hitsCountedSoFar();
-//        int docsRetrieved = hitsToSort.docsProcessedSoFar();
-//        int docsCounted = hitsToSort.docsCountedSoFar();
-//
-//        return new HitsList(hitsToSort.queryInfo(), sorted, capturedGroups, hitsCounted, docsRetrieved, docsCounted);
-//    }
-
-    @Override
-    public Hits sortResults(Results<Hit> hitsToSort) {
-        List<Hit> sorted = new ArrayList<>(hitsToSort.resultsList());
-
-        // We need a HitProperty with the correct Hits object
-        // If we need context, make sure we have it.
-        List<Annotation> requiredContext = needsContext();
-        HitProperty sortProp = copyWith(hitsToSort,
-                requiredContext == null ? null : new Contexts(hitsToSort, requiredContext, needsContextSize(hitsToSort.index())));
-
-        // Perform the actual sort.
-        sorted.sort(sortProp);
-
-        if (hitsToSort instanceof Hits) {
-            Hits hits2 = (Hits)hitsToSort;
-            CapturedGroupsImpl capturedGroups = hits2.capturedGroups();
-            int hitsCounted = hits2.hitsCountedSoFar();
-            int docsRetrieved = hits2.docsProcessedSoFar();
-            int docsCounted = hits2.docsCountedSoFar();
-            return new HitsList(hitsToSort.queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
-        }
-        return Hits.list(hitsToSort.queryInfo(), sorted);
     }
 
 }

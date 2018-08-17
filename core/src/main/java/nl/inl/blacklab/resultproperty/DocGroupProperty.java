@@ -15,17 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.Results;
-import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.blacklab.search.results.WindowStats;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -121,13 +115,5 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     @Override
     public List<String> getPropNames() {
         return Arrays.asList(getName());
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Results<DocGroup> sortResults(Results<DocGroup> results) {
-        List<DocGroup> list = new ArrayList<>(results.resultsList());
-        list.sort(this);
-        return DocGroups.fromList(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 }

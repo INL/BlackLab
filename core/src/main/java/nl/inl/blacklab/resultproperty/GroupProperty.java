@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for a property of a group op results.
@@ -84,8 +83,5 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     public List<String> getPropNames() {
         return Arrays.asList(getName());
     }
-    
-    @Override
-    public abstract Results<G> sortResults(Results<G> results);
 
 }

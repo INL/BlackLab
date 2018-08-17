@@ -146,7 +146,7 @@ public class HitsFromQuery extends Hits {
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hits.size()=" + results.size() + ")";
+        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hitsSoFar=" + results.size() + ")";
     }
 
     /**
