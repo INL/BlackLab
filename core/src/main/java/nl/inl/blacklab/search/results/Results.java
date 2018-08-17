@@ -205,9 +205,10 @@ public abstract class Results<T> implements Iterable<T> {
      * Group these hits by a criterium (or several criteria).
      *
      * @param criteria the hit property to group on
+     * @param maxResultsToStorePerGroup maximum number of results to store per group, or -1 for all
      * @return a HitGroups object representing the grouped hits
      */
-    public abstract ResultGroups<T> groupedBy(ResultProperty<T> criteria);
+    public abstract ResultGroups<T> groupedBy(ResultProperty<T> criteria, int maxResultsToStorePerGroup);
 
     /**
      * Select only the hits where the specified property has the specified value.

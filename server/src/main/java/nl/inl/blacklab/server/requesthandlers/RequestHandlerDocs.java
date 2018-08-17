@@ -120,7 +120,7 @@ public class RequestHandlerDocs extends RequestHandler {
             // some more testing to see if everything is correct if we change this
             String sortBy = searchParam.getString("sort");
             DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
-            DocResults docsSorted = group.getResults();
+            DocResults docsSorted = group.getStoredResults();
             if (sortProp != null)
                 docsSorted = docsSorted.sortedBy(sortProp);
         
@@ -133,7 +133,7 @@ public class RequestHandlerDocs extends RequestHandler {
             totalDocResults = docsSorted;
             window = docsSorted.window(first, number);
             
-            docResults = group.getResults();
+            docResults = group.getStoredResults();
             totalTime = searchGrouped.userWaitTime();
             return doResponse(ds, true);
         } finally {
@@ -230,7 +230,7 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.endEntry();
 
             // Snippets
-            Hits hits2 = result.getResults().window(0, 5); // TODO: make num. snippets configurable
+            Hits hits2 = result.getStoredResults().window(0, 5); // TODO: make num. snippets configurable
             if (hits2.hitsProcessedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
                 ContextSettings contextSettings = searchParam.getContextSettings();

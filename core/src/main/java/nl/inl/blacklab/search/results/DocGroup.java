@@ -26,17 +26,17 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  */
 public class DocGroup extends Group<DocResult> {
     
-    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
-        super(groupIdentity, new DocResults(queryInfo));
+    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+        super(groupIdentity, new DocResults(queryInfo), totalSize);
     }
 
-    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> resultList) {
-        super(groupIdentity, new DocResults(queryInfo, resultList));
+    public DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalSize) {
+        super(groupIdentity, new DocResults(queryInfo, storedResults), totalSize);
     }
     
     @Override
-    public DocResults getResults() {
-        return (DocResults) super.getResults();
+    public DocResults getStoredResults() {
+        return (DocResults) super.getStoredResults();
     }
 
 }

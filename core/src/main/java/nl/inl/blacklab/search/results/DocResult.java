@@ -26,8 +26,8 @@ public class DocResult extends HitGroup {
     
     private float score;
 
-    public DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score) {
-        super(queryInfo, doc);
+    public DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score, int numberOfHits) {
+        super(queryInfo, doc, numberOfHits);
         this.score = score;
     }
 
@@ -35,10 +35,11 @@ public class DocResult extends HitGroup {
      * Construct a DocResult.
      *
      * @param doc the Lucene document id
-     * @param docHits hits in the document
+     * @param storedHits hits in the document stored in this result
+     * @param totalNumberOfHits total number of hits in this document
      */
-    public DocResult(PropertyValue doc, Hits docHits) {
-        super(doc, docHits);
+    public DocResult(PropertyValue doc, Hits storedHits, int totalNumberOfHits) {
+        super(doc, storedHits, totalNumberOfHits);
         this.score = 0.0f;
     }
 

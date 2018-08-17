@@ -98,9 +98,9 @@ public class RequestHandlerHits extends RequestHandler {
                 // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
                 String sortBy = searchParam.getString("sort");
                 HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
-                        ? HitProperty.deserialize(group.getResults(), sortBy)
+                        ? HitProperty.deserialize(group.getStoredResults(), sortBy)
                         : null;
-                Hits hitsInGroup = sortProp != null ? group.getResults().sortedBy(sortProp) : group.getResults();
+                Hits hitsInGroup = sortProp != null ? group.getStoredResults().sortedBy(sortProp) : group.getStoredResults();
 
                 // Important, only count hits within this group for the total
                 // We should have retrieved all the hits already, as JobGroups always counts all hits.

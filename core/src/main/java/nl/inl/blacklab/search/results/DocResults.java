@@ -61,7 +61,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
-            results.add(new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f));
+            results.add(new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
         }
 
         @Override
@@ -119,7 +119,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                     if (docId == DocIdSetIterator.NO_MORE_DOCS)
                         break;
     
-                    DocResult dr = new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(docId)), scorer.score());
+                    DocResult dr = new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(docId)), scorer.score(), 0);
                     results.add(dr);
                 }
             } catch (IOException e) {
@@ -158,8 +158,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     
     private WindowStats windowStats;
 
-    
-    
     DocResults(QueryInfo queryInfo) {
         super(queryInfo);
         groupByDoc = new HitPropertyDoc(queryInfo.index());
@@ -334,7 +332,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                     if (!val.equals(doc)) {
                         if (docHits != null) {
                             Hits hits = Hits.list(queryInfo(), docHits);
-                            addDocResultToList(doc, hits);
+                            addDocResultToList(doc, hits, hits.size());
                         }
                         doc = val;
                         docHits = new ArrayList<>();
@@ -348,7 +346,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         Hits hits = Hits.list(queryInfo(), docHits);
-                        addDocResultToList(doc, hits);
+                        addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
                     }
@@ -363,8 +361,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         }
     }
 
-    private void addDocResultToList(PropertyValue doc, Hits docHits) {
-        DocResult docResult = new DocResult(doc, docHits);
+    private void addDocResultToList(PropertyValue doc, Hits docHits, int totalNumberOfHits) {
+        DocResult docResult = new DocResult(doc, docHits, totalNumberOfHits);
         results.add(docResult);
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
@@ -376,11 +374,12 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * 
      * @param criteria the document property to group on (i.e. number of hits in doc,
      *            value of metadata field, etc.)
+     * @param maxResultsToStorePerGroup how many results to store per group at most
      * @return the grouped results
      */
     @Override
-    public DocGroups groupedBy(ResultProperty<DocResult> criteria) {
-        return new DocGroups(this, criteria);
+    public DocGroups groupedBy(ResultProperty<DocResult> criteria, int maxResultsToStorePerGroup) {
+        return new DocGroups(this, criteria, maxResultsToStorePerGroup);
     }
 
     /**

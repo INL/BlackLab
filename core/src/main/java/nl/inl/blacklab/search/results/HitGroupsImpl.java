@@ -42,10 +42,11 @@ public class HitGroupsImpl extends HitGroups {
      * 
      * @param hits hits to group
      * @param criteria criteria to group by
+     * @param maxResultsToStorePerGroup max results to store
      * @return grouped hits
      */
-    static HitGroups fromHits(Hits hits, HitProperty criteria) {
-        return new HitGroupsImpl(hits, criteria);
+    static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+        return new HitGroupsImpl(hits, criteria, maxResultsToStorePerGroup);
     }
 
     /**
@@ -73,8 +74,9 @@ public class HitGroupsImpl extends HitGroups {
      *
      * @param hits the hits to group
      * @param criteria the criteria to group on
+     * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    HitGroupsImpl(Hits hits, HitProperty criteria) {
+    HitGroupsImpl(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
         super(hits.queryInfo(), criteria);
         
         List<Annotation> requiredContext = criteria.needsContext();
@@ -82,6 +84,7 @@ public class HitGroupsImpl extends HitGroups {
         
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
+        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         for (Hit hit: hits) {
             PropertyValue identity = criteria.get(hit);
             List<Hit> group = groupLists.get(identity);
@@ -89,15 +92,23 @@ public class HitGroupsImpl extends HitGroups {
                 group = new ArrayList<>();
                 groupLists.put(identity, group);
             }
-            group.add(hit);
-            if (group.size() > largestGroupSize)
-                largestGroupSize = group.size();
+            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
+                group.add(hit);
+            Integer groupSize = groupSizes.get(identity);
+            if (groupSize == null)
+                groupSize = 1;
+            else
+                groupSize++;
+            if (groupSize > largestGroupSize)
+                largestGroupSize = groupSize;
+            groupSizes.put(identity, groupSize);
             totalHits++;
         }
         for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            HitGroup group = new HitGroup(queryInfo(), groupId, hitList);
+            Integer groupSize = groupSizes.get(groupId);
+            HitGroup group = new HitGroup(queryInfo(), groupId, hitList, groupSize);
             groups.put(groupId, group);
             results.add(group);
         }
@@ -176,7 +187,7 @@ public class HitGroupsImpl extends HitGroups {
     }
 
     @Override
-    public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria) {
+    public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 

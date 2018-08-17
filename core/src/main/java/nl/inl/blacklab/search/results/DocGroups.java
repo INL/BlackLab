@@ -50,13 +50,15 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      *
      * @param docResults the results to group.
      * @param groupBy the criterium to group on.
+     * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    public DocGroups(DocResults docResults, ResultProperty<DocResult> groupBy) {
+    public DocGroups(DocResults docResults, ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
         super(docResults.queryInfo());
         this.windowStats = null;
         this.groupBy = groupBy;
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
+        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
             PropertyValue groupId = groupBy.get(r);
             List<DocResult> group = groupLists.get(groupId);
@@ -64,13 +66,20 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
                 group = new ArrayList<>();
                 groupLists.put(groupId, group);
             }
-            group.add(r);
-            if (group.size() > largestGroupSize)
-                largestGroupSize = group.size();
+            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
+                group.add(r);
+            Integer groupSize = groupSizes.get(groupId);
+            if (groupSize == null)
+                groupSize = 1;
+            else
+                groupSize++;
+            if (groupSize > largestGroupSize)
+                largestGroupSize = groupSize;
+            groupSizes.put(groupId, groupSize);
             totalResults++;
         }
         for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
-            DocGroup docGroup = new DocGroup(docResults.queryInfo(), e.getKey(), e.getValue());
+            DocGroup docGroup = new DocGroup(docResults.queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
             groups.put(e.getKey(), docGroup);
             results.add(docGroup);
         }
@@ -143,7 +152,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public ResultGroups<DocGroup> groupedBy(ResultProperty<DocGroup> criteria) {
+    public ResultGroups<DocGroup> groupedBy(ResultProperty<DocGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 

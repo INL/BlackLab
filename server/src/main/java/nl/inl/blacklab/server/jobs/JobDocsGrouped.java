@@ -64,7 +64,7 @@ public class JobDocsGrouped extends JobWithDocs {
         docResults = ((JobWithDocs) inputJob).getDocResults();
         setPausedInternal();
         DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
-        DocGroups theGroups = docResults.groupedBy(groupSett.groupBy());
+        DocGroups theGroups = docResults.groupedBy(groupSett.groupBy(), -1);
         DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();
         if (sortSett != null)
             theGroups = theGroups.sortedBy(sortSett.sortBy());

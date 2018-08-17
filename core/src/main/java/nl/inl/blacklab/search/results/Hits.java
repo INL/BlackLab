@@ -270,16 +270,10 @@ public abstract class Hits extends Results<Hit> {
     public DocResults perDocResults() {
         return DocResults.fromHits(queryInfo(), this);
     }
-
-    /**
-     * Group these hits by a criterium (or several criteria).
-     *
-     * @param criteria the hit property to group on
-     * @return a HitGroups object representing the grouped hits
-     */
+    
     @Override
-    public HitGroups groupedBy(ResultProperty<Hit> criteria) {
-        return HitGroupsImpl.fromHits(this, (HitProperty)criteria);
+    public HitGroups groupedBy(ResultProperty<Hit> criteria, int maxResultsToStorePerGroup) {
+        return HitGroupsImpl.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
     }
     
     /**

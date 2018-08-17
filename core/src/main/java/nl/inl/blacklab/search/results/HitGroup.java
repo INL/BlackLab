@@ -25,8 +25,8 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  */
 public class HitGroup extends Group<Hit> {
 
-    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity) {
-        super(groupIdentity, Hits.emptyList(queryInfo));
+    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+        super(groupIdentity, Hits.emptyList(queryInfo), totalSize);
     }
 
     /**
@@ -35,10 +35,11 @@ public class HitGroup extends Group<Hit> {
      * NOTE: the list is not copied!
      *
      * @param queryInfo query info
-     * @param hits the hits
+     * @param storedResults the hits we actually stored
+     * @param totalSize total group size
      */
-    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> hits) {
-        super(groupIdentity, Hits.list(queryInfo, hits));
+    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
+        super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
     }
 
     /**
@@ -47,14 +48,14 @@ public class HitGroup extends Group<Hit> {
      * NOTE: the list is not copied!
      *
      * @param queryInfo query info
-     * @param hits the hits
+     * @param storedResults the hits
      */
-    HitGroup(PropertyValue groupIdentity, Hits hits) {
-        super(groupIdentity, hits);
+    HitGroup(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
+        super(groupIdentity, storedResults, totalSize);
     }
     
     @Override
-    public Hits getResults() {
-        return (Hits)super.getResults();
+    public Hits getStoredResults() {
+        return (Hits)super.getStoredResults();
     }
 }

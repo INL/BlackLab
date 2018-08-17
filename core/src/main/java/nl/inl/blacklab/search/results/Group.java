@@ -26,23 +26,30 @@ public abstract class Group<T> implements Result<Group<T>> {
     
     protected PropertyValue groupIdentity;
 
-    private Results<T> results;
+    private Results<T> storedResults;
+    
+    private int totalSize;
 
-    public Group(PropertyValue groupIdentity, Results<T> results) {
+    public Group(PropertyValue groupIdentity, Results<T> storedResults, int totalSize) {
         this.groupIdentity = groupIdentity;
-        this.results = results;
+        this.storedResults = storedResults;
+        this.totalSize = totalSize;
     }
 
     public PropertyValue getIdentity() {
         return groupIdentity;
     }
     
-    public Results<T> getResults() {
-        return results;
+    public Results<T> getStoredResults() {
+        return storedResults;
+    }
+    
+    public int numberStored() {
+        return storedResults.size();
     }
 
     public int size() {
-        return results.size();
+        return totalSize;
     }
 
     @Override

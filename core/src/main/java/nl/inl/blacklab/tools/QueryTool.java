@@ -1291,7 +1291,7 @@ public class QueryTool {
             errprintln("Unknown criterium: " + groupBy);
             return;
         }
-        groups = hits.groupedBy(crit);
+        groups = hits.groupedBy(crit, -1);
         showSetting = ShowSetting.GROUPS;
         sortGroups("size");
         if (annotationName == null)
@@ -1608,7 +1608,7 @@ public class QueryTool {
         Hits hitsToShow = hits;
         if (showWhichGroup >= 0) {
             Group<Hit> g = groups.get(showWhichGroup);
-            hitsToShow = (Hits)g.getResults();
+            hitsToShow = (Hits)g.getStoredResults();
         }
         return hitsToShow;
     }
