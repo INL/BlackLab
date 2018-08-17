@@ -269,16 +269,17 @@ public abstract class Hits extends Results<Hit> {
 
     /**
      * Return a per-document view of these hits.
+     * @param maxHits 
      *
      * @return the per-document view.
      */
-    public DocResults perDocResults() {
-        return DocResults.fromHits(queryInfo(), this);
+    public DocResults perDocResults(int maxHits) {
+        return DocResults.fromHits(queryInfo(), this, maxHits);
     }
     
     @Override
     public HitGroups groupedBy(ResultProperty<Hit> criteria, int maxResultsToStorePerGroup) {
-        return HitGroupsImpl.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
+        return HitGroups.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
     }
     
     /**

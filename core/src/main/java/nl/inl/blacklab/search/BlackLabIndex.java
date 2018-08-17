@@ -31,6 +31,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
@@ -206,6 +207,24 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      */
     QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
+    
+    /**
+     * Start building a Search. 
+     * 
+     * @param field field to search
+     * @return empty search object
+     */
+    SearchEmpty search(AnnotatedField field);
+    
+    /**
+     * Start building a Search. 
+     * 
+     * @param field field to search
+     * @return empty search object
+     */
+    default SearchEmpty search() {
+        return search(mainAnnotatedField());
+    }
 
     
     // Access the different modules of the index

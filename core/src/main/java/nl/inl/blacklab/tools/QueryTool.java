@@ -78,6 +78,7 @@ import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -1426,7 +1427,7 @@ public class QueryTool {
         Hits currentHitSet = getCurrentHitSet();
         if (docs == null) {
             if (currentHitSet != null)
-                docs = currentHitSet.perDocResults();
+                docs = currentHitSet.perDocResults(MaxSettings.UNLIMITED_HITS);
             else if (filterQuery != null) {
                 docs = index.queryDocuments(filterQuery);
             } else {

@@ -4,6 +4,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.Forbidden;
@@ -74,7 +75,7 @@ public class JobDocs extends JobWithDocs {
             JobWithHits hitsSearch = (JobWithHits) inputJob;
             Hits hits = hitsSearch.getHits();
             // Now, get per document results
-            docResults = hits.perDocResults();
+            docResults = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
         } else {
             // Documents only
             Query filterQuery = jobDesc.getFilterQuery();

@@ -40,11 +40,12 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
-filter: predicate
 
 search
 - introduce new Search interface for building searches
 - update caching in BLS
+
+naming: misschien sortedby, filteredby, etc. weer vervangen door sort, filter, etc.?
 
 
 
@@ -67,6 +68,7 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- filter: predicate (maar Contexts gooien roet in het eten...)
 - docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
 - Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
   die BLS aan het eind opvangt en er een nette boodschap voor toont.

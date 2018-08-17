@@ -1,7 +1,15 @@
 package nl.inl.blacklab.search.results;
 
-public abstract class ResultCount implements SearchResult {
+public class ResultCount implements SearchResult {
     
-    public abstract int count();
+    private int count;
+
+    public ResultCount(int count) {
+        this.count = count;
+    }
+    
+    public int value() {
+        return count;
+    }
 
 }

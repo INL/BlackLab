@@ -36,6 +36,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class MockBlackLabIndex implements BlackLabIndex {
@@ -231,6 +232,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SearchEmpty search(AnnotatedField field) {
         throw new UnsupportedOperationException();
     }
 

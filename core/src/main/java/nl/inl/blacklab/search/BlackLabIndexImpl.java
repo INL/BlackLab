@@ -71,6 +71,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -970,6 +971,11 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity);
         return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
+    }
+
+    @Override
+    public SearchEmpty search(AnnotatedField field) {
+        return new SearchEmpty(QueryInfo.create(this, field));
     }
 
 }

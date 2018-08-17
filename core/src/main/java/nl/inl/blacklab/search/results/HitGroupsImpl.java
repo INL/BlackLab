@@ -166,13 +166,13 @@ public class HitGroupsImpl extends HitGroups {
         List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return HitGroupsImpl.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats);
+        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats);
     }
 
     @Override
     public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = Results.doFilter(this, property, value);
-        return new HitGroupsImpl(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
+        return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -181,7 +181,7 @@ public class HitGroupsImpl extends HitGroups {
     }
 
     @Override
-    public HitGroupsImpl withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
+    public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
@@ -189,7 +189,7 @@ public class HitGroupsImpl extends HitGroups {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
+        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
     }
 
 }

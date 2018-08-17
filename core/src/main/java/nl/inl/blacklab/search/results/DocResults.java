@@ -103,10 +103,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * 
      * @param queryInfo query info
      * @param hits hits to get document results from
+     * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits) {
-        return new DocResults(queryInfo, hits);
+    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
+        return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
     }
 
     /**
@@ -159,6 +160,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     private SampleParameters sampleParameters;
 
+    private int maxHitsToStorePerDoc = 0;
+
     /**
      * Construct an empty DocResults.
      * @param queryInfo
@@ -173,10 +176,12 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * 
      * @param queryInfo query info
      * @param hits the hits to view per-document
+     * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, Hits hits) {
+    protected DocResults(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
         this(queryInfo);
         this.sourceHitsIterator = hits.iterator();
+        this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
     }
@@ -320,21 +325,19 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     private void addDocResultToList(PropertyValue doc, Hits docHits, int totalNumberOfHits) {
-        DocResult docResult = DocResult.fromHits(doc, docHits, totalNumberOfHits);
+        DocResult docResult;
+        if (maxHitsToStorePerDoc == 0)
+            docResult = DocResult.fromHits(doc, Hits.emptyList(queryInfo()), totalNumberOfHits);
+        else if (maxHitsToStorePerDoc > 0 && docHits.size() > maxHitsToStorePerDoc)
+            docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
+        else
+            docResult = DocResult.fromHits(doc, docHits, totalNumberOfHits);
         results.add(docResult);
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
         totalHits += docHits.size();
     }
 
-    /**
-     * Group these results by the specified document property
-     * 
-     * @param criteria the document property to group on (i.e. number of hits in doc,
-     *            value of metadata field, etc.)
-     * @param maxResultsToStorePerGroup how many results to store per group at most
-     * @return the grouped results
-     */
     @Override
     public DocGroups groupedBy(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();

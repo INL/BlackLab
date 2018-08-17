@@ -30,6 +30,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -157,7 +158,7 @@ public class RequestHandlerHits extends RequestHandler {
             boolean includeTokenCount = searchParam.getBoolean("includetokencount");
             int totalTokens = -1;
             if (includeTokenCount) {
-                perDocResults = total.perDocResults();
+                perDocResults = total.perDocResults(MaxSettings.UNLIMITED_HITS);
                 // Determine total number of tokens in result set
                 String fieldName = index.mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
@@ -267,7 +268,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (searchParam.hasFacets()) {
                 // Now, group the docs according to the requested facets.
                 if (perDocResults == null)
-                    perDocResults = total.perDocResults();
+                    perDocResults = total.perDocResults(MaxSettings.UNLIMITED_HITS);
                 ds.startEntry("facets");
                 dataStreamFacets(ds, perDocResults, searchParam.facets());
                 ds.endEntry();

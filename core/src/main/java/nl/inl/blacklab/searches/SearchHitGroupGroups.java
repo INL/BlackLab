@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /**
@@ -12,8 +13,13 @@ import nl.inl.blacklab.search.results.SampleParameters;
  * 
  * For example: documents grouped by author, while document itself is a group of hits.
  */
-public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup, DocGroups> {
+public abstract class SearchHitGroupGroups extends AbstractSearch {
     
+    public SearchHitGroupGroups(QueryInfo queryInfo) {
+        super(queryInfo);
+        // TODO Auto-generated constructor stub
+    }
+
     /**
      * Execute the search operation, returning the final response.
      *  
@@ -29,17 +35,7 @@ public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup,
      * @return resulting operation
      */
     @Override
-    public abstract SearchForHitGroupGroups custom(SearchOperation<DocGroups> receiver);
-    
-//    /**
-//     * Group hits by a property.
-//     * 
-//     * @param groupBy what to group by
-//     * @param maxResultsToGatherPerGroup how many results to gather per group
-//     * @return resulting operation
-//     */
-//    @Override
-//    public abstract SearchForResults<? extends Group<Group<HitGroup>>> groupBy(ResultProperty<Group<HitGroup>> groupBy, int maxResultsToGatherPerGroup);
+    public abstract SearchHitGroupGroups custom(SearchOperation receiver);
     
     /**
      * Sort hits.
@@ -47,8 +43,7 @@ public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup,
      * @param sortBy what to sort by
      * @return resulting operation
      */
-    @Override
-    public abstract SearchForHitGroupGroups sortBy(ResultProperty<DocGroup> sortBy);
+    public abstract SearchHitGroupGroups sortBy(ResultProperty<DocGroup> sortBy);
 
     /**
      * Sample hits.
@@ -56,8 +51,7 @@ public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup,
      * @param par how many hits to sample; seed
      * @return resulting operation
      */
-    @Override
-    public abstract SearchForHitGroupGroups sample(SampleParameters par);
+    public abstract SearchHitGroupGroups sample(SampleParameters par);
 
     /**
      * Filter hits.
@@ -65,8 +59,7 @@ public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup,
      * @param test what hits to keep
      * @return resulting operation
      */
-    @Override
-    public abstract SearchForHitGroupGroups filter(Predicate<DocGroup> test);
+    public abstract SearchHitGroupGroups filter(Predicate<DocGroup> test);
 
     /**
      * Get window of hits.
@@ -75,17 +68,13 @@ public abstract class SearchForHitGroupGroups extends SearchForResults<DocGroup,
      * @param number number of hits to select
      * @return resulting operation
      */
-    @Override
-    public abstract SearchForHitGroupGroups window(int first, int number);
+    public abstract SearchHitGroupGroups window(int first, int number);
 
     /**
      * Count hits.
      * 
-     * @param first first hit to select
-     * @param number number of hits to select
      * @return resulting operation
      */
-    @Override
-    public abstract SearchForCount count();
+    public abstract SearchCount count();
 
 }
