@@ -31,7 +31,7 @@ public class HitsFiltered extends Hits {
     
     private int indexInSource = -1;
 
-    HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
+    protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo());
         this.source = hits;
         

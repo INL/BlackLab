@@ -37,17 +37,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * should use ResultsGrouperSequential).
  */
 public class HitGroupsImpl extends HitGroups {
-    /**
-     * Don't use this; use Hits.groupedBy().
-     * 
-     * @param hits hits to group
-     * @param criteria criteria to group by
-     * @param maxResultsToStorePerGroup max results to store
-     * @return grouped hits
-     */
-    static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
-        return new HitGroupsImpl(hits, criteria, maxResultsToStorePerGroup);
-    }
 
     /**
      * The groups.
@@ -76,7 +65,7 @@ public class HitGroupsImpl extends HitGroups {
      * @param criteria the criteria to group on
      * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    HitGroupsImpl(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+    protected HitGroupsImpl(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
         super(hits.queryInfo(), criteria);
         
         List<Annotation> requiredContext = criteria.needsContext();
@@ -108,13 +97,13 @@ public class HitGroupsImpl extends HitGroups {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = new HitGroup(queryInfo(), groupId, hitList, groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, groupSize);
             groups.put(groupId, group);
             results.add(group);
         }
     }
 
-    public HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, WindowStats windowStats) {
+    protected HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, WindowStats windowStats) {
         super(queryInfo, groupCriteria);
         this.windowStats = windowStats;
         for (HitGroup group: groups) {
@@ -197,7 +186,7 @@ public class HitGroupsImpl extends HitGroups {
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
         for (HitGroup group: results) {
-            HitGroup newGroup = new HitGroup(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            HitGroup newGroup = HitGroup.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
         return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, windowStats);

@@ -25,10 +25,6 @@ package nl.inl.blacklab.search.results;
  */
 public final class HitImpl implements Hit {
 
-    public static HitImpl create(int doc, int start, int end) {
-        return new HitImpl(doc, start, end);
-    }
-
     /** The Lucene doc this hits occurs in */
     private int doc;
 
@@ -50,7 +46,7 @@ public final class HitImpl implements Hit {
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
      */
-    private HitImpl(int doc, int start, int end) {
+    protected HitImpl(int doc, int start, int end) {
         this.doc = doc;
         this.start = start;
         this.end = end;

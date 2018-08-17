@@ -30,10 +30,35 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * retrieved, which may be unfeasible for large results sets.
  */
 public abstract class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
+    
+    /**
+     * Construct HitGroups from a list of HitGroup instances.
+     * 
+     * @param queryInfo query info
+     * @param results list of groups
+     * @param groupCriteria what hits would be grouped by
+     * @param windowStats 
+     * @return grouped hits
+     */
+    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, WindowStats windowStats) {
+        return new HitGroupsImpl(queryInfo, results, groupCriteria, windowStats);
+    }
+
+    /**
+     * Construct HitGroups from a list of hits.
+     * 
+     * @param hits hits to group
+     * @param criteria criteria to group by
+     * @param maxResultsToStorePerGroup max results to store
+     * @return grouped hits
+     */
+    public static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+        return new HitGroupsImpl(hits, criteria, maxResultsToStorePerGroup);
+    }
 
     protected HitProperty criteria;
 
-    public HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
+    protected HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
         super(queryInfo);
         this.criteria = groupCriteria;
     }

@@ -30,6 +30,19 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  */
 public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
     
+    /**
+     * Construct a DocGroups from a list of groups.
+     * 
+     * @param queryInfo query info
+     * @param groups list of groups to wrap
+     * @param groupBy what the documents were grouped by
+     * @param windowStats window stats if this is a window, null otherwise
+     * @return document groups
+     */
+    public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
+        return new DocGroups(queryInfo, groups, groupBy, windowStats);
+    }
+    
     private Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     private int largestGroupSize = 0;
@@ -45,56 +58,16 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         return windowStats;
     }
 
-    /**
-     * Constructor. Fills the groups from the given document results.
-     *
-     * @param docResults the results to group.
-     * @param groupBy the criterium to group on.
-     * @param maxResultsToStorePerGroup how many results to store per group at most
-     */
-    public DocGroups(DocResults docResults, ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
-        super(docResults.queryInfo());
-        this.windowStats = null;
-        this.groupBy = groupBy;
-        //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
-        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
-        for (DocResult r : docResults) { // TODO inconsistency compared to hits within groups, hitgroups ignore sorting of the source data, docgroups don't
-            PropertyValue groupId = groupBy.get(r);
-            List<DocResult> group = groupLists.get(groupId);
-            if (group == null) {
-                group = new ArrayList<>();
-                groupLists.put(groupId, group);
-            }
-            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
-                group.add(r);
-            Integer groupSize = groupSizes.get(groupId);
-            if (groupSize == null)
-                groupSize = 1;
-            else
-                groupSize++;
-            if (groupSize > largestGroupSize)
-                largestGroupSize = groupSize;
-            groupSizes.put(groupId, groupSize);
-            totalResults++;
-        }
-        for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
-            DocGroup docGroup = new DocGroup(docResults.queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
-            groups.put(e.getKey(), docGroup);
-            results.add(docGroup);
-        }
-    }
-
-    public DocGroups(QueryInfo queryInfo, List<DocGroup> sorted, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
+    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
         super(queryInfo);
         this.groupBy = groupBy;
         this.windowStats = windowStats;
-        for (DocGroup group: sorted) {
+        for (DocGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalResults += group.size();
             results.add(group);
-            groups.put(group.getIdentity(), group);
+            this.groups.put(group.getIdentity(), group);
         }
     }
 
@@ -163,7 +136,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.getStoredResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
-            DocGroup newGroup = new DocGroup(queryInfo(), group.getIdentity(), truncatedList, group.size());
+            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.getIdentity(), truncatedList, group.size());
             truncatedGroups.add(newGroup);
         }
         return new DocGroups(queryInfo(), truncatedGroups, groupBy, windowStats);

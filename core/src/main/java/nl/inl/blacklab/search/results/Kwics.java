@@ -28,7 +28,7 @@ public class Kwics {
     /**
      * @param hits
      */
-    Kwics(Hits hits, ContextSize contextSize) {
+    protected Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.left() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
     

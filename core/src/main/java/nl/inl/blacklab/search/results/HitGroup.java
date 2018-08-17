@@ -24,9 +24,21 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
 public class HitGroup extends Group<Hit> {
+    
+    public static HitGroup empty(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+        return new HitGroup(queryInfo, groupIdentity, totalSize);
+    }
 
-    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
-        super(groupIdentity, Hits.emptyList(queryInfo), totalSize);
+    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
+        return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
+    }
+
+    public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
+        return new HitGroup(groupIdentity, storedResults, totalSize);
+    }
+
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+        this(groupIdentity, Hits.emptyList(queryInfo), totalSize);
     }
 
     /**
@@ -38,7 +50,7 @@ public class HitGroup extends Group<Hit> {
      * @param storedResults the hits we actually stored
      * @param totalSize total group size
      */
-    HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
         super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
     }
 
@@ -50,7 +62,7 @@ public class HitGroup extends Group<Hit> {
      * @param queryInfo query info
      * @param storedResults the hits
      */
-    HitGroup(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
+    protected HitGroup(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
         super(groupIdentity, storedResults, totalSize);
     }
     

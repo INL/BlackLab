@@ -27,6 +27,10 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
+    public static DocPropertyAnnotatedFieldLength deserialize(String info) {
+        return new DocPropertyAnnotatedFieldLength(info);
+    }
+
     private String fieldName;
     
     private String friendlyName;
@@ -78,10 +82,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     @Override
     public String getName() {
         return friendlyName;
-    }
-
-    public static DocPropertyAnnotatedFieldLength deserialize(String info) {
-        return new DocPropertyAnnotatedFieldLength(info);
     }
 
     @Override

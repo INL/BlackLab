@@ -16,7 +16,7 @@ public interface Hit extends Result<Hit> {
      * @return the hit
      */
     static Hit create(int doc, int start, int end) {
-        return HitImpl.create(doc, start, end);
+        return new HitImpl(doc, start, end);
     }
     
     @Override

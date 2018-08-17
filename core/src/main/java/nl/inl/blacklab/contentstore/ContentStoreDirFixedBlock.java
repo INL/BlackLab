@@ -128,24 +128,24 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     static class TocEntry {
 
         /** content store id for this document */
-        public int id;
+        int id;
 
         /** length of the encoded string in bytes */
-        public int entryLengthBytes;
+        int entryLengthBytes;
 
         /** length of the decoded string in characters */
-        public int entryLengthCharacters;
+        int entryLengthCharacters;
 
         /** blocks this document is stored in */
-        public int[] blockIndices;
+        int[] blockIndices;
 
         /** first character stored in each block */
-        public int[] blockCharOffsets;
+        int[] blockCharOffsets;
 
         /** was this entry deleted? (can be removed in next compacting run) */
-        public boolean deleted;
+        boolean deleted;
 
-        public TocEntry(int id, int length, int charLength, boolean deleted, int[] blockIndices,
+        TocEntry(int id, int length, int charLength, boolean deleted, int[] blockIndices,
                 int[] blockCharOffsets) {
             super();
             this.id = id;

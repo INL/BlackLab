@@ -24,9 +24,17 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
  */
 public class DocResult extends HitGroup {
     
+    public static DocResult fromDoc(QueryInfo queryInfo, PropertyValueDoc doc, float score, int totalNumberOfHits) {
+        return new DocResult(queryInfo, doc, score, totalNumberOfHits);
+    }
+    
+    public static DocResult fromHits(PropertyValue doc, Hits storedHits, int totalNumberOfHits) {
+        return new DocResult(doc, storedHits, totalNumberOfHits);
+    }
+    
     private float score;
 
-    public DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score, int numberOfHits) {
+    protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score, int numberOfHits) {
         super(queryInfo, doc, numberOfHits);
         this.score = score;
     }
@@ -38,7 +46,7 @@ public class DocResult extends HitGroup {
      * @param storedHits hits in the document stored in this result
      * @param totalNumberOfHits total number of hits in this document
      */
-    public DocResult(PropertyValue doc, Hits storedHits, int totalNumberOfHits) {
+    protected DocResult(PropertyValue doc, Hits storedHits, int totalNumberOfHits) {
         super(doc, storedHits, totalNumberOfHits);
         this.score = 0.0f;
     }

@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.WindowStats;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
@@ -38,11 +39,11 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     /** Reverse comparison result or not? */
     protected boolean reverse = false;
     
-    DocProperty(DocProperty prop, boolean invert) {
+    protected DocProperty(DocProperty prop, boolean invert) {
         reverse = invert ? !prop.reverse : prop.reverse;
     }
     
-    DocProperty() {
+    protected DocProperty() {
     }
 
     /**
@@ -169,7 +170,7 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     public DocResults sortResults(Results<DocResult> results) {
         ArrayList<DocResult> sorted = new ArrayList<>(results.resultsList());
         sorted.sort(this);
-        return new DocResults(results.queryInfo(), sorted);
+        return DocResults.fromList(results.queryInfo(), sorted, (WindowStats)null);
     }
 
 }

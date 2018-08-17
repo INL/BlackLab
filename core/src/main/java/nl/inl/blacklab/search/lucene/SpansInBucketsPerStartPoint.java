@@ -24,7 +24,7 @@ import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.HitImpl;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits.
@@ -183,8 +183,8 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
     }
 
     @Override
-    public HitImpl getHit(int indexInBucket) {
-        return HitImpl.create(docID(), startPosition(indexInBucket), endPosition(indexInBucket));
+    public Hit getHit(int indexInBucket) {
+        return Hit.create(docID(), startPosition(indexInBucket), endPosition(indexInBucket));
     }
 
     @Override

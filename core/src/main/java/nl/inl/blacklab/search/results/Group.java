@@ -30,7 +30,7 @@ public abstract class Group<T> implements Result<Group<T>> {
     
     private int totalSize;
 
-    public Group(PropertyValue groupIdentity, Results<T> storedResults, int totalSize) {
+    protected Group(PropertyValue groupIdentity, Results<T> storedResults, int totalSize) {
         this.groupIdentity = groupIdentity;
         this.storedResults = storedResults;
         this.totalSize = totalSize;

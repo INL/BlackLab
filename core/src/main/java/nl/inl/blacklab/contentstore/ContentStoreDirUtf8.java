@@ -55,30 +55,30 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     /** Table of contents entry */
     static class TocEntry {
         /** id of the string */
-        public int id;
+        int id;
 
         /** id of the file the string was stored in */
-        public int fileId;
+        int fileId;
 
         /** byte offset into the file of the string */
-        public int entryOffsetBytes;
+        int entryOffsetBytes;
 
         /** length of the string in bytes */
-        public int entryLengthBytes;
+        int entryLengthBytes;
 
         /** length of the string in characters */
-        public int entryLengthCharacters;
+        int entryLengthCharacters;
 
         /** fixed block size in characters (note that byte size differs per block) */
-        public int blockSizeCharacters;
+        int blockSizeCharacters;
 
         /** relative block start offsets in bytes */
-        public int[] blockOffsetBytes;
+        int[] blockOffsetBytes;
 
         /** was this entry deleted? (can be removed in next compacting run) */
-        public boolean deleted;
+        boolean deleted;
 
-        public TocEntry(int id, int fileId, int offset, int length, int charLength, int blockSize,
+        TocEntry(int id, int fileId, int offset, int length, int charLength, int blockSize,
                 boolean deleted, int[] blockOffset) {
             super();
             this.id = id;

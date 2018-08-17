@@ -17,8 +17,10 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -60,7 +62,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
-            results.add(new DocResult(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
+            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
         }
 
         @Override
@@ -72,6 +74,38 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         public boolean needsScores() {
             return false;
         }
+    }
+    
+    /**
+     * Construct an empty DocResults.
+     * @param queryInfo query info
+     * @return document results
+     */
+    public static DocResults empty(QueryInfo queryInfo) {
+        return new DocResults(queryInfo);
+    }
+    
+    /**
+     * Construct a DocResults from a list of results.
+     * 
+     * @param queryInfo query info
+     * @param results results
+     * @param windowStats window stats (if this is a window)
+     * @return document results
+     */
+    public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
+        return new DocResults(queryInfo, results, windowStats);
+    }
+    
+    /**
+     * Construct a DocResults from a Hits instance.
+     * 
+     * @param queryInfo query info
+     * @param hits hits to get document results from
+     * @return document results
+     */
+    public static DocResults fromHits(QueryInfo queryInfo, Hits hits) {
+        return new DocResults(queryInfo, hits);
     }
 
     /**
@@ -90,7 +124,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-        return new DocResults(queryInfo, results);
+        return new DocResults(queryInfo, results, (WindowStats)null);
     }
 
     /**
@@ -126,7 +160,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * Construct an empty DocResults.
      * @param queryInfo
      */
-    public DocResults(QueryInfo queryInfo) {
+    protected DocResults(QueryInfo queryInfo) {
         super(queryInfo);
         groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
@@ -137,25 +171,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param queryInfo query info
      * @param hits the hits to view per-document
      */
-    public DocResults(QueryInfo queryInfo, Hits hits) {
+    protected DocResults(QueryInfo queryInfo, Hits hits) {
         this(queryInfo);
         this.sourceHitsIterator = hits.iterator();
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
-    }
-
-    /**
-     * Wraps a list of DocResult objects with the DocResults interface.
-     *
-     * NOTE: the list is not copied but referenced!
-     *
-     * Used by DocGroups constructor.
-     *
-     * @param queryInfo query info
-     * @param results the list of results
-     */
-    public DocResults(QueryInfo queryInfo, List<DocResult> results) {
-        this(queryInfo, results, null);
     }
     
     /**
@@ -169,7 +189,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param results the list of results
      * @param windowStats window stats
      */
-    public DocResults(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
+    protected DocResults(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
         this(queryInfo);
         this.results = results;
         this.windowStats = windowStats;
@@ -301,7 +321,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     private void addDocResultToList(PropertyValue doc, Hits docHits, int totalNumberOfHits) {
-        DocResult docResult = new DocResult(doc, docHits, totalNumberOfHits);
+        DocResult docResult = DocResult.fromHits(doc, docHits, totalNumberOfHits);
         results.add(docResult);
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
@@ -317,8 +337,31 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return the grouped results
      */
     @Override
-    public DocGroups groupedBy(ResultProperty<DocResult> criteria, int maxResultsToStorePerGroup) {
-        return new DocGroups(this, criteria, maxResultsToStorePerGroup);
+    public DocGroups groupedBy(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
+        Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
+        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
+        for (DocResult r : this) {
+            PropertyValue groupId = groupBy.get(r);
+            List<DocResult> group = groupLists.get(groupId);
+            if (group == null) {
+                group = new ArrayList<>();
+                groupLists.put(groupId, group);
+            }
+            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
+                group.add(r);
+            Integer groupSize = groupSizes.get(groupId);
+            if (groupSize == null)
+                groupSize = 1;
+            else
+                groupSize++;
+            groupSizes.put(groupId, groupSize);
+        }
+        List<DocGroup> results = new ArrayList<DocGroup>();
+        for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
+            DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
+            results.add(docGroup);
+        }
+        return DocGroups.fromList(queryInfo(), results, groupBy, (WindowStats)null);
     }
 
     /**
@@ -392,7 +435,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public DocResults filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new DocResults(queryInfo(), list);
+        return new DocResults(queryInfo(), list, (WindowStats)null);
     }
 
     @Override
@@ -401,7 +444,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<DocResult> truncatedGroups = new ArrayList<DocResult>();
         for (DocResult group: results) {
-            DocResult newGroup = new DocResult(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            DocResult newGroup = DocResult.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
         return new DocResults(queryInfo(), truncatedGroups, windowStats);

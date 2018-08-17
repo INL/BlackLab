@@ -59,11 +59,11 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
         return result;
     }
 
-    DocGroupProperty(DocGroupProperty prop, boolean invert) {
+    protected DocGroupProperty(DocGroupProperty prop, boolean invert) {
         super(prop, invert);
     }
     
-    public DocGroupProperty() {
+    protected DocGroupProperty() {
         super();
     }
 
@@ -126,6 +126,6 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     public Results<DocGroup> sortResults(Results<DocGroup> results) {
         List<DocGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return new DocGroups(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria(), null);
+        return DocGroups.fromList(results.queryInfo(), list, ((ResultGroups<DocResult>)results).getGroupCriteria(), null);
     }
 }

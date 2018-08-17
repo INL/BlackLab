@@ -92,7 +92,7 @@ public class HitsFromQuery extends Hits {
      * @param sourceQuery the query to execute to get the hits
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, MaxSettings maxSettings) throws WildcardTermTooBroad {
+    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, MaxSettings maxSettings) throws WildcardTermTooBroad {
         super(queryInfo);
         this.maxSettings = maxSettings;
         this.maxStats = new MaxStats();
@@ -274,7 +274,7 @@ public class HitsFromQuery extends Hits {
                     }
                     if (!maxHitsProcessed) {
                         Hit hit = currentSourceSpans.getHit();
-                        Hit offsetHit = HitImpl.create(hit.doc() + currentDocBase, hit.start(), hit.end());
+                        Hit offsetHit = Hit.create(hit.doc() + currentDocBase, hit.start(), hit.end());
                         if (capturedGroups != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
