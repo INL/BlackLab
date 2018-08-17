@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -9,12 +7,14 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.util.LuceneUtil;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -31,18 +31,18 @@ public class RequestHandlerTermFreq extends RequestHandler {
         //TODO: use background job?
 
         BlackLabIndex blIndex = blIndex();
-        Field cfd = blIndex.mainAnnotatedField();
+        AnnotatedField cfd = blIndex.mainAnnotatedField();
         String propName = searchParam.getString("property");
-        boolean sensitive = searchParam.getBoolean("sensitive");
+        Annotation annotation = cfd.annotation(propName);
+        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
+        AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         Query q = searchParam.getFilterQuery();
         if (q == null)
             return Response.badRequest(ds, "NO_FILTER_GIVEN",
                     "Document filter required. Please specify 'filter' parameter.");
-        Map<String, Integer> freq = LuceneUtil.termFrequencies(blIndex.searcher(), q, cfd.name(), propName,
-                sensitive ? "s" : "i");
-
-        TermFrequencyList tfl = new TermFrequencyList(freq, true);
+        
+        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q);
 
         int first = searchParam.getInteger("first");
         if (first < 0 || first >= tfl.size())

@@ -13,11 +13,17 @@ import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.util.StringUtil;
 
 /**
@@ -27,7 +33,7 @@ import nl.inl.util.StringUtil;
  * also set the total frequency explicitly (after all entries have been added)
  * if you want to calculate relative frequencies based on a different total.
  */
-public class TermFrequencyList implements Iterable<TermFrequency> {
+public class TermFrequencyList extends Results<TermFrequency> {
     
     /**
      * Count occurrences of context words around hit.
@@ -89,14 +95,15 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         }
 
         // Transfer from map to list
-        return new TermFrequencyList(wordFreq, sort);
+        return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
     }
 
     List<TermFrequency> list;
 
     long totalFrequency = 0;
 
-    public TermFrequencyList(Map<String, Integer> wordFreq, boolean sort) {
+    public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
+        super(queryInfo);
         list = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
             list.add(new TermFrequency(e.getKey(), e.getValue()));
@@ -105,7 +112,8 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
             list.sort(Comparator.naturalOrder());
     }
 
-    TermFrequencyList(List<TermFrequency> list) {
+    TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
+        super(queryInfo);
         this.list = list;
         totalFrequency = 0;
         for (TermFrequency fr: list) {
@@ -113,6 +121,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         }
     }
 
+    @Override
     public int size() {
         return list.size();
     }
@@ -122,6 +131,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         return list.iterator();
     }
 
+    @Override
     public TermFrequency get(int index) {
         return list.get(index);
     }
@@ -146,7 +156,38 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
     }
 
     public TermFrequencyList subList(int fromIndex, int toIndex) {
-        return new TermFrequencyList(list.subList(fromIndex, toIndex));
+        return new TermFrequencyList(queryInfo(), list.subList(fromIndex, toIndex));
+    }
+
+    @Override
+    protected void ensureResultsRead(int number) {
+        // NOP
+    }
+
+    @Override
+    public ResultGroups<TermFrequency> groupedBy(ResultProperty<TermFrequency> criteria,
+            int maxResultsToStorePerGroup) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Results<TermFrequency> filteredBy(ResultProperty<TermFrequency> property, PropertyValue value) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <P extends ResultProperty<TermFrequency>> Results<TermFrequency> sortedBy(P sortProp) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Results<TermFrequency> window(int first, int windowSize) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Results<TermFrequency> sample(SampleParameters sampleParameters) {
+        throw new UnsupportedOperationException();
     }
 
 }

@@ -41,6 +41,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public final class LuceneUtil {
 
@@ -349,9 +350,9 @@ public final class LuceneUtil {
     }
 
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            String fieldName, String propName, String altName) {
+            AnnotationSensitivity annotSensitivity) {
         try {
-            String luceneField = AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName);
+            //String luceneField = AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName);
             Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();
@@ -366,6 +367,7 @@ public final class LuceneUtil {
                 if (scorer != null) {
                     DocIdSetIterator it = scorer.iterator();
                     while (it.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
+                        String luceneField = annotSensitivity.luceneField();
                         getFrequenciesFromTermVector(indexReader, it.docID() + arc.docBase, luceneField, freq);
                     }
                 }

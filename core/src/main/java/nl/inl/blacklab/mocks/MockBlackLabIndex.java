@@ -22,8 +22,10 @@ import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -225,6 +227,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public boolean indexMode() {
         return false;
+    }
+
+    @Override
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
+        throw new UnsupportedOperationException();
     }
 
 }

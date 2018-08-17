@@ -55,6 +55,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -963,6 +964,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public boolean indexMode() {
         return indexMode;
+    }
+
+    @Override
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
+        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity);
+        return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
     }
 
 }

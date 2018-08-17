@@ -19,6 +19,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -170,6 +171,15 @@ public interface BlackLabIndex extends Closeable {
      * @return the matching documents
      */
     DocResults queryDocuments(Query documentFilterQuery);
+
+    /**
+     * Determine the term frequencies for an annotation sensitivity.
+     * 
+     * @param annotSensitivity the annation + sensitivity indexing we want the term frequency for
+     * @param filterQuery document filter, or null for all documents
+     * @return term frequencies
+     */
+    TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery);
 
     /**
      * Explain how a TextPattern is converted to a SpanQuery and rewritten to an

@@ -24,7 +24,7 @@ import nl.inl.util.ThreadPauser;
  *
  * @param <T> result type, e.g. Hit
  */
-public abstract class Results<T> implements Iterable<T> {
+public abstract class Results<T> implements SearchResult, Iterable<T> {
 
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;

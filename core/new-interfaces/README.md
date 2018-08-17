@@ -40,8 +40,7 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
-Results
-- method name consistency ("get" weg in belangrijkste classes)
+filter: predicate
 
 search
 - introduce new Search interface for building searches
