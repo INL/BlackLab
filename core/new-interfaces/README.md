@@ -41,15 +41,6 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
-- docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
-
-- DocGroups / HitGroups / DocResults moeten...
-  * mogelijkheid krijgen aantal resultaten op te slaan per groep te limiteren
-  * moeten een withTruncatedGroups() operatie krijgen om een object met kleinere limiet te retourneren
-
-  kun je gebruiken voor docs/snippets maar ook voor andere groupings: bewaar de eerste 25 en toon die
-  als mensen groep openklikken; zoek en toon de rest pas als ze de hele groep willen zien.
-  je kunt de volledige grouping evt. korter in de cache bewaren (of helemaal niet) en de truncated grouping langer
 
 - sample overal implementeren
 
@@ -58,7 +49,14 @@ search
 - update caching in BLS
 
 
+
 POSSIBLE OPTIMIZATIONS
+- niet alle resultaten opslaan in groupings. en/of na een tijdje groups "truncaten" zodat er minder/geen
+  resultaten opgeslagen blijven.
+  kun je gebruiken voor docs/snippets maar ook voor andere groupings: bewaar de eerste 25 en toon die
+  als mensen groep openklikken; zoek en toon de rest pas als ze de hele groep willen zien.
+  je kunt de volledige grouping evt. korter in de cache bewaren (of helemaal niet) en de truncated grouping langer
+
 - Nieuwe (multi)forward index die documenten lineair opslaat.
   Ws. handig om dan van een document eerst alle words, dan alle lemmas, dan alle pos, etc. op te slaan.
   performancevoordelen: forward index matching; lazy filtering (which we don't do right now...)
@@ -71,6 +69,7 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
 - Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
   die BLS aan het eind opvangt en er een nette boodschap voor toont.
   (zorg wel dat aborted jobs uit de cache verwijderd worden, zodat we geen incorrecte counts tonen!)

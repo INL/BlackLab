@@ -36,11 +36,12 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      * @param queryInfo query info
      * @param groups list of groups to wrap
      * @param groupBy what the documents were grouped by
+     * @param sampleParameters sample parameters if this is a sample, null otherwise
      * @param windowStats window stats if this is a window, null otherwise
      * @return document groups
      */
-    public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
-        return new DocGroups(queryInfo, groups, groupBy, windowStats);
+    public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
+        return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats);
     }
     
     private Map<PropertyValue, DocGroup> groups = new HashMap<>();
@@ -53,15 +54,13 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     
     private WindowStats windowStats;
     
-    @Override
-    public WindowStats windowStats() {
-        return windowStats;
-    }
-
-    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, WindowStats windowStats) {
+    private SampleParameters sampleParameters;
+    
+    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
         this.groupBy = groupBy;
         this.windowStats = windowStats;
+        this.sampleParameters = sampleParameters;
         for (DocGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
@@ -69,6 +68,16 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
             results.add(group);
             this.groups.put(group.getIdentity(), group);
         }
+    }
+
+    @Override
+    public WindowStats windowStats() {
+        return windowStats;
+    }
+
+    @Override
+    public SampleParameters sampleParameters() {
+        return sampleParameters;
     }
 
     @Override
@@ -81,7 +90,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         ensureAllHitsRead();
         List<DocGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
-        return new DocGroups(queryInfo(), sorted, groupBy, null);
+        return new DocGroups(queryInfo(), sorted, groupBy, (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -110,7 +119,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
             to = results.size();
         List<DocGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
         boolean hasNext = results.size() > to;
-        return new DocGroups(queryInfo(), list, groupBy, new WindowStats(hasNext, first, windowSize, list.size()));
+        return DocGroups.fromList(queryInfo(), list, groupBy, (SampleParameters)null, new WindowStats(hasNext, first, windowSize, list.size()));
     }
 
     @Override
@@ -121,7 +130,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
         List<DocGroup> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new DocGroups(queryInfo(), list, getGroupCriteria(), null);
+        return new DocGroups(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -139,6 +148,17 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
             DocGroup newGroup = DocGroup.fromList(queryInfo(), group.getIdentity(), truncatedList, group.size());
             truncatedGroups.add(newGroup);
         }
-        return new DocGroups(queryInfo(), truncatedGroups, groupBy, windowStats);
+        return DocGroups.fromList(queryInfo(), truncatedGroups, groupBy, (SampleParameters)null, windowStats);
+    }
+
+    /**
+     * Take a sample of hits by wrapping an existing Hits object.
+     *
+     * @param sampleParameters sample parameters 
+     * @return the sample
+     */
+    @Override
+    public DocGroups sample(SampleParameters sampleParameters) {
+        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
     }
 }

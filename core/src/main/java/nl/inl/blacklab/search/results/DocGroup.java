@@ -31,7 +31,7 @@ public class DocGroup extends Group<DocResult> {
     }
     
     protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalSize) {
-        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (WindowStats)null), totalSize);
+        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters)null, (WindowStats)null), totalSize);
     }
     
     @Override

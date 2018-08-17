@@ -90,11 +90,12 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * 
      * @param queryInfo query info
      * @param results results
+     * @param sampleParameters sample parameters (if this is a sample)
      * @param windowStats window stats (if this is a window)
      * @return document results
      */
-    public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
-        return new DocResults(queryInfo, results, windowStats);
+    public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+        return new DocResults(queryInfo, results, sampleParameters, windowStats);
     }
     
     /**
@@ -124,7 +125,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-        return new DocResults(queryInfo, results, (WindowStats)null);
+        return DocResults.fromList(queryInfo, results, (SampleParameters)null, (WindowStats)null);
     }
 
     /**
@@ -155,6 +156,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     private int totalHits = 0;
     
     private WindowStats windowStats;
+
+    private SampleParameters sampleParameters;
 
     /**
      * Construct an empty DocResults.
@@ -189,15 +192,21 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param results the list of results
      * @param windowStats window stats
      */
-    protected DocResults(QueryInfo queryInfo, List<DocResult> results, WindowStats windowStats) {
+    protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
         this.results = results;
+        this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
     }
    
     @Override
     public WindowStats windowStats() {
         return windowStats;
+    }
+   
+    @Override
+    public SampleParameters sampleParameters() {
+        return sampleParameters;
     }
     
     boolean sourceHitsFullyRead() {
@@ -361,7 +370,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, groupBy, (WindowStats)null);
+        return DocGroups.fromList(queryInfo(), results, groupBy, (SampleParameters)null, (WindowStats)null);
     }
 
     /**
@@ -386,7 +395,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         List<DocResult> resultsWindow = new ArrayList<DocResult>(results.subList(first, first + actualSize));
         boolean hasNext = docsProcessedAtLeast(first + actualSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return new DocResults(queryInfo(), resultsWindow, windowStats);
+        return DocResults.fromList(queryInfo(), resultsWindow, (SampleParameters)null, windowStats);
     }
 
     /**
@@ -435,7 +444,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public DocResults filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new DocResults(queryInfo(), list, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -447,7 +456,18 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             DocResult newGroup = DocResult.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return new DocResults(queryInfo(), truncatedGroups, windowStats);
+        return DocResults.fromList(queryInfo(), truncatedGroups, (SampleParameters)null, windowStats);
+    }
+
+    /**
+     * Take a sample of hits by wrapping an existing Hits object.
+     *
+     * @param sampleParameters sample parameters 
+     * @return the sample
+     */
+    @Override
+    public DocResults sample(SampleParameters sampleParameters) {
+        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, (WindowStats)null);
     }
     
 }

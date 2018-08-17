@@ -54,6 +54,8 @@ public class HitGroupsImpl extends HitGroups {
     private int largestGroupSize = 0;
 
     private WindowStats windowStats = null;
+
+    private SampleParameters sampleParameters = null;
     
     /**
      * Construct a ResultsGrouper object, by grouping the supplied hits.
@@ -103,9 +105,10 @@ public class HitGroupsImpl extends HitGroups {
         }
     }
 
-    protected HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, WindowStats windowStats) {
+    protected HitGroupsImpl(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo, groupCriteria);
         this.windowStats = windowStats;
+        this.sampleParameters = sampleParameters;
         for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
@@ -154,6 +157,11 @@ public class HitGroupsImpl extends HitGroups {
     public WindowStats windowStats() {
         return windowStats;
     }
+    
+    @Override
+    public SampleParameters sampleParameters() {
+        return sampleParameters;
+    }
 
     @Override
     public Results<HitGroup> window(int first, int windowSize) {
@@ -166,13 +174,13 @@ public class HitGroupsImpl extends HitGroups {
             to = results.size();
         List<HitGroup> list = new ArrayList<>(results.subList(first, to)); // copy to avoid 'memleaks' from .subList()
         boolean hasNext = results.size() > to;
-        return new HitGroupsImpl(queryInfo(), list, criteria, new WindowStats(hasNext, first, windowSize, list.size()));
+        return new HitGroupsImpl(queryInfo(), list, criteria, (SampleParameters)null, new WindowStats(hasNext, first, windowSize, list.size()));
     }
 
     @Override
     public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria(), null);
+        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -189,7 +197,7 @@ public class HitGroupsImpl extends HitGroups {
             HitGroup newGroup = HitGroup.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, windowStats);
+        return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
     }
 
 }

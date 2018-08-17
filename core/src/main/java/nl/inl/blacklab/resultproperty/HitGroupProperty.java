@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.HitGroupsImpl;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 
 /**
@@ -128,6 +129,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     public HitGroups sortResults(Results<HitGroup> results) {
         List<HitGroup> list = new ArrayList<>(results.resultsList());
         list.sort(this);
-        return HitGroupsImpl.fromList(results.queryInfo(), list, (HitProperty)((ResultGroups<Hit>)results).getGroupCriteria(), (WindowStats)null);
+        return HitGroupsImpl.fromList(results.queryInfo(), list, (HitProperty)((ResultGroups<Hit>)results).getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 }

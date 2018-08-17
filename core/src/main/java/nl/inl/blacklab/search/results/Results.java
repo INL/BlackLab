@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -28,6 +31,36 @@ public abstract class Results<T> implements Iterable<T> {
         return nextHitsObjId++;
     }
     
+    // Perform simple generic sampling operation
+    protected static <T> List<T> doSample(Results<T> source, SampleParameters sampleParameters) {
+        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
+        // (this class could save memory by only storing the hits we're interested in)
+        
+        List<T> results = new ArrayList<>();
+        
+        Random random = new Random(sampleParameters.seed());
+        int numberOfHitsToSelect = sampleParameters.numberOfHits(source.size());
+        if (numberOfHitsToSelect > source.size())
+            numberOfHitsToSelect = source.size(); // default to all hits in this case
+        // Choose the hits
+        Set<Integer> chosenHitIndices = new TreeSet<>();
+        for (int i = 0; i < numberOfHitsToSelect; i++) {
+            // Choose a hit we haven't chosen yet
+            int hitIndex;
+            do {
+                hitIndex = random.nextInt(source.size());
+            } while (chosenHitIndices.contains(hitIndex));
+            chosenHitIndices.add(hitIndex);
+        }
+        
+        // Add the hits in order of their index
+        for (Integer hitIndex : chosenHitIndices) {
+            T hit = source.get(hitIndex);
+            results.add(hit);
+        }
+        return results;
+    }
+
     /** Unique id of this Hits instance (for debugging) */
     protected final int hitsObjId = getNextHitsObjId();
     
@@ -318,9 +351,7 @@ public abstract class Results<T> implements Iterable<T> {
      * @param sampleParameters sample parameters 
      * @return the sample
      */
-    public Hits sample(SampleParameters sampleParameters) {
-        throw new UnsupportedOperationException();
-    }
+    public abstract Results<T> sample(SampleParameters sampleParameters);
 
     
 }

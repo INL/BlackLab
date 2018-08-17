@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 
 /**
@@ -170,7 +171,7 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     public DocResults sortResults(Results<DocResult> results) {
         ArrayList<DocResult> sorted = new ArrayList<>(results.resultsList());
         sorted.sort(this);
-        return DocResults.fromList(results.queryInfo(), sorted, (WindowStats)null);
+        return DocResults.fromList(results.queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
     }
 
 }

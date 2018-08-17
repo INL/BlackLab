@@ -37,11 +37,12 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @param queryInfo query info
      * @param results list of groups
      * @param groupCriteria what hits would be grouped by
-     * @param windowStats 
+     * @param sampleParameters how groups were sampled, or null if not applicable
+     * @param windowStats what groups window this is, or null if not applicable
      * @return grouped hits
      */
-    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, WindowStats windowStats) {
-        return new HitGroupsImpl(queryInfo, results, groupCriteria, windowStats);
+    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
+        return new HitGroupsImpl(queryInfo, results, groupCriteria, sampleParameters, windowStats);
     }
 
     /**
@@ -86,7 +87,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
         ensureAllHitsRead();
         List<HitGroup> sorted = new ArrayList<>(results);
         sorted.sort(sortProp);
-        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria(), null);
+        return new HitGroupsImpl(queryInfo(), sorted, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     /**
@@ -108,5 +109,16 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     @Override
     protected void ensureResultsRead(int number) {
         // NOP
+    }
+
+    /**
+     * Take a sample of hits by wrapping an existing Hits object.
+     *
+     * @param sampleParameters sample parameters 
+     * @return the sample
+     */
+    @Override
+    public HitGroups sample(SampleParameters sampleParameters) {
+        return new HitGroupsImpl(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
     }
 }
