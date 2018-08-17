@@ -19,7 +19,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     private ContextSize contextSize;
     private MatchSensitivity sensitivity;
 
-    public SearchCollocationsFromHits(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
+    public SearchCollocationsFromHits(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
         super(queryInfo, ops);
         this.source = source;
         this.annotation = annotation;
@@ -29,12 +29,12 @@ public class SearchCollocationsFromHits extends SearchCollocations {
 
     @Override
     public TermFrequencyList execute() throws InvalidQuery {
-        return performCustom(source.execute().collocations(annotation, contextSize, sensitivity));
+        return notifyObservers(source.execute().collocations(annotation, contextSize, sensitivity));
     }
 
     @Override
-    public SearchCollocationsFromHits custom(SearchOperation op) {
-        return new SearchCollocationsFromHits(queryInfo(), extraCustomOp(op), source, annotation, contextSize, sensitivity);
+    public SearchCollocationsFromHits observe(SearchResultObserver op) {
+        return new SearchCollocationsFromHits(queryInfo(), extraObserver(op), source, annotation, contextSize, sensitivity);
     }
 
 }

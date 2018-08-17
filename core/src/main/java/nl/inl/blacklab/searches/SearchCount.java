@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.ResultCount;
  */
 public abstract class SearchCount extends AbstractSearch {
     
-    public SearchCount(QueryInfo queryInfo, List<SearchOperation> ops) {
+    public SearchCount(QueryInfo queryInfo, List<SearchResultObserver> ops) {
         super(queryInfo, ops);
     }
 
@@ -31,7 +31,7 @@ public abstract class SearchCount extends AbstractSearch {
      * @return resulting operation
      */
     @Override
-    public abstract SearchCount custom(SearchOperation receiver);
+    public abstract SearchCount observe(SearchResultObserver receiver);
     
 
 }

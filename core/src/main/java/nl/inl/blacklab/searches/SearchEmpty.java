@@ -27,7 +27,7 @@ public class SearchEmpty extends AbstractSearch {
     }
 
     @Override
-    public Search custom(SearchOperation receiver) {
+    public Search observe(SearchResultObserver receiver) {
         throw new UnsupportedOperationException();
     }
 
@@ -40,7 +40,7 @@ public class SearchEmpty extends AbstractSearch {
     }
     
     public SearchDocs find(Query documentQuery) {
-        return new SearchDocsFromQuery(queryInfo(), (List<SearchOperation>)null, documentQuery);
+        return new SearchDocsFromQuery(queryInfo(), (List<SearchResultObserver>)null, documentQuery);
     }
     
 }

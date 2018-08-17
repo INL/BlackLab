@@ -14,7 +14,7 @@ public class SearchHitsSampled extends SearchHits {
     private SearchHits source;
     private SampleParameters sampleParameters;
 
-    SearchHitsSampled(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits source, SampleParameters sampleParameters) {
+    SearchHitsSampled(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, SampleParameters sampleParameters) {
         super(queryInfo, ops);
         this.source = source;
         this.sampleParameters = sampleParameters;
@@ -22,11 +22,11 @@ public class SearchHitsSampled extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(source.execute().sample(sampleParameters));
+        return notifyObservers(source.execute().sample(sampleParameters));
     }
 
     @Override
-    public SearchHitsSampled custom(SearchOperation operation) {
-        return new SearchHitsSampled(queryInfo(), extraCustomOp(operation), source, sampleParameters);
+    public SearchHitsSampled observe(SearchResultObserver operation) {
+        return new SearchHitsSampled(queryInfo(), extraObserver(operation), source, sampleParameters);
     }
 }

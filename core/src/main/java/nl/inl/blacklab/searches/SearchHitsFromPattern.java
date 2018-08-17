@@ -20,7 +20,7 @@ public class SearchHitsFromPattern extends SearchHits {
     
     private MaxSettings maxSettings;
 
-    SearchHitsFromPattern(QueryInfo queryInfo, List<SearchOperation> ops, TextPattern pattern, Query filter, MaxSettings maxSettings) {
+    SearchHitsFromPattern(QueryInfo queryInfo, List<SearchResultObserver> ops, TextPattern pattern, Query filter, MaxSettings maxSettings) {
         super(queryInfo, ops);
         this.pattern = pattern;
         this.filter = filter;
@@ -36,11 +36,11 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings));
+        return notifyObservers(queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings));
     }
 
     @Override
-    public SearchHitsFromPattern custom(SearchOperation operation) {
-        return new SearchHitsFromPattern(queryInfo(), extraCustomOp(operation), pattern, filter, maxSettings);
+    public SearchHitsFromPattern observe(SearchResultObserver operation) {
+        return new SearchHitsFromPattern(queryInfo(), extraObserver(operation), pattern, filter, maxSettings);
     }
 }

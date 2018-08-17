@@ -17,7 +17,7 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     
     private ResultProperty<HitGroup> sortBy;
 
-    public SearchHitGroupsSorted(QueryInfo queryInfo, List<SearchOperation> ops, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
+    public SearchHitGroupsSorted(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
         super(queryInfo, ops);
         this.source = source;
         this.sortBy = sortBy;
@@ -25,11 +25,11 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return performCustom(source.execute().sortedBy(sortBy));
+        return notifyObservers(source.execute().sortedBy(sortBy));
     }
 
     @Override
-    public SearchHitGroupsSorted custom(SearchOperation operation) {
-        return new SearchHitGroupsSorted(queryInfo(), extraCustomOp(operation), source, sortBy);
+    public SearchHitGroupsSorted observe(SearchResultObserver operation) {
+        return new SearchHitGroupsSorted(queryInfo(), extraObserver(operation), source, sortBy);
     }
 }

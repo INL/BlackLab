@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  * 
  * This can be useful for e.g. caching an intermediate result.
  */
-public interface SearchOperation {
+public interface SearchResultObserver {
     
     /**
      * Perform the operation on the result.

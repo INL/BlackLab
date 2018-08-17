@@ -14,7 +14,7 @@ public class SearchHitsWindow extends SearchHits {
     private int first;
     private int number;
 
-    SearchHitsWindow(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits source, int first, int number) {
+    SearchHitsWindow(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, int first, int number) {
         super(queryInfo, ops);
         this.source = source;
         this.first = first;
@@ -23,11 +23,11 @@ public class SearchHitsWindow extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(source.execute().window(first, number));
+        return notifyObservers(source.execute().window(first, number));
     }
 
     @Override
-    public SearchHitsWindow custom(SearchOperation operation) {
-        return new SearchHitsWindow(queryInfo(), extraCustomOp(operation), source, first, number);
+    public SearchHitsWindow observe(SearchResultObserver operation) {
+        return new SearchHitsWindow(queryInfo(), extraObserver(operation), source, first, number);
     }
 }

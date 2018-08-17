@@ -16,7 +16,7 @@ public class SearchHitsFiltered extends SearchHits {
     private HitProperty property;
     private PropertyValue value;
 
-    SearchHitsFiltered(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits source, HitProperty property, PropertyValue value) {
+    SearchHitsFiltered(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, HitProperty property, PropertyValue value) {
         super(queryInfo, ops);
         this.source = source;
         this.property = property;
@@ -25,11 +25,11 @@ public class SearchHitsFiltered extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(source.execute().filteredBy(property, value));
+        return notifyObservers(source.execute().filteredBy(property, value));
     }
 
     @Override
-    public SearchHitsFiltered custom(SearchOperation operation) {
-        return new SearchHitsFiltered(queryInfo(), extraCustomOp(operation), source, property, value);
+    public SearchHitsFiltered observe(SearchResultObserver operation) {
+        return new SearchHitsFiltered(queryInfo(), extraObserver(operation), source, property, value);
     }
 }

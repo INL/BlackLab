@@ -35,7 +35,7 @@ public abstract class SearchHitGroupGroups extends AbstractSearch {
      * @return resulting operation
      */
     @Override
-    public abstract SearchHitGroupGroups custom(SearchOperation receiver);
+    public abstract SearchHitGroupGroups observe(SearchResultObserver receiver);
     
     /**
      * Sort hits.

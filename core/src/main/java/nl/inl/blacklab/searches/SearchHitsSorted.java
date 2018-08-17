@@ -14,7 +14,7 @@ public class SearchHitsSorted extends SearchHits {
     private SearchHits source;
     private HitProperty sortBy;
 
-    SearchHitsSorted(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits source, HitProperty sortBy) {
+    SearchHitsSorted(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, HitProperty sortBy) {
         super(queryInfo, ops);
         this.source = source;
         this.sortBy = sortBy;
@@ -22,11 +22,11 @@ public class SearchHitsSorted extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(source.execute().sortedBy(sortBy));
+        return notifyObservers(source.execute().sortedBy(sortBy));
     }
 
     @Override
-    public SearchHitsSorted custom(SearchOperation operation) {
-        return new SearchHitsSorted(queryInfo(), extraCustomOp(operation), source, sortBy);
+    public SearchHitsSorted observe(SearchResultObserver operation) {
+        return new SearchHitsSorted(queryInfo(), extraObserver(operation), source, sortBy);
     }
 }

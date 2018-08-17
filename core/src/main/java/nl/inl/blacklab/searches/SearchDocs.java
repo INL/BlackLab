@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /** A search that produces DocResults. */
 public abstract class SearchDocs extends AbstractSearch {
 
-    public SearchDocs(QueryInfo queryInfo, List<SearchOperation> customOperations) {
+    public SearchDocs(QueryInfo queryInfo, List<SearchResultObserver> customOperations) {
         super(queryInfo, customOperations);
     }
 

@@ -16,11 +16,11 @@ public abstract class AbstractSearch implements Search {
 	
     private QueryInfo queryInfo;
     
-    List<SearchOperation> customOperations;
+    List<SearchResultObserver> observers;
     
-    public AbstractSearch(QueryInfo queryInfo, List<SearchOperation> customOperations) {
+    public AbstractSearch(QueryInfo queryInfo, List<SearchResultObserver> customOperations) {
         this.queryInfo = queryInfo;  
-        this.customOperations = customOperations == null ? Collections.emptyList() : customOperations;
+        this.observers = customOperations == null ? Collections.emptyList() : customOperations;
     }
     
     public AbstractSearch(QueryInfo queryInfo) {
@@ -31,30 +31,30 @@ public abstract class AbstractSearch implements Search {
     public QueryInfo queryInfo() {
         return queryInfo;
     }
-    
-    protected <T extends SearchResult> T performCustom(T result) {
-        for (SearchOperation op: customOperations) {
+
+    protected <T extends SearchResult> T notifyObservers(T result) {
+        for (SearchResultObserver op: observers) {
             op.perform(this, result);
         }
         return result;
     }
-	
-    protected List<SearchOperation> extraCustomOp(SearchOperation operation) {
-        List<SearchOperation> ops = new ArrayList<>(customOperations);
-        ops.add(operation);
+    
+    protected List<SearchResultObserver> extraObserver(SearchResultObserver observer) {
+        List<SearchResultObserver> ops = new ArrayList<>(this.observers);
+        ops.add(observer);
         return ops;
     }
 
     /**
-     * Perform a custom operation on the result.
+     * Be notified of the result of this search.
      * 
      * This is useful to allow the client to put intermediate results
      * into the cache, among other things.
      * 
-     * @param operation operation to perform
+     * @param observer search observer
      * @return this search
      */
-    public abstract Search custom(SearchOperation operation);
+    public abstract Search observe(SearchResultObserver observer);
 
     @Override
     public int hashCode() {

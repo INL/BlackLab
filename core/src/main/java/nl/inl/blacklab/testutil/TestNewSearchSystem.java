@@ -7,6 +7,7 @@ import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 public class TestNewSearchSystem {
@@ -25,7 +26,7 @@ public class TestNewSearchSystem {
             System.out.println("First 10 document results for 'schip':");
             index.search()
                     .find("[lemma=\"schip\"]", null, index.maxSettings())
-                    .groupByDoc(3)
+                    .docs(3)
                     //.window(0, 10)
                     .execute()
                     .forEach(doc -> System.out.println(doc));
@@ -39,6 +40,14 @@ public class TestNewSearchSystem {
             System.out.println("Count number of hits for 'schip': " + index
                     .search()
                     .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .count()
+                    .execute()
+                    .value());
+
+            System.out.println("Count different spellings for 'schip': " + index
+                    .search()
+                    .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .group(new HitPropertyHitText(index), -1)
                     .count()
                     .execute()
                     .value());

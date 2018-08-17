@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public abstract class SearchCollocations extends AbstractSearch {
 
-    public SearchCollocations(QueryInfo queryInfo, List<SearchOperation> ops) {
+    public SearchCollocations(QueryInfo queryInfo, List<SearchResultObserver> ops) {
         super(queryInfo, ops);
     }
 
@@ -19,7 +19,7 @@ public abstract class SearchCollocations extends AbstractSearch {
     public abstract TermFrequencyList execute() throws InvalidQuery;
 
     @Override
-    public abstract SearchCollocations custom(SearchOperation receiver);
+    public abstract SearchCollocations observe(SearchResultObserver receiver);
 
 //    /**
 //     * Sort hits.

@@ -9,14 +9,15 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that yields hits. */
-public abstract class SearchHits extends AbstractSearch {
+public abstract class SearchHits extends SearchResults<Hit> {
 
-    SearchHits(QueryInfo queryInfo, List<SearchOperation> ops) {
+    SearchHits(QueryInfo queryInfo, List<SearchResultObserver> ops) {
         super(queryInfo, ops);
     }
 
@@ -31,7 +32,7 @@ public abstract class SearchHits extends AbstractSearch {
     public abstract Hits execute() throws WildcardTermTooBroad, RegexpTooLarge;
 
     @Override
-    public abstract SearchHits custom(SearchOperation operation);
+    public abstract SearchHits observe(SearchResultObserver operation);
 
     /**
      * Group hits by document.
@@ -43,8 +44,8 @@ public abstract class SearchHits extends AbstractSearch {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchDocs groupByDoc(int maxResultsToGatherPerGroup) {
-        return new SearchDocsFromHits(queryInfo(), customOperations, this, maxResultsToGatherPerGroup);
+    public SearchDocs docs(int maxResultsToGatherPerGroup) {
+        return new SearchDocsFromHits(queryInfo(), observers, this, maxResultsToGatherPerGroup);
     }
 
     /**
@@ -54,8 +55,8 @@ public abstract class SearchHits extends AbstractSearch {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchHitGroups groupBy(HitProperty groupBy, int maxResultsToGatherPerGroup) {
-        return new SearchHitGroupsFromHits(queryInfo(), (List<SearchOperation>)null, this, groupBy, maxResultsToGatherPerGroup);
+    public SearchHitGroups group(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+        return new SearchHitGroupsFromHits(queryInfo(), (List<SearchResultObserver>)null, this, groupBy, maxResultsToGatherPerGroup);
     }
 
     /**
@@ -64,8 +65,8 @@ public abstract class SearchHits extends AbstractSearch {
      * @param sortBy what to sort by
      * @return resulting operation
      */
-    public SearchHits sortBy(HitProperty sortBy) {
-        return new SearchHitsSorted(queryInfo(), (List<SearchOperation>)null, this, sortBy);
+    public SearchHits sort(HitProperty sortBy) {
+        return new SearchHitsSorted(queryInfo(), (List<SearchResultObserver>)null, this, sortBy);
     }
     
     /**
@@ -75,7 +76,7 @@ public abstract class SearchHits extends AbstractSearch {
      * @return resulting operation
      */
     public SearchHits sample(SampleParameters par) {
-        return new SearchHitsSampled(queryInfo(), (List<SearchOperation>)null, this, par);
+        return new SearchHitsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
     }
 
     /**
@@ -86,7 +87,7 @@ public abstract class SearchHits extends AbstractSearch {
      * @return resulting operation
      */
     public SearchHits filter(HitProperty property, PropertyValue value) {
-        return new SearchHitsFiltered(queryInfo(), (List<SearchOperation>)null, this, property, value);
+        return new SearchHitsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
     }
 
     /**
@@ -97,17 +98,9 @@ public abstract class SearchHits extends AbstractSearch {
      * @return resulting operation
      */
     public SearchHits window(int first, int number) {
-        return new SearchHitsWindow(queryInfo(), (List<SearchOperation>)null, this, first, number);
+        return new SearchHitsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
     }
-
-    /**
-     * Count hits.
-     * @return resulting operation
-     */
-    public SearchCount count() {
-        return new SearchCountFromHits(queryInfo(), (List<SearchOperation>)null, this);
-    }
-
+    
     /**
      * Count words occurring near these hits.
      * 
@@ -118,7 +111,7 @@ public abstract class SearchHits extends AbstractSearch {
      * @return resulting operation
      */
     public SearchCollocations collocations(Annotation annotation, ContextSize size, MatchSensitivity sensitivity) {
-        return new SearchCollocationsFromHits(queryInfo(), (List<SearchOperation>)null, this, annotation, size, sensitivity);
+        return new SearchCollocationsFromHits(queryInfo(), (List<SearchResultObserver>)null, this, annotation, size, sensitivity);
     }
 
 

@@ -12,7 +12,7 @@ public class SearchDocsFromHits extends SearchDocs {
 
     private int maxHits = 0;
 
-    public SearchDocsFromHits(QueryInfo queryInfo, List<SearchOperation> customOperations, SearchHits hitSearch, int maxHitsToGatherPerDocument) {
+    public SearchDocsFromHits(QueryInfo queryInfo, List<SearchResultObserver> customOperations, SearchHits hitSearch, int maxHitsToGatherPerDocument) {
         super(queryInfo, customOperations);
         this.hitsSearch = hitSearch;
         this.maxHits = maxHitsToGatherPerDocument;
@@ -20,12 +20,12 @@ public class SearchDocsFromHits extends SearchDocs {
 
     @Override
     public DocResults execute() throws InvalidQuery {
-        return performCustom(hitsSearch.execute().perDocResults(maxHits));
+        return notifyObservers(hitsSearch.execute().perDocResults(maxHits));
     }
 
     @Override
-    public SearchDocsFromHits custom(SearchOperation operation) {
-        return new SearchDocsFromHits(queryInfo(), extraCustomOp(operation), hitsSearch, maxHits);
+    public SearchDocsFromHits observe(SearchResultObserver operation) {
+        return new SearchDocsFromHits(queryInfo(), extraObserver(operation), hitsSearch, maxHits);
     }
 
 }

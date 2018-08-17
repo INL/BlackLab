@@ -19,7 +19,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     
     private int maxResultsToStorePerGroup;
 
-    public SearchHitGroupsFromHits(QueryInfo queryInfo, List<SearchOperation> ops, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup) {
+    public SearchHitGroupsFromHits(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup) {
         super(queryInfo, ops);
         this.hitsSearch = hitsSearch;
         this.groupBy = groupBy;
@@ -35,12 +35,12 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return performCustom(HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup));
+        return notifyObservers(HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup));
     }
 
     @Override
-    public SearchHitGroupsFromHits custom(SearchOperation operation) {
-        return new SearchHitGroupsFromHits(queryInfo(), extraCustomOp(operation), hitsSearch, groupBy, maxResultsToStorePerGroup);
+    public SearchHitGroupsFromHits observe(SearchResultObserver operation) {
+        return new SearchHitGroupsFromHits(queryInfo(), extraObserver(operation), hitsSearch, groupBy, maxResultsToStorePerGroup);
     }
     
 //    /**

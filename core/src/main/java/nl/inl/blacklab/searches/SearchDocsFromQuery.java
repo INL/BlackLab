@@ -12,19 +12,19 @@ public class SearchDocsFromQuery extends SearchDocs {
 
     private Query query;
 
-    public SearchDocsFromQuery(QueryInfo queryInfo, List<SearchOperation> customOperations, Query query) {
+    public SearchDocsFromQuery(QueryInfo queryInfo, List<SearchResultObserver> customOperations, Query query) {
         super(queryInfo, customOperations);
         this.query = query;
     }
 
     @Override
     public DocResults execute() throws InvalidQuery {
-        return performCustom(queryInfo().index().queryDocuments(query));
+        return notifyObservers(queryInfo().index().queryDocuments(query));
     }
 
     @Override
-    public SearchDocsFromQuery custom(SearchOperation operation) {
-        return new SearchDocsFromQuery(queryInfo(), extraCustomOp(operation), query);
+    public SearchDocsFromQuery observe(SearchResultObserver operation) {
+        return new SearchDocsFromQuery(queryInfo(), extraObserver(operation), query);
     }
 
 }
