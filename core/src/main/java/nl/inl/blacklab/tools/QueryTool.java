@@ -261,8 +261,8 @@ public class QueryTool {
         public TextPattern parse(String query) throws InvalidQuery {
             //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
             CompleteQuery q = ContextualQueryLanguageParser.parse(index, query);
-            includedFilterQuery = q.getFilterQuery();
-            return q.getContentsQuery();
+            includedFilterQuery = q.filter();
+            return q.pattern();
         }
 
         @Override
@@ -1414,7 +1414,7 @@ public class QueryTool {
         int i;
         for (i = firstResult; i < groups.size() && i < firstResult + resultsPerPage; i++) {
             Group<Hit> g = groups.get(i);
-            outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.getIdentity().toString()));
+            outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.identity().toString()));
         }
 
         // Summarize
@@ -1442,7 +1442,7 @@ public class QueryTool {
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
         int hitNr = window.windowStats().first() + 1;
         for (Group<Hit> result : window) {
-            Doc doc = ((PropertyValueDoc)result.getIdentity()).getValue();
+            Doc doc = ((PropertyValueDoc)result.identity()).value();
             Document d = doc.luceneDoc();
             String title = d.get(titleField.name());
             if (title == null)
@@ -1608,7 +1608,7 @@ public class QueryTool {
         Hits hitsToShow = hits;
         if (showWhichGroup >= 0) {
             Group<Hit> g = groups.get(showWhichGroup);
-            hitsToShow = (Hits)g.getStoredResults();
+            hitsToShow = (Hits)g.storedResults();
         }
         return hitsToShow;
     }

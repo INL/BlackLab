@@ -394,7 +394,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         ensureAllResultsRead();
         int sum = 0;
         for (DocResult result : results) {
-            sum += ((PropertyValueInt) numProp.get(result)).getValue();
+            sum += ((PropertyValueInt) numProp.get(result)).value();
         }
         return sum;
     }
@@ -413,11 +413,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public Group<Hit> get(PropertyValue prop) {
         ensureAllResultsRead();
-        return results.stream().filter(d -> d.getIdentity().equals(prop)).findFirst().orElse(null);
+        return results.stream().filter(d -> d.identity().equals(prop)).findFirst().orElse(null);
     }
 
     @Override
-    public ResultProperty<Hit> getGroupCriteria() {
+    public ResultProperty<Hit> groupCriteria() {
         return groupByDoc;
     }
 
@@ -433,7 +433,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<DocResult> truncatedGroups = new ArrayList<DocResult>();
         for (DocResult group: results) {
-            DocResult newGroup = DocResult.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
         return DocResults.fromList(queryInfo(), truncatedGroups, (SampleParameters)null, windowStats);

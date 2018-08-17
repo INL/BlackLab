@@ -39,7 +39,7 @@ public class TestDocResults {
             int[] expHits = new int[] { 2, 1, 2 };
             int i = 0;
             for (DocResult dr : drs) {
-                Assert.assertEquals(expDoc[i], dr.getIdentity().getValue().id());
+                Assert.assertEquals(expDoc[i], dr.identity().id());
                 Assert.assertEquals(expHits[i], dr.size());
                 i++;
             }

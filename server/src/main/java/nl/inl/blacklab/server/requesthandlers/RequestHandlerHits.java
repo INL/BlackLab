@@ -98,9 +98,9 @@ public class RequestHandlerHits extends RequestHandler {
                 // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
                 String sortBy = searchParam.getString("sort");
                 HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
-                        ? HitProperty.deserialize(group.getStoredResults(), sortBy)
+                        ? HitProperty.deserialize(group.storedResults(), sortBy)
                         : null;
-                Hits hitsInGroup = sortProp != null ? group.getStoredResults().sortedBy(sortProp) : group.getStoredResults();
+                Hits hitsInGroup = sortProp != null ? group.storedResults().sortedBy(sortProp) : group.storedResults();
 
                 // Important, only count hits within this group for the total
                 // We should have retrieved all the hits already, as JobGroups always counts all hits.
@@ -187,8 +187,8 @@ public class RequestHandlerHits extends RequestHandler {
                 try {
                     QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
                     ds.startEntry("explanation").startMap()
-                            .entry("originalQuery", explanation.getOriginalQuery())
-                            .entry("rewrittenQuery", explanation.getRewrittenQuery())
+                            .entry("originalQuery", explanation.originalQuery())
+                            .entry("rewrittenQuery", explanation.rewrittenQuery())
                             .endMap().endEntry();
                 } catch (RegexpTooLarge e) {
                     throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");

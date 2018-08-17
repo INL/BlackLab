@@ -57,7 +57,7 @@ public class DocImpl implements Doc {
     }
 
     @Override
-    public void getCharacterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,
+    public void characterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound) {
 
         if (startsOfWords.length == 0)
@@ -194,7 +194,7 @@ public class DocImpl implements Doc {
                                    // subtract one
         }
 
-        getCharacterOffsets(hits.field(), starts, ends, true);
+        characterOffsets(hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -228,7 +228,7 @@ public class DocImpl implements Doc {
         boolean endAtEndOfDoc = endAtWord == -1;
         int[] starts = new int[] { startAtStartOfDoc ? 0 : startAtWord };
         int[] ends = new int[] { endAtEndOfDoc ? starts[0] : endAtWord };
-        getCharacterOffsets(field, starts, ends, true);
+        characterOffsets(field, starts, ends, true);
         if (startAtStartOfDoc)
             starts[0] = -1;
         if (endAtEndOfDoc)
@@ -237,7 +237,7 @@ public class DocImpl implements Doc {
     }
 
     @Override
-    public String getContentByCharPos(Field field, int startAtChar, int endAtChar) {
+    public String contentsByCharPos(Field field, int startAtChar, int endAtChar) {
         Document d = luceneDoc();
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
@@ -247,7 +247,7 @@ public class DocImpl implements Doc {
     }
 
     @Override
-    public String getContent(Field field, int startAtWord, int endAtWord) {
+    public String contents(Field field, int startAtWord, int endAtWord) {
         Document d = luceneDoc();
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
@@ -272,7 +272,7 @@ public class DocImpl implements Doc {
         // Get content by char positions
         int startAtChar = startEndCharPos[0];
         int endAtChar = startEndCharPos[1];
-        String content = getContentByCharPos(field, startAtChar, endAtChar);
+        String content = contentsByCharPos(field, startAtChar, endAtChar);
 
         boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
         boolean mustFixUnbalancedTags = !wholeDocument;

@@ -77,7 +77,7 @@ public class ExportCorpus {
                 String fromInputFile = doc.luceneDoc().get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = doc.getContent();
+                    String xml = doc.contents();
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {

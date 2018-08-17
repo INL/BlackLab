@@ -8,7 +8,6 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
@@ -57,8 +56,6 @@ public class Concordances {
     public Concordance get(Hit h) {
         if (kwics != null)
             return kwics.get(h).toConcordance();
-        if (concordances == null)
-            throw new BlackLabRuntimeException("Call findConcordances() before getConcordance().");
         return concordances.get(h);
     }
 
@@ -110,7 +107,7 @@ public class Concordances {
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         AnnotatedField field = queryInfo.field();
-        doc.getCharacterOffsets(field, startsOfWords, endsOfWords, true);
+        doc.characterOffsets(field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
         List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);

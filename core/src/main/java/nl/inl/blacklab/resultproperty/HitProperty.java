@@ -239,7 +239,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     @Override
-    public abstract String getName();
+    public abstract String name();
 
     @Override
     public abstract String serialize();
@@ -292,8 +292,8 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
     
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(getName());
+    public List<String> propNames() {
+        return Arrays.asList(name());
     }
 
 }

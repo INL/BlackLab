@@ -97,7 +97,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
          * @param buf where to serialize to
          * @throws IOException on error
          */
-        public void serialize(ByteBuffer buf) throws IOException {
+        void serialize(ByteBuffer buf) throws IOException {
             buf.putInt(id);
             buf.putInt(fileId);
             buf.putInt(entryOffsetBytes);
@@ -117,7 +117,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
          * @return new TocEntry
          * @throws IOException on error
          */
-        public static TocEntry deserialize(ByteBuffer buf) throws IOException {
+        static TocEntry deserialize(ByteBuffer buf) throws IOException {
             int id = buf.getInt();
             int fileId = buf.getInt();
             int offset = buf.getInt();
@@ -140,7 +140,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
          * @param blockNumber which block?
          * @return byte offset of the first byte in the file
          */
-        public long getBlockStartOffset(int blockNumber) {
+        long getBlockStartOffset(int blockNumber) {
             return entryOffsetBytes + blockOffsetBytes[blockNumber];
         }
 
@@ -150,7 +150,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
          * @param blockNumber which block?
          * @return byte offset of the first byte beyond the block in the file
          */
-        public long getBlockEndOffset(int blockNumber) {
+        long getBlockEndOffset(int blockNumber) {
             if (blockNumber < blockOffsetBytes.length - 1)
                 return entryOffsetBytes + blockOffsetBytes[blockNumber + 1];
             return entryOffsetBytes + entryLengthBytes;
@@ -161,7 +161,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
          *
          * @return the size in bytes
          */
-        public int sizeBytes() {
+        int sizeBytes() {
             return 28 + blockOffsetBytes.length * 4;
         }
     }
@@ -786,7 +786,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     }
 
     @Override
-    public int getDocLength(int id) {
+    public int docLength(int id) {
         return toc.get(id).entryLengthCharacters;
     }
 

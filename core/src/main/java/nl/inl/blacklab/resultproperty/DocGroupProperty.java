@@ -113,7 +113,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     }
 
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(getName());
+    public List<String> propNames() {
+        return Arrays.asList(name());
     }
 }

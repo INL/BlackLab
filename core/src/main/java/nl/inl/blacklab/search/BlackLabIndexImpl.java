@@ -144,7 +144,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return b.toString();
     }
 
-    public static Collator getDefaultCollator() {
+    public static Collator defaultCollator() {
         return defaultCollator;
     }
 
@@ -159,8 +159,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *         timestamp could not be found for some reason (i.e. not running from a
      *         JAR, or key not found in manifest).
      */
-    public static String getBlackLabBuildTime() {
-        return getValueFromManifest("Build-Time", "UNKNOWN");
+    public static String blackLabBuildTime() {
+        return valueFromManifest("Build-Time", "UNKNOWN");
     }
 
     /**
@@ -170,8 +170,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *         some reason (i.e. not running from a JAR, or key not found in
      *         manifest).
      */
-    public static String getBlackLabVersion() {
-        return getValueFromManifest("Implementation-Version", "UNKNOWN");
+    public static String blackLabVersion() {
+        return valueFromManifest("Implementation-Version", "UNKNOWN");
     }
 
     /**
@@ -181,7 +181,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param defaultValue value to return if no manifest found or key not found
      * @return value from the manifest, or the default value if not found
      */
-    static String getValueFromManifest(String key, String defaultValue) {
+    static String valueFromManifest(String key, String defaultValue) {
         try {
             URL res = BlackLabIndexImpl.class.getResource(BlackLabIndexImpl.class.getSimpleName() + ".class");
             URLConnection conn = res.openConnection();
@@ -211,7 +211,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *            (default|whitespace|standard|nontokenizing)
      * @return the analyzer, or null if the name wasn't recognized
      */
-    static Analyzer getAnalyzerInstance(String analyzerName) {
+    static Analyzer analyzerInstance(String analyzerName) {
         analyzerName = analyzerName.toLowerCase();
         if (analyzerName.equals("whitespace")) {
             return whitespaceAnalyzer;
@@ -230,7 +230,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         BlackLabIndexImpl.traceIndexOpening = traceIndexOpening;
     }
 
-    public static boolean isTraceOptimization() {
+    public static boolean traceOptimization() {
         return traceOptimization;
     }
 
@@ -719,14 +719,14 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     private void createAnalyzers() {
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-        fieldAnalyzers.put("fromInputFile", getAnalyzerInstance("nontokenizing"));
-        Analyzer baseAnalyzer = getAnalyzerInstance(indexMetadata.metadataFields().defaultAnalyzerName());
+        fieldAnalyzers.put("fromInputFile", analyzerInstance("nontokenizing"));
+        Analyzer baseAnalyzer = analyzerInstance(indexMetadata.metadataFields().defaultAnalyzerName());
         for (MetadataField field: indexMetadata.metadataFields()) {
             String analyzerName = field.analyzerName();
             if (field.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
             if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
-                Analyzer fieldAnalyzer = getAnalyzerInstance(analyzerName);
+                Analyzer fieldAnalyzer = analyzerInstance(analyzerName);
                 if (fieldAnalyzer == null) {
                     logger.error("Unknown analyzer name " + analyzerName + " for field " + field.name());
                 } else {

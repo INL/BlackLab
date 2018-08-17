@@ -29,14 +29,14 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     
     @Override
     public PropertyValue get(DocGroup result) {
-        return result.getIdentity();
+        return result.identity();
     }
 
     @Override
     public int compare(DocGroup a, DocGroup b) {
         if (reverse)
-            return b.getIdentity().compareTo(a.getIdentity());
-        return a.getIdentity().compareTo(b.getIdentity());
+            return b.identity().compareTo(a.identity());
+        return a.identity().compareTo(b.identity());
     }
 
     @Override
@@ -50,7 +50,7 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "group: identity";
     }
 }

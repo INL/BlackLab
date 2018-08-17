@@ -139,7 +139,7 @@ public class ContentStoreMemory extends ContentStore {
     }
 
     @Override
-    public int getDocLength(int id) {
+    public int docLength(int id) {
         return toc.get(id).length();
     }
 

@@ -46,7 +46,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
      */
     static Collator getValueSortCollator() {
         if (valueSortCollator == null) {
-            valueSortCollator = (RuleBasedCollator) BlackLabIndexImpl.getDefaultCollator();
+            valueSortCollator = (RuleBasedCollator) BlackLabIndexImpl.defaultCollator();
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();

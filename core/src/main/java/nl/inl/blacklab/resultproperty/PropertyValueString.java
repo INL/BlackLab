@@ -11,6 +11,11 @@ public class PropertyValueString extends PropertyValue {
     }
 
     @Override
+    public String value() {
+        return value;
+    }
+
+    @Override
     public int compareTo(Object o) {
         return PropertyValue.collator.compare(value, ((PropertyValueString) o).value);
     }
@@ -45,7 +50,7 @@ public class PropertyValueString extends PropertyValue {
     }
 
     @Override
-    public List<String> getPropValues() {
+    public List<String> propValues() {
         return Arrays.asList(value);
     }
 }

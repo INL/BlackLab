@@ -69,7 +69,12 @@ public class PropertyValueContextWord extends PropertyValueContext {
     }
 
     @Override
-    public List<String> getPropValues() {
+    public List<String> propValues() {
         return Arrays.asList(this.toString());
+    }
+
+    @Override
+    public Integer value() {
+        return valueTokenId;
     }
 }

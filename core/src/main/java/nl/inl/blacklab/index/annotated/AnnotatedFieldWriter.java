@@ -181,15 +181,15 @@ public class AnnotatedFieldWriter {
         return annotations.containsKey(name);
     }
 
-    public AnnotationWriter getMainAnnotation() {
+    public AnnotationWriter mainAnnotation() {
         return mainAnnotation;
     }
 
-    public AnnotationWriter getTagAnnotation() {
+    public AnnotationWriter tagsAnnotation() {
         return annotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
     }
 
-    public AnnotationWriter getPunctAnnotation() {
+    public AnnotationWriter punctAnnotation() {
         return annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 

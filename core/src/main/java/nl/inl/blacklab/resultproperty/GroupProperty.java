@@ -80,8 +80,8 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     }
     
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(getName());
+    public List<String> propNames() {
+        return Arrays.asList(name());
     }
 
 }

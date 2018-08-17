@@ -88,7 +88,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     if (group == null)
                         throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                    hits = group.getStoredResults();
+                    hits = group.storedResults();
 
                     // NOTE: sortBy is automatically applied to regular results, but not to results within groups
                     // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
@@ -133,7 +133,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         try {
             // Write the header
             List<String> row = new ArrayList<>();
-            row.addAll(groups.getGroupCriteria().getPropNames());
+            row.addAll(groups.groupCriteria().propNames());
             row.add("count");
 
             // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
@@ -145,8 +145,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             // write the groups
             for (HitGroup group : groups) {
                 row.clear();
-                row.addAll(group.getIdentity().getPropValues());
-                row.add(Integer.toString(group.getStoredResults().hitsCountedSoFar()));
+                row.addAll(group.identity().propValues());
+                row.add(Integer.toString(group.storedResults().hitsCountedSoFar()));
                 printer.printRecord(row);
             }
 

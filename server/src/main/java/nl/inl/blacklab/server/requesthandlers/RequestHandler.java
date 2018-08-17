@@ -494,7 +494,7 @@ public abstract class RequestHandler {
             int totalSize = 0;
             for (DocGroup count : facetCounts) {
                 ds.startItem("item").startMap()
-                        .entry("value", count.getIdentity().toString())
+                        .entry("value", count.identity().toString())
                         .entry("size", count.size())
                         .endMap().endItem();
                 totalSize += count.size();

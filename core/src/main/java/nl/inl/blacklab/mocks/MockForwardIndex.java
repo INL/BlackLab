@@ -65,13 +65,13 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public long getFreeSpace() {
+    public long freeSpace() {
         //
         return 0;
     }
 
     @Override
-    public int getFreeBlocks() {
+    public int freeBlocks() {
         //
         return 0;
     }

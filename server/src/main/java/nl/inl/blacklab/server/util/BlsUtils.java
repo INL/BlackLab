@@ -62,7 +62,7 @@ public class BlsUtils {
         } else if (filterLang.equals("contextql")) {
             try {
                 CompleteQuery q = ContextualQueryLanguageParser.parse(index, filter);
-                return q.getFilterQuery();
+                return q.filter();
             } catch (InvalidQuery e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing ContextQL filter query: "
@@ -95,7 +95,7 @@ public class BlsUtils {
             try {
                 CompleteQuery q = ContextualQueryLanguageParser.parse(index,
                         pattern);
-                return q.getContentsQuery();
+                return q.pattern();
             } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in ContextQL pattern: " + e.getMessage());
@@ -156,7 +156,7 @@ public class BlsUtils {
                 break;
             }
         }
-        return docResults.get(0).getIdentity().getValue().id();
+        return docResults.get(0).identity().id();
     }
 
     // Copied from Apache Commons

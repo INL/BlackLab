@@ -36,11 +36,11 @@ public abstract class Group<T> implements Result<Group<T>> {
         this.totalSize = totalSize;
     }
 
-    public PropertyValue getIdentity() {
+    public PropertyValue identity() {
         return groupIdentity;
     }
     
-    public Results<T> getStoredResults() {
+    public Results<T> storedResults() {
         return storedResults;
     }
     
@@ -54,12 +54,12 @@ public abstract class Group<T> implements Result<Group<T>> {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "(id=" + getIdentity() + ", size=" + size() + ")";
+        return getClass().getSimpleName() + "(id=" + identity() + ", size=" + size() + ")";
     }
 
     @Override
     public int compareTo(Group<T> o) {
-        return getIdentity().compareTo(o.getIdentity());
+        return identity().compareTo(o.identity());
     }
 
 }

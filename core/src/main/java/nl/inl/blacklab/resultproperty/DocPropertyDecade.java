@@ -39,7 +39,7 @@ public class DocPropertyDecade extends DocProperty {
 
     @Override
     public PropertyValueDecade get(DocResult result) {
-        String strYear = result.getIdentity().getValue().luceneDoc().get(fieldName);
+        String strYear = result.identity().luceneDoc().get(fieldName);
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -59,10 +59,10 @@ public class DocPropertyDecade extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        String strYearA = a.getIdentity().getValue().luceneDoc().get(fieldName);
+        String strYearA = a.identity().luceneDoc().get(fieldName);
         if (strYearA == null)
             strYearA = "";
-        String strYearB = b.getIdentity().getValue().luceneDoc().get(fieldName);
+        String strYearB = b.identity().luceneDoc().get(fieldName);
         if (strYearB == null)
             strYearB = "";
         if (strYearA.length() == 0) { // sort missing year at the end
@@ -92,7 +92,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "decade";
     }
 
@@ -106,8 +106,8 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(serializeReverse() + getName());
+    public List<String> propNames() {
+        return Arrays.asList(serializeReverse() + name());
     }
 
     @Override

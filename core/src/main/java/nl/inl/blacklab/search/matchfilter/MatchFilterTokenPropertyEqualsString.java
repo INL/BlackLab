@@ -86,7 +86,7 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
         Span span = capturedGroups[groupIndex];
         if (span == null)
             return ConstraintValue.undefined();
-        int tokenPosition = span.getStart();
+        int tokenPosition = span.start();
         if (propIndex < 0)
             return ConstraintValue.get(tokenPosition);
         int leftTermId = fiDoc.getToken(propIndex, tokenPosition);

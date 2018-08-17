@@ -122,7 +122,7 @@ public abstract class ContentStore {
      * @param id the document
      * @return the length in characters
      */
-    public abstract int getDocLength(int id);
+    public abstract int docLength(int id);
 
     public static ContentStore open(File indexXmlDir, boolean create) throws ErrorOpeningIndex {
         String type;

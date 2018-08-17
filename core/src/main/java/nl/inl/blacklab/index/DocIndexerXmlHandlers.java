@@ -444,7 +444,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
-        propMain = contentsField.getMainAnnotation();
+        propMain = contentsField.mainAnnotation();
         propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
         // positions

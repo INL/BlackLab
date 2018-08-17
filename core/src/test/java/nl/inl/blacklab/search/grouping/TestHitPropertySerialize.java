@@ -61,9 +61,9 @@ public class TestHitPropertySerialize {
         Assert.assertEquals("hit:lemma:s", prop.serialize());
 
         List<ContextPart> contextParts = Arrays.asList(
-                new ContextPart(ContextStart.LEFT_OF_HIT, 1, 1), // second word to left of hit
-                new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
-                new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
+                ContextPart.get(ContextStart.LEFT_OF_HIT, 1, 1), // second word to left of hit
+                ContextPart.get(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
+                ContextPart.get(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
         );
         prop = new HitPropertyContextWords(mockIndex, lemmaAnnotation, MatchSensitivity.SENSITIVE, contextParts);
         Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());

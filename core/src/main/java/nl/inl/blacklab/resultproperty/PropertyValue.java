@@ -91,5 +91,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     @Override
     public abstract String toString();
 
-    public abstract List<String> getPropValues();    
+    public abstract List<String> propValues();    
+    
+    public abstract Object value();
 }

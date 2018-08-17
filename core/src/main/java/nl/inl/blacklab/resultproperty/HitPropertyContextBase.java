@@ -109,7 +109,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return name + ": " + annotation.name();
     }
 

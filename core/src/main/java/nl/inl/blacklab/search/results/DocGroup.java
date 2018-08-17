@@ -35,8 +35,8 @@ public class DocGroup extends Group<DocResult> {
     }
     
     @Override
-    public DocResults getStoredResults() {
-        return (DocResults) super.getStoredResults();
+    public DocResults storedResults() {
+        return (DocResults) super.storedResults();
     }
 
 }

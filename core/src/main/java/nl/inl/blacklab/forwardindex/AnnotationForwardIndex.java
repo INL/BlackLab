@@ -136,12 +136,12 @@ public abstract class AnnotationForwardIndex {
     /**
      * @return the amount of space in free blocks in the forward index.
      */
-    public abstract long getFreeSpace();
+    public abstract long freeSpace();
 
     /**
      * @return the number of free blocks in the forward index.
      */
-    public abstract int getFreeBlocks();
+    public abstract int freeBlocks();
 
     /**
      * @return total size in bytes of the tokens file.
@@ -156,7 +156,7 @@ public abstract class AnnotationForwardIndex {
      */
     public abstract int docLengthByFiid(int fiid);
 
-    public int getDocLength(int docId) {
+    public int docLength(int docId) {
         return docLengthByFiid(luceneDocIdToFiid(docId));
     }
 

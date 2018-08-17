@@ -51,13 +51,13 @@ public class DocResult extends HitGroup {
         this.score = 0.0f;
     }
 
-    public float getScore() {
+    public float score() {
         return score;
     }
     
     @Override
-    public PropertyValueDoc getIdentity() {
-        return (PropertyValueDoc)super.getIdentity();
+    public PropertyValueDoc identity() {
+        return (PropertyValueDoc)super.identity();
     }
     
 }

@@ -18,18 +18,18 @@ import nl.inl.blacklab.search.textpattern.TextPatternOr;
 public class CompleteQuery {
 
     /** The query to find a structure in the contents */
-    private TextPattern contentsQuery;
+    private TextPattern pattern;
 
     /** The query that determines what documents to search for the structure */
-    private Query filterQuery;
+    private Query filter;
 
     /**
      * Get the query to find a structure in the contents
      * 
      * @return the structural contents query
      */
-    public TextPattern getContentsQuery() {
-        return contentsQuery;
+    public TextPattern pattern() {
+        return pattern;
     }
 
     /**
@@ -37,13 +37,13 @@ public class CompleteQuery {
      * 
      * @return the metadata filter query
      */
-    public Query getFilterQuery() {
-        return filterQuery;
+    public Query filter() {
+        return filter;
     }
 
-    public CompleteQuery(TextPattern contentsQuery, Query filterQuery) {
-        this.contentsQuery = contentsQuery;
-        this.filterQuery = filterQuery;
+    public CompleteQuery(TextPattern pattern, Query filter) {
+        this.pattern = pattern;
+        this.filter = filter;
     }
 
     /**
@@ -59,15 +59,15 @@ public class CompleteQuery {
         TextPattern a, b, c;
         Query d, e, f;
 
-        a = contentsQuery;
-        b = other.contentsQuery;
+        a = pattern;
+        b = other.pattern;
         if (a != null && b != null)
             c = new TextPatternAndNot(a, b); // NOTE: token-level and!
         else
             c = a == null ? b : a;
 
-        d = filterQuery;
-        e = other.filterQuery;
+        d = filter;
+        e = other.filter;
         if (d != null && e != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
             bb.add(d, Occur.MUST);
@@ -89,10 +89,10 @@ public class CompleteQuery {
      * @return the resulting query
      */
     public CompleteQuery or(CompleteQuery other) {
-        TextPattern a = contentsQuery;
-        TextPattern b = other.contentsQuery;
-        Query d = filterQuery;
-        Query e = other.filterQuery;
+        TextPattern a = pattern;
+        TextPattern b = other.pattern;
+        Query d = filter;
+        Query e = other.filter;
 
         if (a == null && b != null || a != null && b == null ||
             d == null && e != null || d != null && e == null) {
@@ -132,15 +132,15 @@ public class CompleteQuery {
         TextPattern a, b, c;
         Query d, e, f;
 
-        a = contentsQuery;
-        b = other.contentsQuery;
+        a = pattern;
+        b = other.pattern;
         if (a != null && b != null)
             c = new TextPatternAndNot(a, new TextPatternNot(b));
         else
             c = a == null ? new TextPatternNot(b) : a;
 
-        d = filterQuery;
-        e = other.filterQuery;
+        d = filter;
+        e = other.filter;
         if (d != null && e != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
             bb.add(d, Occur.MUST);

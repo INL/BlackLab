@@ -48,7 +48,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "hit: position";
     }
 

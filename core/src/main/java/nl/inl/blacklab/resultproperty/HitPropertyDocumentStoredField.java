@@ -99,7 +99,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "document: " + friendlyName;
     }
 

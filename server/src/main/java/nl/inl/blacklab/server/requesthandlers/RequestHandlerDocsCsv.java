@@ -85,7 +85,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     if (group == null)
                         throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                    docs = group.getStoredResults();
+                    docs = group.storedResults();
 
                     // NOTE: sortBy is automatically applied to regular results, but not to results within groups
                     // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
@@ -130,7 +130,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         try {
             // Write the header
             List<String> row = new ArrayList<>();
-            row.addAll(groups.getGroupCriteria().getPropNames());
+            row.addAll(groups.groupCriteria().propNames());
             row.add("count");
 
             // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
@@ -142,8 +142,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             // write the groups
             for (DocGroup group : groups) {
                 row.clear();
-                row.addAll(group.getIdentity().getPropValues());
-                row.add(Integer.toString(group.getStoredResults().size()));
+                row.addAll(group.identity().propValues());
+                row.add(Integer.toString(group.storedResults().size()));
                 printer.printRecord(row);
             }
 
@@ -182,14 +182,14 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
             int subtractClosingToken = 1;
             for (DocResult docResult : docs) {
-                Document doc = docResult.getIdentity().getValue().luceneDoc();
+                Document doc = docResult.identity().luceneDoc();
                 row.clear();
 
                 // Pid field, use lucene doc id if not provided
                 if (pidField != null && doc.get(pidField.name()) != null)
                     row.add(doc.get(pidField.name()));
                 else
-                    row.add(Integer.toString(docResult.getIdentity().getValue().id()));
+                    row.add(Integer.toString(docResult.identity().id()));
 
                 row.add(Integer.toString(docResult.size()));
 

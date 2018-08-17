@@ -195,21 +195,21 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public String getName() {
+    public String name() {
         StringBuilder b = new StringBuilder();
         for (HitProperty crit: properties) {
             if (b.length() > 0)
                 b.append(", ");
-            b.append(crit.getName());
+            b.append(crit.name());
         }
         return b.toString();
     }
 
     @Override
-    public List<String> getPropNames() {
+    public List<String> propNames() {
         List<String> names = new ArrayList<>();
         for (HitProperty prop: properties)
-            names.addAll(prop.getPropNames());
+            names.addAll(prop.propNames());
         return names;
     }
 

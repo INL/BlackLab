@@ -35,8 +35,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
         Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
 
         ds.startMap()
-                .entry("blacklabBuildTime", BlackLabIndexImpl.getBlackLabBuildTime())
-                .entry("blacklabVersion", BlackLabIndexImpl.getBlackLabVersion());
+                .entry("blacklabBuildTime", BlackLabIndexImpl.blackLabBuildTime())
+                .entry("blacklabVersion", BlackLabIndexImpl.blackLabVersion());
 
         ds.startEntry("indices").startMap();
 

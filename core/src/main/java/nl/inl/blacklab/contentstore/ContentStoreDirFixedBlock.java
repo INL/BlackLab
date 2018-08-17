@@ -800,7 +800,7 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     }
 
     @Override
-    public int getDocLength(int id) {
+    public int docLength(int id) {
         return toc.get(id).entryLengthCharacters;
     }
 

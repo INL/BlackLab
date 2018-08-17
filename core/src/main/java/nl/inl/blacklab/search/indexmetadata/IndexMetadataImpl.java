@@ -678,8 +678,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
         if (initTimestamps) {
-            blackLabBuildTime = BlackLabIndexImpl.getBlackLabBuildTime();
-            blackLabVersion = BlackLabIndexImpl.getBlackLabVersion();
+            blackLabBuildTime = BlackLabIndexImpl.blackLabBuildTime();
+            blackLabVersion = BlackLabIndexImpl.blackLabVersion();
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
         } else {
             blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
@@ -944,8 +944,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             // version)
 
             // Reset version info
-            blackLabBuildTime = BlackLabIndexImpl.getBlackLabBuildTime();
-            blackLabVersion = BlackLabIndexImpl.getBlackLabVersion();
+            blackLabBuildTime = BlackLabIndexImpl.blackLabBuildTime();
+            blackLabVersion = BlackLabIndexImpl.blackLabVersion();
             indexFormat = LATEST_INDEX_FORMAT;
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
 
@@ -1054,7 +1054,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotationWriter.setAnnotation(annotation);
         }
-        String mainAnnotName = fieldWriter.getMainAnnotation().name();
+        String mainAnnotName = fieldWriter.mainAnnotation().name();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
         cf.setMainAnnotationName(mainAnnotName); // set main annotation
         fieldWriter.setAnnotatedField(cf);
@@ -1152,8 +1152,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     private static void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
-        versionInfo.put("blackLabBuildTime", BlackLabIndexImpl.getBlackLabBuildTime());
-        versionInfo.put("blackLabVersion", BlackLabIndexImpl.getBlackLabVersion());
+        versionInfo.put("blackLabBuildTime", BlackLabIndexImpl.blackLabBuildTime());
+        versionInfo.put("blackLabVersion", BlackLabIndexImpl.blackLabVersion());
         versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
         versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
         versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);

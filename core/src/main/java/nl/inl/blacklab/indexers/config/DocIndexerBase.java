@@ -182,9 +182,9 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (currentAnnotatedField == null)
             throw new InvalidInputFormatConfig("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
-        annotStartTag = currentAnnotatedField.getTagAnnotation();
-        annotMain = currentAnnotatedField.getMainAnnotation();
-        annotPunct = currentAnnotatedField.getPunctAnnotation();
+        annotStartTag = currentAnnotatedField.tagsAnnotation();
+        annotMain = currentAnnotatedField.mainAnnotation();
+        annotPunct = currentAnnotatedField.punctAnnotation();
     }
 
     protected void addStartChar(int pos) {
@@ -365,7 +365,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         traceln("END DOCUMENT");
 
         for (AnnotatedFieldWriter field : getAnnotatedFields().values()) {
-            AnnotationWriter propMain = field.getMainAnnotation();
+            AnnotationWriter propMain = field.mainAnnotation();
 
             // Make sure all the annotations have an equal number of values.
             // See what annotation has the highest position

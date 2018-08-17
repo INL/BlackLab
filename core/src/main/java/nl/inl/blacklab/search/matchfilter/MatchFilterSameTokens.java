@@ -82,7 +82,7 @@ public class MatchFilterSameTokens extends MatchFilter {
             Span span = capturedGroups[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
-            int tokenPosition = span.getStart();
+            int tokenPosition = span.start();
             if (propIndex < 0)
                 termId[i] = tokenPosition;
             else

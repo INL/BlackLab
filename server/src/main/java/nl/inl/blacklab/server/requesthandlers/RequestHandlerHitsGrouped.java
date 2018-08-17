@@ -59,8 +59,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             for (HitGroup group : groups) {
                 if (i >= first && i < first + requestedWindowSize) {
                     ds.startItem("hitgroup").startMap();
-                    ds.entry("identity", group.getIdentity().serialize())
-                            .entry("identityDisplay", group.getIdentity().toString())
+                    ds.entry("identity", group.identity().serialize())
+                            .entry("identityDisplay", group.identity().toString())
                             .entry("size", group.size());
                     ds.endMap().endItem();
                 }

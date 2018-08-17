@@ -149,7 +149,7 @@ public class QueryExecutionContext {
         return subpropPrefix;
     }
 
-    public BlackLabIndex getIndex() {
+    public BlackLabIndex index() {
         return index;
     }
 

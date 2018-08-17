@@ -109,12 +109,12 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public String getName() {
+    public String name() {
         StringBuilder b = new StringBuilder();
         for (DocProperty crit : criteria) {
             if (b.length() > 0)
                 b.append(", ");
-            b.append(crit.getName());
+            b.append(crit.name());
         }
         return b.toString();
     }
@@ -129,10 +129,10 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public List<String> getPropNames() {
+    public List<String> propNames() {
         List<String> ret = new ArrayList<>();
         for (DocProperty prop : criteria) {
-            ret.addAll(prop.getPropNames());
+            ret.addAll(prop.propNames());
         }
         return ret;
     }

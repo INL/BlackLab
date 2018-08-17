@@ -6,7 +6,8 @@ import java.util.List;
 public class PropertyValueInt extends PropertyValue {
     int value;
 
-    public int getValue() {
+    @Override
+    public Integer value() {
         return value;
     }
 
@@ -55,7 +56,7 @@ public class PropertyValueInt extends PropertyValue {
     }
 
     @Override
-    public List<String> getPropValues() {
+    public List<String> propValues() {
         return Arrays.asList(Integer.toString(value));
     }
 }

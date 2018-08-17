@@ -51,14 +51,6 @@ public class TextPatternEdge extends TextPatternCombiner {
         return rightEdge;
     }
 
-    public String getElementName() {
-        TextPattern cl = getClause();
-        if (cl instanceof TextPatternTags) {
-            return ((TextPatternTags) cl).getElementName();
-        }
-        return null;
-    }
-
     public TextPattern getClause() {
         return clauses.get(0);
     }

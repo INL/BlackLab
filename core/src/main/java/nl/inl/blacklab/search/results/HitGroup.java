@@ -67,7 +67,7 @@ public class HitGroup extends Group<Hit> {
     }
     
     @Override
-    public Hits getStoredResults() {
-        return (Hits)super.getStoredResults();
+    public Hits storedResults() {
+        return (Hits)super.storedResults();
     }
 }

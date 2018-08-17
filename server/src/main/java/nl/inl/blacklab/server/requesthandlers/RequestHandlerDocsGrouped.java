@@ -77,8 +77,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             for (DocGroup group : groups) {
                 if (i >= first && i < first + number) {
                     ds.startItem("docgroup").startMap()
-                            .entry("identity", group.getIdentity().serialize())
-                            .entry("identityDisplay", group.getIdentity().toString())
+                            .entry("identity", group.identity().serialize())
+                            .entry("identityDisplay", group.identity().toString())
                             .entry("size", group.size())
                             .endMap().endItem();
                 }

@@ -212,7 +212,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         boolean anyRewrittenThisCycle = true;
         int pass = 0;
         while (anyRewrittenThisCycle) {
-            if (BlackLabIndexImpl.isTraceOptimization())
+            if (BlackLabIndexImpl.traceOptimization())
                 logger.debug("combineAdj pass " + pass + ": " + StringUtils.join(cl, ", "));
             pass++;
 
@@ -228,7 +228,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 right = cl.get(i);
                 for (ClauseCombiner combiner : combiners) {
                     int prio = combiner.priority(left, right, reader);
-                    if (BlackLabIndexImpl.isTraceOptimization())
+                    if (BlackLabIndexImpl.traceOptimization())
                         logger.debug("  i=" + i + ", combiner=" + combiner + ", prio=" + prio);
                     if (prio < highestPrio) {
                         highestPrio = prio;
@@ -240,7 +240,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Any combiners found?
             if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
                 // Yes, execute the highest-prio combiner
-                if (BlackLabIndexImpl.isTraceOptimization())
+                if (BlackLabIndexImpl.traceOptimization())
                     logger.debug("  Execute combiner: " + highestPrioCombiner + ", index=" + highestPrioIndex);
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);

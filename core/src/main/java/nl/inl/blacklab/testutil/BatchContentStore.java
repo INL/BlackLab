@@ -133,7 +133,7 @@ public class BatchContentStore {
                 id = docIds.get(docPos);
 
                 // Choose random snippets
-                length = cs.getDocLength(id);
+                length = cs.docLength(id);
                 if (length == 0) // can't get snippet from empty doc
                     docPos++;
             } while (length == 0);

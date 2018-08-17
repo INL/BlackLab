@@ -17,11 +17,11 @@ public class QueryExplanation {
         this.rewrittenQuery = rewrittenQuery;
     }
 
-    public BLSpanQuery getOriginalQuery() {
+    public BLSpanQuery originalQuery() {
         return spanQuery;
     }
 
-    public BLSpanQuery getRewrittenQuery() {
+    public BLSpanQuery rewrittenQuery() {
         return rewrittenQuery;
     }
 }

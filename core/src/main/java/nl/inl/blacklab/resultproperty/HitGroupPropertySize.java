@@ -48,7 +48,7 @@ public class HitGroupPropertySize extends HitGroupProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "group: size";
     }
 }

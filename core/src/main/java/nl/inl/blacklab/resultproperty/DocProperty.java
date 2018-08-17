@@ -65,7 +65,7 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     }
 
     @Override
-    public abstract String getName();
+    public abstract String name();
 
     @Override
     public abstract String serialize();
@@ -155,7 +155,7 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
      * @return the list
      */
     @Override
-    public abstract List<String> getPropNames();
+    public abstract List<String> propNames();
 
     public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
         DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));

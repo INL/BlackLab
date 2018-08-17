@@ -83,7 +83,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             public int docLength() {
                 synchronized (fis) {
                     AnnotationForwardIndex afi = anyAnnotationForwardIndex();
-                    return afi.getDocLength(docId);
+                    return afi.docLength(docId);
                 }
             }
         };
@@ -139,7 +139,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.getFreeSpace()).sum();
+            return fis.values().stream().mapToLong(afi -> afi.freeSpace()).sum();
         }
     }
 

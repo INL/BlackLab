@@ -38,7 +38,7 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * Get the name of the property
      * @return name
      */
-    String getName();
+    String name();
 
     /**
      * Serialize this HitProperty so we can deserialize it later (to pass it via
@@ -70,6 +70,6 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * 
      * @return the list
      */
-    List<String> getPropNames();
+    List<String> propNames();
 
 }

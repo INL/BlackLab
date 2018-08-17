@@ -112,7 +112,7 @@ public class HitGroupsImpl extends HitGroups {
                 largestGroupSize = group.size();
             totalHits += group.size();
             results.add(group);
-            this.groups.put(group.getIdentity(), group);
+            this.groups.put(group.identity(), group);
         }
     }
 
@@ -172,7 +172,7 @@ public class HitGroupsImpl extends HitGroups {
     @Override
     public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = Results.doFilter(this, property, value);
-        return new HitGroupsImpl(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
+        return new HitGroupsImpl(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -186,7 +186,7 @@ public class HitGroupsImpl extends HitGroups {
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
         for (HitGroup group: results) {
-            HitGroup newGroup = HitGroup.fromHits(group.getIdentity(), group.getStoredResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
         return new HitGroupsImpl(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);

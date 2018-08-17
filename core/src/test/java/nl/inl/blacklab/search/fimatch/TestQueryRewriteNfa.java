@@ -70,10 +70,10 @@ public class TestQueryRewriteNfa {
         try {
             QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
             if (before != null) {
-                BLSpanQuery original = explanation.getOriginalQuery();
+                BLSpanQuery original = explanation.originalQuery();
                 Assert.assertEquals(before, original.toString());
             }
-            BLSpanQuery rewritten = explanation.getRewrittenQuery();
+            BLSpanQuery rewritten = explanation.rewrittenQuery();
             Assert.assertEquals(after, rewritten.toString());
         } catch (WildcardTermTooBroad | RegexpTooLarge e) {
             throw BlackLabRuntimeException.wrap(e);

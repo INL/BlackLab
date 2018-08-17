@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public abstract class ForwardIndexAccessor {
 
-    public static ForwardIndexAccessor fromSearcher(BlackLabIndex index, String searchField) {
+    public static ForwardIndexAccessor fromIndex(BlackLabIndex index, String searchField) {
         return new ForwardIndexAccessorImpl(index, index.annotatedField(searchField));
     }
     

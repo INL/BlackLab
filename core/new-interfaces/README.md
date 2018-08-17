@@ -41,10 +41,7 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 Results
-- sample overal implementeren
-
 - method name consistency ("get" weg in belangrijkste classes)
-- 
 
 search
 - introduce new Search interface for building searches

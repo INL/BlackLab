@@ -67,7 +67,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     public abstract HitGroup get(PropertyValue identity);
 
     @Override
-    public HitProperty getGroupCriteria() {
+    public HitProperty groupCriteria() {
         return criteria;
     }
 
@@ -106,6 +106,6 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
-        return HitGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
+        return HitGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
 }

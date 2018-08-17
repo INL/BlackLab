@@ -57,7 +57,7 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "number of hits";
     }
 
@@ -67,8 +67,8 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(serializeReverse() + getName());
+    public List<String> propNames() {
+        return Arrays.asList(serializeReverse() + name());
     }
 
     @Override

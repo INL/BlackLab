@@ -54,7 +54,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     public PropertyValueInt get(DocResult result) {
         try {
             int subtractClosingToken = 1;
-            int length = Integer.parseInt(result.getIdentity().getValue().luceneDoc().get(fieldName)) - subtractClosingToken;
+            int length = Integer.parseInt(result.identity().luceneDoc().get(fieldName)) - subtractClosingToken;
             return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
             return new PropertyValueInt(0);
@@ -71,8 +71,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     @Override
     public int compare(DocResult a, DocResult b) {
         try {
-            int ia = Integer.parseInt(a.getIdentity().getValue().luceneDoc().get(fieldName));
-            int ib = Integer.parseInt(b.getIdentity().getValue().luceneDoc().get(fieldName));
+            int ia = Integer.parseInt(a.identity().luceneDoc().get(fieldName));
+            int ib = Integer.parseInt(b.identity().luceneDoc().get(fieldName));
             return reverse ? ib - ia : ia - ib;
         } catch (NumberFormatException e) {
             return 0;
@@ -80,7 +80,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return friendlyName;
     }
 
@@ -90,8 +90,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public List<String> getPropNames() {
-        return Arrays.asList(serializeReverse() + getName());
+    public List<String> propNames() {
+        return Arrays.asList(serializeReverse() + name());
     }
 
     @Override

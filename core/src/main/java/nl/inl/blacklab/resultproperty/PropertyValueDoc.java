@@ -3,15 +3,26 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 
 /** Property value that represents a BlackLab document */
 public class PropertyValueDoc extends PropertyValue {
-    Doc value;
+    private Doc value;
 
-    public Doc getValue() {
+    @Override
+    public Doc value() {
         return value;
+    }
+    
+    public int id() {
+        return value.id();
+    }
+    
+    public Document luceneDoc() {
+        return value.luceneDoc();
     }
 
     public PropertyValueDoc(Doc doc) {
@@ -59,7 +70,7 @@ public class PropertyValueDoc extends PropertyValue {
     }
 
     @Override
-    public List<String> getPropValues() {
+    public List<String> propValues() {
         return Arrays.asList(Integer.toString(value.id()));
     }
 }

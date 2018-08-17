@@ -48,7 +48,7 @@ public class DocGroupPropertySize extends DocGroupProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "group: size";
     }
 }

@@ -50,7 +50,7 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "document: id";
     }
 

@@ -19,7 +19,7 @@ public class TextPatternConstrained extends TextPatternCombiner {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         BLSpanQuery translate = clauses.get(0).translate(context);
-        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromSearcher(context.getIndex(),
+        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(context.index(),
                 translate.getField());
         return new SpanQueryConstrained(translate, constraint, fiAccessor);
     }

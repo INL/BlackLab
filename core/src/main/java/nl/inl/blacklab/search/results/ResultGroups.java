@@ -16,7 +16,7 @@ public interface ResultGroups<T> {
      * What were these results grouped on?
      * @return group criteria
      */
-    ResultProperty<T> getGroupCriteria();
+    ResultProperty<T> groupCriteria();
     
     /**
      * Get the total number of results that were grouped

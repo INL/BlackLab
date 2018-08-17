@@ -15,6 +15,11 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     @Override
+    public PropertyValue[] value() {
+        return value;
+    }
+
+    @Override
     public int compareTo(Object o) {
         return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
     }
@@ -67,10 +72,10 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     @Override
-    public List<String> getPropValues() {
+    public List<String> propValues() {
         List<String> l = new ArrayList<>();
         for (PropertyValue v : value)
-            l.addAll(v.getPropValues());
+            l.addAll(v.propValues());
         return l;
     }
 

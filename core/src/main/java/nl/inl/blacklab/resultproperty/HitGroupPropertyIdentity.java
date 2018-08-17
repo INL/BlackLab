@@ -29,14 +29,14 @@ public class HitGroupPropertyIdentity extends HitGroupProperty {
     
     @Override
     public PropertyValue get(HitGroup result) {
-        return result.getIdentity();
+        return result.identity();
     }
 
     @Override
     public int compare(HitGroup a, HitGroup b) {
         if (reverse)
-            return b.getIdentity().compareTo(a.getIdentity());
-        return a.getIdentity().compareTo(b.getIdentity());
+            return b.identity().compareTo(a.identity());
+        return a.identity().compareTo(b.identity());
     }
 
     @Override
@@ -50,7 +50,7 @@ public class HitGroupPropertyIdentity extends HitGroupProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "group: identity";
     }
 }

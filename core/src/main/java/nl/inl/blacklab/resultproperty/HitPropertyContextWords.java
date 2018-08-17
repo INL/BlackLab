@@ -70,23 +70,29 @@ public class HitPropertyContextWords extends HitProperty {
          * - direction
          * - maxLength (terminated by end of part)
          */
+        
+        public static ContextPart get(ContextStart startFrom, int firstWord, int lastWord) {
+            return new ContextPart(startFrom, firstWord, lastWord);
+        }
 
-        public ContextStart startFrom;
+        public static ContextPart get(ContextStart startFrom, int firstWord, int direction, int maxLength) {
+            return new ContextPart(startFrom, firstWord, direction, maxLength);
+        }
 
-        public int firstWord;
+        protected ContextStart startFrom;
 
-        //public int lastWord;
+        protected int firstWord;
 
         /**
          * Direction: 1 = default direction, -1 = reverse direction. Default direction
          * is right for ContextStart.HIT_TEXT_FROM_START and ContextStart.RIGHT_OF_HIT,
          * left for ContextStart.HIT_TEXT_FROM_END and ContextStart.LEFT_OF_HIT.
          */
-        public int direction;
+        protected int direction;
 
-        public int maxLength;
+        protected int maxLength;
 
-        public ContextPart(ContextStart startFrom, int firstWord, int lastWord) {
+        protected ContextPart(ContextStart startFrom, int firstWord, int lastWord) {
             this.startFrom = startFrom;
             this.firstWord = firstWord;
             if (lastWord == Integer.MAX_VALUE) {
@@ -98,7 +104,7 @@ public class HitPropertyContextWords extends HitProperty {
             }
         }
 
-        public ContextPart(ContextStart startFrom, int firstWord, int direction, int maxLength) {
+        protected ContextPart(ContextStart startFrom, int firstWord, int direction, int maxLength) {
             this.startFrom = startFrom;
             this.firstWord = firstWord;
             this.direction = direction;
@@ -111,7 +117,7 @@ public class HitPropertyContextWords extends HitProperty {
                     + (maxLength != Integer.MAX_VALUE ? "-" + (firstWord + direction * (maxLength - 1) + 1) : "");
         }
 
-        public int getAbsoluteDirection() {
+        public int absoluteDirection() {
             boolean defaultRight = startFrom == ContextStart.HIT_TEXT_FROM_START
                     || startFrom == ContextStart.RIGHT_OF_HIT;
             return defaultRight ? direction : -direction;
@@ -277,7 +283,7 @@ public class HitPropertyContextWords extends HitProperty {
         for (ContextPart ctxPart : words) {
             // Determine anchor position, direction to move in, and edge of part (left/hit/right)
             int srcStartIndex, srcDirection, firstInvalidSrcIndex;
-            srcDirection = ctxPart.getAbsoluteDirection();
+            srcDirection = ctxPart.absoluteDirection();
             int firstWordSrcIndex;
             switch (ctxPart.startFrom) {
             case LEFT_OF_HIT:
@@ -342,7 +348,7 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "left context: " + annotation.name();
     }
 

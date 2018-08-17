@@ -45,18 +45,6 @@ public interface Doc {
      */
     Document luceneDoc();
     
-//    /** Get our forward index document for the specified field.
-//     * 
-//     * @param field the field
-//     * @return Forward index document */
-//    ForwardIndexDoc forwardIndexDoc(AnnotatedField field);
-//    
-//    /** Get our content store document for the specified field.
-//     * 
-//     * @param field the field
-//     * @return Content store document */
-//    ContentStoreDoc contentStoreDoc(Field field);
-    
     /**
      * Get part of the contents of a field from a Lucene Document.
      *
@@ -68,7 +56,7 @@ public interface Doc {
      * @param endAtChar where to end getting the content (-1 for end of document)
      * @return the field content
      */
-    String getContentByCharPos(Field field, int startAtChar, int endAtChar);
+    String contentsByCharPos(Field field, int startAtChar, int endAtChar);
     
     /**
      * Get the contents of a field from a Lucene Document.
@@ -80,8 +68,8 @@ public interface Doc {
      * @param field the field
      * @return the field content
      */
-    default String getContent(Field field) {
-        return getContent(field, -1, -1);
+    default String contents(Field field) {
+        return contents(field, -1, -1);
     }
 
     /**
@@ -90,8 +78,8 @@ public interface Doc {
      * @param docId the Document id
      * @return the field content
      */
-    default String getContent() {
-        return getContent(index().mainAnnotatedField(), -1, -1);
+    default String contents() {
+        return contents(index().mainAnnotatedField(), -1, -1);
     }
 
     /**
@@ -105,7 +93,7 @@ public interface Doc {
      * @param endAtWord where to end getting the content (-1 for end of document)
      * @return the field content
      */
-    String getContent(Field field, int startAtWord, int endAtWord);
+    String contents(Field field, int startAtWord, int endAtWord);
     
     /**
      * Highlight part of field content with the specified hits,
@@ -133,7 +121,7 @@ public interface Doc {
         return highlightContent(hits, -1, -1);
     }
     
-    void getCharacterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,
+    void characterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,
             boolean fillInDefaultsIfNotFound);
 
     /**

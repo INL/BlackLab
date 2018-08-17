@@ -64,7 +64,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
                 largestGroupSize = group.size();
             totalResults += group.size();
             results.add(group);
-            this.groups.put(group.getIdentity(), group);
+            this.groups.put(group.identity(), group);
         }
     }
 
@@ -100,7 +100,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public ResultProperty<DocResult> getGroupCriteria() {
+    public ResultProperty<DocResult> groupCriteria() {
         return groupBy;
     }
     
@@ -120,7 +120,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
         List<DocGroup> list = Results.doFilter(this, property, value);
-        return new DocGroups(queryInfo(), list, getGroupCriteria(), (SampleParameters)null, (WindowStats)null);
+        return new DocGroups(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
@@ -134,8 +134,8 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
         for (DocGroup group: results) {
-            List<DocResult> truncatedList = group.getStoredResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
-            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.getIdentity(), truncatedList, group.size());
+            List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
+            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size());
             truncatedGroups.add(newGroup);
         }
         return DocGroups.fromList(queryInfo(), truncatedGroups, groupBy, (SampleParameters)null, windowStats);
@@ -149,6 +149,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      */
     @Override
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), getGroupCriteria(), sampleParameters, (WindowStats)null);
+        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
 }

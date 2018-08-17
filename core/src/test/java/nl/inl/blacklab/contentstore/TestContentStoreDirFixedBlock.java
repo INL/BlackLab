@@ -181,7 +181,7 @@ public class TestContentStoreDirFixedBlock {
 
     private void assertDocumentStored(Random random, String docContents, int key) {
         Assert.assertFalse(store.isDeleted(key));
-        Assert.assertEquals(docContents.length(), store.getDocLength(key));
+        Assert.assertEquals(docContents.length(), store.docLength(key));
         if (random.nextBoolean()) {
             // Retrieve full document
             Assert.assertEquals(docContents, store.retrieve(key));

@@ -751,7 +751,7 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public long getFreeSpace() {
+    public long freeSpace() {
         long freeSpace = 0;
         for (TocEntry e : deletedTocEntries) {
             freeSpace += e.length;
@@ -760,7 +760,7 @@ class AnnotationForwardIndexImpl extends AnnotationForwardIndex {
     }
 
     @Override
-    public int getFreeBlocks() {
+    public int freeBlocks() {
         return deletedTocEntries.size();
     }
 

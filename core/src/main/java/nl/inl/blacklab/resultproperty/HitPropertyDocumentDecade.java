@@ -116,7 +116,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public String getName() {
+    public String name() {
         return "document: decade";
     }
 

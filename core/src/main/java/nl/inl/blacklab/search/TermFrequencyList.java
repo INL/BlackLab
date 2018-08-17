@@ -132,7 +132,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
      * @param token the token to get the frequency for
      * @return the frequency
      */
-    public long getFrequency(String token) {
+    public long frequency(String token) {
         // TODO: maybe speed this up by keeping a map of tokens and frequencies?
         for (TermFrequency tf : list) {
             if (tf.term.equals(token))
@@ -141,7 +141,7 @@ public class TermFrequencyList implements Iterable<TermFrequency> {
         return 0;
     }
 
-    public long getTotalFrequency() {
+    public long totalFrequency() {
         return totalFrequency;
     }
 

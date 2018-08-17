@@ -38,8 +38,8 @@ public class RequestHandlerExplain extends RequestHandler {
             // Assemble response
             ds.startMap()
                     .entry("textPattern", patt)
-                    .entry("originalQuery", explanation.getOriginalQuery())
-                    .entry("rewrittenQuery", explanation.getRewrittenQuery());
+                    .entry("originalQuery", explanation.originalQuery())
+                    .entry("rewrittenQuery", explanation.rewrittenQuery());
             ds.endMap();
         } catch (TooManyClauses e) {
             return Response.badRequest(ds, "QUERY_TOO_BROAD",
