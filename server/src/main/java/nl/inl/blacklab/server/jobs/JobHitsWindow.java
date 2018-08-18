@@ -54,7 +54,7 @@ public class JobHitsWindow extends JobWithHits {
     protected void performSearch() throws BlsException {
         // Now, create a HitsWindow on these hits.
         Hits inputHits = ((JobWithHits) inputJob).getHits();
-        setPausedInternal(); // make sure hits has the right priority
+        setToCurrentPausedStateInternal(); // make sure hits has the right priority
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
         requestedWindowSize = windowSett.size();
@@ -64,7 +64,7 @@ public class JobHitsWindow extends JobWithHits {
         }
         // NOTE: this.hits must be instanceof HitsWindow inside this class
         this.hits = inputHits.window(first, requestedWindowSize);
-        setPausedInternal(); // make sure hits has the right priority
+        setToCurrentPausedStateInternal(); // make sure hits has the right priority
     }
 
     @Override

@@ -8,6 +8,8 @@ import nl.inl.blacklab.search.results.SearchResult;
  * 
  * It is up to the application to implement the cache, deciding
  * what to cache and ensuring the cache doesn't grow too large.
+ * 
+ * The cache implementation should be made thread-safe.
  */
 public interface SearchCache {
     

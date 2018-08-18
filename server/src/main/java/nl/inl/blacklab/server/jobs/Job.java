@@ -728,7 +728,7 @@ public abstract class Job implements Comparable<Job>, Pausible {
             }
             this.paused = paused;
         }
-        setPausedInternal();
+        setToCurrentPausedStateInternal();
     }
 
     @Override
@@ -741,7 +741,7 @@ public abstract class Job implements Comparable<Job>, Pausible {
      *
      * @param p object to set the priority of
      */
-    protected void setPaused(Pausible p) {
+    protected void setToCurrentPausedState(Pausible p) {
         if (p != null) {
             p.pause(isPaused());
         }
@@ -750,8 +750,8 @@ public abstract class Job implements Comparable<Job>, Pausible {
     /**
      * Set the operation to the current priority level (normal, low or paused).
      */
-    protected void setPausedInternal() {
-        setPaused(getObjectToPrioritize());
+    protected void setToCurrentPausedStateInternal() {
+        setToCurrentPausedState(getObjectToPrioritize());
     }
 
     /**

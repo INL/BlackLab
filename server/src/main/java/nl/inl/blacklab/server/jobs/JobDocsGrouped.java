@@ -62,7 +62,7 @@ public class JobDocsGrouped extends JobWithDocs {
     @Override
     protected void performSearch() throws BlsException {
         docResults = ((JobWithDocs) inputJob).getDocResults();
-        setPausedInternal();
+        setToCurrentPausedStateInternal();
         DocGroupSettings groupSett = jobDesc.getDocGroupSettings();
         DocGroups theGroups = docResults.group(groupSett.groupBy(), -1);
         DocGroupSortSettings sortSett = jobDesc.getDocGroupSortSettings();

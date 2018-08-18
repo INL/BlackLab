@@ -63,7 +63,7 @@ public class JobHitsFiltered extends JobWithHits {
         }
 
         hits = hitsUnfiltered.filter(prop, value);
-        setPausedInternal();
+        setToCurrentPausedStateInternal();
     }
 
     @Override

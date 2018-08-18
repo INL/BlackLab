@@ -39,7 +39,7 @@ public class JobDocsTotal extends JobWithDocs {
         // Get the total number of docs (we ignore the return value because you can monitor progress
         // and get the final total through the getDocResults() method yourself.
         docResults = ((JobWithDocs) inputJob).getDocResults();
-        setPausedInternal(); // make sure docResults has the right priority
+        setToCurrentPausedStateInternal(); // make sure docResults has the right priority
         docResults.size();
         if (Thread.interrupted()) {
             // We don't throw anymore because that will cause this error to re-throw even when we just

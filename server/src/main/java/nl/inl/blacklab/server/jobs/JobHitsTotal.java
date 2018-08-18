@@ -37,7 +37,7 @@ public class JobHitsTotal extends JobWithHits {
         // Get the total number of hits (we ignore the value because you can monitor progress
         // and get the final total through the getHits() method yourself.
         hits = ((JobWithHits) inputJob).getHits();
-        setPausedInternal(); // make sure hits has the right priority
+        setToCurrentPausedStateInternal(); // make sure hits has the right priority
         hits.size();
         if (Thread.interrupted()) {
             // We don't throw anymore because that will cause this error to re-throw even when we just

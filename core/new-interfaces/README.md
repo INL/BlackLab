@@ -85,20 +85,49 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
   alleen totals-searches zouden met block=false moeten worden aangeroepen.
   RequestHandlerDocs: originalHitsSearch was block=false, nu block=true (Hits object moet beschikbaar zijn, niet alle hits gelezen)
   RequestHandlerDocsGrouped: originalHitsSearch was block=false, nu block=true (idem)
+  (het lijkt of /docs toch altijd alle hits ophaalt - klopt dat..?)
+
+- een search die gestart wordt, maar nog niet klaar is, moet alvast als placeholder in de cache gezet worden, zodat-ie niet opnieuw gestart wordt.
 
 BLS:
 - default sort descending terugbrengen
 - use new Search system
-- use integrated BlackLab cache
+- use integrated BlackLab cache? (but we do need information like last used, etc. - can we do both?)
 - don't use threads except for total count (the only asynchronously running search, right...?)
 
 
-naming: misschien sortedby, filteredby, etc. weer vervangen door sort, filter, etc.?
-
 - filter: predicate (maar Contexts gooien roet in het eten...)
+
+- make error messages lower-level, "server busy" requires a bit more explanation to understand why BL is refusing to execute your search
+
+
+PERFORMANCE ANALYSIS
+- log queries, times, #results, etc. to separate log file for analysis
+  also log whether search was aborted (, paused)
+- maybe add a performance logging object to QueryInfo, so you can gather detailed information about
+  the different phases of queries, and see what is slowing things down
+
+
+SERVER POLICIES
+- get rid of threadpauser?
+- max. number of running searches (if you try to start one but already at max, you get an error message)
+  (probably needs to take into account how many cores a search is using)
+- max. hits to process per search (if exceeded, BLS will indicate this)
+- max. time a search may run (after which it is aborted by BLS and an error message is shown)
+- number of result instances in cache
+  (result instance = hit, doc, group, etc.; measure of amount of memory taken)
+  (if exceeded, a result is selected to be removed based on size, staleness, search type)
+- searches are automatically removed from cache after X time, even if cache is not full
+  (to allow GC to reclaim memory)
+- min. amount of free memory (if less, we try to remove cached searches, and you cannot start a new search)
 
 
 POSSIBLE OPTIMIZATIONS
+- what if we do a search, start a totalcount that doesn't store hits, then decide we want to group the hits?
+  should we terminate the totalcount...?
+  or should we always start out storing hits, and only transition to not storing but just counting if we haven't
+  used them after a while..? (this means we need to track hit use in Hits)
+
 - (CPU/threading) voor operaties waarvan we zeker weten dat we alle hits nodig hebben:
   haal hits in parallel op voor meerdere/alle leafreaders. verwerk ze verder ook in parallel waar mogelijk.
 
