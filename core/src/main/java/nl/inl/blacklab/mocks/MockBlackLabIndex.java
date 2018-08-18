@@ -35,10 +35,9 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
@@ -53,6 +52,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
     private Analyzer analyzer;
 
     private IndexSearcher searcher;
+
+    private SearchCache cache = new SearchCacheDummy();
 
     public MockBlackLabIndex() {
         super();
@@ -242,20 +243,15 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public SearchEmpty search(AnnotatedField field) {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void notifyCache(Search search, SearchResult result) {
-        // NOP
-    }
-
+    
     @Override
     public void setCache(SearchCache cache) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public SearchResult getFromCache(Search search) {
-        return null;
+    public SearchCache cache() {
+        return cache;
     }
 
 }

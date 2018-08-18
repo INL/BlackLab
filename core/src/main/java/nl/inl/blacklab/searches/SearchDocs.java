@@ -1,5 +1,9 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -13,13 +17,30 @@ public abstract class SearchDocs extends AbstractSearch {
     public SearchDocs(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
+    
     @Override
     public final DocResults execute() throws InvalidQuery {
-        DocResults result = (DocResults)getFromCache(this);
-        if (result != null)
+        CompletableFuture<DocResults> future = new CompletableFuture<>();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<DocResults> fromCache = (CompletableFuture<DocResults>)getFromCache(this, future);
+        if (fromCache != null) {
+            try {
+                return fromCache.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        try {
+            DocResults result = executeInternal();
+            future.complete(result);
             return result;
-        return notifyCache(executeInternal());
+        } catch (InvalidQuery e) {
+            cancelSearch(future);
+            throw e;
+        } catch (RuntimeException e) {
+            cancelSearch(future);
+            throw e;
+        }
     }
     
     protected abstract DocResults executeInternal() throws InvalidQuery;

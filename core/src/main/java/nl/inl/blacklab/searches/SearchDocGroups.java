@@ -1,5 +1,9 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -14,13 +18,30 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
     public SearchDocGroups(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
+    
     @Override
     public final DocGroups execute() throws InvalidQuery {
-        DocGroups result = (DocGroups)getFromCache(this);
-        if (result != null)
+        CompletableFuture<DocGroups> future = new CompletableFuture<>();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<DocGroups> fromCache = (CompletableFuture<DocGroups>)getFromCache(this, future);
+        if (fromCache != null) {
+            try {
+                return fromCache.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        try {
+            DocGroups result = executeInternal();
+            future.complete(result);
             return result;
-        return notifyCache(executeInternal());
+        } catch (InvalidQuery e) {
+            cancelSearch(future);
+            throw e;
+        } catch (RuntimeException e) {
+            cancelSearch(future);
+            throw e;
+        }
     }
     
     protected abstract DocGroups executeInternal() throws InvalidQuery;

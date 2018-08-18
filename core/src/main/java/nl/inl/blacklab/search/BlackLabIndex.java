@@ -30,9 +30,7 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
-import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
@@ -427,16 +425,6 @@ public interface BlackLabIndex extends Closeable {
     void setDefaultContextSize(ContextSize size);
 
     /**
-     * Notify the cache of a search plus result.
-     * 
-     * The cache can decide whether or not to add this result.
-     * 
-     * @param search search
-     * @param result result
-     */
-    void notifyCache(Search search, SearchResult result);
-
-    /**
      * Set the object BlackLab should use as cache.
      * 
      * BlackLab will notify the cache of search results and will ask
@@ -449,15 +437,6 @@ public interface BlackLabIndex extends Closeable {
      */
     void setCache(SearchCache cache);
 
-    /**
-     * Get a result from the cache.
-     * 
-     * Applications normally don't call this directly;
-     * The Search classes use it internally.
-     * 
-     * @param search search we want the cached result for
-     * @return cached result, or null if it wasn't in the cache
-     */
-    SearchResult getFromCache(Search search);
+    SearchCache cache();
 
 }

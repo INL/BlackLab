@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.CompletableFuture;
+
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -16,13 +18,18 @@ public abstract class AbstractSearch implements Search {
         this.queryInfo = queryInfo;  
     }
     
-    protected <T extends SearchResult> T notifyCache(T result) {
-        queryInfo.index().notifyCache(this, result);
-        return result;
+    protected CompletableFuture<? extends SearchResult> getFromCache(Search search, CompletableFuture<? extends SearchResult> future) {
+        SearchCache cache = queryInfo.index().cache();
+        CompletableFuture<? extends SearchResult> fromCache = cache.get(search, future);
+        if (fromCache == null) {
+            cache.onSearchResult(this, future);
+        }
+        return fromCache;
     }
     
-    protected SearchResult getFromCache(Search search) {
-        return queryInfo.index().getFromCache(search);
+    protected void cancelSearch(CompletableFuture<? extends SearchResult> future) {
+        queryInfo.index().cache().remove(future);
+        future.cancel(false);
     }
     
     @Override

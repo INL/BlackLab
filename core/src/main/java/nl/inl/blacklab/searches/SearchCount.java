@@ -1,5 +1,9 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -12,19 +16,30 @@ public abstract class SearchCount extends AbstractSearch {
     public SearchCount(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
-    /**
-     * Execute the search operation, returning the final response.
-     *  
-     * @return result of the operation
-     * @throws InvalidQuery if the query was invalid
-     */
+    
     @Override
     public final ResultCount execute() throws InvalidQuery {
-        ResultCount result = (ResultCount)getFromCache(this);
-        if (result != null)
+        CompletableFuture<ResultCount> future = new CompletableFuture<>();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<ResultCount> fromCache = (CompletableFuture<ResultCount>)getFromCache(this, future);
+        if (fromCache != null) {
+            try {
+                return fromCache.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        try {
+            ResultCount result = executeInternal();
+            future.complete(result);
             return result;
-        return notifyCache(executeInternal());
+        } catch (InvalidQuery e) {
+            cancelSearch(future);
+            throw e;
+        } catch (RuntimeException e) {
+            cancelSearch(future);
+            throw e;
+        }
     }
     
     protected abstract ResultCount executeInternal() throws InvalidQuery;

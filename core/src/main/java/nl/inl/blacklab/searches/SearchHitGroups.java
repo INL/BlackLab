@@ -1,5 +1,9 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -15,13 +19,30 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
     public SearchHitGroups(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
+    
     @Override
     public final HitGroups execute() throws InvalidQuery {
-        HitGroups result = (HitGroups)getFromCache(this);
-        if (result != null)
+        CompletableFuture<HitGroups> future = new CompletableFuture<>();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<HitGroups> fromCache = (CompletableFuture<HitGroups>)getFromCache(this, future);
+        if (fromCache != null) {
+            try {
+                return fromCache.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        try {
+            HitGroups result = executeInternal();
+            future.complete(result);
             return result;
-        return notifyCache(executeInternal());
+        } catch (InvalidQuery e) {
+            cancelSearch(future);
+            throw e;
+        } catch (RuntimeException e) {
+            cancelSearch(future);
+            throw e;
+        }
     }
     
     protected abstract HitGroups executeInternal() throws InvalidQuery;
