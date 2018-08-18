@@ -38,10 +38,50 @@ Reasoning behind specific design choices / implementation notes:
     - Generic rollback on error. IndexMetadata is the main thing; FI/CS will solve itself when we integrate them in the Lucene index.
 
 
+## Immutability (in search mode) ##
+
+### MUTABLE ###
+
+- BlackLabIndex
+  Certain settings can be changed, changing the state of the index object.
+  Mutating methods:
+  setCache, setDefaultContextSize, setMaxSettings, setDefaultMatchSensitivity, 
+  setCollator, setDefaultUnbalancedTagsStrategy.
+
+### ALMOST IMMUTABLE ###
+- Results class (Hits, HitGroups, DocResults, DocGroups, ...)
+
+  When alle results have been fetched, the objects are immutable.
+  Until then, methods with names ending in "SoFar" and "AtLeast" may return different values.
+  All other methods should always return the same value for the same inputs, regardless of how many results have been fetched.
+  
+  Strictly speaking, each Results instance has a ThreadPauser that may change from unpaused to paused and back,
+  but that doesn't affect the other properties, just the timing. ThreadPauser may be removed in the future.
+
+- CapturedGroups
+
+  Hits objects may have a CapturedGroups object if the query captures any groups.
+  Whenever a Hit inside a Hits object is accessible, its corresponding CapturedGroups entry is available,
+  so this instance should appear immutable to the client.
+
+### IMMUTABLE ###
+- Result (including Hit, DocResult, Group<>()
+- Doc
+- TextPattern, CompleteQuery
+- Kwic, Concordance
+- Contexts
+- all index metadata/structure classes (IndexMetadata, AnnotatedField, Annotation, AnnotationSensitivity)
+
+
+
 ## Implementation plan ##
 
-search
-- update caching in BLS
+BLS:
+- use new Search system
+- use integrated BlackLab cache
+- remove "block=no"...?
+- don't use threads except for total count (the only asynchronously running search, right...?)
+
 
 naming: misschien sortedby, filteredby, etc. weer vervangen door sort, filter, etc.?
 
@@ -49,6 +89,9 @@ naming: misschien sortedby, filteredby, etc. weer vervangen door sort, filter, e
 
 
 POSSIBLE OPTIMIZATIONS
+- (CPU/threading) voor operaties waarvan we zeker weten dat we alle hits nodig hebben:
+  haal hits in parallel op voor meerdere/alle leafreaders. verwerk ze verder ook in parallel waar mogelijk.
+
 - niet alle resultaten opslaan in groupings. en/of na een tijdje groups "truncaten" zodat er minder/geen
   resultaten opgeslagen blijven.
   kun je gebruiken voor docs/snippets maar ook voor andere groupings: bewaar de eerste 25 en toon die

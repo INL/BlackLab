@@ -2,6 +2,14 @@
 
 ## Improvements in HEAD
 
+### New
+* New Search system that allows you to build a search, cache searches
+  in an application-specific way, allows better optimizations, etc.
+
+### Changed
+* Completely refactored Java API.
+* Almost all objects in a search are now (effectively) immutable.
+
 ## Improvements up to v1.7.1
 
 ### Changed

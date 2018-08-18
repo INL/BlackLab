@@ -101,7 +101,7 @@ public class RequestHandlerHits extends RequestHandler {
                 HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
                         ? HitProperty.deserialize(group.storedResults(), sortBy)
                         : null;
-                Hits hitsInGroup = sortProp != null ? group.storedResults().sortedBy(sortProp) : group.storedResults();
+                Hits hitsInGroup = sortProp != null ? group.storedResults().sort(sortProp) : group.storedResults();
 
                 // Important, only count hits within this group for the total
                 // We should have retrieved all the hits already, as JobGroups always counts all hits.

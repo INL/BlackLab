@@ -73,11 +73,11 @@ public class JobHitsGrouped extends JobWithHits {
         groupProp = HitProperty.deserialize(hits, groupSett.groupBy());
         if (groupProp == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupSett.groupBy() + "'.");
-        HitGroups theGroups = hits.groupedBy(groupProp, -1);
+        HitGroups theGroups = hits.group(groupProp, -1);
 
         HitGroupSortSettings sortSett = jobDesc.getHitGroupSortSettings();
         if (sortSett != null)
-            theGroups = theGroups.sortedBy(sortSett.sortBy());
+            theGroups = theGroups.sort(sortSett.sortBy());
 
         groups = theGroups; // we're done, caller can use the groups now
     }

@@ -58,7 +58,7 @@ public class JobHitsSorted extends JobWithHits {
         if (sortProp != null) {
             if (sortSett.reverse())
                 sortProp = sortProp.reverse();
-            hits = hitsUnsorted.sortedBy(sortProp);
+            hits = hitsUnsorted.sort(sortProp);
         } else {
             // Be lenient of clients passing wrong sortBy values; simply ignore bad sort requests.
             hits = hitsUnsorted;

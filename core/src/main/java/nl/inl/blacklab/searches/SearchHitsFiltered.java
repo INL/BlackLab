@@ -22,7 +22,7 @@ public class SearchHitsFiltered extends SearchHits {
     
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return source.execute().filteredBy(property, value);
+        return source.execute().filter(property, value);
     }
 
     @Override

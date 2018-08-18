@@ -19,7 +19,7 @@ public class SearchHitsSorted extends SearchHits {
     
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return source.execute().sortedBy(sortBy);
+        return source.execute().sort(sortBy);
     }
 
     @Override

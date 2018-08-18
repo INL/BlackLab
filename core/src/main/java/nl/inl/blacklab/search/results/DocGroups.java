@@ -84,7 +84,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public <P extends ResultProperty<DocGroup>> DocGroups sortedBy(P sortProp) {
+    public <P extends ResultProperty<DocGroup>> DocGroups sort(P sortProp) {
         List<DocGroup> sorted = Results.doSort(this, sortProp);
         return DocGroups.fromList(queryInfo(), sorted, groupBy, (SampleParameters)null, (WindowStats)null);
     }
@@ -118,13 +118,13 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public DocGroups filteredBy(ResultProperty<DocGroup> property, PropertyValue value) {
+    public DocGroups filter(ResultProperty<DocGroup> property, PropertyValue value) {
         List<DocGroup> list = Results.doFilter(this, property, value);
         return new DocGroups(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
-    public ResultGroups<DocGroup> groupedBy(ResultProperty<DocGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<DocGroup> group(ResultProperty<DocGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 

@@ -1217,7 +1217,7 @@ public class QueryTool {
             errprintln("Invalid hit sort criterium: " + sortBy
                     + " (valid are: match, left, right, doc, <metadatafield>)");
         } else {
-            sortedHits = hitsToSort.sortedBy(crit);
+            sortedHits = hitsToSort.sort(crit);
             firstResult = 0;
             showResultsPage();
             if (annotationName == null)
@@ -1241,7 +1241,7 @@ public class QueryTool {
             errprintln("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");
         } else {
-            groups = groups.sortedBy(crit);
+            groups = groups.sort(crit);
             firstResult = 0;
             showResultsPage();
         }
@@ -1292,7 +1292,7 @@ public class QueryTool {
             errprintln("Unknown criterium: " + groupBy);
             return;
         }
-        groups = hits.groupedBy(crit, -1);
+        groups = hits.group(crit, -1);
         showSetting = ShowSetting.GROUPS;
         sortGroups("size");
         if (annotationName == null)

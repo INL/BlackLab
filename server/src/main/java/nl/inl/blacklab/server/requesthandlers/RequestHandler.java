@@ -487,7 +487,7 @@ public abstract class RequestHandler {
         for (Entry<String, DocGroups> e : counts.entrySet()) {
             String facetBy = e.getKey();
             DocGroups facetCounts = e.getValue();
-            facetCounts = facetCounts.sortedBy(DocGroupProperty.size());
+            facetCounts = facetCounts.sort(DocGroupProperty.size());
             ds.startAttrEntry("facet", "name", facetBy)
                     .startList();
             int n = 0, maxFacetValues = 10;

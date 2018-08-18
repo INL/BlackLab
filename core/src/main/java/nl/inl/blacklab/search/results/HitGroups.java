@@ -84,9 +84,6 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     /**
      * Construct a ResultsGrouper object, by grouping the supplied hits.
      *
-     * NOTE: this will be made package-private in a future release. Use
-     * Hits.groupedBy(criteria) instead.
-     *
      * @param hits the hits to group
      * @param criteria the criteria to group on
      * @param maxResultsToStorePerGroup how many results to store per group at most
@@ -151,7 +148,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     @Override
-    public <P extends ResultProperty<HitGroup>> HitGroups sortedBy(P sortProp) {
+    public <P extends ResultProperty<HitGroup>> HitGroups sort(P sortProp) {
         List<HitGroup> sorted = Results.doSort(this, sortProp);
         return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null);
     }
@@ -226,13 +223,13 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     @Override
-    public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
+    public HitGroups filter(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = Results.doFilter(this, property, value);
         return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
     }
 
     @Override
-    public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<HitGroup> group(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 

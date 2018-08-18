@@ -219,7 +219,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public <P extends ResultProperty<DocResult>> DocResults sortedBy(P sortProp) {
+    public <P extends ResultProperty<DocResult>> DocResults sort(P sortProp) {
         List<DocResult> sorted = Results.doSort(this, sortProp);
         return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
     }
@@ -339,7 +339,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public DocGroups groupedBy(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
+    public DocGroups group(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         for (DocResult r : this) {
@@ -425,7 +425,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public DocResults filteredBy(ResultProperty<DocResult> property, PropertyValue value) {
+    public DocResults filter(ResultProperty<DocResult> property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
         return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
     }

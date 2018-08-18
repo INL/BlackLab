@@ -19,7 +19,7 @@ public class SearchDocsSorted extends SearchDocs {
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().sortedBy(sortBy);
+        return docsSearch.execute().sort(sortBy);
     }
 
     @Override

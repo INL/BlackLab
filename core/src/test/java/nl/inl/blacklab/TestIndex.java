@@ -184,12 +184,12 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query, HitProperty sortBy) {
-        Hits hits = find(query, null).sortedBy(sortBy);
+        Hits hits = find(query, null).sort(sortBy);
         return getConcordances(hits, word);
     }
     
     public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
-        Hits hits = find(query, null).filteredBy(prop, value);
+        Hits hits = find(query, null).filter(prop, value);
         return getConcordances(hits, word);
     }
 

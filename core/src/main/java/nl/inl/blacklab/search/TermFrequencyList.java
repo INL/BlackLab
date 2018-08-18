@@ -165,18 +165,18 @@ public class TermFrequencyList extends Results<TermFrequency> {
     }
 
     @Override
-    public ResultGroups<TermFrequency> groupedBy(ResultProperty<TermFrequency> criteria,
+    public ResultGroups<TermFrequency> group(ResultProperty<TermFrequency> criteria,
             int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TermFrequencyList filteredBy(ResultProperty<TermFrequency> property, PropertyValue value) {
+    public TermFrequencyList filter(ResultProperty<TermFrequency> property, PropertyValue value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <P extends ResultProperty<TermFrequency>> TermFrequencyList sortedBy(P sortProp) {
+    public <P extends ResultProperty<TermFrequency>> TermFrequencyList sort(P sortProp) {
         throw new UnsupportedOperationException();
     }
 

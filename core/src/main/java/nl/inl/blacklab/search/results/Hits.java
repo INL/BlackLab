@@ -278,7 +278,7 @@ public abstract class Hits extends Results<Hit> {
     }
     
     @Override
-    public HitGroups groupedBy(ResultProperty<Hit> criteria, int maxResultsToStorePerGroup) {
+    public HitGroups group(ResultProperty<Hit> criteria, int maxResultsToStorePerGroup) {
         return HitGroups.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
     }
     
@@ -290,7 +290,7 @@ public abstract class Hits extends Results<Hit> {
      * @return filtered hits
      */
     @Override
-    public Hits filteredBy(ResultProperty<Hit> property, PropertyValue value) {
+    public Hits filter(ResultProperty<Hit> property, PropertyValue value) {
         return new HitsFiltered(this, (HitProperty)property, value);
     }
     
@@ -383,7 +383,7 @@ public abstract class Hits extends Results<Hit> {
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public <P extends ResultProperty<Hit>> Hits sortedBy(P sortProp) {
+    public <P extends ResultProperty<Hit>> Hits sort(P sortProp) {
         if (!(sortProp instanceof HitProperty))
             throw new UnsupportedOperationException("Can only sort Hits by an instance of HitProperty!");
         HitProperty hitProp = (HitProperty)sortProp;

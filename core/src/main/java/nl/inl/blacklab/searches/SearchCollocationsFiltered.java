@@ -27,7 +27,7 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().filteredBy(property, value);
+        return source.execute().filter(property, value);
     }
 
     @Override

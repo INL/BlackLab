@@ -26,7 +26,7 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
 
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return source.execute().filteredBy(property, value);
+        return source.execute().filter(property, value);
     }
 
     @Override

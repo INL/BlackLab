@@ -73,7 +73,7 @@ public class JobFacets extends Job {
 
         Map<String, DocGroups> theCounts = new HashMap<>();
         for (DocProperty facetBy : props) {
-            DocGroups facetCounts = docResults.groupedBy(facetBy, -1); //TODO: don't store all the results!
+            DocGroups facetCounts = docResults.group(facetBy, -1); //TODO: don't store all the results!
             theCounts.put(facetBy.name(), facetCounts);
         }
         counts = theCounts; // we're done, caller can use the groups now

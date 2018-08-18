@@ -62,7 +62,7 @@ public class JobHitsFiltered extends JobWithHits {
             throw new BadRequest("ERROR_IN_HITFILTER", "Incorrect hit filter property of value specified.");
         }
 
-        hits = hitsUnfiltered.filteredBy(prop, value);
+        hits = hitsUnfiltered.filter(prop, value);
         setPausedInternal();
     }
 

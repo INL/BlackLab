@@ -24,7 +24,7 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
     
     @Override
     public DocGroups executeInternal() throws InvalidQuery {
-        return source.execute().filteredBy(property, value);
+        return source.execute().filter(property, value);
     }
 
     @Override

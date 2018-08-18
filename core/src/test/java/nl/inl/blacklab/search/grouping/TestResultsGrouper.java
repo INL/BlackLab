@@ -50,7 +50,7 @@ public class TestResultsGrouper {
         searcher.setIndexSearcher(indexSearcher);
         Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.maxSettings());
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hits.groupedBy(crit, -1);
+        HitGroups grouper = hits.group(crit, -1);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);

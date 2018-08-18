@@ -23,7 +23,7 @@ public class SearchDocsFiltered extends SearchDocs {
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().filteredBy(property, value);
+        return docsSearch.execute().filter(property, value);
     }
 
     @Override

@@ -268,7 +268,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param maxResultsToStorePerGroup maximum number of results to store per group, or -1 for all
      * @return a HitGroups object representing the grouped hits
      */
-    public abstract ResultGroups<T> groupedBy(ResultProperty<T> criteria, int maxResultsToStorePerGroup);
+    public abstract ResultGroups<T> group(ResultProperty<T> criteria, int maxResultsToStorePerGroup);
 
     /**
      * Select only the hits where the specified property has the specified value.
@@ -277,7 +277,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    public abstract Results<T> filteredBy(ResultProperty<T> property, PropertyValue value);
+    public abstract Results<T> filter(ResultProperty<T> property, PropertyValue value);
 
     /**
      * Return a new Results object with these results sorted by the given property.
@@ -289,7 +289,15 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param sortProp the property to sort on
      * @return a new Results object with the same results, sorted in the specified way
      */
-    public abstract <P extends ResultProperty<T>> Results<T> sortedBy(P sortProp);
+    public abstract <P extends ResultProperty<T>> Results<T> sort(P sortProp);
+
+    /**
+     * Take a sample of results.
+     *
+     * @param sampleParameters sample parameters 
+     * @return the sample
+     */
+    public abstract Results<T> sample(SampleParameters sampleParameters);
 
     /**
      * Get a window into this list of results.
@@ -369,14 +377,6 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         ensureAllResultsRead();
         return Collections.unmodifiableList(results);
     }
-
-    /**
-     * Take a sample of results.
-     *
-     * @param sampleParameters sample parameters 
-     * @return the sample
-     */
-    public abstract Results<T> sample(SampleParameters sampleParameters);
 
     
 }

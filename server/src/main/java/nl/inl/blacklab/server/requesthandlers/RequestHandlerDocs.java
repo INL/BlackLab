@@ -122,7 +122,7 @@ public class RequestHandlerDocs extends RequestHandler {
             DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
             DocResults docsSorted = group.storedResults();
             if (sortProp != null)
-                docsSorted = docsSorted.sortedBy(sortProp);
+                docsSorted = docsSorted.sort(sortProp);
         
             int first = searchParam.getInteger("first");
             if (first < 0)
