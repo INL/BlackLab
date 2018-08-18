@@ -15,11 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -28,7 +32,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * access to the hits. Note that this means that all hits found must be
  * retrieved, which may be unfeasible for large results sets.
  */
-public abstract class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
+public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     
     /**
      * Construct HitGroups from a list of HitGroup instances.
@@ -41,7 +45,7 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @return grouped hits
      */
     public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
-        return new HitGroupsImpl(queryInfo, results, groupCriteria, sampleParameters, windowStats);
+        return new HitGroups(queryInfo, results, groupCriteria, sampleParameters, windowStats);
     }
 
     /**
@@ -53,19 +57,94 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
      * @return grouped hits
      */
     public static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
-        return new HitGroupsImpl(hits, criteria, maxResultsToStorePerGroup);
+        return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
     }
 
-    protected HitProperty criteria;
+    private HitProperty criteria;
 
-    protected HitGroups(QueryInfo queryInfo, HitProperty groupCriteria) {
+    /**
+     * The groups.
+     */
+    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
+
+    /**
+     * Total number of hits.
+     */
+    private int totalHits = 0;
+
+    /**
+     * Size of the largest group.
+     */
+    private int largestGroupSize = 0;
+
+    private WindowStats windowStats = null;
+
+    private SampleParameters sampleParameters = null;
+
+    /**
+     * Construct a ResultsGrouper object, by grouping the supplied hits.
+     *
+     * NOTE: this will be made package-private in a future release. Use
+     * Hits.groupedBy(criteria) instead.
+     *
+     * @param hits the hits to group
+     * @param criteria the criteria to group on
+     * @param maxResultsToStorePerGroup how many results to store per group at most
+     */
+    protected HitGroups(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+        super(hits.queryInfo());
+        this.criteria = criteria;
+        
+        List<Annotation> requiredContext = criteria.needsContext();
+        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index())));
+        
+        //Thread currentThread = Thread.currentThread();
+        Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
+        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
+        for (Hit hit: hits) {
+            PropertyValue identity = criteria.get(hit);
+            List<Hit> group = groupLists.get(identity);
+            if (group == null) {
+                group = new ArrayList<>();
+                groupLists.put(identity, group);
+            }
+            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
+                group.add(hit);
+            Integer groupSize = groupSizes.get(identity);
+            if (groupSize == null)
+                groupSize = 1;
+            else
+                groupSize++;
+            if (groupSize > largestGroupSize)
+                largestGroupSize = groupSize;
+            groupSizes.put(identity, groupSize);
+            totalHits++;
+        }
+        for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
+            PropertyValue groupId = e.getKey();
+            List<Hit> hitList = e.getValue();
+            Integer groupSize = groupSizes.get(groupId);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, groupSize);
+            groups.put(groupId, group);
+            results.add(group);
+        }
+    }
+
+    protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
         this.criteria = groupCriteria;
+        this.windowStats = windowStats;
+        this.sampleParameters = sampleParameters;
+        for (HitGroup group: groups) {
+            if (group.size() > largestGroupSize)
+                largestGroupSize = group.size();
+            totalHits += group.size();
+            results.add(group);
+            this.groups.put(group.identity(), group);
+        }
     }
-    
-    @Override
-    public abstract HitGroup get(PropertyValue identity);
 
+    
     @Override
     public HitProperty groupCriteria() {
         return criteria;
@@ -76,22 +155,6 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
         List<HitGroup> sorted = Results.doSort(this, sortProp);
         return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null);
     }
-    
-    /**
-     * Get the total number of hits
-     *
-     * @return the number of hits
-     */
-    @Override
-    public abstract int sumOfGroupSizes();
-
-    /**
-     * Return the size of the largest group
-     *
-     * @return size of the largest group
-     */
-    @Override
-    public abstract int largestGroupSize();
     
     @Override
     protected void ensureResultsRead(int number) {
@@ -108,4 +171,82 @@ public abstract class HitGroups extends Results<HitGroup> implements ResultGroup
     public HitGroups sample(SampleParameters sampleParameters) {
         return HitGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
+    
+    /**
+     * Get the total number of hits
+     *
+     * @return the number of hits
+     */
+    @Override
+    public int sumOfGroupSizes() {
+        return totalHits;
+    }
+
+    /**
+     * Return the size of the largest group
+     *
+     * @return size of the largest group
+     */
+    @Override
+    public int largestGroupSize() {
+        return largestGroupSize;
+    }
+
+    @Override
+    public String toString() {
+        return "ResultsGrouper with " + size() + " groups";
+    }
+
+    @Override
+    public HitGroup get(PropertyValue identity) {
+        return groups.get(identity);
+    }
+
+    @Override
+    public int size() {
+        return groups.size();
+    }
+
+    @Override
+    public WindowStats windowStats() {
+        return windowStats;
+    }
+    
+    @Override
+    public SampleParameters sampleParameters() {
+        return sampleParameters;
+    }
+    
+    @Override
+    public HitGroups window(int first, int number) {
+        List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
+        boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
+        WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
+        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats);
+    }
+
+    @Override
+    public HitGroups filteredBy(ResultProperty<HitGroup> property, PropertyValue value) {
+        List<HitGroup> list = Results.doFilter(this, property, value);
+        return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
+    }
+
+    @Override
+    public ResultGroups<HitGroup> groupedBy(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
+        throw new UnsupportedOperationException("Cannot group HitGroups");
+    }
+
+    @Override
+    public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
+        if (maximumNumberOfResultsPerGroup < 0)
+            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+        List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
+        for (HitGroup group: results) {
+            HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
+            truncatedGroups.add(newGroup);
+        }
+        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
+    }
+
+    
 }

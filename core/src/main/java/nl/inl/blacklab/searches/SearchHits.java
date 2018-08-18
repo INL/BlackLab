@@ -114,5 +114,4 @@ public abstract class SearchHits extends SearchResults<Hit> {
         return new SearchCollocationsFromHits(queryInfo(), (List<SearchResultObserver>)null, this, annotation, size, sensitivity);
     }
 
-
 }

@@ -171,22 +171,22 @@ public class TermFrequencyList extends Results<TermFrequency> {
     }
 
     @Override
-    public Results<TermFrequency> filteredBy(ResultProperty<TermFrequency> property, PropertyValue value) {
+    public TermFrequencyList filteredBy(ResultProperty<TermFrequency> property, PropertyValue value) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public <P extends ResultProperty<TermFrequency>> Results<TermFrequency> sortedBy(P sortProp) {
+    public <P extends ResultProperty<TermFrequency>> TermFrequencyList sortedBy(P sortProp) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Results<TermFrequency> window(int first, int windowSize) {
+    public TermFrequencyList window(int first, int windowSize) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Results<TermFrequency> sample(SampleParameters sampleParameters) {
+    public TermFrequencyList sample(SampleParameters sampleParameters) {
         throw new UnsupportedOperationException();
     }
 
