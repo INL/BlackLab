@@ -107,4 +107,30 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public String serialize() {
         return serializeReverse() + PropertySerializeUtil.combineParts("field", fieldName);
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HitPropertyDocumentStoredField other = (HitPropertyDocumentStoredField) obj;
+        if (fieldName == null) {
+            if (other.fieldName != null)
+                return false;
+        } else if (!fieldName.equals(other.fieldName))
+            return false;
+        return true;
+    }
+    
 }

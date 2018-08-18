@@ -65,4 +65,30 @@ public class HitPropertyDoc extends HitProperty {
     public String serialize() {
         return serializeReverse() + "doc";
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((index == null) ? 0 : index.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HitPropertyDoc other = (HitPropertyDoc) obj;
+        if (index == null) {
+            if (other.index != null)
+                return false;
+        } else if (!index.equals(other.index))
+            return false;
+        return true;
+    }
+    
 }

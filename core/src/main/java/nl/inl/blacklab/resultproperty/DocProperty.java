@@ -162,4 +162,26 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
         param.put("facets", f.serialize());
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (reverse ? 1231 : 1237);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DocProperty other = (DocProperty) obj;
+        if (reverse != other.reverse)
+            return false;
+        return true;
+    }
+    
 }

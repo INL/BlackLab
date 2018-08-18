@@ -63,4 +63,5 @@ public class HitPropertyHitPosition extends HitProperty {
     public String serialize() {
         return serializeReverse() + "hitposition";
     }
+    
 }

@@ -115,6 +115,7 @@
         <exclude name="CouplingBetweenObjects" />
         <exclude name="AvoidCatchingGenericException" />
         <exclude name="ExceptionAsFlowControl" />
+        <exclude name="SimplifyBooleanReturns" />
 
         <!-- Might not need re-examination -->
         <exclude name="UseUtilityClass" />

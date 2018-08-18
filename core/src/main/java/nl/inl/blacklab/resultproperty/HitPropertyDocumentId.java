@@ -63,4 +63,5 @@ public class HitPropertyDocumentId extends HitProperty {
     public String serialize() {
         return serializeReverse() + "docid";
     }
+    
 }

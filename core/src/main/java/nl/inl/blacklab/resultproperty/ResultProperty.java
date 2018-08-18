@@ -71,5 +71,11 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * @return the list
      */
     List<String> propNames();
+    
+    @Override
+    int hashCode();
+    
+    @Override
+    boolean equals(Object obj);
 
 }
