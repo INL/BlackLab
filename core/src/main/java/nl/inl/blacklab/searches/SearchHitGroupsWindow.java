@@ -22,7 +22,7 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return notifyCache(source.execute().window(first, number));
     }
 
     @Override

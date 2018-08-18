@@ -22,7 +22,7 @@ public class SearchCollocationsSampled extends SearchCollocations {
 
     @Override
     public TermFrequencyList execute() throws InvalidQuery {
-        return source.execute().sample(sampleParameters);
+        return notifyCache(source.execute().sample(sampleParameters));
     }
 
     @Override

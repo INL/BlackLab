@@ -30,7 +30,9 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -422,5 +424,17 @@ public interface BlackLabIndex extends Closeable {
      * @param size default context size
      */
     void setDefaultContextSize(ContextSize size);
+
+    /**
+     * Notify the cache of a search plus result.
+     * 
+     * The cache can decide whether or not to add this result.
+     * 
+     * @param search search
+     * @param result result
+     */
+    default <T extends SearchResult> void notifyCache(Search search, T result) {
+        // NOP
+    }
 
 }

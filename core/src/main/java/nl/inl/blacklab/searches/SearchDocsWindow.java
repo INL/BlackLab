@@ -21,7 +21,7 @@ public class SearchDocsWindow extends SearchDocs {
 
     @Override
     public DocResults execute() throws InvalidQuery {
-        return docsSearch.execute().window(first, number);
+        return notifyCache(docsSearch.execute().window(first, number));
     }
 
     @Override

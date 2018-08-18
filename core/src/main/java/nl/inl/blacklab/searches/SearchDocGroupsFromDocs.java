@@ -23,7 +23,7 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     
     @Override
     public DocGroups execute() throws InvalidQuery {
-        return source.execute().groupedBy(property, maxDocs);
+        return notifyCache(source.execute().groupedBy(property, maxDocs));
     }
 
     @Override

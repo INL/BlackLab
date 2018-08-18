@@ -22,7 +22,7 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return source.execute().sample(sampleParameters);
+        return notifyCache(source.execute().sample(sampleParameters));
     }
 
     @Override

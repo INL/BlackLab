@@ -20,7 +20,7 @@ public class SearchHitsSampled extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return source.execute().sample(sampleParameters);
+        return notifyCache(source.execute().sample(sampleParameters));
     }
 
     @Override

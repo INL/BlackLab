@@ -19,7 +19,7 @@ public class SearchCountFromResults<T> extends SearchCount {
 
     @Override
     public ResultCount execute() throws InvalidQuery {
-        return new ResultCount(source.execute().size());
+        return notifyCache(new ResultCount(source.execute().size()));
     }
 
     @Override

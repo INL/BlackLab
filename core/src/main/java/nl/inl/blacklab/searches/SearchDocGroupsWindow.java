@@ -20,7 +20,7 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     
     @Override
     public DocGroups execute() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return notifyCache(source.execute().window(first, number));
     }
 
     @Override

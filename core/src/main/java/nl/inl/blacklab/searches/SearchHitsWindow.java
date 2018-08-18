@@ -21,7 +21,7 @@ public class SearchHitsWindow extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return source.execute().window(first, number);
+        return notifyCache(source.execute().window(first, number));
     }
 
     @Override

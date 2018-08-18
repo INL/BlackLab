@@ -41,7 +41,6 @@ Reasoning behind specific design choices / implementation notes:
 ## Implementation plan ##
 
 search
-- introduce new Search interface for building searches
 - update caching in BLS
 
 naming: misschien sortedby, filteredby, etc. weer vervangen door sort, filter, etc.?

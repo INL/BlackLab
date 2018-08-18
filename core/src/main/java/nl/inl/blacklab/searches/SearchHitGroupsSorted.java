@@ -23,7 +23,7 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return source.execute().sortedBy(sortBy);
+        return notifyCache(source.execute().sortedBy(sortBy));
     }
 
     @Override

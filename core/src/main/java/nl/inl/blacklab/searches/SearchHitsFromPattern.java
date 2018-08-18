@@ -34,7 +34,7 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings);
+        return notifyCache(queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings));
     }
 
     @Override

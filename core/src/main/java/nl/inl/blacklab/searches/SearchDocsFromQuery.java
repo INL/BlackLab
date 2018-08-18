@@ -17,7 +17,7 @@ public class SearchDocsFromQuery extends SearchDocs {
 
     @Override
     public DocResults execute() throws InvalidQuery {
-        return queryInfo().index().queryDocuments(query);
+        return notifyCache(queryInfo().index().queryDocuments(query));
     }
 
     @Override

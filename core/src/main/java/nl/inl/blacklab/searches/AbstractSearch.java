@@ -1,6 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchResult;
 
 /**
  * Abstract base class for all Search implementations,
@@ -13,6 +14,11 @@ public abstract class AbstractSearch implements Search {
     
     public AbstractSearch(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;  
+    }
+    
+    protected <T extends SearchResult> T notifyCache(T result) {
+        queryInfo.index().notifyCache(this, result);
+        return result;
     }
     
     @Override

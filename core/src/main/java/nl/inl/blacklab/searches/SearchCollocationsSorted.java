@@ -22,7 +22,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
 
     @Override
     public TermFrequencyList execute() throws InvalidQuery {
-        return source.execute().sortedBy(property);
+        return notifyCache(source.execute().sortedBy(property));
     }
 
     @Override

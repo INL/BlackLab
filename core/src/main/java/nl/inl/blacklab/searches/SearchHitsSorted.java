@@ -20,7 +20,7 @@ public class SearchHitsSorted extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return source.execute().sortedBy(sortBy);
+        return notifyCache(source.execute().sortedBy(sortBy));
     }
 
     @Override

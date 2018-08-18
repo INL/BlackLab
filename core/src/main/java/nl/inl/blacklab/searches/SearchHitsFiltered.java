@@ -23,7 +23,7 @@ public class SearchHitsFiltered extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return source.execute().filteredBy(property, value);
+        return notifyCache(source.execute().filteredBy(property, value));
     }
 
     @Override

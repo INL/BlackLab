@@ -33,7 +33,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup);
+        return notifyCache(HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup));
     }
 
     @Override
