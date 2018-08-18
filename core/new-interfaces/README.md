@@ -76,10 +76,20 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
+FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toch voor)
+```
+http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
+```
+
+- block parameter verwijderd.
+  alleen totals-searches zouden met block=false moeten worden aangeroepen.
+  RequestHandlerDocs: originalHitsSearch was block=false, nu block=true (Hits object moet beschikbaar zijn, niet alle hits gelezen)
+  RequestHandlerDocsGrouped: originalHitsSearch was block=false, nu block=true (idem)
+
 BLS:
+- default sort descending terugbrengen
 - use new Search system
 - use integrated BlackLab cache
-- remove "block=no"...?
 - don't use threads except for total count (the only asynchronously running search, right...?)
 
 

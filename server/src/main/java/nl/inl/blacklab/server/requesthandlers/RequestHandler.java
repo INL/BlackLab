@@ -45,7 +45,6 @@ import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
@@ -535,16 +534,6 @@ public abstract class RequestHandler {
 
     protected BlackLabIndex blIndex() throws BlsException {
         return indexMan.getIndex(indexName).blIndex();
-    }
-
-    protected boolean isBlockingOperation() {
-        String str = ServletUtil.getParameter(request, "block", "yes").toLowerCase();
-        try {
-            return ParseUtil.strToBool(str);
-        } catch (IllegalArgumentException e) {
-            debug(logger, "Illegal boolean value for parameter '" + "block" + "': " + str);
-            return false;
-        }
     }
 
     /**

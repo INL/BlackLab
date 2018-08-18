@@ -72,10 +72,9 @@ public class RequestHandlerHits extends RequestHandler {
 
         try {
             HitGroup group = null;
-            boolean block = isBlockingOperation();
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
                 // Yes. Group, then show hits from the specified group
-                job = searchMan.search(user, searchParam.hitsGrouped(), block);
+                job = searchMan.search(user, searchParam.hitsGrouped(), true);
                 JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
                 // If search is not done yet, indicate this to the user

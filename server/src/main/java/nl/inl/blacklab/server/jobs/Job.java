@@ -66,27 +66,6 @@ public abstract class Job implements Comparable<Job>, Pausible {
     Set<Job> waitingFor = new HashSet<>();
 
     /**
-     * Wait for the specified job to finish
-     * 
-     * @param job the job to wait for
-     * @throws BlsException
-     */
-    protected void waitForJobToFinish(Job job) throws BlsException {
-        synchronized (waitingFor) {
-            waitingFor.add(job);
-            job.incrRef();
-        }
-        try {
-            job.waitUntilFinished();
-        } finally {
-            synchronized (waitingFor) {
-                job.decrRef();
-                waitingFor.remove(job);
-            }
-        }
-    }
-
-    /**
      * The total accumulated paused time so far. If the search is currently paused,
      * that time is not taken into account yet. (it is added when the search is
      * resumed). So total paused time is: pausedTime + (level == PAUSED ? now() -
@@ -266,7 +245,18 @@ public abstract class Job implements Comparable<Job>, Pausible {
             // Perform the input job and then call this job's performSearch method
             inputJob = searchMan.search(user, inputDesc, false);
             try {
-                waitForJobToFinish(inputJob);
+                synchronized (waitingFor) {
+                    waitingFor.add(inputJob);
+                    inputJob.incrRef();
+                }
+                try {
+                    inputJob.waitUntilFinished();
+                } finally {
+                    synchronized (waitingFor) {
+                        inputJob.decrRef();
+                        waitingFor.remove(inputJob);
+                    }
+                }
                 performSearch();
             } finally {
                 inputJob.decrRef();

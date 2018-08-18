@@ -58,23 +58,22 @@ public class RequestHandlerDocs extends RequestHandler {
             viewGroup = "";
         search = null;
         try {
-            boolean block = isBlockingOperation();
             int response = 0;
             
             // Make sure we have the hits search, so we can later determine totals.
             originalHitsSearch = null;
             if (searchParam.hasPattern()) {
-                originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits(), false);
+                originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits(), true);
             }
             
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
                 
                 // View a single group in a grouped docs resultset
-                response = doViewGroup(ds, block, viewGroup);
+                response = doViewGroup(ds, viewGroup);
                 
             } else {
                 // Regular set of docs (no grouping first)
-                response = doRegularDocs(ds, block);
+                response = doRegularDocs(ds);
             }
             return response;
         } finally {
@@ -85,13 +84,13 @@ public class RequestHandlerDocs extends RequestHandler {
         }
     }
 
-    private int doViewGroup(DataStream ds, boolean block, String viewGroup) throws BlsException {
+    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
     
         // Yes. Group, then show hits from the specified group
         JobDocsGrouped searchGrouped = null;
         try {
-            searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), block);
+            searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
             search = searchGrouped;
             search.incrRef();
         
@@ -142,11 +141,11 @@ public class RequestHandlerDocs extends RequestHandler {
         }
     }
 
-    private int doRegularDocs(DataStream ds, boolean block) throws BlsException {
+    private int doRegularDocs(DataStream ds) throws BlsException {
         JobDocsWindow searchWindow = null;
         JobDocsTotal total = null;
         try {
-            searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow(), block);
+            searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow(), true);
             search = searchWindow;
             search.incrRef();
         
