@@ -421,10 +421,16 @@ public abstract class Hits extends Results<Hit> {
     //--------------------------------------------------------------------
     
     public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
+        if (contextSize == null)
+            contextSize = index().defaultContextSize();
+        if (type == null)
+            type = ConcordanceType.FORWARD_INDEX;
         return new Concordances(this, type, contextSize);
     }
 
     public Kwics kwics(ContextSize contextSize) {
+        if (contextSize == null)
+            contextSize = index().defaultContextSize();
         return new Kwics(this, contextSize);
     }
 

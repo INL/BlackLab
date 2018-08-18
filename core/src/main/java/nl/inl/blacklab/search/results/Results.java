@@ -64,7 +64,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     }
 
     protected static <T> List<T> doWindow(Results<T> results, int first, int number) {
-        if (first < 0 || !results.resultsProcessedAtLeast(first + 1)) {
+        if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
             throw new BlackLabRuntimeException("First hit out of range");
         }
     

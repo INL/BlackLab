@@ -49,6 +49,10 @@ public class TermFrequencyList extends Results<TermFrequency> {
         BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();
+        if (contextSize == null)
+            contextSize = index.defaultContextSize();
+        if (sensitivity == null)
+            sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
         
         Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
