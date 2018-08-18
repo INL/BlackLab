@@ -21,8 +21,8 @@ public class SearchCollocationsSampled extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList execute() throws InvalidQuery {
-        return notifyCache(source.execute().sample(sampleParameters));
+    public TermFrequencyList executeInternal() throws InvalidQuery {
+        return source.execute().sample(sampleParameters);
     }
 
     @Override

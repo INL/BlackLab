@@ -33,6 +33,7 @@ import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -433,8 +434,30 @@ public interface BlackLabIndex extends Closeable {
      * @param search search
      * @param result result
      */
-    default <T extends SearchResult> void notifyCache(Search search, T result) {
-        // NOP
-    }
+    void notifyCache(Search search, SearchResult result);
+
+    /**
+     * Set the object BlackLab should use as cache.
+     * 
+     * BlackLab will notify the cache of search results and will ask
+     * the cache for results before executing a search.
+     * 
+     * It is up to the application to implement an effective cache, deciding
+     * whether to cache a result and ensuring the cache doesn't grow too large.
+     * 
+     * @param cache cache object to use
+     */
+    void setCache(SearchCache cache);
+
+    /**
+     * Get a result from the cache.
+     * 
+     * Applications normally don't call this directly;
+     * The Search classes use it internally.
+     * 
+     * @param search search we want the cached result for
+     * @return cached result, or null if it wasn't in the cache
+     */
+    SearchResult getFromCache(Search search);
 
 }

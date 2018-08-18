@@ -21,8 +21,8 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().sample(sampleParameters));
+    public HitGroups executeInternal() throws InvalidQuery {
+        return source.execute().sample(sampleParameters);
     }
 
     @Override

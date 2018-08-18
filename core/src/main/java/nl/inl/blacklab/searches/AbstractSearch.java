@@ -21,6 +21,10 @@ public abstract class AbstractSearch implements Search {
         return result;
     }
     
+    protected SearchResult getFromCache(Search search) {
+        return queryInfo.index().getFromCache(search);
+    }
+    
     @Override
     public QueryInfo queryInfo() {
         return queryInfo;

@@ -21,8 +21,8 @@ public class SearchCollocationsWindow extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList execute() throws InvalidQuery {
-        return notifyCache(source.execute().window(first, number));
+    public TermFrequencyList executeInternal() throws InvalidQuery {
+        return source.execute().window(first, number);
     }
 
     @Override

@@ -18,8 +18,8 @@ public class SearchDocsSorted extends SearchDocs {
     }
 
     @Override
-    public DocResults execute() throws InvalidQuery {
-        return notifyCache(docsSearch.execute().sortedBy(sortBy));
+    public DocResults executeInternal() throws InvalidQuery {
+        return docsSearch.execute().sortedBy(sortBy);
     }
 
     @Override

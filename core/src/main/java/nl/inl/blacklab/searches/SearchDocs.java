@@ -15,8 +15,15 @@ public abstract class SearchDocs extends AbstractSearch {
     }
 
     @Override
-    public abstract DocResults execute() throws InvalidQuery;
-
+    public final DocResults execute() throws InvalidQuery {
+        DocResults result = (DocResults)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract DocResults executeInternal() throws InvalidQuery;
+    
     /**
      * Group hits by a property.
      * 

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -18,17 +17,17 @@ public abstract class SearchHits extends SearchResults<Hit> {
     SearchHits(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
-    /**
-     * Execute the search operation, returning the final response.
-     * 
-     * @return result of the operation
-     * @throws RegexpTooLarge if a regular expression was too large
-     * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
-     */
+    
     @Override
-    public abstract Hits execute() throws WildcardTermTooBroad, RegexpTooLarge;
-
+    public final Hits execute() throws InvalidQuery {
+        Hits result = (Hits)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract Hits executeInternal() throws InvalidQuery;
+    
     /**
      * Group hits by document.
      * 

@@ -25,8 +25,8 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().filteredBy(property, value));
+    public HitGroups executeInternal() throws InvalidQuery {
+        return source.execute().filteredBy(property, value);
     }
 
     @Override

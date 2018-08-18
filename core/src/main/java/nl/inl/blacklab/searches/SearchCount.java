@@ -20,7 +20,15 @@ public abstract class SearchCount extends AbstractSearch {
      * @throws InvalidQuery if the query was invalid
      */
     @Override
-    public abstract ResultCount execute() throws InvalidQuery;
+    public final ResultCount execute() throws InvalidQuery {
+        ResultCount result = (ResultCount)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract ResultCount executeInternal() throws InvalidQuery;
+
     
     @Override
     public boolean equals(Object obj) {

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -28,12 +27,11 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * Execute the search operation, returning the final response.
      *  
      * @return result of the operation
-     * @throws RegexpTooLarge if a regular expression was too large 
-     * @throws WildcardTermTooBroad if a term expression matched too many terms
+     * @throws InvalidQuery 
      */
     @Override
-    public HitGroups execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return notifyCache(HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup));
+    public HitGroups executeInternal() throws InvalidQuery {
+        return HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup);
     }
 
     @Override

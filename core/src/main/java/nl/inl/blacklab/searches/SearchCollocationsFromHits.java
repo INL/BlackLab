@@ -26,8 +26,8 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList execute() throws InvalidQuery {
-        return notifyCache(source.execute().collocations(annotation, contextSize, sensitivity));
+    public TermFrequencyList executeInternal() throws InvalidQuery {
+        return source.execute().collocations(annotation, contextSize, sensitivity);
     }
 
     @Override

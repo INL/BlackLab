@@ -18,7 +18,14 @@ public abstract class SearchCollocations extends AbstractSearch {
     }
 
     @Override
-    public abstract TermFrequencyList execute() throws InvalidQuery;
+    public final TermFrequencyList execute() throws InvalidQuery {
+        TermFrequencyList result = (TermFrequencyList)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract TermFrequencyList executeInternal() throws InvalidQuery;
 
     /**
      * Sort collocations.

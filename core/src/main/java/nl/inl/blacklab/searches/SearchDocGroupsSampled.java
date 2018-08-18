@@ -19,8 +19,8 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().sample(sampleParameters));
+    public DocGroups executeInternal() throws InvalidQuery {
+        return source.execute().sample(sampleParameters);
     }
 
     @Override

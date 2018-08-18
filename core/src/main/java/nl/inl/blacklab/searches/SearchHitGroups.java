@@ -15,9 +15,16 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
     public SearchHitGroups(QueryInfo queryInfo) {
         super(queryInfo);
     }
-    
+
     @Override
-    public abstract HitGroups execute() throws InvalidQuery;
+    public final HitGroups execute() throws InvalidQuery {
+        HitGroups result = (HitGroups)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract HitGroups executeInternal() throws InvalidQuery;
 
     /**
      * Sort hits.

@@ -22,8 +22,8 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().sortedBy(sortBy));
+    public HitGroups executeInternal() throws InvalidQuery {
+        return source.execute().sortedBy(sortBy);
     }
 
     @Override

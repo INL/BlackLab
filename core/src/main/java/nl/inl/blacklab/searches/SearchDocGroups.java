@@ -14,10 +14,17 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
     public SearchDocGroups(QueryInfo queryInfo) {
         super(queryInfo);
     }
-    
-    @Override
-    public abstract DocGroups execute() throws InvalidQuery;
 
+    @Override
+    public final DocGroups execute() throws InvalidQuery {
+        DocGroups result = (DocGroups)getFromCache(this);
+        if (result != null)
+            return result;
+        return notifyCache(executeInternal());
+    }
+    
+    protected abstract DocGroups executeInternal() throws InvalidQuery;
+    
     /**
      * Sort hits.
      * 

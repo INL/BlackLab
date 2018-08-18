@@ -18,8 +18,8 @@ public class SearchDocsSampled extends SearchDocs {
     }
 
     @Override
-    public DocResults execute() throws InvalidQuery {
-        return notifyCache(docsSearch.execute().sample(sampleParameters));
+    public DocResults executeInternal() throws InvalidQuery {
+        return docsSearch.execute().sample(sampleParameters);
     }
 
     @Override

@@ -17,8 +17,8 @@ public class SearchDocsFromHits extends SearchDocs {
     }
 
     @Override
-    public DocResults execute() throws InvalidQuery {
-        return notifyCache(hitsSearch.execute().perDocResults(maxHits));
+    public DocResults executeInternal() throws InvalidQuery {
+        return hitsSearch.execute().perDocResults(maxHits);
     }
 
     @Override

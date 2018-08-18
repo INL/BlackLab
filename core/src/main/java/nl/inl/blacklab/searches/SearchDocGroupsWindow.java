@@ -19,8 +19,8 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().window(first, number));
+    public DocGroups executeInternal() throws InvalidQuery {
+        return source.execute().window(first, number);
     }
 
     @Override

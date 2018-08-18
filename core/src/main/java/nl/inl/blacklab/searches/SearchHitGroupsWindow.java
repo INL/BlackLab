@@ -21,8 +21,8 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().window(first, number));
+    public HitGroups executeInternal() throws InvalidQuery {
+        return source.execute().window(first, number);
     }
 
     @Override

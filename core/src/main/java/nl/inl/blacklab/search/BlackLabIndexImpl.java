@@ -70,7 +70,10 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
@@ -312,6 +315,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     private IndexWriter indexWriter = null;
 
     private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
+
+    /** Search cache to use, or null for none (the default) */
+    private SearchCache cache = null;
 
     
     // Constructors
@@ -976,6 +982,22 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public SearchEmpty search(AnnotatedField field) {
         return new SearchEmpty(QueryInfo.create(this, field));
+    }
+
+    @Override
+    public void notifyCache(Search search, SearchResult result) {
+        if (cache != null)
+            cache.onSearchResult(search, result);
+    }
+
+    @Override
+    public void setCache(SearchCache cache) {
+        this.cache = cache;
+    }
+
+    @Override
+    public SearchResult getFromCache(Search search) {
+        return cache != null ? cache.get(search) : null;
     }
 
 }

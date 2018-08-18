@@ -19,8 +19,8 @@ public class SearchDocGroupsSorted extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups execute() throws InvalidQuery {
-        return notifyCache(source.execute().sortedBy(property));
+    public DocGroups executeInternal() throws InvalidQuery {
+        return source.execute().sortedBy(property);
     }
 
     @Override

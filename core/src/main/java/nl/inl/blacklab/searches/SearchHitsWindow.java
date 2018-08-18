@@ -1,7 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -20,8 +19,8 @@ public class SearchHitsWindow extends SearchHits {
     }
     
     @Override
-    public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return notifyCache(source.execute().window(first, number));
+    public Hits executeInternal() throws InvalidQuery {
+        return source.execute().window(first, number);
     }
 
     @Override

@@ -22,8 +22,8 @@ public class SearchDocsFiltered extends SearchDocs {
     }
 
     @Override
-    public DocResults execute() throws InvalidQuery {
-        return notifyCache(docsSearch.execute().filteredBy(property, value));
+    public DocResults executeInternal() throws InvalidQuery {
+        return docsSearch.execute().filteredBy(property, value);
     }
 
     @Override
