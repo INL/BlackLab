@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -13,8 +11,8 @@ import nl.inl.blacklab.search.results.Results;
  */
 public abstract class SearchResults<R> extends AbstractSearch {
 
-    SearchResults(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    SearchResults(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     /**
@@ -26,15 +24,12 @@ public abstract class SearchResults<R> extends AbstractSearch {
     @Override
     public abstract Results<R> execute() throws WildcardTermTooBroad, RegexpTooLarge, InvalidQuery;
 
-    @Override
-    public abstract SearchResults<R> observe(SearchResultObserver operation);
-
     /**
      * Count hits.
      * @return resulting operation
      */
     public SearchCount count() {
-        return new SearchCountFromResults<R>(queryInfo(), (List<SearchResultObserver>)null, this);
+        return new SearchCountFromResults<R>(queryInfo(), this);
     }
     
 }

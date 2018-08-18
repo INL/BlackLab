@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -19,8 +17,8 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
     
     private PropertyValue value;
 
-    public SearchHitGroupsFiltered(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
-        super(queryInfo, ops);
+    public SearchHitGroupsFiltered(QueryInfo queryInfo, SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
+        super(queryInfo);
         this.source = source;
         this.property = property;
         this.value = value;
@@ -28,11 +26,6 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return notifyObservers(source.execute().filteredBy(property, value));
-    }
-
-    @Override
-    public SearchHitGroupsFiltered observe(SearchResultObserver operation) {
-        return new SearchHitGroupsFiltered(queryInfo(), extraObserver(operation), source, property, value);
+        return source.execute().filteredBy(property, value);
     }
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -16,8 +14,8 @@ public class SearchHitsFiltered extends SearchHits {
     private HitProperty property;
     private PropertyValue value;
 
-    SearchHitsFiltered(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, HitProperty property, PropertyValue value) {
-        super(queryInfo, ops);
+    SearchHitsFiltered(QueryInfo queryInfo, SearchHits source, HitProperty property, PropertyValue value) {
+        super(queryInfo);
         this.source = source;
         this.property = property;
         this.value = value;
@@ -25,11 +23,6 @@ public class SearchHitsFiltered extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return notifyObservers(source.execute().filteredBy(property, value));
-    }
-
-    @Override
-    public SearchHitsFiltered observe(SearchResultObserver operation) {
-        return new SearchHitsFiltered(queryInfo(), extraObserver(operation), source, property, value);
+        return source.execute().filteredBy(property, value);
     }
 }

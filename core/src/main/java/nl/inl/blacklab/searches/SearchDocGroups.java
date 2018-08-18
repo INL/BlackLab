@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -13,8 +11,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that yields groups of hits. */
 public abstract class SearchDocGroups extends SearchResults<DocGroup> {
     
-    public SearchDocGroups(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    public SearchDocGroups(QueryInfo queryInfo) {
+        super(queryInfo);
     }
     
     @Override
@@ -27,7 +25,7 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
      * @return resulting operation
      */
     public SearchDocGroups sort(DocGroupProperty sortBy) {
-        return new SearchDocGroupsSorted(queryInfo(), null, this, sortBy);
+        return new SearchDocGroupsSorted(queryInfo(), this, sortBy);
     }
     
     /**
@@ -37,7 +35,7 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
      * @return resulting operation
      */
     public SearchDocGroups sample(SampleParameters par) {
-        return new SearchDocGroupsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
+        return new SearchDocGroupsSampled(queryInfo(), this, par);
     }
 
     /**
@@ -48,7 +46,7 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
      * @return resulting operation
      */
     public SearchDocGroups filter(DocGroupProperty property, PropertyValue value) {
-        return new SearchDocGroupsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
+        return new SearchDocGroupsFiltered(queryInfo(), this, property, value);
     }
 
     /**
@@ -59,7 +57,7 @@ public abstract class SearchDocGroups extends SearchResults<DocGroup> {
      * @return resulting operation
      */
     public SearchDocGroups window(int first, int number) {
-        return new SearchDocGroupsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
+        return new SearchDocGroupsWindow(queryInfo(), this, first, number);
     }
     
 }

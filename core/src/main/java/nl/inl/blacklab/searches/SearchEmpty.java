@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -26,21 +24,16 @@ public class SearchEmpty extends AbstractSearch {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public Search observe(SearchResultObserver receiver) {
-        throw new UnsupportedOperationException();
-    }
-
     public SearchHits find(String cql, Query filter, MaxSettings maxSettings) throws InvalidQuery {
         return find(CorpusQueryLanguageParser.parse(cql), filter, maxSettings);
     }
 
     public SearchHits find(TextPattern pattern, Query filter, MaxSettings maxSettings) {
-        return new SearchHitsFromPattern(queryInfo(), null, pattern, filter, maxSettings);
+        return new SearchHitsFromPattern(queryInfo(), pattern, filter, maxSettings);
     }
     
     public SearchDocs find(Query documentQuery) {
-        return new SearchDocsFromQuery(queryInfo(), (List<SearchResultObserver>)null, documentQuery);
+        return new SearchDocsFromQuery(queryInfo(), documentQuery);
     }
     
 }

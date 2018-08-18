@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -17,19 +15,14 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     
     private ResultProperty<HitGroup> sortBy;
 
-    public SearchHitGroupsSorted(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
-        super(queryInfo, ops);
+    public SearchHitGroupsSorted(QueryInfo queryInfo, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
+        super(queryInfo);
         this.source = source;
         this.sortBy = sortBy;
     }
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return notifyObservers(source.execute().sortedBy(sortBy));
-    }
-
-    @Override
-    public SearchHitGroupsSorted observe(SearchResultObserver operation) {
-        return new SearchHitGroupsSorted(queryInfo(), extraObserver(operation), source, sortBy);
+        return source.execute().sortedBy(sortBy);
     }
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.results.Hits;
@@ -14,8 +12,8 @@ public class SearchHitsWindow extends SearchHits {
     private int first;
     private int number;
 
-    SearchHitsWindow(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHits source, int first, int number) {
-        super(queryInfo, ops);
+    SearchHitsWindow(QueryInfo queryInfo, SearchHits source, int first, int number) {
+        super(queryInfo);
         this.source = source;
         this.first = first;
         this.number = number;
@@ -23,11 +21,6 @@ public class SearchHitsWindow extends SearchHits {
     
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return notifyObservers(source.execute().window(first, number));
-    }
-
-    @Override
-    public SearchHitsWindow observe(SearchResultObserver operation) {
-        return new SearchHitsWindow(queryInfo(), extraObserver(operation), source, first, number);
+        return source.execute().window(first, number);
     }
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -14,8 +12,8 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class SearchCustom<S extends Search, T extends SearchResult> extends AbstractSearch {
 
-    public SearchCustom(QueryInfo queryInfo, List<SearchResultObserver> customOperations) {
-        super(queryInfo, customOperations);
+    public SearchCustom(QueryInfo queryInfo) {
+        super(queryInfo);
     }
     
     /**
@@ -28,8 +26,5 @@ public abstract class SearchCustom<S extends Search, T extends SearchResult> ext
 
     @Override
     public abstract T execute() throws InvalidQuery;
-
-    @Override
-    public abstract SearchCustom<S, T> observe(SearchResultObserver operation);
 
 }

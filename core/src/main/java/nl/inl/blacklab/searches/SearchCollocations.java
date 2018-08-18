@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -15,15 +13,12 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public abstract class SearchCollocations extends AbstractSearch {
 
-    public SearchCollocations(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    public SearchCollocations(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     @Override
     public abstract TermFrequencyList execute() throws InvalidQuery;
-
-    @Override
-    public abstract SearchCollocations observe(SearchResultObserver receiver);
 
     /**
      * Sort collocations.
@@ -32,7 +27,7 @@ public abstract class SearchCollocations extends AbstractSearch {
      * @return resulting operation
      */
     public SearchCollocations sortBy(ResultProperty<TermFrequency> sortBy) {
-        return new SearchCollocationsSorted(queryInfo(), (List<SearchResultObserver>)null, this, sortBy);
+        return new SearchCollocationsSorted(queryInfo(), this, sortBy);
     }
 
     /**
@@ -42,7 +37,7 @@ public abstract class SearchCollocations extends AbstractSearch {
      * @return resulting operation
      */
     public SearchCollocations sample(SampleParameters par) {
-        return new SearchCollocationsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
+        return new SearchCollocationsSampled(queryInfo(), this, par);
     }
 
     /**
@@ -53,7 +48,7 @@ public abstract class SearchCollocations extends AbstractSearch {
      * @return resulting operation
      */
     public SearchCollocations filter(ResultProperty<TermFrequency> property, PropertyValue value) {
-        return new SearchCollocationsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
+        return new SearchCollocationsFiltered(queryInfo(), this, property, value);
     }
 
     /**
@@ -64,6 +59,6 @@ public abstract class SearchCollocations extends AbstractSearch {
      * @return resulting operation
      */
     public SearchCollocations window(int first, int number) {
-        return new SearchCollocationsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
+        return new SearchCollocationsWindow(queryInfo(), this, first, number);
     }
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -14,19 +12,14 @@ public class SearchDocGroupsSorted extends SearchDocGroups {
 
     private DocGroupProperty property;
 
-    public SearchDocGroupsSorted(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchDocGroups source, DocGroupProperty property) {
-        super(queryInfo, ops);
+    public SearchDocGroupsSorted(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property) {
+        super(queryInfo);
         this.source = source;
         this.property = property;
     }
     
     @Override
     public DocGroups execute() throws InvalidQuery {
-        return notifyObservers(source.execute().sortedBy(property));
-    }
-
-    @Override
-    public SearchDocGroupsSorted observe(SearchResultObserver operation) {
-        return new SearchDocGroupsSorted(queryInfo(), extraObserver(operation), source, property);
+        return source.execute().sortedBy(property);
     }
 }

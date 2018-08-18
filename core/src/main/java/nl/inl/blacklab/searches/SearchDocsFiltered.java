@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -16,8 +14,8 @@ public class SearchDocsFiltered extends SearchDocs {
 
     private PropertyValue value;
 
-    public SearchDocsFiltered(QueryInfo queryInfo, List<SearchResultObserver> customOperations, SearchDocs docsSearch, DocProperty sortBy, PropertyValue value) {
-        super(queryInfo, customOperations);
+    public SearchDocsFiltered(QueryInfo queryInfo, SearchDocs docsSearch, DocProperty sortBy, PropertyValue value) {
+        super(queryInfo);
         this.docsSearch = docsSearch;
         this.property = sortBy;
         this.value = value;
@@ -25,12 +23,7 @@ public class SearchDocsFiltered extends SearchDocs {
 
     @Override
     public DocResults execute() throws InvalidQuery {
-        return notifyObservers(docsSearch.execute().filteredBy(property, value));
-    }
-
-    @Override
-    public SearchDocsFiltered observe(SearchResultObserver operation) {
-        return new SearchDocsFiltered(queryInfo(), extraObserver(operation), docsSearch, property, value);
+        return docsSearch.execute().filteredBy(property, value);
     }
 
 }

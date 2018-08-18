@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -12,8 +10,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that produces DocResults. */
 public abstract class SearchDocs extends AbstractSearch {
 
-    public SearchDocs(QueryInfo queryInfo, List<SearchResultObserver> customOperations) {
-        super(queryInfo, customOperations);
+    public SearchDocs(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     @Override
@@ -27,7 +25,7 @@ public abstract class SearchDocs extends AbstractSearch {
      * @return resulting operation
      */
     public SearchDocGroups group(DocProperty groupBy, int maxResultsToGatherPerGroup) {
-        return new SearchDocGroupsFromDocs(queryInfo(), (List<SearchResultObserver>)null, this, groupBy, maxResultsToGatherPerGroup);
+        return new SearchDocGroupsFromDocs(queryInfo(), this, groupBy, maxResultsToGatherPerGroup);
     }
 
     /**
@@ -37,7 +35,7 @@ public abstract class SearchDocs extends AbstractSearch {
      * @return resulting operation
      */
     public SearchDocs sort(DocProperty sortBy) {
-        return new SearchDocsSorted(queryInfo(), (List<SearchResultObserver>)null, this, sortBy);
+        return new SearchDocsSorted(queryInfo(), this, sortBy);
     }
     
     /**
@@ -47,7 +45,7 @@ public abstract class SearchDocs extends AbstractSearch {
      * @return resulting operation
      */
     public SearchDocs sample(SampleParameters par) {
-        return new SearchDocsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
+        return new SearchDocsSampled(queryInfo(), this, par);
     }
 
     /**
@@ -58,7 +56,7 @@ public abstract class SearchDocs extends AbstractSearch {
      * @return resulting operation
      */
     public SearchDocs filter(DocProperty property, PropertyValue value) {
-        return new SearchDocsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
+        return new SearchDocsFiltered(queryInfo(), this, property, value);
     }
 
     /**
@@ -69,7 +67,7 @@ public abstract class SearchDocs extends AbstractSearch {
      * @return resulting operation
      */
     public SearchDocs window(int first, int number) {
-        return new SearchDocsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
+        return new SearchDocsWindow(queryInfo(), this, first, number);
     }
     
 }

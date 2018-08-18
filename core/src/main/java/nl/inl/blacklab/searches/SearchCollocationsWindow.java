@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -15,8 +13,8 @@ public class SearchCollocationsWindow extends SearchCollocations {
     private int first;
     private int number;
 
-    public SearchCollocationsWindow(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchCollocations source, int first, int number) {
-        super(queryInfo, ops);
+    public SearchCollocationsWindow(QueryInfo queryInfo, SearchCollocations source, int first, int number) {
+        super(queryInfo);
         this.source = source;
         this.first = first;
         this.number = number;
@@ -24,12 +22,7 @@ public class SearchCollocationsWindow extends SearchCollocations {
 
     @Override
     public TermFrequencyList execute() throws InvalidQuery {
-        return notifyObservers(source.execute().window(first, number));
-    }
-
-    @Override
-    public SearchCollocationsWindow observe(SearchResultObserver observer) {
-        return new SearchCollocationsWindow(queryInfo(), extraObserver(observer), source, first, number);
+        return source.execute().window(first, number);
     }
 
 }

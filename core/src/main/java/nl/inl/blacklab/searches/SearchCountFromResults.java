@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -14,19 +12,14 @@ public class SearchCountFromResults<T> extends SearchCount {
     
     private SearchResults<T> source;
 
-    public SearchCountFromResults(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchResults<T> source) {
-        super(queryInfo, ops);
+    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source) {
+        super(queryInfo);
         this.source = source;
     }
 
     @Override
     public ResultCount execute() throws InvalidQuery {
-        return notifyObservers(new ResultCount(source.execute().size()));
-    }
-
-    @Override
-    public SearchCountFromResults<T> observe(SearchResultObserver op) {
-        return new SearchCountFromResults<T>(queryInfo(), extraObserver(op), source);
+        return new ResultCount(source.execute().size());
     }
 
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -11,8 +9,8 @@ import nl.inl.blacklab.search.results.ResultCount;
  */
 public abstract class SearchCount extends AbstractSearch {
     
-    public SearchCount(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    public SearchCount(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     /**
@@ -23,15 +21,6 @@ public abstract class SearchCount extends AbstractSearch {
      */
     @Override
     public abstract ResultCount execute() throws InvalidQuery;
-
-    /**
-     * Report the intermediate result.
-     * 
-     * @param receiver who to report to
-     * @return resulting operation
-     */
-    @Override
-    public abstract SearchCount observe(SearchResultObserver receiver);
     
 
 }

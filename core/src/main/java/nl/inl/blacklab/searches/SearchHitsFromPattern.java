@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
@@ -20,8 +18,8 @@ public class SearchHitsFromPattern extends SearchHits {
     
     private MaxSettings maxSettings;
 
-    SearchHitsFromPattern(QueryInfo queryInfo, List<SearchResultObserver> ops, TextPattern pattern, Query filter, MaxSettings maxSettings) {
-        super(queryInfo, ops);
+    SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, MaxSettings maxSettings) {
+        super(queryInfo);
         this.pattern = pattern;
         this.filter = filter;
         this.maxSettings = maxSettings;
@@ -36,11 +34,6 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
-        return notifyObservers(queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings));
-    }
-
-    @Override
-    public SearchHitsFromPattern observe(SearchResultObserver operation) {
-        return new SearchHitsFromPattern(queryInfo(), extraObserver(operation), pattern, filter, maxSettings);
+        return queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings);
     }
 }

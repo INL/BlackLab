@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -14,8 +12,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that yields groups of hits. */
 public abstract class SearchHitGroups extends SearchResults<HitGroup> {
     
-    public SearchHitGroups(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    public SearchHitGroups(QueryInfo queryInfo) {
+        super(queryInfo);
     }
     
     @Override
@@ -28,7 +26,7 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
      * @return resulting operation
      */
     public SearchHitGroups sort(ResultProperty<HitGroup> sortBy) {
-        return new SearchHitGroupsSorted(queryInfo(), null, this, sortBy);
+        return new SearchHitGroupsSorted(queryInfo(), this, sortBy);
     }
     
     /**
@@ -38,7 +36,7 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
      * @return resulting operation
      */
     public SearchHitGroups sample(SampleParameters par) {
-        return new SearchHitGroupsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
+        return new SearchHitGroupsSampled(queryInfo(), this, par);
     }
 
     /**
@@ -49,7 +47,7 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
      * @return resulting operation
      */
     public SearchHitGroups filter(HitGroupProperty property, PropertyValue value) {
-        return new SearchHitGroupsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
+        return new SearchHitGroupsFiltered(queryInfo(), this, property, value);
     }
 
     /**
@@ -60,7 +58,7 @@ public abstract class SearchHitGroups extends SearchResults<HitGroup> {
      * @return resulting operation
      */
     public SearchHitGroups window(int first, int number) {
-        return new SearchHitGroupsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
+        return new SearchHitGroupsWindow(queryInfo(), this, first, number);
     }
 
 }

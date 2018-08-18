@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -17,8 +15,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchResults<Hit> {
 
-    SearchHits(QueryInfo queryInfo, List<SearchResultObserver> ops) {
-        super(queryInfo, ops);
+    SearchHits(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     /**
@@ -31,9 +29,6 @@ public abstract class SearchHits extends SearchResults<Hit> {
     @Override
     public abstract Hits execute() throws WildcardTermTooBroad, RegexpTooLarge;
 
-    @Override
-    public abstract SearchHits observe(SearchResultObserver operation);
-
     /**
      * Group hits by document.
      * 
@@ -45,7 +40,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchDocs docs(int maxResultsToGatherPerGroup) {
-        return new SearchDocsFromHits(queryInfo(), observers, this, maxResultsToGatherPerGroup);
+        return new SearchDocsFromHits(queryInfo(), this, maxResultsToGatherPerGroup);
     }
 
     /**
@@ -56,7 +51,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchHitGroups group(HitProperty groupBy, int maxResultsToGatherPerGroup) {
-        return new SearchHitGroupsFromHits(queryInfo(), (List<SearchResultObserver>)null, this, groupBy, maxResultsToGatherPerGroup);
+        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup);
     }
 
     /**
@@ -66,7 +61,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchHits sort(HitProperty sortBy) {
-        return new SearchHitsSorted(queryInfo(), (List<SearchResultObserver>)null, this, sortBy);
+        return new SearchHitsSorted(queryInfo(), this, sortBy);
     }
     
     /**
@@ -76,7 +71,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchHits sample(SampleParameters par) {
-        return new SearchHitsSampled(queryInfo(), (List<SearchResultObserver>)null, this, par);
+        return new SearchHitsSampled(queryInfo(), this, par);
     }
 
     /**
@@ -87,7 +82,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchHits filter(HitProperty property, PropertyValue value) {
-        return new SearchHitsFiltered(queryInfo(), (List<SearchResultObserver>)null, this, property, value);
+        return new SearchHitsFiltered(queryInfo(), this, property, value);
     }
 
     /**
@@ -98,7 +93,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchHits window(int first, int number) {
-        return new SearchHitsWindow(queryInfo(), (List<SearchResultObserver>)null, this, first, number);
+        return new SearchHitsWindow(queryInfo(), this, first, number);
     }
     
     /**
@@ -111,7 +106,7 @@ public abstract class SearchHits extends SearchResults<Hit> {
      * @return resulting operation
      */
     public SearchCollocations collocations(Annotation annotation, ContextSize size, MatchSensitivity sensitivity) {
-        return new SearchCollocationsFromHits(queryInfo(), (List<SearchResultObserver>)null, this, annotation, size, sensitivity);
+        return new SearchCollocationsFromHits(queryInfo(), this, annotation, size, sensitivity);
     }
 
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -20,8 +18,8 @@ public class SearchCollocationsFiltered extends SearchCollocations {
     
     private PropertyValue value;
 
-    public SearchCollocationsFiltered(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
-        super(queryInfo, ops);
+    public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
+        super(queryInfo);
         this.source = source;
         this.property = property;
         this.value = value;
@@ -29,11 +27,6 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     @Override
     public TermFrequencyList execute() throws InvalidQuery {
-        return notifyObservers(source.execute().filteredBy(property, value));
-    }
-
-    @Override
-    public SearchCollocationsFiltered observe(SearchResultObserver observer) {
-        return new SearchCollocationsFiltered(queryInfo(), extraObserver(observer), source, property, value);
+        return source.execute().filteredBy(property, value);
     }
 }

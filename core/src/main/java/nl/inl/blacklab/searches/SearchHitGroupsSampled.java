@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.List;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -16,19 +14,14 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     
     private SampleParameters sampleParameters;
 
-    public SearchHitGroupsSampled(QueryInfo queryInfo, List<SearchResultObserver> ops, SearchHitGroups source, SampleParameters sampleParameters) {
-        super(queryInfo, ops);
+    public SearchHitGroupsSampled(QueryInfo queryInfo, SearchHitGroups source, SampleParameters sampleParameters) {
+        super(queryInfo);
         this.source = source;
         this.sampleParameters = sampleParameters;
     }
 
     @Override
     public HitGroups execute() throws InvalidQuery {
-        return notifyObservers(source.execute().sample(sampleParameters));
-    }
-
-    @Override
-    public SearchHitGroupsSampled observe(SearchResultObserver operation) {
-        return new SearchHitGroupsSampled(queryInfo(), extraObserver(operation), source, sampleParameters);
+        return source.execute().sample(sampleParameters);
     }
 }
