@@ -99,6 +99,12 @@ public interface Annotation {
      * @return subannotation descriptor
      */
     Annotation subannotation(String subName);
+    
+    @Override
+    boolean equals(Object obj);
+    
+    @Override
+    int hashCode();
 
     
 }

@@ -108,5 +108,11 @@ public abstract class SearchHits extends SearchResults<Hit> {
     public SearchCollocations collocations(Annotation annotation, ContextSize size, MatchSensitivity sensitivity) {
         return new SearchCollocationsFromHits(queryInfo(), this, annotation, size, sensitivity);
     }
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
 
 }

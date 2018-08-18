@@ -92,4 +92,35 @@ final class Subannotation implements Annotation {
     public boolean isSubannotation() {
         return true;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((mainAnnotation == null) ? 0 : mainAnnotation.hashCode());
+        result = prime * result + ((subName == null) ? 0 : subName.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Subannotation other = (Subannotation) obj;
+        if (mainAnnotation == null) {
+            if (other.mainAnnotation != null)
+                return false;
+        } else if (!mainAnnotation.equals(other.mainAnnotation))
+            return false;
+        if (subName == null) {
+            if (other.subName != null)
+                return false;
+        } else if (!subName.equals(other.subName))
+            return false;
+        return true;
+    }
 }

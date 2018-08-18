@@ -26,5 +26,11 @@ public abstract class SearchCustom<S extends Search, T extends SearchResult> ext
 
     @Override
     public abstract T execute() throws InvalidQuery;
+    
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
 
 }

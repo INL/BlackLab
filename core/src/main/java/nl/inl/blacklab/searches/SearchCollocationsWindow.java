@@ -25,4 +25,35 @@ public class SearchCollocationsWindow extends SearchCollocations {
         return source.execute().window(first, number);
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + first;
+        result = prime * result + number;
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SearchCollocationsWindow other = (SearchCollocationsWindow) obj;
+        if (first != other.first)
+            return false;
+        if (number != other.number)
+            return false;
+        if (source == null) {
+            if (other.source != null)
+                return false;
+        } else if (!source.equals(other.source))
+            return false;
+        return true;
+    }
+
 }

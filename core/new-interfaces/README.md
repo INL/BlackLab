@@ -40,9 +40,6 @@ Reasoning behind specific design choices / implementation notes:
 
 ## Implementation plan ##
 
- -resultproperty, propertyvalue, search moeten allemaal hashCode/equals hebben!
-
-
 search
 - introduce new Search interface for building searches
 - update caching in BLS

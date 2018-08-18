@@ -22,4 +22,35 @@ public class SearchHitsSorted extends SearchHits {
     public Hits execute() throws WildcardTermTooBroad, RegexpTooLarge {
         return source.execute().sortedBy(sortBy);
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((sortBy == null) ? 0 : sortBy.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SearchHitsSorted other = (SearchHitsSorted) obj;
+        if (sortBy == null) {
+            if (other.sortBy != null)
+                return false;
+        } else if (!sortBy.equals(other.sortBy))
+            return false;
+        if (source == null) {
+            if (other.source != null)
+                return false;
+        } else if (!source.equals(other.source))
+            return false;
+        return true;
+    }
 }

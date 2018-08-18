@@ -22,5 +22,14 @@ public abstract class SearchCount extends AbstractSearch {
     @Override
     public abstract ResultCount execute() throws InvalidQuery;
     
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+    
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 
 }

@@ -24,4 +24,35 @@ public class SearchDocsWindow extends SearchDocs {
         return docsSearch.execute().window(first, number);
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((docsSearch == null) ? 0 : docsSearch.hashCode());
+        result = prime * result + first;
+        result = prime * result + number;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SearchDocsWindow other = (SearchDocsWindow) obj;
+        if (docsSearch == null) {
+            if (other.docsSearch != null)
+                return false;
+        } else if (!docsSearch.equals(other.docsSearch))
+            return false;
+        if (first != other.first)
+            return false;
+        if (number != other.number)
+            return false;
+        return true;
+    }
+
 }

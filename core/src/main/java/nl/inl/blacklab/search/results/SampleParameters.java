@@ -128,5 +128,38 @@ public class SampleParameters {
     public boolean isFixedSeed() {
         return isFixedSeed;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (isPercentage ? 1231 : 1237);
+        if (isPercentage)
+            result = prime * result + Float.floatToIntBits(percentageOfHits);
+        else
+            result = prime * result + numberOfHitsSet;
+        result = prime * result + (int) (seedValueSet ^ (seedValueSet >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SampleParameters other = (SampleParameters) obj;
+        if (isPercentage != other.isPercentage)
+            return false;
+        if (!isPercentage && numberOfHitsSet != other.numberOfHitsSet)
+            return false;
+        if (isPercentage && Float.floatToIntBits(percentageOfHits) != Float.floatToIntBits(other.percentageOfHits))
+            return false;
+        if (seedValueSet != other.seedValueSet)
+            return false;
+        return true;
+    }
     
 }

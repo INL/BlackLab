@@ -35,4 +35,38 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     public HitGroups execute() throws WildcardTermTooBroad, RegexpTooLarge {
         return HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup);
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((groupBy == null) ? 0 : groupBy.hashCode());
+        result = prime * result + ((hitsSearch == null) ? 0 : hitsSearch.hashCode());
+        result = prime * result + maxResultsToStorePerGroup;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SearchHitGroupsFromHits other = (SearchHitGroupsFromHits) obj;
+        if (groupBy == null) {
+            if (other.groupBy != null)
+                return false;
+        } else if (!groupBy.equals(other.groupBy))
+            return false;
+        if (hitsSearch == null) {
+            if (other.hitsSearch != null)
+                return false;
+        } else if (!hitsSearch.equals(other.hitsSearch))
+            return false;
+        if (maxResultsToStorePerGroup != other.maxResultsToStorePerGroup)
+            return false;
+        return true;
+    }
 }

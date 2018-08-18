@@ -70,4 +70,10 @@ public abstract class SearchDocs extends AbstractSearch {
         return new SearchDocsWindow(queryInfo(), this, first, number);
     }
     
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
+    
 }

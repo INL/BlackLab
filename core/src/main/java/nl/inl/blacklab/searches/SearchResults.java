@@ -32,4 +32,10 @@ public abstract class SearchResults<R> extends AbstractSearch {
         return new SearchCountFromResults<R>(queryInfo(), this);
     }
     
+    @Override
+    public abstract boolean equals(Object obj);
+    
+    @Override
+    public abstract int hashCode();
+    
 }
