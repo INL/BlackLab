@@ -14,16 +14,6 @@ import nl.inl.blacklab.search.results.SearchResult;
  * The cache implementation should be made thread-safe.
  */
 public interface SearchCache {
-    
-    /**
-     * A search was executed, and this was the result.
-     * 
-     * The cache may decide to cache this result.
-     * 
-     * @param search search operation that produced this result
-     * @param result the result
-     */
-    void onSearchResult(Search search, CompletableFuture<? extends SearchResult> result);
 
     /**
      * See if the specified search was previously cached.
@@ -34,6 +24,6 @@ public interface SearchCache {
      */
     CompletableFuture<? extends SearchResult> get(Search search, CompletableFuture<? extends SearchResult> future);
     
-    void remove(CompletableFuture<? extends SearchResult> future);
+    void remove(Search search);
     
 }

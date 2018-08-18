@@ -17,13 +17,16 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.searches.SearchCacheDebug;
 
 public class TestNewSearchSystem {
-
+    
     public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
         File indexDir = new File(args[0]);
         System.out.println("Opening index " + indexDir + "...");
         try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
+            
+            index.setCache(new SearchCacheDebug());
             
             System.out.println("\nFirst 20 hits for 'schip':");
             Hits hits = index.search()
@@ -52,6 +55,7 @@ public class TestNewSearchSystem {
                         String title = document.get(titleField.name());
                         System.out.println("- " + title + " (" + doc + ")"); 
                     });
+            System.out.flush();
 
             System.out.println("\nFirst 10 document results for title:test :");
             index.search()
@@ -63,6 +67,19 @@ public class TestNewSearchSystem {
                         String title = document.get(titleField.name());
                         System.out.println("- " + title + " (" + doc + ")"); 
                     });
+            System.out.flush();
+
+            System.out.println("\nFirst 10 document results for title:test :");
+            index.search()
+                    .find(new TermQuery(new Term("title", "test")))
+                    .window(0, 10)
+                    .execute()
+                    .forEach(doc -> {
+                        Document document = doc.identity().luceneDoc();
+                        String title = document.get(titleField.name());
+                        System.out.println("- " + title + " (" + doc + ")"); 
+                    });
+            System.out.flush();
 
             System.out.println("\nCount number of hits for 'schip': " + index
                     .search()

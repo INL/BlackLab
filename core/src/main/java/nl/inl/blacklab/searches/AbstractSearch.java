@@ -19,16 +19,11 @@ public abstract class AbstractSearch implements Search {
     }
     
     protected CompletableFuture<? extends SearchResult> getFromCache(Search search, CompletableFuture<? extends SearchResult> future) {
-        SearchCache cache = queryInfo.index().cache();
-        CompletableFuture<? extends SearchResult> fromCache = cache.get(search, future);
-        if (fromCache == null) {
-            cache.onSearchResult(this, future);
-        }
-        return fromCache;
+        return queryInfo.index().cache().get(search, future);
     }
     
     protected void cancelSearch(CompletableFuture<? extends SearchResult> future) {
-        queryInfo.index().cache().remove(future);
+        queryInfo.index().cache().remove(this);
         future.cancel(false);
     }
     
