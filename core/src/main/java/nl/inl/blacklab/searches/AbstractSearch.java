@@ -1,7 +1,10 @@
 package nl.inl.blacklab.searches;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -9,14 +12,43 @@ import nl.inl.blacklab.search.results.SearchResult;
  * Abstract base class for all Search implementations,
  * to enforce that equals() and hashCode are implemented
  * (to ensure proper caching)
+ * 
+ * @param <R> results type, e.g. Hits
  */
-public abstract class AbstractSearch implements Search {
+public abstract class AbstractSearch<R extends SearchResult> implements Search {
 	
     private QueryInfo queryInfo;
     
     public AbstractSearch(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;  
     }
+    
+    @Override
+    public final R execute() throws InvalidQuery {
+        CompletableFuture<R> future = new CompletableFuture<>();
+        @SuppressWarnings("unchecked")
+        CompletableFuture<R> fromCache = (CompletableFuture<R>)getFromCache(this, future);
+        if (fromCache != null) {
+            try {
+                return fromCache.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+        }
+        try {
+            R result = executeInternal();
+            future.complete(result);
+            return result;
+        } catch (InvalidQuery e) {
+            cancelSearch(future);
+            throw e;
+        } catch (RuntimeException e) {
+            cancelSearch(future);
+            throw e;
+        }
+    }
+    
+    protected abstract R executeInternal() throws InvalidQuery;
     
     protected CompletableFuture<? extends SearchResult> getFromCache(Search search, CompletableFuture<? extends SearchResult> future) {
         return queryInfo.index().cache().get(search, future);
@@ -48,7 +80,7 @@ public abstract class AbstractSearch implements Search {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        AbstractSearch other = (AbstractSearch) obj;
+        AbstractSearch<?> other = (AbstractSearch<?>) obj;
         if (queryInfo == null) {
             if (other.queryInfo != null)
                 return false;

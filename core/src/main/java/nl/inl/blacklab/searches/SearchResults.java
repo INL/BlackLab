@@ -1,28 +1,16 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 
 /** A search that yields results. 
- * @param <R> result type, e.g. Hit
+ * @param <R> results type, e.g. Hits
  */
-public abstract class SearchResults<R> extends AbstractSearch {
+public abstract class SearchResults<R extends Results<?>> extends AbstractSearch<R> {
 
     SearchResults(QueryInfo queryInfo) {
         super(queryInfo);
     }
-
-    /**
-     * Execute the search operation, returning the final response.
-     * 
-     * @return result of the operation
-     * @throws InvalidQuery if query is invalid 
-     */
-    @Override
-    public abstract Results<R> execute() throws WildcardTermTooBroad, RegexpTooLarge, InvalidQuery;
 
     /**
      * Count hits.

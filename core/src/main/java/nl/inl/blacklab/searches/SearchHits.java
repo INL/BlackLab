@@ -1,53 +1,20 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that yields hits. */
-public abstract class SearchHits extends SearchResults<Hit> {
+public abstract class SearchHits extends SearchResults<Hits> {
 
     SearchHits(QueryInfo queryInfo) {
         super(queryInfo);
     }
-    
-    @Override
-    public final Hits execute() throws InvalidQuery {
-        CompletableFuture<Hits> future = new CompletableFuture<>();
-        @SuppressWarnings("unchecked")
-        CompletableFuture<Hits> fromCache = (CompletableFuture<Hits>)getFromCache(this, future);
-        if (fromCache != null) {
-            try {
-                return fromCache.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
-        try {
-            Hits result = executeInternal();
-            future.complete(result);
-            return result;
-        } catch (InvalidQuery e) {
-            cancelSearch(future);
-            throw e;
-        } catch (RuntimeException e) {
-            cancelSearch(future);
-            throw e;
-        }
-    }
-    
-    protected abstract Hits executeInternal() throws InvalidQuery;
     
     /**
      * Group hits by document.

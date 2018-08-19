@@ -13,14 +13,14 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  * Empty search that just knows about its index and annotated field to search,
  * and serves as a starting point for actual searches.
  */
-public class SearchEmpty extends AbstractSearch {
+public class SearchEmpty extends AbstractSearch<SearchResult> {
     
     public SearchEmpty(QueryInfo queryInfo) {
         super(queryInfo);
     }
 
     @Override
-    public SearchResult execute() {
+    protected SearchResult executeInternal() throws InvalidQuery {
         throw new UnsupportedOperationException();
     }
 
