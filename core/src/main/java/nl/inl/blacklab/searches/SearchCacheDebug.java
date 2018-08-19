@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
@@ -12,8 +13,7 @@ public class SearchCacheDebug implements SearchCache {
     Map<Search, CompletableFuture<? extends SearchResult>> searches = new HashMap<>();
 
     @Override
-    public CompletableFuture<? extends SearchResult> get(Search search,
-            Supplier<? extends SearchResult> supplier) {
+    public Future<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> supplier) {
         CompletableFuture<? extends SearchResult> result = searches.get(search);
         if (result == null) {
             result = CompletableFuture.supplyAsync(supplier);
@@ -26,8 +26,9 @@ public class SearchCacheDebug implements SearchCache {
     }
 
     @Override
-    public void remove(Search search) {
+    public Future<? extends SearchResult> remove(Search search) {
         System.out.println("Remove from cache: " + search);
+        return null;
     }
     
 }

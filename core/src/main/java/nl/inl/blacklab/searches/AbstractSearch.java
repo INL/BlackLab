@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
@@ -29,8 +30,8 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     @Override
     @SuppressWarnings("unchecked")
-    public CompletableFuture<R> executeAsync() {
-        return (CompletableFuture<R>)getFromCache(this, () -> {
+    public Future<R> executeAsync() {
+        return (Future<R>)getFromCache(this, () -> {
             try {
                 return executeInternal();
             } catch (InvalidQuery e) {
@@ -41,7 +42,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     @Override
     public final R execute() throws InvalidQuery {
-        CompletableFuture<R> future = executeAsync();
+        Future<R> future = executeAsync();
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -59,7 +60,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     protected abstract R executeInternal() throws InvalidQuery;
     
-    protected CompletableFuture<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
+    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
         return queryInfo.index().cache().get(search, searchTask);
     }
     

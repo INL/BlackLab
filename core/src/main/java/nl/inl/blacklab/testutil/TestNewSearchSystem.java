@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.searches.SearchCacheDebug;
+import nl.inl.blacklab.searches.FutureSearchResultCache;
 
 public class TestNewSearchSystem {
     
@@ -26,7 +26,9 @@ public class TestNewSearchSystem {
         System.out.println("Opening index " + indexDir + "...");
         try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
             
-            index.setCache(new SearchCacheDebug());
+            FutureSearchResultCache cache = new FutureSearchResultCache();
+            cache.setTrace(true);
+            index.setCache(cache); //new SearchCacheDebug());
             
             System.out.println("\nFirst 20 hits for 'schip':");
             Hits hits = index.search()

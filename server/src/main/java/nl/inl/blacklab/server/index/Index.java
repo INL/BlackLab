@@ -244,7 +244,7 @@ public class Index {
      * @throws ServiceUnavailable if the index could not be opened due to currently
      *             ongoing indexing
      * @throws InternalServerError if there was some other error opening the index
-     * @throws IndexTooOld if the index was too old to open by this versio of BlackLab 
+     * @throws IndexTooOld if the index was too old to open by this version of BlackLab 
      */
     private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError, IndexTooOld {
         cleanupClosedIndexerOrThrow();
@@ -255,6 +255,7 @@ public class Index {
         logger.debug("Opening index '" + id + "', dir = " + dir);
         try {
             index = BlackLabIndex.open(this.dir);
+            index.setCache(cache.getBlackLabCache());
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {

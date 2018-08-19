@@ -1,6 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
@@ -20,11 +20,11 @@ public interface SearchCache {
      * See if the specified search was previously cached.
      * 
      * @param search search we want the result for
-     * @param searchTask if not found, put a future using this supplier in the cache and return it
+     * @param searchTask if the search is not in the cache, execute this task, returning the future result and putting it in the cache
      * @return the future, either one that was alrady the cache or a new one using the supplier
      */
-    CompletableFuture<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask);
+    Future<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask);
     
-    void remove(Search search);
+    Future<? extends SearchResult> remove(Search search);
     
 }

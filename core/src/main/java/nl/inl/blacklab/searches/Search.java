@@ -1,6 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -29,7 +29,7 @@ public interface Search {
      * 
      * @return future result
      */
-    CompletableFuture<? extends SearchResult> executeAsync();
+    Future<? extends SearchResult> executeAsync();
     
     @Override
     boolean equals(Object obj);

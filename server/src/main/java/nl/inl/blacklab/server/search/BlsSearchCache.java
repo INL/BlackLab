@@ -14,6 +14,7 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -41,12 +42,16 @@ public class BlsSearchCache {
     //----------------------------------------------------
 
     /** Our configuration */
-    private BlsConfigCacheAndPerformance cacheConfig;
+    BlsConfigCacheAndPerformance cacheConfig;
 
     /** The cached search objects. */
     private Map<String, Job> cachedSearches;
 
+    /** Our new, BlackLab-native cache object */
+    private SearchCache newCache;
+
     
+
     // LOAD MANAGEMENT
     //----------------------------------------------------
 
@@ -89,6 +94,7 @@ public class BlsSearchCache {
         this.searchMan = searchMan;
 
         this.cacheConfig = cacheConfig;
+        newCache = new NewBlsSearchCache(cacheConfig);
 
         cachedSearches = new HashMap<>();
 
@@ -577,6 +583,10 @@ public class BlsSearchCache {
 
     public BlsConfigCacheAndPerformance getConfig() {
         return cacheConfig;
+    }
+
+    public SearchCache getBlackLabCache() {
+        return newCache;
     }
 
 }
