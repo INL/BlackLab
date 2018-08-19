@@ -1,7 +1,9 @@
 package nl.inl.blacklab.searches;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -24,34 +26,39 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     }
     
     @Override
-    public final R execute() throws InvalidQuery {
-        CompletableFuture<R> future = new CompletableFuture<>();
-        @SuppressWarnings("unchecked")
-        CompletableFuture<R> fromCache = (CompletableFuture<R>)getFromCache(this, future);
-        if (fromCache != null) {
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<R> executeAsync() {
+        return (CompletableFuture<R>)getFromCache(this, () -> {
             try {
-                return fromCache.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                return executeInternal();
+            } catch (InvalidQuery e) {
+                throw new CompletionException(e);
             }
-        }
+        });
+    }
+    
+    @Override
+    public final R execute() throws InvalidQuery {
+        CompletableFuture<R> future = executeAsync();
         try {
-            R result = executeInternal();
-            future.complete(result);
-            return result;
-        } catch (InvalidQuery e) {
-            cancelSearch(future);
-            throw e;
-        } catch (RuntimeException e) {
-            cancelSearch(future);
-            throw e;
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        } catch (CompletionException e) {
+            try {
+                throw e.getCause();
+            } catch (InvalidQuery e2) {
+                throw e2;
+            } catch (Throwable e2) {
+                throw new AssertionError(e2);
+            }
         }
     }
     
     protected abstract R executeInternal() throws InvalidQuery;
     
-    protected CompletableFuture<? extends SearchResult> getFromCache(Search search, CompletableFuture<? extends SearchResult> future) {
-        return queryInfo.index().cache().get(search, future);
+    protected CompletableFuture<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
+        return queryInfo.index().cache().get(search, searchTask);
     }
     
     protected void cancelSearch(CompletableFuture<? extends SearchResult> future) {

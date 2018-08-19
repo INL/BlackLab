@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -12,13 +13,14 @@ public class SearchCacheDebug implements SearchCache {
 
     @Override
     public CompletableFuture<? extends SearchResult> get(Search search,
-            CompletableFuture<? extends SearchResult> future) {
+            Supplier<? extends SearchResult> supplier) {
         CompletableFuture<? extends SearchResult> result = searches.get(search);
-        if (result != null) {
-            System.out.println("Found in cache: " + search);
-        } else {
-            searches.put(search, future);
+        if (result == null) {
+            result = CompletableFuture.supplyAsync(supplier);
+            searches.put(search, result);
             System.out.println("Not found in cache, adding now: " + search);
+        } else {
+            System.out.println("Found in cache: " + search);
         }
         return result;
     }

@@ -29,9 +29,7 @@ public interface Search {
      * 
      * @return future result
      */
-    default CompletableFuture<? extends SearchResult> executeAsync() {
-        return null;
-    }
+    CompletableFuture<? extends SearchResult> executeAsync();
     
     @Override
     boolean equals(Object obj);

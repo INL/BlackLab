@@ -116,6 +116,7 @@
         <exclude name="AvoidCatchingGenericException" />
         <exclude name="ExceptionAsFlowControl" />
         <exclude name="SimplifyBooleanReturns" />
+        <exclude name="AvoidRethrowingException" />
 
         <!-- Might not need re-examination -->
         <exclude name="UseUtilityClass" />
@@ -136,6 +137,7 @@
         <exclude name="UseLocaleWithCaseConversions" />
         <exclude name="UseProperClassLoader" />
         <exclude name="DataflowAnomalyAnalysis" />
+        <exclude name="AvoidCatchingThrowable" />
 
         <!-- Might not need re-examination -->
         <exclude name="AvoidFieldNameMatchingTypeName" />
