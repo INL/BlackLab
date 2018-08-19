@@ -195,10 +195,6 @@ public abstract class Job implements Comparable<Job>, Pausible {
         return -Double.compare(worthiness, o.worthiness);
     }
 
-    public long getLastAccessed() {
-        return lastAccessed;
-    }
-
     public void resetLastAccessed() {
         lastAccessed = System.currentTimeMillis();
     }

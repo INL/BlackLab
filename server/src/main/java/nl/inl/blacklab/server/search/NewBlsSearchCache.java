@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
@@ -12,7 +11,7 @@ import nl.inl.util.ThreadPauser;
 
 class NewBlsSearchCache implements SearchCache {
     
-    protected Map<Search, Future<? extends SearchResult>> searches = new HashMap<>();
+    protected Map<Search, NewBlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
     protected boolean trace = false;
 
@@ -35,8 +34,8 @@ class NewBlsSearchCache implements SearchCache {
     }
 
     @Override
-    public Future<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask) {
-        Future<? extends SearchResult> future;
+    public NewBlsCacheEntry<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask) {
+        NewBlsCacheEntry<? extends SearchResult> future;
         synchronized (searches) {
             future = searches.get(search);
             if (future == null) {
@@ -47,14 +46,15 @@ class NewBlsSearchCache implements SearchCache {
             } else {
                 if (trace)
                     System.out.println("FOUND: " + search);
+                future.updateLastAccess();
             }
         }
         return future;
     }
 
     @Override
-    public Future<? extends SearchResult> remove(Search search) {
-        Future<? extends SearchResult> future;
+    public NewBlsCacheEntry<? extends SearchResult> remove(Search search) {
+        NewBlsCacheEntry<? extends SearchResult> future;
         synchronized (searches) {
             future = searches.remove(search);
             if (trace)
