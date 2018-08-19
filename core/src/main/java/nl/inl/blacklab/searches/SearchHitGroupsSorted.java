@@ -13,24 +13,24 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     
     private SearchHitGroups source;
     
-    private ResultProperty<HitGroup> sortBy;
+    private ResultProperty<HitGroup> property;
 
     public SearchHitGroupsSorted(QueryInfo queryInfo, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
         super(queryInfo);
         this.source = source;
-        this.sortBy = sortBy;
+        this.property = sortBy;
     }
 
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return source.execute().sort(sortBy);
+        return source.execute().sort(property);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sortBy == null) ? 0 : sortBy.hashCode());
+        result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         return result;
     }
@@ -44,10 +44,10 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
         if (getClass() != obj.getClass())
             return false;
         SearchHitGroupsSorted other = (SearchHitGroupsSorted) obj;
-        if (sortBy == null) {
-            if (other.sortBy != null)
+        if (property == null) {
+            if (other.property != null)
                 return false;
-        } else if (!sortBy.equals(other.sortBy))
+        } else if (!property.equals(other.property))
             return false;
         if (source == null) {
             if (other.source != null)
@@ -55,5 +55,10 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
         } else if (!source.equals(other.source))
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("sort", source, property);
     }
 }

@@ -8,29 +8,29 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsFiltered extends SearchDocs {
 
-    private SearchDocs docsSearch;
+    private SearchDocs source;
 
     private DocProperty property;
 
     private PropertyValue value;
 
-    public SearchDocsFiltered(QueryInfo queryInfo, SearchDocs docsSearch, DocProperty sortBy, PropertyValue value) {
+    public SearchDocsFiltered(QueryInfo queryInfo, SearchDocs source, DocProperty sortBy, PropertyValue value) {
         super(queryInfo);
-        this.docsSearch = docsSearch;
+        this.source = source;
         this.property = sortBy;
         this.value = value;
     }
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().filter(property, value);
+        return source.execute().filter(property, value);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((docsSearch == null) ? 0 : docsSearch.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
@@ -45,10 +45,10 @@ public class SearchDocsFiltered extends SearchDocs {
         if (getClass() != obj.getClass())
             return false;
         SearchDocsFiltered other = (SearchDocsFiltered) obj;
-        if (docsSearch == null) {
-            if (other.docsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!docsSearch.equals(other.docsSearch))
+        } else if (!source.equals(other.source))
             return false;
         if (property == null) {
             if (other.property != null)
@@ -61,6 +61,11 @@ public class SearchDocsFiltered extends SearchDocs {
         } else if (!value.equals(other.value))
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("filter", source, property, value);
     }
 
 }

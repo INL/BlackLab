@@ -81,7 +81,7 @@ public final class MaxSettings {
     
     @Override
     public String toString() {
-        return "MaxHits(" + maxHitsToProcess + ", " + maxHitsToCount + ")";
+        return "MaxSettings(" + maxHitsToProcess + ", " + maxHitsToCount + ")";
     }
 
 }

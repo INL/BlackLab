@@ -38,5 +38,8 @@ public interface Search {
     int hashCode();
 
     QueryInfo queryInfo();
+    
+    @Override
+    String toString();
 
 }

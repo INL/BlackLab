@@ -6,26 +6,26 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsFromHits extends SearchDocs {
 
-    private SearchHits hitsSearch;
+    private SearchHits source;
 
     private int maxHits = 0;
 
     public SearchDocsFromHits(QueryInfo queryInfo, SearchHits hitSearch, int maxHitsToGatherPerDocument) {
         super(queryInfo);
-        this.hitsSearch = hitSearch;
+        this.source = hitSearch;
         this.maxHits = maxHitsToGatherPerDocument;
     }
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return hitsSearch.execute().perDocResults(maxHits);
+        return source.execute().perDocResults(maxHits);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((hitsSearch == null) ? 0 : hitsSearch.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + maxHits;
         return result;
     }
@@ -39,14 +39,19 @@ public class SearchDocsFromHits extends SearchDocs {
         if (getClass() != obj.getClass())
             return false;
         SearchDocsFromHits other = (SearchDocsFromHits) obj;
-        if (hitsSearch == null) {
-            if (other.hitsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!hitsSearch.equals(other.hitsSearch))
+        } else if (!source.equals(other.source))
             return false;
         if (maxHits != other.maxHits)
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("docs", source, maxHits);
     }
 
 }

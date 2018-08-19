@@ -7,26 +7,26 @@ import nl.inl.blacklab.search.results.SampleParameters;
 
 public class SearchDocsSampled extends SearchDocs {
 
-    private SearchDocs docsSearch;
+    private SearchDocs source;
 
     private SampleParameters sampleParameters;
 
     public SearchDocsSampled(QueryInfo queryInfo, SearchDocs docsSearch, SampleParameters sampleParameters) {
         super(queryInfo);
-        this.docsSearch = docsSearch;
+        this.source = docsSearch;
         this.sampleParameters = sampleParameters;
     }
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().sample(sampleParameters);
+        return source.execute().sample(sampleParameters);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((docsSearch == null) ? 0 : docsSearch.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + ((sampleParameters == null) ? 0 : sampleParameters.hashCode());
         return result;
     }
@@ -40,10 +40,10 @@ public class SearchDocsSampled extends SearchDocs {
         if (getClass() != obj.getClass())
             return false;
         SearchDocsSampled other = (SearchDocsSampled) obj;
-        if (docsSearch == null) {
-            if (other.docsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!docsSearch.equals(other.docsSearch))
+        } else if (!source.equals(other.source))
             return false;
         if (sampleParameters == null) {
             if (other.sampleParameters != null)
@@ -51,6 +51,11 @@ public class SearchDocsSampled extends SearchDocs {
         } else if (!sampleParameters.equals(other.sampleParameters))
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("sample", source, sampleParameters);
     }
 
 }

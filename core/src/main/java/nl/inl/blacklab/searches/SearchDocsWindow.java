@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsWindow extends SearchDocs {
 
-    private SearchDocs docsSearch;
+    private SearchDocs source;
 
     private int first;
 
@@ -14,21 +14,21 @@ public class SearchDocsWindow extends SearchDocs {
 
     public SearchDocsWindow(QueryInfo queryInfo, SearchDocs docsSearch, int first, int number) {
         super(queryInfo);
-        this.docsSearch = docsSearch;
+        this.source = docsSearch;
         this.first = first;
         this.number = number;
     }
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().window(first, number);
+        return source.execute().window(first, number);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((docsSearch == null) ? 0 : docsSearch.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + first;
         result = prime * result + number;
         return result;
@@ -43,16 +43,21 @@ public class SearchDocsWindow extends SearchDocs {
         if (getClass() != obj.getClass())
             return false;
         SearchDocsWindow other = (SearchDocsWindow) obj;
-        if (docsSearch == null) {
-            if (other.docsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!docsSearch.equals(other.docsSearch))
+        } else if (!source.equals(other.source))
             return false;
         if (first != other.first)
             return false;
         if (number != other.number)
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("window", source, first, number);
     }
 
 }

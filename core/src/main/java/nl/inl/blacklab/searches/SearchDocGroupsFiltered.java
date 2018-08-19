@@ -63,4 +63,9 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("filter", source, property, value);
+    }
 }

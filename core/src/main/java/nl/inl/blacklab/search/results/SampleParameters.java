@@ -162,4 +162,10 @@ public class SampleParameters {
         return true;
     }
     
+    @Override
+    public String toString() {
+        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Integer.toString(numberOfHitsSet)) + 
+                ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED)" : " (RANDOM)");
+    }
+    
 }

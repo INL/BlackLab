@@ -55,4 +55,9 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("window", source, first, number);
+    }
 }

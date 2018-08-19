@@ -44,5 +44,10 @@ public class SearchDocsFromQuery extends SearchDocs {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("docquery", query);
+    }
 
 }

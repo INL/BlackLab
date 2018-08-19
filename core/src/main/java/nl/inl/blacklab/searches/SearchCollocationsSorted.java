@@ -55,5 +55,10 @@ public class SearchCollocationsSorted extends SearchCollocations {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("sort", source, property);
+    }
 
 }

@@ -9,24 +9,24 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SearchHitsSorted extends SearchHits {
 
     private SearchHits source;
-    private HitProperty sortBy;
+    private HitProperty property;
 
     SearchHitsSorted(QueryInfo queryInfo, SearchHits source, HitProperty sortBy) {
         super(queryInfo);
         this.source = source;
-        this.sortBy = sortBy;
+        this.property = sortBy;
     }
     
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return source.execute().sort(sortBy);
+        return source.execute().sort(property);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((sortBy == null) ? 0 : sortBy.hashCode());
+        result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         return result;
     }
@@ -40,10 +40,10 @@ public class SearchHitsSorted extends SearchHits {
         if (getClass() != obj.getClass())
             return false;
         SearchHitsSorted other = (SearchHitsSorted) obj;
-        if (sortBy == null) {
-            if (other.sortBy != null)
+        if (property == null) {
+            if (other.property != null)
                 return false;
-        } else if (!sortBy.equals(other.sortBy))
+        } else if (!property.equals(other.property))
             return false;
         if (source == null) {
             if (other.source != null)
@@ -51,5 +51,10 @@ public class SearchHitsSorted extends SearchHits {
         } else if (!source.equals(other.source))
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("sort", source, property);
     }
 }

@@ -36,4 +36,9 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
         return new SearchDocsFromQuery(queryInfo(), documentQuery);
     }
     
+    @Override
+    public String toString() {
+        return toString("empty");
+    }
+    
 }

@@ -53,4 +53,9 @@ public class SearchDocGroupsSorted extends SearchDocGroups {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("sort", source, property);
+    }
 }

@@ -60,4 +60,9 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
         return true;
     }
     
+    @Override
+    public String toString() {
+        return toString("group", source, property, maxDocs);
+    }
+    
 }

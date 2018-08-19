@@ -5,6 +5,8 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -94,6 +96,10 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
         } else if (!queryInfo.equals(other.queryInfo))
             return false;
         return true;
+    }
+
+    protected static String toString(String operation, Object... param) {
+        return operation + "(" + StringUtils.join(param, ", ") + ")";
     }
 	
 }

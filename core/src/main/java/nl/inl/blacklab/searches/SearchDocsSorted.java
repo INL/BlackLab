@@ -7,27 +7,27 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsSorted extends SearchDocs {
 
-    private SearchDocs docsSearch;
+    private SearchDocs source;
 
-    private DocProperty sortBy;
+    private DocProperty property;
 
     public SearchDocsSorted(QueryInfo queryInfo, SearchDocs docsSearch, DocProperty sortBy) {
         super(queryInfo);
-        this.docsSearch = docsSearch;
-        this.sortBy = sortBy;
+        this.source = docsSearch;
+        this.property = sortBy;
     }
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return docsSearch.execute().sort(sortBy);
+        return source.execute().sort(property);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((docsSearch == null) ? 0 : docsSearch.hashCode());
-        result = prime * result + ((sortBy == null) ? 0 : sortBy.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        result = prime * result + ((property == null) ? 0 : property.hashCode());
         return result;
     }
 
@@ -40,17 +40,22 @@ public class SearchDocsSorted extends SearchDocs {
         if (getClass() != obj.getClass())
             return false;
         SearchDocsSorted other = (SearchDocsSorted) obj;
-        if (docsSearch == null) {
-            if (other.docsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!docsSearch.equals(other.docsSearch))
+        } else if (!source.equals(other.source))
             return false;
-        if (sortBy == null) {
-            if (other.sortBy != null)
+        if (property == null) {
+            if (other.property != null)
                 return false;
-        } else if (!sortBy.equals(other.sortBy))
+        } else if (!property.equals(other.property))
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("sort", source, property);
     }
 
 }

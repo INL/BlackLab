@@ -55,5 +55,10 @@ public class SearchCollocationsWindow extends SearchCollocations {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("window", source, first, number);
+    }
 
 }

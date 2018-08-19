@@ -47,5 +47,10 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("count", source);
+    }
 
 }

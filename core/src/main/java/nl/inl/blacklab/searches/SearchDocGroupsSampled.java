@@ -53,4 +53,9 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("sample", source, sampleParameters);
+    }
 }

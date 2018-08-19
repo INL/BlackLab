@@ -69,5 +69,10 @@ public class SearchCollocationsFromHits extends SearchCollocations {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("colloc", source, annotation, contextSize, sensitivity);
+    }
 
 }

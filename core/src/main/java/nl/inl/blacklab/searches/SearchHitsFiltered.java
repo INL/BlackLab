@@ -61,4 +61,9 @@ public class SearchHitsFiltered extends SearchHits {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("filter", source, property, value);
+    }
 }

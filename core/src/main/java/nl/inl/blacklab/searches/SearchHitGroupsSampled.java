@@ -55,4 +55,9 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return toString("sample", source, sampleParameters);
+    }
 }

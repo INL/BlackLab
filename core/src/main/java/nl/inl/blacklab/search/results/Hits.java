@@ -247,7 +247,6 @@ public abstract class Hits extends Results<Hit> {
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * @param sensitivity what sensitivity to use
-     * 
      * @return the frequency of each occurring token
      */
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {

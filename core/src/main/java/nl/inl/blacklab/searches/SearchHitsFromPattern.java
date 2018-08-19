@@ -73,4 +73,11 @@ public class SearchHitsFromPattern extends SearchHits {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        if (filter == null)
+            return toString("hits", pattern);
+        return toString("hits", pattern, filter);
+    }
 }

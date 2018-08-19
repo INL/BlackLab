@@ -28,5 +28,8 @@ public abstract class SearchCustom<S extends Search, T extends SearchResult> ext
     
     @Override
     public abstract int hashCode();
+    
+    @Override
+    public abstract String toString();
 
 }

@@ -10,17 +10,17 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsFromHits extends SearchHitGroups {
     
-    private SearchHits hitsSearch;
+    private SearchHits source;
     
-    private HitProperty groupBy;
+    private HitProperty property;
     
-    private int maxResultsToStorePerGroup;
+    private int maxHits;
 
     public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup) {
         super(queryInfo);
-        this.hitsSearch = hitsSearch;
-        this.groupBy = groupBy;
-        this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;
+        this.source = hitsSearch;
+        this.property = groupBy;
+        this.maxHits = maxResultsToStorePerGroup;
     }
 
     /**
@@ -31,16 +31,16 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return HitGroups.fromHits(hitsSearch.execute(), groupBy, maxResultsToStorePerGroup);
+        return HitGroups.fromHits(source.execute(), property, maxHits);
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((groupBy == null) ? 0 : groupBy.hashCode());
-        result = prime * result + ((hitsSearch == null) ? 0 : hitsSearch.hashCode());
-        result = prime * result + maxResultsToStorePerGroup;
+        result = prime * result + ((property == null) ? 0 : property.hashCode());
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        result = prime * result + maxHits;
         return result;
     }
 
@@ -53,18 +53,23 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         if (getClass() != obj.getClass())
             return false;
         SearchHitGroupsFromHits other = (SearchHitGroupsFromHits) obj;
-        if (groupBy == null) {
-            if (other.groupBy != null)
+        if (property == null) {
+            if (other.property != null)
                 return false;
-        } else if (!groupBy.equals(other.groupBy))
+        } else if (!property.equals(other.property))
             return false;
-        if (hitsSearch == null) {
-            if (other.hitsSearch != null)
+        if (source == null) {
+            if (other.source != null)
                 return false;
-        } else if (!hitsSearch.equals(other.hitsSearch))
+        } else if (!source.equals(other.source))
             return false;
-        if (maxResultsToStorePerGroup != other.maxResultsToStorePerGroup)
+        if (maxHits != other.maxHits)
             return false;
         return true;
+    }
+    
+    @Override
+    public String toString() {
+        return toString("group", source, property, maxHits);
     }
 }
