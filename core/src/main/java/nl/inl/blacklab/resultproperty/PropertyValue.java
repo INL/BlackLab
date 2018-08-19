@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -90,8 +91,25 @@ public abstract class PropertyValue implements Comparable<Object> {
 
     @Override
     public abstract String toString();
+    
+    public boolean isCompound() {
+        return false;
+    }
+    
+    public List<PropertyValue> values() {
+        return null;
+    }
 
-    public abstract List<String> propValues();    
+    public List<String> propValues() {
+        List<String> l = new ArrayList<>();
+        if (isCompound()) {
+            for (PropertyValue v : values())
+                l.addAll(v.propValues());
+        } else {
+            l.add(toString());
+        }
+        return l;
+    }
     
     public abstract Object value();
 }

@@ -85,7 +85,6 @@ FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toc
 http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
 ```
 
-
 BLS:
 - use new Search system
 - use integrated BlackLab cache? (but we do need information like last used, etc. - can we do both?)
@@ -142,6 +141,10 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- base interface DocStore for ForwardIndex, ContentStore..?
+  access FI/CS using FIDoc / CSDoc (FIDoc already exists, but not used much) ?
+- TermsSensitivity to access Terms with specific sensitivity?
+- capture BLIndex settings in single setting object? Immutable?
 - make error messages lower-level, "server busy" requires a bit more explanation to understand why BL is refusing to execute your search
 - filter: predicate (maar Contexts gooien roet in het eten...)
 - collocation sort properties

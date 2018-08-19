@@ -15,9 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 
@@ -69,7 +66,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
      * @return either a dash or the empty string
      */
     @Override
-    protected String serializeReverse() {
+    public String serializeReverse() {
         return reverse ? "-" : "";
     }
 
@@ -110,10 +107,5 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     @Override
     public String toString() {
         return serialize();
-    }
-
-    @Override
-    public List<String> propNames() {
-        return Arrays.asList(name());
     }
 }

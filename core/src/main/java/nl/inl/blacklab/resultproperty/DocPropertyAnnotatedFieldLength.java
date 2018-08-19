@@ -15,9 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
 
@@ -87,11 +84,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     @Override
     public String serialize() {
         return serializeReverse() + PropertySerializeUtil.combineParts("fieldlen", fieldName);
-    }
-
-    @Override
-    public List<String> propNames() {
-        return Arrays.asList(serializeReverse() + name());
     }
 
     @Override

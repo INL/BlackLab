@@ -249,7 +249,8 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * 
      * @return either a dash or the empty string
      */
-    protected String serializeReverse() {
+    @Override
+    public String serializeReverse() {
         return reverse ? "-" : "";
     }
     
@@ -289,11 +290,6 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     @Override
     public String toString() {
         return serialize();
-    }
-    
-    @Override
-    public List<String> propNames() {
-        return Arrays.asList(name());
     }
 
     @Override

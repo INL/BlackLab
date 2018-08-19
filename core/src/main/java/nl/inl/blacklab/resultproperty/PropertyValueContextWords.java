@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
-import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -81,11 +80,6 @@ public class PropertyValueContextWords extends PropertyValueContext {
             parts[i + 3] = terms.serializeTerm(valueTokenId[i]);
         }
         return PropertySerializeUtil.combineParts(parts);
-    }
-
-    @Override
-    public List<String> propValues() {
-        return Arrays.asList(this.toString());
     }
 
     @Override

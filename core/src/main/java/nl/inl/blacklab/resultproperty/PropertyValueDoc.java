@@ -1,8 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -67,10 +64,5 @@ public class PropertyValueDoc extends PropertyValue {
     @Override
     public String serialize() {
         return PropertySerializeUtil.combineParts("doc", Integer.toString(value.id()));
-    }
-
-    @Override
-    public List<String> propValues() {
-        return Arrays.asList(Integer.toString(value.id()));
     }
 }

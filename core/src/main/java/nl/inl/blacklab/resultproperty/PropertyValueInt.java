@@ -1,8 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class PropertyValueInt extends PropertyValue {
     int value;
 
@@ -53,10 +50,5 @@ public class PropertyValueInt extends PropertyValue {
     @Override
     public String serialize() {
         return PropertySerializeUtil.combineParts("int", Integer.toString(value));
-    }
-
-    @Override
-    public List<String> propValues() {
-        return Arrays.asList(Integer.toString(value));
     }
 }

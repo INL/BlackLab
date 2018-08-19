@@ -17,6 +17,7 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -127,14 +128,15 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         }
         return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
-
+    
     @Override
-    public List<String> propNames() {
-        List<String> ret = new ArrayList<>();
-        for (DocProperty prop : criteria) {
-            ret.addAll(prop.propNames());
-        }
-        return ret;
+    public boolean isCompound() {
+        return true;
+    }
+    
+    @Override
+    public List<DocProperty> props() {
+        return Collections.unmodifiableList(criteria);
     }
 
     public static DocPropertyMultiple deserialize(String info) {

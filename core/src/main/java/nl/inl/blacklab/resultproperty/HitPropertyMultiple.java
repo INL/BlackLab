@@ -17,6 +17,7 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -204,13 +205,15 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         }
         return b.toString();
     }
-
+    
     @Override
-    public List<String> propNames() {
-        List<String> names = new ArrayList<>();
-        for (HitProperty prop: properties)
-            names.addAll(prop.propNames());
-        return names;
+    public boolean isCompound() {
+        return true;
+    }
+    
+    @Override
+    public List<HitProperty> props() {
+        return Collections.unmodifiableList(properties);
     }
 
     @Override

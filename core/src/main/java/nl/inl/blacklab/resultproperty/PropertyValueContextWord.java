@@ -1,8 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -66,11 +63,6 @@ public class PropertyValueContextWord extends PropertyValueContext {
                 "cwo", annotation.name(),
                 sensitivity.luceneFieldSuffix(),
                 token);
-    }
-
-    @Override
-    public List<String> propValues() {
-        return Arrays.asList(this.toString());
     }
 
     @Override

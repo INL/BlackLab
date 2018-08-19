@@ -15,9 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -103,11 +100,6 @@ public class DocPropertyDecade extends DocProperty {
     @Override
     public String serialize() {
         return serializeReverse() + PropertySerializeUtil.combineParts("decade", fieldName);
-    }
-
-    @Override
-    public List<String> propNames() {
-        return Arrays.asList(serializeReverse() + name());
     }
 
     @Override

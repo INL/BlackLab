@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -70,12 +71,30 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * 
      * @return the list
      */
-    List<String> propNames();
+    default List<String> propNames() {
+        List<String> names = new ArrayList<>();
+        if (isCompound()) {
+            props().forEach(prop -> names.addAll(prop.propNames()));
+        } else {
+            names.add(serializeReverse() + name());
+        }
+        return names;
+    }
     
     @Override
     int hashCode();
     
     @Override
     boolean equals(Object obj);
+
+    default boolean isCompound() {
+        return false;
+    }
+
+    default List<? extends ResultProperty<T>> props() {
+        return null;
+    }
+
+    String serializeReverse();
 
 }

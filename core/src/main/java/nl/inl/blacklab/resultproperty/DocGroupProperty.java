@@ -15,9 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-import java.util.List;
-
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocResult;
 
@@ -85,7 +82,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
      * @return either a dash or the empty string
      */
     @Override
-    protected String serializeReverse() {
+    public String serializeReverse() {
         return reverse ? "-" : "";
     }
 
@@ -110,10 +107,5 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     @Override
     public String toString() {
         return serialize();
-    }
-
-    @Override
-    public List<String> propNames() {
-        return Arrays.asList(name());
     }
 }

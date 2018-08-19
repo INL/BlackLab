@@ -87,7 +87,8 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
      * 
      * @return either a dash or the empty string
      */
-    protected String serializeReverse() {
+    @Override
+    public String serializeReverse() {
         return reverse ? "-" : "";
     }
 
@@ -160,14 +161,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     public String toString() {
         return serialize();
     }
-
-    /**
-     * Get the names of all (sub-)properties separately.
-     * 
-     * @return the list
-     */
-    @Override
-    public abstract List<String> propNames();
 
     public static void getFacetsUrlParam(Map<String, String> param, List<DocProperty> facets) {
         DocPropertyMultiple f = new DocPropertyMultiple(facets.toArray(new DocProperty[0]));
