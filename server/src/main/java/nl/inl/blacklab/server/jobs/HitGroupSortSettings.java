@@ -8,29 +8,22 @@ public class HitGroupSortSettings {
 
     private HitGroupProperty sortBy;
 
-    private boolean reverse;
-
-    public HitGroupSortSettings(HitGroupProperty sortBy, boolean reverse) {
+    public HitGroupSortSettings(HitGroupProperty sortBy) {
         super();
         this.sortBy = sortBy;
-        this.reverse = reverse;
     }
 
     public HitGroupProperty sortBy() {
         return sortBy;
     }
 
-    public boolean reverse() {
-        return reverse;
-    }
-
     @Override
     public String toString() {
-        return "hitgroupsort=" + sortBy + ", sortreverse=" + reverse;
+        return "hitgroupsort=" + sortBy;
     }
 
     public void getUrlParam(Map<String, String> param) {
-        param.put("sort", (reverse ? "-" : "") + sortBy.serialize());
+        param.put("sort", sortBy.serialize());
     }
 
 }

@@ -74,7 +74,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
             actualSize = results.size() - first;
     
         // Make sublist (copy results from List.subList() to avoid lingering references large lists)
-        return new ArrayList<T>(results.resultsList().subList(first, first + actualSize));
+        return new ArrayList<T>(results.resultsSubList(first, first + actualSize));
     }
 
     protected static <T> List<T> doFilter(Results<T> results, ResultProperty<T> property, PropertyValue value) {
@@ -363,17 +363,33 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     }
 
     /**
-     * Get the raw list of results.
+     * Get part of the list of results.
      * 
      * Clients shouldn't use this. Used internally for certain performance-sensitive
      * operations like sorting.
      * 
-     * The list will only contain whatever hits have been processed; if you want all the hits,
-     * call ensureAllHitsRead(), size() or hitsProcessedTotal() first. 
+     * The returned list is a view backed by the results list.
+     * 
+     * If toIndex is out of range, no exception is thrown, but a smaller list is returned.
      * 
      * @return the list of hits
      */
-    public List<T> resultsList() {
+    protected List<T> resultsSubList(int fromIndex, int toIndex) {
+        ensureResultsRead(toIndex);
+        if (toIndex > results.size())
+            toIndex = results.size();
+        return results.subList(fromIndex, toIndex);
+    }
+
+    /**
+     * Get the list of results.
+     * 
+     * Clients shouldn't use this. Used internally for certain performance-sensitive
+     * operations like sorting.
+     * 
+     * @return the list of hits
+     */
+    protected List<T> resultsList() {
         ensureAllResultsRead();
         return Collections.unmodifiableList(results);
     }

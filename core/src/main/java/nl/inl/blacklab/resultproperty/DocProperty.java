@@ -33,13 +33,25 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */
-    protected boolean reverse = false;
+    protected boolean reverse;
     
     protected DocProperty(DocProperty prop, boolean invert) {
         reverse = invert ? !prop.reverse : prop.reverse;
     }
     
     protected DocProperty() {
+        this.reverse = sortDescendingByDefault();
+    }
+
+    /**
+     * Is the default for this property to sort descending?
+     * 
+     * This is usually a good default for "group size" or "number of hits".
+     * 
+     * @return whether to sort descending by default
+     */
+    protected boolean sortDescendingByDefault() {
+        return false;
     }
 
     /**

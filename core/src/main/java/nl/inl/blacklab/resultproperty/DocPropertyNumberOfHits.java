@@ -38,6 +38,11 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
+    protected boolean sortDescendingByDefault() {
+        return true;
+    }
+
+    @Override
     public PropertyValueInt get(DocResult result) {
         return new PropertyValueInt(result.size());
     }

@@ -64,6 +64,9 @@ Reasoning behind specific design choices / implementation notes:
   Whenever a Hit inside a Hits object is accessible, its corresponding CapturedGroups entry is available,
   so this instance should appear immutable to the client.
 
+- Terms
+  setBlockBasedTermsFile (should be solvable)
+
 ### IMMUTABLE ###
 - Result (including Hit, DocResult, Group<>()
 - Doc
@@ -71,6 +74,7 @@ Reasoning behind specific design choices / implementation notes:
 - Kwic, Concordance
 - Contexts
 - all index metadata/structure classes (IndexMetadata, AnnotatedField, Annotation, AnnotationSensitivity)
+- ForwardIndex, ContentStore
 
 
 
@@ -81,25 +85,13 @@ FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toc
 http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
 ```
 
-- block parameter verwijderd.
-  alleen totals-searches zouden met block=false moeten worden aangeroepen.
-  RequestHandlerDocs: originalHitsSearch was block=false, nu block=true (Hits object moet beschikbaar zijn, niet alle hits gelezen)
-  RequestHandlerDocsGrouped: originalHitsSearch was block=false, nu block=true (idem)
-  (het lijkt of /docs toch altijd alle hits ophaalt - klopt dat..?)
-
-- een search die gestart wordt, maar nog niet klaar is, moet alvast als placeholder in de cache gezet worden, zodat-ie niet opnieuw gestart wordt.
 
 BLS:
-- default sort descending terugbrengen
-  collocation sort properties
 - use new Search system
 - use integrated BlackLab cache? (but we do need information like last used, etc. - can we do both?)
+- alleen totals-searches async draaien.
 - don't use threads except for total count (the only asynchronously running search, right...?)
 
-
-- filter: predicate (maar Contexts gooien roet in het eten...)
-
-- make error messages lower-level, "server busy" requires a bit more explanation to understand why BL is refusing to execute your search
 
 
 PERFORMANCE ANALYSIS
@@ -110,7 +102,7 @@ PERFORMANCE ANALYSIS
 
 
 SERVER POLICIES
-- get rid of threadpauser?
+- get rid of threadpauser? (only if we can prove it cannot help)
 - max. number of running searches (if you try to start one but already at max, you get an error message)
   (probably needs to take into account how many cores a search is using)
 - max. hits to process per search (if exceeded, BLS will indicate this)
@@ -150,6 +142,9 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- make error messages lower-level, "server busy" requires a bit more explanation to understand why BL is refusing to execute your search
+- filter: predicate (maar Contexts gooien roet in het eten...)
+- collocation sort properties
 - docresults (abstract) / docresultsfromhits / docresultslist / -filtered 
 - Whenever thread interrupted: gooi een BlackLabRuntimeException(-subclass)
   die BLS aan het eind opvangt en er een nette boodschap voor toont.

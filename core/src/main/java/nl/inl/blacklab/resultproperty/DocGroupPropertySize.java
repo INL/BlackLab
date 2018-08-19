@@ -26,6 +26,11 @@ public class DocGroupPropertySize extends DocGroupProperty {
     public DocGroupPropertySize() {
         super();
     }
+
+    @Override
+    protected boolean sortDescendingByDefault() {
+        return true;
+    }
     
     @Override
     public PropertyValueInt get(DocGroup result) {

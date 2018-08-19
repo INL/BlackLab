@@ -8,29 +8,22 @@ public class DocGroupSortSettings {
 
     private DocGroupProperty sortBy;
 
-    private boolean reverse;
-
-    public DocGroupSortSettings(DocGroupProperty sortBy, boolean reverse) {
+    public DocGroupSortSettings(DocGroupProperty sortBy) {
         super();
         this.sortBy = sortBy;
-        this.reverse = reverse;
     }
 
     public DocGroupProperty sortBy() {
         return sortBy;
     }
 
-    public boolean reverse() {
-        return reverse;
-    }
-
     @Override
     public String toString() {
-        return "docgroupsort=" + sortBy + ", sortreverse=" + reverse;
+        return "docgroupsort=" + sortBy;
     }
 
     public void getUrlParam(Map<String, String> param) {
-        param.put("sort", (reverse ? "-" : "") + sortBy.serialize());
+        param.put("sort", sortBy.serialize());
     }
 
 }

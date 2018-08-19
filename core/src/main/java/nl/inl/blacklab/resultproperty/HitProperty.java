@@ -124,7 +124,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     protected Results<Hit> hits;
 
     /** Reverse comparison result or not? */
-    protected boolean reverse = false;
+    protected boolean reverse;
 
     /** Hit contexts, if any */
     protected Contexts contexts = null;
@@ -138,6 +138,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
 
     public HitProperty() {
         this.hits = null;
+        this.reverse = sortDescendingByDefault();
     }
 
     /**
@@ -158,16 +159,15 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             this.contextIndices = prop.contextIndices; // ...but if we already had different values, use those
     }
 
-    HitProperty(HitProperty prop, Hits hits, Contexts contexts) {
-        this(prop, hits, contexts, false);
-    }
-    
-    HitProperty(HitProperty prop, Hits hits) {
-        this(prop, hits, null, false);
-    }
-
-    HitProperty(HitProperty prop) {
-        this(prop, null, null, false);
+    /**
+     * Is the default for this property to sort descending?
+     * 
+     * This is usually a good default for "group size" or "number of hits".
+     * 
+     * @return whether to sort descending by default
+     */
+    protected boolean sortDescendingByDefault() {
+        return false;
     }
 
     /**

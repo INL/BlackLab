@@ -26,6 +26,7 @@ import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
@@ -423,15 +424,10 @@ public class SearchParameters {
 
     private DocGroupSortSettings docGroupSortSettings() {
         DocGroupProperty sortProp = null;
-        boolean reverse = false;
         if (isDocsOperation) {
             if (containsKey("group")) {
                 String sortBy = getString("sort");
                 if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
-                    if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-                        reverse = true;
-                        sortBy = sortBy.substring(1);
-                    }
                     sortProp = DocGroupProperty.deserialize(sortBy);
                 }
             }
@@ -440,7 +436,7 @@ public class SearchParameters {
             // By default, show largest group first
             sortProp = new DocGroupPropertySize();
         }
-        return new DocGroupSortSettings(sortProp, reverse);
+        return new DocGroupSortSettings(sortProp);
     }
 
     private DocSortSettings docSortSettings() {
@@ -454,29 +450,19 @@ public class SearchParameters {
         String sortBy = getString("sort");
         if (sortBy == null || sortBy.length() == 0)
             return null;
-        boolean reverse = false;
-        if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-            reverse = true;
-            sortBy = sortBy.substring(1);
-        }
         DocProperty sortProp = DocProperty.deserialize(sortBy);
         if (sortProp == null)
             return null;
-        return new DocSortSettings(sortProp, reverse);
+        return new DocSortSettings(sortProp);
     }
 
     private HitGroupSortSettings hitGroupSortSettings() {
         HitGroupProperty sortProp = null;
-        boolean reverse = false;
         if (!isDocsOperation) {
             // not grouping, so no group sort
             if (containsKey("group")) {
                 String sortBy = getString("sort");
                 if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
-                    if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-                        reverse = true;
-                        sortBy = sortBy.substring(1);
-                    }
                     sortProp = HitGroupProperty.deserialize(sortBy);
                 }
             }
@@ -485,7 +471,7 @@ public class SearchParameters {
             // By default, show largest group first
             sortProp = HitGroupProperty.size();
         }
-        return new HitGroupSortSettings(sortProp, reverse);
+        return new HitGroupSortSettings(sortProp);
     }
 
     private HitGroupSettings hitGroupSettings() {
@@ -508,12 +494,8 @@ public class SearchParameters {
         String sortBy = getString("sort");
         if (sortBy == null || sortBy.length() == 0)
             return null;
-        boolean reverse = false;
-        if (sortBy.length() > 0 && sortBy.charAt(0) == '-') {
-            reverse = true;
-            sortBy = sortBy.substring(1);
-        }
-        return new HitSortSettings(sortBy, reverse);
+        HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy);
+        return new HitSortSettings(sortProp);
     }
 
     public Set<String> listValuesFor() {

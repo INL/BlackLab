@@ -54,10 +54,8 @@ public class JobHitsSorted extends JobWithHits {
         // Now, sort the hits.
         Hits hitsUnsorted = ((JobWithHits) inputJob).getHits();
         HitSortSettings sortSett = jobDesc.getHitSortSettings();
-        HitProperty sortProp = HitProperty.deserialize(hitsUnsorted, sortSett.sortBy());
+        HitProperty sortProp = sortSett.sortBy();
         if (sortProp != null) {
-            if (sortSett.reverse())
-                sortProp = sortProp.reverse();
             hits = hitsUnsorted.sort(sortProp);
         } else {
             // Be lenient of clients passing wrong sortBy values; simply ignore bad sort requests.

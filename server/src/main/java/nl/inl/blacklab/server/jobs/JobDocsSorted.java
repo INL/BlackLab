@@ -58,7 +58,8 @@ public class JobDocsSorted extends JobWithDocs {
             // Be lenient of clients passing wrong sortBy values; ignore bad sort requests
             docResults = unsorted.sort(docSortSett.sortBy());
         }
-        docResults = unsorted; // now that we sorted them we can make them available
+        else
+            docResults = unsorted;
     }
 
     @Override

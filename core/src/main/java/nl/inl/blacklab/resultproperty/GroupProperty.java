@@ -36,7 +36,18 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     }
     
     public GroupProperty() {
-        this.reverse = false;
+        this.reverse = sortDescendingByDefault();
+    }
+
+    /**
+     * Is the default for this property to sort descending?
+     * 
+     * This is usually a good default for "group size" or "number of hits".
+     * 
+     * @return whether to sort descending by default
+     */
+    protected boolean sortDescendingByDefault() {
+        return false;
     }
 
     @Override
