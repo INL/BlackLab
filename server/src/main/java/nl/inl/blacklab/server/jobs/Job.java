@@ -208,16 +208,12 @@ public abstract class Job implements Comparable<Job>, Pausible {
     }
 
     /**
-     * Perform the search.
-     *
-     * @param waitTimeMs if < 0, method blocks until the search is finished. For any
-     *            value >= 0, waits for the specified amount of time or until the
-     *            search is finished, then returns.
+     * Starts performing the search.
      *
      * @throws BlsException on parse error or other query-related error (e.g. too
      *             broad)
      */
-    final public void perform(int waitTimeMs) throws BlsException {
+    final public void perform() throws BlsException {
 
         synchronized (this) {
             if (performCalled)
@@ -232,8 +228,6 @@ public abstract class Job implements Comparable<Job>, Pausible {
         setLevelRunningAt = startedAt;
         searchThread = new SearchThread(this);
         searchThread.start();
-
-        waitUntilFinished(waitTimeMs);
     }
 
     /**

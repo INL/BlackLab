@@ -28,12 +28,6 @@ import nl.inl.util.ThreadPauser;
 
 public class SearchCache {
 
-    /**
-     * In nonblocking mode, how long should we wait to see if the job finishes
-     * really quickly, to avoid unnecessary polling?
-     */
-    private static final int INITIAL_JOB_FINISH_WAIT = 500;
-
     private static final Logger logger = LogManager.getLogger(SearchCache.class);
 
     /**
@@ -196,7 +190,7 @@ public class SearchCache {
         if (performSearch) {
 
             // Start the search, waiting a short time in case it's a fast search
-            job.perform(INITIAL_JOB_FINISH_WAIT);
+            job.perform();
         }
 
         // If the search thread threw an exception, rethrow it now.
@@ -207,6 +201,7 @@ public class SearchCache {
         if (block) {
             job.waitUntilFinished(cacheConfig.getMaxSearchTimeSec() * 1000);
             if (!job.finished()) {
+                // FIXME: seems like we're not actually cancelling the job here...?
                 throw new ServiceUnavailable("Search took too long, cancelled.");
             }
         }
