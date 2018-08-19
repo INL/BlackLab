@@ -30,11 +30,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         JobHits originalHitsSearch = null;
         JobDocsGrouped search = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits(), true);
+            originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits());
         }
         try {
             // Get the window we're interested in
-            search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
+            search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
             
             // If search is not done yet, indicate this to the user
             if (!search.finished()) {

@@ -237,7 +237,7 @@ public abstract class Job implements Comparable<Job>, Pausible {
         JobDescription inputDesc = jobDesc.getInputDesc();
         if (inputDesc != null) {
             // Perform the input job and then call this job's performSearch method
-            inputJob = searchMan.search(user, inputDesc, false);
+            inputJob = searchMan.searchNonBlocking(user, inputDesc);
             try {
                 synchronized (waitingFor) {
                     waitingFor.add(inputJob);

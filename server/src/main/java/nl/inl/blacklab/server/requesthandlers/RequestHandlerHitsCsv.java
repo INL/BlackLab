@@ -75,7 +75,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         try {
             if (groupBy != null) {
-                JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
+                JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
                 job = searchGrouped;
                 groups = searchGrouped.getGroups();
                 // don't set hits yet - only return hits if we're looking within a specific group
@@ -103,7 +103,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             } else {
                 // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                job = (JobWithHits) searchMan.search(user, searchParam.hitsSample(), true);
+                job = (JobWithHits) searchMan.search(user, searchParam.hitsSample());
                 hits = job.getHits();
             }
         } finally {

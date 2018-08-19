@@ -479,7 +479,7 @@ public abstract class RequestHandler {
     protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc)
             throws BlsException {
 
-        JobFacets facets = (JobFacets) searchMan.search(user, facetDesc, true);
+        JobFacets facets = (JobFacets) searchMan.search(user, facetDesc);
         Map<String, DocGroups> counts = facets.getCounts();
 
         ds.startMap();

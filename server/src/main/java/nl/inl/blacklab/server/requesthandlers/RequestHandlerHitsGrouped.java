@@ -26,7 +26,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         // Get the window we're interested in
-        JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped(), true);
+        JobHitsGrouped search = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
         try {
             // If search is not done yet, indicate this to the user
             if (!search.finished()) {

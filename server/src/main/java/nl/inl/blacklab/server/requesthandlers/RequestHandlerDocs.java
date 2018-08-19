@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
@@ -63,7 +64,7 @@ public class RequestHandlerDocs extends RequestHandler {
             // Make sure we have the hits search, so we can later determine totals.
             originalHitsSearch = null;
             if (searchParam.hasPattern()) {
-                originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits(), true);
+                originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits());
             }
             
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
@@ -90,7 +91,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Yes. Group, then show hits from the specified group
         JobDocsGrouped searchGrouped = null;
         try {
-            searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
+            searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
             search = searchGrouped;
             search.incrRef();
         
@@ -145,14 +146,20 @@ public class RequestHandlerDocs extends RequestHandler {
         JobDocsWindow searchWindow = null;
         JobDocsTotal total = null;
         try {
-            searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow(), true);
+            searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow());
             search = searchWindow;
             search.incrRef();
         
             // Also determine the total number of hits
             // (usually nonblocking, unless "waitfortotal=yes" was passed)
-            total = (JobDocsTotal) searchMan.search(user, searchParam.docsTotal(),
-                    searchParam.getBoolean("waitfortotal"));
+            boolean block = searchParam.getBoolean("waitfortotal");
+            total = (JobDocsTotal) searchMan.searchNonBlocking(user, searchParam.docsTotal());
+            if (block) {
+                total.waitUntilFinished();
+                if (!total.finished()) {
+                    throw new ServiceUnavailable("Search took too long, cancelled.");
+                }
+            }
             
             // If search is not done yet, indicate this to the user
             if (!search.finished()) {

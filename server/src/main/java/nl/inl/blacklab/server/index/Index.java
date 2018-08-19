@@ -30,7 +30,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
-import nl.inl.blacklab.server.search.SearchCache;
+import nl.inl.blacklab.server.search.BlsSearchCache;
 
 /**
  * A wrapper of sorts around {@link BlackLabIndexImpl}, which is the main blacklab-core
@@ -82,7 +82,7 @@ public class Index {
 
     private final String id;
     private final File dir;
-    private SearchCache cache;
+    private BlsSearchCache cache;
 
     /**
      * Only one of these can be set at a time. The index is closed and cleared
@@ -111,7 +111,7 @@ public class Index {
      * @throws IllegalIndexName
      * @throws FileNotFoundException
      */
-    public Index(String indexId, File dir, SearchCache cache) throws IllegalIndexName, FileNotFoundException {
+    public Index(String indexId, File dir, BlsSearchCache cache) throws IllegalIndexName, FileNotFoundException {
         if (!isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
         if (dir == null || !dir.exists() || !dir.isDirectory())

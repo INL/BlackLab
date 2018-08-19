@@ -74,7 +74,7 @@ public class RequestHandlerHits extends RequestHandler {
             HitGroup group = null;
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
                 // Yes. Group, then show hits from the specified group
-                job = searchMan.search(user, searchParam.hitsGrouped(), true);
+                job = searchMan.search(user, searchParam.hitsGrouped());
                 JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
                 // If search is not done yet, indicate this to the user
@@ -114,7 +114,7 @@ public class RequestHandlerHits extends RequestHandler {
             } else {
                 // Since we're going to always launch a totals count anyway, just do it right away
                 // then construct a window on top of the total
-                job = searchMan.search(user, searchParam.hitsTotal(), false); // always launch totals nonblocking!
+                job = searchMan.searchNonBlocking(user, searchParam.hitsTotal()); // always launch totals nonblocking!
                 JobHitsTotal jobTotal = (JobHitsTotal) job;
 
                 int sleepTime = 10;

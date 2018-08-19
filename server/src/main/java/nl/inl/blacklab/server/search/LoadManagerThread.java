@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
     private static final Logger logger = LogManager.getLogger(LoadManagerThread.class);
 
-    private SearchCache searchCache;
+    private BlsSearchCache searchCache;
 
     /**
      * Construct the load manager thread object.
@@ -20,7 +20,7 @@ class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
      * @param searchCache cache of running and completed searches, on which we call
      *            load management
      */
-    public LoadManagerThread(SearchCache searchCache) {
+    public LoadManagerThread(BlsSearchCache searchCache) {
         //logger.debug("Creating LOADMGR thread...");
         this.searchCache = searchCache;
         setUncaughtExceptionHandler(this);

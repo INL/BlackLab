@@ -22,7 +22,7 @@ public class SearchManager {
     private BlsConfig config;
 
     /** All running searches as well as recently run searches */
-    private SearchCache cache;
+    private BlsSearchCache cache;
 
     /** System for determining the current user. */
     private AuthManager authSystem;
@@ -38,7 +38,7 @@ public class SearchManager {
 
         // Create the cache
         // Use the performance properties [optional, defaults will be used if missing]
-        cache = new SearchCache(this, config);
+        cache = new BlsSearchCache(this, config.getCacheConfig());
 
         // Find the indices
         indexMan = new IndexManager(this, properties);
@@ -71,7 +71,7 @@ public class SearchManager {
         indexMan = null;
     }
 
-    public SearchCache getCache() {
+    public BlsSearchCache getCache() {
         return cache;
     }
 
@@ -87,8 +87,12 @@ public class SearchManager {
         return indexMan;
     }
 
-    public Job search(User user, JobDescription jobDesc, boolean block) throws BlsException {
-        return cache.search(user, jobDesc, block);
+    public Job search(User user, JobDescription jobDesc) throws BlsException {
+        return cache.searchBlocking(user, jobDesc);
+    }
+    
+    public Job searchNonBlocking(User user, JobDescription jobDesc) throws BlsException {
+        return cache.searchNonBlocking(user, jobDesc);
     }
 
 }

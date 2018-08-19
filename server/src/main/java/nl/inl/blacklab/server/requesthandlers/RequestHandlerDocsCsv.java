@@ -72,7 +72,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
         try {
             if (groupBy != null) {
-                JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), true);
+                JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
                 job = searchGrouped;
                 groups = searchGrouped.getGroups();
                 // don't set docs yet - only return docs if we're looking within a specific group
@@ -100,7 +100,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 }
             } else {
                 // Don't use JobDocsAll, as we only might not need them all.
-                job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted(), true);
+                job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted());
                 docs = job.getDocResults();
             }
         } finally {

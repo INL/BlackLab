@@ -88,7 +88,7 @@ public class RequestHandlerDocContents extends RequestHandler {
             //@@@ TODO: filter on document!
             searchParam.put("docpid", docPid);
             JobWithHits search;
-            search = (JobWithHits) searchMan.search(user, searchParam.hits(), true);
+            search = (JobWithHits) searchMan.search(user, searchParam.hits());
             try {
                 hits = search.getHits();
             } finally {
