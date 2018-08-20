@@ -19,7 +19,7 @@ public class SearchDocGroupsSorted extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups executeInternal() throws InvalidQuery {
+    public DocGroups executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().sort(property);
     }
 

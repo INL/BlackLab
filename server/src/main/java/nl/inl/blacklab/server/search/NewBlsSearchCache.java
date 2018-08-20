@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
@@ -34,24 +35,42 @@ class NewBlsSearchCache implements SearchCache {
     }
 
     @Override
-    public NewBlsCacheEntry<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask) {
+    public NewBlsCacheEntry<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException {
+        return getFromCache(search, searchTask, false);
+    }
+
+    @Override
+    public SearchResult get(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException, ExecutionException {
+        return getFromCache(search, searchTask, true).get();
+    }
+
+    private NewBlsCacheEntry<? extends SearchResult> getFromCache(Search search,
+            Supplier<? extends SearchResult> searchTask, boolean block) throws InterruptedException {
         NewBlsCacheEntry<? extends SearchResult> future;
+        boolean created = false;
         synchronized (searches) {
             future = searches.get(search);
             if (future == null) {
                 future = new NewBlsCacheEntry<>(search, searchTask);
+                created = true;
                 searches.put(search, future);
-                if (trace)
-                    System.out.println("ADDED: " + search);
-            } else {
-                if (trace)
-                    System.out.println("FOUND: " + search);
-                future.updateLastAccess();
+                if (!block)
+                    future.start(false);
             }
+        }
+        if (created) {
+            if (trace)
+                System.out.println("ADDED: " + search);
+            if (block)
+                future.start(true);
+        } else {
+            if (trace)
+                System.out.println("FOUND: " + search);
+            future.updateLastAccess();
         }
         return future;
     }
-
+    
     @Override
     public NewBlsCacheEntry<? extends SearchResult> remove(Search search) {
         NewBlsCacheEntry<? extends SearchResult> future;

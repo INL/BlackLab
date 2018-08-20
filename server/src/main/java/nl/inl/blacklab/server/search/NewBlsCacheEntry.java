@@ -154,26 +154,51 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     
     /** Did the thread finish, succesfully or otherwise? */
     private boolean threadFinished = false;
+
+    private Supplier<T> supplier;
     
-    
+    /**
+     * Construct a cache entry.
+     * 
+     * @param search the search
+     * @param supplier the result supplier
+     * @param block if true, executes task in current thread and blocks until the
+     *     result is available. If false, starts a new thread and returns right away.
+     */
     public NewBlsCacheEntry(Search search, Supplier<T> supplier) {
         this.search = search;
+        this.supplier = supplier;
         id = getNextEntryId();
         createTime = lastAccessTime = now();
+    }
+    
+    /**
+     * Start performing the task.
+     * 
+     * @param block if true, blocks until the task is complete
+     * @throws InterruptedException 
+     */
+    public void start(boolean block) throws InterruptedException {
         thread = new Thread(() -> {
-            try {
-                result = supplier.get();
-                if (result instanceof Results<?>) {
-                    pausing.setThreadPauser(((Results<?>)result).threadPauser());
-                }
-            } catch (Exception e) {
-                exceptionThrown = e;
-            } finally {
-                threadFinishTime = now();
-                threadFinished = true;
-            }
+            performTask(supplier);
         });
         thread.start();
+        if (block)
+            thread.join();
+    }
+
+    private void performTask(Supplier<T> supplier) {
+        try {
+            result = supplier.get();
+            if (result instanceof Results<?>) {
+                pausing.setThreadPauser(((Results<?>)result).threadPauser());
+            }
+        } catch (Exception e) {
+            exceptionThrown = e;
+        } finally {
+            threadFinishTime = now();
+            threadFinished = true;
+        }
     }
 
     public long id() {

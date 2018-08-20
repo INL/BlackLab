@@ -14,14 +14,20 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.searches.FutureSearchResultCache;
 
 public class TestNewSearchSystem {
     
-    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
+    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery, InterruptedException {
+        if (args.length == 0) {
+            System.err.println("Please specify index directory.");
+            System.exit(1);
+        }
         File indexDir = new File(args[0]);
         System.out.println("Opening index " + indexDir + "...");
         try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
@@ -30,9 +36,13 @@ public class TestNewSearchSystem {
             cache.setTrace(true);
             index.setCache(cache); //new SearchCacheDebug());
             
+            String cqlLemmaSchip = "[lemma=\"schip\"]";
+            Annotation annotLemma = index.mainAnnotatedField().annotation("lemma");
+            MetadataField titleField = index.metadata().metadataFields().special("title");
+            
             System.out.println("\nFirst 20 hits for 'schip':");
             Hits hits = index.search()
-                    .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.maxSettings())
                     .window(0, 20)
                     .execute();
             Kwics kwics = hits.kwics(null);
@@ -46,9 +56,8 @@ public class TestNewSearchSystem {
             });
 
             System.out.println("\nFirst 10 document results for 'schip':");
-            MetadataField titleField = index.metadata().metadataFields().special("title");
             index.search()
-                    .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.maxSettings())
                     .docs(3)
                     .window(0, 10)
                     .execute()
@@ -85,7 +94,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nCount number of hits for 'schip': " + index
                     .search()
-                    .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.maxSettings())
                     .count()
                     .execute()
                     .value());
@@ -93,19 +102,20 @@ public class TestNewSearchSystem {
             System.out.println("\nCount different spellings for 'schip': ");
             index
                     .search()
-                    .find("[lemma=\"schip\"]", null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.maxSettings())
                     .group(new HitPropertyHitText(index), 3)
                     .execute()
                     .forEach(group -> {
                         System.out.println("- " + group.identity() + " (stored " + group.numberStored() + " of " + group.size() + ") ");
                     });
 
-            System.out.println("\nCollocations for 'waterval': ");
+            System.out.println("\nCollocations for 'schip': ");
             TermFrequencyList colls = index.search()
-                    .find("[lemma=\"waterval\"]", null, index.maxSettings())
-                    .collocations(null, null, null)
+                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .collocations(annotLemma, ContextSize.get(10), MatchSensitivity.INSENSITIVE)
+                    //.window(0, 10)
                     .execute();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 100 && i < colls.size(); i++) {
                 System.out.println("- " + colls.get(i));
             }
         }

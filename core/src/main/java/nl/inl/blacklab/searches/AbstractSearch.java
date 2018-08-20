@@ -30,27 +30,27 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     @Override
     @SuppressWarnings("unchecked")
-    public Future<R> executeAsync() {
+    public Future<R> executeAsync() throws InterruptedException {
         return (Future<R>)getFromCache(this, () -> {
             try {
                 return executeInternal();
-            } catch (InvalidQuery e) {
+            } catch (InvalidQuery | InterruptedException e) {
                 throw new CompletionException(e);
             }
         });
     }
     
     @Override
-    public final R execute() throws InvalidQuery {
+    public final R execute() throws InvalidQuery, InterruptedException {
         Future<R> future = executeAsync();
         try {
             return future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw BlackLabRuntimeException.wrap(e);
+        } catch (ExecutionException e) {
+            throw BlackLabRuntimeException.wrap(e.getCause());
         } catch (CompletionException e) {
             try {
                 throw e.getCause();
-            } catch (InvalidQuery e2) {
+            } catch (InvalidQuery | InterruptedException e2) {
                 throw e2;
             } catch (Throwable e2) {
                 throw new AssertionError(e2);
@@ -58,9 +58,13 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
         }
     }
     
-    protected abstract R executeInternal() throws InvalidQuery;
+    protected abstract R executeInternal() throws InvalidQuery, InterruptedException;
     
-    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
+    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException {
+        return queryInfo.index().cache().getAsync(search, searchTask);
+    }
+    
+    protected SearchResult getFromCacheBlock(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException, ExecutionException {
         return queryInfo.index().cache().get(search, searchTask);
     }
     

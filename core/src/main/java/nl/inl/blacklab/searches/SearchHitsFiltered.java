@@ -21,7 +21,7 @@ public class SearchHitsFiltered extends SearchHits {
     }
     
     @Override
-    public Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().filter(property, value);
     }
 

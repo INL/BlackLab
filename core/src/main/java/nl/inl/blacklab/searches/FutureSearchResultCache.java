@@ -28,7 +28,7 @@ public class FutureSearchResultCache implements SearchCache {
     }
 
     @Override
-    public Future<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> searchTask) {
+    public Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) {
         Future<? extends SearchResult> future;
         synchronized (searches) {
             future = searches.get(search);

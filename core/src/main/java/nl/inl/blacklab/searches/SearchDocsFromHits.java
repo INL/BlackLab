@@ -17,7 +17,7 @@ public class SearchDocsFromHits extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().perDocResults(maxHits);
     }
 

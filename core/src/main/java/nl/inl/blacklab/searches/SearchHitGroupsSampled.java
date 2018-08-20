@@ -21,7 +21,7 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal() throws InvalidQuery {
+    public HitGroups executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().sample(sampleParameters);
     }
 

@@ -18,8 +18,9 @@ public interface Search {
      *  
      * @return result of the operation 
      * @throws InvalidQuery
+     * @throws InterruptedException 
      */
-    SearchResult execute() throws InvalidQuery;
+    SearchResult execute() throws InvalidQuery, InterruptedException;
 
     /**
      * Execute the search operation asynchronously.
@@ -28,8 +29,9 @@ public interface Search {
      * the returned Future.
      * 
      * @return future result
+     * @throws InterruptedException 
      */
-    Future<? extends SearchResult> executeAsync();
+    Future<? extends SearchResult> executeAsync() throws InterruptedException;
     
     @Override
     boolean equals(Object obj);

@@ -21,7 +21,7 @@ public class SearchCollocationsWindow extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    public TermFrequencyList executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().window(first, number);
     }
 

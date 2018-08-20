@@ -22,7 +22,7 @@ public class SearchDocsFiltered extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().filter(property, value);
     }
 

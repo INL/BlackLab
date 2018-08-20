@@ -23,7 +23,7 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups executeInternal() throws InvalidQuery {
+    public DocGroups executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().filter(property, value);
     }
 

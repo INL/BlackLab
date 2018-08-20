@@ -26,7 +26,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    public TermFrequencyList executeInternal() throws InvalidQuery, InterruptedException {
         return source.execute().collocations(annotation, contextSize, sensitivity);
     }
 

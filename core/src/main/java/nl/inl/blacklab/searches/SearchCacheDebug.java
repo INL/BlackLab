@@ -13,7 +13,7 @@ public class SearchCacheDebug implements SearchCache {
     Map<Search, CompletableFuture<? extends SearchResult>> searches = new HashMap<>();
 
     @Override
-    public Future<? extends SearchResult> get(Search search, Supplier<? extends SearchResult> supplier) {
+    public Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> supplier) {
         CompletableFuture<? extends SearchResult> result = searches.get(search);
         if (result == null) {
             result = CompletableFuture.supplyAsync(supplier);
