@@ -34,6 +34,8 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -48,6 +50,7 @@ import nl.inl.blacklab.server.search.NewBlsCacheEntry;
  * Request handler for hit results.
  */
 public class RequestHandlerHits extends RequestHandler {
+
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
@@ -58,7 +61,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (BlsConfig.traceRequestHandling)
             logger.debug("RequestHandlerHits.handle start");
 
-        Hits total = null;
+        Hits hits = null;
         Hits window = null;
         NewBlsCacheEntry<?> job = null;
 
@@ -71,6 +74,8 @@ public class RequestHandlerHits extends RequestHandler {
             viewGroup = "";
 
         HitGroup group = null;
+        ResultsStats hitsCount;
+        ResultsStats docsCount;
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
             
             // Viewing a single group in a grouped hits results
@@ -108,21 +113,33 @@ public class RequestHandlerHits extends RequestHandler {
 
             // Important, only count hits within this group for the total
             // We should have retrieved all the hits already, as JobGroups always counts all hits.
-            total = hitsInGroup;
+            hits = hitsInGroup;
 
             int first = Math.max(0, searchParam.getInteger("first"));
             int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
             if (!hitsInGroup.hitsStats().processedAtLeast(first))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
             window = hitsInGroup.window(first, size);
+            
+            hitsCount = hitsInGroup.hitsStats();
+            docsCount = hitsInGroup.docsStats();
+            
         } else {
             
             // Regular hits search
             
             // Since we're going to always launch a totals count anyway, just do it right away
             // then construct a window on top of the total
-            total = searchMan.search(user, searchParam.hits());
-            job = searchMan.searchNonBlocking(user, searchParam.hitsTotal()); // always launch totals nonblocking!
+            hits = searchMan.search(user, searchParam.hits());
+            job = searchMan.searchNonBlocking(user, searchParam.hitsCount()); // always launch totals nonblocking!
+            docsCount = searchMan.search(user, searchParam.docsCount());
+            try {
+                hitsCount = (ResultCount)job.get();
+            } catch (InterruptedException e) {
+                throw new InterruptedSearch(e);
+            } catch (ExecutionException e) {
+                throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+            }
 
 //            int sleepTime = 10;
 //            int totalSleepTime = 0;
@@ -133,28 +150,28 @@ public class RequestHandlerHits extends RequestHandler {
             int first = Math.max(0, searchParam.getInteger("first"));
             int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-            total.hitsStats().processedAtLeast(first + size);
+            hits.hitsStats().processedAtLeast(first + size);
 
             // We blocked, so if we don't have the page available, the request is out of bounds.
-            if (total.hitsStats().processedSoFar() < first)
+            if (hits.hitsStats().processedSoFar() < first)
                 first = 0;
 
-            window = total.window(first, size);
+            window = hits.window(first, size);
         }
 
         if (searchParam.getString("calc").equals("colloc")) {
-            dataStreamCollocations(ds, total);
+            dataStreamCollocations(ds, hits);
             return HTTP_OK;
         }
 
         DocResults perDocResults = null;
 
-        BlackLabIndex index = total.index();
+        BlackLabIndex index = hits.index();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
         int totalTokens = -1;
         if (includeTokenCount) {
-            perDocResults = total.perDocResults(MaxSettings.UNLIMITED_HITS);
+            perDocResults = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
             // Determine total number of tokens in result set
             String fieldName = index.mainAnnotatedField().name();
             DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
@@ -173,7 +190,7 @@ public class RequestHandlerHits extends RequestHandler {
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window
         addSummaryCommonFields(ds, searchParam, job.timeUserWaited(), totalTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, total, totalTime < 0);
+        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
         ds.startEntry("docFields");
@@ -264,7 +281,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             if (perDocResults == null)
-                perDocResults = total.perDocResults(MaxSettings.UNLIMITED_HITS);
+                perDocResults = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
             ds.startEntry("facets");
             dataStreamFacets(ds, perDocResults, searchParam.facets());
             ds.endEntry();

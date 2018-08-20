@@ -11,9 +11,12 @@ public class ResultsStatsStatic extends ResultsStats {
     
     private int counted;
     
-    public ResultsStatsStatic(int processed, int counted) {
+    private MaxStats maxStats;
+    
+    public ResultsStatsStatic(int processed, int counted, MaxStats maxStats) {
         this.processed = processed;
         this.counted = counted;
+        this.maxStats = maxStats;
     }
 
     @Override
@@ -49,6 +52,11 @@ public class ResultsStatsStatic extends ResultsStats {
     @Override
     public boolean isStatic() {
         return true;
+    }
+
+    @Override
+    public MaxStats maxStats() {
+        return maxStats;
     }
 
 }

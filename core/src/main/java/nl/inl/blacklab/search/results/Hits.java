@@ -196,6 +196,11 @@ public abstract class Hits extends Results<Hit> {
         public boolean done() {
             return doneProcessingAndCounting();
         }
+
+        @Override
+        public MaxStats maxStats() {
+            return Hits.this.maxStats();
+        }
         
     };
     

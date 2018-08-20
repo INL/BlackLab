@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -44,7 +44,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         ds.startMap();
         ds.startEntry("summary").startMap();
-        Hits hits = searchMan.search(user, searchParam.hits());
         WindowSettings windowSettings = searchParam.getWindowSettings();
         final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
         final int requestedWindowSize = windowSettings.size() < 0
@@ -55,7 +54,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), 0, groups, ourWindow);
-        addNumberOfResultsSummaryTotalHits(ds, hits, false);
+        ResultCount hitsStats = searchMan.search(user, searchParam.hitsCount());
+        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false);
         ds.endMap().endEntry();
 
         // The list of groups found

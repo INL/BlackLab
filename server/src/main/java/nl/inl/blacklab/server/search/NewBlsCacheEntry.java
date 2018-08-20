@@ -8,6 +8,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -48,17 +49,15 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
          */
         @Override
         public void run() {
+            boolean isResultsInstance = false;
             try {
                 Supplier<T> resultSupplier = supplier;
                 supplier = null;
                 result = resultSupplier.get();
-                if (result instanceof Results<?>) {
+                isResultsInstance = result instanceof Results<?>;
+                if (isResultsInstance) {
                     // Make sure our results object can be paused
                     pausing.setThreadPauser(((Results<?>)result).threadPauser());
-                    if (fetchAllResults) {
-                        // Fetch all results from the result object
-                        ((Results<?>) result).resultsStats().processedTotal();
-                    }
                 }
             } catch (Throwable e) {
                 // NOTE: we catch Throwable here (while it's normally good practice to
@@ -73,8 +72,19 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
                 // Even then, some low-level ones (like OutOfMemoryError) seem to slip by.
                 exceptionThrown = e;
             } finally {
-                threadFinishTime = now();
-                threadFinished = true;
+                initialSearchDoneTime = now();
+                initialSearchDone = true;
+                thread = null;
+            }
+            if (fetchAllResults) {
+                if (isResultsInstance) {
+                    // Fetch all results from the result object
+                    ((Results<?>) result).resultsStats().processedTotal();
+                }
+                if (result instanceof ResultCount) {
+                    // Complete the count
+                    ((ResultCount) result).processedTotal();
+                }
             }
         }
 
@@ -118,11 +128,11 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** When was this entry last accessed (ms) */
     private long lastAccessTime;
     
-    /** When was did the thread finish (ms; only valid when finished; set by thread) */
-    private long threadFinishTime = 0;
+    /** When did the initial search finish (ms; only valid when finished; set by thread) */
+    private long initialSearchDoneTime = 0;
     
-    /** Did the thread finish, succesfully or otherwise? (set by thread) */
-    private boolean threadFinished = false;
+    /** Did the initial search finish, succesfully or otherwise? (set by thread) */
+    private boolean initialSearchDone = false;
 
     /** Handles pausing the results object, and keeping track of pause time */
     ThreadPauserProxy pausing = new ThreadPauserProxy();
@@ -154,7 +164,7 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (block) {
             try {
                 // Wait until result available
-                while (result == null && thread != null && thread.isAlive()) {
+                while (!initialSearchDone && thread != null && thread.isAlive()) {
                     Thread.sleep(100);
                 }
             } catch (InterruptedException e) {
@@ -200,7 +210,7 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      */
     @Override
     public boolean isDone() {
-        return threadFinished;
+        return initialSearchDone;
     }
 
     /**
@@ -232,9 +242,9 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return time since search finished (ms)
      */
     public long timeSinceFinished() {
-        if (!threadFinished)
+        if (!initialSearchDone)
             return 0;
-        return now() - threadFinishTime;
+        return now() - initialSearchDoneTime;
     }
 
     /**
@@ -260,8 +270,8 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return user wait time (ms)
      */
     public long timeUserWaited() {
-        if (threadFinished)
-            return threadFinishTime - createTime;
+        if (initialSearchDone)
+            return initialSearchDoneTime - createTime;
         return timeSinceCreation();
     }
 
@@ -288,7 +298,7 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public T get() throws InterruptedException, ExecutionException {
         // Wait until result available
-        while (result == null && thread != null && thread.isAlive()) {
+        while (!initialSearchDone && thread != null && thread.isAlive()) {
             Thread.sleep(100);
         }
         if (exceptionThrown != null)
@@ -300,11 +310,11 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         // Wait until result available
         long ms = unit.toMillis(time);
-        while (ms > 0 && result == null && thread != null && thread.isAlive()) {
+        while (ms > 0 && !initialSearchDone && thread != null && thread.isAlive()) {
             Thread.sleep(100);
             ms -= 100;
         }
-        if (result == null)
+        if (!initialSearchDone)
             throw new TimeoutException("Result still not available after " + ms + "ms");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
@@ -366,7 +376,7 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public boolean cancel(boolean interrupt) {
         synchronized (this) {
-            if (this.thread == null || !this.thread.isAlive())
+            if (initialSearchDone || this.thread == null || !this.thread.isAlive())
                 return false; // cannot cancel
             cancelled = true;
             if (interrupt)

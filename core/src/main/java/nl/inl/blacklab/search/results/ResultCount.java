@@ -51,4 +51,10 @@ public class ResultCount extends ResultsStats implements SearchResult {
         update();
         return count.done();
     }
+
+    @Override
+    public MaxStats maxStats() {
+        update();
+        return count.maxStats();
+    }
 }

@@ -34,7 +34,7 @@ public abstract class ResultsStats {
      * @return static instance of current stats
      */
     public ResultsStats save() {
-        return new ResultsStatsStatic(processedSoFar(), countedSoFar());
+        return new ResultsStatsStatic(processedSoFar(), countedSoFar(), maxStats());
     }
 
     /**
@@ -45,5 +45,12 @@ public abstract class ResultsStats {
     public boolean isStatic() {
         return false;
     }
+
+    /**
+     * Get information about exceeding maximums.
+     * 
+     * @return max stats
+     */
+    public abstract MaxStats maxStats();
     
 }

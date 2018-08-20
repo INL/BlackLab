@@ -8,7 +8,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -30,9 +30,9 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
 
         // Make sure we have the hits search, so we can later determine totals.
-        Hits originalHitsSearch = null;
+        NewBlsCacheEntry<ResultCount> originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchMan.search(user, searchParam.hits());
+            originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
         }
         // Get the window we're interested in
         DocResults docResults = searchMan.search(user, searchParam.docs());
@@ -64,12 +64,20 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
         WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
-        Hits totalHits = originalHitsSearch; //docResults.originalHits();
+        ResultCount totalHits;
+        try {
+            totalHits = originalHitsSearch.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        }
+        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, false);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false);
         
         ds.endMap().endEntry();
 

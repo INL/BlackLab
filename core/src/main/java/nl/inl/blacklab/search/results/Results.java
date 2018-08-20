@@ -136,6 +136,11 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         public boolean done() {
             return doneProcessingAndCounting();
         }
+
+        @Override
+        public MaxStats maxStats() {
+            return (Results.this instanceof Hits ? ((Hits)Results.this).maxStats() : MaxStats.NOT_EXCEEDED);
+        }
     };
 
     public Results(QueryInfo queryInfo) {

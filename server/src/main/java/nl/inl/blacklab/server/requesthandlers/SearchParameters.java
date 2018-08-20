@@ -526,8 +526,8 @@ public class SearchParameters {
         return hitsFiltered().sort(hitsSortSettings.sortBy());
     }
 
-    public SearchHits hitsTotal() throws BlsException {
-        return hitsSample();
+    public SearchCount hitsCount() throws BlsException {
+        return hitsSample().count();
     }
 
     public SearchHits hitsFiltered() throws BlsException {
@@ -557,7 +557,7 @@ public class SearchParameters {
         return docs().sort(docSortSettings.sortBy());
     }
 
-    public SearchCount docsTotal() throws BlsException {
+    public SearchCount docsCount() throws BlsException {
         return docs().count();
     }
 

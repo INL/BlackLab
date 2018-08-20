@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -42,7 +43,7 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     NewBlsCacheEntry<DocResults> search = null;
-    Hits originalHitsSearch;
+    NewBlsCacheEntry<ResultCount> originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
@@ -62,7 +63,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchMan.search(user, searchParam.hits());
+            originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
         }
         
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
@@ -170,13 +171,21 @@ public class RequestHandlerDocs extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-        Hits totalHits = originalHitsSearch == null ? null : originalHitsSearch; //docResults.originalHits();
+        ResultCount totalHits;
+        try {
+            totalHits = originalHitsSearch.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        }
+        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, countFailed);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
         ds.startEntry("docFields");

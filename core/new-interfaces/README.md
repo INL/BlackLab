@@ -86,6 +86,8 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
 ```
 
 BLS:
+- NewBlsCacheEntry: cannot cancel totals count after initialSearchDone,
+  because it violates the Future contract (cannot cancel after isDone)
 - use new Search system
 - alleen totals-searches async draaien.
 - (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
