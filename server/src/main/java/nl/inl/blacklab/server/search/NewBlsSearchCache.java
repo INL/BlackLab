@@ -20,7 +20,7 @@ public class NewBlsSearchCache implements SearchCache {
     
     public static final boolean ENABLE_NEW_CACHE = true;
 
-    protected Map<Search, NewBlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
+    protected Map<Search<?>, NewBlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
     protected boolean trace = true;
 

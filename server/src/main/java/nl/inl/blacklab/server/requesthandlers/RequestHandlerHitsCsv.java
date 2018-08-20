@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -15,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.Kwic;
@@ -33,9 +35,8 @@ import nl.inl.blacklab.server.datastream.DataStreamPlain;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.jobs.JobHitsGrouped;
-import nl.inl.blacklab.server.jobs.JobWithHits;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.NewBlsCacheEntry;
 
 /**
  * Request handler for hit results.
@@ -69,19 +70,18 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        JobWithHits job = null;
+        NewBlsCacheEntry<?> job = null;
         Hits hits = null;
         HitGroups groups = null;
 
         try {
             if (groupBy != null) {
-                JobHitsGrouped searchGrouped = (JobHitsGrouped) searchMan.search(user, searchParam.hitsGrouped());
-                job = searchGrouped;
-                groups = searchGrouped.getGroups();
+                job = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
+                groups = (HitGroups) job.get();
                 // don't set hits yet - only return hits if we're looking within a specific group
 
                 if (viewGroup != null) {
-                    PropertyValue groupId = PropertyValue.deserialize(searchGrouped.getHits(), viewGroup);
+                    PropertyValue groupId = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
                     if (groupId == null)
                         throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                     HitGroup group = groups.get(groupId);
@@ -103,13 +103,13 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             } else {
                 // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                job = (JobWithHits) searchMan.search(user, searchParam.hitsSample());
-                hits = job.getHits();
+                job = searchMan.searchNonBlocking(user, searchParam.hitsSample());
+                hits = (Hits) job.get();
             }
-        } finally {
-            // Jobs automatically have a ref to start out with
-            if (job != null)
-                job.decrRef();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
         }
 
         // apply window settings

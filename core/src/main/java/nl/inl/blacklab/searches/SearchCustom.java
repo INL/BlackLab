@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  * @param <S> source search type
  * @param <T> target result type
  */
-public abstract class SearchCustom<S extends Search, T extends SearchResult> extends AbstractSearch<T> {
+public abstract class SearchCustom<S extends Search<T>, T extends SearchResult> extends AbstractSearch<T> {
 
     public SearchCustom(QueryInfo queryInfo) {
         super(queryInfo);

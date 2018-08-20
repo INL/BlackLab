@@ -135,8 +135,6 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * 
      * @param search the search
      * @param supplier the result supplier
-     * @param block if true, executes task in current thread and blocks until the
-     *     result is available. If false, starts a new thread and returns right away.
      */
     public NewBlsCacheEntry(Search<T> search, Supplier<T> supplier) {
         this.search = search;
@@ -149,7 +147,6 @@ public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * Start performing the task.
      * 
      * @param block if true, blocks until the task is complete
-     * @param fetchAllResults if true, and the search yields a Results object, fetches all results before the thread ends
      */
     public void start(boolean block) {
         thread = new NewBlsSearchThread(search.fetchAllResults());

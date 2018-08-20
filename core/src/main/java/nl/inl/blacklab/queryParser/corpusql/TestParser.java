@@ -23,7 +23,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestParser {
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in));
 
         while (true) {

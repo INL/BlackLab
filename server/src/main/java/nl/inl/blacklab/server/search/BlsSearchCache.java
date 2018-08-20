@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +34,7 @@ public class BlsSearchCache {
     // EXECUTING SEARCHES
     //----------------------------------------------------
 
-    private SearchManager searchMan;
+//    private SearchManager searchMan;
 
     
     // CACHE STATUS
@@ -77,8 +76,8 @@ public class BlsSearchCache {
      */
     private Thread loadManagerThread;
 
-    /** Keeps track of running jobs per user, so we can limit this. */
-    private Map<String, Set<Job>> runningJobsPerUser = new HashMap<>();
+//    /** Keeps track of running jobs per user, so we can limit this. */
+//    private Map<String, Set<Job>> runningJobsPerUser = new HashMap<>();
 
     
     // Initialization / finalization
@@ -91,7 +90,7 @@ public class BlsSearchCache {
      * @param cacheConfig our config
      */
     public BlsSearchCache(SearchManager searchMan, BlsConfigCacheAndPerformance cacheConfig) {
-        this.searchMan = searchMan;
+//        this.searchMan = searchMan;
 
         this.cacheConfig = cacheConfig;
         newCache = new NewBlsSearchCache(cacheConfig);
@@ -116,7 +115,7 @@ public class BlsSearchCache {
     
         clearCache(true);
     
-        searchMan = null;
+//        searchMan = null;
     }
     
     

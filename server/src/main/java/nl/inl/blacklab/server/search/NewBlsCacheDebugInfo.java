@@ -32,7 +32,7 @@ class NewBlsCacheDebugInfo {
         ds.endMap();
     }
 
-    private void dataStreamDebugInfo(DataStream ds, NewBlsCacheEntry<?> entry) {
+    private static void dataStreamDebugInfo(DataStream ds, NewBlsCacheEntry<?> entry) {
         ds.startMap();
         // More information about job state
         ds.entry("timeSinceCreation", entry.timeSinceCreation())

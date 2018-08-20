@@ -33,7 +33,6 @@ public interface SearchCache {
      *                        this can be used for running total counts, for example
      * @return the future, either one that was alrady the cache or a new one using
      *         the supplier
-     * @throws ExecutionException if an error occurred while the search was executing
      */
     <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> searchTask);
 

@@ -109,9 +109,9 @@ public class TestNewSearchSystem {
                         System.out.println("- " + group.identity() + " (stored " + group.numberStored() + " of " + group.size() + ") ");
                     });
 
-            System.out.println("\nCollocations for 'schip': ");
+            System.out.println("\nCollocations for 'waterval': ");
             TermFrequencyList colls = index.search()
-                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .find("[lemma=\"waterval\"]", null, index.maxSettings())
                     .collocations(annotLemma, ContextSize.get(10), MatchSensitivity.INSENSITIVE)
                     //.window(0, 10)
                     .execute();
