@@ -9,12 +9,12 @@ import nl.inl.blacklab.search.results.SearchResult;
 public final class SearchCacheDummy implements SearchCache {
 
     @Override
-    public Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> supplier) {
+    public <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> supplier) {
         return null; // It's never in cache, and don't add it either
     }
 
     @Override
-    public Future<? extends SearchResult> remove(Search search) {
+    public <R extends SearchResult> Future<R> remove(Search<R> search) {
         // Do nothing.
         return null;
     }

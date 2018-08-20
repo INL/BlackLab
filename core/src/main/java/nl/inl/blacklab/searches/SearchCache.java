@@ -29,10 +29,13 @@ public interface SearchCache {
      * @param search search we want the result for
      * @param searchTask if the search is not in the cache, execute this task,
      *            returning the future result and putting it in the cache
+     * @param fetchAllResults if true, and search yield a Results object, will fetch all results before the thread ends
+     *                        this can be used for running total counts, for example
      * @return the future, either one that was alrady the cache or a new one using
      *         the supplier
+     * @throws ExecutionException if an error occurred while the search was executing
      */
-    Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask);
+    <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> searchTask);
 
     /**
      * Get result for the specified search.
@@ -53,7 +56,7 @@ public interface SearchCache {
      * @throws InterruptedSearch if the task was interrupted
      * @throws ExecutionException if the task threw an exception (see the cause)
      */
-    default SearchResult get(Search search, Supplier<? extends SearchResult> searchTask)
+    default <R extends SearchResult> R get(Search<R> search, Supplier<R> searchTask)
             throws ExecutionException {
         try {
             return getAsync(search, searchTask).get();
@@ -62,6 +65,6 @@ public interface SearchCache {
         }
     }
     
-    Future<? extends SearchResult> remove(Search search);
+    <R extends SearchResult> Future<R> remove(Search<R> search);
 
 }

@@ -8,8 +8,10 @@ import nl.inl.blacklab.search.results.SearchResult;
 
 /**
  * A 'recipe' of search operations.
+ * 
+ * @param <R> results type, e.g. Hits
  */
-public interface Search {
+public interface Search<R extends SearchResult> {
 
     /**
      * Execute the search operation, returning the final response.
@@ -19,7 +21,7 @@ public interface Search {
      * @return result of the operation 
      * @throws InvalidQuery
      */
-    SearchResult execute() throws InvalidQuery;
+    R execute() throws InvalidQuery;
 
     /**
      * Execute the search operation asynchronously.
@@ -29,7 +31,7 @@ public interface Search {
      * 
      * @return future result
      */
-    Future<? extends SearchResult> executeAsync();
+    Future<R> executeAsync();
     
     @Override
     boolean equals(Object obj);
@@ -41,5 +43,19 @@ public interface Search {
     
     @Override
     String toString();
+
+    /**
+     * Should we fetch all results in the cache thread?
+     * 
+     * Normally, the cache thread just makes sure the results instance exists,
+     * but doesn't explicitly fetch any results. For total counts, however, we want
+     * the cache thread to actually keep fetching all results, so we can keep track
+     * of the total count. 
+     * 
+     * @return true if cache thread should fetch all results
+     */
+    default boolean fetchAllResults() {
+        return false;
+    }
 
 }

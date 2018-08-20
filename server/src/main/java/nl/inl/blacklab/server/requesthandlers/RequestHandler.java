@@ -22,6 +22,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -30,11 +31,13 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Facets;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -43,8 +46,6 @@ import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.JobDescription;
-import nl.inl.blacklab.server.jobs.JobFacets;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -478,18 +479,18 @@ public abstract class RequestHandler {
         return indexMetadata.contentViewable();
     }
 
-    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, JobDescription facetDesc)
+    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc)
             throws BlsException {
 
-        JobFacets facets = (JobFacets) searchMan.search(user, facetDesc);
-        Map<String, DocGroups> counts = facets.getCounts();
+        Facets facets = searchMan.search(user, facetDesc);
+        Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
 
         ds.startMap();
-        for (Entry<String, DocGroups> e : counts.entrySet()) {
-            String facetBy = e.getKey();
+        for (Entry<DocProperty, DocGroups> e : counts.entrySet()) {
+            DocProperty facetBy = e.getKey();
             DocGroups facetCounts = e.getValue();
             facetCounts = facetCounts.sort(DocGroupProperty.size());
-            ds.startAttrEntry("facet", "name", facetBy)
+            ds.startAttrEntry("facet", "name", facetBy.name())
                     .startList();
             int n = 0, maxFacetValues = 10;
             int totalSize = 0;

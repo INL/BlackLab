@@ -15,7 +15,7 @@ import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.util.ThreadPauser;
 
-class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
+public class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     
     /** id for the next job started */
     private static Long nextEntryId = 0L;
@@ -36,7 +36,10 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Our thread */
     class NewBlsSearchThread extends Thread implements UncaughtExceptionHandler {
         
-        public NewBlsSearchThread() {
+        private boolean fetchAllResults;
+
+        public NewBlsSearchThread(boolean fetchAllResults) {
+            this.fetchAllResults = fetchAllResults;
             setUncaughtExceptionHandler(this);
         }
         
@@ -52,6 +55,10 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
                 if (result instanceof Results<?>) {
                     // Make sure our results object can be paused
                     pausing.setThreadPauser(((Results<?>)result).threadPauser());
+                    if (fetchAllResults) {
+                        // Fetch all results from the result object
+                        ((Results<?>) result).resultsStats().processedTotal();
+                    }
                 }
             } catch (Throwable e) {
                 // NOTE: we catch Throwable here (while it's normally good practice to
@@ -82,7 +89,7 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
     long id;
     
     /** Our search */
-    private Search search;
+    private Search<T> search;
 
     /** Supplier of our result, if the thread hasn't been created yet (cleared by thread) */
     private Supplier<T> supplier;
@@ -131,7 +138,7 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @param block if true, executes task in current thread and blocks until the
      *     result is available. If false, starts a new thread and returns right away.
      */
-    public NewBlsCacheEntry(Search search, Supplier<T> supplier) {
+    public NewBlsCacheEntry(Search<T> search, Supplier<T> supplier) {
         this.search = search;
         this.supplier = supplier;
         id = getNextEntryId();
@@ -142,13 +149,17 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * Start performing the task.
      * 
      * @param block if true, blocks until the task is complete
+     * @param fetchAllResults if true, and the search yields a Results object, fetches all results before the thread ends
      */
     public void start(boolean block) {
-        thread = new NewBlsSearchThread();
+        thread = new NewBlsSearchThread(search.fetchAllResults());
         thread.start();
         if (block) {
             try {
-                thread.join();
+                // Wait until result available
+                while (result == null && thread != null && thread.isAlive()) {
+                    Thread.sleep(100);
+                }
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);
             }
@@ -159,7 +170,7 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
         return id;
     }
 
-    public Search search() {
+    public Search<T> search() {
         return search;
     }
 
@@ -279,14 +290,9 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException {
-        synchronized (this) {
-            try {
-                if (this.thread != null) {
-                    this.thread.join();
-                }
-            } finally {
-                this.thread = null;
-            }
+        // Wait until result available
+        while (result == null && thread != null && thread.isAlive()) {
+            Thread.sleep(100);
         }
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
@@ -295,18 +301,14 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     @Override
     public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        synchronized (this) {
-            try {
-                if (this.thread != null) {
-                    long ms = unit.toMillis(time);
-                    this.thread.join(ms);
-                    if (this.thread.isAlive())
-                        throw new TimeoutException("Thread still running after " + ms + "ms");
-                }
-            } finally {
-                this.thread = null;
-            }
+        // Wait until result available
+        long ms = unit.toMillis(time);
+        while (ms > 0 && result == null && thread != null && thread.isAlive()) {
+            Thread.sleep(100);
+            ms -= 100;
         }
+        if (result == null)
+            throw new TimeoutException("Result still not available after " + ms + "ms");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
         return result;
@@ -374,6 +376,10 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
                 this.thread.interrupt();
         }
         return true;
+    }
+
+    public boolean threwException() {
+        return exceptionThrown != null;
     }
     
 }

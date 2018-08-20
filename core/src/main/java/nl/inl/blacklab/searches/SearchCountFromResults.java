@@ -12,10 +12,12 @@ import nl.inl.blacklab.search.results.Results;
 public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
     
     private SearchResults<T> source;
+    private boolean fetchAllResults;
 
-    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source) {
+    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, boolean fetchAllResults) {
         super(queryInfo);
         this.source = source;
+        this.fetchAllResults = fetchAllResults;
     }
 
     @Override
@@ -51,6 +53,11 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
     @Override
     public String toString() {
         return toString("count", source);
+    }
+    
+    @Override
+    public boolean fetchAllResults() {
+        return fetchAllResults;
     }
 
 }

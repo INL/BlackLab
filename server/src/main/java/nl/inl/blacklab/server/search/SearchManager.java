@@ -6,11 +6,11 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.Job;
-import nl.inl.blacklab.server.jobs.JobDescription;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 
@@ -87,12 +87,12 @@ public class SearchManager {
         return indexMan;
     }
 
-    public Job search(User user, JobDescription jobDesc) throws BlsException {
-        return cache.searchBlocking(user, jobDesc);
+    public <T extends SearchResult> T search(User user, Search<T> search) throws BlsException {
+        return cache.search(user, search);
     }
     
-    public Job searchNonBlocking(User user, JobDescription jobDesc) throws BlsException {
-        return cache.searchNonBlocking(user, jobDesc);
+    public <T extends SearchResult> NewBlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) throws BlsException {
+        return cache.searchNonBlocking(user, search);
     }
 
 }

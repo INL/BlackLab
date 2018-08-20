@@ -452,4 +452,9 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
     
+    @Override
+    public Map<PropertyValue, ? extends Group<Hit>> getGroupMap() {
+        throw new UnsupportedOperationException();
+    }
+    
 }

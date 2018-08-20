@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.List;
+
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.DocResults;
@@ -7,7 +9,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that produces DocResults. */
-public abstract class SearchDocs extends AbstractSearch<DocResults> {
+public abstract class SearchDocs extends SearchResults<DocResults> {
 
     public SearchDocs(QueryInfo queryInfo) {
         super(queryInfo);
@@ -31,6 +33,8 @@ public abstract class SearchDocs extends AbstractSearch<DocResults> {
      * @return resulting operation
      */
     public SearchDocs sort(DocProperty sortBy) {
+        if (sortBy == null)
+            return this;
         return new SearchDocsSorted(queryInfo(), this, sortBy);
     }
     
@@ -64,6 +68,18 @@ public abstract class SearchDocs extends AbstractSearch<DocResults> {
      */
     public SearchDocs window(int first, int number) {
         return new SearchDocsWindow(queryInfo(), this, first, number);
+    }
+
+    /**
+     * Facet the doc results by several properties.
+     * 
+     * Faceting is basically grouping without storing any results, just the counts. 
+     * 
+     * @param facets facets to facet on
+     * @return resulting operation
+     */
+    public SearchFacets facet(List<DocProperty> facets) {
+        return new SearchFacets(queryInfo(), this, facets);
     }
     
     @Override

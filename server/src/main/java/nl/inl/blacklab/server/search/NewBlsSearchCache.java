@@ -18,7 +18,7 @@ public class NewBlsSearchCache implements SearchCache {
     
     private static final Logger logger = LogManager.getLogger(NewBlsSearchCache.class);
     
-    public static final boolean ENABLE_NEW_CACHE = false;
+    public static final boolean ENABLE_NEW_CACHE = true;
 
     protected Map<Search, NewBlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
@@ -44,13 +44,13 @@ public class NewBlsSearchCache implements SearchCache {
     }
 
     @Override
-    public NewBlsCacheEntry<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) {
+    public <R extends SearchResult> NewBlsCacheEntry<R> getAsync(Search<R> search, Supplier<R> searchTask) {
         return getFromCache(search, searchTask, false);
     }
 
     @Override
-    public SearchResult get(Search search, Supplier<? extends SearchResult> searchTask) throws ExecutionException {
-        NewBlsCacheEntry<? extends SearchResult> entry = getFromCache(search, searchTask, true);
+    public <R extends SearchResult> R get(Search<R> search, Supplier<R> searchTask) throws ExecutionException {
+        NewBlsCacheEntry<R> entry = getFromCache(search, searchTask, true);
         try {
             return entry.get();
         } catch (InterruptedException e) {
@@ -58,12 +58,13 @@ public class NewBlsSearchCache implements SearchCache {
         }
     }
 
-    private NewBlsCacheEntry<? extends SearchResult> getFromCache(Search search,
-            Supplier<? extends SearchResult> searchTask, boolean block) {
-        NewBlsCacheEntry<? extends SearchResult> future;
+    @SuppressWarnings("unchecked")
+    private <R extends SearchResult> NewBlsCacheEntry<R> getFromCache(Search<R> search,
+            Supplier<R> searchTask, boolean block) {
+        NewBlsCacheEntry<R> future;
         boolean created = false;
         synchronized (searches) {
-            future = searches.get(search);
+            future = (NewBlsCacheEntry<R>) searches.get(search);
             if (future == null) {
                 future = new NewBlsCacheEntry<>(search, searchTask);
                 created = true;
@@ -86,10 +87,11 @@ public class NewBlsSearchCache implements SearchCache {
     }
     
     @Override
-    public NewBlsCacheEntry<? extends SearchResult> remove(Search search) {
-        NewBlsCacheEntry<? extends SearchResult> future;
+    @SuppressWarnings("unchecked")
+    public <R extends SearchResult> NewBlsCacheEntry<R> remove(Search<R> search) {
+        NewBlsCacheEntry<R> future;
         synchronized (searches) {
-            future = searches.remove(search);
+            future = (NewBlsCacheEntry<R>) searches.remove(search);
             if (trace)
                 logger.info("-- REMOVED: " + search);
         }

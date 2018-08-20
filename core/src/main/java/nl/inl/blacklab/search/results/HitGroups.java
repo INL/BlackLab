@@ -249,5 +249,10 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     public boolean doneProcessingAndCounting() {
         return true;
     }
+
+    @Override
+    public Map<PropertyValue, HitGroup> getGroupMap() {
+        return groups;
+    }
     
 }

@@ -5,7 +5,7 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 
-/** A search that yields groups of docs. */
+/** A search that yields groups of documents. */
 public class SearchDocGroupsSorted extends SearchDocGroups {
     
     private SearchDocGroups source;

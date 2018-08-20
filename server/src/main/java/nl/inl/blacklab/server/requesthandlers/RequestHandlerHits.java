@@ -28,6 +28,7 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.MaxSettings;
@@ -77,7 +78,7 @@ public class RequestHandlerHits extends RequestHandler {
                 // Viewing a single group in a grouped hits results
                 
                 // Group, then show hits from the specified group
-                job = searchMan.search(user, searchParam.hitsGrouped());
+                HitGroups hitsGrouped = (HitGroups)searchMan.search(user, searchParam.hitsGrouped());
                 JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
                 // If search is not done yet, indicate this to the user

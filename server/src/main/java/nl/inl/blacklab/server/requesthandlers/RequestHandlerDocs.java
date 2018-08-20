@@ -1,9 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.concurrent.ExecutionException;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -21,15 +24,12 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.Job;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
-import nl.inl.blacklab.server.jobs.JobDocsTotal;
-import nl.inl.blacklab.server.jobs.JobDocsWindow;
-import nl.inl.blacklab.server.jobs.JobHits;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.NewBlsCacheEntry;
 
 /**
  * Request handler for the doc results.
@@ -41,8 +41,8 @@ public class RequestHandlerDocs extends RequestHandler {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    Job search;
-    JobHits originalHitsSearch;
+    NewBlsCacheEntry<DocResults> search = null;
+    Hits originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
@@ -57,32 +57,24 @@ public class RequestHandlerDocs extends RequestHandler {
         String viewGroup = searchParam.getString("viewgroup");
         if (viewGroup == null)
             viewGroup = "";
-        search = null;
-        try {
-            int response = 0;
-            
-            // Make sure we have the hits search, so we can later determine totals.
-            originalHitsSearch = null;
-            if (searchParam.hasPattern()) {
-                originalHitsSearch = (JobHits)searchMan.search(user, searchParam.hits());
-            }
-            
-            if (groupBy.length() > 0 && viewGroup.length() > 0) {
-                
-                // View a single group in a grouped docs resultset
-                response = doViewGroup(ds, viewGroup);
-                
-            } else {
-                // Regular set of docs (no grouping first)
-                response = doRegularDocs(ds);
-            }
-            return response;
-        } finally {
-            if (search != null)
-                search.decrRef();
-            if (originalHitsSearch != null)
-                originalHitsSearch.decrRef();
+        int response = 0;
+        
+        // Make sure we have the hits search, so we can later determine totals.
+        originalHitsSearch = null;
+        if (searchParam.hasPattern()) {
+            originalHitsSearch = searchMan.search(user, searchParam.hits());
         }
+        
+        if (groupBy.length() > 0 && viewGroup.length() > 0) {
+            
+            // View a single group in a grouped docs resultset
+            response = doViewGroup(ds, viewGroup);
+            
+        } else {
+            // Regular set of docs (no grouping first)
+            response = doRegularDocs(ds);
+        }
+        return response;
     }
 
     private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
@@ -91,17 +83,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Yes. Group, then show hits from the specified group
         JobDocsGrouped searchGrouped = null;
         try {
-            searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
-            search = searchGrouped;
-            search.incrRef();
-        
-            // If search is not done yet, indicate this to the user
-            if (!search.finished()) {
-                return Response.busy(ds, servlet);
-            }
-        
-            // Search is done; construct the results object
-            DocGroups groups = searchGrouped.getGroups();
+            DocGroups groups = searchMan.search(user, searchParam.docsGrouped());
         
             PropertyValue viewGroupVal = null;
             viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -134,7 +116,7 @@ public class RequestHandlerDocs extends RequestHandler {
             window = docsSorted.window(first, number);
             
             docResults = group.storedResults();
-            totalTime = searchGrouped.userWaitTime();
+            totalTime = 0; // TODO searchGrouped.userWaitTime();
             return doResponse(ds, true);
         } finally {
             if (searchGrouped != null)
@@ -143,47 +125,34 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException {
-        JobDocsWindow searchWindow = null;
-        JobDocsTotal total = null;
+        NewBlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
+        search = searchWindow;
+    
+        // Also determine the total number of hits
+        // (usually nonblocking, unless "waitfortotal=yes" was passed)
+        boolean block = searchParam.getBoolean("waitfortotal");
+        NewBlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
+        
         try {
-            searchWindow = (JobDocsWindow) searchMan.search(user, searchParam.docsWindow());
-            search = searchWindow;
-            search.incrRef();
-        
-            // Also determine the total number of hits
-            // (usually nonblocking, unless "waitfortotal=yes" was passed)
-            boolean block = searchParam.getBoolean("waitfortotal");
-            total = (JobDocsTotal) searchMan.searchNonBlocking(user, searchParam.docsTotal());
-            if (block) {
-                total.waitUntilFinished();
-                if (!total.finished()) {
-                    throw new ServiceUnavailable("Search took too long, cancelled.");
-                }
-            }
-            
-            // If search is not done yet, indicate this to the user
-            if (!search.finished()) {
-                return Response.busy(ds, servlet);
-            }
-        
-            window = searchWindow.getDocResults();
-        
-            totalDocResults = total.getDocResults();
-            
-            docResults = total.getDocResults();
-            totalTime = total.threwException() ? -1 : total.userWaitTime();
-            
-            return doResponse(ds, false);
-        } finally {
-            if (total != null)
-                total.decrRef();
-            if (searchWindow != null)
-                searchWindow.decrRef();
+            window = searchWindow.get();
+            totalDocResults = total.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
         }
-    }
+        
+        if (block)
+            totalDocResults.size(); // fetch all
+        
+        docResults = totalDocResults;
+        totalTime = total.threwException() ? -1 : total.timeUserWaited();
+        
+        return doResponse(ds, false);
+}
 
     private int doResponse(DataStream ds, boolean isViewGroup) throws BlsException {
-        BlackLabIndex blIndex = search.blIndex();
+        BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
         int totalTokens = -1;
@@ -201,8 +170,8 @@ public class RequestHandlerDocs extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-        Hits totalHits = originalHitsSearch == null ? null : originalHitsSearch.getHits(); //docResults.originalHits();
-        addSummaryCommonFields(ds, searchParam, search.userWaitTime(), totalTime, null, window.windowStats());
+        Hits totalHits = originalHitsSearch == null ? null : originalHitsSearch; //docResults.originalHits();
+        addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);

@@ -22,6 +22,8 @@ public abstract class SearchHitGroups extends SearchResults<HitGroups> {
      * @return resulting operation
      */
     public SearchHitGroups sort(ResultProperty<HitGroup> sortBy) {
+        if (sortBy == null)
+            return this;
         return new SearchHitGroupsSorted(queryInfo(), this, sortBy);
     }
     

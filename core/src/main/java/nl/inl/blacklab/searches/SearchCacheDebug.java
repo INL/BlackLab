@@ -10,11 +10,12 @@ import nl.inl.blacklab.search.results.SearchResult;
 
 public class SearchCacheDebug implements SearchCache {
     
-    Map<Search, CompletableFuture<? extends SearchResult>> searches = new HashMap<>();
+    Map<Search<?>, CompletableFuture<? extends SearchResult>> searches = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> supplier) {
-        CompletableFuture<? extends SearchResult> result = searches.get(search);
+    public <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> supplier) {
+        CompletableFuture<R> result = (CompletableFuture<R>) searches.get(search);
         if (result == null) {
             result = CompletableFuture.supplyAsync(supplier);
             searches.put(search, result);
@@ -26,7 +27,7 @@ public class SearchCacheDebug implements SearchCache {
     }
 
     @Override
-    public Future<? extends SearchResult> remove(Search search) {
+    public <R extends SearchResult> Future<R> remove(Search<R> search) {
         System.out.println("Remove from cache: " + search);
         return null;
     }

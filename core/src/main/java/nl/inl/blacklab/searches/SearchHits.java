@@ -48,6 +48,8 @@ public abstract class SearchHits extends SearchResults<Hits> {
      * @return resulting operation
      */
     public SearchHits sort(HitProperty sortBy) {
+        if (sortBy == null)
+            return this;
         return new SearchHitsSorted(queryInfo(), this, sortBy);
     }
     

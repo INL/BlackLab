@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  * 
  * @param <R> results type, e.g. Hits
  */
-public abstract class AbstractSearch<R extends SearchResult> implements Search {
+public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
 	
     private QueryInfo queryInfo;
     
@@ -30,9 +30,8 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     }
     
     @Override
-    @SuppressWarnings("unchecked")
     public Future<R> executeAsync() {
-        return (Future<R>)getFromCache(this, () -> {
+        return getFromCache(this, () -> {
             try {
                 return executeInternal();
             } catch (InvalidQuery e) {
@@ -63,11 +62,11 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     protected abstract R executeInternal() throws InvalidQuery;
     
-    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
+    protected Future<R> getFromCache(Search<R> search, Supplier<R> searchTask) {
         return queryInfo.index().cache().getAsync(search, searchTask);
     }
     
-    protected SearchResult getFromCacheBlock(Search search, Supplier<? extends SearchResult> searchTask) throws ExecutionException {
+    protected SearchResult getFromCacheBlock(Search<R> search, Supplier<R> searchTask) throws ExecutionException {
         return queryInfo.index().cache().get(search, searchTask);
     }
     

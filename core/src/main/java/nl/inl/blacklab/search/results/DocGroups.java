@@ -156,4 +156,9 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public boolean doneProcessingAndCounting() {
         return true;
     }
+    
+    @Override
+    public Map<PropertyValue, DocGroup> getGroupMap() {
+        return groups;
+    }
 }

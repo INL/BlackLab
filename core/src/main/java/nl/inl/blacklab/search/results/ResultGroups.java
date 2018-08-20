@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Map;
+
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -81,5 +83,7 @@ public interface ResultGroups<T> {
      * @return new grouping with fewer stored results
      */
     ResultGroups<T> withFewerStoredResults(int maximumNumberOfResultsPerGroup);
+    
+    Map<PropertyValue, ? extends Group<T>> getGroupMap();
 
 }

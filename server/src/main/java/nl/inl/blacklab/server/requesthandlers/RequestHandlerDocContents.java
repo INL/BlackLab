@@ -18,7 +18,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.jobs.JobWithHits;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 
@@ -87,14 +86,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (searchParam.hasPattern()) {
             //@@@ TODO: filter on document!
             searchParam.put("docpid", docPid);
-            JobWithHits search;
-            search = (JobWithHits) searchMan.search(user, searchParam.hits());
-            try {
-                hits = search.getHits();
-            } finally {
-                search.decrRef();
-                search = null;
-            }
+            hits = searchMan.search(user, searchParam.hits());
         }
 
         String content;

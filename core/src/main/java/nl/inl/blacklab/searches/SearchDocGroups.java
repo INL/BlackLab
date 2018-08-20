@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
-/** A search that yields groups of hits. */
+/** A search that yields groups of documents. */
 public abstract class SearchDocGroups extends SearchResults<DocGroups> {
     
     public SearchDocGroups(QueryInfo queryInfo) {
@@ -20,6 +20,8 @@ public abstract class SearchDocGroups extends SearchResults<DocGroups> {
      * @return resulting operation
      */
     public SearchDocGroups sort(DocGroupProperty sortBy) {
+        if (sortBy == null)
+            return this;
         return new SearchDocGroupsSorted(queryInfo(), this, sortBy);
     }
     

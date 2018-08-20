@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,6 +13,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -108,7 +110,7 @@ public abstract class Job implements Comparable<Job>, Pausible {
     protected JobDescription jobDesc;
 
     /** The job we're operating on (i.e. the hits to sort, or the docs to group) */
-    protected Job inputJob = null;
+    protected Future<? extends SearchResult> inputJob = null;
 
     /** The servlet */
     protected SearchManager searchMan;
@@ -231,32 +233,21 @@ public abstract class Job implements Comparable<Job>, Pausible {
      * @throws BlsException on error
      */
     protected void performSearchInternal() throws BlsException {
-        JobDescription inputDesc = jobDesc.getInputDesc();
-        if (inputDesc != null) {
-            // Perform the input job and then call this job's performSearch method
-            inputJob = searchMan.searchNonBlocking(user, inputDesc);
-            try {
-                synchronized (waitingFor) {
-                    waitingFor.add(inputJob);
-                    inputJob.incrRef();
-                }
-                try {
-                    inputJob.waitUntilFinished();
-                } finally {
-                    synchronized (waitingFor) {
-                        inputJob.decrRef();
-                        waitingFor.remove(inputJob);
-                    }
-                }
-                performSearch();
-            } finally {
-                inputJob.decrRef();
-                inputJob = null;
-            }
-        } else {
+//        JobDescription inputDesc = jobDesc.getInputDesc();
+//        if (inputDesc != null) {
+//            // Perform the input job and then call this job's performSearch method
+//            try {
+//                inputJob = searchMan.search(user, inputDesc);
+//            } catch (InterruptedException e) {
+//                throw new InterruptedSearch(e);
+//            } catch (ExecutionException e) {
+//                throw new InternalServerError("Error executing query: " + e.getCause().getMessage(), 101);
+//            }
+//            performSearch();
+//        } else {
             // No input job.
             performSearch();
-        }
+//        }
 
     }
 

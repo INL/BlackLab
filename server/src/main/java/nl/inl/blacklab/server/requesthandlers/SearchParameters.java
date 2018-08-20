@@ -27,6 +27,7 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
@@ -34,6 +35,12 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.searches.SearchDocGroups;
+import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchFacets;
+import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -46,20 +53,6 @@ import nl.inl.blacklab.server.jobs.HitFilterSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
-import nl.inl.blacklab.server.jobs.JobDescription;
-import nl.inl.blacklab.server.jobs.JobDocs.JobDescDocs;
-import nl.inl.blacklab.server.jobs.JobDocsGrouped.JobDescDocsGrouped;
-import nl.inl.blacklab.server.jobs.JobDocsSorted.JobDescDocsSorted;
-import nl.inl.blacklab.server.jobs.JobDocsTotal.JobDescDocsTotal;
-import nl.inl.blacklab.server.jobs.JobDocsWindow.JobDescDocsWindow;
-import nl.inl.blacklab.server.jobs.JobFacets.JobDescFacets;
-import nl.inl.blacklab.server.jobs.JobHits.JobDescHits;
-import nl.inl.blacklab.server.jobs.JobHitsFiltered.JobDescHitsFiltered;
-import nl.inl.blacklab.server.jobs.JobHitsGrouped.JobDescHitsGrouped;
-import nl.inl.blacklab.server.jobs.JobHitsSample.JobDescSampleHits;
-import nl.inl.blacklab.server.jobs.JobHitsSorted.JobDescHitsSorted;
-import nl.inl.blacklab.server.jobs.JobHitsTotal.JobDescHitsTotal;
-import nl.inl.blacklab.server.jobs.JobHitsWindow.JobDescHitsWindow;
 import nl.inl.blacklab.server.jobs.SearchSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -512,79 +505,80 @@ public class SearchParameters {
         return map.containsKey(key);
     }
 
-    public JobDescription hitsWindow() throws BlsException {
+    public SearchHits hitsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
         if (windowSettings == null)
             return hitsSample();
-        return new JobDescHitsWindow(this, hitsSample(), getSearchSettings(), windowSettings);
+        return hitsSample().window(windowSettings.first(), windowSettings.size());
     }
 
-    public JobDescription hitsSample() throws BlsException {
+    public SearchHits hitsSample() throws BlsException {
         SampleParameters sampleSettings = getSampleSettings();
         if (sampleSettings == null)
             return hitsSorted();
-        return new JobDescSampleHits(this, hitsSorted(), getSearchSettings(), sampleSettings);
+        return hitsSorted().sample(sampleSettings);
     }
 
-    public JobDescription hitsSorted() throws BlsException {
+    public SearchHits hitsSorted() throws BlsException {
         HitSortSettings hitsSortSettings = hitsSortSettings();
         if (hitsSortSettings == null)
             return hitsFiltered();
-        return new JobDescHitsSorted(this, hitsFiltered(), getSearchSettings(), hitsSortSettings);
+        return hitsFiltered().sort(hitsSortSettings.sortBy());
     }
 
-    public JobDescription hitsTotal() throws BlsException {
-        return new JobDescHitsTotal(this, hitsSample(), getSearchSettings());
+    public SearchHits hitsTotal() throws BlsException {
+        return hitsSample();
     }
 
-    public JobDescription hitsFiltered() throws BlsException {
+    public SearchHits hitsFiltered() throws BlsException {
         HitFilterSettings hitFilterSettings = getHitFilterSettings();
         if (hitFilterSettings == null)
             return hits();
-        return new JobDescHitsFiltered(this, hits(), getSearchSettings(), hitFilterSettings);
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterSettings.getProperty());
+        PropertyValue value = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterSettings.getValue());
+        return hits().filter(prop, value);
     }
 
-    public JobDescription hits() throws BlsException {
-        return new JobDescHits(this, getSearchSettings(), getIndexName(), getPattern(), getFilterQuery(),
-                getMaxSettings(), getContextSettings());
+    public SearchHits hits() throws BlsException {
+        return blIndex().search().find(getPattern(), getFilterQuery(), getMaxSettings());
     }
 
-    public JobDescription docsWindow() throws BlsException {
+    public SearchDocs docsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
         if (windowSettings == null)
             return docsSorted();
-        return new JobDescDocsWindow(this, docsSorted(), getSearchSettings(), windowSettings);
+        return docsSorted().window(windowSettings.first(), windowSettings.size());
     }
 
-    public JobDescription docsSorted() throws BlsException {
+    public SearchDocs docsSorted() throws BlsException {
         DocSortSettings docSortSettings = docSortSettings();
         if (docSortSettings == null)
             return docs();
-        return new JobDescDocsSorted(this, docs(), getSearchSettings(), docSortSettings);
+        return docs().sort(docSortSettings.sortBy());
     }
 
-    public JobDescription docsTotal() throws BlsException {
-        return new JobDescDocsTotal(this, docs(), getSearchSettings());
+    public SearchCount docsTotal() throws BlsException {
+        return docs().count();
     }
 
-    public JobDescription docs() throws BlsException {
+    public SearchDocs docs() throws BlsException {
         TextPattern pattern = getPattern();
         if (pattern != null)
-            return new JobDescDocs(this, hitsSample(), getSearchSettings(), getFilterQuery(), getIndexName());
-        return new JobDescDocs(this, null, getSearchSettings(), getFilterQuery(), getIndexName());
+            return hitsSample().docs(-1);
+        return blIndex().search().find(getFilterQuery());
     }
 
-    public JobDescription hitsGrouped() throws BlsException {
-        return new JobDescHitsGrouped(this, hitsSample(), getSearchSettings(), hitGroupSettings(),
-                hitGroupSortSettings());
+    public SearchHitGroups hitsGrouped() throws BlsException {
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitGroupSettings().groupBy());
+        return hitsSample().group(prop, -1).sort(hitGroupSortSettings().sortBy());
     }
 
-    public JobDescription docsGrouped() throws BlsException {
-        return new JobDescDocsGrouped(this, docs(), getSearchSettings(), docGroupSettings(), docGroupSortSettings());
+    public SearchDocGroups docsGrouped() throws BlsException {
+        return docs().group(docGroupSettings().groupBy(), -1).sort(docGroupSortSettings().sortBy());
     }
 
-    public JobDescription facets() throws BlsException {
-        return new JobDescFacets(this, docs(), getSearchSettings(), getFacets());
+    public SearchFacets facets() throws BlsException {
+        return docs().facet(getFacets());
     }
 
     public boolean hasFacets() {

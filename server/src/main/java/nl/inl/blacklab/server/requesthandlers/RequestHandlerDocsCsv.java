@@ -29,8 +29,6 @@ import nl.inl.blacklab.server.datastream.DataStreamPlain;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.jobs.JobDocsGrouped;
-import nl.inl.blacklab.server.jobs.JobWithDocs;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
@@ -66,46 +64,37 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        JobWithDocs job = null;
         DocResults docs = null;
         DocGroups groups = null;
 
-        try {
-            if (groupBy != null) {
-                JobDocsGrouped searchGrouped = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped());
-                job = searchGrouped;
-                groups = searchGrouped.getGroups();
-                // don't set docs yet - only return docs if we're looking within a specific group
+        if (groupBy != null) {
+            groups = searchMan.search(user, searchParam.docsGrouped());
+            // don't set docs yet - only return docs if we're looking within a specific group
 
-                if (viewGroup != null) {
-                    PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
-                    if (groupId == null)
-                        throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-                    DocGroup group = groups.get(groupId);
-                    if (group == null)
-                        throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+            if (viewGroup != null) {
+                PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
+                if (groupId == null)
+                    throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+                DocGroup group = groups.get(groupId);
+                if (group == null)
+                    throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-                    docs = group.storedResults();
+                docs = group.storedResults();
 
-                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-                    if (sortBy != null) {
-                        DocProperty sortProp = DocProperty.deserialize(sortBy);
-                        if (sortProp == null)
-                            throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-                        docs = docs.sort(sortProp);
-                    }
+                // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                if (sortBy != null) {
+                    DocProperty sortProp = DocProperty.deserialize(sortBy);
+                    if (sortProp == null)
+                        throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+                    docs = docs.sort(sortProp);
                 }
-            } else {
-                // Don't use JobDocsAll, as we only might not need them all.
-                job = (JobWithDocs) searchMan.search(user, searchParam.docsSorted());
-                docs = job.getDocResults();
             }
-        } finally {
-            if (job != null)
-                job.decrRef();
+        } else {
+            // Don't use JobDocsAll, as we only might not need them all.
+            docs = searchMan.search(user, searchParam.docsSorted());
         }
 
         // apply window settings

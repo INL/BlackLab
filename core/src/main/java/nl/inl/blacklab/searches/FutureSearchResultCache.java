@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public class FutureSearchResultCache implements SearchCache {
 
-    protected Map<Search, Future<? extends SearchResult>> searches = new HashMap<>();
+    protected Map<Search<?>, Future<? extends SearchResult>> searches = new HashMap<>();
     
     protected boolean trace = false;
 
@@ -28,10 +28,11 @@ public class FutureSearchResultCache implements SearchCache {
     }
 
     @Override
-    public Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) {
-        Future<? extends SearchResult> future;
+    @SuppressWarnings("unchecked")
+    public <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> searchTask) {
+        Future<R> future;
         synchronized (searches) {
-            future = searches.get(search);
+            future = (Future<R>)searches.get(search);
             if (future == null) {
                 future = new FutureSearchResult<>(searchTask);
                 searches.put(search, future);
@@ -46,10 +47,11 @@ public class FutureSearchResultCache implements SearchCache {
     }
 
     @Override
-    public Future<? extends SearchResult> remove(Search search) {
-        Future<? extends SearchResult> future;
+    @SuppressWarnings("unchecked")
+    public <R extends SearchResult> Future<R> remove(Search<R> search) {
+        Future<R> future;
         synchronized (searches) {
-            future = searches.remove(search);
+            future = (Future<R>)searches.remove(search);
             if (trace)
                 System.out.println("REMOVED: " + search);
         }

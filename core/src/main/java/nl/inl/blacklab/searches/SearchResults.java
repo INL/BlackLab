@@ -13,11 +13,22 @@ public abstract class SearchResults<R extends Results<?>> extends AbstractSearch
     }
 
     /**
-     * Count hits.
+     * Count hits. All results are fetched in the cache thread.
+     * 
      * @return resulting operation
      */
     public SearchCount count() {
-        return new SearchCountFromResults<R>(queryInfo(), this);
+        return count(true);
+    }
+
+    /**
+     * Count hits.
+     * 
+     * @param fetchAllResults should all results be fetched in the cache thread..?
+     * @return resulting operation
+     */
+    public SearchCount count(boolean fetchAllResults) {
+        return new SearchCountFromResults<R>(queryInfo(), this, fetchAllResults);
     }
     
     @Override

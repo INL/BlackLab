@@ -90,7 +90,8 @@ BLS:
 - alleen totals-searches async draaien.
 - (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
 
-
+- hoe doen we SearchSettings (debugMode, nfa-factor, usecache)..?
+- getContextSettings moet nu bij displayen pas gebeuren
 
 PERFORMANCE ANALYSIS
 - log queries, times, #results, etc. to separate log file for analysis
@@ -100,7 +101,6 @@ PERFORMANCE ANALYSIS
 
 
 SERVER POLICIES
-- get rid of threadpauser? (only if we can prove it cannot help)
 - max. number of running searches (if you try to start one but already at max, you get an error message)
   (probably needs to take into account how many cores a search is using)
 - max. hits to process per search (if exceeded, BLS will indicate this)
