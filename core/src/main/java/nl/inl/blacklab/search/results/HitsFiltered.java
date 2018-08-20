@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -61,8 +62,6 @@ public class HitsFiltered extends Hits {
      * @param number the minimum number of hits that will have been read when this
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
      */
     @Override
     protected void ensureResultsRead(int number) {
@@ -115,9 +114,7 @@ public class HitsFiltered extends Hits {
                 ensureHitsReadLock.unlock();
             }
         } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
+            throw new InterruptedSearch(e);
         }
     }
 

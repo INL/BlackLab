@@ -41,20 +41,20 @@ public class ThreadPauser implements Pausible {
      *             was interrupted from elsewhere
      */
     public void waitIfPaused() throws InterruptedException {
-        if (currentThread != null) {
-            if (currentThread.isInterrupted()) {
-                logger.debug("Thread was interrupted, throw exception");
-                throw new InterruptedException("Operation aborted");
-            }
-            if (!currentThread.isAlive()) {
-                currentThread = null; // don't need this anymore
-            }
-        }
-
-        if (!enabled)
-            return;
-
         while (paused) {
+            if (currentThread != null) {
+                if (currentThread.isInterrupted()) {
+                    logger.debug("Thread was interrupted, throw exception");
+                    throw new InterruptedException("Operation aborted");
+                }
+                if (!currentThread.isAlive()) {
+                    currentThread = null; // don't need this anymore
+                }
+            }
+
+            if (!enabled)
+                return;
+
             Thread.sleep(100);
         }
     }

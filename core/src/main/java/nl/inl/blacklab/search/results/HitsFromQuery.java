@@ -19,6 +19,7 @@ import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
@@ -123,11 +124,7 @@ public class HitsFromQuery extends Hits {
                 try {
                     threadPauser.waitIfPaused();
                 } catch (InterruptedException e) {
-                    // Taking too long, break it off.
-                    // Not a very graceful way to do it... but at least it won't
-                    // be stuck forever.
-                    Thread.currentThread().interrupt(); // client can check this
-                    throw new BlackLabRuntimeException("Query matches too many terms; aborted.");
+                    throw new InterruptedSearch(e);
                 }
                 termContexts.put(term, TermContext.build(reader.getContext(), term));
             }
@@ -155,8 +152,6 @@ public class HitsFromQuery extends Hits {
      * @param number the minimum number of hits that will have been read when this
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
      */
     @Override
     protected void ensureResultsRead(int number) {
@@ -297,9 +292,7 @@ public class HitsFromQuery extends Hits {
                 ensureHitsReadLock.unlock();
             }
         } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
+            throw new InterruptedSearch(e);
         }
     }
 

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
@@ -35,17 +36,22 @@ class NewBlsSearchCache implements SearchCache {
     }
 
     @Override
-    public NewBlsCacheEntry<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException {
+    public NewBlsCacheEntry<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) {
         return getFromCache(search, searchTask, false);
     }
 
     @Override
-    public SearchResult get(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException, ExecutionException {
-        return getFromCache(search, searchTask, true).get();
+    public SearchResult get(Search search, Supplier<? extends SearchResult> searchTask) throws ExecutionException {
+        NewBlsCacheEntry<? extends SearchResult> entry = getFromCache(search, searchTask, true);
+        try {
+            return entry.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        }
     }
 
     private NewBlsCacheEntry<? extends SearchResult> getFromCache(Search search,
-            Supplier<? extends SearchResult> searchTask, boolean block) throws InterruptedException {
+            Supplier<? extends SearchResult> searchTask, boolean block) {
         NewBlsCacheEntry<? extends SearchResult> future;
         boolean created = false;
         synchronized (searches) {

@@ -4,6 +4,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -30,9 +31,8 @@ public interface SearchCache {
      *            returning the future result and putting it in the cache
      * @return the future, either one that was alrady the cache or a new one using
      *         the supplier
-     * @throws InterruptedException 
      */
-    Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException;
+    Future<? extends SearchResult> getAsync(Search search, Supplier<? extends SearchResult> searchTask);
 
     /**
      * Get result for the specified search.
@@ -50,12 +50,16 @@ public interface SearchCache {
      *            returning the future result and putting it in the cache
      * @return the future, either one that was alrady the cache or a new one using
      *         the supplier
-     * @throws InterruptedException if the task was interrupted
+     * @throws InterruptedSearch if the task was interrupted
      * @throws ExecutionException if the task threw an exception (see the cause)
      */
     default SearchResult get(Search search, Supplier<? extends SearchResult> searchTask)
-            throws InterruptedException, ExecutionException {
-        return getAsync(search, searchTask).get();
+            throws ExecutionException {
+        try {
+            return getAsync(search, searchTask).get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        }
     }
     
     Future<? extends SearchResult> remove(Search search);

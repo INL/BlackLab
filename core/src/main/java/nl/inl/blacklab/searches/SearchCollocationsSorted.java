@@ -21,7 +21,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery, InterruptedException {
+    public TermFrequencyList executeInternal() throws InvalidQuery {
         return source.execute().sort(property);
     }
 

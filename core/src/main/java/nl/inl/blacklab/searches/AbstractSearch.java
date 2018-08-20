@@ -9,6 +9,7 @@ import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -30,27 +31,29 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
     
     @Override
     @SuppressWarnings("unchecked")
-    public Future<R> executeAsync() throws InterruptedException {
+    public Future<R> executeAsync() {
         return (Future<R>)getFromCache(this, () -> {
             try {
                 return executeInternal();
-            } catch (InvalidQuery | InterruptedException e) {
+            } catch (InvalidQuery e) {
                 throw new CompletionException(e);
             }
         });
     }
     
     @Override
-    public final R execute() throws InvalidQuery, InterruptedException {
+    public final R execute() throws InvalidQuery {
         Future<R> future = executeAsync();
         try {
             return future.get();
         } catch (ExecutionException e) {
             throw BlackLabRuntimeException.wrap(e.getCause());
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
         } catch (CompletionException e) {
             try {
                 throw e.getCause();
-            } catch (InvalidQuery | InterruptedException e2) {
+            } catch (InvalidQuery e2) {
                 throw e2;
             } catch (Throwable e2) {
                 throw new AssertionError(e2);
@@ -58,13 +61,13 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search {
         }
     }
     
-    protected abstract R executeInternal() throws InvalidQuery, InterruptedException;
+    protected abstract R executeInternal() throws InvalidQuery;
     
-    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException {
+    protected Future<? extends SearchResult> getFromCache(Search search, Supplier<? extends SearchResult> searchTask) {
         return queryInfo.index().cache().getAsync(search, searchTask);
     }
     
-    protected SearchResult getFromCacheBlock(Search search, Supplier<? extends SearchResult> searchTask) throws InterruptedException, ExecutionException {
+    protected SearchResult getFromCacheBlock(Search search, Supplier<? extends SearchResult> searchTask) throws ExecutionException {
         return queryInfo.index().cache().get(search, searchTask);
     }
     

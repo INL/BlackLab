@@ -620,11 +620,7 @@ public class QueryTool {
             if (printStat)
                 statprintln((commandWasQuery ? "" : "@ ") + cmd + "\t" + t.elapsed() + "\t" + statInfo);
 
-            try {
-                Thread.sleep(100); // Give Eclipse console time to show stderr output
-            } catch (InterruptedException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+            System.err.flush(); // if there were error messages, make sure they are shown right away
         }
         cleanup();
     }

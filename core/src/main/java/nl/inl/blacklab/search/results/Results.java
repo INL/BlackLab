@@ -331,9 +331,6 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
 
     /**
      * Ensure that we have read all results.
-     *
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
      */
     protected void ensureAllResultsRead() {
         ensureResultsRead(-1);

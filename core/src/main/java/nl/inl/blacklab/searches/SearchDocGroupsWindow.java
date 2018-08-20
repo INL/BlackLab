@@ -19,7 +19,7 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     }
     
     @Override
-    public DocGroups executeInternal() throws InvalidQuery, InterruptedException {
+    public DocGroups executeInternal() throws InvalidQuery {
         return source.execute().window(first, number);
     }
 

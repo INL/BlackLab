@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -176,15 +177,19 @@ class NewBlsCacheEntry<T extends SearchResult> implements Future<T> {
      * Start performing the task.
      * 
      * @param block if true, blocks until the task is complete
-     * @throws InterruptedException 
      */
-    public void start(boolean block) throws InterruptedException {
+    public void start(boolean block) {
         thread = new Thread(() -> {
             performTask(supplier);
         });
         thread.start();
-        if (block)
-            thread.join();
+        if (block) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new InterruptedSearch(e);
+            }
+        }
     }
 
     private void performTask(Supplier<T> supplier) {

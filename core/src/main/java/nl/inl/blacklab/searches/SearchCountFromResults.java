@@ -19,7 +19,7 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
     }
 
     @Override
-    public ResultCount executeInternal() throws InvalidQuery, InterruptedException {
+    public ResultCount executeInternal() throws InvalidQuery {
         return new ResultCount(source.execute().size());
     }
 

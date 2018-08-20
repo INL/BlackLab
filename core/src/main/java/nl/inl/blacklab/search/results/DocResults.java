@@ -31,6 +31,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
@@ -262,7 +263,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      *
      * @param index the number of results we want to ensure have been read, or
      *            negative for all results
-     * @throws InterruptedException
      */
     @Override
     protected void ensureResultsRead(int index) {
@@ -318,9 +318,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 ensureResultsReadLock.unlock();
             }
         } catch (InterruptedException e) {
-            // Thread was interrupted; abort operation
-            // and let client decide what to do
-            Thread.currentThread().interrupt();
+            throw new InterruptedSearch(e);
         }
     }
 

@@ -23,7 +23,7 @@ import nl.inl.blacklab.searches.FutureSearchResultCache;
 
 public class TestNewSearchSystem {
     
-    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery, InterruptedException {
+    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
         if (args.length == 0) {
             System.err.println("Please specify index directory.");
             System.exit(1);

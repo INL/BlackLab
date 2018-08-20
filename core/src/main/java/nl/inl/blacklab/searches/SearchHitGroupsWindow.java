@@ -21,7 +21,7 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal() throws InvalidQuery, InterruptedException {
+    public HitGroups executeInternal() throws InvalidQuery {
         return source.execute().window(first, number);
     }
 

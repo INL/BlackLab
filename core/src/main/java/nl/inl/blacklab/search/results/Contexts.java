@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
@@ -287,9 +288,7 @@ public class Contexts implements Iterable<int[]> {
                     try {
                         hits.threadPauser().waitIfPaused();
                     } catch (InterruptedException e) {
-                        // Thread was interrupted. Just go ahead with the hits we did
-                        // get, so at least we can return with valid context.
-                        Thread.currentThread().interrupt();
+                        throw new InterruptedSearch(e);
                     }
 
                     // Find context for the hits in the current document

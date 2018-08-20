@@ -18,7 +18,7 @@ public class SearchDocsSampled extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery, InterruptedException {
+    public DocResults executeInternal() throws InvalidQuery {
         return source.execute().sample(sampleParameters);
     }
 

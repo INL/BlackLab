@@ -18,7 +18,7 @@ public class SearchHitsSampled extends SearchHits {
     }
     
     @Override
-    public Hits executeInternal() throws InvalidQuery, InterruptedException {
+    public Hits executeInternal() throws InvalidQuery {
         return source.execute().sample(sampleParameters);
     }
 

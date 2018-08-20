@@ -40,7 +40,8 @@ public class TestParser {
             } catch (InvalidQuery e) {
                 e.printStackTrace(System.err);
             }
-            Thread.sleep(100);
+            System.out.flush();
+            System.err.flush();
         }
     }
 }

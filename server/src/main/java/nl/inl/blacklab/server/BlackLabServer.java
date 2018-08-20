@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -327,7 +328,7 @@ public class BlackLabServer extends HttpServlet {
                 httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
             } catch (BlsException e) {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
-            } catch (InterruptedException e) {
+            } catch (InterruptedSearch e) {
                 httpCode = Response.internalError(es, e, debugMode, 7);
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, 32);

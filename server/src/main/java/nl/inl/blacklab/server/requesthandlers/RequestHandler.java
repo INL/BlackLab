@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -434,9 +435,9 @@ public abstract class RequestHandler {
      * @return the response object
      *
      * @throws BlsException if the query can't be executed
-     * @throws InterruptedException if the thread was interrupted
+     * @throws InterruptedSearch if the thread was interrupted
      */
-    public abstract int handle(DataStream ds) throws BlsException, InterruptedException;
+    public abstract int handle(DataStream ds) throws BlsException;
 
     /**
      * Stream document information (metadata, contents authorization)

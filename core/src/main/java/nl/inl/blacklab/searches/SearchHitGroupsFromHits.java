@@ -28,10 +28,9 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      *  
      * @return result of the operation
      * @throws InvalidQuery 
-     * @throws InterruptedException 
      */
     @Override
-    public HitGroups executeInternal() throws InvalidQuery, InterruptedException {
+    public HitGroups executeInternal() throws InvalidQuery {
         return HitGroups.fromHits(source.execute(), property, maxHits);
     }
 

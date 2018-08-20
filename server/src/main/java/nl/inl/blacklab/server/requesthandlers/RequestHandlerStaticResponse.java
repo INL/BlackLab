@@ -171,7 +171,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
 
     @SuppressWarnings("deprecation")
     @Override
-    public int handle(DataStream ds) throws BlsException, InterruptedException {
+    public int handle(DataStream ds) throws BlsException {
         if (checkAgainAdviceMs != 0) {
             ds.statusObject(code, msg, checkAgainAdviceMs);
         }

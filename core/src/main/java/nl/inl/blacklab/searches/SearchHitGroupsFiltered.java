@@ -25,7 +25,7 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal() throws InvalidQuery, InterruptedException {
+    public HitGroups executeInternal() throws InvalidQuery {
         return source.execute().filter(property, value);
     }
 

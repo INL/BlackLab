@@ -95,8 +95,6 @@ public class HitsList extends Hits {
      * @param number the minimum number of hits that will have been read when this
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
-     * @throws InterruptedException if the thread was interrupted during this
-     *             operation
      */
     @Override
     protected void ensureResultsRead(int number) {
