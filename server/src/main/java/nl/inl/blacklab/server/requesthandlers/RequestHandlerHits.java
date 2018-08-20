@@ -73,7 +73,10 @@ public class RequestHandlerHits extends RequestHandler {
         try {
             HitGroup group = null;
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
-                // Yes. Group, then show hits from the specified group
+                
+                // Viewing a single group in a grouped hits results
+                
+                // Group, then show hits from the specified group
                 job = searchMan.search(user, searchParam.hitsGrouped());
                 JobHitsGrouped jobGrouped = (JobHitsGrouped) job;
 
@@ -108,10 +111,13 @@ public class RequestHandlerHits extends RequestHandler {
 
                 int first = Math.max(0, searchParam.getInteger("first"));
                 int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
-                if (!hitsInGroup.hitsProcessedAtLeast(first))
+                if (!hitsInGroup.hitsStats().processedAtLeast(first))
                     return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
                 window = hitsInGroup.window(first, size);
             } else {
+                
+                // Regular hits search
+                
                 // Since we're going to always launch a totals count anyway, just do it right away
                 // then construct a window on top of the total
                 job = searchMan.searchNonBlocking(user, searchParam.hitsTotal()); // always launch totals nonblocking!
@@ -136,10 +142,10 @@ public class RequestHandlerHits extends RequestHandler {
                 int first = Math.max(0, searchParam.getInteger("first"));
                 int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-                total.hitsProcessedAtLeast(first + size);
+                total.hitsStats().processedAtLeast(first + size);
 
                 // We blocked, so if we don't have the page available, the request is out of bounds.
-                if (total.hitsProcessedSoFar() < first)
+                if (total.hitsStats().processedSoFar() < first)
                     first = 0;
 
                 window = total.window(first, size);

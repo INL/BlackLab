@@ -25,7 +25,7 @@ import nl.inl.blacklab.server.jobs.JobDocsTotal;
 import nl.inl.blacklab.server.jobs.JobHitsTotal;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.MemoryUtil;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadPauserImpl;
 
 public class BlsSearchCache {
 
@@ -99,7 +99,7 @@ public class BlsSearchCache {
         cachedSearches = new HashMap<>();
 
         // Make sure long operations can be paused.
-        ThreadPauser.setEnabled(cacheConfig.enableThreadPausing());
+        ThreadPauserImpl.setEnabled(cacheConfig.enableThreadPausing());
 
         loadManagerThread = new LoadManagerThread(this);
         loadManagerThread.start();

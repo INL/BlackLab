@@ -161,6 +161,43 @@ public abstract class Hits extends Results<Hit> {
      * hits).
      */
     protected int docsCounted = 0;
+
+    private ResultsStats docsStats = new ResultsStats() {
+
+        @Override
+        public boolean processedAtLeast(int lowerBound) {
+            while (!doneProcessingAndCounting() && docsProcessedSoFar() < lowerBound) {
+                ensureResultsRead(results.size() + FETCH_HITS_MIN);
+            }
+            return docsProcessedSoFar() >= lowerBound;
+        }
+
+        @Override
+        public int processedTotal() {
+            return docsProcessedTotal();
+        }
+
+        @Override
+        public int processedSoFar() {
+            return docsProcessedSoFar();
+        }
+
+        @Override
+        public int countedSoFar() {
+            return docsCountedSoFar();
+        }
+
+        @Override
+        public int countedTotal() {
+            return docsCountedTotal();
+        }
+
+        @Override
+        public boolean done() {
+            return doneProcessingAndCounting();
+        }
+        
+    };
     
     public Hits(QueryInfo queryInfo) {
         super(queryInfo);
@@ -323,44 +360,62 @@ public abstract class Hits extends Results<Hit> {
     
     // Stats
     // ---------------------------------------------------------------
+    
+    public ResultsStats hitsStats() {
+        return resultsStats();
+    }
 
-    public boolean hitsProcessedAtLeast(int lowerBound) {
+    protected boolean hitsProcessedAtLeast(int lowerBound) {
         return resultsProcessedAtLeast(lowerBound);
     }
 
-    public int hitsProcessedTotal() {
+    protected int hitsProcessedTotal() {
         return resultsProcessedTotal();
     }
 
-    public int hitsProcessedSoFar() {
+    protected int hitsProcessedSoFar() {
         return resultsProcessedSoFar();
     }
-
-    public int hitsCountedTotal() {
+    
+    protected int hitsCountedTotal() {
         ensureAllResultsRead();
         return hitsCounted;
     }
 
-    public int docsProcessedTotal() {
+    public ResultsStats docsStats() {
+        return docsStats;
+    }
+
+    protected int docsProcessedTotal() {
         ensureAllResultsRead();
         return docsRetrieved;
     }
 
-    public int docsCountedTotal() {
+    protected int docsCountedTotal() {
         ensureAllResultsRead();
         return docsCounted;
     }
 
-    public int hitsCountedSoFar() {
+    protected int hitsCountedSoFar() {
         return hitsCounted;
     }
 
-    public int docsCountedSoFar() {
+    protected int docsCountedSoFar() {
         return docsCounted;
     }
 
-    public int docsProcessedSoFar() {
+    protected int docsProcessedSoFar() {
         return docsRetrieved;
+    }
+
+    @Override
+    protected int resultsCountedTotal() {
+        return hitsCountedTotal();
+    }
+
+    @Override
+    protected int resultsCountedSoFar() {
+        return hitsCountedSoFar();
     }
 
     // Deriving other Hits / Results instances
@@ -432,17 +487,6 @@ public abstract class Hits extends Results<Hit> {
             contextSize = index().defaultContextSize();
         return new Kwics(this, contextSize);
     }
-
-    /**
-     * Check if we're done retrieving/counting hits.
-     *
-     * If you're retrieving hits in a background thread, call this method from
-     * another thread to check if all hits have been processed.
-     *
-     * @return true iff all hits have been retrieved/counted.
-     */
-    public abstract boolean doneProcessingAndCounting();
-
 
     /**
      * Did we exceed the maximum number of hits to process/count?

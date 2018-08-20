@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -618,12 +619,14 @@ public abstract class RequestHandler {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
         ds.entry("stillCounting", !totalHits.doneProcessingAndCounting());
-        ds.entry("numberOfHits", countFailed ? -1 : totalHits.hitsCountedSoFar())
-                .entry("numberOfHitsRetrieved", totalHits.hitsProcessedSoFar())
+        ResultsStats hitsStats = totalHits.hitsStats();
+        ds.entry("numberOfHits", countFailed ? -1 : hitsStats.countedSoFar())
+                .entry("numberOfHitsRetrieved", hitsStats.processedSoFar())
                 .entry("stoppedCountingHits", totalHits.maxStats().hitsCountedExceededMaximum())
                 .entry("stoppedRetrievingHits", totalHits.maxStats().hitsProcessedExceededMaximum());
-        ds.entry("numberOfDocs", countFailed ? -1 : totalHits.docsCountedSoFar())
-                .entry("numberOfDocsRetrieved", totalHits.docsProcessedSoFar());
+        ResultsStats docsStats = totalHits.docsStats();
+        ds.entry("numberOfDocs", countFailed ? -1 : docsStats.countedSoFar())
+                .entry("numberOfDocsRetrieved", docsStats.processedSoFar());
     }
 
     protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed) {

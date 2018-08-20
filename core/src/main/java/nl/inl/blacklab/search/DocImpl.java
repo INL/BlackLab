@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 
@@ -278,10 +279,11 @@ public class DocImpl implements Doc {
         boolean mustFixUnbalancedTags = !wholeDocument;
 
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
-        if (hits.hitsProcessedAtLeast(1) || mustFixUnbalancedTags) {
+        ResultsStats hitsStats = hits.hitsStats();
+        if (hitsStats.processedAtLeast(1) || mustFixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitspans = null;
-            if (hits.hitsProcessedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
+            if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
                 hitspans = getCharacterOffsets(hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());

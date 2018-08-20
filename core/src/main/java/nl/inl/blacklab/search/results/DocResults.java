@@ -215,10 +215,6 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         return sampleParameters;
     }
     
-    boolean sourceHitsFullyRead() {
-        return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
-    }
-
     @Override
     public <P extends ResultProperty<DocResult>> DocResults sort(P sortProp) {
         List<DocResult> sorted = Results.doSort(this, sortProp);
@@ -253,7 +249,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      *
      * @return the number of documents.
      */
-    public int docsProcessedTotal() {
+    protected int docsProcessedTotal() {
         return size();
     }
 
@@ -267,7 +263,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     protected void ensureResultsRead(int index) {
         try {
-            if (sourceHitsFullyRead() || (index >= 0 && results.size() > index))
+            if (doneProcessingAndCounting() || (index >= 0 && results.size() > index))
                 return;
     
             while (!ensureResultsReadLock.tryLock()) {
@@ -277,7 +273,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 Thread.sleep(50);
-                if (sourceHitsFullyRead() || (index >= 0 && results.size() >= index))
+                if (doneProcessingAndCounting() || (index >= 0 && results.size() >= index))
                     return;
             }
     
@@ -449,6 +445,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
         return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, (WindowStats)null);
+    }
+    
+    @Override
+    public boolean doneProcessingAndCounting() {
+        return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
     
 }

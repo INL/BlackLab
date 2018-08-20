@@ -87,9 +87,8 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
 
 BLS:
 - use new Search system
-- use integrated BlackLab cache? (but we do need information like last used, etc. - can we do both?)
 - alleen totals-searches async draaien.
-- don't use threads except for total count (the only asynchronously running search, right...?)
+- (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
 
 
 

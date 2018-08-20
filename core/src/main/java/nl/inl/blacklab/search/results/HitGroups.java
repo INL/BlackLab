@@ -244,6 +244,10 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         }
         return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
     }
-
+    
+    @Override
+    public boolean doneProcessingAndCounting() {
+        return true;
+    }
     
 }

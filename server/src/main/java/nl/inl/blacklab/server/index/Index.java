@@ -31,6 +31,7 @@ import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.search.BlsSearchCache;
+import nl.inl.blacklab.server.search.NewBlsSearchCache;
 
 /**
  * A wrapper of sorts around {@link BlackLabIndexImpl}, which is the main blacklab-core
@@ -47,6 +48,11 @@ import nl.inl.blacklab.server.search.BlsSearchCache;
  * suddenly be closed, or begin indexing new data, or even be deleted.
  */
 public class Index {
+    
+    private static final Logger logger = LogManager.getLogger(Index.class);
+
+    private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
+
     public enum IndexStatus {
         EMPTY, // index has just been created. can be added to but not searched.
         AVAILABLE, // index is available for searching and adding to
@@ -75,10 +81,6 @@ public class Index {
             return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
         }
     };
-
-    private static final Logger logger = LogManager.getLogger(Index.class);
-
-    private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
 
     private final String id;
     private final File dir;
@@ -255,7 +257,8 @@ public class Index {
         logger.debug("Opening index '" + id + "', dir = " + dir);
         try {
             index = BlackLabIndex.open(this.dir);
-            index.setCache(cache.getBlackLabCache());
+            if (NewBlsSearchCache.ENABLE_NEW_CACHE)
+                index.setCache(cache.getBlackLabCache());
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {

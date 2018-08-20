@@ -97,7 +97,7 @@ public class TestNewSearchSystem {
                     .find(cqlLemmaSchip, null, index.maxSettings())
                     .count()
                     .execute()
-                    .value());
+                    .processedTotal());
 
             System.out.println("\nCount different spellings for 'schip': ");
             index
@@ -115,7 +115,7 @@ public class TestNewSearchSystem {
                     .collocations(annotLemma, ContextSize.get(10), MatchSensitivity.INSENSITIVE)
                     //.window(0, 10)
                     .execute();
-            for (int i = 0; i < 100 && i < colls.size(); i++) {
+            for (int i = 0; i < 10 && i < colls.size(); i++) {
                 System.out.println("- " + colls.get(i));
             }
         }

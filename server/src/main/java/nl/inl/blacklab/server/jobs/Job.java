@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Pausible;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -21,9 +22,9 @@ public abstract class Job implements Comparable<Job>, Pausible {
 
     protected static final Logger logger = LogManager.getLogger(Job.class);
 
-    private static final double ALMOST_ZERO = 0.0001;
+    public static final double ALMOST_ZERO = 0.0001;
 
-    private static final int RUN_PAUSE_PHASE_JUST_STARTED = 5;
+    public static final int RUN_PAUSE_PHASE_JUST_STARTED = 5;
 
     /**
      * How long a job remains "young". Young jobs are treated differently than old
@@ -31,7 +32,7 @@ public abstract class Job implements Comparable<Job>, Pausible {
      * fair chance, but we also want to eventually put demanding searches on the
      * back burner if the system is overloaded.
      */
-    private static final int YOUTH_THRESHOLD_SEC = 20;
+    public static final int YOUTH_THRESHOLD_SEC = 20;
 
     private static final int REFS_INVALID = -9999;
 
@@ -449,9 +450,10 @@ public abstract class Job implements Comparable<Job>, Pausible {
             }
             ds.entry("hasHitsObject", hits != null);
             if (hits != null) {
+                ResultsStats hitsStats = hits.hitsStats();
                 ds.entry("hitsObjId", hits.resultsObjId())
-                        .entry("retrievedSoFar", hits.hitsProcessedSoFar())
-                        .entry("doneFetchingHits", hits.doneProcessingAndCounting());
+                        .entry("retrievedSoFar", hitsStats.processedSoFar())
+                        .entry("doneFetchingHits", hitsStats.done());
             }
             ds.endMap().endEntry();
         }

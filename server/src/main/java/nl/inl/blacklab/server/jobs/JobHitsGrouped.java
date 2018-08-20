@@ -88,7 +88,7 @@ public class JobHitsGrouped extends JobWithHits {
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        ds.entry("hitsRetrieved", hits == null ? -1 : hits.hitsProcessedSoFar())
+        ds.entry("hitsRetrieved", hits == null ? -1 : hits.hitsStats().processedSoFar())
                 .entry("numberOfGroups", groups == null ? -1 : groups.size());
     }
 

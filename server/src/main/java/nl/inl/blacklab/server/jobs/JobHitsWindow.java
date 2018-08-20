@@ -58,7 +58,7 @@ public class JobHitsWindow extends JobWithHits {
         WindowSettings windowSett = jobDesc.getWindowSettings();
         int first = windowSett.first();
         requestedWindowSize = windowSett.size();
-        if (!inputHits.hitsProcessedAtLeast(first + 1)) {
+        if (!inputHits.hitsStats().processedAtLeast(first + 1)) {
             debug(logger, "Parameter first (" + first + ") out of range; setting to 0");
             first = 0;
         }

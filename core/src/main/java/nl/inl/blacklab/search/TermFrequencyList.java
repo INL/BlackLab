@@ -194,4 +194,9 @@ public class TermFrequencyList extends Results<TermFrequency> {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public boolean doneProcessingAndCounting() {
+        return true;
+    }
+
 }

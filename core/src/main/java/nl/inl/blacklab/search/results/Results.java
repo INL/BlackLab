@@ -18,6 +18,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadPauserImpl;
 
 /**
  * A list of results of some type.
@@ -105,11 +106,43 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     protected List<T> results;
 
+    private ResultsStats resultsStats = new ResultsStats() {
+        @Override
+        public boolean processedAtLeast(int lowerBound) {
+            return resultsProcessedAtLeast(lowerBound);
+        }
+
+        @Override
+        public int processedTotal() {
+            return resultsProcessedTotal();
+        }
+
+        @Override
+        public int processedSoFar() {
+            return resultsProcessedSoFar();
+        }
+
+        @Override
+        public int countedSoFar() {
+            return resultsCountedSoFar();
+        }
+
+        @Override
+        public int countedTotal() {
+            return resultsCountedTotal();
+        }
+
+        @Override
+        public boolean done() {
+            return doneProcessingAndCounting();
+        }
+    };
+
     public Results(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
         if (queryInfo.resultsObjectId() < 0)
             queryInfo.setResultsObjectId(hitsObjId); // We're the original query. set the id.
-        threadPauser = new ThreadPauser();
+        threadPauser = new ThreadPauserImpl();
         results = new ArrayList<>();
     }
 
@@ -336,7 +369,11 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         ensureResultsRead(-1);
     }
     
-    public boolean resultsProcessedAtLeast(int lowerBound) {
+    public ResultsStats resultsStats() {
+        return resultsStats;
+    }
+    
+    protected boolean resultsProcessedAtLeast(int lowerBound) {
         ensureResultsRead(lowerBound);
         return results.size() >= lowerBound;
     }
@@ -350,15 +387,23 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return resultsProcessedTotal();
     }
 
-    public int resultsProcessedTotal() {
+    protected int resultsProcessedTotal() {
         ensureAllResultsRead();
         return results.size();
     }
 
-    public int resultsProcessedSoFar() {
+    protected int resultsProcessedSoFar() {
         return results.size();
     }
 
+    protected int resultsCountedSoFar() {
+        return resultsProcessedSoFar();
+    }
+    
+    protected int resultsCountedTotal() {
+        return resultsProcessedTotal();
+    }
+    
     /**
      * Get part of the list of results.
      * 
@@ -390,6 +435,16 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         ensureAllResultsRead();
         return Collections.unmodifiableList(results);
     }
+
+    /**
+     * Check if we're done retrieving/counting hits.
+     *
+     * If you're retrieving hits in a background thread, call this method from
+     * another thread to check if all hits have been processed.
+     *
+     * @return true iff all hits have been retrieved/counted.
+     */
+    public abstract boolean doneProcessingAndCounting();
 
     
 }

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.jobs;
 
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -57,10 +58,11 @@ public class JobHitsTotal extends JobWithHits {
 
     @Override
     protected void dataStreamSubclassEntries(DataStream ds) {
-        ds.entry("hitsCounted", hits != null ? hits.hitsCountedSoFar() : -1);
+        ResultsStats hitsStats = hits.hitsStats();
+        ds.entry("hitsCounted", hits != null ? hitsStats.countedSoFar() : -1);
         if (hits != null) {
             ds.entry("hitsObjId", hits.resultsObjId())
-                    .entry("retrievedSoFar", hits.hitsProcessedSoFar())
+                    .entry("retrievedSoFar", hitsStats.processedSoFar())
                     .entry("doneFetchingHits", hits.doneProcessingAndCounting());
         }
     }

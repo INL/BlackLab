@@ -79,6 +79,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -1453,7 +1454,7 @@ public class QueryTool {
         // Summarize
         int docsCounted = docs.size();
         if (determineTotalNumberOfHits && currentHitSet != null)
-            docsCounted = currentHitSet.docsCountedTotal();
+            docsCounted = currentHitSet.docsStats().countedTotal();
         outprintln(docsCounted + " docs");
     }
 
@@ -1559,17 +1560,19 @@ public class QueryTool {
 
         // Summarize
         String msg;
+        ResultsStats hitsStats = hitsToShow.hitsStats();
         if (!determineTotalNumberOfHits) {
-            msg = hitsToShow.hitsCountedSoFar() + " hits counted so far (total not determined)";
+            msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
             int numberRetrieved = hitsToShow.size();
-            String hitsInDocs = numberRetrieved + " hits in " + hitsToShow.docsProcessedTotal() + " documents";
+            ResultsStats docsStats = hitsToShow.docsStats();
+            String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
             if (hits.maxStats().hitsProcessedExceededMaximum()) {
                 if (hits.maxStats().hitsCountedExceededMaximum()) {
-                    msg = hitsInDocs + " retrieved, more than " + hitsToShow.hitsCountedTotal() + " ("
-                            + hitsToShow.docsCountedTotal() + " docs) total";
+                    msg = hitsInDocs + " retrieved, more than " + hitsStats.countedTotal() + " ("
+                            + docsStats.countedTotal() + " docs) total";
                 } else {
-                    msg = hitsInDocs + " retrieved, " + hitsToShow.hitsCountedTotal() + " (" + hitsToShow.docsCountedTotal()
+                    msg = hitsInDocs + " retrieved, " + hitsStats.countedTotal() + " (" + docsStats.countedTotal()
                             + " docs) total";
                 }
             } else {

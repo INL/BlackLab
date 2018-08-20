@@ -237,7 +237,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Snippets
             Hits hits2 = result.storedResults().window(0, 5); // TODO: make num. snippets configurable
-            if (hits2.hitsProcessedAtLeast(1)) {
+            if (hits2.hitsStats().processedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
                 ContextSettings contextSettings = searchParam.getContextSettings();
                 Concordances concordances = null;

@@ -5,17 +5,24 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadPauserImpl;
 
-class NewBlsSearchCache implements SearchCache {
+public class NewBlsSearchCache implements SearchCache {
     
+    private static final Logger logger = LogManager.getLogger(NewBlsSearchCache.class);
+    
+    public static final boolean ENABLE_NEW_CACHE = false;
+
     protected Map<Search, NewBlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
-    protected boolean trace = false;
+    protected boolean trace = true;
 
     private BlsConfigCacheAndPerformance config;
 
@@ -23,11 +30,12 @@ class NewBlsSearchCache implements SearchCache {
         this.config = config;
         
         // Make sure long operations can be paused.
-        ThreadPauser.setEnabled(config.enableThreadPausing());
+        ThreadPauserImpl.setEnabled(config.enableThreadPausing());
         
         // (loadmgrthread)
     }
-     public boolean isTrace() {
+    
+    public boolean isTrace() {
         return trace;
     }
 
@@ -66,12 +74,12 @@ class NewBlsSearchCache implements SearchCache {
         }
         if (created) {
             if (trace)
-                System.out.println("ADDED: " + search);
+                logger.info("-- ADDED: " + search);
             if (block)
                 future.start(true);
         } else {
             if (trace)
-                System.out.println("FOUND: " + search);
+                logger.info("-- FOUND: " + search);
             future.updateLastAccess();
         }
         return future;
@@ -83,7 +91,7 @@ class NewBlsSearchCache implements SearchCache {
         synchronized (searches) {
             future = searches.remove(search);
             if (trace)
-                System.out.println("REMOVED: " + search);
+                logger.info("-- REMOVED: " + search);
         }
         return future;
     }

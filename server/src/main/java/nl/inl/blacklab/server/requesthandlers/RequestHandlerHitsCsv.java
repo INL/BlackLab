@@ -117,7 +117,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
-            if (!hits.hitsProcessedAtLeast(first))
+            if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
             int number = searchMan.config().maxExportPageSize();
@@ -146,7 +146,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Integer.toString(group.storedResults().hitsCountedSoFar()));
+                row.add(Integer.toString(group.storedResults().hitsStats().countedSoFar()));
                 printer.printRecord(row);
             }
 

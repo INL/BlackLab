@@ -151,4 +151,9 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public DocGroups sample(SampleParameters sampleParameters) {
         return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
+    
+    @Override
+    public boolean doneProcessingAndCounting() {
+        return true;
+    }
 }
