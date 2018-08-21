@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -293,6 +294,8 @@ public abstract class RequestHandler {
                         requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+                    } catch (InsufficientMemoryAvailable e) {
+                        return errorObj.error("OUT_OF_MEMORY", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                     } catch (NoSuchMethodException e) {
                         // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);

@@ -44,7 +44,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsConfig;
-import nl.inl.blacklab.server.search.NewBlsCacheEntry;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for hit results.
@@ -63,7 +63,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         Hits hits = null;
         Hits window = null;
-        NewBlsCacheEntry<?> job = null;
+        BlsCacheEntry<?> job = null;
 
         // Do we want to view a single group after grouping?
         String groupBy = searchParam.getString("group");

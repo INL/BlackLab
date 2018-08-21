@@ -29,14 +29,24 @@ public class DocGroup extends Group<DocResult> {
     public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalSize) {
         return new DocGroup(queryInfo, groupIdentity, storedResults, totalSize);
     }
+
+    private int storedHits;
     
     protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalSize) {
         super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters)null, (WindowStats)null), totalSize);
+        storedHits = 0;
+        for (DocResult result: storedResults) {
+            storedHits += result.numberOfStoredResults();
+        }
     }
     
     @Override
     public DocResults storedResults() {
         return (DocResults) super.storedResults();
+    }
+
+    public int numberOfStoredHits() {
+        return storedHits;
     }
 
 }

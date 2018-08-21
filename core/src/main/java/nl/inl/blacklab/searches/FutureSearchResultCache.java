@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -56,5 +57,20 @@ public class FutureSearchResultCache implements SearchCache {
                 System.out.println("REMOVED: " + search);
         }
         return future;
+    }
+
+    @Override
+    public void removeSearchesForIndex(BlackLabIndex index) {
+        throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public void clear(boolean terminateRunning) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void cleanup() {
+        // NOP
     }
 }

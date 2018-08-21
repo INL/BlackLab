@@ -30,8 +30,8 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
-import nl.inl.blacklab.server.search.BlsSearchCache;
-import nl.inl.blacklab.server.search.NewBlsSearchCache;
+import nl.inl.blacklab.server.search.BlsCache;
+import nl.inl.blacklab.server.search.SearchManager;
 
 /**
  * A wrapper of sorts around {@link BlackLabIndexImpl}, which is the main blacklab-core
@@ -83,8 +83,10 @@ public class Index {
     };
 
     private final String id;
+
     private final File dir;
-    private BlsSearchCache cache;
+
+    private SearchManager searchMan;
 
     /**
      * Only one of these can be set at a time. The index is closed and cleared
@@ -109,11 +111,11 @@ public class Index {
      * @param indexId name of this index, including any username if this is a user
      *            index
      * @param dir directory of this index
-     * @param cache
+     * @param searchMan search manager
      * @throws IllegalIndexName
      * @throws FileNotFoundException
      */
-    public Index(String indexId, File dir, BlsSearchCache cache) throws IllegalIndexName, FileNotFoundException {
+    public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, FileNotFoundException {
         if (!isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
         if (dir == null || !dir.exists() || !dir.isDirectory())
@@ -123,7 +125,7 @@ public class Index {
 
         this.id = indexId;
         this.dir = dir;
-        this.cache = cache;
+        this.searchMan = searchMan;
 
         // Opened on-demand
         this.index = null;
@@ -257,8 +259,8 @@ public class Index {
         logger.debug("Opening index '" + id + "', dir = " + dir);
         try {
             index = BlackLabIndex.open(this.dir);
-            if (NewBlsSearchCache.ENABLE_NEW_CACHE)
-                index.setCache(cache.getBlackLabCache());
+            if (BlsCache.ENABLE_NEW_CACHE)
+                index.setCache(searchMan.getBlackLabCache());
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {
@@ -324,7 +326,8 @@ public class Index {
 
         this.indexer = null;
 
-        cache.clearCacheForIndex(this.id);
+//        searchMan.getCache().clearCacheForIndex(this.id);
+        searchMan.getBlackLabCache().removeSearchesForIndex(this.index);
     }
 
     /**

@@ -15,7 +15,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.NewBlsCacheEntry;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for grouped doc results.
@@ -30,13 +30,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
 
         // Make sure we have the hits search, so we can later determine totals.
-        NewBlsCacheEntry<ResultCount> originalHitsSearch = null;
+        BlsCacheEntry<ResultCount> originalHitsSearch = null;
         if (searchParam.hasPattern()) {
             originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
         }
         // Get the window we're interested in
         DocResults docResults = searchMan.search(user, searchParam.docs());
-        NewBlsCacheEntry<DocGroups> groupSearch = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
+        BlsCacheEntry<DocGroups> groupSearch = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
         DocGroups groups;
         try {
             groups = groupSearch.get();

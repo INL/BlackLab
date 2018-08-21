@@ -199,4 +199,9 @@ public class TermFrequencyList extends Results<TermFrequency> {
         return true;
     }
 
+    @Override
+    public int numberOfResultObjects() {
+        return results.size();
+    }
+
 }

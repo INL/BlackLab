@@ -506,5 +506,10 @@ public abstract class Hits extends Results<Hit> {
      * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
      */
     public abstract MaxStats maxStats();
+    
+    @Override
+    public int numberOfResultObjects() {
+        return hitsProcessedSoFar();
+    }
 
 }

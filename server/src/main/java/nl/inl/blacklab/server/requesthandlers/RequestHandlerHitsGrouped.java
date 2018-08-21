@@ -15,7 +15,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.blacklab.server.search.NewBlsCacheEntry;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for grouped hit results.
@@ -30,7 +30,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         // Get the window we're interested in
-        NewBlsCacheEntry<HitGroups> search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
+        BlsCacheEntry<HitGroups> search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
         
         // Search is done; construct the results object
         HitGroups groups;

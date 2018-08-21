@@ -91,7 +91,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
         ds.entry("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
         if (debugMode) {
             ds.startEntry("cacheStatus");
-            searchMan.getCache().dataStreamCacheStatus(ds);
+            searchMan.getBlackLabCache().dataStreamCacheStatus(ds);
             ds.endEntry();
         }
         ds.endMap();

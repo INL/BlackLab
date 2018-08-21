@@ -81,6 +81,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
 
     private SampleParameters sampleParameters = null;
 
+    private int resultObjects;
+
     /**
      * Construct a ResultsGrouper object, by grouping the supplied hits.
      *
@@ -98,6 +100,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
+        resultObjects = 0;
         for (Hit hit: hits) {
             PropertyValue identity = criteria.get(hit);
             List<Hit> group = groupLists.get(identity);
@@ -105,8 +108,10 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
                 group = new ArrayList<>();
                 groupLists.put(identity, group);
             }
-            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
+            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
                 group.add(hit);
+                resultObjects++;
+            }
             Integer groupSize = groupSizes.get(identity);
             if (groupSize == null)
                 groupSize = 1;
@@ -117,6 +122,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             groupSizes.put(identity, groupSize);
             totalHits++;
         }
+        resultObjects += groupLists.size();
         for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
@@ -132,12 +138,14 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         this.criteria = groupCriteria;
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
+        resultObjects = 0;
         for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalHits += group.size();
             results.add(group);
             this.groups.put(group.identity(), group);
+            resultObjects += group.numberOfStoredResults() + 1;
         }
     }
 
@@ -253,6 +261,11 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     @Override
     public Map<PropertyValue, HitGroup> getGroupMap() {
         return groups;
+    }
+    
+    @Override
+    public int numberOfResultObjects() {
+        return resultObjects;
     }
     
 }

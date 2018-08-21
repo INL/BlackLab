@@ -1,8 +1,12 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+
 public class ResultCount extends ResultsStats implements SearchResult {
     
     private ResultsStats count;
+    
+    private boolean wasInterrupted = false;
 
     public ResultCount(Results<?> count) {
         this.count = count.resultsStats();
@@ -19,42 +23,88 @@ public class ResultCount extends ResultsStats implements SearchResult {
     @Override
     public int processedSoFar() {
         update();
-        return count.processedSoFar();
+        try {
+            return count.processedSoFar();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public int processedTotal() {
         update();
-        return count.processedTotal();
+        try {
+            return count.processedTotal();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public boolean processedAtLeast(int n) {
         update();
-        return count.processedAtLeast(n);
+        try {
+            return count.processedAtLeast(n);
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public int countedSoFar() {
         update();
-        return count.countedSoFar();
+        try {
+            return count.countedSoFar();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public int countedTotal() {
         update();
-        return count.countedTotal();
+        try {
+            return count.countedTotal();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public boolean done() {
         update();
-        return count.done();
+        try {
+            return count.done();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
 
     @Override
     public MaxStats maxStats() {
         update();
-        return count.maxStats();
+        try {
+            return count.maxStats();
+        } catch(InterruptedSearch e) {
+            wasInterrupted = true;
+            throw e;
+        }
     }
+
+    @Override
+    public int numberOfResultObjects() {
+        return 1;
+    }
+
+    @Override
+    public boolean wasInterrupted() {
+        return wasInterrupted;
+    }
+
 }

@@ -19,7 +19,8 @@ public class RequestHandlerClearCache extends RequestHandler {
     public int handle(DataStream ds) {
         if (!debugMode)
             return Response.forbidden(ds);
-        searchMan.getCache().clearCache(false);
+//        searchMan.getCache().clearCache(false);
+        searchMan.getBlackLabCache().clear(false);
         return Response.status(ds, "SUCCESS", "Cache cleared succesfully.", HTTP_OK);
     }
 

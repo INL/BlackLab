@@ -157,12 +157,14 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     private int totalHits = 0;
     
+    private int resultObjects = 0;
+
     private WindowStats windowStats;
 
     private SampleParameters sampleParameters;
 
     private int maxHitsToStorePerDoc = 0;
-
+    
     /**
      * Construct an empty DocResults.
      * @param queryInfo
@@ -330,6 +332,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
         totalHits += docHits.size();
+        resultObjects += docHits.numberOfResultObjects() + 1;
     }
 
     @Override
@@ -455,6 +458,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public Map<PropertyValue, ? extends Group<Hit>> getGroupMap() {
         throw new UnsupportedOperationException();
+    }
+    
+    @Override
+    public int numberOfResultObjects() {
+        return resultObjects;
     }
     
 }

@@ -5,6 +5,7 @@ import java.util.concurrent.Future;
 import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -65,5 +66,11 @@ public interface SearchCache {
     }
     
     <R extends SearchResult> Future<R> remove(Search<R> search);
+
+    void removeSearchesForIndex(BlackLabIndex index);
+
+    void clear(boolean b);
+
+    void cleanup();
 
 }

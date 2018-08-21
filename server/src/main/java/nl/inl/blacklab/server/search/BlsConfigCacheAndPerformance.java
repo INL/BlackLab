@@ -90,6 +90,14 @@ public class BlsConfigCacheAndPerformance {
      */
     private int clientCacheTimeSec;
 
+    private long maxJobAgeMs;
+
+    private long abandonedCountPauseTimeMs;
+
+    private long abandonedCountAbortTimeMs;
+
+    private long maxSearchTimeMs;
+
     public BlsConfigCacheAndPerformance(JsonNode settings) {
         this();
 
@@ -137,6 +145,11 @@ public class BlsConfigCacheAndPerformance {
             abandonedCountPauseTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountPauseTimeSec", 10);
             abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 60);
         }
+        
+        maxJobAgeMs = maxJobAgeSec * 1000L;
+        abandonedCountPauseTimeMs = abandonedCountPauseTimeSec * 1000L;
+        abandonedCountAbortTimeMs = abandonedCountAbortTimeSec * 1000L;
+        maxSearchTimeMs = maxSearchTimeSec * 1000L;
 
     }
 
@@ -154,10 +167,6 @@ public class BlsConfigCacheAndPerformance {
 
     public int getMaxNumberOfJobs() {
         return maxNumberOfJobs;
-    }
-
-    public int getMaxJobAgeSec() {
-        return maxJobAgeSec;
     }
 
     public long getMinFreeMemTargetMegs() {
@@ -178,6 +187,10 @@ public class BlsConfigCacheAndPerformance {
 
     public int getMaxPausedSearches() {
         return maxPausedSearches;
+    }
+
+    public int getMaxJobAgeSec() {
+        return maxJobAgeSec;
     }
 
     public int getMaxSearchTimeSec() {
@@ -202,6 +215,22 @@ public class BlsConfigCacheAndPerformance {
 
     public boolean enableThreadPausing() {
         return enableThreadPriority;
+    }
+
+    public long getMaxJobAgeMs() {
+        return maxJobAgeMs;
+    }
+
+    public long getAbandonedCountPauseTimeMs() {
+        return abandonedCountPauseTimeMs;
+    }
+
+    public long getAbandonedCountAbortTimeMs() {
+        return abandonedCountAbortTimeMs;
+    }
+
+    public long getMaxSearchTimeMs() {
+        return maxSearchTimeMs;
     }
 
 }

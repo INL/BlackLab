@@ -52,5 +52,17 @@ public abstract class ResultsStats {
      * @return max stats
      */
     public abstract MaxStats maxStats();
+
+    /**
+     * Was this count interrupted?
+     * 
+     * This can happen if you implement a system that aborts long-running or memory-hungry searches.
+     * If so, the total counts may not reflect reality.
+     * 
+     * @return true if the count was interrupted, false if not
+     */
+    public boolean wasInterrupted() {
+        return false;
+    }
     
 }

@@ -106,7 +106,7 @@ public class TestNewSearchSystem {
                     .group(new HitPropertyHitText(index), 3)
                     .execute()
                     .forEach(group -> {
-                        System.out.println("- " + group.identity() + " (stored " + group.numberStored() + " of " + group.size() + ") ");
+                        System.out.println("- " + group.identity() + " (stored " + group.numberOfStoredResults() + " of " + group.size() + ") ");
                     });
 
             System.out.println("\nCollocations for 'waterval': ");

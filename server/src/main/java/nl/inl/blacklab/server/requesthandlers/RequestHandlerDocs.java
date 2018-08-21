@@ -30,7 +30,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.JobDocsGrouped;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.NewBlsCacheEntry;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for the doc results.
@@ -42,8 +42,8 @@ public class RequestHandlerDocs extends RequestHandler {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    NewBlsCacheEntry<DocResults> search = null;
-    NewBlsCacheEntry<ResultCount> originalHitsSearch;
+    BlsCacheEntry<DocResults> search = null;
+    BlsCacheEntry<ResultCount> originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
@@ -126,13 +126,13 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException {
-        NewBlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
+        BlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
         search = searchWindow;
     
         // Also determine the total number of hits
         // (usually nonblocking, unless "waitfortotal=yes" was passed)
         boolean block = searchParam.getBoolean("waitfortotal");
-        NewBlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
+        BlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
         
         try {
             window = searchWindow.get();

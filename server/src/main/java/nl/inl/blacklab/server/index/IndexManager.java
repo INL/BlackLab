@@ -92,7 +92,7 @@ public class IndexManager {
 
                 try {
                     File dir = JsonUtil.getFileProp(indexConfig, "dir", null);
-                    Index index = new Index(indexName, dir, searchMan.getCache());
+                    Index index = new Index(indexName, dir, searchMan);
 
                     if (indexConfig.has("pid")) {
                         // Should be specified in index metadata now, not in
@@ -255,7 +255,7 @@ public class IndexManager {
         }
 
         try {
-            indices.put(indexId, new Index(indexId, indexDir, this.searchMan.getCache()));
+            indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
         } catch (FileNotFoundException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
@@ -476,7 +476,7 @@ public class IndexManager {
 
                     try {
                         logger.debug("Index found: " + indexName + " (" + subDir + ")");
-                        indices.put(indexName, new Index(indexName, subDir, searchMan.getCache()));
+                        indices.put(indexName, new Index(indexName, subDir, searchMan));
                     } catch (Exception e) {
                         logger.info("Error while loading index " + indexName + " at location " + subDir + "; "
                                 + e.getMessage());
@@ -524,7 +524,7 @@ public class IndexManager {
                 if (indices.containsKey(indexId))
                     continue;
 
-                indices.put(indexId, new Index(indexId, f, searchMan.getCache()));
+                indices.put(indexId, new Index(indexId, f, searchMan));
             } catch (Exception e) {
                 logger.info("Error while loading index " + f.getName() + " at location " + f + "; " + e.getMessage());
             }

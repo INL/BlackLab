@@ -11,12 +11,16 @@ public class Facets implements SearchResult {
     private List<DocProperty> facets;
     
     private Map<DocProperty, DocGroups> counts;
+    
+    private int resultObjects = 0;
 
     public Facets(DocResults source, List<DocProperty> facets) {
         this.facets = facets;
         counts = new HashMap<>();
         for (DocProperty facetBy : facets) {
-            counts.put(facetBy, source.group(facetBy, 0));
+            DocGroups groups = source.group(facetBy, 0);
+            counts.put(facetBy, groups);
+            resultObjects += groups.size();
         }
     }
 
@@ -26,6 +30,11 @@ public class Facets implements SearchResult {
 
     public Map<DocProperty, DocGroups> countsPerFacet() {
         return counts;
+    }
+
+    @Override
+    public int numberOfResultObjects() {
+        return resultObjects;
     }
 
 }

@@ -47,6 +47,8 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     private int largestGroupSize = 0;
 
     private int totalResults = 0;
+    
+    private int resultObjects = 0;
 
     private ResultProperty<DocResult> groupBy;
     
@@ -63,6 +65,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalResults += group.size();
+            resultObjects += group.numberOfStoredHits() + 1;
             results.add(group);
             this.groups.put(group.identity(), group);
         }
@@ -160,5 +163,10 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     public Map<PropertyValue, DocGroup> getGroupMap() {
         return groups;
+    }
+
+    @Override
+    public int numberOfResultObjects() {
+        return resultObjects;
     }
 }

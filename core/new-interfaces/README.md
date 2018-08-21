@@ -85,11 +85,13 @@ FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toc
 http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
 ```
 
+
+cache
+- boolean useCache = jobDesc.getSearchSettings().isUseCache(); (in queryInfo...?)
+- DISABLE CACHE ENTIRELY: if (cacheConfig.getMaxNumberOfJobs() <= 0)
+
+
 BLS:
-- NewBlsCacheEntry: cannot cancel totals count after initialSearchDone,
-  because it violates the Future contract (cannot cancel after isDone)
-- use new Search system
-- alleen totals-searches async draaien.
 - (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
 
 - hoe doen we SearchSettings (debugMode, nfa-factor, usecache)..?
@@ -142,6 +144,7 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- Maybe SearchResult should know its Search (pass in QueryInfo..?)
 - base interface DocStore for ForwardIndex, ContentStore..?
   access FI/CS using FIDoc / CSDoc (FIDoc already exists, but not used much) ?
 - TermsSensitivity to access Terms with specific sensitivity?

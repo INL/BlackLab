@@ -5,9 +5,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -21,9 +23,12 @@ public class SearchManager {
     /** Our config */
     private BlsConfig config;
 
-    /** All running searches as well as recently run searches */
-    private BlsSearchCache cache;
+//    /** All running searches as well as recently run searches */
+//    private BlsSearchCache cache;
 
+    /** All running searches as well as recently run searches */
+    private BlsCache newCache;
+    
     /** System for determining the current user. */
     private AuthManager authSystem;
 
@@ -38,7 +43,8 @@ public class SearchManager {
 
         // Create the cache
         // Use the performance properties [optional, defaults will be used if missing]
-        cache = new BlsSearchCache(this, config.getCacheConfig());
+//        cache = new BlsSearchCache(this, config.getCacheConfig());
+        newCache = new BlsCache(config.getCacheConfig());
 
         // Find the indices
         indexMan = new IndexManager(this, properties);
@@ -62,17 +68,24 @@ public class SearchManager {
      */
     public synchronized void cleanup() {
         // Stop any running searches
-        cache.cleanup();
+        newCache.cleanup();
+        newCache = null;
+        
+//        cache.cleanup();
+//        cache = null;
 
-        // Set variables to null in case it helps GC
-        cache = null;
+        // Set other variables to null in case it helps GC
         config = null;
         authSystem = null;
         indexMan = null;
     }
 
-    public BlsSearchCache getCache() {
-        return cache;
+//    public BlsSearchCache getCache() {
+//        return cache;
+//    }
+
+    public BlsCache getBlackLabCache() {
+        return newCache;
     }
 
     public BlsConfig config() {
@@ -88,11 +101,15 @@ public class SearchManager {
     }
 
     public <T extends SearchResult> T search(User user, Search<T> search) throws BlsException {
-        return cache.search(user, search);
+        try {
+            return search.execute();
+        } catch (InvalidQuery e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getMessage());
+        }
     }
     
-    public <T extends SearchResult> NewBlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) throws BlsException {
-        return cache.searchNonBlocking(user, search);
+    public <T extends SearchResult> BlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) throws BlsException {
+        return (BlsCacheEntry<T>)search.executeAsync();
     }
 
 }
