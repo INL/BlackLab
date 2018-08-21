@@ -17,7 +17,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
-import nl.inl.util.StringUtil;
 
 /** An annotated field */
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
@@ -132,7 +131,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     @Override
     public String toString() {
-        return fieldName + " [" + StringUtil.join(annots.values(), ", ") + "]";
+        return fieldName;
     }
     
     @Override
@@ -224,7 +223,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
         // Not a bookkeeping field; must be a annotation (alternative).
         AnnotationImpl pd = getOrCreateAnnotation(annotPart);
-        if (pd.name().equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME))
+        if (pd.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {

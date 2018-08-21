@@ -52,6 +52,11 @@ public class AnnotationSensitivityImpl implements AnnotationSensitivity {
             return false;
         return true;
     }
+    
+    @Override
+    public String toString() {
+        return luceneField();
+    }
 
     
 }

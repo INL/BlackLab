@@ -67,7 +67,7 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withXmlTagsAnnotation() {
-        Annotation annotation = sensitivity.annotation().field().annotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
+        Annotation annotation = sensitivity.annotation().field().annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
         return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 

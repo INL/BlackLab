@@ -86,16 +86,7 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
 ```
 
 
-BLS testen!
-- wordsaroundhit in corpus-frontend lijkt (nog) niet te werken..?
-
-
-toString:
-- Contexts
-
-
-
-PERFORMANCE IMPROVEMENTS
+PERFORMANCE IMPROVEMENTS MADE SO FAR
 - don't hold on to references
 - don't keep context info around
 - calculate cache size based on number of objects (mostly hits, so reasonable approximation)
@@ -103,7 +94,11 @@ PERFORMANCE IMPROVEMENTS
 - 
 
 
+
+
 PERFORMANCE ANALYSIS
+- zet cache monitoring tool op server
+- bouw evt. nieuwe server met nieuwe blacklab, zodat we sneller kunnen vergelijken?
 - log queries, times, #results, etc. to separate log file for analysis
   also log whether search was aborted (, paused)
 - maybe add a performance logging object to QueryInfo, so you can gather detailed information about
@@ -112,7 +107,7 @@ PERFORMANCE ANALYSIS
 
 SERVER POLICIES
 - max. number of running searches (if you try to start one but already at max, you get an error message)
-  (probably needs to take into account how many cores a search is using)
+  (probably needs to take into account how many cores are in use)
 - max. hits to process per search (if exceeded, BLS will indicate this)
 - max. time a search may run (after which it is aborted by BLS and an error message is shown)
 - number of result instances in cache

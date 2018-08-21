@@ -103,8 +103,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     getSensitivitySetting(mainAnnotation), false);
             addAnnotatedField(fieldWriter);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME,
-                    getSensitivitySetting(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME), true);
+            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+                    getSensitivitySetting(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME), true);
             annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations

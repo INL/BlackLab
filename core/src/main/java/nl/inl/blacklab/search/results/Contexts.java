@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -356,6 +358,11 @@ public class Contexts implements Iterable<int[]> {
     @Override
     public Iterator<int[]> iterator() {
         return contexts.values().iterator();
+    }
+    
+    @Override
+    public String toString() {
+        return "Contexts(" + StringUtils.join(annotations, ", ") + ")";
     }
 
 }

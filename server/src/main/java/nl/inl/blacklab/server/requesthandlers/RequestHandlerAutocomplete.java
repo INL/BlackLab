@@ -7,7 +7,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -88,7 +87,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             Annotation annotation = annotations.get(fieldName);
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
-                fieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName, fieldName, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+                fieldName = annotation.sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
             } else {
                 sensitiveMatching = true;
                 fieldName = annotation.offsetsSensitivity().luceneField();

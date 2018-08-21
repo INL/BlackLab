@@ -186,7 +186,7 @@ public class AnnotatedFieldWriter {
     }
 
     public AnnotationWriter tagsAnnotation() {
-        return annotation(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME);
+        return annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
     }
 
     public AnnotationWriter punctAnnotation() {

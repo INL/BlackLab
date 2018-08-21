@@ -289,19 +289,19 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) {
-            int lastStartTagPos = propStartTag.lastValuePosition();
+            int lastStartTagPos = propTags.lastValuePosition();
             int currentPos = propMain.lastValuePosition() + 1;
             int posIncrement = currentPos - lastStartTagPos;
-            propStartTag.addValue(localName, posIncrement);
-            propStartTag.addPayload(null);
-            int startTagIndex = propStartTag.lastValueIndex();
+            propTags.addValue(localName, posIncrement);
+            propTags.addPayload(null);
+            int startTagIndex = propTags.lastValueIndex();
             openTagIndexes.add(startTagIndex);
             for (int i = 0; i < attributes.getLength(); i++) {
                 // Index element attribute values
                 String name = attributes.getLocalName(i);
                 String value = attributes.getValue(i);
-                propStartTag.addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
-                propStartTag.addPayload(null);
+                propTags.addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
+                propTags.addPayload(null);
             }
         }
 
@@ -313,7 +313,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // Add payload to start tag annotation indicating end position
             Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
             byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
-            propStartTag.setPayloadAtIndex(openTagIndex, new BytesRef(payload));
+            propTags.setPayloadAtIndex(openTagIndex, new BytesRef(payload));
         }
     }
 
@@ -446,9 +446,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.mainAnnotation();
         propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propStartTag = addProperty(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME, true); // start tag
+        propTags = addProperty(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
         // positions
-        propStartTag.setHasForwardIndex(false);
+        propTags.setHasForwardIndex(false);
     }
     
     public void registerContentsField() {
@@ -533,7 +533,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     AnnotationWriter propPunct;
 
     /** The start tag annotation. Also contains tag length in payload. */
-    AnnotationWriter propStartTag;
+    AnnotationWriter propTags;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the
@@ -572,7 +572,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     public AnnotationWriter getPropStartTag() {
-        return propStartTag;
+        return propTags;
     }
 
     public AnnotationWriter mainAnnotation() {

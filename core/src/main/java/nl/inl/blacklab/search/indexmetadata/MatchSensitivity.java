@@ -9,10 +9,10 @@ package nl.inl.blacklab.search.indexmetadata;
  */
 public enum MatchSensitivity {
     
-    SENSITIVE(true, true, AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME),
-    INSENSITIVE(false, false, AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME),
-    CASE_INSENSITIVE(false, true, AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME),
-    DIACRITICS_INSENSITIVE(true, false, AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME);
+    SENSITIVE(true, true, "s"),
+    INSENSITIVE(false, false, "i"),
+    CASE_INSENSITIVE(false, true, "ci"),
+    DIACRITICS_INSENSITIVE(true, false, "di");
     
     public static MatchSensitivity get(boolean caseSensitive, boolean diacriticsSensitive) {
         if (caseSensitive)
@@ -27,13 +27,13 @@ public enum MatchSensitivity {
 
     public static MatchSensitivity fromLuceneFieldSuffix(String code) {
         switch(code) {
-        case AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME:
+        case "s":
             return SENSITIVE;
-        case AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME:
+        case "i":
             return INSENSITIVE;
-        case AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME:
+        case "ci":
             return CASE_INSENSITIVE;
-        case AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME:
+        case "di":
             return DIACRITICS_INSENSITIVE;
         }
         throw new IllegalArgumentException("Unknown sensitivity field code: " + code);

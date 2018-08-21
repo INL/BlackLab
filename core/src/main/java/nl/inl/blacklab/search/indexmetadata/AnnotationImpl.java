@@ -74,7 +74,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
     @Override
     public String toString() {
-        return field() + AnnotatedFieldNameUtil.ANNOT_SEP + name();
+        return luceneFieldPrefix();
     }
 
     @Override
@@ -142,8 +142,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     @Override
     public boolean isInternal() {
-        return name.equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME) ||
-                name.equals(AnnotatedFieldNameUtil.END_TAG_ANNOT_NAME) ||
+        return name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME) ||
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 

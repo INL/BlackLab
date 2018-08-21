@@ -205,7 +205,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", sensitivitySettingDesc(annotation))
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
-            String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);
+            AnnotationSensitivity as = annotation.sensitivity(annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE);
+            String luceneField = as.luceneField();
             if (showValuesFor.contains(annotation.name())) {
                 Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField,
                         MAX_FIELD_VALUES + 1);

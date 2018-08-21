@@ -32,19 +32,7 @@ public final class AnnotatedFieldNameUtil {
 
     private static final String DEFAULT_MAIN_ANNOT_NAME = "word";
 
-    public static final String SENSITIVE_ALT_NAME = "s";
-
-    private static final String DEFAULT_MAIN_ALT_NAME = SENSITIVE_ALT_NAME;
-
-    public static final String INSENSITIVE_ALT_NAME = "i";
-
-    public static final String CASE_INSENSITIVE_ALT_NAME = "ci";
-
-    public static final String DIACRITICS_INSENSITIVE_ALT_NAME = "di";
-
-    public static final String START_TAG_ANNOT_NAME = "starttag";
-
-    public static final String END_TAG_ANNOT_NAME = "endtag";
+    public static final String TAGS_ANNOT_NAME = "starttag";
 
     public static final String WORD_ANNOT_NAME = "word";
 
@@ -58,12 +46,6 @@ public final class AnnotatedFieldNameUtil {
     public static final String LEMMA_ANNOT_NAME = "lemma";
 
     /**
-     * Annotation name for part of speech (optional, not every input format will have
-     * this)
-     */
-    public static final String PART_OF_SPEECH_ANNOT_NAME = "pos";
-
-    /**
      * For annotations combined in a single Lucene field, this is the separator
      * between the name prefix of an indexed value and the actual value of the
      * annotation
@@ -74,7 +56,7 @@ public final class AnnotatedFieldNameUtil {
      * Valid XML element names. Field and annotation names should generally conform to
      * this.
      */
-    static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_\\.]*");
+    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_\\.]*");
 
     /**
      * String used to separate the base field name (say, contents) and the field
@@ -132,10 +114,6 @@ public final class AnnotatedFieldNameUtil {
         LENGTH_TOKENS
     }
 
-    public static boolean isBookkeepingSubfield(String bookkeepName) {
-        return BOOKKEEPING_SUBFIELDS.contains(bookkeepName);
-    }
-
     public static BookkeepFieldType whichBookkeepingSubfield(String bookkeepName) {
         switch (BOOKKEEPING_SUBFIELDS.indexOf(bookkeepName)) {
         case 0:
@@ -157,21 +135,12 @@ public final class AnnotatedFieldNameUtil {
         return bookkeepingField(annotFieldName, FORWARD_INDEX_ID_BOOKKEEP_NAME);
     }
 
-    public static String forwardIndexIdField(IndexMetadata structure, String fieldName) {
-        String annotName = structure.annotatedField(fieldName).mainAnnotation().name();
-        return forwardIndexIdField(annotationField(fieldName, annotName));
-    }
-
     public static String lengthTokensField(String fieldName) {
         return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
     }
 
-    public static String startTagAnnotationField(String fieldName) {
-        return annotationField(fieldName, START_TAG_ANNOT_NAME);
-    }
-
-    public static String endTagAnnotationField(String fieldName) {
-        return annotationField(fieldName, END_TAG_ANNOT_NAME);
+    public static String tagAnnotationField(String fieldName) {
+        return annotationField(fieldName, TAGS_ANNOT_NAME);
     }
 
     /**
@@ -182,7 +151,7 @@ public final class AnnotatedFieldNameUtil {
      * @param bookkeepName name of the bookkeeping value
      * @return the Lucene field name
      */
-    public static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
+    static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
         String fieldAnnotName;
         boolean annotGiven = annotName != null && annotName.length() > 0;
         if (fieldName == null || fieldName.length() == 0) {
@@ -207,7 +176,7 @@ public final class AnnotatedFieldNameUtil {
      * @param bookkeepName name of the bookkeeping value
      * @return the Lucene field name
      */
-    public static String bookkeepingField(String fieldName, String bookkeepName) {
+    static String bookkeepingField(String fieldName, String bookkeepName) {
         return bookkeepingField(fieldName, null, bookkeepName);
     }
 
@@ -364,85 +333,8 @@ public final class AnnotatedFieldNameUtil {
         return luceneFieldName;
     }
 
-    /**
-     * Checks if the given fieldName actually points to an alternative annotation (for
-     * example, a case-sensitive version of a annotation).
-     *
-     * Example: the fieldName "contents%lemma@s" indicates the "s" alternative of
-     * the "lemma" annotation of the "contents" annotated field.
-     *
-     * @param fieldAnnotSensitivityName the full fieldname, possibly including a annotation
-     *            and/or alternative
-     * @param sensitivityName the alternative to test for
-     * @return true if the fieldName indicates the specified alternative
-     */
-    public static boolean isSensitivity(String fieldAnnotSensitivityName, String sensitivityName) {
-        if (sensitivityName.length() == 0) {
-            // No alternative, therefore no alternative separator
-            return fieldAnnotSensitivityName.indexOf(SENSITIVITY_SEP) < 0;
-        }
-
-        // We're looking for an alternative
-        String altSuffix = SENSITIVITY_SEP + sensitivityName;
-        return fieldAnnotSensitivityName.endsWith(altSuffix);
-    }
-
-    public static String mainAnnotationField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedField(fieldName);
-        Annotation pr = cf.mainAnnotation();
-        return annotationField(fieldName, pr.name());
-    }
-
-    public static String mainAnnotationOffsetsField(IndexMetadata structure, String fieldName) {
-        AnnotatedField cf = structure.annotatedField(fieldName);
-        Annotation pr = cf.mainAnnotation();
-        return pr.offsetsSensitivity().luceneField();
-    }
-
     public static String getDefaultMainAnnotationName() {
         return DEFAULT_MAIN_ANNOT_NAME;
-    }
-
-    public static String getDefaultMainAlternativeName() {
-        return DEFAULT_MAIN_ALT_NAME;
-    }
-
-    /**
-     * Are we using the naming scheme with longer separation codes with no special
-     * characters in them?
-     * 
-     * @return true if we are, false if not
-     */
-    public static boolean avoidSpecialCharsInFieldNames() {
-        return ANNOT_SEP_LEN > 1;
-    }
-
-    /**
-     * Does this Lucene field name refer to a case-sensitive alternative?
-     *
-     * Case-sensitive alternatives are "s" (case- and diacritics-sensitive) and "di"
-     * (diacritics-insensitive but case-sensitive).
-     *
-     * @param fieldAnnotSensitivityName Lucene field name including annotation and alt name
-     * @return true if the field name refers to a case-sensitive alternative
-     */
-    public static boolean isCaseSensitive(String fieldAnnotSensitivityName) {
-        // both-sensitive or diacritics-insensitive
-        return fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "s") || fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "di");
-    }
-
-    /**
-     * Does this Lucene field name refer to a diacritics-sensitive alternative?
-     *
-     * Diacritics-sensitive alternatives are "s" (case- and diacritics-sensitive)
-     * and "ci" (case-insensitive but diacritics-sensitive).
-     *
-     * @param fieldAnnotSensitivityName Lucene field name including annotation and alt name
-     * @return true if the field name refers to a diacritics-sensitive alternative
-     */
-    public static boolean isDiacriticsSensitive(String fieldAnnotSensitivityName) {
-        // both-sensitive or case-insensitive
-        return fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "s") || fieldAnnotSensitivityName.endsWith(SENSITIVITY_SEP + "ci");
     }
 
     public static MatchSensitivity sensitivity(String luceneField) {

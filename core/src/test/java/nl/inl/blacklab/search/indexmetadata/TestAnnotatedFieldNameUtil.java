@@ -20,22 +20,6 @@ import org.junit.Test;
 
 public class TestAnnotatedFieldNameUtil {
 
-    //private boolean oldFieldNameSetting;
-
-    @Test
-    public void testIsSensitivity() {
-        String fieldName;
-        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation");
-        Assert.assertEquals(true, AnnotatedFieldNameUtil.isSensitivity(fieldName, ""));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "annotation"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "field"));
-
-        fieldName = AnnotatedFieldNameUtil.annotationField("field", "annotation", "sensitivity");
-        Assert.assertEquals(true, AnnotatedFieldNameUtil.isSensitivity(fieldName, "sensitivity"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "annotation"));
-        Assert.assertEquals(false, AnnotatedFieldNameUtil.isSensitivity(fieldName, "field"));
-    }
-
     @Test
     public void testGetBaseName() {
         String fieldName;

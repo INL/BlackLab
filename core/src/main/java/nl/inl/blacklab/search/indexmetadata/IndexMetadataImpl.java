@@ -336,8 +336,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                                                      // and there is no end tag annotation
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.put("namingScheme",
-                AnnotatedFieldNameUtil.avoidSpecialCharsInFieldNames() ? "NO_SPECIAL_CHARS" : "DEFAULT");
+        fieldInfo.put("namingScheme", "DEFAULT");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         if (metadataFields.titleField() != null)
             fieldInfo.put("titleField", metadataFields.titleField().name());

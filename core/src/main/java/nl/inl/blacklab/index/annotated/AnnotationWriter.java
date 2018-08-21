@@ -33,6 +33,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.CollUtil;
 
 /**
@@ -191,19 +192,19 @@ public class AnnotationWriter {
         mainSensitivity = null;
         if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
             // Add sensitive sensitivity
-            sensitivities.put(AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME, null);
-            mainSensitivity = AnnotatedFieldNameUtil.SENSITIVE_ALT_NAME;
+            mainSensitivity = MatchSensitivity.SENSITIVE.luceneFieldSuffix();
+            sensitivities.put(mainSensitivity, null);
         }
         if (sensitivity != SensitivitySetting.ONLY_SENSITIVE) {
             // Add insensitive sensitivity
-            sensitivities.put(AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, true));
+            sensitivities.put(MatchSensitivity.INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, true));
             if (mainSensitivity == null)
-                mainSensitivity = AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME;
+                mainSensitivity = MatchSensitivity.INSENSITIVE.luceneFieldSuffix();
         }
         if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE) {
             // Add case-insensitive and diacritics-insensitive sensitivity
-            sensitivities.put(AnnotatedFieldNameUtil.CASE_INSENSITIVE_ALT_NAME, new DesensitizerAdder(true, false));
-            sensitivities.put(AnnotatedFieldNameUtil.DIACRITICS_INSENSITIVE_ALT_NAME, new DesensitizerAdder(false, true));
+            sensitivities.put(MatchSensitivity.CASE_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, false));
+            sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(false, true));
         }
 
         this.includeOffsets = includeOffsets;

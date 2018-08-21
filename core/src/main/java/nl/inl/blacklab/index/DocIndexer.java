@@ -439,8 +439,7 @@ public abstract class DocIndexer implements AutoCloseable {
             // Punctuation: default to only insensitive
             return SensitivitySetting.ONLY_INSENSITIVE;
         }
-        if (annotationName.equals(AnnotatedFieldNameUtil.START_TAG_ANNOT_NAME)
-                || annotationName.equals(AnnotatedFieldNameUtil.END_TAG_ANNOT_NAME)) {
+        if (annotationName.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME)) {
             // XML tag properties: default to only sensitive
             return SensitivitySetting.ONLY_SENSITIVE;
         }
