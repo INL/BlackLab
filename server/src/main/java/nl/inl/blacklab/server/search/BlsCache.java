@@ -39,8 +39,11 @@ public class BlsCache implements SearchCache {
     
     protected boolean trace = true;
 
+    private boolean cacheDisabled;
+
     public BlsCache(BlsConfigCacheAndPerformance config) {
         initLoadManagement(config);
+        cacheDisabled = config.getMaxNumberOfJobs() == 0;
     }
 
     /**
@@ -121,7 +124,8 @@ public class BlsCache implements SearchCache {
                 checkFreeMemory(); // check that we have sufficient available memory
                 future = new BlsCacheEntry<>(search, searchTask);
                 created = true;
-                searches.put(search, future);
+                if (!cacheDisabled)
+                    searches.put(search, future);
                 if (!block)
                     future.start(false);
             }

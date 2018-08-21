@@ -33,6 +33,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
@@ -570,11 +571,11 @@ public class SearchParameters {
 
     public SearchHitGroups hitsGrouped() throws BlsException {
         HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitGroupSettings().groupBy());
-        return hitsSample().group(prop, MaxSettings.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
+        return hitsSample().group(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
     public SearchDocGroups docsGrouped() throws BlsException {
-        return docs().group(docGroupSettings().groupBy(), MaxSettings.NO_LIMIT).sort(docGroupSortSettings().sortBy());
+        return docs().group(docGroupSettings().groupBy(), Results.NO_LIMIT).sort(docGroupSortSettings().sortBy());
     }
 
     public SearchFacets facets() throws BlsException {

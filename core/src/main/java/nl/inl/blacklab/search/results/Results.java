@@ -27,6 +27,9 @@ import nl.inl.util.ThreadPauserImpl;
  */
 public abstract class Results<T> implements SearchResult, Iterable<T> {
 
+    /** When setting how many hits to retrieve/count/store in group, this means "no limit". */
+    public static final int NO_LIMIT = -1;
+
     /** Id the next Hits instance will get */
     private static int nextHitsObjId = 0;
 

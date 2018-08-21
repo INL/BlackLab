@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -187,7 +188,7 @@ public class BlsConfig extends YamlJsonReader {
             defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", MaxSettings.DEFAULT_MAX_COUNT);
             maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
                     "maxHitsToRetrieveAllowed", 10_000_000);
-            maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp, "maxHitsToCountAllowed", MaxSettings.NO_LIMIT);
+            maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp, "maxHitsToCountAllowed", Results.NO_LIMIT);
             if (reqProp.has("overrideUserIdIps")) {
                 JsonNode jsonOverrideUserIdIps = reqProp.get("overrideUserIdIps");
                 overrideUserIdIps = new HashSet<>();

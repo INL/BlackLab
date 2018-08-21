@@ -33,8 +33,8 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -43,8 +43,8 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.BlsConfig;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.blacklab.server.search.BlsConfig;
 
 /**
  * Request handler for hit results.
@@ -171,7 +171,7 @@ public class RequestHandlerHits extends RequestHandler {
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
         int totalTokens = -1;
         if (includeTokenCount) {
-            perDocResults = hits.perDocResults(MaxSettings.NO_LIMIT);
+            perDocResults = hits.perDocResults(Results.NO_LIMIT);
             // Determine total number of tokens in result set
             String fieldName = index.mainAnnotatedField().name();
             DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
@@ -214,7 +214,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         ds.startEntry("hits").startList();
         Map<Integer, String> pids = new HashMap<>();
-        ContextSettings contextSettings = searchParam.getContextSettings(); //getString("usecontent").equals("orig");
+        ContextSettings contextSettings = searchParam.getContextSettings();
         Concordances concordances = null;
         Kwics kwics = null;
         if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
@@ -281,7 +281,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             if (perDocResults == null)
-                perDocResults = hits.perDocResults(MaxSettings.NO_LIMIT);
+                perDocResults = hits.perDocResults(Results.NO_LIMIT);
             ds.startEntry("facets");
             dataStreamFacets(ds, perDocResults, searchParam.facets());
             ds.endEntry();

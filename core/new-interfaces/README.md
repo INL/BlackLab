@@ -85,17 +85,9 @@ FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toc
 http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
 ```
 
-
 cache
 - boolean useCache = jobDesc.getSearchSettings().isUseCache(); (in queryInfo...?)
-- DISABLE CACHE ENTIRELY: if (cacheConfig.getMaxNumberOfJobs() <= 0)
-
-
-BLS:
-- (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
-
-- hoe doen we SearchSettings (debugMode, nfa-factor, usecache)..?
-- getContextSettings moet nu bij displayen pas gebeuren
+  idem andere SearchSettings (debugMode, nfa-factor)..?
 
 PERFORMANCE ANALYSIS
 - log queries, times, #results, etc. to separate log file for analysis
@@ -144,6 +136,7 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
+- (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
 - Maybe SearchResult should know its Search (pass in QueryInfo..?)
 - base interface DocStore for ForwardIndex, ContentStore..?
   access FI/CS using FIDoc / CSDoc (FIDoc already exists, but not used much) ?

@@ -22,7 +22,7 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.Results;
 
 public class TestDocResults {
 
@@ -34,7 +34,7 @@ public class TestDocResults {
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
             Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
-            DocResults drs = hits.perDocResults(MaxSettings.NO_LIMIT);
+            DocResults drs = hits.perDocResults(Results.NO_LIMIT);
     
             int[] expDoc = new int[]  { 1, 2, 3 };
             int[] expHits = new int[] { 2, 1, 2 };
