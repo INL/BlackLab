@@ -21,6 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -158,6 +159,24 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
         ds.endMap();
     }
+    
+    public static String sensitivitySettingDesc(Annotation annotation) {
+        String sensitivityDesc;
+        if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE)) {
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
+                if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE)) {
+                    sensitivityDesc = "CASE_AND_DIACRITICS_SEPARATE";
+                } else {
+                    sensitivityDesc = "SENSITIVE_AND_INSENSITIVE";
+                }
+            } else {
+                sensitivityDesc = "ONLY_SENSITIVE";
+            }
+        } else {
+            sensitivityDesc = "ONLY_INSENSITIVE";
+        }
+        return sensitivityDesc;
+    }
 
     public static void describeAnnotatedField(DataStream ds, String indexName, 
             AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
@@ -183,7 +202,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("description", annotation.description())
                     .entry("uiType", annotation.uiType())
                     .entry("hasForwardIndex", annotation.hasForwardIndex())
-                    .entry("sensitivity", annotation.sensitivitySettingDesc())
+                    .entry("sensitivity", sensitivitySettingDesc(annotation))
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
             String luceneField = AnnotatedFieldNameUtil.annotationField(fieldDesc.name(), annotation.name(), AnnotatedFieldNameUtil.INSENSITIVE_ALT_NAME);

@@ -49,11 +49,6 @@ final class Subannotation implements Annotation {
     }
 
     @Override
-    public String sensitivitySettingDesc() {
-        return mainAnnotation.sensitivitySettingDesc();
-    }
-
-    @Override
     public Collection<AnnotationSensitivity> sensitivities() {
         return mainAnnotation.sensitivities();
     }

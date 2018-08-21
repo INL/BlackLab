@@ -52,11 +52,6 @@ public class MockAnnotation implements Annotation {
     }
 
     @Override
-    public String sensitivitySettingDesc() {
-        return null;
-    }
-
-    @Override
     public Collection<AnnotationSensitivity> sensitivities() {
         return null;
     }

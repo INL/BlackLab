@@ -10,8 +10,6 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
@@ -38,12 +36,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     /** Match sensitivity values this annotation has */
     private Set<MatchSensitivity> matchSensitivities = new HashSet<>();
-    
-    /**
-     * What sensitivity alternatives (sensitive/insensitive for case & diacritics)
-     * are present
-     */
-    private SensitivitySetting sensitivitySetting = null;
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -79,31 +71,10 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     public AnnotatedField field() {
         return field;
     }
-
+    
     @Override
     public String toString() {
-        String sensitivityDesc = "";
-        if (sensitivitySetting == null) {
-            sensitivityDesc = "(null)";
-        } else {
-            switch (sensitivitySetting) {
-            case ONLY_SENSITIVE:
-                sensitivityDesc = "sensitive only";
-                break;
-            case ONLY_INSENSITIVE:
-                sensitivityDesc = "insensitive only";
-                break;
-            case SENSITIVE_AND_INSENSITIVE:
-                sensitivityDesc = "sensitive and insensitive";
-                break;
-            case CASE_AND_DIACRITICS_SEPARATE:
-                sensitivityDesc = "case/diacritics sensitivity separate";
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown sensitivity " + sensitivitySetting.toString());
-            }
-        }
-        return name + (forwardIndex ? " (+FI)" : "") + ", " + sensitivityDesc;
+        return field() + AnnotatedFieldNameUtil.ANNOT_SEP + name();
     }
 
     @Override
@@ -119,11 +90,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     @Override
     public String name() {
         return name;
-    }
-
-    @Override
-    public String sensitivitySettingDesc() {
-        return sensitivitySetting.toString();
     }
 
     @Override
@@ -227,21 +193,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         ensureNotFrozen();
         alternatives.add(new AnnotationSensitivityImpl(this, matchSensitivity));
         matchSensitivities.add(matchSensitivity);
-    
-        // Update the sensitivity settings based on the alternatives we've seen so far.
-        if (matchSensitivities.contains(MatchSensitivity.SENSITIVE)) {
-            if (matchSensitivities.contains(MatchSensitivity.INSENSITIVE)) {
-                if (matchSensitivities.contains(MatchSensitivity.CASE_INSENSITIVE)) {
-                    sensitivitySetting = SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
-                } else {
-                    sensitivitySetting = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-                }
-            } else {
-                sensitivitySetting = SensitivitySetting.ONLY_SENSITIVE;
-            }
-        } else {
-            sensitivitySetting = SensitivitySetting.ONLY_INSENSITIVE;
-        }
     }
 
     AnnotationImpl setForwardIndex(boolean b) {

@@ -885,14 +885,32 @@ public class QueryTool {
         }
     }
 
+    public String describeAnnotation(Annotation annotation) {
+        String sensitivityDesc = "";
+        if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE)) {
+            if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
+                if (annotation.hasSensitivity(MatchSensitivity.CASE_INSENSITIVE)) {
+                    sensitivityDesc = "case/diacritics sensitivity separate";
+                } else {
+                    sensitivityDesc = "sensitive and insensitive";
+                }
+            } else {
+                sensitivityDesc = "sensitive only";
+            }
+        } else {
+            sensitivityDesc = "insensitive only";
+        }
+        return annotation.name() + (annotation.hasForwardIndex() ? " (+FI)" : "") + ", " + sensitivityDesc;
+    }
+    
     private void showIndexMetadata() {
         IndexMetadata s = index.metadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + index.name() + "\n");
         out.println("ANNOTATED FIELDS");
         for (AnnotatedField cf: s.annotatedFields()) {
             out.println("- " + cf.name());
-            for (Annotation pr: cf.annotations()) {
-                out.println("  * Annotation: " + pr.toString());
+            for (Annotation annot: cf.annotations()) {
+                out.println("  * Annotation: " + describeAnnotation(annot));
             }
             out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
             out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
