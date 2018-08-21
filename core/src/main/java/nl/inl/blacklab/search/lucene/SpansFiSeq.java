@@ -59,7 +59,7 @@ class SpansFiSeq extends BLSpans {
     /** The NFA to use to find matches in the forward index. */
     private NfaState nfa;
 
-    /** The direction to match in (-1 = backward, 1 = forward). */
+    /** The direction to match in (-1 / DIR_TO_LEFT = backward, 1 / DIR_TO_RIGHT = forward). */
     private int direction;
 
     /** Maps from term strings to term indices for each annotation. */

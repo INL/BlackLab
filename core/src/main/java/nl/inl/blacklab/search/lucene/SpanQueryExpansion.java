@@ -220,7 +220,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         NfaState any = new NfaStateAnyToken(clauses.get(0).getRealField(), null);
         Nfa frag = new Nfa(any, Arrays.asList(any));
         frag.repeat(min, max);
-        if (expandToLeft && direction == 1 || !expandToLeft && direction == -1) {
+        if (expandToLeft && direction == SpanQueryFiSeq.DIR_TO_RIGHT || !expandToLeft && direction == SpanQueryFiSeq.DIR_TO_LEFT) {
             // Prepend nfa with stretch of anytokens
             frag.append(nfa);
             nfa = frag;

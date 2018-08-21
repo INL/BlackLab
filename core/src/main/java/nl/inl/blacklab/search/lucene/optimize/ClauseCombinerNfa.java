@@ -165,15 +165,15 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         }
 
         // Backward (i.e. right is anchor, left is NFA)
-        if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) right).getDirection() == -1) {
+        if (right instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) right).getDirection() == SpanQueryFiSeq.DIR_TO_LEFT) {
             // Existing backward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
         ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLabIndexRegistry.fromIndexReader(reader),
                 left.getField());
-        NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, -1);
-        return new SpanQueryFiSeq(right, true, nfaTwoWay, left, -1, fiAccessor);
+        NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
+        return new SpanQueryFiSeq(right, true, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
 
     }
 

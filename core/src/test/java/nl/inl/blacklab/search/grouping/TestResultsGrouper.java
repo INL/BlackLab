@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestResultsGrouper {
@@ -50,7 +51,7 @@ public class TestResultsGrouper {
         searcher.setIndexSearcher(indexSearcher);
         Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.maxSettings());
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hits.group(crit, -1);
+        HitGroups grouper = hits.group(crit, MaxSettings.NO_LIMIT);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);

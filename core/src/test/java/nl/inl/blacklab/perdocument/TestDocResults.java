@@ -34,7 +34,7 @@ public class TestDocResults {
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
             Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
-            DocResults drs = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
+            DocResults drs = hits.perDocResults(MaxSettings.NO_LIMIT);
     
             int[] expDoc = new int[]  { 1, 2, 3 };
             int[] expHits = new int[] { 2, 1, 2 };

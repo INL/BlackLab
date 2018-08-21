@@ -38,6 +38,10 @@ import nl.inl.blacklab.search.fimatch.NfaTwoWay;
  */
 public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
+    public static final int DIR_TO_LEFT = -1;
+
+    public static final int DIR_TO_RIGHT = 1;
+
     boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
@@ -58,7 +62,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
      * @param nfaQuery the query that generated the NFA, so we can still use its
      *            guarantee methods for optimization
      * @param direction the direction to match in (-1 = right-to-left, 1 =
-     *            left-to-right)
+     *            left-to-right; use DIR_TO_RIGHT / DIR_TO_LEFT)
      * @param fiAccessor maps between term strings and term indices for each
      *            annotation
      */
@@ -151,7 +155,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     @Override
     public int hitsLengthMin() {
-        if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
+        if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
             // Non-overlapping; add the two values
             return clauses.get(0).hitsLengthMin() + nfaQuery.hitsLengthMin();
         }
@@ -161,7 +165,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     @Override
     public int hitsLengthMax() {
-        if (startOfAnchor && direction == -1 || !startOfAnchor && direction == 1) {
+        if (startOfAnchor && direction == DIR_TO_LEFT || !startOfAnchor && direction == DIR_TO_RIGHT) {
             // Non-overlapping; add the two values
             return clauses.get(0).hitsLengthMax() + nfaQuery.hitsLengthMax();
         }
@@ -171,28 +175,28 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsStartPointSorted() {
-        if (direction == 1)
+        if (direction == DIR_TO_RIGHT)
             return clauses.get(0).hitsStartPointSorted();
         return clauses.get(0).hitsStartPointSorted() && nfaQuery.hitsAllSameLength();
     }
 
     @Override
     public boolean hitsEndPointSorted() {
-        if (direction == -1)
+        if (direction == DIR_TO_LEFT)
             return clauses.get(0).hitsEndPointSorted();
         return clauses.get(0).hitsEndPointSorted() && nfaQuery.hitsAllSameLength();
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        if (direction == 1)
+        if (direction == DIR_TO_RIGHT)
             return clauses.get(0).hitsHaveUniqueStart();
         return clauses.get(0).hitsHaveUniqueStart() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueStart();
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        if (direction == -1)
+        if (direction == DIR_TO_LEFT)
             return clauses.get(0).hitsHaveUniqueEnd();
         return clauses.get(0).hitsHaveUniqueEnd() && nfaQuery.hitsAllSameLength() || nfaQuery.hitsHaveUniqueEnd();
     }

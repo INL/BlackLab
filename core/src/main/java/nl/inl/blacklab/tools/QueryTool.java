@@ -1424,7 +1424,7 @@ public class QueryTool {
         Hits currentHitSet = getCurrentHitSet();
         if (docs == null) {
             if (currentHitSet != null)
-                docs = currentHitSet.perDocResults(MaxSettings.UNLIMITED_HITS);
+                docs = currentHitSet.perDocResults(MaxSettings.NO_LIMIT);
             else if (filterQuery != null) {
                 docs = index.queryDocuments(filterQuery);
             } else {

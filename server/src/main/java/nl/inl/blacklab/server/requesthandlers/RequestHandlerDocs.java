@@ -28,7 +28,6 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.JobDocsGrouped;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
 
@@ -82,47 +81,41 @@ public class RequestHandlerDocs extends RequestHandler {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
     
         // Yes. Group, then show hits from the specified group
-        JobDocsGrouped searchGrouped = null;
-        try {
-            DocGroups groups = searchMan.search(user, searchParam.docsGrouped());
+        DocGroups groups = searchMan.search(user, searchParam.docsGrouped());
+    
+        PropertyValue viewGroupVal = null;
+        viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
+        if (viewGroupVal == null)
+            return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
+                    "Parameter 'viewgroup' has an illegal value: " + viewGroup);
+    
+        DocGroup group = groups.get(viewGroupVal);
+        if (group == null)
+            return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+    
+        // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+        // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+        // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+        // There is probably no reason why we can't just sort/use the sort of the input results, but we need 
+        // some more testing to see if everything is correct if we change this
+        String sortBy = searchParam.getString("sort");
+        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
+        DocResults docsSorted = group.storedResults();
+        if (sortProp != null)
+            docsSorted = docsSorted.sort(sortProp);
+    
+        int first = searchParam.getInteger("first");
+        if (first < 0)
+            first = 0;
+        int number = searchParam.getInteger("number");
+        if (number < 0 || number > searchMan.config().maxPageSize())
+            number = searchMan.config().defaultPageSize();
+        totalDocResults = docsSorted;
+        window = docsSorted.window(first, number);
         
-            PropertyValue viewGroupVal = null;
-            viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
-            if (viewGroupVal == null)
-                return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
-                        "Parameter 'viewgroup' has an illegal value: " + viewGroup);
-        
-            DocGroup group = groups.get(viewGroupVal);
-            if (group == null)
-                return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
-        
-            // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-            // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-            // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-            // There is probably no reason why we can't just sort/use the sort of the input results, but we need 
-            // some more testing to see if everything is correct if we change this
-            String sortBy = searchParam.getString("sort");
-            DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
-            DocResults docsSorted = group.storedResults();
-            if (sortProp != null)
-                docsSorted = docsSorted.sort(sortProp);
-        
-            int first = searchParam.getInteger("first");
-            if (first < 0)
-                first = 0;
-            int number = searchParam.getInteger("number");
-            if (number < 0 || number > searchMan.config().maxPageSize())
-                number = searchMan.config().defaultPageSize();
-            totalDocResults = docsSorted;
-            window = docsSorted.window(first, number);
-            
-            docResults = group.storedResults();
-            totalTime = 0; // TODO searchGrouped.userWaitTime();
-            return doResponse(ds, true);
-        } finally {
-            if (searchGrouped != null)
-                searchGrouped.decrRef();
-        }
+        docResults = group.storedResults();
+        totalTime = 0; // TODO searchGrouped.userWaitTime();
+        return doResponse(ds, true);
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException {

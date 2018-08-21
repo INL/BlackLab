@@ -187,8 +187,7 @@ public class BlsConfig extends YamlJsonReader {
             defaultMaxHitsToCount = JsonUtil.getIntProp(reqProp, "defaultMaxHitsToCount", MaxSettings.DEFAULT_MAX_COUNT);
             maxHitsToRetrieveAllowed = JsonUtil.getIntProp(reqProp,
                     "maxHitsToRetrieveAllowed", 10_000_000);
-            maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp,
-                    "maxHitsToCountAllowed", -1);
+            maxHitsToCountAllowed = JsonUtil.getIntProp(reqProp, "maxHitsToCountAllowed", MaxSettings.NO_LIMIT);
             if (reqProp.has("overrideUserIdIps")) {
                 JsonNode jsonOverrideUserIdIps = reqProp.get("overrideUserIdIps");
                 overrideUserIdIps = new HashSet<>();

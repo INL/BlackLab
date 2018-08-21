@@ -718,8 +718,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         Nfa frag = null;
-        int start = direction == 1 ? 0 : clauses.size() - 1;
-        int end = direction == 1 ? clauses.size() : -1;
+        int start = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? 0 : clauses.size() - 1;
+        int end = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? clauses.size() : -1;
         for (int i = start; i != end; i += direction) {
             BLSpanQuery clause = clauses.get(i);
             if (frag == null)

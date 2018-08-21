@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -40,7 +41,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     @Override
     public int getToken(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
-            return -1;
+            return Terms.NO_TERM;
 
         // Get the list of chunks for the annotation we're interested in,
         // and the forward index object to get more.

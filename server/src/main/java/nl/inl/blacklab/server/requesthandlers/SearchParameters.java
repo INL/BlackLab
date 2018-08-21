@@ -570,11 +570,11 @@ public class SearchParameters {
 
     public SearchHitGroups hitsGrouped() throws BlsException {
         HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitGroupSettings().groupBy());
-        return hitsSample().group(prop, -1).sort(hitGroupSortSettings().sortBy());
+        return hitsSample().group(prop, MaxSettings.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
     public SearchDocGroups docsGrouped() throws BlsException {
-        return docs().group(docGroupSettings().groupBy(), -1).sort(docGroupSortSettings().sortBy());
+        return docs().group(docGroupSettings().groupBy(), MaxSettings.NO_LIMIT).sort(docGroupSortSettings().sortBy());
     }
 
     public SearchFacets facets() throws BlsException {

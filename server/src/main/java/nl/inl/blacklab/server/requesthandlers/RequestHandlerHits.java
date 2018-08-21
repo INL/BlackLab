@@ -171,7 +171,7 @@ public class RequestHandlerHits extends RequestHandler {
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
         int totalTokens = -1;
         if (includeTokenCount) {
-            perDocResults = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
+            perDocResults = hits.perDocResults(MaxSettings.NO_LIMIT);
             // Determine total number of tokens in result set
             String fieldName = index.mainAnnotatedField().name();
             DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
@@ -281,7 +281,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             if (perDocResults == null)
-                perDocResults = hits.perDocResults(MaxSettings.UNLIMITED_HITS);
+                perDocResults = hits.perDocResults(MaxSettings.NO_LIMIT);
             ds.startEntry("facets");
             dataStreamFacets(ds, perDocResults, searchParam.facets());
             ds.endEntry();

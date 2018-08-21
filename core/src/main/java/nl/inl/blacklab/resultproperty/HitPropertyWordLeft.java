@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -67,7 +68,7 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
         int contextLength = context[Contexts.LENGTH_INDEX];
 
         if (contextHitStart <= 0)
-            return new PropertyValueContextWord(index, annotation, sensitivity, -1);
+            return new PropertyValueContextWord(index, annotation, sensitivity, Terms.NO_TERM);
         int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         return new PropertyValueContextWord(index, annotation, sensitivity, context[contextStart
                         + contextHitStart - 1]);

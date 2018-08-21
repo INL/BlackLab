@@ -8,13 +8,13 @@ public final class MaxSettings {
     }
 
     /** When setting how many hits to retrieve/count, this means "no limit". */
-    public static final int UNLIMITED_HITS = -1;
+    public static final int NO_LIMIT = -1;
     
     /** How many hits to process by default */
     public static final int DEFAULT_MAX_PROCESS = 1000000;
     
     /** How many hits to count by default */
-    public static final int DEFAULT_MAX_COUNT = UNLIMITED_HITS;
+    public static final int DEFAULT_MAX_COUNT = NO_LIMIT;
     
     /**
      * Stop retrieving hits after this number. (NO_LIMIT = -1 = don't stop
