@@ -167,6 +167,40 @@ public interface BlackLabIndex extends Closeable {
             throws WildcardTermTooBroad, RegexpTooLarge;
 
     /**
+     * Find hits for a pattern in a field.
+     *
+     * @param pattern the pattern to find
+     * @param field field to find pattern in
+     * @param filter determines which documents to search
+     * @param settings search settings, or null for default
+     *
+     * @return the hits found
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     * @throws RegexpTooLarge 
+     */
+    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+        return find(pattern, field, filter, searchSettings());
+    }
+
+    /**
+     * Find hits for a pattern in a field.
+     *
+     * @param pattern the pattern to find
+     * @param field field to find pattern in
+     * @param filter determines which documents to search
+     * @param settings search settings, or null for default
+     *
+     * @return the hits found
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     * @throws RegexpTooLarge 
+     */
+    default Hits find(TextPattern pattern, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+        return find(pattern, mainAnnotatedField(), filter, searchSettings());
+    }
+
+    /**
      * Perform a document query only (no hits)
      * 
      * @param documentFilterQuery the document-level query
