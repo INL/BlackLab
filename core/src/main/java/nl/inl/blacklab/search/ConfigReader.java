@@ -28,7 +28,7 @@ import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 
@@ -196,7 +196,7 @@ public class ConfigReader extends YamlJsonReader {
     }
 
     private static void readSearch(ObjectNode obj, BlackLabIndex index) {
-        MaxSettings hitsSett = index.maxSettings();
+        SearchSettings hitsSett = index.searchSettings();
         Iterator<Entry<String, JsonNode>> it = obj.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
@@ -208,12 +208,12 @@ public class ConfigReader extends YamlJsonReader {
                 index.setDefaultContextSize(ContextSize.get(integer(e)));
                 break;
             case "maxHitsToRetrieve":
-                hitsSett = new MaxSettings(integer(e), hitsSett.maxHitsToCount());
-                index.setMaxSettings(hitsSett);
+                hitsSett = hitsSett.withMaxHitsToProcess(integer(e));
+                index.setSearchSettings(hitsSett);
                 break;
             case "maxHitsToCount":
-                hitsSett = new MaxSettings(hitsSett.maxHitsToProcess(), integer(e));
-                index.setMaxSettings(hitsSett);
+                hitsSett = hitsSett.withMaxHitsToCount(integer(e));
+                index.setSearchSettings(hitsSett);
                 break;
             default:
                 throw new InvalidConfiguration("Unknown key " + e.getKey() + " in search section");

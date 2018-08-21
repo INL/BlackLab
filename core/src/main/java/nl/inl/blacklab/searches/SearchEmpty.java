@@ -4,7 +4,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -24,12 +24,12 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
         throw new UnsupportedOperationException();
     }
 
-    public SearchHits find(String cql, Query filter, MaxSettings maxSettings) throws InvalidQuery {
-        return find(CorpusQueryLanguageParser.parse(cql), filter, maxSettings);
+    public SearchHits find(String cql, Query filter, SearchSettings searchSettings) throws InvalidQuery {
+        return find(CorpusQueryLanguageParser.parse(cql), filter, searchSettings);
     }
 
-    public SearchHits find(TextPattern pattern, Query filter, MaxSettings maxSettings) {
-        return new SearchHitsFromPattern(queryInfo(), pattern, filter, maxSettings);
+    public SearchHits find(TextPattern pattern, Query filter, SearchSettings searchSettings) {
+        return new SearchHitsFromPattern(queryInfo(), pattern, filter, searchSettings);
     }
     
     public SearchDocs find(Query documentQuery) {

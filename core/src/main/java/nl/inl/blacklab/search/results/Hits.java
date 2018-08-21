@@ -28,12 +28,12 @@ public abstract class Hits extends Results<Hit> {
      * 
      * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
-     * @param maxSettings max. hits to process/count
+     * @param searchSettings settings such as max. hits to process/count
      * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, MaxSettings maxSettings) throws WildcardTermTooBroad {
-        return new HitsFromQuery(queryInfo, query, maxSettings);
+    public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) throws WildcardTermTooBroad {
+        return new HitsFromQuery(queryInfo, query, searchSettings);
     }
 
     /**

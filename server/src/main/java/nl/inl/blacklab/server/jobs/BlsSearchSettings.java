@@ -4,7 +4,7 @@ package nl.inl.blacklab.server.jobs;
  * Some general settings that control how BlackLab Server executes a search
  * request.
  */
-public class SearchSettings {
+public class BlsSearchSettings {
 
     private boolean debugMode;
 
@@ -12,7 +12,7 @@ public class SearchSettings {
 
     private boolean useCache;
 
-    public SearchSettings(boolean debugMode, int fiMatchNfaFactor, boolean useCache) {
+    public BlsSearchSettings(boolean debugMode, int fiMatchNfaFactor, boolean useCache) {
         super();
         this.debugMode = debugMode;
         this.fiMatchNfaFactor = fiMatchNfaFactor;

@@ -42,7 +42,7 @@ public class TestNewSearchSystem {
             
             System.out.println("\nFirst 20 hits for 'schip':");
             Hits hits = index.search()
-                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.searchSettings())
                     .window(0, 20)
                     .execute();
             Kwics kwics = hits.kwics(null);
@@ -57,7 +57,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nFirst 10 document results for 'schip':");
             index.search()
-                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.searchSettings())
                     .docs(3)
                     .window(0, 10)
                     .execute()
@@ -94,7 +94,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nCount number of hits for 'schip': " + index
                     .search()
-                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.searchSettings())
                     .count()
                     .execute()
                     .processedTotal());
@@ -102,7 +102,7 @@ public class TestNewSearchSystem {
             System.out.println("\nCount different spellings for 'schip': ");
             index
                     .search()
-                    .find(cqlLemmaSchip, null, index.maxSettings())
+                    .find(cqlLemmaSchip, null, index.searchSettings())
                     .group(new HitPropertyHitText(index), 3)
                     .execute()
                     .forEach(group -> {
@@ -111,7 +111,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nCollocations for 'waterval': ");
             TermFrequencyList colls = index.search()
-                    .find("[lemma=\"waterval\"]", null, index.maxSettings())
+                    .find("[lemma=\"waterval\"]", null, index.searchSettings())
                     .collocations(annotLemma, ContextSize.get(10), MatchSensitivity.INSENSITIVE)
                     //.window(0, 10)
                     .execute();

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 /**
@@ -9,11 +10,15 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return new QueryInfo(index, null);
+        return new QueryInfo(index, null, true);
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
-        return new QueryInfo(index, field);
+        return new QueryInfo(index, field, true);
+    }
+
+    public static QueryInfo create(BlackLabIndexImpl index, AnnotatedField field, boolean useCache) {
+        return new QueryInfo(index, field, useCache);
     }
 
     private BlackLabIndex index;
@@ -24,10 +29,14 @@ public final class QueryInfo {
     /** The results object id of the original query (for debugging). */
     private int resultsObjectId = -1;
 
-    private QueryInfo(BlackLabIndex index, AnnotatedField field) {
+    /** Should we use the cache for this query, or bypass it? */
+    private boolean useCache;
+
+    private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
         super();
         this.index = index;
         this.field = field == null ? index.mainAnnotatedField() : field;
+        this.useCache = useCache;
     }
 
     /** @return the index that was searched. */
@@ -38,6 +47,11 @@ public final class QueryInfo {
     /** @return field that was searched */
     public AnnotatedField field() {
         return field;
+    }
+
+    /** @return should we use the cache for this query, or bypass it? */
+    public boolean useCache() {
+        return useCache;
     }
 
     /** @return the results object id of the original query. */

@@ -68,8 +68,8 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -274,7 +274,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      */
     protected Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
 
-    protected MaxSettings maxSettings;
+    protected SearchSettings searchSettings;
 
     /** Should we default to case-/diacritics-sensitive searching? [default: both insensitive] */
     protected MatchSensitivity defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
@@ -323,8 +323,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //---------------------------------------------------------------
     
 
-    public BlackLabIndexImpl(MaxSettings settings) {
-        maxSettings = settings == null ? MaxSettings.defaults() : settings;
+    public BlackLabIndexImpl(SearchSettings settings) {
+        searchSettings = settings == null ? SearchSettings.defaults() : settings;
     }
 
     public BlackLabIndexImpl() {
@@ -398,7 +398,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param settings default search settings
      * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, MaxSettings settings) throws ErrorOpeningIndex {
+    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, SearchSettings settings) throws ErrorOpeningIndex {
         this(settings);
         this.indexMode = indexMode;
 
@@ -428,13 +428,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     
 
     @Override
-    public MaxSettings maxSettings() {
-        return maxSettings;
+    public SearchSettings searchSettings() {
+        return searchSettings;
     }
     
     @Override
-    public void setMaxSettings(MaxSettings maxSettings) {
-        this.maxSettings = maxSettings;
+    public void setSearchSettings(SearchSettings searchSettings) {
+        this.searchSettings = searchSettings;
     }
 
     @Override
@@ -484,13 +484,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, MaxSettings settings) throws WildcardTermTooBroad {
+    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
         QueryInfo queryInfo = QueryInfo.create(this, annotatedField(query.getField()));
-        return Hits.fromSpanQuery(queryInfo, query, settings == null ? maxSettings() : settings);
+        return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings)
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings)
             throws WildcardTermTooBroad, RegexpTooLarge {
         return find(createSpanQuery(pattern, field, filter), settings);
     }
@@ -980,7 +980,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public SearchEmpty search(AnnotatedField field) {
-        return new SearchEmpty(QueryInfo.create(this, field));
+        return search(field, true);
+    }
+
+    @Override
+    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+        return new SearchEmpty(QueryInfo.create(this, field, useCache));
     }
     
     @Override

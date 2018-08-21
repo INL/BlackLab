@@ -118,13 +118,14 @@ public class BlsCache implements SearchCache {
             Supplier<R> searchTask, boolean block) {
         BlsCacheEntry<R> future;
         boolean created = false;
+        boolean useCache = search.queryInfo().useCache();
         synchronized (this) {
-            future = (BlsCacheEntry<R>) searches.get(search);
+            future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
                 checkFreeMemory(); // check that we have sufficient available memory
                 future = new BlsCacheEntry<>(search, searchTask);
                 created = true;
-                if (!cacheDisabled)
+                if (!cacheDisabled && useCache)
                     searches.put(search, future);
                 if (!block)
                     future.start(false);

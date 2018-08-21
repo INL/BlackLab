@@ -68,6 +68,10 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         ClauseCombinerNfa.nfaThreshold = nfaThreshold;
     }
 
+    public static long getNfaThreshold() {
+        return ClauseCombinerNfa.nfaThreshold;
+    }
+
     public static void setNfaMatchingEnabled(boolean doNfaMatching) {
         boolean doingNfaMatching = nfaThreshold != NO_NFA_MATCHING;
         if (doNfaMatching != doingNfaMatching)

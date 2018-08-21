@@ -32,9 +32,9 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
@@ -54,7 +54,6 @@ import nl.inl.blacklab.server.jobs.HitFilterSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
-import nl.inl.blacklab.server.jobs.SearchSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -270,12 +269,6 @@ public class SearchParameters {
         }
     }
 
-    public SearchSettings getSearchSettings() {
-        int fiMatchNfaFactor = getInteger("fimatch");
-        boolean useCache = getBoolean("usecache");
-        return new SearchSettings(debugMode, fiMatchNfaFactor, useCache);
-    }
-
     public boolean hasPattern() throws BlsException {
         return getPattern() != null;
     }
@@ -347,8 +340,13 @@ public class SearchParameters {
         }
         return p;
     }
+    
+    boolean getUseCache() {
+        return debugMode ? getBoolean("usecache") : true;
+    }
 
-    private MaxSettings getMaxSettings() {
+    private SearchSettings getSearchSettings() {
+        int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
         int maxRetrieve = getInteger("maxretrieve");
         if (searchManager.config().maxHitsToRetrieveAllowed() >= 0
                 && maxRetrieve > searchManager.config().maxHitsToRetrieveAllowed()) {
@@ -359,7 +357,7 @@ public class SearchParameters {
                 && maxCount > searchManager.config().maxHitsToCountAllowed()) {
             maxCount = searchManager.config().maxHitsToCountAllowed();
         }
-        return new MaxSettings(maxRetrieve, maxCount);
+        return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
     }
 
     WindowSettings getWindowSettings() {
@@ -541,7 +539,7 @@ public class SearchParameters {
     }
 
     public SearchHits hits() throws BlsException {
-        return blIndex().search().find(getPattern(), getFilterQuery(), getMaxSettings());
+        return blIndex().search().find(getPattern(), getFilterQuery(), getSearchSettings());
     }
 
     public SearchDocs docsWindow() throws BlsException {

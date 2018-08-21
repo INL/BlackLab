@@ -5,7 +5,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -16,13 +16,13 @@ public class SearchHitsFromPattern extends SearchHits {
     
     private Query filter;
     
-    private MaxSettings maxSettings;
+    private SearchSettings searchSettings;
 
-    SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, MaxSettings maxSettings) {
+    SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings searchSettings) {
         super(queryInfo);
         this.pattern = pattern;
         this.filter = filter;
-        this.maxSettings = maxSettings;
+        this.searchSettings = searchSettings;
     }
 
     /**
@@ -34,7 +34,7 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     public Hits executeInternal() throws WildcardTermTooBroad, RegexpTooLarge {
-        return queryInfo().index().find(pattern, queryInfo().field(), filter, maxSettings);
+        return queryInfo().index().find(pattern, queryInfo().field(), filter, searchSettings);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class SearchHitsFromPattern extends SearchHits {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((filter == null) ? 0 : filter.hashCode());
-        result = prime * result + ((maxSettings == null) ? 0 : maxSettings.hashCode());
+        result = prime * result + ((searchSettings == null) ? 0 : searchSettings.hashCode());
         result = prime * result + ((pattern == null) ? 0 : pattern.hashCode());
         return result;
     }
@@ -61,10 +61,10 @@ public class SearchHitsFromPattern extends SearchHits {
                 return false;
         } else if (!filter.equals(other.filter))
             return false;
-        if (maxSettings == null) {
-            if (other.maxSettings != null)
+        if (searchSettings == null) {
+            if (other.searchSettings != null)
                 return false;
-        } else if (!maxSettings.equals(other.maxSettings))
+        } else if (!searchSettings.equals(other.searchSettings))
             return false;
         if (pattern == null) {
             if (other.pattern != null)

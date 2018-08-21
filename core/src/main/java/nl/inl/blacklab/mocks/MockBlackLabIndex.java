@@ -33,8 +33,8 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.MaxSettings;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -45,7 +45,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private IndexMetadata indexMetadata;
 
-    private MaxSettings maxSettings;
+    private SearchSettings searchSettings;
 
     private Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
@@ -59,7 +59,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         super();
         indexMetadata = new MockIndexMetadata();
         analyzer = new BLStandardAnalyzer();
-        maxSettings = MaxSettings.defaults();
+        searchSettings = SearchSettings.defaults();
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
@@ -129,8 +129,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public MaxSettings maxSettings() {
-        return maxSettings;
+    public SearchSettings searchSettings() {
+        return searchSettings;
     }
 
     @Override
@@ -169,12 +169,12 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, MaxSettings settings) throws TooManyClauses {
+    public Hits find(BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings) throws TooManyClauses {
+    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -215,7 +215,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public void setMaxSettings(MaxSettings settings) {
+    public void setSearchSettings(SearchSettings settings) {
         throw new UnsupportedOperationException();
     }
 
@@ -241,6 +241,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public SearchEmpty search(AnnotatedField field) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public SearchEmpty search(AnnotatedField field, boolean useCache) {
         throw new UnsupportedOperationException();
     }
     

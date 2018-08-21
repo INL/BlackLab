@@ -27,14 +27,15 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
 public class HitsFromQuery extends Hits {
 
-    /** Max. hits to process/count. */
-    MaxSettings maxSettings;
+    /** Settings such as max. hits to process/count. */
+    SearchSettings searchSettings;
     
     /** Did we exceed the maximums? */
     MaxStats maxStats;
@@ -88,20 +89,27 @@ public class HitsFromQuery extends Hits {
     /**
      * Construct a Hits object from a SpanQuery.
      *
-     * @param index the index object
-     * @param field field our hits came from
+     * @param queryInfo query info
      * @param sourceQuery the query to execute to get the hits
+     * @param searchSettings search settings
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, MaxSettings maxSettings) throws WildcardTermTooBroad {
+    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
         super(queryInfo);
-        this.maxSettings = maxSettings;
+        this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;
         hitQueryContext = new HitQueryContext();
         try {
             BlackLabIndex index = queryInfo.index();
             IndexReader reader = index.reader();
+            
+            // Override FI match threshold? (debug use only!)
+            long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
+            if (searchSettings.fiMatchFactor() != -1) {
+                ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
+            }
+            
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
             BLSpanQuery optimize = sourceQuery.optimize(reader);
@@ -109,6 +117,11 @@ public class HitsFromQuery extends Hits {
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): rewrite");
             BLSpanQuery spanQuery = optimize.rewrite(reader);
+            
+            // Restore previous FI match threshold
+            if (searchSettings.fiMatchFactor() != -1) {
+                ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
+            }
 
             //System.err.println(spanQuery);
             termContexts = new HashMap<>();
@@ -177,8 +190,8 @@ public class HitsFromQuery extends Hits {
             }
             try {
                 boolean readAllHits = number < 0;
-                int maxHitsToCount = maxSettings.maxHitsToCount();
-                int maxHitsToProcess = maxSettings.maxHitsToProcess();
+                int maxHitsToCount = searchSettings.maxHitsToCount();
+                int maxHitsToProcess = searchSettings.maxHitsToProcess();
                 while (readAllHits || results.size() < number) {
     
                     // Pause if asked

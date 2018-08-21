@@ -49,7 +49,7 @@ public class TestResultsGrouper {
         Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
 
         searcher.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.maxSettings());
+        Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.searchSettings());
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
 

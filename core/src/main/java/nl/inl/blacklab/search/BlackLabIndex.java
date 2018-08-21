@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.MaxSettings;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -82,7 +82,7 @@ public interface BlackLabIndex extends Closeable {
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir, MaxSettings settings) throws ErrorOpeningIndex {
+    static BlackLabIndex open(File indexDir, SearchSettings settings) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
     }
 
@@ -148,7 +148,7 @@ public interface BlackLabIndex extends Closeable {
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query, MaxSettings settings) throws WildcardTermTooBroad;
+    Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad;
 
     /**
      * Find hits for a pattern in a field.
@@ -163,7 +163,7 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      * @throws RegexpTooLarge 
      */
-    Hits find(TextPattern pattern, AnnotatedField field, Query filter, MaxSettings settings)
+    Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings)
             throws WildcardTermTooBroad, RegexpTooLarge;
 
     /**
@@ -209,6 +209,15 @@ public interface BlackLabIndex extends Closeable {
      */
     QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
     
+    /**
+     * Start building a Search. 
+     * 
+     * @param field field to search
+     * @param useCache whether to use the cache or bypass it
+     * @return empty search object
+     */
+    SearchEmpty search(AnnotatedField field, boolean useCache);
+
     /**
      * Start building a Search. 
      * 
@@ -341,7 +350,7 @@ public interface BlackLabIndex extends Closeable {
      *
      * @return settings object
      */
-    MaxSettings maxSettings();
+    SearchSettings searchSettings();
 
     /**
      * How do we fix well-formedness for snippets of XML?
@@ -416,7 +425,7 @@ public interface BlackLabIndex extends Closeable {
      * Set the maximum number of hits to process/count.
      * @param settings desired settings
      */
-    void setMaxSettings(MaxSettings settings);
+    void setSearchSettings(SearchSettings settings);
     
     /**
      * Set the default context size.

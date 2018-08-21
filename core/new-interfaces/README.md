@@ -85,9 +85,9 @@ FOUT, ZIT OOK AL IN 1.7: (negatieve match met NFA werkt niet goed, golf komt toc
 http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22de%22+[lemma+!%3D+%22golf%22]{2}+%22daarbij%22+%22ontstond%22&sort=hit%3Alemma&_=1534601373896&explain=yes
 ```
 
-cache
-- boolean useCache = jobDesc.getSearchSettings().isUseCache(); (in queryInfo...?)
-  idem andere SearchSettings (debugMode, nfa-factor)..?
+
+BLS testen!
+
 
 PERFORMANCE ANALYSIS
 - log queries, times, #results, etc. to separate log file for analysis
