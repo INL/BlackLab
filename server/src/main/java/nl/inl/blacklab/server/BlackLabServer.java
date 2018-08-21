@@ -329,7 +329,7 @@ public class BlackLabServer extends HttpServlet {
             } catch (BlsException e) {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
             } catch (InterruptedSearch e) {
-                httpCode = Response.internalError(es, e, debugMode, 7);
+                httpCode = Response.error(es, "INTERRUPTED", "Search was interrupted", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, 32);
             }

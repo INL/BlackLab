@@ -259,6 +259,7 @@ public class BlsCache implements SearchCache {
         long cacheSizeBytes = (long)resultsObjectsInCache * SIZE_OF_HIT;
 
         List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
+        int numberOfSearchesInCache = searches.size();
 
         // Sort the searches based on descending "worthiness"
         for (BlsCacheEntry<?> s : searches)
@@ -282,12 +283,13 @@ public class BlsCache implements SearchCache {
             if (!search1.isSearchDone() && search1.timeUserWaited() > config.getMaxSearchTimeMs()) {
                 // Search is taking too long. Cancel it.
                 if (BlsConfig.traceCache) {
-                    logger.debug("Search is taking too long (time " + search1.timeUserWaited() + "s > max time "
+                    logger.debug("Search is taking too long (time " + (search1.timeUserWaited()/1000) + "s > max time "
                             + config.getMaxSearchTimeSec() + "s)");
                     logger.debug("  Cancelling searchjob: " + search1);
                 }
                 remove(search1.search());
                 cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
+                numberOfSearchesInCache--;
                 removed.add(search1);
                 search1.cancelSearch();
             } else if (search1.isDone()) {
@@ -296,11 +298,13 @@ public class BlsCache implements SearchCache {
                 boolean isCacheTooBig = false;
                 boolean isSearchTooOld = false;
                 long cacheSizeMegs = 0;
+                boolean tooMuchMemory = false;
+                boolean tooManySearches = false;
                 if (lookAtCacheSizeAndSearchAccessTime) {
-                    boolean tooManySearches = config.getMaxNumberOfJobs() >= 0
-                            && searches.size() > config.getMaxNumberOfJobs();
+                    tooManySearches = config.getMaxNumberOfJobs() >= 0
+                            && numberOfSearchesInCache > config.getMaxNumberOfJobs();
                     cacheSizeMegs = cacheSizeBytes / 1000000;
-                    boolean tooMuchMemory = config.getMaxSizeMegs() >= 0
+                    tooMuchMemory = config.getMaxSizeMegs() >= 0
                             && cacheSizeMegs > config.getMaxSizeMegs();
                     isCacheTooBig = tooManySearches || tooMuchMemory;
                     isSearchTooOld = false;
@@ -319,16 +323,20 @@ public class BlsCache implements SearchCache {
                         if (memoryToFreeUp > 0)
                             logger.debug("Not enough free mem (free " + freeMegs + "M < min free "
                                     + config.getMinFreeMemTargetMegs() + "M)");
-                        else if (isCacheTooBig)
+                        else if (tooManySearches)
+                            logger.debug("Too many searches in cache (" + searches.size() + " > max size "
+                                    + config.getMaxNumberOfJobs() + ")");
+                        else if (tooMuchMemory)
                             logger.debug("Cache too large (size " + cacheSizeMegs + "M > max size "
                                     + config.getMaxSizeMegs() + "M)");
                         else
-                            logger.debug("Searchjob too old (age " + (int) search1.timeUnused() + "s > max age "
-                                    + config.getMaxJobAgeMs() + "s)");
+                            logger.debug("Searchjob too old (age " + (int)(search1.timeUnused()/1000) + "s > max age "
+                                    + (config.getMaxJobAgeMs()/1000) + "s)");
                         logger.debug("  Removing searchjob: " + search1);
                     }
                     remove(search1.search());
                     cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
+                    numberOfSearchesInCache--;
                     removed.add(search1);
                     memoryToFreeUp -= search1.numberOfStoredHits() * SIZE_OF_HIT;
                     

@@ -9,11 +9,11 @@ public class SampleParameters {
     
     private static final Random random = new Random(); 
     
-    public static SampleParameters percentage(float percentageOfHits, long seedValueSet) {
+    public static SampleParameters percentage(double percentageOfHits, long seedValueSet) {
         return new SampleParameters(true, percentageOfHits, 0, true, seedValueSet);
     }
     
-    public static SampleParameters percentage(float percentageOfHits) {
+    public static SampleParameters percentage(double percentageOfHits) {
         return new SampleParameters(true, percentageOfHits, 0, false, 0);
     }
     
@@ -27,7 +27,7 @@ public class SampleParameters {
     
     boolean isPercentage;
     
-    private float percentageOfHits;
+    private double percentageOfHits;
     
     private int numberOfHitsSet;
     
@@ -35,7 +35,7 @@ public class SampleParameters {
     
     private long seedValueSet;
     
-    SampleParameters(boolean isPercentage, float percentageOfHits, int numberOfHitsSet, boolean isFixedSeed, long seedValueSet) {
+    SampleParameters(boolean isPercentage, double percentageOfHits, int numberOfHitsSet, boolean isFixedSeed, long seedValueSet) {
         this.isPercentage = isPercentage;
         this.percentageOfHits = percentageOfHits;
         this.numberOfHitsSet = numberOfHitsSet;
@@ -72,7 +72,7 @@ public class SampleParameters {
      * @return number to sample
      */
     public int numberOfHits(int totalNumberOfHits) {
-        return isPercentage() ? Math.round(percentageOfHits() * totalNumberOfHits) : numberOfHitsSet();
+        return isPercentage() ? Math.round((float)percentageOfHits() * totalNumberOfHits) : numberOfHitsSet();
     }
     
     
@@ -101,7 +101,7 @@ public class SampleParameters {
      * 
      * @return desired percentage
      */
-    public float percentageOfHits() {
+    public double percentageOfHits() {
         return percentageOfHits;
     }
     
@@ -128,16 +128,23 @@ public class SampleParameters {
     public boolean isFixedSeed() {
         return isFixedSeed;
     }
+    
+    @Override
+    public String toString() {
+        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Integer.toString(numberOfHitsSet)) + 
+                ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED)" : " (RANDOM)");
+    }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
+        result = prime * result + (isFixedSeed ? 1231 : 1237);
         result = prime * result + (isPercentage ? 1231 : 1237);
-        if (isPercentage)
-            result = prime * result + Float.floatToIntBits(percentageOfHits);
-        else
-            result = prime * result + numberOfHitsSet;
+        result = prime * result + numberOfHitsSet;
+        long temp;
+        temp = Double.doubleToLongBits(percentageOfHits);
+        result = prime * result + (int) (temp ^ (temp >>> 32));
         result = prime * result + (int) (seedValueSet ^ (seedValueSet >>> 32));
         return result;
     }
@@ -151,21 +158,18 @@ public class SampleParameters {
         if (getClass() != obj.getClass())
             return false;
         SampleParameters other = (SampleParameters) obj;
+        if (isFixedSeed != other.isFixedSeed)
+            return false;
         if (isPercentage != other.isPercentage)
             return false;
-        if (!isPercentage && numberOfHitsSet != other.numberOfHitsSet)
+        if (numberOfHitsSet != other.numberOfHitsSet)
             return false;
-        if (isPercentage && Float.floatToIntBits(percentageOfHits) != Float.floatToIntBits(other.percentageOfHits))
+        if (Double.doubleToLongBits(percentageOfHits) != Double.doubleToLongBits(other.percentageOfHits))
             return false;
         if (seedValueSet != other.seedValueSet)
             return false;
         return true;
     }
     
-    @Override
-    public String toString() {
-        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Integer.toString(numberOfHitsSet)) + 
-                ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED)" : " (RANDOM)");
-    }
     
 }

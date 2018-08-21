@@ -46,7 +46,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.reader = hits.index().reader();
+        this.reader = hits == null ? null : hits.index().reader();
         this.fieldName = prop.fieldName;
     }
 

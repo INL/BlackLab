@@ -185,7 +185,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (block) {
             try {
                 // Wait until result available
-                while (!resultAvailable && thread != null && thread.isAlive()) {
+                while (!resultAvailable) {
                     Thread.sleep(100);
                 }
             } catch (InterruptedException e) {
@@ -264,9 +264,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return time since search finished (ms)
      */
     public long timeSinceFinished() {
-        if (!fullSearchDone)
-            return 0;
-        return now() - fullSearchDoneTime;
+        return fullSearchDone ? now() - fullSearchDoneTime : 0;
     }
 
     /**
@@ -278,9 +276,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return the unused time (ms)
      */
     public long timeUnused() {
-        if (isDone())
-            return now() - lastAccessTime;
-        return 0;
+        return isDone() ? now() - lastAccessTime : 0;
     }
 
     /**
@@ -294,7 +290,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     public long timeUserWaited() {
         if (fullSearchDone)
             return fullSearchDoneTime - createTime;
-        return timeSinceCreation();
+        else return timeSinceCreation();
     }
 
     /**
@@ -318,9 +314,9 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     @Override
-    public synchronized T get() throws InterruptedException, ExecutionException {
+    public T get() throws InterruptedException, ExecutionException {
         // Wait until result available
-        while (!resultAvailable && thread != null && thread.isAlive()) {
+        while (!resultAvailable) {
             Thread.sleep(100);
         }
         if (exceptionThrown != null)
@@ -329,10 +325,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     @Override
-    public synchronized T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         // Wait until result available
         long ms = unit.toMillis(time);
-        while (ms > 0 && !resultAvailable && thread != null && thread.isAlive()) {
+        while (ms > 0 && !resultAvailable) {
             Thread.sleep(100);
             ms -= 100;
         }
@@ -396,12 +392,15 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     @Override
-    public synchronized boolean cancel(boolean interrupt) {
-        if (resultAvailable || this.thread == null || !this.thread.isAlive())
+    public boolean cancel(boolean interrupt) {
+        if (resultAvailable)
             return false; // cannot cancel
         cancelled = true;
-        if (interrupt)
-            this.thread.interrupt();
+        Thread theThread = thread; // avoid locking
+        if (interrupt && theThread != null) {
+            theThread.interrupt();
+            thread = null;
+        }
         return true;
     }
 
@@ -415,8 +414,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * 
      * @return true if the search is fully complete (or threw and exception)
      */
-    public synchronized boolean isSearchDone() {
-        return resultAvailable && (this.thread == null || !this.thread.isAlive()); 
+    public boolean isSearchDone() {
+        return fullSearchDone; 
     }
 
     /**
@@ -437,14 +436,18 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * 
      * @return true if the search was cancelled, false if it could not be cancelled (because it wasn't running anymore)
      */
-    public synchronized boolean cancelSearch() {
+    public boolean cancelSearch() {
         if (!resultAvailable) {
             // Regular situation; use regular cancel method.
             return cancel(true);
         }
-        if (this.thread == null || !this.thread.isAlive())
+        if (fullSearchDone)
             return false; // cannot cancel
-        this.thread.interrupt();
+        Thread theThread = thread; // avoid locking
+        if (theThread != null) {
+            theThread.interrupt();
+            thread = null;
+        }
         return true;
     }
 
@@ -464,7 +467,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         return pausing.isPaused() ? "paused" : "running";
     }
     
-    public synchronized void dataStream(DataStream ds, boolean debugInfo) {
+    public void dataStream(DataStream ds, boolean debugInfo) {
         boolean isCount = search instanceof SearchCount;
         ds.startMap()
                 .entry("id", id)

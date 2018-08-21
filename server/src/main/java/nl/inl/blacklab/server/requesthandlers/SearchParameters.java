@@ -329,9 +329,9 @@ public class SearchParameters {
         boolean withSeed = containsKey("sampleseed");
         if (containsKey("sample")) {
             if (withSeed)
-                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0), getLong("sampleseed"));
+                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0) / 100.0, getLong("sampleseed"));
             else
-                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0));
+                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0) / 100.0);
         } else {
             if (withSeed)
                 p = SampleParameters.fixedNumber(getInteger("samplenum"), getLong("sampleseed"));
@@ -539,7 +539,7 @@ public class SearchParameters {
     }
 
     public SearchHits hits() throws BlsException {
-        return blIndex().search().find(getPattern(), getFilterQuery(), getSearchSettings());
+        return blIndex().search(blIndex().mainAnnotatedField(), getUseCache()).find(getPattern(), getFilterQuery(), getSearchSettings());
     }
 
     public SearchDocs docsWindow() throws BlsException {

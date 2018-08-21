@@ -256,7 +256,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     
     @Override
     public HitProperty reverse() {
-        return copyWith(null, null, true);
+        return copyWith(hits, contexts, true);
     }
 
     /**

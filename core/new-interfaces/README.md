@@ -87,6 +87,20 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
 
 
 BLS testen!
+- wordsaroundhit in corpus-frontend lijkt (nog) niet te werken..?
+
+
+toString:
+- Contexts
+
+
+
+PERFORMANCE IMPROVEMENTS
+- don't hold on to references
+- don't keep context info around
+- calculate cache size based on number of objects (mostly hits, so reasonable approximation)
+- don't empty out cache when maximum number of searches is reached
+- 
 
 
 PERFORMANCE ANALYSIS

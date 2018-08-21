@@ -66,7 +66,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
         ResultCount totalHits;
         try {
-            totalHits = originalHitsSearch.get();
+            totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         } catch (ExecutionException e) {

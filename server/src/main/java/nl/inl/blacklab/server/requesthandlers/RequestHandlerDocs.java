@@ -41,7 +41,7 @@ public class RequestHandlerDocs extends RequestHandler {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    BlsCacheEntry<DocResults> search = null;
+    BlsCacheEntry<?> search = null;
     BlsCacheEntry<ResultCount> originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
@@ -80,8 +80,17 @@ public class RequestHandlerDocs extends RequestHandler {
     private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
     
+        BlsCacheEntry<DocGroups> docGroupFuture;
         // Yes. Group, then show hits from the specified group
-        DocGroups groups = searchMan.search(user, searchParam.docsGrouped());
+        search = docGroupFuture = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
+        DocGroups groups;
+        try {
+            groups = docGroupFuture.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        }
     
         PropertyValue viewGroupVal = null;
         viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -113,6 +122,7 @@ public class RequestHandlerDocs extends RequestHandler {
         totalDocResults = docsSorted;
         window = docsSorted.window(first, number);
         
+        originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = 0; // TODO searchGrouped.userWaitTime();
         return doResponse(ds, true);
@@ -166,7 +176,7 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.startEntry("summary").startMap();
         ResultCount totalHits;
         try {
-            totalHits = originalHitsSearch.get();
+            totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         } catch (ExecutionException e) {

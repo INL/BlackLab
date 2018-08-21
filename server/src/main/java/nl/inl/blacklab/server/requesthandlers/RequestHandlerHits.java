@@ -130,7 +130,7 @@ public class RequestHandlerHits extends RequestHandler {
             
             // Since we're going to always launch a totals count anyway, just do it right away
             // then construct a window on top of the total
-            hits = searchMan.search(user, searchParam.hits());
+            hits = searchMan.search(user, searchParam.hitsSample());
             job = searchMan.searchNonBlocking(user, searchParam.hitsCount()); // always launch totals nonblocking!
             docsCount = searchMan.search(user, searchParam.docsCount());
             try {
@@ -220,7 +220,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
             concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
         else
-            kwics = window.kwics(blIndex().defaultContextSize());
+            kwics = window.kwics(contextSettings.size());
         for (Hit hit : window) {
             ds.startItem("hit").startMap();
 
