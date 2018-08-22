@@ -18,7 +18,7 @@ public class SearchDocsSorted extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    protected DocResults executeInternal() throws InvalidQuery {
         return source.execute().sort(property);
     }
 

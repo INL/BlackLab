@@ -21,7 +21,7 @@ public class SearchCollocationsSampled extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    protected TermFrequencyList executeInternal() throws InvalidQuery {
         return source.execute().sample(sampleParameters);
     }
 

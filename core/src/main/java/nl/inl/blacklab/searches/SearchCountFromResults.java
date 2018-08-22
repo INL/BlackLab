@@ -24,7 +24,7 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
     }
 
     @Override
-    public ResultCount executeInternal() throws InvalidQuery {
+    protected ResultCount executeInternal() throws InvalidQuery {
         return new ResultCount(source.execute(), type);
     }
     

@@ -30,7 +30,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @throws InvalidQuery 
      */
     @Override
-    public HitGroups executeInternal() throws InvalidQuery {
+    protected HitGroups executeInternal() throws InvalidQuery {
         return HitGroups.fromHits(source.execute(), property, maxHits);
     }
 

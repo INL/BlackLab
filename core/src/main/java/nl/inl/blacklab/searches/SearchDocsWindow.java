@@ -20,7 +20,7 @@ public class SearchDocsWindow extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    protected DocResults executeInternal() throws InvalidQuery {
         return source.execute().window(first, number);
     }
 
