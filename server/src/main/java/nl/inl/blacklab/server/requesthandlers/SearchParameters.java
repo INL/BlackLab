@@ -368,7 +368,7 @@ public class SearchParameters {
 
     WindowSettings getWindowSettings() {
         int first = getInteger("first");
-        int size = getInteger("number");
+        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().maxPageSize());
         return new WindowSettings(first, size);
     }
 

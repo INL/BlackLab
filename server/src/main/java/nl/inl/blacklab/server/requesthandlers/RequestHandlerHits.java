@@ -140,23 +140,26 @@ public class RequestHandlerHits extends RequestHandler {
             } catch (ExecutionException e) {
                 throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
             }
-
+            
 //            int sleepTime = 10;
 //            int totalSleepTime = 0;
 
             // check if we have the requested window available
             // NOTE: don't create the HitsWindow object yet, as it will attempt to resolve the hits immediately and block the thread until they've been found.
             // Instead, check with the Hits object directly, instead of blindly getting (and thus loading) the hits by creating a window
-            int first = Math.max(0, searchParam.getInteger("first"));
-            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
+//            int first = Math.max(0, searchParam.getInteger("first"));
+//            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
 
-            hits.hitsStats().processedAtLeast(first + size);
+            window = searchMan.search(user, searchParam.hitsWindow());
 
-            // We blocked, so if we don't have the page available, the request is out of bounds.
-            if (hits.hitsStats().processedSoFar() < first)
-                first = 0;
-
-            window = hits.window(first, size);
+            
+//            hits.hitsStats().processedAtLeast(first + size);
+//
+//            // We blocked, so if we don't have the page available, the request is out of bounds.
+//            if (hits.hitsStats().processedSoFar() < first)
+//                first = 0;
+//
+//            window = hits.window(first, size);
         }
 
         if (searchParam.getString("calc").equals("colloc")) {
@@ -185,7 +188,7 @@ public class RequestHandlerHits extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
 
-        double totalTime = job.threwException() ? -1 : job.timeUserWaited();
+        long totalTime = job.threwException() ? -1 : job.timeUserWaited();
 
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window
