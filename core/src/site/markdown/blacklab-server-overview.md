@@ -232,7 +232,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>outputformat </td>
-		<td>“json” or “xml”. (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.</td>
+		<td>“json”, “xml” or "csv". (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.<br/><br/>For "csv", two additional parameters are supported: "csvsummary=yes" will add a summary of the query to the CSV output; "csvsepline=yes" will add "sep=," as the first line, specifically for using the resulting CSV with Excel. Both default to "no".</td>
 	</tr>
 	<tr>
 		<td>jsonp </td>
