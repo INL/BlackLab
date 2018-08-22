@@ -532,7 +532,7 @@ public class SearchParameters {
     }
 
     public SearchCount hitsCount() throws BlsException {
-        return hitsSample().count();
+        return hitsSample().hitCount();
     }
 
     public SearchHits hitsFiltered() throws BlsException {
@@ -563,7 +563,7 @@ public class SearchParameters {
     }
 
     public SearchCount docsCount() throws BlsException {
-        return docs().count();
+        return hitsSample().docCount();
     }
 
     public SearchDocs docs() throws BlsException {

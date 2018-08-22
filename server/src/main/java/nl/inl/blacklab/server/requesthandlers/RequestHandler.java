@@ -125,7 +125,7 @@ public abstract class RequestHandler {
         boolean pathGiven = urlPathInfo.length() > 0;
         
         // Debug feature: sleep for x ms before carrying out the request
-        if (!doDebugSleep(request)) {
+        if (debugMode && !doDebugSleep(request)) {
             return errorObj.error("ROUGH_AWAKENING", "I was taking a nice nap, but something disturbed me", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
         }
         
@@ -336,7 +336,9 @@ public abstract class RequestHandler {
             int sleepMs = Integer.parseInt(sleep);
             if (sleepMs > 0 || sleepMs <= 3600000) {
                 try {
+                    logger.debug("Debug sleep requested (" + sleepMs + "ms). Zzzzz...");
                     Thread.sleep(sleepMs);
+                    logger.debug("Ahh, that was a nice snooze!");
                 } catch (InterruptedException e) {
                     return false;
                 }

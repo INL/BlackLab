@@ -462,8 +462,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
     
     private String status() {
-        if (isDone())
+        if (isSearchDone())
             return "finished";
+        if (isDone())
+            return "counting";
         return pausing.isPaused() ? "paused" : "running";
     }
     

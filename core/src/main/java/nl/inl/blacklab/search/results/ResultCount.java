@@ -4,12 +4,47 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 
 public class ResultCount extends ResultsStats implements SearchResult {
     
-    private ResultsStats count;
+    public enum CountType {
+        RESULTS, // number of results
+        HITS,    // number of hits represented by results
+        DOCS     // number of docs represented by results
+    }
     
+    private ResultsStats count;
+
     private boolean wasInterrupted = false;
 
-    public ResultCount(Results<?> count) {
-        this.count = count.resultsStats();
+    public ResultCount(Results<?> count, CountType type) {
+        switch (type) {
+        case RESULTS:
+            this.count = count.resultsStats();
+            break;
+        case HITS:
+            if (count instanceof Hits) {
+                this.count = ((Hits) count).hitsStats();
+            } else if (count instanceof HitGroups) {
+                int n = ((HitGroups) count).sumOfGroupSizes();
+                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+            } else if (count instanceof DocResults) {
+                int n = ((DocResults) count).sumOfGroupSizes();
+                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+            } else if (count instanceof DocGroups) {
+                throw new UnsupportedOperationException("Cannot get hits count from DocGroups");
+            }
+            break;
+        case DOCS:
+            if (count instanceof Hits) {
+                this.count = ((Hits) count).docsStats();
+            } else if (count instanceof HitGroups) {
+                throw new UnsupportedOperationException("Cannot get docs count from HitGroups");
+            } else if (count instanceof DocResults) {
+                this.count = count.resultsStats();
+            } else if (count instanceof DocGroups) {
+                int n = ((DocGroups) count).sumOfGroupSizes();
+                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+            }
+            break;
+        }
         update();
     }
 

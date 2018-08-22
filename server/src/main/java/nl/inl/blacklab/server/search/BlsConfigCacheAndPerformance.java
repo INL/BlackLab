@@ -26,12 +26,6 @@ public class BlsConfigCacheAndPerformance {
     /** How much free memory we should try to target when cleaning the cache. */
     private long minFreeMemTargetMegs;
 
-    /**
-     * If we're below target mem, how many jobs should we get rid of each time we
-     * add something to the cache?
-     */
-    private int numberOfJobsToPurgeWhenBelowTargetMem;
-
     private int maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
 
     private boolean autoDetectMaxConcurrent = true;
@@ -120,8 +114,7 @@ public class BlsConfigCacheAndPerformance {
             maxNumberOfJobs = JsonUtil.getIntProp(cacheSettings, "maxNumberOfJobs", 20);
             maxSizeMegs = JsonUtil.getIntProp(cacheSettings, "maxSizeMegs", -1);
             minFreeMemTargetMegs = JsonUtil.getIntProp(cacheSettings, "targetFreeMemMegs", 100);
-            numberOfJobsToPurgeWhenBelowTargetMem = JsonUtil.getIntProp(cacheSettings,
-                    "numberOfJobsToPurgeWhenBelowTargetMem", 2);
+            maxSearchTimeSec = JsonUtil.getIntProp(cacheSettings, "maxSearchTimeSec", 300);
         }
 
         JsonNode serverLoadSettings = null;
@@ -158,7 +151,6 @@ public class BlsConfigCacheAndPerformance {
         maxNumberOfJobs = 20;
         maxSizeMegs = -1;
         minFreeMemTargetMegs = 100;
-        numberOfJobsToPurgeWhenBelowTargetMem = 100;
     }
 
     public long getMaxSizeMegs() {
@@ -171,10 +163,6 @@ public class BlsConfigCacheAndPerformance {
 
     public long getMinFreeMemTargetMegs() {
         return minFreeMemTargetMegs;
-    }
-
-    public int getNumberOfJobsToPurgeWhenBelowTargetMem() {
-        return numberOfJobsToPurgeWhenBelowTargetMem;
     }
 
     public int getMaxConcurrentSearches() {

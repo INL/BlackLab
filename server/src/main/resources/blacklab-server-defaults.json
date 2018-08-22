@@ -170,7 +170,7 @@
             // How much free memory the cache should shoot for (in megabytes) while cleaning up.
             // Because we don't have direct control over the garbage collector, we can't reliably clean up until
             // this exact number is available. Instead we just get rid of a few cached jobs whenever a
-            // new job is added and we're under this target number. See numberOfJobsToPurgeWhenBelowTargetMem.
+            // new job is added and we're under this target number.
             
             // @@@ change this to % (of initial free memory) ?
             
@@ -180,7 +180,6 @@
             // is created and added to the cache, we will get rid of this number of older jobs in order
             // to (hopefully) free up memory (if the Java GC agrees with us).
             // 2 seems like an okay value, but you can change it if you want to experiment.
-            //"numberOfJobsToPurgeWhenBelowTargetMem": 2
         },
 
         // The minimum amount of free memory required to start a new search job. If this memory is not available,

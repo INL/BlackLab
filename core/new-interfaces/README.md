@@ -86,6 +86,9 @@ http://localhost:8080/blacklab-server/opensonar/hits?number=20&first=0&patt=%22d
 ```
 
 
+
+
+
 PERFORMANCE IMPROVEMENTS MADE SO FAR
 - don't hold on to references
 - don't keep context info around
@@ -98,9 +101,11 @@ PERFORMANCE IMPROVEMENTS MADE SO FAR
 
 PERFORMANCE ANALYSIS
 - zet cache monitoring tool op server
-- bouw evt. nieuwe server met nieuwe blacklab, zodat we sneller kunnen vergelijken?
-- log queries, times, #results, etc. to separate log file for analysis
+- JConsole/VisualVM connecten. Eerst lokaal draaiend krijgen, dan pas op server?
+- log queries, times, #results, memory, etc. to separate log file for analysis
   also log whether search was aborted (, paused)
+  log verschillende fases van uitvoeren query met de tijden (lucene, hits, sort/group, ...)
+- bouw evt. nieuwe server met nieuwe blacklab, zodat we sneller kunnen vergelijken?
 - maybe add a performance logging object to QueryInfo, so you can gather detailed information about
   the different phases of queries, and see what is slowing things down
 
@@ -119,6 +124,8 @@ SERVER POLICIES
 
 
 POSSIBLE OPTIMIZATIONS
+- (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
+
 - what if we do a search, start a totalcount that doesn't store hits, then decide we want to group the hits?
   should we terminate the totalcount...?
   or should we always start out storing hits, and only transition to not storing but just counting if we haven't
@@ -145,7 +152,7 @@ POSSIBLE OPTIMIZATIONS
   
 
 MISC
-- (eventually: don't use threads except for total count (the only asynchronously running search, right...?) )
+- Clean up config files [but keep backwards compatible...?]
 - Maybe SearchResult should know its Search (pass in QueryInfo..?)
 - base interface DocStore for ForwardIndex, ContentStore..?
   access FI/CS using FIDoc / CSDoc (FIDoc already exists, but not used much) ?
