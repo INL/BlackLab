@@ -99,6 +99,8 @@ public class SearchParameters {
         defaultParameterValues.put("explain", "no");
         defaultParameterValues.put("listvalues", "");
         defaultParameterValues.put("subprops", "");
+        defaultParameterValues.put("csvsummary", "no");
+        defaultParameterValues.put("csvsepline", "no");
     }
 
     private static String getDefault(String paramName) {
@@ -159,7 +161,11 @@ public class SearchParameters {
 
             // How to execute request
             "waitfortotal", // wait until total number of results known?
-            "term" // term for autocomplete
+            "term", // term for autocomplete
+            
+            // CSV options
+            "csvsummary", // include summary of search in the CSV output? [no]
+            "csvsepline" // include separator declaration for Excel? [no]
     );
 
     /** The search manager, for querying default value for missing parameters */

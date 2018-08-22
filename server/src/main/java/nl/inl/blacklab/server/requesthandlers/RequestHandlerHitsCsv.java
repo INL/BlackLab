@@ -136,11 +136,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             row.addAll(groups.groupCriteria().propNames());
             row.add("count");
 
-            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
-            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
-            addSummaryCommonFieldsCSV(format, printer, searchParam);
-            row.clear();
+            CSVPrinter printer = createHeader(row);
 
             // write the groups
             for (HitGroup group : groups) {
@@ -155,6 +151,25 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         } catch (IOException e) {
             throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
         }
+    }
+
+    private CSVPrinter createHeader(List<String> row) throws IOException {
+        // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+        CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
+        if (includeSearchParameters()) {
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+        }
+        row.clear();
+        return printer;
+    }
+
+    private boolean includeSearchParameters() {
+        return searchParam.getBoolean("csvsummary");
+    }
+
+    private boolean declareSeparator() {
+        return searchParam.getBoolean("csvsepline");
     }
 
     private static void writeHit(Kwic kwic, Annotation mainTokenProperty, List<Annotation> otherTokenProperties, String docPid,
@@ -202,11 +217,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             }
 
-            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
-            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
-            addSummaryCommonFieldsCSV(format, printer, searchParam);
-            row.clear();
+            CSVPrinter printer = createHeader(row);
 
             // Write the hits
             // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
