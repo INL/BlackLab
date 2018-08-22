@@ -102,7 +102,7 @@ public abstract class RequestHandler {
      */
     public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode,
             DataFormat outputType) {
-
+        
         // See if a user is logged in
         SearchManager searchManager = servlet.getSearchManager();
         User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
@@ -123,7 +123,12 @@ public abstract class RequestHandler {
         String urlPathInfo = parts.length >= 3 ? parts[2] : "";
         boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
-
+        
+        // Debug feature: sleep for x ms before carrying out the request
+        if (!doDebugSleep(request)) {
+            return errorObj.error("ROUGH_AWAKENING", "I was taking a nice nap, but something disturbed me", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+        }
+        
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
         boolean isYourPrivateIndex = false;
@@ -323,6 +328,21 @@ public abstract class RequestHandler {
         if (debugMode)
             requestHandler.setDebug(debugMode);
         return requestHandler;
+    }
+
+    private static boolean doDebugSleep(HttpServletRequest request) {
+        String sleep = request.getParameter("sleep");
+        if (sleep != null) {
+            int sleepMs = Integer.parseInt(sleep);
+            if (sleepMs > 0 || sleepMs <= 3600000) {
+                try {
+                    Thread.sleep(sleepMs);
+                } catch (InterruptedException e) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     boolean debugMode;
