@@ -46,7 +46,7 @@ public class RequestHandlerDocs extends RequestHandler {
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
-    private double totalTime;
+    private long totalTime;
     
     @Override
     public int handle(DataStream ds) throws BlsException {

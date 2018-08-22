@@ -593,8 +593,8 @@ public abstract class RequestHandler {
     protected <T> void addSummaryCommonFields(
             DataStream ds,
             SearchParameters searchParam,
-            double searchTime,
-            double countTime,
+            long searchTime,
+            long countTime,
             ResultGroups<T> groups,
             WindowStats window
             ) throws BlsException {
@@ -620,9 +620,9 @@ public abstract class RequestHandler {
         }
 
         // Information about search progress
-        ds.entry("searchTime", (int) (searchTime * 1000));
+        ds.entry("searchTime", searchTime);
         if (countTime != 0)
-            ds.entry("countTime", (int)(countTime < 0 ? countTime : (countTime * 1000)));
+            ds.entry("countTime", countTime);
         
         // Information about grouping operation
         if (groups != null) {
