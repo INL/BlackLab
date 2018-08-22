@@ -228,7 +228,7 @@ public class BlackLabServer extends HttpServlet {
         handleRequest(request, responseObject);
     }
 
-    Override
+    @Override
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doOptions(req, resp);
         String allowOrigin = searchManager == null ? "*" : searchManager.config().getAccessControlAllowOrigin();
