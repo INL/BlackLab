@@ -43,8 +43,12 @@ import nl.inl.blacklab.search.Span;
  * document.
  */
 public interface SpansInBuckets {
+    
+    /** What initial capacity to reserve for lists */
+    int LIST_INITIAL_SIZE = 100;
+    
     /** When to reallocate arraylists to avoid holding on to too much memory */
-    int ARRAYLIST_REALLOC_THRESHOLD = 5000;
+    int LIST_REALLOC_THRESHOLD = 5000;
 
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 

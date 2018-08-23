@@ -42,9 +42,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     protected int currentSpansStart = -1;
 
-    private IntArrayList endPoints = new IntArrayList();
+    private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_SIZE);
 
-    private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>();
+    private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_SIZE);
 
     private int bucketSize = 0;
 
@@ -115,14 +115,14 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
     }
 
     protected int gatherEndPointsAtStartPoint() throws IOException {
-        if (endPoints.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+        if (endPoints.size() < LIST_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             endPoints.clear();
             capturedGroupsPerEndpoint.clear();
         } else {
             // Reallocate in this case to avoid holding on to a lot of memory
-            endPoints = new IntArrayList();
-            capturedGroupsPerEndpoint = new ArrayList<>();
+            endPoints = new IntArrayList(LIST_INITIAL_SIZE);
+            capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_SIZE);
         }
 
         doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null
