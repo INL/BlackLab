@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Comparator;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
@@ -26,10 +25,6 @@ import nl.inl.blacklab.search.Span;
  * Sort the given Spans per document, according to the given comparator.
  */
 class PerDocumentSortedSpans extends BLSpans {
-
-    final static Comparator<Long> cmpStartPoint = new SpanComparatorStartPoint(); //@@@@ WAS Comparators.naturalOrder();
-
-    final static Comparator<Long> cmpEndPoint = new SpanComparatorEndPoint();
 
     private int curDoc = -1;
 
@@ -45,9 +40,9 @@ class PerDocumentSortedSpans extends BLSpans {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    public PerDocumentSortedSpans(BLSpans src, Comparator<Long> comparator, boolean eliminateDuplicates) {
+    public PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-        bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
+        bucketedSpans = new SpansInBucketsPerDocumentSorted(src, sortByStartPoint);
 
         this.eliminateDuplicates = eliminateDuplicates;
     }

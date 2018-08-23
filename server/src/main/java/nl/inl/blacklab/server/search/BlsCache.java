@@ -165,12 +165,7 @@ public class BlsCache implements SearchCache {
      */
     class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
 
-        /**
-         * Construct the load manager thread object.
-         *
-         * @param searchCache cache of running and completed searches, on which we call
-         *            load management
-         */
+        /** Construct the load manager thread object. */
         public LoadManagerThread() {
             setUncaughtExceptionHandler(this);
         }

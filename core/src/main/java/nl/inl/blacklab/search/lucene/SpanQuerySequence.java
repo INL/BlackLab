@@ -618,9 +618,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 // We keep track of this and sort them manually if necessary.
                 CombiPart newPart = null;
                 if (!left.endSorted)
-                    left.spans = new PerDocumentSortedSpans(left.spans, PerDocumentSortedSpans.cmpEndPoint, false);
+                    left.spans = new PerDocumentSortedSpans(left.spans, false, false);
                 if (!right.startSorted)
-                    right.spans = new PerDocumentSortedSpans(right.spans, PerDocumentSortedSpans.cmpStartPoint, false);
+                    right.spans = new PerDocumentSortedSpans(right.spans, true, false);
                 BLSpans newSpans = new SpansSequenceRaw(left.spans, right.spans);
                 newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
                         left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,

@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -104,11 +103,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         }
     };
     
-    protected void sortHits(Comparator<Long> comparator) {
-        if (comparator instanceof SpanComparatorEndPoint) {
-            LongArrays.quickSort(bucket.elements(), 0, bucket.size(), longCmpEndPoint);
-        } else { 
+    protected void sortHits(boolean sortByStartPoint) {
+        if (sortByStartPoint) { 
             LongArrays.quickSort(bucket.elements(), 0, bucket.size()); // natural order is startpoint order
+        } else {
+            LongArrays.quickSort(bucket.elements(), 0, bucket.size(), longCmpEndPoint);
         }
     }
 

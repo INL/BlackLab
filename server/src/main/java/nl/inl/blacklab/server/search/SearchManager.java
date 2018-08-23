@@ -108,7 +108,7 @@ public class SearchManager {
         }
     }
     
-    public <T extends SearchResult> BlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) throws BlsException {
+    public <T extends SearchResult> BlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) {
         return (BlsCacheEntry<T>)search.executeAsync();
     }
 

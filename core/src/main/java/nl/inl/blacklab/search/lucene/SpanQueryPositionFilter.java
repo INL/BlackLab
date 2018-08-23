@@ -37,8 +37,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
-    static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
-
     /** Filter operation to apply */
     SpanQueryPositionFilter.Operation op;
 
@@ -146,7 +144,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             if (spansProd == null)
                 return null;
             if (!clauses.get(0).hitsStartPointSorted())
-                spansProd = new PerDocumentSortedSpans(spansProd, PerDocumentSortedSpans.cmpStartPoint, false);
+                spansProd = new PerDocumentSortedSpans(spansProd, true, false);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
                 // No filter hits. If it's a positive filter, that means no producer hits can match.
@@ -160,7 +158,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 filter = new SpansInBucketsPerDocument(spansFilter);
             } else {
                 // Not sorted yet; sort buckets
-                filter = new SpansInBucketsPerDocumentSorted(spansFilter, cmpStartPoint);
+                filter = new SpansInBucketsPerDocumentSorted(spansFilter, true);
             }
             return new SpansPositionFilter(spansProd, filter, filterFixedLength, op, invert, leftAdjust, rightAdjust);
         }

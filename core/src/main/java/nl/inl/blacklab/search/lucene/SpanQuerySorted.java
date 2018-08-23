@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
@@ -83,9 +82,7 @@ class SpanQuerySorted extends BLSpanQuery {
             BLSpans srcSpans = weight.getSpans(context, requiredPostings);
             if (srcSpans == null)
                 return null;
-            Comparator<Long> comparator = sortByEndpoint ? PerDocumentSortedSpans.cmpEndPoint
-                    : PerDocumentSortedSpans.cmpStartPoint;
-            return new PerDocumentSortedSpans(srcSpans, comparator, eliminateDuplicates);
+            return new PerDocumentSortedSpans(srcSpans, !sortByEndpoint, eliminateDuplicates);
         }
     }
 
