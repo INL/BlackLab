@@ -3,19 +3,21 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+
 /**
  * Manages opened zip files.
  *
- * Openings large zip files takes time, so it's more efficient to keep zip files open
- * for a while in case we'll access the same zip file again. Of course, we should
- * eventually close them to free up resources as well.
+ * Openings large zip files takes time, so it's more efficient to keep zip files
+ * open for a while in case we'll access the same zip file again. Of course, we
+ * should eventually close them to free up resources as well.
  */
 public class ZipHandleManager {
 
@@ -96,7 +98,7 @@ public class ZipHandleManager {
             try {
                 zipFile.close();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw BlackLabRuntimeException.wrap(e);
             }
         }
 
@@ -131,7 +133,7 @@ public class ZipHandleManager {
 
         // If too many zips are open, close ones that haven't been used the longest
         if (openZips.size() > maxOpenZipFiles) {
-            Collections.sort(zl);
+            zl.sort(Comparator.naturalOrder());
             it = openZips.values().iterator();
             while (openZips.size() > maxOpenZipFiles && it.hasNext()) {
                 ZipHandle zh = it.next();
@@ -167,6 +169,5 @@ public class ZipHandleManager {
     public static void setMaxOpen(int maxOpenZipFiles) {
         ZipHandleManager.maxOpenZipFiles = maxOpenZipFiles;
     }
-
 
 }

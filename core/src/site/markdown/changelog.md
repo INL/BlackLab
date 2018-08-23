@@ -2,6 +2,22 @@
 
 ## Improvements in HEAD
 
+### New
+* New Search system that allows better optimization and integrates result
+  caching, allowing you to define an application-specific cache behaviour.
+
+### Changed
+* Completely refactored Java API to be more clear and consistent.
+* Almost all objects in a search are now (effectively) immutable.
+
+### Removed
+* Really old index formats (pre 1.4 or so) are no longer supported.
+  BlackLab will report this when you try to open such an old index. 
+* BLS no longer supports the rarely used block=no parameter for 
+  polling-based asynchronous search. All search requests block until
+  the response is available. Only the "total results" count will be 
+  reported asynchronously unless the "waitfortotal" parameters is true.
+
 ## Improvements up to v1.7.1
 
 ### Changed

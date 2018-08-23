@@ -27,216 +27,177 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.util.LuceneUtil;
 
 /**
- * Returns all tokens that do not occur in the matches
- * of the specified query.
+ * Returns all tokens that do not occur in the matches of the specified query.
  *
  * Each token is returned as a single hit.
  */
 public class SpanQueryNot extends BLSpanQueryAbstract {
 
-	/** if true, we assume the last token is always a special closing token and ignore it */
-	boolean ignoreLastToken = false;
+    public SpanQueryNot(BLSpanQuery query) {
+        super(query);
+    }
 
-	public SpanQueryNot(BLSpanQuery query) {
-		super(query);
-	}
+    public SpanQueryNot(Collection<BLSpanQuery> clauscol) {
+        super(clauscol);
+    }
 
-	public SpanQueryNot(Collection<BLSpanQuery> clauscol) {
-		super(clauscol);
-	}
+    public SpanQueryNot(BLSpanQuery[] clauses) {
+        super(clauses);
+    }
 
-	public SpanQueryNot(BLSpanQuery[] _clauses) {
-		super(_clauses);
-	}
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
 
-	/**
-	 * A BLSpanQuery that simply matches all tokens in a field
-	 * @param matchAllTokensFieldName what field to match all tokens in
-	 */
-	private SpanQueryNot(String matchAllTokensFieldName) {
-		clauses = Arrays.asList((BLSpanQuery)null);
-		baseFieldName = matchAllTokensFieldName;
-	}
+        // Can we cancel out a double not?
+        if (rewritten.okayToInvertForOptimization())
+            return rewritten.inverted(); // yes
 
-	/**
-	 * Return a query that matches all tokens in a field.
-	 *
-	 * @param ignoreLastToken if true, we assume the last token is always a special closing
-	 *     token and ignore it (special closing token is required for punctuation after the last word)
-	 * @param fieldName the field from which to match
-	 * @return the resulting query
-	 * @deprecated use SpanQueryNGrams
-	 */
-	@Deprecated
-	public static BLSpanQuery matchAllTokens(boolean ignoreLastToken, String fieldName) {
-		SpanQueryNot spanQueryNot = new SpanQueryNot(fieldName);
-		spanQueryNot.setIgnoreLastToken(ignoreLastToken);
-		return spanQueryNot;
-	}
+        // No, must remain a NOT
+        if (rewritten == clauses.get(0)) {
+            return this;
+        }
+        return new SpanQueryNot(rewritten);
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
+    @Override
+    public BLSpanQuery inverted() {
+        return clauses.get(0); // Just return our clause, dropping the NOT operation
+    }
 
-		// Can we cancel out a double not?
-		if (rewritten.okayToInvertForOptimization())
-			return rewritten.inverted(); // yes
+    @Override
+    protected boolean okayToInvertForOptimization() {
+        // Yes, inverting is actually an improvement
+        return true;
+    }
 
-		// No, must remain a NOT
-		if (rewritten == clauses.get(0)) {
-			return this;
-		}
-		SpanQueryNot result = new SpanQueryNot(rewritten);
-		if (ignoreLastToken)
-			result.setIgnoreLastToken(true);
-		return result;
-	}
+    @Override
+    public boolean isSingleTokenNot() {
+        return true;
+    }
 
-	@Override
-	public BLSpanQuery inverted() {
-		return clauses.get(0); // Just return our clause, dropping the NOT operation
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof SpanQueryNot) {
+            return super.equals(obj);
+        }
+        return false;
+    }
 
-	@Override
-	protected boolean okayToInvertForOptimization() {
-		// Yes, inverting is actually an improvement
-		return true;
-	}
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        BLSpanQuery query = clauses.get(0);
+        BLSpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
+        return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    }
 
-	@Override
-	public boolean isSingleTokenNot() {
-		return true;
-	}
+    class SpanWeightNot extends BLSpanWeight {
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof SpanQueryNot) {
-			return super.equals(obj);
-		}
-		return false;
-	}
+        final BLSpanWeight weight;
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		BLSpanQuery query = clauses.get(0);
-		BLSpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
-		return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
-	}
+        public SpanWeightNot(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+                throws IOException {
+            super(SpanQueryNot.this, searcher, terms);
+            this.weight = weight;
+        }
 
-	class SpanWeightNot extends BLSpanWeight {
+        @Override
+        public void extractTerms(Set<Term> terms) {
+            if (weight != null)
+                weight.extractTerms(terms);
+        }
 
-		final BLSpanWeight weight;
+        @Override
+        public void extractTermContexts(Map<Term, TermContext> contexts) {
+            if (weight != null)
+                weight.extractTermContexts(contexts);
+        }
 
-		public SpanWeightNot(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
-			super(SpanQueryNot.this, searcher, terms);
-			this.weight = weight;
-		}
+        @Override
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
+            if (!clauses.get(0).hitsStartPointSorted())
+                spans = BLSpans.optSortUniq(spans, true, false);
+            return new SpansNot(context.reader(), baseFieldName, spans);
+        }
 
-		@Override
-		public void extractTerms(Set<Term> terms) {
-			if (weight != null)
-				weight.extractTerms(terms);
-		}
+    }
 
-		@Override
-		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			if (weight != null)
-				weight.extractTermContexts(contexts);
-		}
+    @Override
+    public String toString(String field) {
+        return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
+    }
 
-		@Override
-		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans spans = weight == null ? null : weight.getSpans(context, requiredPostings);
-			if (!clauses.get(0).hitsStartPointSorted())
-				spans = BLSpans.optSortUniq(spans, true, false);
-			return new SpansNot(ignoreLastToken, context.reader(), baseFieldName, spans);
-		}
+    @Override
+    public boolean hitsAllSameLength() {
+        return true;
+    }
 
-	}
+    @Override
+    public int hitsLengthMin() {
+        return 1;
+    }
 
-	@Override
-	public String toString(String field) {
-		return "NOT(" + (clauses.get(0) == null ? "" : clausesToString(field)) + ")";
-	}
+    @Override
+    public int hitsLengthMax() {
+        return 1;
+    }
 
-	/** Set whether to ignore the last token.
-	 *
-	 * @param ignoreLastToken if true, we assume the last token is always a special closing token and ignore it
-	 */
-	public void setIgnoreLastToken(boolean ignoreLastToken) {
-		this.ignoreLastToken = ignoreLastToken;
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return 1;
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return true;
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return 1;
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+        Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
+        //nfa.finish();
+        nfa.invert();
+        NfaState not = nfa.getStartingState();
+        return new Nfa(not, Arrays.asList(not)); // ignore the dangling arrows in the clause we've inverted
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return true;
-	}
+    @Override
+    public boolean canMakeNfa() {
+        return clauses.get(0).canMakeNfa();
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return true;
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        // Should be rewritten, but if it can't, calculate a rough indication of the number of token hits
+        long freq = clauses.get(0).reverseMatchingCost(reader);
+        return LuceneUtil.getSumTotalTermFreq(reader, getRealField()) - freq;
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
-
-	@Override
-	public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
-		Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
-		//nfa.finish();
-		nfa.invert();
-		NfaState not = nfa.getStartingState();
-		return new Nfa(not, Arrays.asList(not)); // ignore the dangling arrows in the clause we've inverted
-	}
-
-	@Override
-	public boolean canMakeNfa() {
-		return clauses.get(0).canMakeNfa();
-	}
-
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		// Should be rewritten, but if it can't, calculate a rough indication of the number of token hits
-		long freq = clauses.get(0).reverseMatchingCost(reader);
-		return LuceneUtil.getSumTotalTermFreq(reader, getRealField()) - freq;
-	}
-
-	@Override
-	public int forwardMatchingCost() {
-		return clauses.get(0).forwardMatchingCost() + 1;
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return clauses.get(0).forwardMatchingCost() + 1;
+    }
 
 }

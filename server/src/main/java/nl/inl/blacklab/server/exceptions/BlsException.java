@@ -1,37 +1,56 @@
 package nl.inl.blacklab.server.exceptions;
 
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 
 /**
  * Thrown when the requested index was not available or could not be opened
  */
 public class BlsException extends Exception {
+    
+    public static InternalServerError indexTooOld() {
+        return indexTooOld(null);
+    }
 
-	/**
-	 * The HTTP error code to send.
-	 */
-	protected int httpStatusCode;
+    public static InternalServerError indexTooOld(Throwable e) {
+        return new InternalServerError("Index too old to open with this BlackLab version", 43, e);
+    }
 
-	/**
-	 * A symbolic error code that the client can recognize and show a custom
-	 * message for.
-	 */
-	protected String errorCode;
+    public static BadRequest wildcardTermTooBroad(WildcardTermTooBroad e) {
+        return new BadRequest("QUERY_TOO_BROAD", "Query too broad, too many matching terms. Please be more specific.", e);
+    }
+    
+    public static BadRequest regexpTooLarge(RegexpTooLarge e) {
+        return new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.", e);
+    }
 
-	public BlsException(int httpStatusCode, String errorCode, String msg, Throwable cause) {
-		super(msg, cause);
-		this.httpStatusCode = httpStatusCode;
-		this.errorCode = errorCode;
-	}
+    /**
+     * The HTTP error code to send.
+     */
+    protected int httpStatusCode;
 
-	public BlsException(int httpCode, String errorCode, String msg) {
-		this(httpCode, errorCode, msg, null);
-	}
+    /**
+     * A symbolic error code that the client can recognize and show a custom message
+     * for.
+     */
+    protected String errorCode;
 
-	public int getHttpStatusCode() {
-		return httpStatusCode;
-	}
+    public BlsException(int httpStatusCode, String errorCode, String msg, Throwable cause) {
+        super(msg, cause);
+        this.httpStatusCode = httpStatusCode;
+        this.errorCode = errorCode;
+    }
 
-	public String getBlsErrorCode() {
-		return errorCode;
-	}
+    public BlsException(int httpCode, String errorCode, String msg) {
+        this(httpCode, errorCode, msg, null);
+    }
+
+    public int getHttpStatusCode() {
+        return httpStatusCode;
+    }
+
+    public String getBlsErrorCode() {
+        return errorCode;
+    }
+
 }

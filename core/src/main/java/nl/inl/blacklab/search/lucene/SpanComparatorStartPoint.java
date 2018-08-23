@@ -17,18 +17,18 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
-
+import nl.inl.blacklab.search.results.Hit;
 
 /**
- * Compare two hits (assumed to be in the same document) by start point, then by end point.
+ * Compare two hits (assumed to be in the same document) by start point, then by
+ * end point.
  */
 class SpanComparatorStartPoint implements Comparator<Hit> {
-	@Override
-	public int compare(Hit o1, Hit o2) {
-		if (o2.start != o1.start)
-			return o1.start - o2.start;
+    @Override
+    public int compare(Hit o1, Hit o2) {
+        if (o2.start() != o1.start())
+            return o1.start() - o2.start();
 
-		return o1.end - o2.end;
-	}
+        return o1.end() - o2.end();
+    }
 }

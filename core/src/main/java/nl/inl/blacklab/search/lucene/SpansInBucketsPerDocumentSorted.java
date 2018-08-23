@@ -18,27 +18,27 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.Hit;
+import nl.inl.blacklab.search.results.Hit;
 
 /**
- * Wrap a Spans to retrieve hits per document, so we can process all matches in a document
- * efficiently.
+ * Wrap a Spans to retrieve hits per document, so we can process all matches in
+ * a document efficiently.
  *
  * Hits are sorted by the given comparator.
  */
 class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
-	private Comparator<Hit> comparator;
+    private Comparator<Hit> comparator;
 
-	public SpansInBucketsPerDocumentSorted(BLSpans source, Comparator<Hit> comparator) {
-		super(source);
-		this.comparator = comparator;
-	}
+    public SpansInBucketsPerDocumentSorted(BLSpans source, Comparator<Hit> comparator) {
+        super(source);
+        this.comparator = comparator;
+    }
 
-	@Override
-	protected void gatherHits() throws IOException {
-		super.gatherHits();
-		if (comparator != null)
-			sortHits(comparator);
-	}
+    @Override
+    protected void gatherHits() throws IOException {
+        super.gatherHits();
+        if (comparator != null)
+            sortHits(comparator);
+    }
 
 }

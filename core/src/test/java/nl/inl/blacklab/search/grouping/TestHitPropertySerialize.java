@@ -7,85 +7,100 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.MockForwardIndex;
-import nl.inl.blacklab.MockHits;
-import nl.inl.blacklab.MockSearcher;
-import nl.inl.blacklab.MockTerms;
-import nl.inl.blacklab.perdocument.DocProperty;
-import nl.inl.blacklab.perdocument.DocPropertyDecade;
-import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextPart;
-import nl.inl.blacklab.search.grouping.HitPropertyContextWords.ContextStart;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
+import nl.inl.blacklab.mocks.MockForwardIndex;
+import nl.inl.blacklab.mocks.MockTerms;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyDecade;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextPart;
+import nl.inl.blacklab.resultproperty.HitPropertyContextWords.ContextStart;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
+import nl.inl.blacklab.resultproperty.PropertyValueDecade;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
+    
+    private MetadataField decadeField = new MockMetadataField("decade");
 
-	MockSearcher mockSearcher = new MockSearcher();
+    private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-	Hits hits = new MockHits(mockSearcher);
+    private Hits hits = Hits.emptyList(mockIndex.createDefaultQueryInfo());
 
-	@Before
-	public void setUp() {
-		mockSearcher.setForwardIndex("contents%lemma", new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
-	}
+    private Annotation lemmaAnnotation;
 
-	@Test
-	public void testHitPropertySerialize() {
-		HitProperty prop;
+    @Before
+    public void setUp() {
+        lemmaAnnotation = mockIndex.mainAnnotatedField().annotation("lemma");
+        mockIndex.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
+    }
 
-		prop = new HitPropertyDocumentDecade(hits, "decade");
-		Assert.assertEquals("decade:decade", prop.serialize());
+    @Test
+    public void testHitPropertySerialize() {
+        HitProperty prop;
 
-		prop = new HitPropertyDocumentId(hits);
-		prop.setReverse(true);
-		String exp = "-docid";
-		Assert.assertEquals(exp, prop.serialize());
-		Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
+        prop = new HitPropertyDocumentDecade(decadeField);
+        Assert.assertEquals("decade:decade", prop.serialize());
 
-		prop = new HitPropertyHitText(hits, "contents", "lemma", true);
-		Assert.assertEquals("hit:lemma:s", prop.serialize());
+        prop = new HitPropertyDocumentId().reverse();
+        String exp = "-docid";
+        Assert.assertEquals(exp, prop.serialize());
+        Assert.assertEquals(exp, HitProperty.deserialize(hits, exp).serialize());
 
-		List<ContextPart> contextParts = Arrays.asList(
-			new ContextPart(ContextStart.LEFT_OF_HIT, 1, 1),         // second word to left of hit
-			new ContextPart(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
-			new ContextPart(ContextStart.HIT_TEXT_FROM_END, 0, 0)    // last hit word
-		);
-		prop = new HitPropertyContextWords(hits, "contents", "lemma", true, contextParts);
-		Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
-	}
+        prop = new HitPropertyHitText(mockIndex, lemmaAnnotation, MatchSensitivity.SENSITIVE);
+        Assert.assertEquals("hit:lemma:s", prop.serialize());
 
-	@Test
-	public void testDocPropertySerialize() {
-		DocProperty prop;
+        List<ContextPart> contextParts = Arrays.asList(
+                ContextPart.get(ContextStart.LEFT_OF_HIT, 1, 1), // second word to left of hit
+                ContextPart.get(ContextStart.HIT_TEXT_FROM_START, 0, 1), // first two hit words
+                ContextPart.get(ContextStart.HIT_TEXT_FROM_END, 0, 0) // last hit word
+        );
+        prop = new HitPropertyContextWords(mockIndex, lemmaAnnotation, MatchSensitivity.SENSITIVE, contextParts);
+        Assert.assertEquals("context:lemma:s:L2-2;H1-2;E1-1", prop.serialize());
+    }
 
-		prop = new DocPropertyDecade("decade");
-		prop.setReverse(true);
-		String exp = "-decade:decade";
-		Assert.assertEquals(exp, prop.serialize());
-		Assert.assertEquals(exp, DocProperty.deserialize(exp).serialize());
-	}
+    @Test
+    public void testDocPropertySerialize() {
+        DocProperty prop;
 
-	@Test
-	public void testHitPropValueSerialize() {
-		HitPropValue val, val1;
+        prop = new DocPropertyDecade("decade").reverse();
+        String exp = "-decade:decade";
+        Assert.assertEquals(exp, prop.serialize());
+        Assert.assertEquals(exp, DocProperty.deserialize(exp).serialize());
+    }
 
-		val1 = new HitPropValueContextWord(hits, "lemma", 2, true);
-		String exp = "cwo:lemma:s:mies";
-		Assert.assertEquals(exp, val1.serialize());
-		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+    @Test
+    public void testHitPropValueSerialize() {
+        PropertyValue val, val1;
 
-		val1 = new HitPropValueDecade(1980);
-		exp = "dec:1980";
-		Assert.assertEquals(exp, val1.serialize());
-		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        val1 = new PropertyValueContextWord(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, 2);
+        String exp = "cwo:lemma:s:mies";
+        Assert.assertEquals(exp, val1.serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-		val = new HitPropValueMultiple(new HitPropValue[] {val1, new HitPropValueString("blabla")});
-		exp = "dec:1980,str:blabla";
-		Assert.assertEquals(exp, val.serialize());
-		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
+        val1 = new PropertyValueDecade(1980);
+        exp = "dec:1980";
+        Assert.assertEquals(exp, val1.serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-		val = new HitPropValueMultiple(new HitPropValue[] {val1, new HitPropValueString("$bl:ab,la")});
-		exp = "dec:1980,str:$DLbl$CLab$CMla";
-		Assert.assertEquals(exp, val.serialize());
-		Assert.assertEquals(exp, HitPropValue.deserialize(hits, exp).serialize());
-	}
+        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("blabla") });
+        exp = "dec:1980,str:blabla";
+        Assert.assertEquals(exp, val.serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
+
+        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("$bl:ab,la") });
+        exp = "dec:1980,str:$DLbl$CLab$CMla";
+        Assert.assertEquals(exp, val.serialize());
+        Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
+    }
 }

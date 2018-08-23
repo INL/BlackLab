@@ -25,6 +25,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.PluginException;
+
 public class TagPluginDutchTagger implements TagPlugin {
     private static final String PROP_JAR = "jarPath";
     private static final String PROP_VECTORS = "vectorFile";
@@ -63,7 +65,7 @@ public class TagPluginDutchTagger implements TagPlugin {
             Method setProperties = converterClass.getMethod("setProperties", Properties.class);
             handleFile = converterClass.getMethod("handleFile", String.class, String.class);
 
-            converter = converterClass.newInstance();
+            converter = converterClass.getConstructor().newInstance();
             setProperties.invoke(converter, converterProps);
         } catch (Exception e) {
             throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);

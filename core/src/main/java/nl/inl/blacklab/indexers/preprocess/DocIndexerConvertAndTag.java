@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -15,69 +16,79 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
-import nl.inl.blacklab.index.config.ConfigInputFormat;
-import nl.inl.blacklab.index.config.DocIndexerConfig;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 
 /**
- * Wrapper class for a regular DocIndexer.
- * It's activated when a format has the "convertPlugin" or "tagPlugin" properties.
- * This DocIndexer will first run the to-be-indexed file through the convert and tagging plugins
- * before handing result off to the actual DocIndexer.
+ * Wrapper class for a regular DocIndexer. It's activated when a format has the
+ * "convertPlugin" or "tagPlugin" properties. This DocIndexer will first run the
+ * to-be-indexed file through the convert and tagging plugins before handing
+ * result off to the actual DocIndexer.
  * <p>
- * It shares the ConfigInputFormat object with the actual DocIndexer,
- * and should be considered an internal implementation detail of the DocIndexer system.
+ * It shares the ConfigInputFormat object with the actual DocIndexer, and should
+ * be considered an internal implementation detail of the DocIndexer system.
  */
 public class DocIndexerConvertAndTag extends DocIndexerConfig {
 
-	PushbackInputStream input;
-	/** Charset of the data for our converter and tagger input/output, might be null if our converter/tagger do not use charsets (because they process binary data for example). */
-	Charset charset;
+    PushbackInputStream input;
+    /**
+     * Charset of the data for our converter and tagger input/output, might be null
+     * if our converter/tagger do not use charsets (because they process binary data
+     * for example).
+     */
+    Charset charset;
 
-	private DocIndexerConfig outputIndexer;
+    private DocIndexerConfig outputIndexer;
 
-	public DocIndexerConvertAndTag(DocIndexerConfig actualIndexer, ConfigInputFormat config) {
-	    this.outputIndexer = actualIndexer;
-	    this.config = config;	}
+    public DocIndexerConvertAndTag(DocIndexerConfig actualIndexer, ConfigInputFormat config) {
+        this.outputIndexer = actualIndexer;
+        this.config = config;
+    }
 
-	@Override
-	public void close() throws Exception {
-		outputIndexer.close();
-	}
+    @Override
+    public void close() throws BlackLabRuntimeException {
+        outputIndexer.close();
+    }
 
-	/**
-	 * Use {@link DocIndexerConvertAndTag#setDocument(InputStream, Charset)} if at all possible.
-	 */
-	@Override
-	public void setDocument(Reader reader) {
-		// Reader outputs chars, so we can determine our own charset when we put them back into a stream
-		// We just need to make sure to pass it on to whatever consumes the stream
-		input = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8), 251);
-		charset = StandardCharsets.UTF_8;
-	}
+    /**
+     * Use {@link DocIndexerConvertAndTag#setDocument(InputStream, Charset)} if at
+     * all possible.
+     */
+    @Override
+    public void setDocument(Reader reader) {
+        // Reader outputs chars, so we can determine our own charset when we put them back into a stream
+        // We just need to make sure to pass it on to whatever consumes the stream
+        input = new PushbackInputStream(new ReaderInputStream(reader, StandardCharsets.UTF_8), 251);
+        charset = StandardCharsets.UTF_8;
+    }
 
-	@Override
-	public void setDocument(InputStream is, Charset cs) {
-		input = new PushbackInputStream(is, 251);
-		charset = cs;
-	}
+    @Override
+    public void setDocument(InputStream is, Charset cs) {
+        input = new PushbackInputStream(is, 251);
+        charset = cs;
+    }
 
-	@Override
-	public void index() throws Exception {
-		if (this.input == null)
-			throw new IllegalStateException("A document must be set before calling index()");
+    @Override
+    public void index() throws PluginException, MalformedInputFile, IOException {
+        if (this.input == null)
+            throw new IllegalStateException("A document must be set before calling index()");
 
-		/*
-		 * If the converter can't handle the file,
-		 * we assume that the file is already in the output format, and we attempt to index it directly.
-		 * This isn't entirely correct when the file is in a format neither the converter nor the indexer can handle, but that is technically user error.
-		 */
-		// ByteArrayOutputStream can conveniently be read and reused even after close()
-		ByteArrayOutputStream output = new ByteArrayOutputStream();
+        // If the converter can't handle the file, we assume that the file is already in
+        // the output format, and we attempt to index it directly.
+        // This isn't entirely correct when the file is in a format neither the
+        // converter nor the indexer can handle, but that is technically user error.
+        //
+        // ByteArrayOutputStream can conveniently be read and reused even after close()
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
         if (config.getConvertPluginId() != null) {
             ConvertPlugin converter = PluginManager.getConverter(config.getConvertPluginId())
-                .orElseThrow(() -> new RuntimeException("Unknown conversion plugin: " + config.getConvertPluginId()));
+                    .orElseThrow(
+                            () -> new RuntimeException("Unknown conversion plugin: " + config.getConvertPluginId()));
 
             // convertplugin always outputs in the input charset if provided, utf8 otherwise
             if (converter.canConvert(input, charset, FilenameUtils.getExtension(this.documentName).toLowerCase())) {
@@ -89,19 +100,19 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
 
         if (config.getTagPluginId() != null) {
             TagPlugin tagger = PluginManager.getTagger(config.getTagPluginId())
-                .orElseThrow(() -> new RuntimeException("Unknown tagging plugin: " + config.getTagPluginId()));
+                    .orElseThrow(() -> new RuntimeException("Unknown tagging plugin: " + config.getTagPluginId()));
 
             // read in the original charset (if provided)
             Reader taggerInput = new InputStreamReader(input, charset);
 
             // always output in utf8 for ease of mind
             charset = StandardCharsets.UTF_8;
-			try (OutputStreamWriter w = new OutputStreamWriter(output, charset)) {
-				tagger.perform(taggerInput, w);
-			}
+            try (OutputStreamWriter w = new OutputStreamWriter(output, charset)) {
+                tagger.perform(taggerInput, w);
+            }
 
-			this.documentName = tagger.getOutputFileName(this.documentName);
-		}
+            this.documentName = tagger.getOutputFileName(this.documentName);
+        }
 
         this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
@@ -110,12 +121,12 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
             this.outputIndexer.setDocument(is, charset);
             this.outputIndexer.index();
         }
-	}
+    }
 
-	@Override
-	protected int getCharacterPosition() {
-	    return 0;
-	}
+    @Override
+    protected int getCharacterPosition() {
+        return 0;
+    }
 
     @Override
     protected void storeDocument() {
@@ -123,8 +134,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void setIndexer(Indexer indexer) {
-        outputIndexer.setIndexer(indexer);
+    public void setDocWriter(DocWriter indexer) {
+        outputIndexer.setDocWriter(indexer);
     }
 
     @Override
@@ -143,8 +154,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public Indexer getIndexer() {
-        return outputIndexer.getIndexer();
+    public DocWriter getDocWriter() {
+        return outputIndexer.getDocWriter();
     }
 
     @Override

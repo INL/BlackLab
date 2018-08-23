@@ -14,7 +14,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 /**
  * Supports reading/writing JSON and YAML files.
  *
- * NOTE: C++ style // comments are allowed in Json files, which is a non-standard extension.
+ * NOTE: C++ style // comments are allowed in Json files, which is a
+ * non-standard extension.
  *
  */
 public class Json {
@@ -182,56 +183,56 @@ public class Json {
 //		return obj;
 //	}
 
-	/**
-	 * Get or create a JsonNode child of the specified parent.
-	 *
-	 * @param parent parent node to get the object from
-	 * @param name name of the JsonNode to get
-	 * @return the object
-	 * @throws RuntimeException if a non-JsonNode child with this name exists
-	 */
-	public static ObjectNode getObject(ObjectNode parent, String name) {
-	    ObjectNode object = null;
-		if (parent.has(name))
-			object = (ObjectNode)parent.get(name);
-		else
-			object = parent.putObject(name);
-		return object;
-	}
-
-	/**
-	 * Get a string value from a JSON Object, or substitute a default value
-	 * if the key doesn't exist.
-	 *
-	 * @param parent parent node to get the object from
-	 * @param name name of the value to get
-	 * @param defVal value to use if key doesn't exist
-	 * @return the string value
-	 */
-	public static String getString(JsonNode parent, String name, String defVal) {
-		if (parent.has(name))
-			return parent.get(name).textValue();
-		return defVal;
-	}
-
-	/**
-	 * Get a boolean value from a JSON Object, or substitute a default value
-	 * if the key doesn't exist.
-	 *
-	 * @param parent parent node to get the object from
-	 * @param name name of the value to get
-	 * @param defVal value to use if key doesn't exist
-	 * @return the boolean value
-	 */
-	public static boolean getBoolean(JsonNode parent, String name, boolean defVal) {
-		if (parent.has(name))
-			return parent.get(name).booleanValue();
-		return defVal;
-	}
+    /**
+     * Get or create a JsonNode child of the specified parent.
+     *
+     * @param parent parent node to get the object from
+     * @param name name of the JsonNode to get
+     * @return the object
+     * @throws RuntimeException if a non-JsonNode child with this name exists
+     */
+    public static ObjectNode getObject(ObjectNode parent, String name) {
+        ObjectNode object = null;
+        if (parent.has(name))
+            object = (ObjectNode) parent.get(name);
+        else
+            object = parent.putObject(name);
+        return object;
+    }
 
     /**
-     * Get a long value from a JSON Object, or substitute a default value
-     * if the key doesn't exist.
+     * Get a string value from a JSON Object, or substitute a default value if the
+     * key doesn't exist.
+     *
+     * @param parent parent node to get the object from
+     * @param name name of the value to get
+     * @param defVal value to use if key doesn't exist
+     * @return the string value
+     */
+    public static String getString(JsonNode parent, String name, String defVal) {
+        if (parent.has(name))
+            return parent.get(name).textValue();
+        return defVal;
+    }
+
+    /**
+     * Get a boolean value from a JSON Object, or substitute a default value if the
+     * key doesn't exist.
+     *
+     * @param parent parent node to get the object from
+     * @param name name of the value to get
+     * @param defVal value to use if key doesn't exist
+     * @return the boolean value
+     */
+    public static boolean getBoolean(JsonNode parent, String name, boolean defVal) {
+        if (parent.has(name))
+            return parent.get(name).booleanValue();
+        return defVal;
+    }
+
+    /**
+     * Get a long value from a JSON Object, or substitute a default value if the key
+     * doesn't exist.
      *
      * @param parent parent node to get the object from
      * @param name name of the value to get
@@ -245,8 +246,8 @@ public class Json {
     }
 
     /**
-     * Get an int value from a JSON Object, or substitute a default value
-     * if the key doesn't exist.
+     * Get an int value from a JSON Object, or substitute a default value if the key
+     * doesn't exist.
      *
      * @param parent parent node to get the object from
      * @param name name of the value to get
@@ -260,14 +261,14 @@ public class Json {
     }
 
     public static ArrayNode arrayOfStrings(ArrayNode arr, List<String> fields) {
-        for (String str: fields) {
+        for (String str : fields) {
             arr.add(str);
         }
         return arr;
     }
 
     public static List<String> getListOfStrings(JsonNode group, String name) {
-        ArrayNode arr = (ArrayNode)group.get(name);
+        ArrayNode arr = (ArrayNode) group.get(name);
         List<String> result = new ArrayList<>();
         if (arr != null) {
             for (int i = 0; i < arr.size(); i++) {

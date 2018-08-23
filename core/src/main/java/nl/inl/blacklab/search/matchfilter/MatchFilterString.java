@@ -6,77 +6,80 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterString extends MatchFilter {
-	ConstraintValueString string;
-	
-	/** -1 if we don't know the property index, or the property index otherwise */
-	int propIndex = -1;
-	
-	/** Term index if we know the property index to use for this expression (i.e. propIndex >= 0), or -1 if not */
-	int termIndex = -1;
+    ConstraintValueString string;
 
-	public MatchFilterString(String string) {
-		this.string = new ConstraintValueString(string);
-	}
+    /** -1 if we don't know the annotation index, or the annotation index otherwise */
+    int annotIndex = -1;
 
-	public String getString() {
-		return string.getValue();
-	}
+    /**
+     * Term index if we know the annotation index to use for this expression (i.e.
+     * propIndex >= 0), or -1 if not
+     */
+    int termIndex = -1;
 
-	@Override
-	public String toString() {
-		return "\"" + string + "\"";
-	}
+    public MatchFilterString(String string) {
+        this.string = new ConstraintValueString(string);
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((string == null) ? 0 : string.hashCode());
-		return result;
-	}
+    public String getString() {
+        return string.getValue();
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		MatchFilterString other = (MatchFilterString) obj;
-		if (string == null) {
-			if (other.string != null)
-				return false;
-		} else if (!string.equals(other.string))
-			return false;
-		return true;
-	}
+    @Override
+    public String toString() {
+        return "\"" + string + "\"";
+    }
 
-	@Override
-	public void setHitQueryContext(HitQueryContext context) {
-		// NOP
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((string == null) ? 0 : string.hashCode());
+        return result;
+    }
 
-	@Override
-	public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-		return string;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MatchFilterString other = (MatchFilterString) obj;
+        if (string == null) {
+            if (other.string != null)
+                return false;
+        } else if (!string.equals(other.string))
+            return false;
+        return true;
+    }
 
-	@Override
-	public void lookupPropertyIndices(ForwardIndexAccessor fiAccessor) {
-		// NOP
-	}
+    @Override
+    public void setHitQueryContext(HitQueryContext context) {
+        // NOP
+    }
 
-	public int getPropIndex() {
-		return propIndex;
-	}
+    @Override
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
+        return string;
+    }
 
-	public int getTermIndex() {
-		return termIndex;
-	}
+    @Override
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        // NOP
+    }
 
-	@Override
-	public MatchFilter rewrite() {
-		return this;
-	}
+    public int getPropIndex() {
+        return annotIndex;
+    }
+
+    public int getTermIndex() {
+        return termIndex;
+    }
+
+    @Override
+    public MatchFilter rewrite() {
+        return this;
+    }
 }

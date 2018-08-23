@@ -5,39 +5,40 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
- * Some types of clauses try to "gobble up" adjacent tokens in order
- * to improve optimization.
+ * Some types of clauses try to "gobble up" adjacent tokens in order to improve
+ * optimization.
  */
 class ClauseCombinerInternalisation extends ClauseCombiner {
 
-	private static final int PRIORITY = 2;
+    private static final int PRIORITY = 2;
 
-	enum Type {
-		INTERNALIZE_RIGHT_NEIGHBOUR,
-		INTERNALIZE_LEFT_NEIGHBOUR,
-	}
+    enum Type {
+        INTERNALIZE_RIGHT_NEIGHBOUR,
+        INTERNALIZE_LEFT_NEIGHBOUR,
+    }
 
-	Type getType(BLSpanQuery left, BLSpanQuery right) {
-		if (left.canInternalizeNeighbour(right, true))
-			return Type.INTERNALIZE_RIGHT_NEIGHBOUR;
-		if (right.canInternalizeNeighbour(left, false))
-			return Type.INTERNALIZE_LEFT_NEIGHBOUR;
-		return null;
-	}
+    Type getType(BLSpanQuery left, BLSpanQuery right) {
+        if (left.canInternalizeNeighbour(right, true))
+            return Type.INTERNALIZE_RIGHT_NEIGHBOUR;
+        if (right.canInternalizeNeighbour(left, false))
+            return Type.INTERNALIZE_LEFT_NEIGHBOUR;
+        return null;
+    }
 
-	@Override
-	public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-		return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;
-	}
+    @Override
+    public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
+        return getType(left, right) == null ? CANNOT_COMBINE : PRIORITY;
+    }
 
-	@Override
-	public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-		switch(getType(left, right)) {
-		case INTERNALIZE_LEFT_NEIGHBOUR:
-			return right.internalizeNeighbour(left, false);
-		case INTERNALIZE_RIGHT_NEIGHBOUR:
-			return left.internalizeNeighbour(right, true);
-		}
-		throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
-	}
+    @Override
+    public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
+        switch (getType(left, right)) {
+        case INTERNALIZE_LEFT_NEIGHBOUR:
+            return right.internalizeNeighbour(left, false);
+        case INTERNALIZE_RIGHT_NEIGHBOUR:
+            return left.internalizeNeighbour(right, true);
+        default:
+            throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
+        }
+    }
 }

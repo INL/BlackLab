@@ -1,88 +1,109 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.concurrent.ExecutionException;
+
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.perdocument.DocGroup;
-import nl.inl.blacklab.perdocument.DocGroups;
-import nl.inl.blacklab.perdocument.DocResults;
-import nl.inl.blacklab.search.Hits;
-import nl.inl.blacklab.search.HitsSample;
-import nl.inl.blacklab.search.ResultsWindow;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.Job;
-import nl.inl.blacklab.server.jobs.JobDocsGrouped;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for grouped doc results.
  */
-@SuppressWarnings("unused")
 public class RequestHandlerDocsGrouped extends RequestHandler {
-	public RequestHandlerDocsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathPart) {
-		super(servlet, request, user, indexName, urlResource, urlPathPart);
-	}
+    public RequestHandlerDocsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+            String urlResource, String urlPathPart) {
+        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    }
 
-	@Override
-	public int handle(DataStream ds) throws BlsException {
-		// Get the window we're interested in
-		JobDocsGrouped search = (JobDocsGrouped) searchMan.search(user, searchParam.docsGrouped(), isBlockingOperation());
-		try {
-			// If search is not done yet, indicate this to the user
-			if (!search.finished()) {
-				return Response.busy(ds, servlet);
-			}
+    @Override
+    public int handle(DataStream ds) throws BlsException {
 
-			// Search is done; construct the results object
+        // Make sure we have the hits search, so we can later determine totals.
+        BlsCacheEntry<ResultCount> originalHitsSearch = null;
+        if (searchParam.hasPattern()) {
+            originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
+        }
+        // Get the window we're interested in
+        DocResults docResults = searchMan.search(user, searchParam.docs());
+        BlsCacheEntry<DocGroups> groupSearch = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
+        DocGroups groups;
+        try {
+            groups = groupSearch.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        }
 
-			DocResults docResults = search.getDocResults();
-			DocGroups groups = search.getGroups();
-			int first = searchParam.getInteger("first");
-			if (first < 0)
-				first = 0;
-			int number = searchParam.getInteger("number");
-			if (number < 0 || number > searchMan.config().maxPageSize())
-				number = searchMan.config().defaultPageSize();
-			int numberOfGroupsInWindow = 0;
-			numberOfGroupsInWindow = number;
-			if (first + number > groups.numberOfGroups())
-				numberOfGroupsInWindow = groups.numberOfGroups() - first;
+        // Search is done; construct the results object
 
-			ds.startMap();
+        int first = searchParam.getInteger("first");
+        if (first < 0)
+            first = 0;
+        int number = searchParam.getInteger("number");
+        if (number < 0 || number > searchMan.config().maxPageSize())
+            number = searchMan.config().defaultPageSize();
+        int numberOfGroupsInWindow = 0;
+        numberOfGroupsInWindow = number;
+        if (first + number > groups.size())
+            numberOfGroupsInWindow = groups.size() - first;
 
-			// The summary
-			ds.startEntry("summary").startMap();
-			ResultsWindow ourWindow = new ResultsWindowImpl(groups.numberOfGroups(), first, number, numberOfGroupsInWindow);
-			addSummaryCommonFields(ds, searchParam, search.userWaitTime(), 0, (Hits)null, (Hits)null, false, docResults, groups, ourWindow);
-			ds.endMap().endEntry();
+        ds.startMap();
 
-			// The list of groups found
-			ds.startEntry("docGroups").startList();
-			int i = 0;
-			for (DocGroup group: groups) {
-				if (i >= first && i < first + number) {
-					ds.startItem("docgroup").startMap()
-						.entry("identity", group.getIdentity().serialize())
-						.entry("identityDisplay", group.getIdentity().toString())
-						.entry("size", group.size())
-					.endMap().endItem();
-				}
-				i++;
-			}
-			ds.endList().endEntry();
+        // The summary
+        ds.startEntry("summary").startMap();
+        WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
+        ResultCount totalHits;
+        try {
+            totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        }
+        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
+        if (totalHits == null)
+            addNumberOfResultsSummaryDocResults(ds, false, docResults, false);
+        else
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false);
+        
+        ds.endMap().endEntry();
 
-			ds.endMap();
+        // The list of groups found
+        ds.startEntry("docGroups").startList();
+        int i = 0;
+        for (DocGroup group : groups) {
+            if (i >= first && i < first + number) {
+                ds.startItem("docgroup").startMap()
+                        .entry("identity", group.identity().serialize())
+                        .entry("identityDisplay", group.identity().toString())
+                        .entry("size", group.size())
+                        .endMap().endItem();
+            }
+            i++;
+        }
+        ds.endList().endEntry();
 
-			return HTTP_OK;
-		} finally {
-			search.decrRef();
-		}
-	}
+        ds.endMap();
 
-	@Override
-	protected boolean isDocsOperation() {
-		return true;
-	}
+        return HTTP_OK;
+    }
+
+    @Override
+    protected boolean isDocsOperation() {
+        return true;
+    }
 
 }

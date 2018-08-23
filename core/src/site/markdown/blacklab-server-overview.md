@@ -232,7 +232,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>outputformat </td>
-		<td>“json” or “xml”. (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.</td>
+		<td>“json”, “xml” or "csv". (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.<br/><br/>For "csv", two additional parameters are supported: "csvsummary=yes" will add a summary of the query to the CSV output; "csvsepline=yes" will add "sep=," as the first line, specifically for using the resulting CSV with Excel. Both default to "no".</td>
 	</tr>
 	<tr>
 		<td>jsonp </td>
@@ -632,8 +632,8 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	
 	            // Maximum size the cache may grow to (in megabytes), or 
 	            // -1 for no limit.
-	            // [NOT PROPERLY IMPLEMENTED YET! LEAVE AT -1 FOR NOW]
-	            "maxSizeMegs": -1,
+	            // [IMPLEMENTED IN 2.0; FOR EARLIER VERSIONS, LEAVE THIS AT -1 ]
+	            "maxSizeMegs": 1000,
 	
 	            // How much free memory the cache should shoot for (in 
 	            // megabytes) while cleaning up. Because we don&#39;t have 
@@ -641,16 +641,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	            // reliably clean up until this exact number is available.
 	            // Instead we just get rid of a few cached jobs whenever a
 	            // new job is added and we&#39;re under this target number.
-	            // See numberOfJobsToPurgeWhenBelowTargetMem.
-	            "targetFreeMemMegs": 100,
-	
-	            // When there&#39;s less free memory available than 
-	            // targetFreeMemMegs, each time a job is created and added
-	            // to the cache, we will get rid of this number of older 
-	            // jobs in order to (hopefully) free up memory (if the 
-	            // Java GC agrees with us). 2 seems like an okay value, 
-	            // but you can change it if you want to experiment.
-	            "numberOfJobsToPurgeWhenBelowTargetMem": 2
+	            "targetFreeMemMegs": 100
 	        },
 	
 	        // The minimum amount of free memory required to start a new 
@@ -666,6 +657,7 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 	        // shouldn&#39;t be set too low. This setting is meant to prevent
 	        // over-eager scripts and other abuse from bringing down the
 	        // server. Regular users should never hit this limit.
+	        // [NO LONGER USED IN 2.0, BUT MIGHT MAKE A COMEBACK AT SOME POINT]
 	        "maxRunningJobsPerUser": 20,
 	
 	        // How long the client may keep results we give them in their

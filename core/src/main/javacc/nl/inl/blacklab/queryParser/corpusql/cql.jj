@@ -28,29 +28,15 @@ options
 	//USER_CHAR_STREAM=true;
 }
 
-PARSER_BEGIN(CorpusQueryLanguageParser)
+PARSER_BEGIN(GeneratedCorpusQueryLanguageParser)
 
 package nl.inl.blacklab.queryParser.corpusql;
 
-import java.util.Map;
 import java.util.HashMap;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import java.util.Map;
 
-import nl.inl.blacklab.search.TextPattern;
-import nl.inl.blacklab.search.TextPatternAnd;
-import nl.inl.blacklab.search.TextPatternAnyToken;
-import nl.inl.blacklab.search.TextPatternCaptureGroup;
-import nl.inl.blacklab.search.TextPatternConstrained;
-import nl.inl.blacklab.search.TextPatternEdge;
-import nl.inl.blacklab.search.TextPatternNot;
-import nl.inl.blacklab.search.TextPatternOr;
-import nl.inl.blacklab.search.TextPatternPositionFilter;
-import nl.inl.blacklab.search.TextPatternProperty;
-import nl.inl.blacklab.search.TextPatternRegex;
-import nl.inl.blacklab.search.TextPatternRepetition;
-import nl.inl.blacklab.search.TextPatternSequence;
-import nl.inl.blacklab.search.TextPatternTags;
-import nl.inl.blacklab.search.indexstructure.IndexStructure;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -61,92 +47,30 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
+import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
+import nl.inl.blacklab.search.textpattern.TextPatternEdge;
+import nl.inl.blacklab.search.textpattern.TextPatternNot;
+import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
+import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 @SuppressWarnings("all")
 
-public class CorpusQueryLanguageParser {
+public class GeneratedCorpusQueryLanguageParser {
 
-    public static void main(String[] args) throws nl.inl.blacklab.queryParser.corpusql.ParseException 
-    {
-		CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(args[0]));
-		parser.query();
-    }
-    
-    public static TextPattern parse(String query) throws nl.inl.blacklab.queryParser.corpusql.ParseException 
-    {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(new java.io.StringReader(query));
-        return parser.query();
-    }
-    
-    private int num(Token t)
-    {
-    	return Integer.parseInt(t.toString());
-    }
-    
-    private String chopEnds(String input)
-    {
-    	if (input.length() >= 2)
-    		return input.substring(1, input.length() - 1);
-    	throw new RuntimeException();
-    }
-    
-    private String getStringBetweenQuotes(String input) throws SingleQuotesException
-    {
-        if (!allowSingleQuotes && input.charAt(0) == '\'')
-            throw new SingleQuotesException();
-        return chopEnds(input);
-    }
-    
-    private TextPattern simplePattern(String str)
-    {
-        if (str.length() > 0) {
-            if (str.charAt(0) != '^')
-                str = "^" + str;
-            if (str.charAt(str.length() - 1) != '$')
-                str += "$";
-        }
-        
-        // Treat everything like regex now; will be simplified later if possible
-        return new TextPatternRegex(str); 
-    }
-
-    /** Allow strings to be quoted using single quotes? */
-    private boolean allowSingleQuotes = true;
-    
-    /** Allow strings to be quoted using single quotes? [default: yes] */
-    public void setAllowSingleQuotes(boolean b) {
-        allowSingleQuotes = b;
-    }
-
-    /** Allow strings to be quoted using single quotes? */
-    public boolean getAllowSingleQuotes() {
-        return allowSingleQuotes;
-    }
-
-    private String defaultProperty = "word"; //ComplexFieldUtil.DEFAULT_MAIN_PROP_NAME;
-    
-    public void setDefaultProperty(IndexStructure structure, String fieldName) {
-        defaultProperty = structure.getComplexFieldDesc(fieldName).getMainProperty().getName();
-    }
-
-    public void setDefaultProperty(String property) {
-        defaultProperty = property;
-    }
-
-    public String getDefaultProperty() {
-        return defaultProperty;
-    }
-
-    private TextPattern propertyClause(String prop, TextPattern value) {
-        // Main property has a name. Use that.
-        if (prop == null || prop.length() == 0)
-            prop = defaultProperty;
-        return new TextPatternProperty(prop, value);
-    }
+    CorpusQueryLanguageParser wrapper;
     
 }
 
-PARSER_END(CorpusQueryLanguageParser)
+PARSER_END(GeneratedCorpusQueryLanguageParser)
 
 // Skip whitespace and comment
 SKIP:  
@@ -234,9 +158,9 @@ MatchFilter simpleConstraint():
 		if (b == null)
 			return v;
         if (b.toString().equals("="))
-            return new MatchFilterEquals(v, w, false, false);
+            return new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE);
 		if (b.toString().equals("!="))
-			return new MatchFilterNot(new MatchFilterEquals(v, w, false, false));
+			return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));
     }
 }
 
@@ -368,7 +292,7 @@ String quotedString():
 {
     (a=<QUOTED_STRING> | a=<SINGLE_QUOTED_STRING>)
     {
-    	return getStringBetweenQuotes(a.toString());
+    	return wrapper.getStringBetweenQuotes(a.toString());
     }
 }
 
@@ -409,14 +333,14 @@ Integer[] repetitionAmount():
 	"*"                                 { minMax[0] = 0; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
 |	"+"                                 { minMax[0] = 1; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
 |	"?"                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
-|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = num(t); return minMax; }
+|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = wrapper.num(t); return minMax; }
 |	"{" t=<NUMBER> "," [ t2=<NUMBER> ] "}"
 	{
-		minMax[0] = num(t);
+		minMax[0] = wrapper.num(t);
 		if (t2 == null)
 			minMax[1] = BLSpanQuery.MAX_UNLIMITED;
 		else
-			minMax[1] = num(t2);
+			minMax[1] = wrapper.num(t2);
 		return minMax; 
 	}
 }
@@ -497,7 +421,7 @@ TextPattern positionWord():
 	String t = null;
 }
 {
-	t=quotedString()      { return simplePattern(t); }
+	t=quotedString()      { return wrapper.simplePattern(t); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple 
@@ -536,27 +460,27 @@ TextPattern positionLongPart():
 TextPattern attValuePair():
 {
 	TextPattern v = null;
-	String prop;
+	String annot;
 	String f = null;
 }
 {
 	LOOKAHEAD(2)
-	prop=propName() "=" v=valuePart() [f=flags()]  { return propertyClause(prop, v); }
-|	prop=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(propertyClause(prop, v)); }
+	annot=propName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
+|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
 |	v=valuePart() [f=flags()]                      { return v; }
 }
 
 String propName():
 {
-	Token t = null, subProp = null;
+	Token t = null, subAnnot = null;
 }
 {
-	t=<NAME> [ "/" subProp=<NAME> ]
+	t=<NAME> [ "/" subAnnot=<NAME> ]
 	{
 		String propName = t.toString(); 
-		if (subProp == null)
+		if (subAnnot == null)
 			return propName;
-		return propName + "/" + subProp.toString();
+		return propName + "/" + subAnnot.toString();
 	}
 }
 
@@ -585,7 +509,7 @@ TextPattern valuePart():
 	String t = null;
 }
 {
-	t=quotedString()              { return simplePattern(t); }
+	t=quotedString()              { return wrapper.simplePattern(t); }
 |	"(" m=value() ")"              { return m; }
 
 }

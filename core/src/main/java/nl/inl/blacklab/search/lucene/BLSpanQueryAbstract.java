@@ -23,123 +23,123 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
- * A base class for a SpanQuery with an array of clauses. Provides default implementations of some
- * abstract methods in SpanQuery.
+ * A base class for a SpanQuery with an array of clauses. Provides default
+ * implementations of some abstract methods in SpanQuery.
  */
 abstract class BLSpanQueryAbstract extends BLSpanQuery {
-	/**
-	 * The field name for this query. The "base" part is only applicable when dealing with complex
-	 * fields: the base field name of "contents" and "contents%pos" would both be "contents".
-	 */
-	protected String baseFieldName = "";
+    /**
+     * The field name for this query. The "base" part is only applicable when
+     * dealing with annotated fields: the base field name of "contents" and
+     * "contents%pos" would both be "contents".
+     */
+    protected String baseFieldName = "";
 
-	protected String luceneFieldName = "";
+    protected String luceneFieldName = "";
 
-	protected List<BLSpanQuery> clauses;
+    protected List<BLSpanQuery> clauses;
+    
+    public BLSpanQueryAbstract() {
+        //
+    }
 
-	public BLSpanQueryAbstract() {
-		//
-	}
+    public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
+        clauses = Arrays.asList(first, second);
+        determineBaseFieldName();
+    }
 
-	public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
-		clauses = Arrays.asList(first, second);
-		determineBaseFieldName();
-	}
+    public BLSpanQueryAbstract(BLSpanQuery clause) {
+        clauses = Arrays.asList(clause);
+        determineBaseFieldName();
+    }
 
-	public BLSpanQueryAbstract(BLSpanQuery clause) {
-		clauses = Arrays.asList(clause);
-		determineBaseFieldName();
-	}
+    public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
+        clauses = new ArrayList<>(clauscol);
+        determineBaseFieldName();
+    }
 
-	public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
-		clauses = new ArrayList<>(clauscol);
-		determineBaseFieldName();
-	}
+    public BLSpanQueryAbstract(BLSpanQuery[] clauses) {
+        this.clauses = Arrays.asList(clauses);
+        determineBaseFieldName();
+    }
 
-	public BLSpanQueryAbstract(BLSpanQuery[] _clauses) {
-		clauses = Arrays.asList(_clauses);
-		determineBaseFieldName();
-	}
+    private void determineBaseFieldName() {
+        if (!clauses.isEmpty()) {
+            luceneFieldName = clauses.get(0).getRealField();
+            baseFieldName = AnnotatedFieldNameUtil.getBaseName(clauses.get(0).getField());
+            for (int i = 1; i < clauses.size(); i++) {
+                String f = AnnotatedFieldNameUtil.getBaseName(clauses.get(i).getField());
+                if (!baseFieldName.equals(f))
+                    throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
+                            + baseFieldName + " and " + f + ")");
+            }
+        }
+    }
 
-	private void determineBaseFieldName() {
-		if (clauses.size() > 0) {
-			luceneFieldName = clauses.get(0).getRealField();
-			baseFieldName = ComplexFieldUtil.getBaseName(clauses.get(0).getField());
-			for (int i = 1; i < clauses.size(); i++) {
-				String f = ComplexFieldUtil.getBaseName(clauses.get(i).getField());
-				if (!baseFieldName.equals(f))
-					throw new RuntimeException("Mix of incompatible fields in query ("
-							+ baseFieldName + " and " + f + ")");
-			}
-		}
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || this.getClass() != o.getClass())
+            return false;
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || this.getClass() != o.getClass())
-			return false;
+        final BLSpanQueryAbstract that = (BLSpanQueryAbstract) o;
 
-		final BLSpanQueryAbstract that = (BLSpanQueryAbstract) o;
+        return clauses.equals(that.clauses);
+    }
 
-		if (clauses.equals(that.clauses))
-			return true;
+    @Override
+    public int hashCode() {
+        int h = clauses.hashCode();
+        h ^= (h << 10) | (h >>> 23);
+        return h;
+    }
 
-		return false;
-	}
+    /**
+     * Returns the name of the search field. In the case of a annotated field, the
+     * clauses may actually query different properties of the same annotated field
+     * (e.g. "description" and "description__pos"). That's why only the prefix is
+     * returned.
+     *
+     * @return name of the search field
+     */
+    @Override
+    public String getField() {
+        return baseFieldName;
+    }
 
-	@Override
-	public int hashCode() {
-		int h = clauses.hashCode();
-		h ^= (h << 10) | (h >>> 23);
-		return h;
-	}
+    @Override
+    public String getRealField() {
+        return luceneFieldName;
+    }
 
-	/**
-	 * Returns the name of the search field. In the case of a complex field, the clauses may
-	 * actually query different properties of the same complex field (e.g. "description" and
-	 * "description__pos"). That's why only the prefix is returned.
-	 *
-	 * @return name of the search field. In the case of a complex
-	 */
-	@Override
-	public String getField() {
-		return baseFieldName;
-	}
+    List<BLSpanQuery> getClauses() {
+        return clauses;
+    }
 
-	@Override
-	public String getRealField() {
-		return luceneFieldName;
-	}
+    protected List<BLSpanQuery> rewriteClauses(IndexReader reader) throws IOException {
+        List<BLSpanQuery> rewritten = new ArrayList<>(clauses.size());
+        boolean someRewritten = false;
+        for (BLSpanQuery c : clauses) {
+            BLSpanQuery query = c == null ? null : (BLSpanQuery) c.rewrite(reader);
+            rewritten.add(query);
+            if (query != c)
+                someRewritten = true;
+        }
+        return someRewritten ? rewritten : null;
+    }
 
-	List<BLSpanQuery> getClauses() {
-		return clauses;
-	}
-
-	protected List<BLSpanQuery> rewriteClauses(IndexReader reader) throws IOException {
-		List<BLSpanQuery> rewritten = new ArrayList<>(clauses.size());
-		boolean someRewritten = false;
-		for (BLSpanQuery c: clauses) {
-			BLSpanQuery query = c == null ? null : (BLSpanQuery) c.rewrite(reader);
-			rewritten.add(query);
-			if (query != c)
-				someRewritten = true;
-		}
-		return someRewritten ? rewritten : null;
-	}
-
-	public String clausesToString(String field) {
-		StringBuilder buffer = new StringBuilder();
-		for (BLSpanQuery clause: clauses) {
-			if (buffer.length() > 0) {
-				buffer.append(", ");
-			}
-			buffer.append(clause.toString(field));
-		}
-		return buffer.toString();
-	}
+    public String clausesToString(String field) {
+        StringBuilder buffer = new StringBuilder();
+        for (BLSpanQuery clause : clauses) {
+            if (buffer.length() > 0) {
+                buffer.append(", ");
+            }
+            buffer.append(clause.toString(field));
+        }
+        return buffer.toString();
+    }
 }

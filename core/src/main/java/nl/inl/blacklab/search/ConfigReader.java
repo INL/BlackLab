@@ -22,10 +22,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
-import nl.inl.blacklab.index.config.YamlJsonReader;
+import nl.inl.blacklab.indexers.config.YamlJsonReader;
+import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 
@@ -33,63 +36,74 @@ import nl.inl.util.Json;
  * Reads blacklab.yaml/.json file from one of the config dirs.
  *
  * This file contains general BlackLab settings that apply to multiple
- * applications, i.e. IndexTool, QueryTool, BlackLab Server, and
- * other applications that use BlackLab.
+ * applications, i.e. IndexTool, QueryTool, BlackLab Server, and other
+ * applications that use BlackLab.
  *
- * Config dirs are, in search order: $BLACKLAB_CONFIG_DIR/, $HOME/.blacklab/
- * or /etc/blacklab/.
+ * Config dirs are, in search order: $BLACKLAB_CONFIG_DIR/, $HOME/.blacklab/ or
+ * /etc/blacklab/.
  */
 public class ConfigReader extends YamlJsonReader {
 
-	private static final Logger logger = LogManager.getLogger(ConfigReader.class);
+    private static final Logger logger = LogManager.getLogger(ConfigReader.class);
 
-	/** Cache for getConfigDirs() */
+    /** Cache for getConfigDirs() */
     private static List<File> configDirs;
 
     /** Cache of root node of config file */
     private static JsonNode blacklabConfig;
 
-    /** Do we wish to forego looking for a config file on the filesystem? Useful for testing. */
+    /**
+     * Do we wish to forego looking for a config file on the filesystem? Useful for
+     * testing.
+     */
     private static boolean ignoreConfigFile = false;
 
     /**
-     * Do we wish to forego looking for a config file on the filesystem? Useful for repeatable testing.
-     * @param ignoreConfigFile if true, no config file will be loaded, so all setting will be at their default
+     * Do we wish to forego looking for a config file on the filesystem? Useful for
+     * repeatable testing.
+     * 
+     * @param ignoreConfigFile if true, no config file will be loaded, so all
+     *            setting will be at their default
      */
     public static void setIgnoreConfigFile(boolean ignoreConfigFile) {
         ConfigReader.ignoreConfigFile = ignoreConfigFile;
     }
 
     /**
-     * Load the global blacklab configuration.
-     * This file configures several global settings, as well as providing default settings for any new {@link Searcher} constructed hereafter.
+     * Load the global blacklab configuration. This file configures several global
+     * settings, as well as providing default settings for any new {@link BlackLabIndexImpl}
+     * constructed hereafter.
      *
-     * If no explicit config file has been set by the time when the first Searcher is opened, BlackLab automatically attempts to find and load a
-     * configuration file in a number of preset locations (see {@link ConfigReader#getDefaultConfigDirs()}).
+     * If no explicit config file has been set by the time when the first Searcher
+     * is opened, BlackLab automatically attempts to find and load a configuration
+     * file in a number of preset locations (see
+     * {@link ConfigReader#getDefaultConfigDirs()}).
      *
-     * Attempting to set another configuration when one is already loaded will throw an UnsupportedOperationException.
+     * Attempting to set another configuration when one is already loaded will throw
+     * an UnsupportedOperationException.
      *
      * @param file
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static void setConfigFile(File file) throws FileNotFoundException, IOException {
+    public synchronized static void setConfigFile(File file) throws FileNotFoundException, IOException {
         if (ignoreConfigFile) // useful for repeatable testing
             return;
 
-    	if (file == null || !file.canRead())
-    		throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
+        if (file == null || !file.canRead())
+            throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
-    	if (!FilenameUtils.isExtension(file.getName(), Arrays.asList("yaml", "yml", "json")))
-    		throw new IllegalArgumentException("Configuration file " + file + " is of an unsupported type.");
+        if (!FilenameUtils.isExtension(file.getName(), Arrays.asList("yaml", "yml", "json")))
+            throw new InvalidConfiguration("Configuration file " + file + " is of an unsupported type.");
 
-    	if (blacklabConfig != null)
-    		throw new UnsupportedOperationException("Cannot load configuration file " + file + " - another configuration file has already been loaded.");
+        if (blacklabConfig != null)
+            throw new UnsupportedOperationException("Cannot load configuration file " + file
+                    + " - another configuration file has already been loaded.");
 
-		boolean isJson = file.getName().endsWith(".json");
-		try (BufferedReader reader = FileUtil.openForReading(file)) {
-			setConfigFile(reader, isJson);
-		}
+        boolean isJson = file.getName().endsWith(".json");
+        try (BufferedReader reader = FileUtil.openForReading(file)) {
+            setConfigFile(reader, isJson);
+        }
     }
 
     /**
@@ -102,99 +116,112 @@ public class ConfigReader extends YamlJsonReader {
      * @throws JsonProcessingException
      * @throws IOException
      */
-    public static void setConfigFile(Reader reader, boolean isJson) throws JsonProcessingException, IOException{
+    public synchronized static void setConfigFile(Reader reader, boolean isJson)
+            throws JsonProcessingException, IOException {
         if (ignoreConfigFile) // useful for repeatable testing
             return;
 
-    	if (blacklabConfig != null)
-    		throw new UnsupportedOperationException("Cannot load configuration file - another configuration file has already been loaded.");
+        if (blacklabConfig != null)
+            throw new UnsupportedOperationException(
+                    "Cannot load configuration file - another configuration file has already been loaded.");
 
-    	ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+        ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
-    	logger.debug("Reading global BlackLab config");
-    	JsonNode parsedConfig = mapper.readTree(reader);
+        logger.debug("Reading global BlackLab config");
+        JsonNode parsedConfig = mapper.readTree(reader);
 
-	    readGlobalSettings(parsedConfig);
+        readGlobalSettings(parsedConfig);
 
-	    blacklabConfig = parsedConfig;
+        blacklabConfig = parsedConfig;
     }
 
+    public synchronized static void loadDefaultConfig() {
+        if (blacklabConfig != null)
+            return;
 
-    public static void loadDefaultConfig() {
-    	if (blacklabConfig != null)
-    		return;
-
-    	File file = FileUtil.findFile(getDefaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
-    	if (file != null) {
-    		try {
-    			setConfigFile(file);
-    		} catch (IOException e) {
-    			logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
-    		}
-    	}
+        File file = FileUtil.findFile(getDefaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
+        if (file != null) {
+            try {
+                setConfigFile(file);
+            } catch (IOException e) {
+                logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
+            }
+        }
     }
 
     /**
-     * Get the global blacklab configuration file.
-     * Null will be returned if no config has been set and no default configuration has been loaded yet.
-     * Will not load the default configuration.
+     * Get the global blacklab configuration file. Null will be returned if no
+     * config has been set and no default configuration has been loaded yet. Will
+     * not load the default configuration.
      *
-     * @return the loaded configuration file, or null if no config has been loaded yet.
+     * @return the loaded configuration file, or null if no config has been loaded
+     *         yet.
      */
-    public static JsonNode getConfigFile() {
-    	return blacklabConfig;
+    public synchronized static JsonNode getConfigFile() {
+        return blacklabConfig;
     }
 
     /**
-     * Configure the searcher according to the blacklab configuration file.
+     * Configure the index according to the blacklab configuration file.
      *
-     * @param searcher
+     * @param index
      * @throws IOException
      */
-    public static void applyConfig(Searcher searcher) throws IOException {
-    	if (blacklabConfig == null)
-    		loadDefaultConfig();
+    public synchronized static void applyConfig(BlackLabIndex index) throws IOException {
+        if (blacklabConfig == null)
+            loadDefaultConfig();
 
-    	if (blacklabConfig != null) {
-	        readSearcherSettings(blacklabConfig, searcher);
-    	}
+        if (blacklabConfig != null)
+            readSearcherSettings(blacklabConfig, index);
     }
 
-    private static void readSearcherSettings(JsonNode root, Searcher searcher) {
+    private static void readSearcherSettings(JsonNode root, BlackLabIndex index) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
 
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "search": readSearch(obj(e), searcher); break;
+            case "search":
+                readSearch(obj(e), index);
+                break;
             case "plugins":
             case "indexing":
             case "debug":
-            	break;
+                break;
             default:
-                throw new IllegalArgumentException("Unknown top-level key " + e.getKey());
+                throw new InvalidConfiguration("Unknown top-level key " + e.getKey());
             }
         }
     }
 
-    private static void readSearch(ObjectNode obj, Searcher searcher) {
-        HitsSettings hitsSett = searcher.hitsSettings();
+    private static void readSearch(ObjectNode obj, BlackLabIndex index) {
+        SearchSettings hitsSett = index.searchSettings();
         Iterator<Entry<String, JsonNode>> it = obj.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "collator": readCollator(e, searcher); break;
-            case "contextSize": hitsSett.setContextSize(integer(e)); break;
-            case "maxHitsToRetrieve": hitsSett.setMaxHitsToRetrieve(integer(e)); break;
-            case "maxHitsToCount": hitsSett.setMaxHitsToCount(integer(e)); break;
+            case "collator":
+                readCollator(e, index);
+                break;
+            case "contextSize":
+                index.setDefaultContextSize(ContextSize.get(integer(e)));
+                break;
+            case "maxHitsToRetrieve":
+                hitsSett = hitsSett.withMaxHitsToProcess(integer(e));
+                index.setSearchSettings(hitsSett);
+                break;
+            case "maxHitsToCount":
+                hitsSett = hitsSett.withMaxHitsToCount(integer(e));
+                index.setSearchSettings(hitsSett);
+                break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in search section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in search section");
             }
         }
     }
 
-    private static void readCollator(Entry<String, JsonNode> e, Searcher searcher) {
+    private static void readCollator(Entry<String, JsonNode> e, BlackLabIndex index) {
         Collator collator;
         if (e.getValue() instanceof ObjectNode) {
             Iterator<Entry<String, JsonNode>> it = obj(e).fields();
@@ -202,15 +229,23 @@ public class ConfigReader extends YamlJsonReader {
             while (it.hasNext()) {
                 Entry<String, JsonNode> e2 = it.next();
                 switch (e2.getKey()) {
-                case "language": language = str(e2); break;
-                case "country": country = str(e2); break;
-                case "variant": variant = str(e2); break;
+                case "language":
+                    language = str(e2);
+                    break;
+                case "country":
+                    country = str(e2);
+                    break;
+                case "variant":
+                    variant = str(e2);
+                    break;
                 default:
-                    throw new IllegalArgumentException("Unknown key " + e.getKey() + " in collator (must have language, can have country and variant)");
+                    throw new InvalidConfiguration("Unknown key " + e.getKey()
+                            + " in collator (must have language, can have country and variant)");
                 }
             }
             if (language == null || country == null && variant != null)
-                throw new IllegalArgumentException("Collator must have language, language+country or language+country+variant");
+                throw new InvalidConfiguration(
+                        "Collator must have language, language+country or language+country+variant");
             if (country == null)
                 collator = Collator.getInstance(new Locale(language));
             else if (variant == null)
@@ -220,22 +255,28 @@ public class ConfigReader extends YamlJsonReader {
         } else {
             collator = Collator.getInstance(new Locale(str(e)));
         }
-        searcher.setCollator(collator);
+        index.setCollator(collator);
     }
 
     private static void readGlobalSettings(JsonNode root) {
-    	obj(root, "root node");
+        obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "indexing": readIndexing(obj(e)); break;
-            case "plugins": PluginManager.initPlugins(obj(e)); break;
-            case "debug": readDebug(obj(e)); break;
+            case "indexing":
+                readIndexing(obj(e));
+                break;
+            case "plugins":
+                PluginManager.initPlugins(obj(e));
+                break;
+            case "debug":
+                readDebug(obj(e));
+                break;
             case "search":
-            	break;
+                break;
             default:
-                throw new IllegalArgumentException("Unknown top-level key " + e.getKey());
+                throw new InvalidConfiguration("Unknown top-level key " + e.getKey());
             }
         }
     }
@@ -245,9 +286,11 @@ public class ConfigReader extends YamlJsonReader {
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "trace": readTrace(obj(e)); break;
+            case "trace":
+                readTrace(obj(e));
+                break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in debug section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in debug section");
             }
         }
     }
@@ -257,11 +300,17 @@ public class ConfigReader extends YamlJsonReader {
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "indexOpening": Searcher.setTraceIndexOpening(bool(e)); break;
-            case "optimization": Searcher.setTraceOptimization(bool(e)); break;
-            case "queryExecution": Searcher.setTraceQueryExecution(bool(e)); break;
+            case "indexOpening":
+                BlackLabIndexImpl.setTraceIndexOpening(bool(e));
+                break;
+            case "optimization":
+                BlackLabIndexImpl.setTraceOptimization(bool(e));
+                break;
+            case "queryExecution":
+                BlackLabIndexImpl.setTraceQueryExecution(bool(e));
+                break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in trace section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in trace section");
             }
         }
     }
@@ -271,36 +320,45 @@ public class ConfigReader extends YamlJsonReader {
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "downloadAllowed": DownloadCache.setDownloadAllowed(bool(e)); break;
-            case "downloadCacheMaxFileSizeMegs": DownloadCache.setMaxFileSizeMegs(integer(e)); break;
-            case "downloadCacheDir": DownloadCache.setDir(new File(str(e))); break;
-            case "downloadCacheSizeMegs": DownloadCache.setSizeMegs(integer(e)); break;
-            case "zipFilesMaxOpen": ZipHandleManager.setMaxOpen(integer(e)); break;
+            case "downloadAllowed":
+                DownloadCache.setDownloadAllowed(bool(e));
+                break;
+            case "downloadCacheMaxFileSizeMegs":
+                DownloadCache.setMaxFileSizeMegs(integer(e));
+                break;
+            case "downloadCacheDir":
+                DownloadCache.setDir(new File(str(e)));
+                break;
+            case "downloadCacheSizeMegs":
+                DownloadCache.setSizeMegs(integer(e));
+                break;
+            case "zipFilesMaxOpen":
+                ZipHandleManager.setMaxOpen(integer(e));
+                break;
             default:
-                throw new IllegalArgumentException("Unknown key " + e.getKey() + " in indexing section");
+                throw new InvalidConfiguration("Unknown key " + e.getKey() + " in indexing section");
             }
         }
     }
 
-	/**
-	 * Return a list of directories that should be searched for BlackLab-related configuration files.
-	 *
-	 * May be used by applications to locate BlackLab-related configuration, such as
-	 * input format definition files or other configuration files. IndexTool and BlackLab Server use
-	 * this.
-	 *
-	 * The directories returned are (in decreasing priority):
-	 * - $BLACKLAB_CONFIG_DIR (if env. var. is defined)
-	 * - $HOME/.blacklab
-	 * - /etc/blacklab
-	 * - /vol1/etc/blacklab (legacy, will be removed)
-	 * - /tmp (legacy, will be removed)
-	 *
-	 * A convenient method to use with this is {@link FileUtil#findFile(List, String, List)}.
-	 *
-	 * @return list of directories to search in decreasing order of priority
-	 */
-    public static List<File> getDefaultConfigDirs() {
+    /**
+     * Return a list of directories that should be searched for BlackLab-related
+     * configuration files.
+     *
+     * May be used by applications to locate BlackLab-related configuration, such as
+     * input format definition files or other configuration files. IndexTool and
+     * BlackLab Server use this.
+     *
+     * The directories returned are (in decreasing priority): - $BLACKLAB_CONFIG_DIR
+     * (if env. var. is defined) - $HOME/.blacklab - /etc/blacklab -
+     * /vol1/etc/blacklab (legacy, will be removed) - /tmp (legacy, will be removed)
+     *
+     * A convenient method to use with this is
+     * {@link FileUtil#findFile(List, String, List)}.
+     *
+     * @return list of directories to search in decreasing order of priority
+     */
+    public synchronized static List<File> getDefaultConfigDirs() {
         if (configDirs == null) {
             configDirs = new ArrayList<>();
             String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");

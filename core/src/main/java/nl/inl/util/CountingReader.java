@@ -25,53 +25,52 @@ import java.io.Reader;
  * A Reader decorator that keeps track of the number of characters read.
  */
 public class CountingReader extends Reader {
-	/**
-	 * The Reader we're decorating
-	 */
-	private Reader reader_;
+    /**
+     * The Reader we're decorating
+     */
+    private Reader reader_;
 
-	/**
-	 * Character count
-	 */
-	private int charsRead;
+    /**
+     * Character count
+     */
+    private int charsRead;
 
-	/**
-	 * Last count reported
-	 */
-	private int lastReported;
+    /**
+     * Last count reported
+     */
+    private int lastReported;
 
-	/**
-	 * Constructor
-	 *
-	 * @param reader
-	 *            the Reader we're decorating
-	 */
-	public CountingReader(Reader reader) {
-		reader_ = reader;
-		charsRead = lastReported = 0;
-	}
+    /**
+     * Constructor
+     *
+     * @param reader the Reader we're decorating
+     */
+    public CountingReader(Reader reader) {
+        reader_ = reader;
+        charsRead = lastReported = 0;
+    }
 
-	@Override
-	public void close() throws IOException {
-		reader_.close();
-	}
+    @Override
+    public void close() throws IOException {
+        reader_.close();
+    }
 
-	@Override
-	public int read(char[] cbuf, int off, int len) throws IOException {
-		int bytesReadThisTime = reader_.read(cbuf, off, len);
-		if (bytesReadThisTime > 0)
-			charsRead += bytesReadThisTime;
-		return bytesReadThisTime;
-	}
+    @Override
+    public int read(char[] cbuf, int off, int len) throws IOException {
+        int bytesReadThisTime = reader_.read(cbuf, off, len);
+        if (bytesReadThisTime > 0)
+            charsRead += bytesReadThisTime;
+        return bytesReadThisTime;
+    }
 
-	public int getCharsRead() {
-		lastReported = charsRead;
-		return charsRead;
-	}
+    public int getCharsRead() {
+        lastReported = charsRead;
+        return charsRead;
+    }
 
-	public int getCharsReadSinceLastCall() {
-		int n = charsRead - lastReported;
-		lastReported = charsRead;
-		return n;
-	}
+    public int getCharsReadSinceLastCall() {
+        int n = charsRead - lastReported;
+        lastReported = charsRead;
+        return n;
+    }
 }

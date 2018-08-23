@@ -16,16 +16,18 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import nl.inl.blacklab.index.config.InputFormatConfigException;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /**
  *
  * @author eduard
  */
 public class TestYaml {
-    
+
     @Test
     public void testDuplicatObjects() {
         DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig() {
@@ -33,15 +35,15 @@ public class TestYaml {
             public boolean isSupported(String formatIdentifier) {
                 return "nodups".equals(formatIdentifier);
             }
-            
+
         };
-        
+
         try {
             factoryConfig.load("nodups", new File("src/test/resources/yaml/nodups.blf.yaml"));
             Assert.fail("expected duplicates error");
-        } catch (InputFormatConfigException ex) {
+        } catch (InvalidInputFormatConfig ex) {
             Assert.assertTrue(ex.getMessage().contains("Duplicate"));
         }
     }
-    
+
 }

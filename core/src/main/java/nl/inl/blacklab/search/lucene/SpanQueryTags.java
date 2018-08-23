@@ -26,200 +26,206 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 
 /**
  *
  * Returns spans corresponding to a certain element (tag) type.
  *
- * For example, SpanQueryTags("ne") will give us spans for all the <ne> elements in the document.
+ * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
+ * elements in the document.
  */
 public class SpanQueryTags extends BLSpanQuery {
 
-	BLSpanTermQuery clause;
+    BLSpanTermQuery clause;
 
-	private String tagName;
+    private String tagName;
 
-	private String baseFieldName;
+    private String baseFieldName;
 
-	private Map<String, String> attr;
+    private Map<String, String> attr;
 
-	private String startTagFieldName;
+    private String startTagFieldName;
 
-	public SpanQueryTags(String startTagFieldName, String tagName, Map<String, String> attr) {
-		this.tagName = tagName;
-		baseFieldName = ComplexFieldUtil.getBaseName(startTagFieldName);
-		this.startTagFieldName = startTagFieldName;
-		this.clause = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
-		this.attr = attr != null && attr.isEmpty() ? null : attr;
-	}
+    public SpanQueryTags(String startTagFieldName, String tagName, Map<String, String> attr) {
+        this.tagName = tagName;
+        baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
+        this.startTagFieldName = startTagFieldName;
+        this.clause = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
+        this.attr = attr != null && attr.isEmpty() ? null : attr;
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		if (attr == null)
-			return this;
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        if (attr == null)
+            return this;
 
-		// Construct attribute filters
-		List<BLSpanQuery> attrFilters = new ArrayList<>();
-		for (Map.Entry<String,String> e: attr.entrySet()) {
-			String value = "@" + e.getKey() + "__" + e.getValue();
-			attrFilters.add(new BLSpanTermQuery(new Term(startTagFieldName, value)));
-		}
+        // Construct attribute filters
+        List<BLSpanQuery> attrFilters = new ArrayList<>();
+        for (Map.Entry<String, String> e : attr.entrySet()) {
+            String value = "@" + e.getKey() + "__" + e.getValue();
+            attrFilters.add(new BLSpanTermQuery(new Term(startTagFieldName, value)));
+        }
 
-		// Filter the tags
-		// (NOTE: only works for start tags and full elements because attribute values
-		//  are indexed at the start tag!)
-		BLSpanQuery filter;
-		if (attrFilters.size() == 1)
-			filter = attrFilters.get(0);
-		else
-			filter = new SpanQueryAnd(attrFilters);
-		return new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter, SpanQueryPositionFilter.Operation.STARTS_AT, false);
-	}
+        // Filter the tags
+        // (NOTE: only works for start tags and full elements because attribute values
+        //  are indexed at the start tag!)
+        BLSpanQuery filter;
+        if (attrFilters.size() == 1)
+            filter = attrFilters.get(0);
+        else
+            filter = new SpanQueryAnd(attrFilters);
+        return new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter,
+                SpanQueryPositionFilter.Operation.STARTS_AT, false);
+    }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		if (attr != null)
-			throw new RuntimeException("Query should've been rewritten! (attr != null)");
-		BLSpanWeight weight = clause.createWeight(searcher, needsScores);
-		return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
-	}
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        if (attr != null)
+            throw new BlackLabRuntimeException("Query should've been rewritten! (attr != null)");
+        BLSpanWeight weight = clause.createWeight(searcher, needsScores);
+        return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    }
 
-	class SpanWeightTags extends BLSpanWeight {
+    class SpanWeightTags extends BLSpanWeight {
 
-		final BLSpanWeight weight;
+        final BLSpanWeight weight;
 
-		public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
-			super(SpanQueryTags.this, searcher, terms);
-			this.weight = weight;
-		}
+        public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+                throws IOException {
+            super(SpanQueryTags.this, searcher, terms);
+            this.weight = weight;
+        }
 
-		@Override
-		public void extractTerms(Set<Term> terms) {
-			weight.extractTerms(terms);
-		}
+        @Override
+        public void extractTerms(Set<Term> terms) {
+            weight.extractTerms(terms);
+        }
 
-		@Override
-		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			weight.extractTermContexts(contexts);
-		}
+        @Override
+        public void extractTermContexts(Map<Term, TermContext> contexts) {
+            weight.extractTermContexts(contexts);
+        }
 
-		@Override
-		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans startTags = weight.getSpans(context, requiredPostings);
-			if (startTags == null)
-				return null;
-			return new SpansTags(startTags);
-		}
-	}
+        @Override
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            BLSpans startTags = weight.getSpans(context, requiredPostings);
+            if (startTags == null)
+                return null;
+            return new SpansTags(startTags);
+        }
+    }
 
-	@Override
-	public String toString(String field) {
-		if (attr != null && !attr.isEmpty())
-			return "TAGS(" + tagName + ", " + StringUtil.join(attr) + ")";
-		return "TAGS(" + tagName + ")";
-	}
+    @Override
+    public String toString(String field) {
+        if (attr != null && !attr.isEmpty())
+            return "TAGS(" + tagName + ", " + StringUtil.join(attr) + ")";
+        return "TAGS(" + tagName + ")";
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o == null || this.getClass() != o.getClass())
-			return false;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || this.getClass() != o.getClass())
+            return false;
 
-		final SpanQueryTags that = (SpanQueryTags) o;
+        final SpanQueryTags that = (SpanQueryTags) o;
 
-		if (!clause.equals(that.clause))
-			return false;
-		if (attr == null) {
-			if (that.attr != null) {
-				return false;
-			}
-		} else if (!attr.equals(that.attr)) {
-			return false;
-		}
+        if (!clause.equals(that.clause))
+            return false;
+        if (attr == null) {
+            if (that.attr != null) {
+                return false;
+            }
+        } else if (!attr.equals(that.attr)) {
+            return false;
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * Returns the name of the search field. In the case of a complex field, the clauses may
-	 * actually query different properties of the same complex field (e.g. "description" and
-	 * "description__pos"). That's why only the prefix is returned.
-	 *
-	 * @return name of the search field. In the case of a complex
-	 */
-	@Override
-	public String getField() {
-		return baseFieldName;
-	}
+    /**
+     * Returns the name of the search field. In the case of a annotated field, the
+     * clauses may actually query different properties of the same annotated field
+     * (e.g. "description" and "description__pos"). That's why only the prefix is
+     * returned.
+     *
+     * @return name of the search field
+     */
+    @Override
+    public String getField() {
+        return baseFieldName;
+    }
 
-	@Override
-	public String getRealField() {
-		return startTagFieldName;
-	}
+    @Override
+    public String getRealField() {
+        return startTagFieldName;
+    }
 
-	@Override
-	public int hashCode() {
-		int h = clause.hashCode();
-		if (attr != null)
-			h ^= attr.hashCode();
-		h ^= (h << 10) | (h >>> 23);
-		return h;
-	}
+    @Override
+    public int hashCode() {
+        int h = clause.hashCode();
+        if (attr != null)
+            h ^= attr.hashCode();
+        h ^= (h << 10) | (h >>> 23);
+        return h;
+    }
 
-	public String getElementName() {
-		return tagName;
-	}
+    public String getElementName() {
+        return tagName;
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return false;
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return false;
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return 0;
-	}
+    @Override
+    public int hitsLengthMin() {
+        return 0;
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return Integer.MAX_VALUE;
-	}
+    @Override
+    public int hitsLengthMax() {
+        return Integer.MAX_VALUE;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return false;
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return false;
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return true;
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return false;
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return false;
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		return clause.reverseMatchingCost(reader);
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        return clause.reverseMatchingCost(reader);
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		return clause.forwardMatchingCost();
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return clause.forwardMatchingCost();
+    }
 }

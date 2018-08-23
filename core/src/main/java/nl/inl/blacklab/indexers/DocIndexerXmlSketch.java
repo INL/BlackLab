@@ -20,16 +20,17 @@ import java.io.Reader;
 import org.xml.sax.Attributes;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
-import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.complex.ComplexFieldProperty;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 
 /**
  * Index a Sketch XML file.
  *
- * The Sketch XML format was created with a trivial transform of the Sketch Engine word-per-line
- * input file, converting the data to well-formed XML. Using XML is useful because it allows us
- * to later easily display it using XSLT.
+ * The Sketch XML format was created with a trivial transform of the Sketch
+ * Engine word-per-line input file, converting the data to well-formed XML.
+ * Using XML is useful because it allows us to later easily display it using
+ * XSLT.
  *
  * For information about the original Sketch Engine word-per-line format, see
  * http://trac.sketchengine.co.uk/wiki/SkE/PrepareText .
@@ -38,113 +39,118 @@ import nl.inl.blacklab.index.complex.ComplexFieldProperty;
  */
 public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
 
-    public static String getDisplayName() { return "Sketch Engine XML-from-WPL (deprecated)"; }
-    public static String getDescription() { return
-            "Older way of indexing Sketch Engine files, after converting them to XML. " +
-            "This is not necessary anymore, use sketch-wpl to index Sketch Engine WPL files directly."; }
+    public static String getDisplayName() {
+        return "Sketch Engine XML-from-WPL (deprecated)";
+    }
 
-	/** Captures the punctuation so we can add it to the next word. */
-	StringBuilder punctuation = new StringBuilder();
+    public static String getDescription() {
+        return "Older way of indexing Sketch Engine files, after converting them to XML. " +
+                "This is not necessary anymore, use sketch-wpl to index Sketch Engine WPL files directly.";
+    }
 
-	public DocIndexerXmlSketch(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader);
+    /** Captures the punctuation so we can add it to the next word. */
+    StringBuilder punctuation = new StringBuilder();
 
-		// Get handles to the default properties (the main one & punct)
-		final ComplexFieldProperty propMain = getMainProperty();
-		final ComplexFieldProperty propPunct = getPropPunct();
+    public DocIndexerXmlSketch(DocWriter indexer, String fileName, Reader reader) {
+        super(indexer, fileName, reader);
 
-		// Add some extra properties
-		final ComplexFieldProperty propLemma = addProperty("lemma");
-		final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
-		final ComplexFieldProperty propWordClass = addProperty("class");
+        // Get handles to the default properties (the main one & punct)
+        final AnnotationWriter propMain = mainAnnotation();
+        final AnnotationWriter propPunct = punctAnnotation();
 
-		// Doc element: the individual documents to index (one or more per file)
-		addHandler("/docs/doc", new DocumentElementHandler() {
+        // Add some extra properties
+        final AnnotationWriter propLemma = addProperty("lemma");
+        final AnnotationWriter propPartOfSpeech = addProperty("pos");
+        final AnnotationWriter propWordClass = addProperty("class");
 
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
+        registerContentsField();
 
-				// Make sure the punctuation buffer is empty
-				punctuation.setLength(0);
-			}
+        // Doc element: the individual documents to index (one or more per file)
+        addHandler("/docs/doc", new DocumentElementHandler() {
 
-			@Override
-			public void endElement(String uri, String localName, String qName) {
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
 
-				// Before ending the document, add the final bit of punctuation.
-				propPunct.addValue(punctuation.toString());
+                // Make sure the punctuation buffer is empty
+                punctuation.setLength(0);
+            }
 
-				super.endElement(uri, localName, qName);
-			}
+            @Override
+            public void endElement(String uri, String localName, String qName) {
 
-		});
+                // Before ending the document, add the final bit of punctuation.
+                propPunct.addValue(punctuation.toString());
 
-		// Word elements: index as main contents
-		addHandler("//w", new WordHandlerBase() {
+                super.endElement(uri, localName, qName);
+            }
 
-			@Override
-			public void startElement(String uri, String localName, String qName,
-					Attributes attributes) {
-				super.startElement(uri, localName, qName, attributes);
+        });
 
-				// Determine lemma, word class and part of speech from the attributes
-				String lemma = attributes.getValue("l");
-				if (lemma == null || lemma.length() < 2) {
-					lemma = "???-?";
-				}
-				propLemma.addValue(lemma.substring(0, lemma.length() - 2));
-				propWordClass.addValue(lemma.substring(lemma.length() - 1));
-				String pos = attributes.getValue("p");
-				if (pos == null)
-					pos = "?";
-				propPartOfSpeech.addValue(pos);
+        // Word elements: index as main contents
+        addHandler("//w", new WordHandlerBase() {
 
-				// Add punctuation value
-				propPunct.addValue(punctuation.toString());
-				punctuation.setLength(0); // reset for next word
-				punctuation.append(' '); // will be deleted if we find a glue tag
+            @Override
+            public void startElement(String uri, String localName, String qName,
+                    Attributes attributes) {
+                super.startElement(uri, localName, qName, attributes);
 
-				consumeCharacterContent(); // empty content buffer so we catch only element content (i.e., the word)
-			}
+                // Determine lemma, word class and part of speech from the attributes
+                String lemma = attributes.getValue("l");
+                if (lemma == null || lemma.length() < 2) {
+                    lemma = "???-?";
+                }
+                propLemma.addValue(lemma.substring(0, lemma.length() - 2));
+                propWordClass.addValue(lemma.substring(lemma.length() - 1));
+                String pos = attributes.getValue("p");
+                if (pos == null)
+                    pos = "?";
+                propPartOfSpeech.addValue(pos);
 
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
-				propMain.addValue(consumeCharacterContent());
-			}
+                // Add punctuation value
+                propPunct.addValue(punctuation.toString());
+                punctuation.setLength(0); // reset for next word
+                punctuation.append(' '); // will be deleted if we find a glue tag
 
-		});
+                consumeCharacterContent(); // empty content buffer so we catch only element content (i.e., the word)
+            }
 
-		// Punctuation elements: keep track of them so we can add them to the next word
-		addHandler("//pu", new ContentCapturingHandler() {
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
+                propMain.addValue(consumeCharacterContent());
+            }
 
-				// Capture punctuation and add space by default (space will be deleted
-				// if we encounter a glue tag)
-				punctuation.append(getElementContent()).append(' ');
-			}
-		});
+        });
 
-		// Glue tag: delete last space from punctuation capturing buffer
-		addHandler("//g", new ContentCapturingHandler() {
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				super.endElement(uri, localName, qName);
+        // Punctuation elements: keep track of them so we can add them to the next word
+        addHandler("//pu", new ContentCapturingHandler() {
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
 
-				// If last character in punctuation buffer is a space, delete it
-				if (punctuation.length() > 0 && punctuation.charAt(punctuation.length() - 1) == ' ')
-					punctuation.setLength(punctuation.length() - 1);
-			}
-		});
+                // Capture punctuation and add space by default (space will be deleted
+                // if we encounter a glue tag)
+                punctuation.append(getElementContent()).append(' ');
+            }
+        });
 
-		// Sentence tags: index as tags in the content
-		addHandler("//s", new InlineTagHandler());
+        // Glue tag: delete last space from punctuation capturing buffer
+        addHandler("//g", new ContentCapturingHandler() {
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                super.endElement(uri, localName, qName);
 
-	}
+                // If last character in punctuation buffer is a space, delete it
+                if (punctuation.length() > 0 && punctuation.charAt(punctuation.length() - 1) == ' ')
+                    punctuation.setLength(punctuation.length() - 1);
+            }
+        });
 
+        // Sentence tags: index as tags in the content
+        addHandler("//s", new InlineTagHandler());
+
+    }
 
 }
