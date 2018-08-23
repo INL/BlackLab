@@ -89,7 +89,7 @@ class SpanQueryUnique extends BLSpanQuery {
             if (srcSpans == null)
                 return null;
             if (!src.hitsStartPointSorted())
-                return new PerDocumentSortedSpans(srcSpans, true, true);
+                return PerDocumentSortedSpans.startPointEliminateDuplicates(srcSpans);
             return new SpansUnique(srcSpans);
         }
     }

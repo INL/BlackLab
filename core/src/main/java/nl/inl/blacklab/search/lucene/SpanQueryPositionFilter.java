@@ -144,7 +144,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             if (spansProd == null)
                 return null;
             if (!clauses.get(0).hitsStartPointSorted())
-                spansProd = new PerDocumentSortedSpans(spansProd, true, false);
+                spansProd = PerDocumentSortedSpans.startPoint(spansProd);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
                 // No filter hits. If it's a positive filter, that means no producer hits can match.

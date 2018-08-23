@@ -244,9 +244,9 @@ class SpanQuerySequenceOfTwo extends BLSpanQueryAbstract {
                     combiUniqueEnds = clauses.get(i).hitsHaveUniqueEnd();
                 } else {
                     if (!combiEndpointSorted)
-                        combi = new PerDocumentSortedSpans(combi, false, false);
+                        combi = PerDocumentSortedSpans.endPoint(combi);
                     if (!clauses.get(i).hitsStartPointSorted())
-                        si = new PerDocumentSortedSpans(si, true, false);
+                        si = PerDocumentSortedSpans.startPoint(si);
                     combi = new SpansSequenceRaw(combi, si);
                     combiUniqueEnds = combiUniqueEnds && clauses.get(i).hitsHaveUniqueEnd();
                     combiEndpointSorted = clauses.get(i).hitsAllSameLength();

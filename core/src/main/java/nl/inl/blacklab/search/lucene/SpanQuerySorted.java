@@ -82,7 +82,7 @@ class SpanQuerySorted extends BLSpanQuery {
             BLSpans srcSpans = weight.getSpans(context, requiredPostings);
             if (srcSpans == null)
                 return null;
-            return new PerDocumentSortedSpans(srcSpans, !sortByEndpoint, eliminateDuplicates);
+            return PerDocumentSortedSpans.get(srcSpans, !sortByEndpoint, eliminateDuplicates);
         }
     }
 

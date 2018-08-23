@@ -24,7 +24,43 @@ import nl.inl.blacklab.search.Span;
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
-class PerDocumentSortedSpans extends BLSpans {
+final class PerDocumentSortedSpans extends BLSpans {
+    
+    public static PerDocumentSortedSpans startPointEliminateDuplicates(BLSpans src) {
+        return new PerDocumentSortedSpans(src, true, true);
+    }
+
+    public static PerDocumentSortedSpans startPoint(BLSpans src) {
+        return new PerDocumentSortedSpans(src, true, false);
+    }
+
+    public static PerDocumentSortedSpans startPoint(BLSpans src, boolean removeDuplicates) {
+        return new PerDocumentSortedSpans(src, true, removeDuplicates);
+    }
+
+    public static PerDocumentSortedSpans endPointEliminateDuplicates(BLSpans src) {
+        return new PerDocumentSortedSpans(src, false, true);
+    }
+
+    public static PerDocumentSortedSpans endPoint(BLSpans src) {
+        return new PerDocumentSortedSpans(src, false, false);
+    }
+
+    public static PerDocumentSortedSpans endPoint(BLSpans src, boolean removeDuplicates) {
+        return new PerDocumentSortedSpans(src, false, removeDuplicates);
+    }
+
+    public static PerDocumentSortedSpans sortEliminateDuplicates(BLSpans src, boolean sortByStartPoint) {
+        return new PerDocumentSortedSpans(src, sortByStartPoint, true);
+    }
+
+    public static PerDocumentSortedSpans sort(BLSpans src, boolean sortByStartPoint) {
+        return new PerDocumentSortedSpans(src, sortByStartPoint, false);
+    }
+
+    public static PerDocumentSortedSpans get(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
+        return new PerDocumentSortedSpans(src, sortByStartPoint, removeDuplicates);
+    }
 
     private int curDoc = -1;
 
@@ -40,7 +76,7 @@ class PerDocumentSortedSpans extends BLSpans {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    public PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
+    private PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
         bucketedSpans = new SpansInBucketsPerDocumentSorted(src, sortByStartPoint);
 

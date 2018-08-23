@@ -78,7 +78,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     protected boolean clauseCapturesGroups = true;
 
     protected void addHitFromSource() {
-        long span = ((long)source.startPosition() << 32) | (long)source.endPosition();
+        long span = ((long)source.startPosition() << 32) | source.endPosition();
         bucket.add(span);
         if (doCapturedGroups) {
             // Store captured group information

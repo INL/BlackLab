@@ -121,7 +121,7 @@ public abstract class BLSpans extends Spans {
         }
         if (sort) {
             // Sort spans by document and start point, then optionally make them unique too.
-            return new PerDocumentSortedSpans(result, true, removeDuplicates);
+            return PerDocumentSortedSpans.startPoint(result, removeDuplicates);
         }
         return result;
     }
