@@ -20,7 +20,6 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
@@ -40,18 +39,6 @@ public abstract class BLSpans extends Spans {
      * any groups, this will be set to false to improve performance.
      */
     protected boolean childClausesCaptureGroups = true;
-
-    /**
-     * Makes a new Hit object from the document id, start and end positions.
-     *
-     * Subclasses that already have a Hit object available should override this and
-     * return the existing Hit object, to avoid excessive Hit instantiations.
-     *
-     * @return the Hit object for the current hit
-     */
-    public Hit getHit() {
-        return Hit.create(docID(), startPosition(), endPosition());
-    }
 
     /**
      * Give the BLSpans tree a way to access captured groups, and the capture groups

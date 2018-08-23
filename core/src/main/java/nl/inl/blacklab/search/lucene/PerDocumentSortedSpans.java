@@ -21,16 +21,15 @@ import java.util.Comparator;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
 class PerDocumentSortedSpans extends BLSpans {
 
-    final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
+    final static Comparator<Long> cmpStartPoint = new SpanComparatorStartPoint(); //@@@@ WAS Comparators.naturalOrder();
 
-    final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
+    final static Comparator<Long> cmpEndPoint = new SpanComparatorEndPoint();
 
     private int curDoc = -1;
 
@@ -46,7 +45,7 @@ class PerDocumentSortedSpans extends BLSpans {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
+    public PerDocumentSortedSpans(BLSpans src, Comparator<Long> comparator, boolean eliminateDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
         bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
 
@@ -74,13 +73,6 @@ class PerDocumentSortedSpans extends BLSpans {
         if (indexInBucket >= bucketedSpans.bucketSize())
             return NO_MORE_POSITIONS;
         return curEnd;
-    }
-
-    @Override
-    public Hit getHit() {
-        if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-            return null;
-        return bucketedSpans.getHit(indexInBucket);
     }
 
     @Override

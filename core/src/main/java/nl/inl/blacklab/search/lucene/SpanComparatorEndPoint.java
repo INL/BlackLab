@@ -17,8 +17,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.results.Hit;
-
 /**
  * Compare two hits (assumed to be in the same document) by end point, then by
  * start point.
@@ -43,12 +41,11 @@ import nl.inl.blacklab.search.results.Hit;
  * (2, 4)
  * </pre>
  */
-class SpanComparatorEndPoint implements Comparator<Hit> {
+class SpanComparatorEndPoint implements Comparator<Long> {
     @Override
-    public int compare(Hit o1, Hit o2) {
-        if (o2.end() != o1.end())
-            return o1.end() - o2.end();
-
-        return o1.start() - o2.start();
+    public int compare(Long a, Long b) {
+        long a2 = (a << 32) | (a >> 32);
+        long b2 = (b << 32) | (b >> 32);
+        return a2 > b2 ? 1 : (a2 == b2 ? 0 : -1);
     }
 }

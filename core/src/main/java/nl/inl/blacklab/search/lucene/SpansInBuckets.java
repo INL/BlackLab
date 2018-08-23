@@ -20,7 +20,6 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")
@@ -45,7 +44,7 @@ import nl.inl.blacklab.search.results.Hit;
  */
 public interface SpansInBuckets {
     /** When to reallocate arraylists to avoid holding on to too much memory */
-    int ARRAYLIST_REALLOC_THRESHOLD = 1000;
+    int ARRAYLIST_REALLOC_THRESHOLD = 5000;
 
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
@@ -65,8 +64,6 @@ public interface SpansInBuckets {
     int startPosition(int index);
 
     int endPosition(int index);
-
-    Hit getHit(int index);
 
     /**
      * Go to the next document.

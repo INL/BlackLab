@@ -11,8 +11,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.results.Hit;
-
 /**
  * Ensure hits from a SpanQuery are sorted by start- or endpoint (within
  * document), and optionally eliminate duplicate hits.
@@ -85,7 +83,7 @@ class SpanQuerySorted extends BLSpanQuery {
             BLSpans srcSpans = weight.getSpans(context, requiredPostings);
             if (srcSpans == null)
                 return null;
-            Comparator<Hit> comparator = sortByEndpoint ? PerDocumentSortedSpans.cmpEndPoint
+            Comparator<Long> comparator = sortByEndpoint ? PerDocumentSortedSpans.cmpEndPoint
                     : PerDocumentSortedSpans.cmpStartPoint;
             return new PerDocumentSortedSpans(srcSpans, comparator, eliminateDuplicates);
         }

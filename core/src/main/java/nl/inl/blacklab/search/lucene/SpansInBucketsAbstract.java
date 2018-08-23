@@ -16,17 +16,15 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Wrap a Spans to retrieve sequences of certain matches (in "buckets"), so we
@@ -47,17 +45,21 @@ import nl.inl.blacklab.search.results.Hit;
  *
  */
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
+    
+    public static final int INITIAL_LIST_SIZE = 100;
+    
     protected BLSpans source;
 
     protected int currentDoc = -1;
 
-    private List<Hit> bucket = new ArrayList<>();
+    /** Starts of hits in our bucket */
+    private LongArrayList bucket = new LongArrayList(INITIAL_LIST_SIZE);
 
     /**
      * For each hit we fetched, store the captured groups, so we don't lose this
      * information.
      */
-    private Map<Hit, Span[]> capturedGroupsPerHit = new HashMap<>();
+    private Map<Long, Span[]> capturedGroupsPerHit = null;
 
     /**
      * Size of the current bucket, or -1 if we're not at a valid bucket.
@@ -75,19 +77,21 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     protected boolean clauseCapturesGroups = true;
 
     protected void addHitFromSource() {
-        Hit hit = source.getHit();
-        bucket.add(hit);
+        long span = ((long)source.startPosition() << 32) | (long)source.endPosition();
+        bucket.add(span);
         if (doCapturedGroups) {
             // Store captured group information
             Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
             source.getCapturedGroups(capturedGroups);
-            capturedGroupsPerHit.put(hit, capturedGroups);
+            if (capturedGroupsPerHit == null)
+                capturedGroupsPerHit = new HashMap<>(INITIAL_LIST_SIZE);
+            capturedGroupsPerHit.put(span, capturedGroups);
         }
         bucketSize++;
     }
-
-    protected void sortHits(Comparator<Hit> hitComparator) {
-        bucket.sort(hitComparator);
+    
+    protected void sortHits(Comparator<Long> comparator) {
+        bucket.sort(comparator);
     }
 
     @Override
@@ -97,17 +101,14 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
 
     @Override
     public int startPosition(int indexInBucket) {
-        return bucket.get(indexInBucket).start();
+        //return bucketSlow.get(indexInBucket).start();
+        return (int)(bucket.getLong(indexInBucket) >> 32);
     }
 
     @Override
     public int endPosition(int indexInBucket) {
-        return bucket.get(indexInBucket).end();
-    }
-
-    @Override
-    public Hit getHit(int indexInBucket) {
-        return bucket.get(indexInBucket);
+        //return bucketSlow.get(indexInBucket).end();
+        return (int)bucket.getLong(indexInBucket);
     }
 
     public SpansInBucketsAbstract(BLSpans source) {
@@ -171,14 +172,18 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     private int gatherHitsInternal() throws IOException {
         // NOTE: we could call .clear() here, but we don't want to hold on to
         // a lot of memory indefinitely after encountering one huge bucket.
-        if (bucket.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+        if (bucketSize < ARRAYLIST_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             bucket.clear();
-            capturedGroupsPerHit.clear();
+//            bucketSlow.clear();
+            if (doCapturedGroups)
+                capturedGroupsPerHit.clear();
         } else {
             // Reallocate in this case to avoid holding on to a lot of memory
-            bucket = new ArrayList<>();
-            capturedGroupsPerHit = new HashMap<>();
+            bucket = new LongArrayList();
+//            bucketSlow = new ArrayList<>();
+            if (doCapturedGroups)
+                capturedGroupsPerHit = new HashMap<>();
         }
 
         bucketSize = 0;
@@ -213,7 +218,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
         if (!doCapturedGroups)
             return;
-        Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.get(indexInBucket));
+        Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
         if (previouslyCapturedGroups != null) {
             for (int i = 0; i < capturedGroups.length; i++) {
                 if (previouslyCapturedGroups[i] != null)

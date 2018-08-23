@@ -281,14 +281,13 @@ public class HitsFromQuery extends Hits {
                         previousHitDoc = hitDoc;
                     }
                     if (!maxHitsProcessed) {
-                        Hit hit = currentSourceSpans.getHit();
-                        Hit offsetHit = Hit.create(hit.doc() + currentDocBase, hit.start(), hit.end());
+                        Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
                         if (capturedGroups != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(offsetHit, groups);
+                            capturedGroups.put(hit, groups);
                         }
-                        results.add(offsetHit);
+                        results.add(hit);
                         if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }

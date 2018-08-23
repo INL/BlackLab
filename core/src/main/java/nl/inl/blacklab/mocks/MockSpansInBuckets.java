@@ -26,7 +26,6 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.SpansInBuckets;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Stub SpansInBuckets class for testing. Takes arrays and iterates through
@@ -130,15 +129,6 @@ public class MockSpansInBuckets implements SpansInBuckets {
         if (currentBucket == bucketDoc.length - 1)
             return start.length - bucketStart[currentBucket];
         return bucketStart[currentBucket + 1] - bucketStart[currentBucket];
-    }
-
-    @Override
-    public Hit getHit(int i) {
-        if (alreadyAtFirstBucket)
-            return null;
-        if (currentBucket >= bucketDoc.length)
-            return null;
-        return Hit.create(docID(), startPosition(i), endPosition(i));
     }
 
     @Override

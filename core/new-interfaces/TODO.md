@@ -4,6 +4,12 @@ PERFORMANCE IMPROVEMENTS MADE SO FAR
 - calculate cache size based on number of objects (mostly hits, so reasonable approximation)
 - don't empty out cache when maximum number of searches is reached
 - 
+https://portal.clarin.inl.nl/blacklab-server-new/opensonar/hits?patt=%22het%22%20%22door%22%20%5B%5D%7B1%2C2%7D%20%22..%2Aen%22%20%22van%22&first=40&explain=true&fimatch=0
+
+
+
+FEATURE KOEN:
+- sort/group sensitivity for all properties
 
 
 
