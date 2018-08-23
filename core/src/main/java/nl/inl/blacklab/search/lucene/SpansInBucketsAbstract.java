@@ -24,6 +24,8 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrays;
+import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -90,8 +92,24 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         bucketSize++;
     }
     
+    static final LongComparator longCmpEndPoint = new LongComparator() {
+        @Override
+        public int compare(long k1, long k2) {
+            int a = (int)k1;
+            int b = (int)k2;
+            if (a == b)
+                return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
+            else
+                return a - b; // compare endpoints
+        }
+    };
+    
     protected void sortHits(Comparator<Long> comparator) {
-        bucket.sort(comparator);
+        if (comparator instanceof SpanComparatorEndPoint) {
+            LongArrays.quickSort(bucket.elements(), 0, bucket.size(), longCmpEndPoint);
+        } else { 
+            LongArrays.quickSort(bucket.elements(), 0, bucket.size()); // natural order is startpoint order
+        }
     }
 
     @Override
@@ -175,13 +193,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         if (bucketSize < ARRAYLIST_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             bucket.clear();
-//            bucketSlow.clear();
             if (doCapturedGroups)
                 capturedGroupsPerHit.clear();
         } else {
             // Reallocate in this case to avoid holding on to a lot of memory
-            bucket = new LongArrayList();
-//            bucketSlow = new ArrayList<>();
+            bucket.trim(ARRAYLIST_REALLOC_THRESHOLD / 2);
             if (doCapturedGroups)
                 capturedGroupsPerHit = new HashMap<>();
         }
