@@ -44,12 +44,18 @@ import nl.inl.blacklab.search.Span;
  */
 public interface SpansInBuckets {
     
-    /** What initial capacity to reserve for lists */
-    int LIST_INITIAL_SIZE = 100;
+    /** What initial capacity to reserve for lists to avoid too much reallocation */
+    int LIST_INITIAL_CAPACITY = 100;
     
-    /** When to reallocate arraylists to avoid holding on to too much memory */
-    int LIST_REALLOC_THRESHOLD = 5000;
+    /** Load factor determines when a HashMap is rehashed to increase its size (percentage filled) */
+    double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
+    
+    /** Initial capacity for HashMap to avoid too much reallocation */
+    int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
+    /** When to reallocate lists/maps to avoid holding on to too much memory */
+    int COLLECTION_REALLOC_THRESHOLD = 5000;
+    
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
     interface BucketSpanComparator {

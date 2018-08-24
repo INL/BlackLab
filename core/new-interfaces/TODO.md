@@ -1,10 +1,17 @@
 PERFORMANCE IMPROVEMENTS MADE SO FAR
+
+CACHE / LONGTERM MEMORY USE
 - don't hold on to references
 - don't keep context info around
 - calculate cache size based on number of objects (mostly hits, so reasonable approximation)
-- don't empty out cache when maximum number of searches is reached
-- 
-https://portal.clarin.inl.nl/blacklab-server-new/opensonar/hits?patt=%22het%22%20%22door%22%20%5B%5D%7B1%2C2%7D%20%22..%2Aen%22%20%22van%22&first=40&explain=true&fimatch=0
+- (bug) don't empty out cache when maximum number of searches is reached
+
+FRAGMENTATION, GC OVERHEAD PROBLEMS
+- don't create extra hit objects just to add the docBase in HitsFromQuery
+- don't allocate Hits to sort them in SpansInBucketsAbstract; instead use fastutil's LongArrayList
+  (with start/end of a span encoded in a long) and sort it using LongArrays.quickSort().
+
+
 
 
 

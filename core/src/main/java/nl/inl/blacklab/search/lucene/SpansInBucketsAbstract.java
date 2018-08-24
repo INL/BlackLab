@@ -52,7 +52,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     protected int currentDoc = -1;
 
     /** Starts of hits in our bucket */
-    private LongArrayList bucket = new LongArrayList(LIST_INITIAL_SIZE);
+    private LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
      * For each hit we fetched, store the captured groups, so we don't lose this
@@ -83,7 +83,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
             Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
             source.getCapturedGroups(capturedGroups);
             if (capturedGroupsPerHit == null)
-                capturedGroupsPerHit = new HashMap<>(LIST_INITIAL_SIZE);
+                capturedGroupsPerHit = new HashMap<>(HASHMAP_INITIAL_CAPACITY);
             capturedGroupsPerHit.put(span, capturedGroups);
         }
         bucketSize++;
@@ -187,14 +187,14 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     private int gatherHitsInternal() throws IOException {
         // NOTE: we could call .clear() here, but we don't want to hold on to
         // a lot of memory indefinitely after encountering one huge bucket.
-        if (bucketSize < LIST_REALLOC_THRESHOLD) {
+        if (bucketSize < COLLECTION_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             bucket.clear();
             if (doCapturedGroups)
                 capturedGroupsPerHit.clear();
         } else {
             // Reallocate in this case to avoid holding on to a lot of memory
-            bucket.trim(LIST_REALLOC_THRESHOLD / 2);
+            bucket.trim(COLLECTION_REALLOC_THRESHOLD / 2);
             if (doCapturedGroups)
                 capturedGroupsPerHit = new HashMap<>();
         }
