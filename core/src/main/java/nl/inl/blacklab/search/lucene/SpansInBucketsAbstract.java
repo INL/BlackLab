@@ -16,12 +16,12 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongArrays;
 import it.unimi.dsi.fastutil.longs.LongComparator;
@@ -58,7 +58,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * For each hit we fetched, store the captured groups, so we don't lose this
      * information.
      */
-    private Map<Long, Span[]> capturedGroupsPerHit = null;
+    private Long2ObjectMap<Span[]> capturedGroupsPerHit = null;
 
     /**
      * Size of the current bucket, or -1 if we're not at a valid bucket.
@@ -83,7 +83,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
             Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
             source.getCapturedGroups(capturedGroups);
             if (capturedGroupsPerHit == null)
-                capturedGroupsPerHit = new HashMap<>(HASHMAP_INITIAL_CAPACITY);
+                capturedGroupsPerHit = new Long2ObjectOpenHashMap<>(HASHMAP_INITIAL_CAPACITY);
             capturedGroupsPerHit.put(span, capturedGroups);
         }
         bucketSize++;
@@ -196,7 +196,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
             // Reallocate in this case to avoid holding on to a lot of memory
             bucket.trim(COLLECTION_REALLOC_THRESHOLD / 2);
             if (doCapturedGroups)
-                capturedGroupsPerHit = new HashMap<>();
+                capturedGroupsPerHit = new Long2ObjectOpenHashMap<>();
         }
 
         bucketSize = 0;
