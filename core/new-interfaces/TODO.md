@@ -22,7 +22,11 @@ FEATURE KOEN:
 
 
 fastutil ipv eclipse collections...???
+- Use ByteBufferInputStream for memory-mapped files:
+  http://dsiutils.di.unimi.it/docs/it/unimi/dsi/io/ByteBufferInputStream.html
 
+
+- toch een SpansSequenceWithGap implementeren om expanderen/sorteren te voorkomen?
 
 
 TIMEOUT

@@ -35,7 +35,7 @@ public class TextPatternFilterNGrams extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
-        return new SpanQueryFilterNGrams(clause.translate(context), op, min, max);
+        return new SpanQueryFilterNGrams(clause.translate(context), op, min, max, 0, 0);
     }
 
     @Override

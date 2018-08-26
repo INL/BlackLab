@@ -40,7 +40,13 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     int max;
 
-    public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max) {
+    /** How to adjust left n-gram border relative to the filter clause */
+    private int leftAdjust;
+
+    /** How to adjust right n-gram border relative to the filter clause */
+    private int rightAdjust;
+
+    public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause);
         this.op = op;
         this.min = min;
@@ -49,6 +55,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("min, max cannot be negative");
+        this.leftAdjust = leftAdjust;
+        this.rightAdjust = rightAdjust;
     }
 
     @Override
@@ -67,7 +75,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
         if (rewritten == null)
             return this;
-        return new SpanQueryFilterNGrams(rewritten.get(0), op, min, max);
+        return new SpanQueryFilterNGrams(rewritten.get(0), op, min, max, leftAdjust, rightAdjust);
     }
 
     @Override
@@ -80,7 +88,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         if (!matchesEmptySequence())
             return this;
         int newMin = min == 0 ? 1 : min;
-        return new SpanQueryFilterNGrams(clauses.get(0).noEmpty(), op, newMin, max);
+        return new SpanQueryFilterNGrams(clauses.get(0).noEmpty(), op, newMin, max, leftAdjust, rightAdjust);
     }
 
     @Override
@@ -115,7 +123,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             if (spansSource == null)
                 return null;
             BLSpans spans = new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
-                    spansSource, op, min, max);
+                    spansSource, op, min, max, leftAdjust, rightAdjust);
             return spans;
         }
 

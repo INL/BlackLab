@@ -13,12 +13,12 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -254,6 +254,40 @@ public class TestSearches {
         expected = Arrays.asList("[The quick brown fox jumps over the] lazy");
         Assert.assertEquals(expected,
                 testIndex.findConc("a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma"));
+    }
+
+    @Test
+    public void testConstraintSimple4a() {
+        expected = Arrays.asList(
+                "[The quick brown fox] jumps", 
+                "[The quick brown fox jumps] over", 
+                "[The quick brown fox jumps over] the", 
+                "[The quick brown fox jumps over the] lazy", 
+                "The [quick brown fox] jumps",
+                "The [quick brown fox jumps] over",
+                "The [quick brown fox jumps over] the",
+                "The [quick brown fox jumps over the] lazy",
+                "The [quick brown fox jumps over the lazy] dog"
+                );
+        Assert.assertEquals(expected,
+                testIndex.findConc("a:[] ([]{1,5} containing 'brown') b:[]"));
+    }
+
+    @Test
+    public void testNGramContainingWithAdjustment() {
+        expected = Arrays.asList(
+            "[The quick brown] fox", 
+            "[The quick brown fox] jumps", 
+            "[The quick brown fox jumps] over", 
+            "[The quick brown fox jumps over] the", 
+            "The [quick brown] fox",
+            "The [quick brown fox] jumps",
+            "The [quick brown fox jumps] over",
+            "The [quick brown fox jumps over] the",
+            "The [quick brown fox jumps over the] lazy"
+            );
+        Assert.assertEquals(expected,
+                testIndex.findConc("[] ([]{1,5} containing 'brown')"));
     }
 
     @Test

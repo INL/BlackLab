@@ -53,6 +53,9 @@ class SpansFilterNGramsRaw extends BLSpans {
     /** Current startPosition() in the clause */
     private int srcStart = -1;
 
+    /** End of the current source hit */
+    private int srcEnd = -1;
+
     /** How to expand the hits */
     private SpanQueryPositionFilter.Operation op;
 
@@ -62,13 +65,16 @@ class SpansFilterNGramsRaw extends BLSpans {
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     private int max;
 
-    /** End of the current source hit */
-    private int srcEnd = -1;
+    /** How to adjust the left edge of the producer hits (N-grams) while matching */
+    private int leftAdjust;
+
+    /** How to adjust the right edge of the producer hits (N-grams) while matching */
+    private int rightAdjust;
 
     /** Start of the current expanded hit */
     private int start = -1;
 
-    /** Start of the current expanded hit */
+    /** End of the current expanded hit */
     private int end = -1;
 
     /** For which document do we have the token length? */
@@ -86,7 +92,7 @@ class SpansFilterNGramsRaw extends BLSpans {
     private boolean alreadyAtFirstHit;
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
-            SpanQueryPositionFilter.Operation op, int min, int max) {
+            SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
         subtractClosingToken = 1;
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
@@ -102,6 +108,8 @@ class SpansFilterNGramsRaw extends BLSpans {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
+        this.leftAdjust = leftAdjust;
+        this.rightAdjust = rightAdjust;
     }
 
     /**
@@ -157,22 +165,26 @@ class SpansFilterNGramsRaw extends BLSpans {
         switch (op) {
         case CONTAINING:
             end++;
-            if (end - start > max || end > tokenLength) {
+            while (!atValidNGram) {
+                if (end - start <= max && end <= tokenLength) {
+                    // N-gram is within allowed size and not beyond end of document
+                    atValidNGram = true;
+                    break;
+                }
                 // N-gram became too long, or we went past end of document.
                 // On to next start position.
                 start++;
-                if (start > srcStart) {
+                if (start + leftAdjust > srcStart) {
                     // No more start positions for N-gram; done with this source hit.
                     break;
                 }
-                end = Math.max(srcEnd, start + min); // minimum length still containing source hit
+                end = Math.max(srcEnd - rightAdjust, start + min); // minimum length still containing source hit
                 if (end > tokenLength) {
                     // Smallest n-gram at start position went past the end of the document.
                     // Done with this source hit.
                     break;
                 }
             }
-            atValidNGram = true;
             break;
         case CONTAINING_AT_START:
             end++;
@@ -186,7 +198,7 @@ class SpansFilterNGramsRaw extends BLSpans {
         case CONTAINING_AT_END:
             // On to next start position.
             start++;
-            if (end - start < min || start > srcStart) {
+            if (end - start < min || start + leftAdjust > srcStart) {
                 // No more start positions for N-gram; done with this source hit.
                 break;
             }
@@ -194,11 +206,11 @@ class SpansFilterNGramsRaw extends BLSpans {
             break;
         case WITHIN:
             end++;
-            if (end - start > max || end > srcEnd) {
+            if (end - start > max || end + rightAdjust > srcEnd) {
                 // N-gram became too long, or we went past end of source hit.
                 // On to next start position.
                 start++;
-                if (start > srcEnd - min) {
+                if (start + min + rightAdjust > srcEnd) {
                     // No more start positions for N-gram; done with this source hit.
                     break;
                 }
@@ -270,11 +282,11 @@ class SpansFilterNGramsRaw extends BLSpans {
             srcEnd = clause.endPosition();
             switch (op) {
             case MATCHES:
-                int len = srcEnd - srcStart;
+                int len = srcEnd - rightAdjust - (srcStart - leftAdjust);
                 if (len >= min && len <= max) {
                     // Only one n-gram
-                    start = srcStart;
-                    end = srcEnd;
+                    start = srcStart - leftAdjust;
+                    end = srcEnd - rightAdjust;
                     return start;
                 }
                 // Hit length doesn't match, so no n-grams.
@@ -289,15 +301,18 @@ class SpansFilterNGramsRaw extends BLSpans {
 
                 // First n-gram containing source hit: minimum start position,
                 // smallest possible length
-                start = srcEnd - max;
+                start = srcEnd - rightAdjust - max;
                 if (start < 0)
                     start = 0;
-                end = Math.max(srcEnd, start + min); // minimum length still containing source hit
-                if (end <= start + max && end <= tokenLength) {
-                    // Valid n-gram containing hit.
-                    return start;
+                while (start <= srcStart - leftAdjust && start <= srcEnd - rightAdjust - min) {
+                    end = Math.max(srcEnd - rightAdjust, start + min); // minimum length still containing source hit
+                    if (end <= start + max && end <= tokenLength) {
+                        // Valid n-gram containing hit.
+                        return start;
+                    }
+                    start++; // couldn't get valid match from this start position; try next
                 }
-                // First n-gram would go past end of document, so no n-grams.
+                // Cannot make valid n-gram (too long or would go past end of document), so no n-grams.
                 break;
             case CONTAINING_AT_START:
                 // Do we know this document's length already?
@@ -309,8 +324,8 @@ class SpansFilterNGramsRaw extends BLSpans {
 
                 // First n-gram containing source hit: minimum start position,
                 // smallest possible length
-                start = srcStart;
-                end = Math.max(srcEnd, start + min); // minimum length still containing source hit
+                start = srcStart - leftAdjust;
+                end = Math.max(srcEnd - rightAdjust, start + min); // minimum length still containing source hit
                 if (end <= start + max && end <= tokenLength) {
                     // Valid n-gram containing hit.
                     return start;
@@ -319,11 +334,11 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case CONTAINING_AT_END:
                 // First n-gram containing source hit: minimum start position, maximum length.
-                start = srcEnd - max;
+                start = srcEnd - rightAdjust - max;
                 if (start < 0)
                     start = 0;
-                end = srcEnd;
-                if (start <= srcStart) {
+                end = srcEnd - rightAdjust;
+                if (start <= srcStart - leftAdjust) {
                     // Valid n-gram containing hit.
                     return start;
                 }
@@ -331,9 +346,9 @@ class SpansFilterNGramsRaw extends BLSpans {
                 break;
             case WITHIN:
                 // First n-gram within source hit: starts at source start, minimum length
-                start = srcStart;
+                start = srcStart - leftAdjust;
                 end = start + min;
-                if (end <= srcEnd) {
+                if (end <= srcEnd - rightAdjust) {
                     // n-gram is contained within hit, so valid.
                     return start;
                 }
@@ -364,7 +379,8 @@ class SpansFilterNGramsRaw extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansExpansion(" + clause + ", " + op + ", " + min + ", " + inf(max) + ")";
+        String adj = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
+        return "SpansFilterNGrams(" + clause + ", " + op + ", " + min + ", " + inf(max) + adj + ")";
     }
 
     @Override

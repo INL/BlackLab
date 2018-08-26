@@ -91,11 +91,12 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         BLSpanQuery filter = clauses.get(1).rewrite(reader);
 
         if (!invert && op != SpanQueryPositionFilter.Operation.STARTS_AT
-                && op != SpanQueryPositionFilter.Operation.ENDS_AT && producer instanceof SpanQueryAnyToken) {
+                && op != SpanQueryPositionFilter.Operation.ENDS_AT && 
+                producer instanceof SpanQueryAnyToken) {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
             SpanQueryAnyToken tp = (SpanQueryAnyToken) producer;
-            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax());
+            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax(), leftAdjust, rightAdjust);
         }
 
         if (producer != clauses.get(0) || filter != clauses.get(1)) {

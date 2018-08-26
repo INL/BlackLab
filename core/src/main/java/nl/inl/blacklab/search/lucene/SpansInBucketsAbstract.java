@@ -155,6 +155,26 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     }
 
     /**
+     * Go to the next bucket at or beyond the specified start point.
+     *
+     * Always at least advances to the next bucket, even if we were already at or
+     * beyond the specified target.
+     * 
+     * Note that this will only work correctly if the underlying Spans is startpoint-sorted.
+     *
+     * @param targetPos the target start point
+     * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
+     * @throws IOException
+     */
+    public int advanceBucket(int targetPos) throws IOException {
+        if (source.startPosition() >= targetPos)
+            return nextBucket();
+        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS)
+            return NO_MORE_BUCKETS;
+        return gatherHitsInternal();
+    }
+
+    /**
      * Subclasses should override this to gather the hits they wish to put in the
      * next bucket.
      *
