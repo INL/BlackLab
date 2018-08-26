@@ -21,7 +21,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGaps.Gap;
+import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -96,6 +96,23 @@ class SpansExpansionRaw extends BLSpans {
             // We need to know document length to properly do expansion to the right
             // TODO: cache this in Searcher..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
+        }
+        this.clause = clause;
+        this.expandToLeft = expandToLeft;
+        this.min = min;
+        this.max = max == -1 ? MAX_UNLIMITED : max;
+        if (min > this.max)
+            throw new IllegalArgumentException("min > max");
+        if (min < 0 || this.max < 0)
+            throw new IllegalArgumentException("Expansions cannot be negative");
+    }
+
+    public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, boolean expandToLeft, int min, int max) {
+        subtractClosingToken = 1;
+        if (!expandToLeft) {
+            // We need to know document length to properly do expansion to the right
+            // TODO: cache this in Searcher..?
+            this.lengthGetter = lengthGetter;
         }
         this.clause = clause;
         this.expandToLeft = expandToLeft;
@@ -344,5 +361,9 @@ class SpansExpansionRaw extends BLSpans {
     
     public Gap gap() {
         return Gap.variable(min, max);
+    }
+
+    public DocFieldLengthGetter lengthGetter() {
+        return lengthGetter;
     }
 }

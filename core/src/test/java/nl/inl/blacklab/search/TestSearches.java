@@ -291,6 +291,15 @@ public class TestSearches {
     }
 
     @Test
+    public void testExpandTwice() {
+        expected = Arrays.asList(
+            "[The quick brown fox jumps over] the"
+            );
+        Assert.assertEquals(expected,
+                testIndex.findConc("'The' []{1,2} 'fox' []{1, 2} 'over' "));
+    }
+
+    @Test
     public void testConstraintOr1() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[] :: a.word = b.lemma | a.word = b.pos"));

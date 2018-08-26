@@ -38,7 +38,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGaps.Gap;
+import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
 /**
@@ -610,7 +610,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 }
             }
 
-            // Next, see if we have SpansExpansion that we can resolve using SpansSequenceWithGaps.
+            // Next, see if we have SpansExpansion that we can resolve using SpansSequenceWithGap.
             for (int i = 1; i < parts.size(); i++) {
                 CombiPart left = parts.get(i - 1);
                 CombiPart right = parts.get(i);
@@ -618,10 +618,20 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 BLSpans lsp = left.spans;
                 BLSpans rsp = right.spans;
                 if (lsp instanceof SpansExpansionRaw && !((SpansExpansionRaw)lsp).expandToLeft()) {
-                    // TODO: if right is an expansion-to-the-right, make the whole resulting clause expansion-to-right
-                    //   instead, so we can repeat the sequence-with-gaps trick.
-                    SpansExpansionRaw exp = (SpansExpansionRaw)lsp;
-                    SpansSequenceWithGaps newSpans = new SpansSequenceWithGaps(exp.clause(), exp.gap(), rsp);
+                    // Left is an expand-to-right. Make a SpansSequenceWithGap.
+                    BLSpans newSpans;
+                    if (rsp instanceof SpansExpansionRaw && !((SpansExpansionRaw)rsp).expandToLeft()) {
+                        // Right is an expansion-to-the-right too. Make the whole resulting clause expansion-to-right
+                        //   instead, so we can repeat the sequence-with-gaps trick.
+                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
+                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
+                        BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expLeft.gap(), expRight.clause());
+                        newSpans = new SpansExpansionRaw(expRight.lengthGetter(), gapped, false, expRight.gap().minSize(), expRight.gap().maxSize());
+                    } else {
+                        // Only left is an expansion-to-the-right.
+                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
+                        newSpans = new SpansSequenceWithGap(expLeft.clause(), expLeft.gap(), rsp);
+                    }
                     newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
                             left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
                             left.sameLength && right.sameLength);
@@ -629,8 +639,20 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                     parts.set(i - 1, newPart);
                     i--;
                 } else if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).expandToLeft()) {
-                    SpansExpansionRaw exp = (SpansExpansionRaw)rsp;
-                    SpansSequenceWithGaps newSpans = new SpansSequenceWithGaps(lsp, exp.gap(), exp.clause());
+                    // Right is an expand-to-left (much less common, but can probably occur sometimes)
+                    BLSpans newSpans;
+                    if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).expandToLeft()) {
+                        // Left is an expansion-to-the-left too. Make the whole resulting clause expansion-to-left
+                        //   instead, so we can repeat the sequence-with-gaps trick.
+                        SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
+                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
+                        BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expRight.gap(), expRight.clause());
+                        newSpans = new SpansExpansionRaw(expLeft.lengthGetter(), gapped, true, expLeft.gap().minSize(), expLeft.gap().maxSize());
+                    } else {
+                        // Only right is an expasion-to-the-left
+                        SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
+                        newSpans = new SpansSequenceWithGap(lsp, expRight.gap(), expRight.clause());
+                    }
                     newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
                             left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
                             left.sameLength && right.sameLength);
@@ -647,14 +669,14 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 CombiPart right = parts.get(1);
 
                 if (USE_SPANS_SEQUENCE_GAPS) {
-                    // Note: the spans coming from SpansSequenceWithGaps may not be sorted by end point.
+                    // Note: the spans coming from SpansSequenceWithGap may not be sorted by end point.
                     // We keep track of this and sort them manually if necessary.
                     CombiPart newPart = null;
                     if (!left.endSorted)
                         left.spans = PerDocumentSortedSpans.endPoint(left.spans);
                     if (!right.startSorted)
                         right.spans = PerDocumentSortedSpans.startPoint(right.spans);
-                    BLSpans newSpans = new SpansSequenceWithGaps(left.spans, Gap.NONE, right.spans);
+                    BLSpans newSpans = new SpansSequenceWithGap(left.spans, Gap.NONE, right.spans);
                     newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
                             left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
                             left.sameLength && right.sameLength);

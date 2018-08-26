@@ -61,7 +61,7 @@ import nl.inl.blacklab.search.Span;
  * Therefore, objects of this class should be wrapped in a class that sort the
  * matches per document and eliminates duplicates.
  */
-class SpansSequenceWithGaps extends BLSpans {
+class SpansSequenceWithGap extends BLSpans {
     
     /** Allowable gap size between parts of a sequence. */
     public static class Gap {
@@ -184,13 +184,13 @@ class SpansSequenceWithGaps extends BLSpans {
     private int rightStartLast;
 
     /**
-     * Construct SpansSequenceWithGaps.
+     * Construct SpansSequenceWithGap.
      *
      * @param left (startpoint-sorted) left clause
      * @param gap allowable gap between the clauses
      * @param right (startpoint-sorted) right clause
      */
-    public SpansSequenceWithGaps(BLSpans left, Gap gap, BLSpans right) {
+    public SpansSequenceWithGap(BLSpans left, Gap gap, BLSpans right) {
         this.left = left;
         this.gap = gap;
         this.right = new SpansInBucketsPerDocument(right);
@@ -415,7 +415,7 @@ class SpansSequenceWithGaps extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansSequenceWithGaps(" + left + ", " + gap + ", " + right + ")";
+        return "SpansSequenceWithGap(" + left + ", " + gap + ", " + right + ")";
     }
 
     @Override
