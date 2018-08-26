@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 
@@ -617,16 +618,16 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 CombiPart newPart = null;
                 BLSpans lsp = left.spans;
                 BLSpans rsp = right.spans;
-                if (lsp instanceof SpansExpansionRaw && !((SpansExpansionRaw)lsp).expandToLeft()) {
+                if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).direction() == Direction.RIGHT) {
                     // Left is an expand-to-right. Make a SpansSequenceWithGap.
                     BLSpans newSpans;
-                    if (rsp instanceof SpansExpansionRaw && !((SpansExpansionRaw)rsp).expandToLeft()) {
+                    if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).direction() == Direction.RIGHT) {
                         // Right is an expansion-to-the-right too. Make the whole resulting clause expansion-to-right
                         //   instead, so we can repeat the sequence-with-gaps trick.
                         SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
                         SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
                         BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expLeft.gap(), expRight.clause());
-                        newSpans = new SpansExpansionRaw(expRight.lengthGetter(), gapped, false, expRight.gap().minSize(), expRight.gap().maxSize());
+                        newSpans = new SpansExpansionRaw(expRight.lengthGetter(), gapped, Direction.RIGHT, expRight.gap().minSize(), expRight.gap().maxSize());
                     } else {
                         // Only left is an expansion-to-the-right.
                         SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
@@ -638,16 +639,16 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                     parts.remove(i - 1);
                     parts.set(i - 1, newPart);
                     i--;
-                } else if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).expandToLeft()) {
+                } else if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).direction() == Direction.LEFT) {
                     // Right is an expand-to-left (much less common, but can probably occur sometimes)
                     BLSpans newSpans;
-                    if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).expandToLeft()) {
+                    if (lsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)lsp).direction() == Direction.LEFT) {
                         // Left is an expansion-to-the-left too. Make the whole resulting clause expansion-to-left
                         //   instead, so we can repeat the sequence-with-gaps trick.
                         SpansExpansionRaw expLeft = (SpansExpansionRaw)lsp;
                         SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;
                         BLSpans gapped = new SpansSequenceWithGap(expLeft.clause(), expRight.gap(), expRight.clause());
-                        newSpans = new SpansExpansionRaw(expLeft.lengthGetter(), gapped, true, expLeft.gap().minSize(), expLeft.gap().maxSize());
+                        newSpans = new SpansExpansionRaw(expLeft.lengthGetter(), gapped, Direction.LEFT, expLeft.gap().minSize(), expLeft.gap().maxSize());
                     } else {
                         // Only right is an expasion-to-the-left
                         SpansExpansionRaw expRight = (SpansExpansionRaw)rsp;

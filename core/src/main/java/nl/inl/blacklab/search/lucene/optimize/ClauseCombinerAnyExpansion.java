@@ -5,6 +5,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 
 /**
  * Recognize "anytoken" clauses and combine them with their neighbour to create
@@ -43,12 +44,12 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
         case LEFT_ANY:
             // Expand to left
             any = (SpanQueryAnyToken) left;
-            result = new SpanQueryExpansion(right, true, any.hitsLengthMin(), any.hitsLengthMax());
+            result = new SpanQueryExpansion(right, Direction.LEFT, any.hitsLengthMin(), any.hitsLengthMax());
             return result;
         case RIGHT_ANY:
             // Expand to right
             any = (SpanQueryAnyToken) right;
-            result = new SpanQueryExpansion(left, false, any.hitsLengthMin(), any.hitsLengthMax());
+            result = new SpanQueryExpansion(left, Direction.RIGHT, any.hitsLengthMin(), any.hitsLengthMax());
             return result;
         case BOTH_ANY:
             // Combine two anytoken clauses

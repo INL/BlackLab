@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
@@ -204,8 +205,8 @@ public class TestNfaFromQuery {
         return new SpanQueryAnyToken(min, max, "contents%word@i");
     }
 
-    private static BLSpanQuery exp(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
-        return new SpanQueryExpansion(clause, expandToLeft, min, max);
+    private static BLSpanQuery exp(BLSpanQuery clause, Direction direction, int min, int max) {
+        return new SpanQueryExpansion(clause, direction, min, max);
     }
 
     private static SpanQueryNot not(BLSpanQuery clause) {
@@ -302,7 +303,7 @@ public class TestNfaFromQuery {
         ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
         // The query: []{1,2} very
-        BLSpanQuery q = exp(term("very"), true, 1, 2);
+        BLSpanQuery q = exp(term("very"), Direction.LEFT, 1, 2);
 
         test(q, fiAccessor, 0, 1, 6, Arrays.asList(0, 1, 2, 3));
         test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3));
@@ -314,7 +315,7 @@ public class TestNfaFromQuery {
         ForwardIndexAccessor fiAccessor = new MockForwardIndexAccessor("This", "is", "very", "very", "very", "fun");
 
         // The query: "is" []{0,3}
-        BLSpanQuery q = exp(term("is"), false, 0, 3);
+        BLSpanQuery q = exp(term("is"), Direction.RIGHT, 0, 3);
 
         test(q, fiAccessor, 0, 1, 6, Arrays.asList(1));
         test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3, 4));
@@ -352,7 +353,7 @@ public class TestNfaFromQuery {
                 "lots", "of", "fun");
 
         // The query: []? "is" ("lots" "and"){1,3} [word != "lots"] "of"
-        BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), not(term("lots")),
+        BLSpanQuery q = seq(exp(term("is"), Direction.LEFT, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), not(term("lots")),
                 term("of"));
 
         test(q, fiAccessor, 0, 1, 9, NO_MATCHES);
@@ -366,7 +367,7 @@ public class TestNfaFromQuery {
                 "lots", "of", "fun");
 
         // The query: []? "is" ("lots" "and"){1,3} "lots" "of"
-        BLSpanQuery q = seq(exp(term("is"), true, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), term("lots"),
+        BLSpanQuery q = seq(exp(term("is"), Direction.LEFT, 0, 1), rep(seq(term("lots"), term("and")), 1, 3), term("lots"),
                 term("of"));
 
         test(q, fiAccessor, 0, 1, 9, Arrays.asList(0, 1));

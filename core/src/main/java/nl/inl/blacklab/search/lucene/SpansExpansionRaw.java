@@ -21,6 +21,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 
 /**
@@ -57,8 +58,8 @@ class SpansExpansionRaw extends BLSpans {
     /** Current startPosition() in the clause */
     private int clauseStart = -1;
 
-    /** Whether to expand to left (true) or right (false) */
-    private boolean expandToLeft;
+    /** Whether to expand to left or right */
+    private Direction direction;
 
     /** Minimum number of tokens to expand */
     private int min;
@@ -90,15 +91,15 @@ class SpansExpansionRaw extends BLSpans {
     private boolean alreadyAtFirstHit;
 
     public SpansExpansionRaw(LeafReader reader, String fieldName, BLSpans clause,
-            boolean expandToLeft, int min, int max) {
+            Direction direction, int min, int max) {
         subtractClosingToken = 1;
-        if (!expandToLeft) {
+        if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // TODO: cache this in Searcher..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
         this.clause = clause;
-        this.expandToLeft = expandToLeft;
+        this.direction = direction;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -107,15 +108,15 @@ class SpansExpansionRaw extends BLSpans {
             throw new IllegalArgumentException("Expansions cannot be negative");
     }
 
-    public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, boolean expandToLeft, int min, int max) {
+    public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, Direction direction, int min, int max) {
         subtractClosingToken = 1;
-        if (!expandToLeft) {
+        if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // TODO: cache this in Searcher..?
             this.lengthGetter = lengthGetter;
         }
         this.clause = clause;
-        this.expandToLeft = expandToLeft;
+        this.direction = direction;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -177,7 +178,7 @@ class SpansExpansionRaw extends BLSpans {
 
         if (expandStepsLeft > 0) {
             expandStepsLeft--;
-            if (expandToLeft) {
+            if (direction == Direction.LEFT) {
                 start--;
 
                 // Valid expansion?
@@ -265,14 +266,14 @@ class SpansExpansionRaw extends BLSpans {
             // Attempt to do the initial expansion and reset the counter
             start = clauseStart;
             end = clause.endPosition();
-            if (expandToLeft)
+            if (direction == Direction.LEFT)
                 start -= min;
             else
                 end += min;
 
             // What's the maximum we could still expand from here?
             int maxExpandSteps;
-            if (expandToLeft) {
+            if (direction == Direction.LEFT) {
                 // Can only expand to the left until token 0.
                 maxExpandSteps = start;
             } else {
@@ -321,7 +322,7 @@ class SpansExpansionRaw extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansExpansion(" + clause + ", " + expandToLeft + ", " + min + ", " + inf(max) + ")";
+        return "SpansExpansion(" + clause + ", " + direction + ", " + min + ", " + inf(max) + ")";
     }
 
     @Override
@@ -351,8 +352,8 @@ class SpansExpansionRaw extends BLSpans {
         return clause.positionsCost();
     }
 
-    public boolean expandToLeft() {
-        return expandToLeft;
+    public Direction direction() {
+        return direction;
     }
     
     public BLSpans clause() {

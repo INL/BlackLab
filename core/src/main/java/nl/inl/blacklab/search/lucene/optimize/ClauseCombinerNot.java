@@ -4,6 +4,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 
 /**
@@ -41,7 +42,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             // Constant-length child after negative, single-token part.
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
             int myLen = right.hitsLengthMin();
-            container = new SpanQueryExpansion(right, true, 1, 1);
+            container = new SpanQueryExpansion(right, Direction.LEFT, 1, 1);
             posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING,
                     true);
             posf.adjustRight(-myLen);
@@ -50,7 +51,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             // Negative, single-token child after constant-length part.
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
             int prevLen = left.hitsLengthMin();
-            container = new SpanQueryExpansion(left, false, 1, 1);
+            container = new SpanQueryExpansion(left, Direction.RIGHT, 1, 1);
             posf = new SpanQueryPositionFilter(container, right.inverted(),
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
             posf.adjustLeft(prevLen);

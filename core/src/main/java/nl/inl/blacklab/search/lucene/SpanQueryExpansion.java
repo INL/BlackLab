@@ -50,8 +50,18 @@ import nl.inl.blacklab.search.fimatch.NfaStateAnyToken;
  */
 public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
-    /** Whether to expand to left (true) or right (false) */
-    boolean expandToLeft;
+    public enum Direction {
+        LEFT,
+        RIGHT;
+        
+        @Override
+        public String toString() {
+            return this == LEFT ? "L" : "R";
+        }
+    };
+    
+    /** Whether to expand to left or right */
+    Direction direction;
 
     /** Minimum number of tokens to expand */
     int min;
@@ -59,9 +69,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     int max;
 
-    public SpanQueryExpansion(BLSpanQuery clause, boolean expandToLeft, int min, int max) {
+    public SpanQueryExpansion(BLSpanQuery clause, Direction direction, int min, int max) {
         super(clause);
-        this.expandToLeft = expandToLeft;
+        this.direction = direction;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -78,7 +88,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return false;
 
         final SpanQueryExpansion that = (SpanQueryExpansion) o;
-        return expandToLeft == that.expandToLeft && min == that.min && max == that.max;
+        return direction == that.direction && min == that.min && max == that.max;
     }
 
     @Override
@@ -88,7 +98,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return this;
         if (min == 0 && max == 0)
             return rewritten.get(0); // not really an expansion
-        return new SpanQueryExpansion(rewritten.get(0), expandToLeft, min, max);
+        return new SpanQueryExpansion(rewritten.get(0), direction, min, max);
     }
 
     @Override
@@ -101,7 +111,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         if (!matchesEmptySequence())
             return this;
         int newMin = min == 0 ? 1 : min;
-        return new SpanQueryExpansion(clauses.get(0).noEmpty(), expandToLeft, newMin, max);
+        return new SpanQueryExpansion(clauses.get(0).noEmpty(), direction, newMin, max);
     }
 
     @Override
@@ -136,7 +146,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             if (spansSource == null)
                 return null;
             return new SpansExpansionRaw(context.reader(), clauses.get(0).getField(),
-                    spansSource, expandToLeft, min, max);
+                    spansSource, direction, min, max);
         }
 
     }
@@ -147,17 +157,17 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         h ^= (h << 10) | (h >>> 23);
         h ^= min << 10;
         h ^= max << 5;
-        h ^= expandToLeft ? 1 : 0;
+        h ^= direction.hashCode();
         return h;
     }
 
     @Override
     public String toString(String field) {
-        return "EXPAND(" + clauses.get(0) + ", " + (expandToLeft ? "L" : "R") + ", " + min + ", " + inf(max) + ")";
+        return "EXPAND(" + clauses.get(0) + ", " + direction + ", " + min + ", " + inf(max) + ")";
     }
 
     public boolean isExpandToLeft() {
-        return expandToLeft;
+        return direction == Direction.LEFT;
     }
 
     public int getMinExpand() {
@@ -189,12 +199,12 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsEndPointSorted() {
-        return clauses.get(0).hitsEndPointSorted() && (expandToLeft || !expandToLeft && min == max);
+        return clauses.get(0).hitsEndPointSorted() && (direction == Direction.LEFT || direction == Direction.RIGHT && min == max);
     }
 
     @Override
     public boolean hitsStartPointSorted() {
-        return clauses.get(0).hitsStartPointSorted() && (!expandToLeft || expandToLeft && min == max);
+        return clauses.get(0).hitsStartPointSorted() && (direction == Direction.RIGHT || direction == Direction.LEFT && min == max);
     }
 
     @Override
@@ -213,14 +223,14 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     }
 
     @Override
-    public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
+    public Nfa getNfa(ForwardIndexAccessor fiAccessor, int nfaDirection) {
         if (max == MAX_UNLIMITED)
             throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
-        Nfa nfa = clauses.get(0).getNfa(fiAccessor, direction);
+        Nfa nfa = clauses.get(0).getNfa(fiAccessor, nfaDirection);
         NfaState any = new NfaStateAnyToken(clauses.get(0).getRealField(), null);
         Nfa frag = new Nfa(any, Arrays.asList(any));
         frag.repeat(min, max);
-        if (expandToLeft && direction == SpanQueryFiSeq.DIR_TO_RIGHT || !expandToLeft && direction == SpanQueryFiSeq.DIR_TO_LEFT) {
+        if (direction == Direction.LEFT && nfaDirection == SpanQueryFiSeq.DIR_TO_RIGHT || direction == Direction.RIGHT && nfaDirection == SpanQueryFiSeq.DIR_TO_LEFT) {
             // Prepend nfa with stretch of anytokens
             frag.append(nfa);
             nfa = frag;
@@ -255,12 +265,12 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     public BLSpanQuery addExpand(int addMin, int addMax) {
         int nMin = min + addMin;
         int nMax = addMaxValues(max, addMax);
-        return new SpanQueryExpansion(clauses.get(0), expandToLeft, nMin, nMax);
+        return new SpanQueryExpansion(clauses.get(0), direction, nMin, nMax);
     }
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        if (onTheRight == expandToLeft) {
+        if (onTheRight && direction == Direction.LEFT || !onTheRight && direction == Direction.RIGHT) {
             // Internalization on the side of our non-expanded clause. Always possible.
             return true;
         }
@@ -270,6 +280,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+        boolean expandToLeft = direction == Direction.LEFT;
         if (onTheRight != expandToLeft && !(clause instanceof SpanQueryAnyToken)) {
             throw new IllegalArgumentException("Cannot internalize " + clause + " into " + this + " on the "
                     + (onTheRight ? "right" : "left") + "side");
@@ -278,7 +289,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             // "Gobble up" a clause into the clause we're expanding.
             // If we're expanding to the left, the clause is added to the right of what we were expanding, and vice versa.
             SpanQuerySequence seq = SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, expandToLeft);
-            return new SpanQueryExpansion(seq, expandToLeft, min, max);
+            return new SpanQueryExpansion(seq, direction, min, max);
         }
         // Add any token to our expansion.
         return addExpand(clause.hitsLengthMin(), clause.hitsLengthMax());
