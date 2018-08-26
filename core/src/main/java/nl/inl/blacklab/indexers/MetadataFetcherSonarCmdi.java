@@ -240,12 +240,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
                         indexAs = localName;
 
                     // Leaf node with content; store as metadata field.
-                    if (docIndexer != null) {
-                        docIndexer.addMetadataField(indexAs, content);
-                    } else {
-                        // TEST; print metadata value
-                        System.out.println(indexAs + ": " + content);
-                    }
+                    docIndexer.addMetadataField(indexAs, content);
                 }
             }
 

@@ -302,8 +302,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         if (inputFile.startsWith("file://"))
             inputFile = inputFile.substring(7);
-        if (docWriter == null) // TEST
-            return new File(inputFile);
         File f = docWriter.linkedFile(inputFile);
         if (f == null)
             throw new FileNotFoundException("Referenced file not found");

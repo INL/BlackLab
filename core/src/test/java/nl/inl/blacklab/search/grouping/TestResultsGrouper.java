@@ -22,13 +22,10 @@ import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.mocks.MockSpanQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -36,20 +33,19 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 
 public class TestResultsGrouper {
-    int[] doc = { 1, 2, 1, 3, 2, 1 };
+    int[] doc   = { 1, 2, 1, 3, 2, 1 };
     int[] start = { 1, 2, 3, 4, 5, 6 };
-    int[] end = { 7, 8, 9, 10, 11, 12 };
+    int[] end   = { 7, 8, 9, 10, 11, 12 };
 
     @Test
-    public void testGrouper() throws WildcardTermTooBroad {
-        BLSpanQuery query = new MockSpanQuery(doc, start, end);
+    public void testGrouper() {
         MockBlackLabIndex searcher = new MockBlackLabIndex();
         
         IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
         Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
 
         searcher.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.fromSpanQuery(QueryInfo.create(searcher), query, searcher.searchSettings());
+        Hits hits = Hits.fromArrays(QueryInfo.create(searcher), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
 

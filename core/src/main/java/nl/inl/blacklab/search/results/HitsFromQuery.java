@@ -220,15 +220,6 @@ public class HitsFromQuery extends Hits {
                                 currentDocBase = context.docBase;
                                 BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
                                 currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
-                            } else {
-                                // TESTING
-                                currentDocBase = 0;
-                                if (atomicReaderContextIndex > 0) {
-                                    setFinished();
-                                    return;
-                                }
-                                BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
-                                currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
                             }
     
                             if (currentSourceSpans != null) {
