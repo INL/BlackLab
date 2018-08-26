@@ -143,7 +143,7 @@ public class HitsFromQuery extends Hits {
             }
 
             currentSourceSpans = null;
-            atomicReaderContexts = reader == null ? null : reader.leaves();
+            atomicReaderContexts = reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -210,18 +210,14 @@ public class HitsFromQuery extends Hits {
                             // Exhausted (or not started yet); get next segment spans.
     
                             atomicReaderContextIndex++;
-                            if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
+                            if (atomicReaderContextIndex >= atomicReaderContexts.size()) {
                                 setFinished();
                                 return;
                             }
-                            if (atomicReaderContexts != null) {
-                                // Get the atomic reader context and get the next Spans from it.
-                                LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
-                                currentDocBase = context.docBase;
-                                BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
-                                currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
-                            }
-    
+                            // Get the atomic reader context and get the next Spans from it.
+                            LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+                            currentDocBase = context.docBase;
+                            currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
                             if (currentSourceSpans != null) {
                                 // Update the hit query context with our new spans,
                                 // and notify the spans of the hit query context

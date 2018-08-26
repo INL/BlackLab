@@ -38,24 +38,8 @@ final class PerDocumentSortedSpans extends BLSpans {
         return new PerDocumentSortedSpans(src, true, removeDuplicates);
     }
 
-    public static PerDocumentSortedSpans endPointEliminateDuplicates(BLSpans src) {
-        return new PerDocumentSortedSpans(src, false, true);
-    }
-
     public static PerDocumentSortedSpans endPoint(BLSpans src) {
         return new PerDocumentSortedSpans(src, false, false);
-    }
-
-    public static PerDocumentSortedSpans endPoint(BLSpans src, boolean removeDuplicates) {
-        return new PerDocumentSortedSpans(src, false, removeDuplicates);
-    }
-
-    public static PerDocumentSortedSpans sortEliminateDuplicates(BLSpans src, boolean sortByStartPoint) {
-        return new PerDocumentSortedSpans(src, sortByStartPoint, true);
-    }
-
-    public static PerDocumentSortedSpans sort(BLSpans src, boolean sortByStartPoint) {
-        return new PerDocumentSortedSpans(src, sortByStartPoint, false);
     }
 
     public static PerDocumentSortedSpans get(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
