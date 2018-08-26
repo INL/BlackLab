@@ -610,6 +610,36 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 }
             }
 
+            // Next, see if we have SpansExpansion that we can resolve using SpansSequenceWithGaps.
+            for (int i = 1; i < parts.size(); i++) {
+                CombiPart left = parts.get(i - 1);
+                CombiPart right = parts.get(i);
+                CombiPart newPart = null;
+                BLSpans lsp = left.spans;
+                BLSpans rsp = right.spans;
+                if (lsp instanceof SpansExpansionRaw && !((SpansExpansionRaw)lsp).expandToLeft()) {
+                    // TODO: if right is an expansion-to-the-right, make the whole resulting clause expansion-to-right
+                    //   instead, so we can repeat the sequence-with-gaps trick.
+                    SpansExpansionRaw exp = (SpansExpansionRaw)lsp;
+                    SpansSequenceWithGaps newSpans = new SpansSequenceWithGaps(exp.clause(), exp.gap(), rsp);
+                    newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
+                            left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
+                            left.sameLength && right.sameLength);
+                    parts.remove(i - 1);
+                    parts.set(i - 1, newPart);
+                    i--;
+                } else if (rsp instanceof SpansExpansionRaw && ((SpansExpansionRaw)rsp).expandToLeft()) {
+                    SpansExpansionRaw exp = (SpansExpansionRaw)rsp;
+                    SpansSequenceWithGaps newSpans = new SpansSequenceWithGaps(lsp, exp.gap(), exp.clause());
+                    newPart = new CombiPart(newSpans, left.uniqueStart && left.uniqueEnd && right.uniqueStart,
+                            left.uniqueEnd && right.uniqueStart && right.uniqueEnd, left.startSorted, right.sameLength,
+                            left.sameLength && right.sameLength);
+                    parts.remove(i - 1);
+                    parts.set(i - 1, newPart);
+                    i--;
+                }
+            }
+
             // Now, combine the rest (if any) using the more expensive SpansSequenceRaw,
             // that takes more complex sequences into account.
             while (parts.size() > 1) {

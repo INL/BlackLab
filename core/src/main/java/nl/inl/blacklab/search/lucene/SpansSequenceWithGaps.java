@@ -129,6 +129,11 @@ class SpansSequenceWithGaps extends BLSpans {
             return true;
         }
         
+        @Override
+        public String toString() {
+            return minSize + "-" + maxSize;
+        }
+        
     }
 
     private BLSpans left;
@@ -410,7 +415,7 @@ class SpansSequenceWithGaps extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansSequence(" + left + ", " + right + ")";
+        return "SpansSequenceWithGaps(" + left + ", " + gap + ", " + right + ")";
     }
 
     @Override

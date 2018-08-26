@@ -21,6 +21,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.SpansSequenceWithGaps.Gap;
 
 /**
  * Expands the source spans to the left and right by the given ranges.
@@ -81,7 +82,7 @@ class SpansExpansionRaw extends BLSpans {
     private int tokenLength;
 
     /** Used to get the field length in tokens for a document */
-    DocFieldLengthGetter lengthGetter;
+    private DocFieldLengthGetter lengthGetter;
 
     /** How much to subtract from length (for ignoring closing token) */
     private int subtractClosingToken;
@@ -331,5 +332,17 @@ class SpansExpansionRaw extends BLSpans {
     @Override
     public float positionsCost() {
         return clause.positionsCost();
+    }
+
+    public boolean expandToLeft() {
+        return expandToLeft;
+    }
+    
+    public BLSpans clause() {
+        return clause;
+    }
+    
+    public Gap gap() {
+        return Gap.variable(min, max);
     }
 }
