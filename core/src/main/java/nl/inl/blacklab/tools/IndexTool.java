@@ -313,9 +313,9 @@ public class IndexTool {
             usage();
             return;
         }
-        try (BlackLabIndexWriter searcher = BlackLabIndexWriter.openForWriting(indexDir, false)) {
+        try (BlackLabIndexWriter indexWriter = BlackLabIndexWriter.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
-            searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.analyzer(), null));
+            indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), null));
         }
     }
 

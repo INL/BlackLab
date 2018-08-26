@@ -29,7 +29,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      *
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
-     * @return the searcher in index mode
+     * @return index writer
      * @throws ErrorOpeningIndex if the index could not be opened
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws ErrorOpeningIndex {
@@ -46,7 +46,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
      * @param indexTemplateFile JSON template to use for index structure / metadata
-     * @return the searcher in index mode
+     * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
@@ -65,7 +65,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param createNewIndex if true, create a new index even if one existed there
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
-     * @return the searcher in index mode
+     * @return index writer
      * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)

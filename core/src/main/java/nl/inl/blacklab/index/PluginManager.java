@@ -69,7 +69,7 @@ public class PluginManager {
     // The blacklab Config is automatically loaded when the first Searcher is
     // opened, or earlier by a user library.
     // So plugin formats should always be visible by the time they're needed.
-    // (except when trying to query available formats before opening a searcher or
+    // (except when trying to query available formats before opening an index or
     // loading a config...this is an edge case)
     private PluginManager() {
     }

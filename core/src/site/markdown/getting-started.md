@@ -157,7 +157,7 @@ Here’s the basic structure of a BlackLab search application, to give you an id
 The above in code:
 
 	// Open your index
-	Searcher searcher = Searcher.open(new File("/home/zwets/testindex"));
+	BlackLabIndex index = BlackLabIndex.open(new File("/home/zwets/testindex"));
 	try {
 	    // NOTE: we use single quotes here to keep the example readable,
 	    // but CQL only uses double quotes, so we do a replace.
@@ -168,18 +168,19 @@ The above in code:
 	    TextPattern pattern = CorpusQueryLanguageParser.parse(corpusQlQuery);
 	
 	    // Execute the TextPattern
-	    Hits hits = searcher.find(pattern);
+	    Hits hits = index.find(pattern);
 	
 	    // Sort the hits by the words to the left of the matched text
-	    HitProperty sortProperty = new HitPropertyLeftContext(searcher);
-	    hits.sort(sortProperty);
+	    HitProperty sortProperty = new HitPropertyLeftContext(index, index.mainAnnotation());
+	    hits = hits.sort(sortProperty);
 	
 	    // Limit the results to the ones we want to show now (i.e. the first page)
-	    HitsWindow window = hits.window(0, 20);
+	    Hits window = hits.window(0, 20);
 	
 	    // Iterate over window and display the hits
+	    Concordances concs = hits.concordances(ContextSize.get(5));
 	    for (Hit hit: window) {
-	        Concordance conc = hits.getConcordance(hit);
+	        Concordance conc = concs.get(hit);
 	        // Strip out XML tags for display.
 	        String left = XmlUtil.xmlToPlainText(conc.left);
 	        String hitText = XmlUtil.xmlToPlainText(conc.hit);
@@ -188,7 +189,7 @@ The above in code:
 	    }
 	
 	} finally {
-	    searcher.close();
+	    index.close();
 	}
 
 See also:

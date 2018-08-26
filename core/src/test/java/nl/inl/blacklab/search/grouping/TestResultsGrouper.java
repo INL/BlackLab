@@ -39,13 +39,13 @@ public class TestResultsGrouper {
 
     @Test
     public void testGrouper() {
-        MockBlackLabIndex searcher = new MockBlackLabIndex();
+        MockBlackLabIndex index = new MockBlackLabIndex();
         
         IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
         Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
 
-        searcher.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.fromArrays(QueryInfo.create(searcher), doc, start, end);
+        index.setIndexSearcher(indexSearcher);
+        Hits hits = Hits.fromArrays(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
 

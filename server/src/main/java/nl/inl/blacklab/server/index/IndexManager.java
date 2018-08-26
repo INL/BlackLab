@@ -249,7 +249,7 @@ public class IndexManager {
         boolean contentViewable = true; // user may view his own private corpus documents
         Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
-        try (BlackLabIndexWriter searcher = BlackLabIndexWriter.create(indexDir, config, displayName, formatIdentifier, contentViewable,
+        try (BlackLabIndexWriter indexWriter = BlackLabIndexWriter.create(indexDir, config, displayName, formatIdentifier, contentViewable,
                 TextDirection.LEFT_TO_RIGHT)) {
             // We're only creating it and closing it right away.
         }

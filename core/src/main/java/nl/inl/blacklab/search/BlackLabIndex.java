@@ -65,7 +65,7 @@ public interface BlackLabIndex extends Closeable {
      * Open an index for reading ("search mode").
      *
      * @param indexDir the index directory
-     * @return the searcher
+     * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
@@ -78,7 +78,7 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param indexDir the index directory
      * @param settings default search settings
-     * @return the searcher
+     * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
