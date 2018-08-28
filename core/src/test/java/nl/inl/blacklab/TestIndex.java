@@ -16,8 +16,8 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
@@ -29,6 +29,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
+import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
     
@@ -113,8 +114,7 @@ public class TestIndex {
     public TestIndex() {
 
         // Get a temporary directory for our test index
-        indexDir = new File(System.getProperty("java.io.tmpdir"),
-                "BlackLabExample");
+        indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
         if (indexDir.exists()) {
             // Delete the old example dir
             // (NOTE: we also try to do this on exit but it may fail due to
