@@ -48,8 +48,10 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     /**
      * Indicates how expensive fetching a lot of term positions from Lucene is; Used
      * to calculate the cost of "regular" matching.
+     * 
+     * Higher values means "regular" (reverse) matching is considered relatively cheaper.
      */
-    private static final long TERM_FREQ_PENALTY_FACTOR = 500;
+    private static final long TERM_FREQ_DIVIDER = 500;
 
     /**
      * What we multiply our calculated cost ratio by to get an integer in a
@@ -85,7 +87,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         boolean rightEmpty = right.matchesEmptySequence();
         long numLeft = Math.max(1, left.reverseMatchingCost(reader));
         long numRight = Math.max(1, right.reverseMatchingCost(reader));
-        long seqReverseCost = Math.min(numLeft, numRight) + (numLeft + numRight) / TERM_FREQ_PENALTY_FACTOR;
+        long seqReverseCost = Math.min(numLeft, numRight) + (numLeft + numRight) / TERM_FREQ_DIVIDER;
         int fiCostLeft = left.forwardMatchingCost();
         int fiCostRight = right.forwardMatchingCost();
         long costNfaToReverseForward = COST_RATIO_CONSTANT_FACTOR * numLeft * fiCostRight / seqReverseCost;

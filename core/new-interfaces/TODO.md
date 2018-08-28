@@ -11,6 +11,15 @@ FRAGMENTATION, GC OVERHEAD PROBLEMS
 - don't allocate Hits to sort them in SpansInBucketsAbstract; instead use fastutil's LongArrayList
   (with start/end of a span encoded in a long) and sort it using LongArrays.quickSort().
 
+GENERAL CPU USAGE
+- use a more efficient approach to sequence matching, matching two clauses with optional gap in between
+  instead of expanding one of the clauses with the gap and matching the result.
+
+FREQUENT TERMS (PREFIX/SUFFIX)
+- greatly favour using NFAs to match regexes, especially with short pre- and suffixes,
+  because finding matching terms is often the slowest part of the matching process
+
+
 
 
 

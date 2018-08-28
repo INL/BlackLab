@@ -58,10 +58,10 @@ public class CompareCollectionsLibs {
         
         // Conclusion: ...
         
-        final int N = 10000000;
+        final int numberOfItems = 10000000;
         
-        int[] baseKeys = new int[N];
-        Hit[] base = new Hit[N];
+        int[] baseKeys = new int[numberOfItems];
+        Hit[] base = new Hit[numberOfItems];
         
         Map<Integer, Hit> javaMap = new HashMap<>();
         
@@ -70,37 +70,37 @@ public class CompareCollectionsLibs {
         Int2ObjectMap<Hit> fuMap = new Int2ObjectOpenHashMap<>();
 
         Random random = new Random(1234);
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < numberOfItems; i++) {
             baseKeys[i] = random.nextInt();
             base[i] = new Hit(random.nextInt(), random.nextInt(), random.nextInt());
         }
         
-        time("Fill Java map", () -> { for (int i = 0; i < N; i++) javaMap.put(baseKeys[i], base[i]); });
-        time("Fill Eclipse map", () -> { for (int i = 0; i < N; i++) ecMap.put(baseKeys[i], base[i]); });
-        time("Fill fastutil map", () -> { for (int i = 0; i < N; i++) fuMap.put(baseKeys[i], base[i]); });
+        time("Fill Java map", () -> { for (int i = 0; i < numberOfItems; i++) javaMap.put(baseKeys[i], base[i]); });
+        time("Fill Eclipse map", () -> { for (int i = 0; i < numberOfItems; i++) ecMap.put(baseKeys[i], base[i]); });
+        time("Fill fastutil map", () -> { for (int i = 0; i < numberOfItems; i++) fuMap.put(baseKeys[i], base[i]); });
         
-        final int FETCHES = 2000000;
-        int[] fetchIndex = new int[FETCHES];
-        for (int i = 0; i < FETCHES; i++) {
-            fetchIndex[i] = random.nextInt(N);
+        final int numberOfFetches = 2000000;
+        int[] fetchIndex = new int[numberOfFetches];
+        for (int i = 0; i < numberOfFetches; i++) {
+            fetchIndex[i] = random.nextInt(numberOfItems);
         }
         time("Retrieve from Java map", () -> {
             int total = 0;
-            for (int i = 0; i < FETCHES; i++) {
+            for (int i = 0; i < numberOfFetches; i++) {
                 total += javaMap.get(baseKeys[fetchIndex[i]]).start;
             }
             System.out.println("Total: " + total);
         });
         time("Retrieve from Eclipse map", () -> {
             int total = 0;
-            for (int i = 0; i < FETCHES; i++) {
+            for (int i = 0; i < numberOfFetches; i++) {
                 total += javaMap.get(baseKeys[fetchIndex[i]]).start;
             }
             System.out.println("Total: " + total);
         });
         time("Retrieve from fastutil map", () -> {
             int total = 0;
-            for (int i = 0; i < FETCHES; i++) {
+            for (int i = 0; i < numberOfFetches; i++) {
                 total += javaMap.get(baseKeys[fetchIndex[i]]).start;
             }
             System.out.println("Total: " + total);
@@ -113,9 +113,9 @@ public class CompareCollectionsLibs {
         
         // Conclusion: Java ArrayList is about as fast as the other two, sometimes even a little faster.
         
-        final int N = 10000000;
+        final int numberOfItems = 10000000;
         
-        Hit[] base = new Hit[N];
+        Hit[] base = new Hit[numberOfItems];
         
         List<Hit> javaList = new ArrayList<>();
         
@@ -124,7 +124,7 @@ public class CompareCollectionsLibs {
         ObjectArrayList<Hit> fuList = new ObjectArrayList<>();
 
         Random random = new Random(1234);
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < numberOfItems; i++) {
             base[i] = new Hit(random.nextInt(), random.nextInt(), random.nextInt());
         }
         
@@ -157,9 +157,9 @@ public class CompareCollectionsLibs {
         // Conclusion: Java list is slow because of (un)boxing. Eclipse is fast but doesn't allow for custom Comparators.
         // Fastutil is about as fast as Eclipse and allows for custom primitive Comparators.
         
-        final int N = 10000000;
+        final int numberOfItems = 10000000;
         
-        int[] base = new int[N];
+        int[] base = new int[numberOfItems];
         
         List<Integer> javaList = new ArrayList<>();
         
@@ -168,7 +168,7 @@ public class CompareCollectionsLibs {
         it.unimi.dsi.fastutil.ints.IntArrayList fuList = new it.unimi.dsi.fastutil.ints.IntArrayList();
 
         Random random = new Random(1234);
-        for (int i = 0; i < N; i++) {
+        for (int i = 0; i < numberOfItems; i++) {
             base[i] = random.nextInt();
         }
         
@@ -178,7 +178,7 @@ public class CompareCollectionsLibs {
         
         time("Sort Java list", () -> { javaList.sort(Comparator.naturalOrder()); });
         time("Sort Eclipse list", () -> { ecList.sortThis(); });
-        time("Sort fastutil list", () -> { IntArrays.quickSort(fuList.elements(), 0, N); });
+        time("Sort fastutil list", () -> { IntArrays.quickSort(fuList.elements(), 0, numberOfItems); });
     }
     
     interface Task {
