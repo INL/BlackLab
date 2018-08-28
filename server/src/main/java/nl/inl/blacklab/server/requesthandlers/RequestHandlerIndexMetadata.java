@@ -9,6 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationGroup;
+import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
@@ -141,6 +144,37 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.endMap().endItem();
             }
             ds.endList().endEntry();
+            
+            ds.startEntry("annotationGroups").startMap();
+            for (AnnotatedField f: indexMetadata.annotatedFields()) {
+                AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
+                Set<Annotation> annotationsNotInGroups = new HashSet<>(f.annotations().stream().collect(Collectors.toList()));
+                for (AnnotationGroup group : groups) {
+                    for (Annotation annotation: group) {
+                        annotationsNotInGroups.remove(annotation);
+                    }
+                }
+                ds.startList();
+                boolean addedRemainingAnnots = false;
+                for (AnnotationGroup group : groups) {
+                    ds.startItem("metadataFieldGroup").startMap();
+                    ds.entry("name", group.groupName());
+                    ds.startEntry("annotations").startList();
+                    for (Annotation annotation: group) {
+                        ds.item("annotation", annotation.name());
+                    }
+                    if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
+                        addedRemainingAnnots = true;
+                        for (Annotation annotation: annotationsNotInGroups) {
+                            ds.item("annotation", annotation.name());
+                        }
+                    }
+                    ds.endList().endEntry();
+                    ds.endMap().endItem();
+                }
+                ds.endList();
+            }
+            ds.endMap().endEntry();
 
             // Remove any empty settings
             //response.removeEmptyMapValues();

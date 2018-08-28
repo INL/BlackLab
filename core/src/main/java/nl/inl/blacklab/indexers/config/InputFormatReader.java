@@ -249,34 +249,20 @@ public class InputFormatReader extends YamlJsonReader {
     }
 
     private static void readAllAnnotationGroups(Entry<String, JsonNode> afagEntry, ConfigCorpus cfg) {
-        Iterator<JsonNode> itFields = array(afagEntry).elements();
+        Iterator<Entry<String, JsonNode>> itFields = obj(afagEntry.getValue(), "annotated fields annotation groupings").fields();
         while (itFields.hasNext()) {
-            JsonNode field = itFields.next();
-            Iterator<Entry<String, JsonNode>> itField = obj(field, "annotated field annotation grouping").fields();
-            ConfigAnnotationGroups g = new ConfigAnnotationGroups();
-            while (itField.hasNext()) {
-                Entry<String, JsonNode> e = itField.next();
-                switch (e.getKey()) {
-                case "name":
-                    g.setName(str(e));
-                    break;
-                case "groups":
-                    readAnnotationGroups(afagEntry, g);
-                    break;
-                default:
-                    throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in annotated field annotation grouping " + g.getName());
-                }
-            }
+            Entry<String, JsonNode> entry = itFields.next();
+            ConfigAnnotationGroups g = new ConfigAnnotationGroups(entry.getKey());
+            readAnnotationGroups(entry, g);
             cfg.addAnnotationGroups(g);
         }
     }
 
-    private static void readAnnotationGroups(Entry<String, JsonNode> afgEntry, ConfigAnnotationGroups cfg) {
-        Iterator<JsonNode> itGroups = array(afgEntry).elements();
+    private static void readAnnotationGroups(Entry<String, JsonNode> entry, ConfigAnnotationGroups cfg) {
+        Iterator<JsonNode> itGroups = array(entry.getValue(), "annotated field annotation groups").elements();
         while (itGroups.hasNext()) {
             JsonNode group = itGroups.next();
-            Iterator<Entry<String, JsonNode>> itGroup = obj(group, "metadata field group").fields();
+            Iterator<Entry<String, JsonNode>> itGroup = obj(group, "annotated field annotation group").fields();
             ConfigAnnotationGroup g = new ConfigAnnotationGroup();
             List<String> fields = new ArrayList<>();
             while (itGroup.hasNext()) {

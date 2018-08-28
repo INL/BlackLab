@@ -226,6 +226,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             addFormat(format);
             return Optional.of(format);
         } catch (IOException e) {
+            e.printStackTrace(); // TODO: don't sweep this error under the rug please!
             return Optional.empty();
         }
     }
@@ -239,6 +240,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             try {
                 load(e.getKey(), e.getValue());
             } catch (InvalidInputFormatConfig ex) {
+                ex.printStackTrace();
                 logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
                 // an invalid format somehow got saved, or something else went wrong, just ignore this file then
             }

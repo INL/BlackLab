@@ -774,14 +774,13 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             while (it.hasNext()) {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
-                JsonNode field = entry.getValue();
-                JsonNode groups = field.get("groups");
+                JsonNode groups = entry.getValue();
                 List<AnnotationGroup> annotationsGroups = new ArrayList<>();
                 for (int i = 0; i < groups.size(); i++) {
                     JsonNode group = groups.get(i);
                     warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
                     String groupName = Json.getString(group, "name", "UNKNOWN");
-                    List<String> annotations = Json.getListOfStrings(field, "annotations");
+                    List<String> annotations = Json.getListOfStrings(group, "annotations");
                     boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingFields", false);
                     annotationsGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
                             addRemainingAnnotations));
