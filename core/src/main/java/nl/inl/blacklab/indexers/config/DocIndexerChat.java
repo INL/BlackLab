@@ -120,7 +120,8 @@ public class DocIndexerChat extends DocIndexerConfig {
     @Override
     public void close() throws BlackLabRuntimeException {
         try {
-            reader.close();
+            if (reader != null)
+                reader.close();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

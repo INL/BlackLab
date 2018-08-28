@@ -145,66 +145,100 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String method = step.getMethod();
             Map<String, String> param = step.getParam();
             switch (method) {
-            case "replace": {
-                String find = param.get("find");
-                String replace = param.get("replace");
-                if (find == null || replace == null)
-                    throw new InvalidInputFormatConfig("replace needs parameters find and replace");
-                try {
-                    result = result.replaceAll(find, replace);
-                } catch (PatternSyntaxException e) {
-                    throw new InvalidInputFormatConfig("Syntax error in replace regex: " + find);
-                }
+            case "replace":
+                result = opReplace(result, param);
                 break;
-            }
-            case "default": {
-                if (result.length() == 0) {
-                    String field = param.get("field");
-                    String value;
-                    if (field != null)
-                        value = currentLuceneDoc.get(field);
-                    else
-                        value = param.get("value");
-                    if (value != null)
-                        result = value;
-                }
+            case "default":
+                result = opDefault(result, param);
                 break;
-            }
-            case "append": {
-                String separator = param.containsKey("separator") ? param.get("separator") : " ";
-                String field = param.get("field");
-                String value;
-                if (field != null)
-                    value = currentLuceneDoc.get(field);
-                else
-                    value = param.get("value");
-                if (value != null && value.length() > 0) {
-                    if (result.length() > 0)
-                        result += separator;
-                    result += value;
-                }
+            case "append": 
+                result = opAppend(result, param);
                 break;
-            }
-            case "split": {
-                // Split on a separator regex and keep one part (first part by default)
-                String separator = param.containsKey("separator") ? param.get("separator") : ";";
-                int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
-                if (keep < 0) {
-                    warn("action 'split', parameter 'keep': must be at least 1");
-                    keep = 0;
-                }
-                String[] parts = result.split(separator, -1);
-                if (keep >= parts.length)
-                    result = "";
-                else
-                    result = parts[keep];
+            case "split":
+                result = opSplit(result, param);
                 break;
-            }
-            default: {
+            case "chatFormatAgeToMonths":
+                result = opChatFormatAgeToMonths(result);
+                break;
+            default:
                 // In the future, we'll support user plugins here
                 throw new UnsupportedOperationException("Unknown processing step method " + method);
             }
-            }
+        }
+        return result;
+    }
+
+    protected String opChatFormatAgeToMonths(String result) {
+        // 1;10.30 => 1 jaar, 10 maanden, 30 dagen => afgerond 23 maanden?
+        String[] parts = result.split("[;\\.]", 3);
+        int years = 0;
+        int months = 0;
+        int days = 0;
+        try {
+            years = Integer.parseInt(parts[0]);
+            months = parts.length <= 1 ? 0 : Integer.parseInt(parts[1]);
+            days = parts.length <= 2 ? 0 : Integer.parseInt(parts[2]);
+        } catch (NumberFormatException e) {
+            warn("action 'opChatFormatAgeToMonths': illegal value " + result);
+        }
+        return Integer.toString(years * 12 + months + (days > 14 ? 1 : 0) );
+    }
+
+    private String opSplit(String result, Map<String, String> param) {
+        // Split on a separator regex and keep one part (first part by default)
+        String separator = param.containsKey("separator") ? param.get("separator") : ";";
+        int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
+        if (keep < 0) {
+            warn("action 'split', parameter 'keep': must be at least 1");
+            keep = 0;
+        }
+        String[] parts = result.split(separator, -1);
+        if (keep >= parts.length)
+            result = "";
+        else
+            result = parts[keep];
+        return result;
+    }
+
+    private String opAppend(String result, Map<String, String> param) {
+        String separator = param.containsKey("separator") ? param.get("separator") : " ";
+        String field = param.get("field");
+        String value;
+        if (field != null)
+            value = currentLuceneDoc.get(field);
+        else
+            value = param.get("value");
+        if (value != null && value.length() > 0) {
+            if (result.length() > 0)
+                result += separator;
+            result += value;
+        }
+        return result;
+    }
+
+    private String opDefault(String result, Map<String, String> param) {
+        if (result.length() == 0) {
+            String field = param.get("field");
+            String value;
+            if (field != null)
+                value = currentLuceneDoc.get(field);
+            else
+                value = param.get("value");
+            if (value != null)
+                result = value;
+        }
+        return result;
+    }
+
+    private static String opReplace(String result, Map<String, String> param) {
+        String find = param.get("find");
+        String replace = param.get("replace");
+        if (find == null || replace == null)
+            throw new InvalidInputFormatConfig("replace needs parameters find and replace");
+        try {
+            result = result.replaceAll(find, replace);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidInputFormatConfig("Syntax error in replace regex: " + find);
         }
         return result;
     }
