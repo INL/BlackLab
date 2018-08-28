@@ -185,6 +185,9 @@ public class InputFormatReader extends YamlJsonReader {
             case "metadataFieldGroups":
                 readMetadataFieldGroups(e, corpusConfig);
                 break;
+            case "annotationGroups":
+                readAllAnnotationGroups(e, corpusConfig);
+                break;
             default:
                 throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in corpusConfig");
             }
@@ -242,6 +245,59 @@ public class InputFormatReader extends YamlJsonReader {
                 }
             }
             cfg.addMetadataFieldGroup(g);
+        }
+    }
+
+    private static void readAllAnnotationGroups(Entry<String, JsonNode> afagEntry, ConfigCorpus cfg) {
+        Iterator<JsonNode> itFields = array(afagEntry).elements();
+        while (itFields.hasNext()) {
+            JsonNode field = itFields.next();
+            Iterator<Entry<String, JsonNode>> itField = obj(field, "annotated field annotation grouping").fields();
+            ConfigAnnotationGroups g = new ConfigAnnotationGroups();
+            while (itField.hasNext()) {
+                Entry<String, JsonNode> e = itField.next();
+                switch (e.getKey()) {
+                case "name":
+                    g.setName(str(e));
+                    break;
+                case "groups":
+                    readAnnotationGroups(afagEntry, g);
+                    break;
+                default:
+                    throw new InvalidInputFormatConfig(
+                            "Unknown key " + e.getKey() + " in annotated field annotation grouping " + g.getName());
+                }
+            }
+            cfg.addAnnotationGroups(g);
+        }
+    }
+
+    private static void readAnnotationGroups(Entry<String, JsonNode> afgEntry, ConfigAnnotationGroups cfg) {
+        Iterator<JsonNode> itGroups = array(afgEntry).elements();
+        while (itGroups.hasNext()) {
+            JsonNode group = itGroups.next();
+            Iterator<Entry<String, JsonNode>> itGroup = obj(group, "metadata field group").fields();
+            ConfigAnnotationGroup g = new ConfigAnnotationGroup();
+            List<String> fields = new ArrayList<>();
+            while (itGroup.hasNext()) {
+                Entry<String, JsonNode> e = itGroup.next();
+                switch (e.getKey()) {
+                case "name":
+                    g.setName(str(e));
+                    break;
+                case "annotations":
+                    readStringList(e, fields);
+                    g.addAnnotations(fields);
+                    break;
+                case "addRemainingAnnotations":
+                    g.setAddRemainingAnnotations(bool(e));
+                    break;
+                default:
+                    throw new InvalidInputFormatConfig(
+                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
+                }
+            }
+            cfg.addGroup(g);
         }
     }
 

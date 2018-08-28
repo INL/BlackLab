@@ -45,4 +45,6 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
      */
     boolean exists(String fieldName);
 
+    AnnotationGroups annotationGroups(String fieldName);
+
 }

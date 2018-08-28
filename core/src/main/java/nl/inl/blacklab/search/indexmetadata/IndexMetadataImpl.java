@@ -41,6 +41,8 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
+import nl.inl.blacklab.indexers.config.ConfigAnnotationGroup;
+import nl.inl.blacklab.indexers.config.ConfigAnnotationGroups;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument;
@@ -91,6 +93,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     /** What keys may occur under metadataFieldGroups group? */
     private static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
             "name", "fields", "addRemainingFields"));
+    
+    /** What keys may occur under annotationGroups group? */
+    private static final Set<String> KEYS_ANNOTATION_GROUP = new HashSet<>(Arrays.asList(
+            "name", "annotations", "addRemainingAnnotations"));
 
     /** What keys may occur under metadata field config? */
     private static final Set<String> KEYS_META_FIELD_CONFIG = new HashSet<>(Arrays.asList(
@@ -211,10 +217,11 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 fieldInfo.put(e.getKey(), e.getValue());
             }
             ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
+            ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
             ObjectNode metadata = fieldInfo.putObject("metadataFields");
             ObjectNode annotated = fieldInfo.putObject("complexFields");
 
-            addFieldInfoFromConfig(metadata, annotated, metaGroups, config);
+            addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
             extractFromJson(jsonRoot, null, true, false);
             save();
         } else {
@@ -347,6 +354,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         if (metadataFields.pidField() != null)
             fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
+        ObjectNode annotationGroups = fieldInfo.putObject("annotationGroups");
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
         ObjectNode jsonAnnotatedFields = fieldInfo.putObject("complexFields");
 
@@ -358,6 +366,21 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
             Json.arrayOfStrings(arr, g.stream().map(f -> f.name()).collect(Collectors.toList()));
+        }
+        // Add annotation group info
+        for (AnnotatedField f: annotatedFields()) {
+            AnnotationGroups groups = annotatedFields().annotationGroups(f.name());
+            if (groups != null) {
+                ArrayNode jsonGroups = annotationGroups.putArray(f.name());
+                for (AnnotationGroup g: groups) {
+                    ObjectNode jsonGroup = jsonGroups.addObject();
+                    jsonGroup.put("name", g.groupName());
+                    if (g.addRemainingAnnotations())
+                        jsonGroup.put("addRemainingAnnotations", true);
+                    ArrayNode arr = jsonGroup.putArray("annotations");
+                    Json.arrayOfStrings(arr, g.annotations().stream().map(ann -> ann.name()).collect(Collectors.toList()));
+                }
+            }
         }
 
         // Add metadata field info
@@ -744,6 +767,28 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         boolean hasAnnotatedFields = annotatedFieldConfigs.size() > 0;
         boolean hasFieldInfo = hasMetaFields || hasAnnotatedFields;
 
+        if (hasFieldInfo && fieldInfo.has("annotationGroups")) {
+            annotatedFields.clearAnnotationGroups();
+            JsonNode groupingsPerField = fieldInfo.get("annotationGroups");
+            Iterator<Entry<String, JsonNode>> it = groupingsPerField.fields();
+            while (it.hasNext()) {
+                Entry<String, JsonNode> entry = it.next();
+                String fieldName = entry.getKey();
+                JsonNode field = entry.getValue();
+                JsonNode groups = field.get("groups");
+                List<AnnotationGroup> annotationsGroups = new ArrayList<>();
+                for (int i = 0; i < groups.size(); i++) {
+                    JsonNode group = groups.get(i);
+                    warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
+                    String groupName = Json.getString(group, "name", "UNKNOWN");
+                    List<String> annotations = Json.getListOfStrings(field, "annotations");
+                    boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingFields", false);
+                    annotationsGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
+                            addRemainingAnnotations));
+                }
+                annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationsGroups));
+            }
+        }
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
             metadataFields.clearMetadataGroups();
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
@@ -1161,7 +1206,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     }
 
     private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
-            ConfigInputFormat config) {
+            ObjectNode annotGroupsPerField, ConfigInputFormat config) {
         ensureNotFrozen();
 
         // Add metadata field groups info
@@ -1177,6 +1222,24 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
             if (g.isAddRemainingFields())
                 h.put("addRemainingFields", true);
+        }
+
+        // Add annotated field annotation groupings info
+        for (ConfigAnnotationGroups cfgField: corpusConfig.getAnnotationGroups().values()) {
+            ObjectNode annotatedField = annotGroupsPerField.putObject(cfgField.getName());
+            if (cfgField.getGroups().size() > 0) {
+                ArrayNode annotGroups = annotatedField.putArray("groups");
+                for (ConfigAnnotationGroup cfgAnnotGroup: cfgField.getGroups()) {
+                    ObjectNode annotGroup = annotGroups.addObject();
+                    annotGroup.put("name", cfgAnnotGroup.getName());
+                    ArrayNode annots = annotGroup.putArray("annotations");
+                    for (String annot: cfgAnnotGroup.getAnnotations()) {
+                        annots.add(annot);
+                    }
+                    if (cfgAnnotGroup.isAddRemainingAnnotations())
+                        annotGroup.put("addRemainingAnnotations", true);
+                }
+            }
         }
 
         // Add metadata info
@@ -1238,7 +1301,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
             if (format.isConfigurationBased())
-                addFieldInfoFromConfig(metadata, annotated, metaGroups, format.getConfig());
+                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
         }
     }
 

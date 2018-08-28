@@ -9,6 +9,7 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
@@ -51,6 +52,11 @@ public class MockIndexMetadata implements IndexMetadata {
             @Override
             public boolean exists(String fieldName) {
                 return fields.stream().anyMatch(f -> f.name().equals(fieldName));
+            }
+
+            @Override
+            public AnnotationGroups annotationGroups(String fieldName) {
+                throw new UnsupportedOperationException();
             }
         };
     }

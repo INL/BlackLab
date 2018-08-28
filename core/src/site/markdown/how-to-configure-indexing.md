@@ -27,6 +27,9 @@ customize them to fit your data.
 * <a href="#metadata">Metadata</a>
     * <a href="#metadata-in-document">Embedded (in-document) metadata</a>
     * <a href="#metadata-external">Linking to external (metadata) files</a>
+    * <a href="#metadata-gui-widget">Changing the default GUI widget for a metadata field</a>
+    * <a href="#add-fixed-metadata">Add a fixed metadata value to each document</a>
+    * <a href="#control-metadata-fetch-index">Controlling how metadata is fetched and indexed</a>
 * <a href="#influence-index-metadata">Influencing index metadata from the input format configuration file</a>
 * <a href="#annotated-input-format-configuration-file">Annotated input format configuration file</a>
 
@@ -855,7 +858,30 @@ As you can see, it's possible to use local files or files via http; you can use 
 
 Linking to external files is mostly done to fetch metadata to accompany a "contents" file, but there's no reason why you couldn't turn the tables if you wanted, and index a set of metadata files that link to the corresponding "contents" file. The mechanism is universal; it would even be possible to link to a document that links to another document, although that may not be very useful.
 
-### Add a fixed metadata field to each document
+<a id="metadata-gui-widget"></a>
+
+### Changing the default GUI widget for a metadata field
+
+In the `fields` section, you can specify `uiType` for each field to override the default GUI widget to use for the field. By default, fields that have only a few values will use `select`, while others will use `text`. There's also a `range` type for a range of numbers.
+
+Example:
+
+```yaml
+metadata:
+    fields:
+    - name: author
+      uiType: select
+      
+    - name: year
+      uiType: range
+      
+    - name: genre
+      uiType: text
+```
+
+<a id="add-fixed-metadata"></a>
+
+### Add a fixed metadata value to each document
 
 You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name. To do this, simply specify `value` instead of `valuePath`.
 
@@ -874,6 +900,8 @@ metadata:
   - name: collection
     value: blacklab-docs
 ```
+
+<a id="control-metadata-fetch-index"></a>
 
 ### Controlling how metadata is fetched and indexed
 
