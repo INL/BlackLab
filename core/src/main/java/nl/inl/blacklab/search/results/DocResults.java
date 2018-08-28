@@ -112,7 +112,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     /**
-     * Don't use this, use Searcher.queryDocuments().
+     * Don't use this, use BlackLabIndex.queryDocuments().
      *
      * @param queryInfo query info
      * @param query query to execute

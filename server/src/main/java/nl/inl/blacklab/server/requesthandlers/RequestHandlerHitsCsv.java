@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.Kwic;
@@ -106,10 +105,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 job = searchMan.searchNonBlocking(user, searchParam.hitsSample());
                 hits = (Hits) job.get();
             }
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
 
         // apply window settings

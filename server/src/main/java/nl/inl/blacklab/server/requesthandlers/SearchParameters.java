@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -45,6 +46,7 @@ import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.Forbidden;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSettings;
@@ -563,14 +565,24 @@ public class SearchParameters {
     }
 
     public SearchCount docsCount() throws BlsException {
-        return hitsSample().docCount();
+        if (getPattern() != null)
+            return hitsSample().docCount();
+        return docs().count();
     }
 
     public SearchDocs docs() throws BlsException {
         TextPattern pattern = getPattern();
         if (pattern != null)
             return hitsSample().docs(-1);
-        return blIndex().search().find(getFilterQuery());
+        Query docFilterQuery = getFilterQuery();
+        if (pattern == null && docFilterQuery == null) {
+            // All docs, if allowed
+            if (searchManager.config().isAllDocsQueryAllowed())
+                docFilterQuery = new MatchAllDocsQuery();
+            else
+                throw new Forbidden("You must specify at least a filter query.");
+        }
+        return blIndex().search().find(docFilterQuery);
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {

@@ -20,6 +20,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -41,8 +42,10 @@ import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -723,5 +726,19 @@ public abstract class RequestHandler {
                 writeRow(printer, numColumns, e.getKey(), e.getValue());
         }
         writeRow(printer, numColumns, "");
+    }
+
+    protected static BlsException translateSearchException(Exception e) {
+        if (e instanceof InterruptedException) {
+            throw new InterruptedSearch((InterruptedException) e);
+        } else {
+            try {
+                throw e.getCause();
+            } catch (BlackLabException e1) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (Throwable e1) {
+                return new InternalServerError("Internal error while searching", 0, e1);
+            }
+        }
     }
 }

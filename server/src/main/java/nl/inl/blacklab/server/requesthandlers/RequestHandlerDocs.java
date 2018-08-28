@@ -6,7 +6,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -25,7 +24,6 @@ import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
@@ -86,10 +84,8 @@ public class RequestHandlerDocs extends RequestHandler {
         DocGroups groups;
         try {
             groups = docGroupFuture.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
     
         PropertyValue viewGroupVal = null;
@@ -140,10 +136,8 @@ public class RequestHandlerDocs extends RequestHandler {
         try {
             window = searchWindow.get();
             totalDocResults = total.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
         
         if (block)
@@ -177,10 +171,8 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultCount totalHits;
         try {
             totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());

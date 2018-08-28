@@ -20,6 +20,8 @@ public class SearchHitsFromPattern extends SearchHits {
 
     SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings searchSettings) {
         super(queryInfo);
+        if (pattern == null)
+            throw new IllegalArgumentException("Must specify a pattern");
         this.pattern = pattern;
         this.filter = filter;
         this.searchSettings = searchSettings;

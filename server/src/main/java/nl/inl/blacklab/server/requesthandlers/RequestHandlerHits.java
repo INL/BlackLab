@@ -10,7 +10,6 @@ import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -85,10 +84,8 @@ public class RequestHandlerHits extends RequestHandler {
             HitGroups hitsGrouped;
             try {
                 hitsGrouped = (HitGroups)job.get();
-            } catch (InterruptedException e) {
-                throw new InterruptedSearch(e);
-            } catch (ExecutionException e) {
-                throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+            } catch (InterruptedException | ExecutionException e) {
+                throw RequestHandler.translateSearchException(e);
             }
 
             PropertyValue viewGroupVal = null;
@@ -135,10 +132,8 @@ public class RequestHandlerHits extends RequestHandler {
             docsCount = searchMan.search(user, searchParam.docsCount());
             try {
                 hitsCount = (ResultCount)job.get();
-            } catch (InterruptedException e) {
-                throw new InterruptedSearch(e);
-            } catch (ExecutionException e) {
-                throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+            } catch (InterruptedException | ExecutionException e) {
+                throw RequestHandler.translateSearchException(e);
             }
             
 //            int sleepTime = 10;

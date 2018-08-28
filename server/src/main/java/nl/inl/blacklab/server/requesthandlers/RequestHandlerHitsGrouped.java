@@ -4,14 +4,12 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -36,10 +34,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         HitGroups groups;
         try {
             groups = search.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
 
         ds.startMap();

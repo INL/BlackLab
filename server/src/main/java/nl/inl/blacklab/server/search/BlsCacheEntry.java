@@ -87,7 +87,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                     // Even then, some low-level ones (like OutOfMemoryError) seem to slip by.
                     exceptionThrown = e;
                 } finally {
-                    resultAvailable = true;
+                    initialSearchDone = true;
                 }
                 if (fetchAllResults) {
                     if (isResultsInstance) {
@@ -147,7 +147,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     private long lastAccessTime;
     
     /** Did the initial search finish, succesfully or otherwise? (set by thread) */
-    private boolean resultAvailable = false;
+    private boolean initialSearchDone = false;
 
     /** When did we finish our task? (ms; only valid when finished; set by thread) */
     private long fullSearchDoneTime = 0;
@@ -185,7 +185,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (block) {
             try {
                 // Wait until result available
-                while (!resultAvailable) {
+                while (!initialSearchDone) {
                     Thread.sleep(100);
                 }
             } catch (InterruptedException e) {
@@ -224,15 +224,17 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     /**
-     * Is our result available?
+     * Is the initial search finished?
      * 
-     * This means only that the results object is available. It does not
-     * necessarily mean the results object has e.g. read all its hits. For that,
+     * This means our result is available, or an error occurred.
+     * 
+     * Note that if the result is available, it does not necessarily 
+     * mean the results object has e.g. read all its hits. For that,
      * see {@link #isSearchDone()}.
      */
     @Override
     public boolean isDone() {
-        return resultAvailable;
+        return initialSearchDone;
     }
 
     /**
@@ -316,7 +318,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public T get() throws InterruptedException, ExecutionException {
         // Wait until result available
-        while (!resultAvailable) {
+        while (!initialSearchDone) {
             Thread.sleep(100);
         }
         if (exceptionThrown != null)
@@ -328,11 +330,11 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         // Wait until result available
         long ms = unit.toMillis(time);
-        while (ms > 0 && !resultAvailable) {
+        while (ms > 0 && !initialSearchDone) {
             Thread.sleep(100);
             ms -= 100;
         }
-        if (!resultAvailable)
+        if (!initialSearchDone)
             throw new TimeoutException("Result still not available after " + ms + "ms");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
@@ -393,7 +395,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     @Override
     public boolean cancel(boolean interrupt) {
-        if (resultAvailable)
+        if (initialSearchDone)
             return false; // cannot cancel
         cancelled = true;
         Thread theThread = thread; // avoid locking
@@ -437,7 +439,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return true if the search was cancelled, false if it could not be cancelled (because it wasn't running anymore)
      */
     public boolean cancelSearch() {
-        if (!resultAvailable) {
+        if (!initialSearchDone) {
             // Regular situation; use regular cancel method.
             return cancel(true);
         }
@@ -456,7 +458,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     public int numberOfStoredHits() {
-        if (!resultAvailable)
+        if (result == null)
             return 0;
         return result.numberOfResultObjects();
     }
