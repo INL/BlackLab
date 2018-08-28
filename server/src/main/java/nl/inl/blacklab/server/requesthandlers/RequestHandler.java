@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -304,28 +303,19 @@ public abstract class RequestHandler {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (InsufficientMemoryAvailable e) {
                         return errorObj.error("OUT_OF_MEMORY", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-                    } catch (NoSuchMethodException e) {
+                    } catch (ReflectiveOperationException e) {
                         // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);
-                        return errorObj.internalError(e, debugMode, 2);
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATE_REQHANDLER1");
                     } catch (IllegalArgumentException e) {
                         logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 3);
-                    } catch (InstantiationException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 4);
-                    } catch (IllegalAccessException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 5);
-                    } catch (InvocationTargetException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 6);
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATE_REQHANDLER2");
                     }
                 }
             }
             if (requestHandler == null) {
                 return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
-                        10);
+                        "INTERR_WRONG_HTTP_METHOD");
             }
         }
         if (debugMode)
@@ -736,8 +726,10 @@ public abstract class RequestHandler {
                 throw e.getCause();
             } catch (BlackLabException e1) {
                 return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (BlsException e1) {
+                return e1;
             } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", 0, e1);
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
             }
         }
     }

@@ -237,7 +237,7 @@ public class IndexManager {
 
         File userDir = getUserCollectionDir(userId);
         if (userDir == null || !userDir.canWrite())
-            throw new InternalServerError("Could not create index. Cannot write in user dir: " + userDir, 16);
+            throw new InternalServerError("Could not create index. Cannot write in user dir: " + userDir, "CANNOT_WRITE_USER_DIR");
 
         File indexDir = new File(userDir, indexName);
 
@@ -291,22 +291,22 @@ public class IndexManager {
         // Generally these should never happen as they would have been triggered when the Index was first loaded
         // But, it can't hurt to be certain
         if (!indexDir.isDirectory())
-            throw new InternalServerError("Could not delete index. Not an index.", 17);
+            throw new InternalServerError("Could not delete index. Not an index.", "INTERR_DELETING_INDEX1");
         if (!userDir.canWrite() || !indexDir.canWrite())
-            throw new InternalServerError("Could not delete index. Check file permissions.", 18);
+            throw new InternalServerError("Could not delete index. Check file permissions.", "INTERR_DELETING_INDEX2");
         if (!indexDir.getAbsoluteFile().getParentFile().equals(userDir)) // Yes, we're paranoid..
-            throw new InternalServerError("Could not delete index. Not found in user dir.", 19);
+            throw new InternalServerError("Could not delete index. Not found in user dir.", "INTERR_DELETING_INDEX3");
         if (!BlackLabIndex.isIndex(indexDir)) { // ..but are we paranoid enough?
-            throw new InternalServerError("Could not delete index. Not a BlackLab index.", 20);
+            throw new InternalServerError("Could not delete index. Not a BlackLab index.", "INTERR_DELETING_INDEX4");
         }
 
         // Don't follow symlinks
         try {
             if (BlsUtils.isSymlink(indexDir)) {
-                throw new InternalServerError("Could not delete index. Is a symlink.", 21);
+                throw new InternalServerError("Could not delete index. Is a symlink.", "INTERR_DELETING_INDEX5");
             }
         } catch (IOException e1) {
-            throw new InternalServerError(13);
+            throw new InternalServerError("INTERR_DELETING_INDEX6");
         }
 
         // Can we even delete the whole tree? If not, don't even try.
@@ -319,7 +319,7 @@ public class IndexManager {
                 }
             });
         } catch (Exception e) {
-            throw new InternalServerError("Could not delete index. Can't delete all files/dirs.", 22);
+            throw new InternalServerError("Could not delete index. Can't delete all files/dirs.", "INTERR_DELETING_INDEX7");
         }
 
         // Everything seems ok. Delete the index.

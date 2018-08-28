@@ -39,7 +39,7 @@ public class RequestHandlerCreateIndex extends RequestHandler {
         } catch (BlsException e) {
             throw e;
         } catch (Exception e) {
-            return Response.internalError(ds, e, debugMode, 11);
+            return Response.internalError(ds, e, debugMode, "INTERR_CREATING_INDEX");
         }
     }
 }

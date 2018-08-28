@@ -216,11 +216,11 @@ public class ServletUtil {
         }
     }
 
-    public static String internalErrorMessage(int code) {
+    public static String internalErrorMessage(String code) {
         return "An internal error occurred. Please contact the administrator. Error code: " + code + ".";
     }
 
-    public static String internalErrorMessage(Exception e, boolean debugMode, int code) {
+    public static String internalErrorMessage(Exception e, boolean debugMode, String code) {
         if (debugMode) {
             if (e instanceof InternalServerError)
                 return internalErrorMessage(e.getMessage(), debugMode, code);
@@ -229,7 +229,7 @@ public class ServletUtil {
         return ServletUtil.internalErrorMessage(code);
     }
 
-    public static String internalErrorMessage(String message, boolean debugMode, int code) {
+    public static String internalErrorMessage(String message, boolean debugMode, String code) {
         if (debugMode) {
             return message + " (Internal error code " + code + ")";
         }

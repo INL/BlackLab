@@ -264,7 +264,7 @@ public class Index {
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {
-            throw new InternalServerError("Error opening index: " + dir, 43, e);
+            throw new InternalServerError("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
         }
     }
 
@@ -289,7 +289,7 @@ public class Index {
             this.indexer = Indexer.openIndex(this.dir);
             indexer.setUseThreads(true);
         } catch (Exception e) {
-            throw new InternalServerError("Could not open index '" + id + "'", 27, e);
+            throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);
         }
 
         return indexer;

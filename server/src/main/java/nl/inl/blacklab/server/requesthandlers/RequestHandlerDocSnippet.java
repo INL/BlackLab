@@ -47,7 +47,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
         Document document = blIndex.doc(luceneDocId).luceneDoc();
         if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 24);
+            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
         Hit hit;
         ContextSize wordsAroundHit;

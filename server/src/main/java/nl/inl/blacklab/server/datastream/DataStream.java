@@ -96,15 +96,15 @@ public abstract class DataStream {
         error(code, msg, null);
     }
 
-    public void internalError(Exception e, boolean debugMode, int code) {
+    public void internalError(Exception e, boolean debugMode, String code) {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(e, debugMode, code), debugMode ? e : null);
     }
 
-    public void internalError(String message, boolean debugMode, int code) {
+    public void internalError(String message, boolean debugMode, String code) {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(message, debugMode, code));
     }
 
-    public void internalError(int code) {
+    public void internalError(String code) {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
     }
 
