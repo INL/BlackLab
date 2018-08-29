@@ -87,7 +87,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     /** What keys may occur under fieldInfo? */
     private static final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
             "namingScheme", "unknownCondition", "unknownValue",
-            "metadataFields", "complexFields", "metadataFieldGroups",
+            "metadataFields", "complexFields", "metadataFieldGroups", "annotationGroups",
             "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
 
     /** What keys may occur under metadataFieldGroups group? */
@@ -781,7 +781,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                     warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
                     String groupName = Json.getString(group, "name", "UNKNOWN");
                     List<String> annotations = Json.getListOfStrings(group, "annotations");
-                    boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingFields", false);
+                    boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingAnnotations", false);
                     annotationsGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
                             addRemainingAnnotations));
                 }

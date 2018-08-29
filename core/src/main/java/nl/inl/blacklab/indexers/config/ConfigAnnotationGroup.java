@@ -57,8 +57,8 @@ public class ConfigAnnotationGroup {
         return addRemainingAnnotations;
     }
 
-    public void setAddRemainingAnnotations(boolean addRemainingFields) {
-        this.addRemainingAnnotations = addRemainingFields;
+    public void setAddRemainingAnnotations(boolean addRemainingAnnotations) {
+        this.addRemainingAnnotations = addRemainingAnnotations;
     }
 
 }

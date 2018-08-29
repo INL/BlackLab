@@ -166,7 +166,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
                         addedRemainingAnnots = true;
                         for (Annotation annotation: annotationsNotInGroups) {
-                            ds.item("annotation", annotation.name());
+                            if (!annotation.isInternal())
+                                ds.item("annotation", annotation.name());
                         }
                     }
                     ds.endList().endEntry();
