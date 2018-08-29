@@ -13,7 +13,7 @@ import java.util.function.Function;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -21,27 +21,27 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
-    static Indexer createNewIndex(File directory) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer createNewIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, true);
     }
     
-    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, true, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, false);
     }
     
-    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, false, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, createNewIndex, formatIdentifier, null);
     }
 
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatException, ErrorOpeningIndex {
+    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, createNewIndex, formatIdentifier, indexTemplateFile);
     }
 
@@ -70,7 +70,7 @@ public interface Indexer {
      */
     void setRecurseSubdirs(boolean recurseSubdirs);
 
-    void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException;
+    void setFormatIdentifier(String formatIdentifier) throws DocumentFormatNotFound;
 
     /**
      * Set the listener object that receives messages about indexing progress.

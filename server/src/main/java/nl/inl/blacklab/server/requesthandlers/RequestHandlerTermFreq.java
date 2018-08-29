@@ -46,6 +46,8 @@ public class RequestHandlerTermFreq extends RequestHandler {
         
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q);
 
+        searchLogger.setResultsFound(tfl.size());
+        
         int first = searchParam.getInteger("first");
         if (first < 0 || first >= tfl.size())
             first = 0;

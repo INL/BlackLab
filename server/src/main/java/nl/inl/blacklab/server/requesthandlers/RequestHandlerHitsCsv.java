@@ -127,6 +127,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeGroups(HitGroups groups, DataStreamPlain ds) throws BlsException {
+        searchLogger.setResultsFound(groups.size());
         try {
             // Write the header
             List<String> row = new ArrayList<>();
@@ -194,6 +195,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
+        searchLogger.setResultsFound(hits.size());
+
         final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
         List<Annotation> otherTokenProperties = new ArrayList<>();
 

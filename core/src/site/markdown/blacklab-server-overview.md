@@ -692,6 +692,11 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 		        "0:0:0:0:0:0:0:1" // IPv6 localhost
 		    ],
 		    
+		    // Specify a file to create an SQLite (https://www.sqlite.org/index.html) database
+		    // and log details about requests and cache statistics there.
+		    // [defaults to no SQLite log]
+		    "sqliteLogDatabase": "/tmp/blacklab_log.db",
+		    
 	        // Trace settings. Controls per-subject detail logging.
 	        "trace": {
 	        

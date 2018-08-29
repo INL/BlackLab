@@ -43,7 +43,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.MaxDocsReachedException;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -210,7 +210,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // Stop if required
             if (!docWriter.continueIndexing())
-                throw new MaxDocsReachedException();
+                throw new MaxDocsReached();
         }
     }
 
@@ -639,7 +639,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             xmlReader.parse(is);
         } catch (SAXException e) {
             throw new MalformedInputFile(e);
-        } catch (MaxDocsReachedException e) {
+        } catch (MaxDocsReached e) {
             // OK; just stop indexing prematurely
         }
 

@@ -55,6 +55,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false);
         ds.endMap().endEntry();
 
+        searchLogger.setResultsFound(groups.size());
+        
         // The list of groups found
         ds.startEntry("hitGroups").startList();
         int i = 0;

@@ -27,7 +27,7 @@ import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.MaxDocsReachedException;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
@@ -278,7 +278,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             // Stop if required
             if (!docWriter.continueIndexing())
-                throw new MaxDocsReachedException();
+                throw new MaxDocsReached();
 
         }
 

@@ -33,7 +33,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
@@ -269,7 +269,7 @@ public class IndexTool {
             indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
             if (useThreads)
                 indexer.setUseThreads(true);
-        } catch (DocumentFormatException e1) {
+        } catch (DocumentFormatNotFound e1) {
             System.err.println(e1.getMessage());
             System.err.println("Please specify a correct format on the command line.");
             usage();

@@ -26,7 +26,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.MaxDocsReachedException;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
@@ -475,7 +475,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         // Stop if required
         if (docWriter != null) {
             if (!docWriter.continueIndexing())
-                throw new MaxDocsReachedException();
+                throw new MaxDocsReached();
         }
 
         uniqueStrings.clear();

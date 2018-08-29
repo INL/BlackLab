@@ -14,6 +14,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 
 public class SearchManager {
@@ -34,7 +35,7 @@ public class SearchManager {
 
     /** Manages all the indices we have available and/or open */
     private IndexManager indexMan;
-
+    
     public SearchManager(JsonNode properties) throws ConfigurationException {
         logger.debug("SearchManager created");
 
@@ -51,7 +52,7 @@ public class SearchManager {
 
         // Init auth system
         authSystem = new AuthManager(config.getAuthClass(), config.getAuthParam());
-
+        
         // Set up the parameter default values
         SearchParameters.setDefault("number", "" + config.defaultPageSize());
         SearchParameters.setDefault("wordsaroundhit", "" + config.getDefaultContextSize());
@@ -110,6 +111,10 @@ public class SearchManager {
     
     public <T extends SearchResult> BlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) {
         return (BlsCacheEntry<T>)search.executeAsync();
+    }
+
+    public void setLogDatabase(LogDatabase logDatabase) {
+        newCache.setLogDatabase(logDatabase);
     }
 
 }

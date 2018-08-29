@@ -22,12 +22,15 @@ import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.util.MemoryUtil;
 import nl.inl.util.ThreadPauser;
 import nl.inl.util.ThreadPauserImpl;
 
 public class BlsCache implements SearchCache {
     
+    private static final int ONE_MINUTE_MS = 60000;
+
     private static final Logger logger = LogManager.getLogger(BlsCache.class);
     
     public static final boolean ENABLE_NEW_CACHE = true;
@@ -40,10 +43,16 @@ public class BlsCache implements SearchCache {
     protected boolean trace = true;
 
     private boolean cacheDisabled;
+    
+    private LogDatabase logDatabase = null;
 
     public BlsCache(BlsConfigCacheAndPerformance config) {
         initLoadManagement(config);
         cacheDisabled = config.getMaxNumberOfJobs() == 0;
+    }
+    
+    public void setLogDatabase(LogDatabase logDatabase) {
+        this.logDatabase = logDatabase;
     }
 
     /**
@@ -211,6 +220,8 @@ public class BlsCache implements SearchCache {
     private int resultsObjectsInCache;
 
     private LoadManagerThread loadManagerThread;
+
+    private long lastCacheLog = 0;
     
     private void initLoadManagement(BlsConfigCacheAndPerformance config) {
         this.config = config;
@@ -244,7 +255,7 @@ public class BlsCache implements SearchCache {
      * server load.
      */
     synchronized void performLoadManagement() {
-
+        
         if (config.shouldAutoDetectMaxConcurrent()) {
             // Autodetect number of CPUs
             config.autoAdjustMaxConcurrent();
@@ -255,6 +266,25 @@ public class BlsCache implements SearchCache {
 
         List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
         int numberOfSearchesInCache = searches.size();
+
+        // Log cache state every 60s
+        if (logDatabase != null && System.currentTimeMillis() - lastCacheLog > ONE_MINUTE_MS) {
+            int numberRunning = 0, numberPaused = 0;
+            int largestEntryHits = 0;
+            long oldestEntryAgeMs = 0;
+            for (BlsCacheEntry<?> s: searches) {
+                if (!s.isSearchDone())
+                    numberRunning++;
+                if (s.threadPauser().isPaused())
+                    numberPaused++;
+                if (s.numberOfStoredHits() > largestEntryHits)
+                    largestEntryHits = s.numberOfStoredHits();
+                if (s.timeSinceCreation() > oldestEntryAgeMs)
+                    oldestEntryAgeMs = s.timeSinceCreation();
+            }
+            lastCacheLog = System.currentTimeMillis();
+            logDatabase.addCacheInfo(searches.size(), numberRunning, numberPaused, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
+        }
 
         // Sort the searches based on descending "worthiness"
         for (BlsCacheEntry<?> s : searches)

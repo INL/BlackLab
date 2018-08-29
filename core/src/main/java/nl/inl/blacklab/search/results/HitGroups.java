@@ -92,6 +92,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
      */
     protected HitGroups(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
         super(hits.queryInfo());
+        if (criteria == null)
+            throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
         
         List<Annotation> requiredContext = criteria.needsContext();

@@ -175,6 +175,8 @@ public class RequestHandlerHits extends RequestHandler {
             DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
             totalTokens = perDocResults.intSum(propTokens);
         }
+        
+        searchLogger.setResultsFound(hitsCount.processedSoFar());
 
         // Search is done; construct the results object
 

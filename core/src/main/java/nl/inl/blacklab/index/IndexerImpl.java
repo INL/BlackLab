@@ -38,7 +38,7 @@ import org.apache.lucene.index.Term;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -201,12 +201,12 @@ class IndexerImpl implements DocWriter, Indexer {
      * @param directory the main BlackLab index directory
      * @param create if true, creates a new index; otherwise, appends to existing
      *            index
-     * @throws DocumentFormatException if autodetection of the document format
+     * @throws DocumentFormatNotFound if autodetection of the document format
      *             failed
      * @throws ErrorOpeningIndex if we couldn't open the index
      */
     IndexerImpl(File directory, boolean create)
-            throws DocumentFormatException, ErrorOpeningIndex {
+            throws DocumentFormatNotFound, ErrorOpeningIndex {
         this(directory, create, (String) null, null);
     }
 
@@ -229,18 +229,18 @@ class IndexerImpl implements DocWriter, Indexer {
      *            used by this Indexer however.
      * @param indexTemplateFile JSON file to use as template for index structure /
      *            metadata (if creating new index)
-     * @throws DocumentFormatException if no formatIdentifier was specified and
+     * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
      * @throws IOException
      * @throws ErrorOpeningIndex 
      */
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws DocumentFormatException, ErrorOpeningIndex {
+            throws DocumentFormatNotFound, ErrorOpeningIndex {
         init(directory, create, formatIdentifier, indexTemplateFile);
     }
 
     protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws DocumentFormatException, ErrorOpeningIndex {
+            throws DocumentFormatNotFound, ErrorOpeningIndex {
 
         if (create) {
             if (indexTemplateFile != null) {
@@ -263,7 +263,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 } else {
                     // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
                     indexWriter.close();
-                    throw new DocumentFormatException("Input format config '" + formatIdentifier
+                    throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
                             + "' not found (or format config contains an error) when creating new index in "
                             + directory);
                 }
@@ -292,7 +292,7 @@ class IndexerImpl implements DocWriter, Indexer {
                     indexWriter.metadataWriter().save();
                 }
             } else {
-                throw new DocumentFormatException("Input format config '" + formatIdentifier
+                throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
                         + "' not found (or format config contains an error) when creating new index in " + directory);
             }
         } else { // opening an existing index
@@ -308,7 +308,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 indexWriter.close();
                 String message = formatIdentifier == null ? "No formatIdentifier"
                         : "Unknown formatIdentifier '" + formatIdentifier + "'";
-                throw new DocumentFormatException(
+                throw new DocumentFormatNotFound(
                         message + ", and could not determine the default documentFormat for index " + directory);
             }
         }
@@ -349,9 +349,9 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatException {
+    public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatNotFound {
         if (!DocumentFormats.isSupported(formatIdentifier))
-            throw new DocumentFormatException("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
+            throw new DocumentFormatNotFound("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
                     + this.indexWriter.name() + "; unknown identifier");
 
         this.formatIdentifier = formatIdentifier;

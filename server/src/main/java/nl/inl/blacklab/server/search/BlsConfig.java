@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.search;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -89,6 +90,8 @@ public class BlsConfig extends YamlJsonReader {
 
     private MatchSensitivity defaultMatchSensitivity;
 
+    private File logDatabase = null;
+
     /** Log detailed debug messages about search cache management? */
     public static boolean traceCache = false;
 
@@ -130,6 +133,10 @@ public class BlsConfig extends YamlJsonReader {
                     debugModeIps.add(addr);
                     logger.debug("Debug address found: " + addr);
                 }
+            }
+            
+            if (debugProp.has("sqliteLogDatabase")) {
+                logDatabase = new File(debugProp.get("sqliteLogDatabase").textValue());
             }
 
             if (debugProp.has("trace")) {
@@ -325,6 +332,10 @@ public class BlsConfig extends YamlJsonReader {
 
     public boolean isOmitEmptyProperties() {
         return omitEmptyProperties;
+    }
+
+    public File logDatabase() {
+        return logDatabase;
     }
 
 }

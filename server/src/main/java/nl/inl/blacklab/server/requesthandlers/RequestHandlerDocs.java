@@ -187,6 +187,8 @@ public class RequestHandlerDocs extends RequestHandler {
         RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
         ds.endEntry();
         ds.endMap().endEntry();
+        
+        searchLogger.setResultsFound(docsStats.processedSoFar());
 
         // The hits and document info
         ds.startEntry("docs").startList();

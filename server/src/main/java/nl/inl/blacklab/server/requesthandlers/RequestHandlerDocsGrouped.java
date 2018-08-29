@@ -75,6 +75,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         
         ds.endMap().endEntry();
 
+        searchLogger.setResultsFound(groups.size());
+        
         // The list of groups found
         ds.startEntry("docGroups").startList();
         int i = 0;

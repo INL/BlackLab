@@ -22,6 +22,7 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -259,7 +260,7 @@ public abstract class RequestHandler {
                                         "status", "autocomplete", "sharing").contains(handlerName)) {
                             handlerName = "debug";
                         }
-
+                        
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
@@ -294,11 +295,29 @@ public abstract class RequestHandler {
 
                         if (!availableHandlers.containsKey(handlerName))
                             return errorObj.unknownOperation(handlerName);
-                        Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
-                        Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
-                                HttpServletRequest.class, User.class, String.class, String.class, String.class);
-                        //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
-                        requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
+                        
+                        @SuppressWarnings("resource")
+                        SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
+                        boolean succesfullyCreatedRequestHandler = false;
+                        try {
+                            Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
+                            Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
+                                    HttpServletRequest.class, User.class, String.class, String.class, String.class);
+                            //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
+                            requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
+                            requestHandler.setLogger(logger);
+                            succesfullyCreatedRequestHandler = true;
+                        } finally {
+                            if (!succesfullyCreatedRequestHandler) {
+                                // Operation didn't complete succesfully. Make sure logger gets closed cleanly.
+                                // (if reqhandler *was* created succesfully, its cleanup() method will close the logger)
+                                try {
+                                    logger.close();
+                                } catch (IOException e) {
+                                    throw new InternalServerError("INTERR_CLOSING_LOGGER");
+                                }
+                            }
+                        }
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (InsufficientMemoryAvailable e) {
@@ -306,10 +325,10 @@ public abstract class RequestHandler {
                     } catch (ReflectiveOperationException e) {
                         // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);
-                        return errorObj.internalError(e, debugMode, "INTERR_CREATE_REQHANDLER1");
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATING_REQHANDLER1");
                     } catch (IllegalArgumentException e) {
                         logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, "INTERR_CREATE_REQHANDLER2");
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATING_REQHANDLER2");
                     }
                 }
             }
@@ -320,7 +339,14 @@ public abstract class RequestHandler {
         }
         if (debugMode)
             requestHandler.setDebug(debugMode);
+        
         return requestHandler;
+    }
+
+    protected SearchLogger searchLogger;
+
+    private void setLogger(SearchLogger searchLogger) {
+        this.searchLogger = searchLogger;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -397,6 +423,15 @@ public abstract class RequestHandler {
         this.urlPathInfo = urlPathInfo;
         this.user = user;
 
+    }
+    
+    public void cleanup() {
+        try {
+            if (searchLogger != null)
+                searchLogger.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

@@ -8,7 +8,7 @@ import java.util.List;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -140,7 +140,7 @@ public class TestIndex {
             // Create the BlackLab index object
             index = BlackLabIndex.open(indexDir, null);
             word = index.mainAnnotatedField().annotation("word");
-        } catch (DocumentFormatException | ErrorOpeningIndex e) {
+        } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }

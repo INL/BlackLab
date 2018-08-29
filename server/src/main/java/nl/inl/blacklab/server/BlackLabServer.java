@@ -38,6 +38,9 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.logging.LogDatabase;
+import nl.inl.blacklab.server.logging.LogDatabaseDummy;
+import nl.inl.blacklab.server.logging.LogDatabaseImpl;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -55,6 +58,9 @@ public class BlackLabServer extends HttpServlet {
 
     /** Manages all our searches */
     private SearchManager searchManager;
+
+    /** SQLite database to log all our searches to (if enabled) */
+    private LogDatabase logDatabase = new LogDatabaseDummy();
 
     private boolean configRead = false;
 
@@ -180,6 +186,20 @@ public class BlackLabServer extends HttpServlet {
                     throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
                 }
             }
+            
+            // Open log database
+            try {
+                File dbFile = searchManager.config().logDatabase();
+                if (dbFile != null) {
+                    String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
+                    Class.forName("org.sqlite.JDBC");
+                    logDatabase = new LogDatabaseImpl(url);
+                    searchManager.setLogDatabase(logDatabase);
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                throw new RuntimeException("Error opening log database", e);
+            }
+            
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);
         } catch (IOException e) {
@@ -313,7 +333,7 @@ public class BlackLabServer extends HttpServlet {
         boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : "blacklabResponse";
-
+        
         // === Handle the request
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
@@ -343,6 +363,8 @@ public class BlackLabServer extends HttpServlet {
                 httpCode = Response.error(es, "INTERRUPTED", "Search was interrupted", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, "INTERR_HANDLING_REQUEST");
+            } finally {
+                requestHandler.cleanup(); // close logger
             }
         }
         ds.endDocument(rootEl);
@@ -376,6 +398,13 @@ public class BlackLabServer extends HttpServlet {
 
     @Override
     public void destroy() {
+        
+        try {
+            if (logDatabase != null)
+                logDatabase.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         // Stops the load management thread
         if (searchManager != null)
@@ -420,6 +449,10 @@ public class BlackLabServer extends HttpServlet {
 
     public SearchManager getSearchManager() {
         return searchManager;
+    }
+
+    public LogDatabase logDatabase() {
+        return logDatabase;
     }
 
 }

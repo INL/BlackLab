@@ -591,7 +591,10 @@ public class SearchParameters {
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitGroupSettings().groupBy());
+        String groupBy = hitGroupSettings().groupBy();
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
+        if (prop == null)
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
         return hitsSample().group(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
