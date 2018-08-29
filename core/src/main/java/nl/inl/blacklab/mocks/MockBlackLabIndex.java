@@ -14,6 +14,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
@@ -240,12 +241,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+    public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
         throw new UnsupportedOperationException();
     }
     

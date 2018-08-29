@@ -52,6 +52,7 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -979,13 +980,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field) {
-        return search(field, true);
-    }
-
-    @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        return new SearchEmpty(QueryInfo.create(this, field, useCache));
+    public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
+        return new SearchEmpty(QueryInfo.create(this, field, useCache, searchLogger));
     }
     
     @Override

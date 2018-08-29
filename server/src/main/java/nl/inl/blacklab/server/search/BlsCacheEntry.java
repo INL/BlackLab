@@ -102,6 +102,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             } finally {
                 fullSearchDoneTime = now();
                 fullSearchDone = true;
+                search.queryInfo().clearLogger();
                 thread = null;
             }
         }

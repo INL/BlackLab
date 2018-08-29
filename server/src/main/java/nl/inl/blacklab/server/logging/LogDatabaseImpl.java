@@ -95,6 +95,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 ));
                 execute(String.join("\n", 
                         "CREATE TABLE IF NOT EXISTS \"request_logs\" (",
+                        "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
                         "  `request`   INTEGER NOT NULL,",
                         "  `time`  INTEGER NOT NULL,",
                         "  `timestamp` TEXT NOT NULL,",

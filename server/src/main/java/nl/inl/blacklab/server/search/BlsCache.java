@@ -131,13 +131,24 @@ public class BlsCache implements SearchCache {
         synchronized (this) {
             future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
-                checkFreeMemory(); // check that we have sufficient available memory
+                search.log("Not found in cache, starting search: " + search);
+                try {
+                    checkFreeMemory(); // check that we have sufficient available memory
+                } catch (InsufficientMemoryAvailable e) {
+                    search.log("Not enough memory for search: " + e.getMessage());
+                    throw e;
+                }
                 future = new BlsCacheEntry<>(search, searchTask);
                 created = true;
                 if (!cacheDisabled && useCache)
                     searches.put(search, future);
                 if (!block)
                     future.start(false);
+            } else {
+                if (future.isDone())
+                    search.log("Found in cache, already done: " + search);
+                else
+                    search.log("Found in cache, still running: " + search);
             }
         }
         if (created) {

@@ -58,4 +58,12 @@ public interface Search<R extends SearchResult> {
         return false;
     }
 
+    /**
+     * Log details about the search's execution.
+     * @param msg message to log
+     */
+    default void log(String msg) {
+        queryInfo().log(msg);
+    }
+
 }

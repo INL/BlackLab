@@ -347,6 +347,8 @@ public abstract class RequestHandler {
 
     private void setLogger(SearchLogger searchLogger) {
         this.searchLogger = searchLogger;
+        if (searchParam != null)
+            searchParam.setLogger(searchLogger);
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {

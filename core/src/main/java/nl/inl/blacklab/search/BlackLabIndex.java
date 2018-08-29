@@ -16,6 +16,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -248,9 +249,21 @@ public interface BlackLabIndex extends Closeable {
      * 
      * @param field field to search
      * @param useCache whether to use the cache or bypass it
+     * @param searchLogger where to log details about how the search was executed, or null to skip this logging
      * @return empty search object
      */
-    SearchEmpty search(AnnotatedField field, boolean useCache);
+    SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger);
+
+    /**
+     * Start building a Search. 
+     * 
+     * @param field field to search
+     * @param useCache whether to use the cache or bypass it
+     * @return empty search object
+     */
+    default SearchEmpty search(AnnotatedField field, boolean useCache) {
+        return search(field, useCache, null);
+    }
 
     /**
      * Start building a Search. 
@@ -258,7 +271,9 @@ public interface BlackLabIndex extends Closeable {
      * @param field field to search
      * @return empty search object
      */
-    SearchEmpty search(AnnotatedField field);
+    default SearchEmpty search(AnnotatedField field) {
+        return search(field, true);
+    }
     
     /**
      * Start building a Search. 

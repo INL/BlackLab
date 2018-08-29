@@ -22,6 +22,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -40,6 +41,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
@@ -191,6 +193,8 @@ public class SearchParameters {
     private boolean isDocsOperation;
 
     private List<DocProperty> facetProps;
+
+    private SearchLogger searchLogger;
 
     private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
         this.searchManager = searchManager;
@@ -552,7 +556,8 @@ public class SearchParameters {
     }
 
     public SearchHits hits() throws BlsException {
-        return blIndex().search(blIndex().mainAnnotatedField(), getUseCache()).find(getPattern(), getFilterQuery(), getSearchSettings());
+        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        return search.find(getPattern(), getFilterQuery(), getSearchSettings());
     }
 
     public SearchDocs docsWindow() throws BlsException {
@@ -587,7 +592,8 @@ public class SearchParameters {
             else
                 throw new Forbidden("You must specify at least a filter query.");
         }
-        return blIndex().search().find(docFilterQuery);
+        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        return search.find(docFilterQuery);
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {
@@ -628,6 +634,10 @@ public class SearchParameters {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void setLogger(SearchLogger searchLogger) {
+        this.searchLogger = searchLogger;
     }
 
 }
