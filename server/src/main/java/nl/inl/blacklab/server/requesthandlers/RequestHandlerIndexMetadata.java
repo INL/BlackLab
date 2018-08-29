@@ -157,7 +157,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.startAttrEntry("annotatedField", "name", f.name()).startList();
                 boolean addedRemainingAnnots = false;
                 for (AnnotationGroup group : groups) {
-                    ds.startItem("metadataFieldGroup").startMap();
+                    ds.startItem("annotationGroup").startMap();
                     ds.entry("name", group.groupName());
                     ds.startEntry("annotations").startList();
                     for (Annotation annotation: group) {
