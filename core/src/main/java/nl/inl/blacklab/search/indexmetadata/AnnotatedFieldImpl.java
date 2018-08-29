@@ -71,7 +71,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
-    /** This complex field's annotations, sorted by name */
+    /** This field's annotations, sorted by name */
     private Map<String, AnnotationImpl> annots;
     
     /** This field's annotations, in desired display order */

@@ -32,7 +32,9 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String propName = searchParam.getString("property");
+        String propName = searchParam.getString("annotation");
+        if (propName.length() == 0)
+            propName = searchParam.getString("property");
         Annotation annotation = cfd.annotation(propName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);

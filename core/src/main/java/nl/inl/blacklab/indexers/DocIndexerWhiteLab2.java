@@ -98,13 +98,13 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
         final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
-        final AnnotationWriter propLemma = addProperty("lemma");
-        final AnnotationWriter propPartOfSpeech = addProperty("pos");
-        final AnnotationWriter propPhonetic = addProperty("phonetic");
-        final AnnotationWriter propXmlid = addProperty("xmlid");
-        final AnnotationWriter propSpeaker = addProperty("speaker");
-        final AnnotationWriter propBeginTime = addProperty("begin_time");
-        final AnnotationWriter propEndTime = addProperty("end_time");
+        final AnnotationWriter propLemma = addAnnotation("lemma");
+        final AnnotationWriter propPartOfSpeech = addAnnotation("pos");
+        final AnnotationWriter propPhonetic = addAnnotation("phonetic");
+        final AnnotationWriter propXmlid = addAnnotation("xmlid");
+        final AnnotationWriter propSpeaker = addAnnotation("speaker");
+        final AnnotationWriter propBeginTime = addAnnotation("begin_time");
+        final AnnotationWriter propEndTime = addAnnotation("end_time");
 
         registerContentsField();
         

@@ -136,7 +136,7 @@ If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e.
 so you don't need a separate index structure file)
 
 What we call the "index structure" consists of some top-level index information (name, description, etc.), what word-level annotations 
-("properties") you want to index, what metadata fields there are and how they should be indexed, and more.
+(formerly called "properties") you want to index, what metadata fields there are and how they should be indexed, and more.
 
 By default, a default index structure is determined by BlackLab and the DocIndexer you're using. However, you can influence exactly 
 how your index is created using a customized index structure file. If you specify such an index structure file when creating the 
@@ -185,15 +185,15 @@ If you have an XML format in which each word has its own XML tag, containing any
 
 The constructor of your indexing class should call the superclass constructor, declare any annotations (e.g. lemma, pos) you're going to index and finally add hooks (called handlers) for each XML element you want to do something with.
 
-Declaring annotations (called "properties" in BlackLab) is done using the DocIndexerXmlHandlers.addProperty(String). Store the result in a final variable so you can access it from your custom handlers. Note that the "main property" (usually called "word") and the "punct" property (whitespace and punctuation between words) have already been created by DocIndexerXmlHandlers; retrieve them using the getMainProperty() and getPropPunct() methods.
+Declaring annotations (formerly called "properties" in BlackLab) is done using the DocIndexerXmlHandlers.addProperty(String). Store the result in a final variable so you can access it from your custom handlers. Note that the "main property" (usually called "word") and the "punct" property (whitespace and punctuation between words) have already been created by DocIndexerXmlHandlers; retrieve them using the getMainProperty() and getPropPunct() methods.
 
 Adding a handler is done using the DocIndexerXmlHandlers.addHandler(String, ElementHandler) method. The first parameter is an xpath-like expression that indicates the element to handle. The expression looks like xpath but is very limited: only element names separated by slashes; it may start with either a single (absolute path) or a double (relative path) slash. DocIndexerXmlHandlers defines several default ElementHandlers: ElementHandler (does nothing but keep track of whether we're inside this element), DocumentElementHandler (creates and adds document to the index), several metadata handlers that deal with different types of metadata elements (assuming the document contains its own metadata - see below for external metadata), InlineTagHandler (adds inline tags from the content to the index, such as &lt;p&gt;, &lt;s&gt; (sentence), &lt;b&gt;), several word handlers (indexes words and whitespace/punctuation between words). You can also easily create or derive your own, usually as an anonymous inner class that overrides the startElement() and endElement() methods.
 
 You need to add a handler for your document element (signifying the start and end of your logical documents; probably just use DocumentElementHandler), your word element (signifying a word to index; probably derive from WordHandlerBase), and any inline tags you wish to index (probably just use InlineTagHandler). Optionally, you may want to add a simple ElementHandler for your "body" tag, if you wish to restrict what part of the document is actually indexed; in this case, you should expand your word and inline tag handlers to check that you're inside this body element before processing the matched element. 
 
-A word handler derived from DefaultWordHandler might retrieve lemma and part of speech from the attributes of the start tag and add them to the properties you declared at the top of your DocIndexer-constructor. You can do this using the ComplexFieldProperty.addValue() method. DefaultWordHandler takes care of adding values to the standard properties word and punct. For this, DefaultWordHandler assumes the word is simply the word element's text content. DefaultWordHandler also stores the character positions before and after the word (which are needed if you want to highlight in the original XML).
+A word handler derived from DefaultWordHandler might retrieve lemma and part of speech from the attributes of the start tag and add them to the properties you declared at the top of your DocIndexer-constructor. You can do this using the AnnotationWriter.addValue() method. DefaultWordHandler takes care of adding values to the standard properties word and punct. For this, DefaultWordHandler assumes the word is simply the word element's text content. DefaultWordHandler also stores the character positions before and after the word (which are needed if you want to highlight in the original XML).
 
-An important note about adding values to properties: it is crucial that you call ComplexFieldProperty.addValue() to each property an equal number of times! Each time you call addValue(), you move that property to the next corpus position, but other properties do not automatically move to the next corpus position; it is up to you to make sure all properties stay at the same corpus position. If a property has no value at a certain position, just add an empty string. 
+An important note about adding values to properties: it is crucial that you call AnnotationWriter.addValue() to each property an equal number of times! Each time you call addValue(), you move that property to the next corpus position, but other properties do not automatically move to the next corpus position; it is up to you to make sure all properties stay at the same corpus position. If a property has no value at a certain position, just add an empty string. 
 
 You should probably call consumeCharacterContent(), which clears the buffer of captured text content in the document, at the start of a document (or at the start of the body element, if you handle that separately). This prevents the first punct value containing already captured text content you don't want. Similarly, before storing the document, you should add one last punct value (using consumeCharacterContent() to get the value to store), so the last bit of whitespace/punctuation isn't skipped. BlackLab assumes that there's always an extra "dummy" token containing only the last bit of whitespace/punctuation.
 
@@ -205,13 +205,13 @@ The [tutorial](add-input-format.html) develops a simple TEI DocIndexer using the
 
 NOTE: this applies if you're implementing your own DocIndexer class. The other appraoch, using a [configuration file](how-to-configure-indexing.html), does support standoff annotations but has no support for multiple values at one position (yet). Please let us know if you need this. 
 
-The ComplexFieldProperty.addValue(String) method adds a value to a property ("annotation layer") at the next corpus position. Sometimes you may want to add multiple values at a single corpus position, or you may want to skip a number of corpus positions. This can be done using the ComplexFieldProperty.addValue(String, Integer) method; the second parameter is the increment compared to the previous value. The default value for the increment is 1, meaning each value is indexed at the next corpus position.
+The AnnotationWriter.addValue(String) method adds a value to a property ("annotation layer") at the next corpus position. Sometimes you may want to add multiple values at a single corpus position, or you may want to skip a number of corpus positions. This can be done using the AnnotationWriter.addValue(String, Integer) method; the second parameter is the increment compared to the previous value. The default value for the increment is 1, meaning each value is indexed at the next corpus position.
 
 To add multiple values to a single corpus position, only use the default increment of 1 for the first value you want to add at this position; for all subsequent values at this position, use an increment of 0. Note: if the value you added first was the empty string, adding the next value with an increment of 0 will overwrite this empty string. This can be convenient if you're not sure whether you want to add any values at a particular location, but you want to make sure the property stays at the correct corpus position regardless.
 
 To skip a number of corpus positions when adding a value, use an increment that is higher than 1. So to skip one position (and therefore leave a "gap" one wide), use an increment of 2.
 
-Finally, you may sometimes wish to add values to an earlier corpus position. Say you're at position 100, and you want to add a value to position 50. You can do so using the ComplexFieldProperty.addValueAtPosition(String, Integer) method. The first token has position 0.
+Finally, you may sometimes wish to add values to an earlier corpus position. Say you're at position 100, and you want to add a value to position 50. You can do so using the AnnotationWriter.addValueAtPosition(String, Integer) method. The first token has position 0.
 
 <a id="subproperties"></a>
 
@@ -225,7 +225,7 @@ Part of speech sometimes consists of several features in addition to the main Po
 
 To add subproperties to a property, first add the main property value (in this case, the whole PoS expression "NOU-C(gender=n,number=sg)"), followed by several other tokens at the same position (position increments of zero):
 
-  propPartOfSpeech.addValue(subPropertyName + ComplexFieldUtil.ASCII_UNIT_SEPARATOR + subPropertyValue, 0);
+  propPartOfSpeech.addValue(subPropertyName + AnnotatedFieldNameUtil.ASCII_UNIT_SEPARATOR + subPropertyValue, 0);
 
 In our example, you might add three subproperty values: main=NOU-C (the "main" part of speech), gender=n and number=sg.
 
@@ -249,7 +249,7 @@ Adding a few subproperties per token position like this will make the index slig
 
 (the [configuration file](how-to-configure-indexing.html) approach does not support this yet; let us know if you need this)
 
-It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use ComplexFieldProperty.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
+It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use AnnotationWriter.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
 
 One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' property. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
 
@@ -400,7 +400,7 @@ Here's a commented example of indexmetadata.yaml:
         - date
         - keywords
         
-      # Information about annotated fields (also called "complex fields" in BlackLab)
+      # Information about annotated fields (formerly called "complex fields" in BlackLab)
       complexFields:
       
         # Information about the contents field

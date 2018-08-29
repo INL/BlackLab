@@ -110,7 +110,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexName != null)
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fd.name())
-                .entry("isComplexField", "false")
+                .entry(ElementNames.isAnnotatedField, "false")
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
@@ -185,16 +185,16 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ds.entry("indexName", indexName);
         Annotations annotations = fieldDesc.annotations();
         ds.entry("fieldName", fieldDesc.name())
-                .entry("isComplexField", "true")
+                .entry(ElementNames.isAnnotatedField, "true")
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
                 .entry("mainProperty", annotations.main().name());
-        ds.startEntry("properties").startMap();
+        ds.startEntry(ElementNames.annotations).startMap();
         for (Annotation annotation: annotations) {
-            ds.startAttrEntry("property", "name", annotation.name()).startMap();
+            ds.startAttrEntry(ElementNames.annotation, "name", annotation.name()).startMap();
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
             String offsetsAlternative = offsetsSensitivity == null ? "" : offsetsSensitivity.sensitivity().luceneFieldSuffix();
             ds

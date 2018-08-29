@@ -14,9 +14,10 @@ import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.requesthandlers.ElementNames;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -160,6 +161,11 @@ public class BlsConfig extends YamlJsonReader {
                         reqProp.get("defaultOutputType").textValue(), DataFormat.XML);
             if (reqProp.has("omitEmptyProperties"))
                 omitEmptyProperties = reqProp.get("omitEmptyProperties").booleanValue();
+            if (reqProp.has("useOldElementNames")) {
+                // Use the old names for elements (complexField, property, etc. instead of annotatedField, annotation)?
+                boolean useOldElementNames = reqProp.get("useOldElementNames").booleanValue();
+                ElementNames.setUseOldElementNames(useOldElementNames);
+            }
             defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize", 20);
             maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 1000);
             maxExportPageSize = JsonUtil.getIntProp(reqProp, "maxExportPageSize", 100_000);

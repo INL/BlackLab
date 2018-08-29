@@ -89,7 +89,8 @@ public class SearchParameters {
         defaultParameterValues.put("wordstart", "-1");
         defaultParameterValues.put("wordend", "-1");
         defaultParameterValues.put("calc", "");
-        defaultParameterValues.put("property", "word");
+        defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
+        defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultParameterValues.put("waitfortotal", "no");
         defaultParameterValues.put("number", "20");
         defaultParameterValues.put("wordsaroundhit", "5");
@@ -159,15 +160,19 @@ public class SearchParameters {
             // Alternative views
             "calc", // collocations, or other context-based calculations
             "group", "viewgroup", // grouping hits/docs
-            "property", "sensitive", // for term frequency
-
+            "annotation", "sensitive", // for term frequency
+            
             // How to execute request
             "waitfortotal", // wait until total number of results known?
             "term", // term for autocomplete
             
             // CSV options
             "csvsummary", // include summary of search in the CSV output? [no]
-            "csvsepline" // include separator declaration for Excel? [no]
+            "csvsepline", // include separator declaration for Excel? [no]
+            
+            // Deprecated parameters
+            "property" // now called "annotation"
+            
     );
 
     /** The search manager, for querying default value for missing parameters */

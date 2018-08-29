@@ -105,7 +105,7 @@ Explanation of the various resources:
 	</tr>
 	<tr>
 		<td>fields/FIELDNAME </td>
-		<td>Shows the settings and (some) field values for a metadata field. For complex ("contents") fields, it will show the different properties (e.g. features/annotations) the field has for each token.</td>
+		<td>Shows the settings and (some) field values for a metadata field. For annotated fields (e.g. "contents"), it will show the different annotations (e.g. word, lemma, pos) the field has for each token.</td>
 	</tr>
 	<tr>
 		<td>autocomplete/FIELDNAME </td>
@@ -286,7 +286,7 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 	</tr>
 	<tr>
 		<td>hit[:prop[:c]] </td>
-		<td>Sort/group/facet on matched text. If prop is omitted, the default property (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, wordleft and wordright. Examples: hit, hit:lemma, hit:lemma:s.</td>
+		<td>Sort/group/facet on matched text. If prop is omitted, the default annotation (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, wordleft and wordright. Examples: hit, hit:lemma, hit:lemma:s.</td>
 	</tr>
 	<tr>
 		<td>left / right </td>
@@ -327,7 +327,7 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 
 Criteria like "context:word:s:H1-2" (first two matched words) allow fine control over what to group or sort on.
 
-Like with criteria such as left, right or hit, you can vary the property to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
+Like with criteria such as left, right or hit, you can vary the annotation to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
 
 The final parameter to a "context:" criterium is the specification. This consists of one or more parts separated by a semicolon. Each part consists of an "anchor" and number(s) to indicate a stretch of words. The anchor can be H (hit text), E (hit text, but counted from the end of the hit), L (words to the left of the hit) or R (words to the right of the hit). The number or numbers after the anchor specify what words you want from this part. A single number indicates a single word; 1 is the first word, 2 the second word, etc. So "E2" means "the second-to-last word of the hit". Two numbers separated by a dash indicate a stretch of words. So "H1-2" means "the first two words of the hit", and "E2-1" means "the second-to-last word followed by the last word". A single number followed by a dash means "as much as possible from this part, starting from this word". So "H2-" means "the entire hit text except the first word".
 
@@ -395,11 +395,11 @@ Information about the “opensonar” corpus (structure, fields, human-readable 
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
 
-Information about the “opensonar” corpus, include all values for "pos" property (listvalues is a comma-separated list of property names):
+Information about the “opensonar” corpus, include all values for "pos" annotation (listvalues is a comma-separated list of annotation names):
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos
 
-Information about the “opensonar” corpus, include subproperties and their values for "pos" property:
+Information about the “opensonar” corpus, include subproperties and their values for "pos" annotation:
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/?subprops=pos
 
@@ -571,6 +571,10 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
             // When true exclude empty word properties (lemma, pos,...) in 
             // result (default is to include empty properties)
             "omitEmptyProperties": false,
+            
+            // Use the old names for annotatedField and annotation
+            // (used to be complexField and property)? [false]
+            "useOldElementNames": false,
             
             // By default, BLS will send the Access-Control-Allow-Origin
             // header to allow all origins to connect, but you can override

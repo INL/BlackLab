@@ -89,9 +89,9 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
         final AnnotationWriter propMain = mainAnnotation();
         final AnnotationWriter propPunct = punctAnnotation();
 
-        final AnnotationWriter propLemma = hasLemma ? addProperty(indexLemmaAs) : null;
-        final AnnotationWriter propType = hasType ? addProperty(indexTypeAs) : null;
-        final AnnotationWriter propFunction = hasFunction ? addProperty(indexFunctionAs) : null;
+        final AnnotationWriter propLemma = hasLemma ? addAnnotation(indexLemmaAs) : null;
+        final AnnotationWriter propType = hasType ? addAnnotation(indexTypeAs) : null;
+        final AnnotationWriter propFunction = hasFunction ? addAnnotation(indexFunctionAs) : null;
         
         registerContentsField();
 

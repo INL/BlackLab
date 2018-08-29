@@ -126,7 +126,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
     }
 
     public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
-        return contentsField.addProperty(propName, sensitivity);
+        return contentsField.addAnnotation(propName, sensitivity);
     }
 
     @Override

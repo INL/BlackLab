@@ -94,10 +94,10 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("dateField", optSpecialFieldName(fields, MetadataFields.DATE))
                     .endMap().endEntry();
 
-            ds.startEntry("complexFields").startMap();
+            ds.startEntry(ElementNames.annotatedFields).startMap();
             // Annotated fields
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
-                ds.startAttrEntry("complexField", "name", field.name());
+                ds.startAttrEntry(ElementNames.annotatedField, "name", field.name());
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();
                 Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();

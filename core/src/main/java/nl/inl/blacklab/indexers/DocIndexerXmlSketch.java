@@ -59,9 +59,9 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
         final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
-        final AnnotationWriter propLemma = addProperty("lemma");
-        final AnnotationWriter propPartOfSpeech = addProperty("pos");
-        final AnnotationWriter propWordClass = addProperty("class");
+        final AnnotationWriter propLemma = addAnnotation("lemma");
+        final AnnotationWriter propPartOfSpeech = addAnnotation("pos");
+        final AnnotationWriter propWordClass = addAnnotation("class");
 
         registerContentsField();
 

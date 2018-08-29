@@ -423,17 +423,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // System.out.println("END PREFIX MAPPING: " + prefix);
     }
 
-    protected AnnotationWriter addProperty(String propName) {
-        return addProperty(propName, false);
+    protected AnnotationWriter addAnnotation(String propName) {
+        return addAnnotation(propName, false);
     }
 
     @SuppressWarnings("deprecation")
-    protected AnnotationWriter addProperty(String propName, boolean includePayloads) {
+    protected AnnotationWriter addAnnotation(String propName, boolean includePayloads) {
         return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads);
     }
 
     public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
-        return contentsField.addProperty(propName, sensitivity);
+        return contentsField.addAnnotation(propName, sensitivity);
     }
 
     @SuppressWarnings("deprecation")
@@ -445,8 +445,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.mainAnnotation();
-        propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propTags = addProperty(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
+        propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
         // positions
         propTags.setHasForwardIndex(false);
     }
@@ -571,7 +571,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return propPunct;
     }
 
-    public AnnotationWriter getPropStartTag() {
+    public AnnotationWriter tagAnnotation() {
         return propTags;
     }
 
@@ -579,7 +579,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return propMain;
     }
 
-    public AnnotatedFieldWriter getContentsField() {
+    public AnnotatedFieldWriter mainAnnotatedField() {
         return contentsField;
     }
 

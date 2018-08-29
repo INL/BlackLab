@@ -1010,7 +1010,7 @@ documentPath: //FoLiA
 # This defaults to true, but you can turn it off if you don't need this.
 store: false
 
-# Annotated, CQL-searchable fields (also called "complex fields").
+# Annotated, CQL-searchable fields (formerly called "complex fields").
 # We usually have just one, named "contents".
 annotatedFields:
 

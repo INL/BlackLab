@@ -31,14 +31,14 @@ Note that, if we want, we can customize the handler. We'll see an example of thi
 Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these properties to your index as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:
 
 	// Add some extra properties
-	final ComplexFieldProperty propLemma = addProperty("lemma");
-	final ComplexFieldProperty propPartOfSpeech = addProperty("pos");
+	final AnnotationWriter annotLemma = addAnnotation("lemma");
+	final AnnotationWriter annotPartOfSpeech = addAnnotation("pos");
 
 Because we will also be working with the two default properties that every indexer gets, word and punct, we also need to store a reference to those:
 
 	// Get handles to the default properties (the main one & punct)
-	final ComplexFieldProperty propMain = getMainProperty();
-	final ComplexFieldProperty propPunct = getPropPunct();
+	final AnnotationWriter annotMain = mainAnnotation();
+	final AnnotationWriter annotPunct = punctAnnotation();
 
 The main property (named "word") generally contains the word forms of the text. The punct property is used to store the characters between the words: punctuation and whitespace. These two properties together can be used to generate snippets of context when needed.
 
@@ -61,14 +61,14 @@ Now it's time to add a handler for word tags:
 			String lemma = attributes.getValue("lemma");
 			if (lemma == null)
 				lemma = "";
-			propLemma.addValue(lemma);
+			annotLemma.addValue(lemma);
 			String pos = attributes.getValue("type");
 			if (pos == null)
 				pos = "?";
-			propPartOfSpeech.addValue(pos);
+			annotPartOfSpeech.addValue(pos);
 
 			// Add punctuation
-			propPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+			annotPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
 		}
 
 		@Override
@@ -76,7 +76,7 @@ Now it's time to add a handler for word tags:
 			if (!body.insideElement())
 				return;
 			super.endElement(uri, localName, qName);
-			propMain.addValue(consumeCharacterContent());
+			annotMain.addValue(consumeCharacterContent());
 		}
 	});
 
@@ -119,7 +119,7 @@ We're almost done, but there's one subtle thing to take care of. What happens to
 			public void endElement(String uri, String localName, String qName) {
 
 				// Before ending the document, add the final bit of punctuation.
-				propPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
+				annotPunct.addValue(StringUtil.normalizeWhitespace(consumeCharacterContent()));
 
 				super.endElement(uri, localName, qName);
 			}
