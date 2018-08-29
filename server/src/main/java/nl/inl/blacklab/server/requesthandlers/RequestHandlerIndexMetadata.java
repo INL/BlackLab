@@ -154,7 +154,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                         annotationsNotInGroups.remove(annotation);
                     }
                 }
-                ds.startList();
+                ds.startAttrEntry("annotatedField", "name", f.name()).startList();
                 boolean addedRemainingAnnots = false;
                 for (AnnotationGroup group : groups) {
                     ds.startItem("metadataFieldGroup").startMap();
@@ -173,7 +173,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     ds.endList().endEntry();
                     ds.endMap().endItem();
                 }
-                ds.endList();
+                ds.endList().endAttrEntry();
             }
             ds.endMap().endEntry();
 
