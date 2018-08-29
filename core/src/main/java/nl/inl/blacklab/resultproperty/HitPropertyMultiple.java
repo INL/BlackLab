@@ -68,6 +68,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             List<Integer> indices = mprop.contextIndicesPerProperty.get(prop);
             if (indices != null) {
                 contextIndicesPerProperty.put(nprop, indices);
+                prop.setContextIndices(indices);
             }
             this.properties.add(nprop);
         }
@@ -120,6 +121,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
                     contextNumbers.add(contextNeeded.indexOf(c));
                 }
                 contextIndicesPerProperty.put(prop, contextNumbers);
+                prop.setContextIndices(contextNumbers);
             }
         }
         contextNeeded = result.isEmpty() ? null : result;
