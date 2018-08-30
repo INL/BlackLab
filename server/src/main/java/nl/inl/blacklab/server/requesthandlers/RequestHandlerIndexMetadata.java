@@ -148,32 +148,34 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {
                 AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
-                Set<Annotation> annotationsNotInGroups = new HashSet<>(f.annotations().stream().collect(Collectors.toList()));
-                for (AnnotationGroup group : groups) {
-                    for (Annotation annotation: group) {
-                        annotationsNotInGroups.remove(annotation);
-                    }
-                }
-                ds.startAttrEntry("annotatedField", "name", f.name()).startList();
-                boolean addedRemainingAnnots = false;
-                for (AnnotationGroup group : groups) {
-                    ds.startItem("annotationGroup").startMap();
-                    ds.entry("name", group.groupName());
-                    ds.startEntry("annotations").startList();
-                    for (Annotation annotation: group) {
-                        ds.item("annotation", annotation.name());
-                    }
-                    if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
-                        addedRemainingAnnots = true;
-                        for (Annotation annotation: annotationsNotInGroups) {
-                            if (!annotation.isInternal())
-                                ds.item("annotation", annotation.name());
+                if (groups != null) {
+                    Set<Annotation> annotationsNotInGroups = new HashSet<>(f.annotations().stream().collect(Collectors.toList()));
+                    for (AnnotationGroup group : groups) {
+                        for (Annotation annotation: group) {
+                            annotationsNotInGroups.remove(annotation);
                         }
                     }
-                    ds.endList().endEntry();
-                    ds.endMap().endItem();
+                    ds.startAttrEntry("annotatedField", "name", f.name()).startList();
+                    boolean addedRemainingAnnots = false;
+                    for (AnnotationGroup group : groups) {
+                        ds.startItem("annotationGroup").startMap();
+                        ds.entry("name", group.groupName());
+                        ds.startEntry("annotations").startList();
+                        for (Annotation annotation: group) {
+                            ds.item("annotation", annotation.name());
+                        }
+                        if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
+                            addedRemainingAnnots = true;
+                            for (Annotation annotation: annotationsNotInGroups) {
+                                if (!annotation.isInternal())
+                                    ds.item("annotation", annotation.name());
+                            }
+                        }
+                        ds.endList().endEntry();
+                        ds.endMap().endItem();
+                    }
+                    ds.endList().endAttrEntry();
                 }
-                ds.endList().endAttrEntry();
             }
             ds.endMap().endEntry();
 
