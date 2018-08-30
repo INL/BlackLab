@@ -415,7 +415,7 @@ class SpansSequenceWithGap extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansSequenceWithGap(" + left + ", " + gap + ", " + right + ")";
+        return "SeqGap(" + left + ", " + gap + ", " + right + ")";
     }
 
     @Override

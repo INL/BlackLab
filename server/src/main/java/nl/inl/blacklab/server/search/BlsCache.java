@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -131,11 +132,11 @@ public class BlsCache implements SearchCache {
         synchronized (this) {
             future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
-                search.log("Not found in cache, starting search: " + search);
+                search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
                 try {
                     checkFreeMemory(); // check that we have sufficient available memory
                 } catch (InsufficientMemoryAvailable e) {
-                    search.log("Not enough memory for search: " + e.getMessage());
+                    search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
                     throw e;
                 }
                 future = new BlsCacheEntry<>(search, searchTask);
@@ -145,10 +146,7 @@ public class BlsCache implements SearchCache {
                 if (!block)
                     future.start(false);
             } else {
-                if (future.isDone())
-                    search.log("Found in cache, already done: " + search);
-                else
-                    search.log("Found in cache, still running: " + search);
+                search.log(LogLevel.BASIC, "found in cache (" + future.status() + "): " + search);
             }
         }
         if (created) {

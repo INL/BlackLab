@@ -26,10 +26,12 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
@@ -129,6 +131,9 @@ public abstract class BLSpanQuery extends SpanQuery {
     public static String inf(int max) {
         return max == MAX_UNLIMITED ? "INF" : Integer.toString(max);
     }
+
+    /** Information such as our index, our search logger, etc. */
+    private QueryInfo queryInfo;
 
     @Override
     public abstract String toString(String field);
@@ -369,5 +374,14 @@ public abstract class BLSpanQuery extends SpanQuery {
     }
 
     public abstract String getRealField();
+    
+    public void setQueryInfo(QueryInfo queryInfo) {
+        this.queryInfo = queryInfo;
+    }
+    
+    public void log(LogLevel level, String msg) {
+        if (queryInfo != null)
+            queryInfo.log(level, msg);
+    }
 
 }

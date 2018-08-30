@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -99,7 +100,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
         if (BlackLabIndexImpl.traceOptimization()) {
-            logger.debug(String.format("   fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d",
+            left.log(LogLevel.CHATTY, String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
                     forwardPossible ? 1 : 0,
                     backwardPossible ? 1 : 0,
                     costNfaToReverseForward,
@@ -132,19 +133,19 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         if (nfaThreshold == NO_NFA_MATCHING) {
             if (BlackLabIndexImpl.traceOptimization())
-                logger.debug("   nfa matching switched off");
+                left.log(LogLevel.DETAIL, "(CCNFA: nfa matching switched off)");
             return CANNOT_COMBINE;
         }
         long factor = getFactor(left, right, reader);
         if (factor == 0) {
             if (BlackLabIndexImpl.traceOptimization())
-                logger.debug("   factor == 0");
+                left.log(LogLevel.DETAIL, "(CCNFA: factor == 0)");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
             if (BlackLabIndexImpl.traceOptimization())
-                logger.debug("   factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + ")");
+                left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
         return factor > 0 ? FORWARD_PRIORITY - (int) (10000 / absFactor)
@@ -181,6 +182,11 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
         return new SpanQueryFiSeq(right, true, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
 
+    }
+
+    @Override
+    public String toString() {
+        return "CCNFA";
     }
 
 }

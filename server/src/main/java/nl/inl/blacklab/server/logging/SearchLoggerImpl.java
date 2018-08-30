@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.logging;
 
 import java.io.IOException;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 
 /**
@@ -16,6 +17,8 @@ public class SearchLoggerImpl implements SearchLogger {
     private long startedAt;
     
     private int resultsFound = -1;
+    
+    private boolean isClosed = false;
 
     SearchLoggerImpl(LogDatabaseImpl logDatabase, int requestId) {
         this.logDatabase = logDatabase;
@@ -24,8 +27,9 @@ public class SearchLoggerImpl implements SearchLogger {
     }
 
     @Override
-    public void log(String line) {
-        this.logDatabase.requestAddLogLine(id, line);
+    public void log(LogLevel level, String line) {
+        if (!isClosed)
+            this.logDatabase.requestAddLogLine(id, level, line);
     }
     
     @Override
@@ -35,6 +39,7 @@ public class SearchLoggerImpl implements SearchLogger {
 
     @Override
     public void close() throws IOException {
+        isClosed = true;
         this.logDatabase.requestFinalize(id, resultsFound, System.currentTimeMillis() - startedAt);
     }
 
@@ -44,7 +49,7 @@ public class SearchLoggerImpl implements SearchLogger {
     
     @Override
     public String toString() {
-        return "#" + id;
+        return "#" + id + (isClosed ? " (CLOSED)" : "");
     }
     
 }

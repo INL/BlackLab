@@ -21,6 +21,7 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
@@ -107,16 +108,22 @@ public class HitsFromQuery extends Hits {
             // Override FI match threshold? (debug use only!)
             long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
             if (searchSettings.fiMatchFactor() != -1) {
+                queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                 ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
             }
+            
+            sourceQuery.setQueryInfo(queryInfo);
+            queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
             
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): optimize");
             BLSpanQuery optimize = sourceQuery.optimize(reader);
+            queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
 
             if (BlackLabIndexImpl.isTraceQueryExecution())
                 logger.debug("Hits(): rewrite");
             BLSpanQuery spanQuery = optimize.rewrite(reader);
+            queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
             
             // Restore previous FI match threshold
             if (searchSettings.fiMatchFactor() != -1) {
@@ -205,6 +212,7 @@ public class HitsFromQuery extends Hits {
     
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
+                    boolean loggedSpans = false;
                     while (true) {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.
@@ -218,6 +226,10 @@ public class HitsFromQuery extends Hits {
                             LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
                             currentDocBase = context.docBase;
                             currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
+                            if (!loggedSpans) {
+                                queryInfo().log(LogLevel.EXPLAIN, "got Spans: " + currentSourceSpans);
+                                loggedSpans = true;
+                            }
                             if (currentSourceSpans != null) {
                                 // Update the hit query context with our new spans,
                                 // and notify the spans of the hit query context

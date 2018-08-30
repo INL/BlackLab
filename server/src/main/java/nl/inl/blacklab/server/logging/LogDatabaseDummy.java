@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 
 public class LogDatabaseDummy implements LogDatabase {
@@ -53,7 +54,7 @@ public class LogDatabaseDummy implements LogDatabase {
     public SearchLogger addRequest(String corpus, String type, Map<String, String[]> parameters) {
         return new SearchLogger() {
             @Override
-            public void log(String line) {
+            public void log(LogLevel level, String line) {
                 // NOP
             }
 

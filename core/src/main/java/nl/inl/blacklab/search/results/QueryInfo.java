@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -48,24 +49,28 @@ public final class QueryInfo {
     }
     
     /**
+     * Return a copy with a different index.
+     * 
+     * If this is the same index, simply returns this object.
+     * 
+     * @param newIndex index to use
+     * @return QueryInfo with the specified index
+     */
+    public QueryInfo withIndex(BlackLabIndex newIndex) {
+        if (this.index == newIndex)
+            return this;
+        return new QueryInfo(newIndex, field, useCache, searchLogger);
+    }
+    
+    /**
      * Log to the configured search logger, if any.
      * 
+     * @param level log level 
      * @param msg message to log
      */
-    public void log(String msg) {
+    public void log(LogLevel level, String msg) {
         if (searchLogger != null)
-            searchLogger.log(msg);
-    }
-
-    /**
-     * Clear the logger.
-     * 
-     * This is called when the initial search is done. The results are still in the cache
-     * and may be used by other, completely unrelated searches, so it doesn't make sense to
-     * log to the same place again.
-     */
-    public void clearLogger() {
-        searchLogger = null;
+            searchLogger.log(level, msg);
     }
 
     /** @return the index that was searched. */
@@ -136,7 +141,10 @@ public final class QueryInfo {
             return false;
         return true;
     }
-    
-    
+
+    public SearchLogger searchLogger() {
+        return searchLogger;
+    }
+
 }
 

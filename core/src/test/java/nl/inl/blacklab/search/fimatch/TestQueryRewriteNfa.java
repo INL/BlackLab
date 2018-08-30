@@ -31,6 +31,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestQueryRewriteNfa {
@@ -68,7 +69,7 @@ public class TestQueryRewriteNfa {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
+            QueryExplanation explanation = index.explain(QueryInfo.create(index), getPatternFromCql(cql), null);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();
                 Assert.assertEquals(before, original.toString());

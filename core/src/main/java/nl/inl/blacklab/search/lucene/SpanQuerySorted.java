@@ -10,6 +10,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.results.QueryInfo;
+
 /**
  * Ensure hits from a SpanQuery are sorted by start- or endpoint (within
  * document), and optionally eliminate duplicate hits.
@@ -166,5 +168,11 @@ class SpanQuerySorted extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         return src.forwardMatchingCost();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        src.setQueryInfo(queryInfo);
     }
 }

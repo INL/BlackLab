@@ -25,11 +25,14 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.LogException;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 
 public class LogDatabaseImpl implements Closeable, LogDatabase {
 
     private static final long FIVE_MIN_MS = 1000 * 60 * 5;
+    
+    private static final long THREE_MONTHS_MS = 3L * 31 * 24 * 3600 * 1000;
 
     private static String encode(String s) {
         try {
@@ -99,6 +102,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                         "  `request`   INTEGER NOT NULL,",
                         "  `time`  INTEGER NOT NULL,",
                         "  `timestamp` TEXT NOT NULL,",
+                        "  `level` INTEGER DEFAULT 0,",
                         "  `line`  TEXT NOT NULL,",
                         "  FOREIGN KEY(`request`) REFERENCES requests ( id )",
                         ")"
@@ -116,6 +120,13 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                         "  `oldest_entry_sec`  INTEGER NOT NULL",
                         ")"
                 ));
+                
+                // Don't let the database grow too large
+                long threeMonthsAgo = now() - THREE_MONTHS_MS;
+                execute("DELETE FROM request_logs WHERE time < " + threeMonthsAgo);
+                execute("DELETE FROM requests WHERE time < " + threeMonthsAgo);
+                execute("DELETE FROM cache_stats WHERE time < " + threeMonthsAgo);
+                
                 execute("COMMIT");
             } catch(SQLException e) {
                 execute("ROLLBACK");
@@ -177,7 +188,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
      * @return log lines
      */
     List<SearchLogLine> getRequestLogLines(int id) {
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT request, time, timestamp, line FROM request_logs WHERE request = ? ORDER BY time")) {
+        try (PreparedStatement stmt = conn.prepareStatement("SELECT request, time, timestamp, level, line FROM request_logs WHERE request = ? ORDER BY time")) {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 List<SearchLogLine> results = new ArrayList<>();
@@ -233,20 +244,22 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
             throw new LogException(e);
         }
     }
-
+    
     /**
      * Log a line for a request.
      * 
      * @param requestId request id this log line belongs to
      * @param line log line
      */
-    void requestAddLogLine(int requestId, String line) {
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO request_logs (request, time, timestamp, line) VALUES (?, ?, ?, ?)")) {
+    void requestAddLogLine(int requestId, LogLevel level, String line) {
+        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO request_logs (request, time, timestamp, level, line) VALUES (?, ?, ?, ?, ?)")) {
             stmt.setInt(1, requestId);
             long now = now();
             stmt.setLong(2, now);
             stmt.setString(3, timestamp(now));
-            stmt.setString(4, line);
+            int l = level.intValue();
+            stmt.setInt(4, l);
+            stmt.setString(5, StringUtils.repeat("    ", l - 1) + line);
             stmt.executeUpdate();
         } catch (SQLException e) {
             throw new LogException(e);
@@ -296,11 +309,11 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 param.put("a", new String[] {"b"});
                 param.put("c", new String[] {"d"});
                 try (SearchLogger req = log.addRequest("opensonar", "hits", param)) {
-                    req.log("Ga request " + req + " uitvoeren...");
+                    req.log(LogLevel.BASIC, "Ga request " + req + " uitvoeren...");
                     Thread.sleep(300);
-                    req.log("Bezig met request " + req + " uitvoeren...");
+                    req.log(LogLevel.BASIC, "Bezig met request " + req + " uitvoeren...");
                     Thread.sleep(300);
-                    req.log("request " + req + " klaar!");
+                    req.log(LogLevel.BASIC, "request " + req + " klaar!");
                     int n = random.nextInt();
                     req.setResultsFound(n);
                 } catch (InterruptedException e) {

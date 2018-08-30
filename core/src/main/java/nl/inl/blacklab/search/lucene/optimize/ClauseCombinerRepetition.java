@@ -41,4 +41,9 @@ class ClauseCombinerRepetition extends ClauseCombiner {
         }
         return new SpanQueryRepetition(leftCl, leftMin + rightMin, BLSpanQuery.addMaxValues(leftMax, rightMax));
     }
+
+    @Override
+    public String toString() {
+        return "CCRepetition";
+    }
 }

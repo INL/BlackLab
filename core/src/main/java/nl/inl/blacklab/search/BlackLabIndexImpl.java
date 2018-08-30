@@ -475,31 +475,30 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) throws RegexpTooLarge {
+    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
-        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(field));
+        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
     }
+    
+    protected AnnotatedField fieldFromQuery(BLSpanQuery q) {
+        return annotatedField(q.getField());
+    }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
-        QueryInfo queryInfo = QueryInfo.create(this, annotatedField(query.getField()));
+    public Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger logger) throws WildcardTermTooBroad {
+        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true, logger);
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings)
-            throws WildcardTermTooBroad, RegexpTooLarge {
-        return find(createSpanQuery(pattern, field, filter), settings);
-    }
-
-    @Override
-    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
+    public QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws WildcardTermTooBroad {
         try {
             IndexReader indexReader = reader();
+            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true, searchLogger));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -578,8 +577,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this), documentFilterQuery);
+    public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
+        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true, searchLogger), documentFilterQuery);
     }
     
     public boolean canDoNfaMatching() {

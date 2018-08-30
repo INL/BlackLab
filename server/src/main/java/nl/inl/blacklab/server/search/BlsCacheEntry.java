@@ -102,7 +102,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             } finally {
                 fullSearchDoneTime = now();
                 fullSearchDone = true;
-                search.queryInfo().clearLogger();
                 thread = null;
             }
         }
@@ -464,7 +463,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         return result.numberOfResultObjects();
     }
     
-    private String status() {
+    public String status() {
         if (isSearchDone())
             return "finished";
         if (isDone())

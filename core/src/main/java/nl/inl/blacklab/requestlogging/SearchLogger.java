@@ -5,7 +5,7 @@ import java.io.IOException;
 
 public interface SearchLogger extends Closeable {
 
-    void log(String line);
+    void log(LogLevel level, String line);
 
     void setResultsFound(int resultsFound);
 

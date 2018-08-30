@@ -35,6 +35,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A SpanQuery for an AND NOT query. Produces all spans matching all the
@@ -428,6 +429,17 @@ public class SpanQueryAndNot extends BLSpanQuery {
             cost += clause.forwardMatchingCost();
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        for (BLSpanQuery cl: include) {
+            cl.setQueryInfo(queryInfo);
+        }
+        for (BLSpanQuery cl: exclude) {
+            cl.setQueryInfo(queryInfo);
+        }
     }
 
 }

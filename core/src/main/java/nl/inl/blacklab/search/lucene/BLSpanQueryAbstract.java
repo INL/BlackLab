@@ -25,6 +25,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A base class for a SpanQuery with an array of clauses. Provides default
@@ -141,5 +142,13 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
             buffer.append(clause.toString(field));
         }
         return buffer.toString();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        for (BLSpanQuery clause: clauses) {
+            clause.setQueryInfo(queryInfo);
+        }
     }
 }

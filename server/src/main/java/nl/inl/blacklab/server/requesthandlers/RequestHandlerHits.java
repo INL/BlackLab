@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -199,7 +200,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
             try {
-                QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
+                QueryExplanation explanation = index.explain(QueryInfo.create(index), tp, null);
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.originalQuery())
                         .entry("rewrittenQuery", explanation.rewrittenQuery())

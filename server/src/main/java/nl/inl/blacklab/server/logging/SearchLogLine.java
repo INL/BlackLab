@@ -14,18 +14,21 @@ public class SearchLogLine {
     
     String timestamp;
     
+    int level;
+    
     String line;
     
     SearchLogLine(ResultSet rs) throws SQLException {
         requestId = rs.getInt("request");
         time = rs.getLong("time");
         timestamp = rs.getString("timestamp");
+        level = rs.getInt("level");
         line = rs.getString("line");
     }
     
     @Override
     public String toString() {
-        return timestamp + " " + line;
+        return timestamp + " [" + level + "] " + line;
     }
     
 }

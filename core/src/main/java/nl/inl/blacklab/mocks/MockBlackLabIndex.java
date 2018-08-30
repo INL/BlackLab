@@ -12,6 +12,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.requestlogging.SearchLogger;
@@ -112,7 +113,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public DocResults queryDocuments(Query documentFilterQuery) {
+    public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
         throw new UnsupportedOperationException();
     }
 
@@ -164,23 +165,14 @@ public class MockBlackLabIndex implements BlackLabIndex {
         throw new UnsupportedOperationException();
     }
 
+
     @Override
-    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
+    public Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger searchLogger) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings) throws TooManyClauses {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public QueryExplanation explain(BLSpanQuery query) throws TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -253,6 +245,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public SearchCache cache() {
         return cache;
+    }
+
+    @Override
+    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
+        throw new UnsupportedOperationException();
     }
 
 }

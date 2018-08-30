@@ -59,4 +59,9 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
         }
         throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
     }
+
+    @Override
+    public String toString() {
+        return "CCAnyExpansion";
+    }
 }

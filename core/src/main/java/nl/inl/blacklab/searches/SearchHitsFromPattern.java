@@ -36,7 +36,7 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     protected Hits executeInternal() throws WildcardTermTooBroad, RegexpTooLarge {
-        return queryInfo().index().find(pattern, queryInfo().field(), filter, searchSettings);
+        return queryInfo().index().find(queryInfo(), pattern, filter, searchSettings);
     }
 
     @Override

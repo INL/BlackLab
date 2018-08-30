@@ -27,6 +27,7 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UtilsForTesting;
@@ -213,7 +214,7 @@ public class TestIndex {
      */
     public Hits find(String pattern, Query filter) {
         try {
-            return index.find(CorpusQueryLanguageParser.parse(pattern), index.mainAnnotatedField(), filter, null);
+            return index.find(QueryInfo.create(index), CorpusQueryLanguageParser.parse(pattern), filter, null);
         } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }
