@@ -23,7 +23,6 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -87,6 +86,8 @@ public class HitsFromQuery extends Hits {
      */
     private int previousHitDoc = -1;
 
+    private boolean loggedSpans;
+
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -115,13 +116,9 @@ public class HitsFromQuery extends Hits {
             sourceQuery.setQueryInfo(queryInfo);
             queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
             
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): optimize");
             BLSpanQuery optimize = sourceQuery.optimize(reader);
             queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
 
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): rewrite");
             BLSpanQuery spanQuery = optimize.rewrite(reader);
             queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
             
@@ -134,12 +131,8 @@ public class HitsFromQuery extends Hits {
             termContexts = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): createWeight");
             weight = spanQuery.createWeight(index.searcher(), false);
             weight.extractTerms(terms);
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): extract terms");
             for (Term term : terms) {
                 try {
                     threadPauser.waitIfPaused();
@@ -150,6 +143,7 @@ public class HitsFromQuery extends Hits {
             }
 
             currentSourceSpans = null;
+            loggedSpans = false;
             atomicReaderContexts = reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
@@ -157,8 +151,6 @@ public class HitsFromQuery extends Hits {
         }
 
         sourceSpansFullyRead = false;
-        if (BlackLabIndexImpl.isTraceQueryExecution())
-            logger.debug("Hits(): done");
     }
     
     @Override
@@ -212,7 +204,6 @@ public class HitsFromQuery extends Hits {
     
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
-                    boolean loggedSpans = false;
                     while (true) {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.

@@ -694,6 +694,8 @@ The blacklab-server.json file should be placed in /etc/blacklab/, or you should 
 		    
 		    // Specify a file to create an SQLite (https://www.sqlite.org/index.html) database
 		    // and log details about requests and cache statistics there.
+		    // Note that SQLite will extract its DLL to the tmpDir (usually /tmp/), which must
+		    // therefore be writable by the application server!
 		    // [defaults to no SQLite log]
 		    "sqliteLogDatabase": "/tmp/blacklab_log.db",
 		    
