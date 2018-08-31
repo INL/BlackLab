@@ -49,7 +49,7 @@ public class TestTerms {
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
-        t = Terms.open(true, colls, null, true);
+        t = Terms.openForWriting(colls, null, true);
         if (t instanceof TermsWriter)
             ((TermsWriter) t).setMaxBlockSize(10);
         for (int i = 0; i < str.length; i++) {
@@ -59,7 +59,7 @@ public class TestTerms {
         t.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
-        t = Terms.open(false, colls, f, true);
+        t = Terms.openForReading(colls, f, true);
     }
 
     @After

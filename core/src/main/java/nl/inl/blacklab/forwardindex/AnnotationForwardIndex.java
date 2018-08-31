@@ -76,6 +76,96 @@ public abstract class AnnotationForwardIndex {
      */
     static final int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
 
+    /** Different versions of insensitive collator */
+    public enum CollatorVersion {
+        V1, // ignored dash and space
+        V2 // doesn't ignore dash and space
+    }
+
+    /**
+     * Open a forward index.
+     *
+     * Automatically figures out the forward index version and instantiates the
+     * right class.
+     *
+     * @param dir forward index directory
+     * @param indexMode true iff we're in index mode (writing to the forward index);
+     *            otherwise it will be read-only.
+     * @param collator collator to use for sorting
+     * @param create if true, create a new forward index
+     * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
+     * @param fiidLookup how to look up fiid given docId 
+     * @return the forward index object
+     */
+    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup) {
+    
+        if (annotation != null && !annotation.hasForwardIndex())
+            throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
+        
+        if (!dir.exists()) {
+            if (!create)
+                throw new IllegalArgumentException("Annotation should have forward index but directory is missing: " + annotation);
+            if (!dir.mkdir())
+                throw new BlackLabRuntimeException("Could not create dir: " + dir);
+        }
+    
+        // Version check
+        String version = CURRENT_VERSION;
+        if (!indexMode || !create) {
+            // We're opening an existing forward index. Check version.
+            if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
+                if (VersionFile.isTypeVersion(dir, "fi", "4")) {
+                    version = "4";
+                } else if (VersionFile.isTypeVersion(dir, "fi", "3")) {
+                    version = "3";
+                } else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
+                    version = "2";
+                } else {
+                    throw new IllegalArgumentException("Not a forward index or wrong version: "
+                            + VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
+                }
+            }
+        } else {
+            // We're creating a forward index. Write version.
+            VersionFile.write(dir, "fi", CURRENT_VERSION);
+        }
+    
+        AnnotationForwardIndex fi;
+        boolean largeTermsFileSupport = true;
+        CollatorVersion collVersion = CollatorVersion.V2;
+        switch (version) {
+        case "2":
+            throw new UnsupportedOperationException(
+                    "Forward index version (2) too old for this BlackLab version. Please re-index.");
+        case "3":
+            largeTermsFileSupport = false;
+            collVersion = CollatorVersion.V1;
+            break;
+        case "4":
+            collVersion = CollatorVersion.V1;
+            break;
+        case "5":
+            break;
+        }
+        Collators collators = new Collators(collator, collVersion);
+        if (indexMode)
+            fi = new AnnotationForwardIndexWriter(dir, collators, create, largeTermsFileSupport);
+        else {
+            if (create)
+                throw new UnsupportedOperationException("create == true, but not in index mode!");
+            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport);
+        }
+        if (annotation != null && fiidLookup != null) {
+            fi.setIdTranslateInfo(fiidLookup, annotation);
+        }
+        return fi;
+    }
+
+    /** A task to perform on a document in the forward index. */
+    public interface ForwardIndexDocTask {
+        void perform(int fiid, int[] tokenIds);
+    }
+
     /**
      * The table of contents (where documents start in the tokens file and how long
      * they are)
@@ -319,102 +409,8 @@ public abstract class AnnotationForwardIndex {
         return docLengthByFiid(luceneDocIdToFiid(docId));
     }
 
-    /** Different versions of insensitive collator */
-    public enum CollatorVersion {
-        V1, // ignored dash and space
-        V2 // doesn't ignore dash and space
-    }
-    
-    public static AnnotationForwardIndex open(File dir, BlackLabIndex index, Annotation annotation) {
-        return open(dir, index.indexMode(), index.collator(), index.indexMode() && index.isEmpty(), annotation, new FiidLookup(index.reader(), annotation));
-    }
-
-    /**
-     * Open a forward index.
-     *
-     * Automatically figures out the forward index version and instantiates the
-     * right class.
-     *
-     * @param dir forward index directory
-     * @param indexMode true iff we're in index mode (writing to the forward index);
-     *            otherwise it will be read-only.
-     * @param collator collator to use for sorting
-     * @param create if true, create a new forward index
-     * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
-     * @param fiidLookup how to look up fiid given docId 
-     * @return the forward index object
-     */
-    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup) {
-
-        if (annotation != null && !annotation.hasForwardIndex())
-            throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
-        
-        if (!dir.exists()) {
-            if (!create)
-                throw new IllegalArgumentException("Annotation should have forward index but directory is missing: " + annotation);
-            if (!dir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + dir);
-        }
-
-        // Version check
-        String version = CURRENT_VERSION;
-        if (!indexMode || !create) {
-            // We're opening an existing forward index. Check version.
-            if (!VersionFile.isTypeVersion(dir, "fi", CURRENT_VERSION)) {
-                if (VersionFile.isTypeVersion(dir, "fi", "4")) {
-                    version = "4";
-                } else if (VersionFile.isTypeVersion(dir, "fi", "3")) {
-                    version = "3";
-                } else if (VersionFile.isTypeVersion(dir, "fi", "2")) {
-                    version = "2";
-                } else {
-                    throw new IllegalArgumentException("Not a forward index or wrong version: "
-                            + VersionFile.report(dir) + " (fi " + CURRENT_VERSION + " expected)");
-                }
-            }
-        } else {
-            // We're creating a forward index. Write version.
-            VersionFile.write(dir, "fi", CURRENT_VERSION);
-        }
-
-        AnnotationForwardIndex fi;
-        boolean largeTermsFileSupport = true;
-        CollatorVersion collVersion = CollatorVersion.V2;
-        switch (version) {
-        case "2":
-            throw new UnsupportedOperationException(
-                    "Forward index version (2) too old for this BlackLab version. Please re-index.");
-        case "3":
-            largeTermsFileSupport = false;
-            collVersion = CollatorVersion.V1;
-            break;
-        case "4":
-            collVersion = CollatorVersion.V1;
-            break;
-        case "5":
-            break;
-        }
-        Collators collators = new Collators(collator, collVersion);
-        if (indexMode)
-            fi = new AnnotationForwardIndexWriter(dir, collators, create, largeTermsFileSupport);
-        else {
-            if (create)
-                throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport);
-        }
-        if (annotation != null && fiidLookup != null) {
-            fi.setIdTranslateInfo(fiidLookup, annotation);
-        }
-        return fi;
-    }
-
     protected void setLargeTermsFileSupport(boolean b) {
         this.useBlockBasedTermsFile = b;
-    }
-
-    /** A task to perform on a document in the forward index. */
-    public interface ForwardIndexDocTask {
-        void perform(int fiid, int[] tokenIds);
     }
 
     /**

@@ -243,10 +243,12 @@ public abstract class Terms {
 
     protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
 
-    public static Terms open(boolean indexMode, Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
-        if (indexMode)
-            return new TermsWriter(collators, termsFile, useBlockBasedTermsFile);
+    public static Terms openForReading(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
         return new TermsReader(collators, termsFile, useBlockBasedTermsFile);
+    }
+
+    public static Terms openForWriting(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
+        return new TermsWriter(collators, termsFile, useBlockBasedTermsFile);
     }
 
     public abstract boolean termsEqual(int[] termId, MatchSensitivity sensitivity);

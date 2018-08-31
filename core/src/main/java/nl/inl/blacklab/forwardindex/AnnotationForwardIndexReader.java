@@ -55,7 +55,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         try {
             if (tocFile.exists()) {
                 readToc();
-                terms = Terms.open(false, collators, termsFile, useBlockBasedTermsFile);
+                terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
             } else {
                 throw new IllegalArgumentException("No TOC found, and not in index mode!");
             }

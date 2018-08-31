@@ -85,10 +85,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
         try {
             if (tocFile.exists()) {
                 readToc();
-                terms = Terms.open(true, collators, termsFile, useBlockBasedTermsFile);
+                terms = Terms.openForWriting(collators, termsFile, useBlockBasedTermsFile);
                 tocModified = false;
             } else {
-                terms = Terms.open(true, collators, null, true);
+                terms = Terms.openForWriting(collators, null, true);
                 if (!tokensFile.createNewFile())
                     throw new BlackLabRuntimeException("Could not create file: " + tokensFile);
                 tocModified = true;
@@ -186,7 +186,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                 terms.write(termsFile);
             }
 
-            // Close the FileChannel and RandomAccessFile (indexMode only)
+            // Close the FileChannel and RandomAccessFile
             if (writeTokensFileChannel != null) {
                 // Cannot truncate if still mapped; cannot force demapping.
                 //tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);

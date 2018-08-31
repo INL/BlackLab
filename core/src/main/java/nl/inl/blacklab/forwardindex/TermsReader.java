@@ -62,25 +62,24 @@ class TermsReader extends Terms {
 
     /**
      * The index number of each sorting position. Inverse of sortPositionPerId[]
-     * array. Only valid when indexMode == false.
+     * array.
      */
     int[] idPerSortPosition;
 
     /**
      * The index number of each case-insensitive sorting position. Inverse of
-     * sortPositionPerIdInsensitive[] array. Only valid when indexMode == false.
+     * sortPositionPerIdInsensitive[] array.
      */
     int[] idPerSortPositionInsensitive;
 
     /**
      * The sorting position for each index number. Inverse of idPerSortPosition[]
-     * array. Only valid when indexMode == false.
+     * array.
      */
     int[] sortPositionPerId;
 
     /**
-     * The case-insensitive sorting position for each index number. Only valid when
-     * indexMode == false.
+     * The case-insensitive sorting position for each index number.
      */
     int[] sortPositionPerIdInsensitive;
 

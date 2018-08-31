@@ -178,8 +178,10 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     private AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
-        AnnotationForwardIndex afi = AnnotationForwardIndex.open(determineAfiDir(index.indexDirectory(), annotation),
-                index, annotation);
+        File dir = determineAfiDir(index.indexDirectory(), annotation);
+        boolean create = index.indexMode() && index.isEmpty();
+        FiidLookup fiidLookup = new FiidLookup(index.reader(), annotation);
+        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, fiidLookup);
         synchronized (fis) {
             fis.put(annotation, afi);
         }
