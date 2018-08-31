@@ -4,11 +4,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * A request.
  */
 public class Request {
+    
+    private static String encodeEntry(Entry<String, String> entry) {
+        return LogDatabaseImpl.encode(entry.getKey()) + "=" + LogDatabaseImpl.encode(entry.getValue());
+    }
+    
+    static String mapToQueryString(Map<String, String> parameters) {
+        return parameters.entrySet().stream().map(Request::encodeEntry).collect(Collectors.joining("&"));
+    }
     
     private final LogDatabaseImpl logDatabase;
 
@@ -85,6 +95,6 @@ public class Request {
     
     @Override
     public String toString() {
-        return timestamp + " /" + corpus + "/" + type + "?" + LogDatabaseImpl.mapToQueryString(parameters);
+        return timestamp + " /" + corpus + "/" + type + "?" + mapToQueryString(parameters);
     }
 }

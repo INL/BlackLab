@@ -34,7 +34,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     
     private static final long THREE_MONTHS_MS = 3L * 31 * 24 * 3600 * 1000;
 
-    private static String encode(String s) {
+    static String encode(String s) {
         try {
             return URLEncoder.encode(s, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
@@ -42,7 +42,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
         }
     }
 
-    private static String decode(String s) {
+    static String decode(String s) {
         try {
             return URLDecoder.decode(s, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
@@ -54,18 +54,14 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
         return encode(entry.getKey()) + "=" + encode(StringUtils.join(entry.getValue(), "||"));
     }
 
-    private static String encodeEntry(Entry<String, String> entry) {
-        return encode(entry.getKey()) + "=" + encode(entry.getValue());
+    private static boolean includeEntryArray(Entry<String, String[]> entry) {
+        return !entry.getKey().equals("_"); // skip no-cache parameter
     }
 
     static String mapToQueryStringArray(Map<String, String[]> parameters) {
-        return parameters.entrySet().stream().map(LogDatabaseImpl::encodeEntryArray).collect(Collectors.joining("&"));
+        return parameters.entrySet().stream().filter(LogDatabaseImpl::includeEntryArray).map(LogDatabaseImpl::encodeEntryArray).collect(Collectors.joining("&"));
     }
 
-    static String mapToQueryString(Map<String, String> parameters) {
-        return parameters.entrySet().stream().map(LogDatabaseImpl::encodeEntry).collect(Collectors.joining("&"));
-    }
-    
     static Map<String, String> queryStringToMap(String queryString) {
         Map<String, String> result = new HashMap<>();
         for (String keyValue: queryString.split("&")) {
