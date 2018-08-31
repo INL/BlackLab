@@ -30,7 +30,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.UtilsForTesting;
 
-public class TestTermsV3 {
+public class TestTerms {
     private Terms t;
 
     private File dir;
@@ -50,8 +50,8 @@ public class TestTermsV3 {
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
         t = Terms.open(true, colls, null, true);
-        if (t instanceof TermsImplV3)
-            ((TermsImplV3) t).setMaxBlockSize(10);
+        if (t instanceof TermsWriter)
+            ((TermsWriter) t).setMaxBlockSize(10);
         for (int i = 0; i < str.length; i++) {
             t.indexOf(str[i]);
         }

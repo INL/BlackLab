@@ -264,6 +264,7 @@ public class Index {
             index = BlackLabIndex.open(this.dir);
             if (BlsCache.ENABLE_NEW_CACHE)
                 index.setCache(searchMan.getBlackLabCache());
+            logger.debug("Done opening index '" + id + "'");
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {

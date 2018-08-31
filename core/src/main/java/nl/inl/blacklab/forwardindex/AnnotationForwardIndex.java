@@ -23,6 +23,8 @@ public abstract class AnnotationForwardIndex {
      * 1. Initial version.
      * 2. Added sort index to terms file.
      * 3. New terms and docs file format; added reverse sort index and case-insensitive index to terms file.
+     * 4. Large terms file support
+     * 5. New collators
      */
 
     /**
