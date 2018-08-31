@@ -126,6 +126,8 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 } catch(SQLException e) {
                     conn.rollback();
                     throw e;
+                } finally {
+                    conn.setAutoCommit(true);
                 }
             }
         
@@ -232,7 +234,24 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 }
             }
         } catch (SQLException e) {
-            throw new LogException(e);
+            // don't take BL down because SQLite logging isn't working right (happens when doing lots of requests at once)
+            e.printStackTrace();
+            return new SearchLogger() {
+                @Override
+                public void log(LogLevel level, String line) {
+                    // NOP
+                }
+
+                @Override
+                public void setResultsFound(int resultsFound) {
+                    // NOP
+                }
+
+                @Override
+                public void close() throws IOException {
+                    // NOP
+                }
+            };
         }
     }
 
@@ -245,7 +264,8 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new LogException(e);
+            // don't take BL down because SQLite logging isn't working right (happens when doing lots of requests at once)
+            e.printStackTrace();
         }
     }
     
@@ -268,7 +288,8 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new LogException(e);
+            // don't take BL down because SQLite logging isn't working right (happens when doing lots of requests at once)
+            e.printStackTrace();
         }
     }
     
@@ -290,7 +311,8 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
-            throw new LogException(e);
+            // don't take BL down because SQLite logging isn't working right (happens when doing lots of requests at once)
+            e.printStackTrace();
         }
     }
 
