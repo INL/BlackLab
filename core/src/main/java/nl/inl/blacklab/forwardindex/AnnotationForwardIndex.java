@@ -518,4 +518,9 @@ public abstract class AnnotationForwardIndex {
         return canDoNfaMatching;
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + tocFile.getParentFile() + ")";
+    }
+
 }

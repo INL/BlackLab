@@ -54,4 +54,9 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
         return vf;
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + dir + ")";
+    }
+
 }

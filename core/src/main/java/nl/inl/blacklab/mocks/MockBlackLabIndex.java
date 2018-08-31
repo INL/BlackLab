@@ -252,4 +252,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "()";
+    }
 }

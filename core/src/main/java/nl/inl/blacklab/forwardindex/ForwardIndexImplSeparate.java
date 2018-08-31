@@ -212,5 +212,10 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             return !fis.isEmpty();
         }
     }
+    
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + index.indexDirectory() + "/fi_*)";
+    }
 
 }

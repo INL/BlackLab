@@ -1000,4 +1000,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public void setCache(SearchCache cache) {
         this.cache = cache;
     }
+    
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + indexLocation + ")";
+    }
 }
