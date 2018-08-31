@@ -692,7 +692,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                     if (dir.exists()) {
                         if (traceIndexOpening)
                             logger.debug("    " + dir + "...");
-                        registerContentStore(field, ContentStore.open(dir, false));
+                        registerContentStore(field, ContentStore.open(dir, indexMode, false));
                     }
                 }
             }
@@ -794,7 +794,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected ContentStore openContentStore(Field field) throws ErrorOpeningIndex {
         File contentStoreDir = new File(indexLocation, "cs_" + field.name());
-        ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
+        ContentStore contentStore = ContentStore.open(contentStoreDir, indexMode, isEmptyIndex);
         registerContentStore(field, contentStore);
         return contentStore;
     }

@@ -16,30 +16,22 @@
 package nl.inl.blacklab.contentstore;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.Inflater;
 
 import org.eclipse.collections.api.iterator.IntIterator;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.CollUtil;
 import nl.inl.util.SimpleResourcePool;
 
 /**
@@ -54,191 +46,15 @@ import nl.inl.util.SimpleResourcePool;
  * Thread-safety: not thread-safe in index mode, but thread-safe while searching
  */
 @NotThreadSafe // in index mode
-public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
+public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
-
-    /**
-     * The type of content store. Written to version file and detected when opening.
-     */
-    private static final String CONTENT_STORE_TYPE_NAME = "fixedblock";
-
-    /**
-     * Version of this type of content store. Written to version file and detected
-     * when opening.
-     */
-    private static final String CURRENT_VERSION = "1";
 
     /** Name of the version file */
     private static final String VERSION_FILE_NAME = "version.dat";
 
-    /** Name of the table of contents file */
-    private static final String TOC_FILE_NAME = "toc.dat";
-
-    /** Name of the file containing all the original file contents (zipped) */
-    private static final String CONTENTS_FILE_NAME = "file-contents.dat";
-
-    /** How many bytes an int consists of (used when repositioning file pointers) */
-    private static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
-
-    /**
-     * Block size for the contents file.
-     *
-     * Contributing factors for choosing block size: - larger blocks improve
-     * compression ratio - larger blocks decrease number of blocks you have to read
-     * - smaller blocks decrease the decompression time - smaller blocks increase
-     * the chance that we only have to read one disk block for a single concordance
-     * (disk blocks are generally 2 or 4K) - consider OS I/O caching and memory
-     * mapping. Then it becomes the difference between reading a few bytes from
-     * memory and reading a few kilobytes and decompressing them. Right now, making
-     * concordances is often CPU-bound (because of decompression?)
-     */
-    private static final int BLOCK_SIZE_BYTES = 4096;
-
-    /**
-     * How small a block can get without triggering a retry with more input
-     * characters
-     */
-    private static final int MINIMUM_ACCEPTABLE_BLOCK_SIZE = BLOCK_SIZE_BYTES * 9 / 10;
-
-    /** The expected average compression factor */
-    private static final float AVERAGE_COMPRESSION_FACTOR = 4;
-
-    /** A conservative estimate to avoid our estimates going over the block size */
-    private static final float CONSERVATIVE_COMPRESSION_FACTOR = AVERAGE_COMPRESSION_FACTOR * 7 / 8;
-
-    /** How many characters we will usually be able to fit within a BLOCK_SIZE */
-    private static final int TYPICAL_BLOCK_SIZE_CHARACTERS = (int) (BLOCK_SIZE_BYTES * CONSERVATIVE_COMPRESSION_FACTOR);
-
-    /** The expected maximum compression factor */
-    private static final float MAX_COMPRESSION_FACTOR = 20;
-
-    /**
-     * Maximum byte size of unencoded block (we make the zip buffer one larger to
-     * detect when buffer space was insufficient)
-     */
-    private static final int MAX_BLOCK_SIZE_BYTES = (int) (BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
 
     /** How many available characters will trigger a block write. */
     private static final int WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE = (int) (BLOCK_SIZE_BYTES * MAX_COMPRESSION_FACTOR);
-
-    /** Size of the (de)compressor and zipbuf pools */
-    private static final int POOL_SIZE = 10;
-    
-    /** Table of contents entry */
-    static class TocEntry {
-
-        /** content store id for this document */
-        int id;
-
-        /** length of the encoded string in bytes */
-        int entryLengthBytes;
-
-        /** length of the decoded string in characters */
-        int entryLengthCharacters;
-
-        /** blocks this document is stored in */
-        int[] blockIndices;
-
-        /** first character stored in each block */
-        int[] blockCharOffsets;
-
-        /** was this entry deleted? (can be removed in next compacting run) */
-        boolean deleted;
-
-        TocEntry(int id, int length, int charLength, boolean deleted, int[] blockIndices,
-                int[] blockCharOffsets) {
-            super();
-            this.id = id;
-            entryLengthBytes = length;
-            entryLengthCharacters = charLength;
-            this.deleted = deleted;
-            this.blockIndices = blockIndices;
-            this.blockCharOffsets = blockCharOffsets;
-        }
-
-        /**
-         * Store TOC entry in the TOC file
-         *
-         * @param buf where to serialize to
-         * @throws IOException on error
-         */
-        public void serialize(ByteBuffer buf) throws IOException {
-            buf.putInt(id);
-            buf.putInt(entryLengthBytes);
-            buf.putInt(deleted ? -1 : entryLengthCharacters);
-            buf.putInt(blockIndices.length);
-            IntBuffer ib = buf.asIntBuffer();
-            ib.put(blockIndices);
-            ib.put(blockCharOffsets);
-            buf.position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
-        }
-
-        /**
-         * Read TOC entry from the TOC file
-         *
-         * @param buf the buffer to read from
-         * @return new TocEntry
-         * @throws IOException on error
-         */
-        public static TocEntry deserialize(ByteBuffer buf) throws IOException {
-            int id = buf.getInt();
-            int length = buf.getInt();
-            int charLength = buf.getInt();
-            boolean deleted = charLength < 0;
-            int nBlocks = buf.getInt();
-            int[] blockIndices = new int[nBlocks];
-            int[] blockCharOffsets = new int[nBlocks];
-            IntBuffer ib = buf.asIntBuffer();
-            ib.get(blockIndices);
-            ib.get(blockCharOffsets);
-            buf.position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
-            return new TocEntry(id, length, charLength, deleted, blockIndices, blockCharOffsets);
-        }
-
-        /**
-         * Get the offset of the first byte of the specified block.
-         *
-         * @param blockNumber which block?
-         * @return byte offset of the first byte in the file
-         */
-        public int getBlockNumber(int blockNumber) {
-            return blockIndices[blockNumber];
-        }
-
-        /**
-         * Size of this entry serialized
-         *
-         * @return the size in bytes
-         */
-        public int sizeBytes() {
-            return 4 * BYTES_PER_INT + blockIndices.length * BYTES_PER_INT * 2;
-        }
-    }
-
-    /**
-     * The TOC entries
-     */
-    private MutableIntObjectMap<TocEntry> toc;
-
-    /**
-     * The table of contents (TOC) file
-     */
-    private File tocFile;
-
-    /**
-     * Memory mapping of the TOC file
-     */
-    private ByteBuffer tocFileBuffer;
-
-    /**
-     * The TOC file channel.
-     */
-    private FileChannel tocFileChannel;
-
-    /**
-     * The TOC random access file
-     */
-    private RandomAccessFile tocRaf;
 
     /**
      * How much to reserve at the end of mapped file for writing
@@ -256,12 +72,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     public void setWriteMapReserve(int writeMapReserve) {
         this.writeMapReserve = writeMapReserve;
     }
-
-    /** Next content ID */
-    private int nextId = 1;
-
-    /** The file containing all the original file contents */
-    File contentsFile;
 
     /** Handle into the contents file */
     RandomAccessFile rafContentsFile;
@@ -299,23 +109,17 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     /** Used to pad blocks that are less than BLOCK_SIZE long */
     private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
 
-    /** Total number of blocks in the contents file */
-    private int totalBlocks;
-
-    /** The sorted list of free blocks in the contents file */
-    private IntArrayList freeBlocks = new IntArrayList();
+    SimpleResourcePool<Deflater> compresserPool;
 
     /**
      * @param dir content store dir
      * @param create if true, create a new content store
      * @throws ErrorOpeningIndex 
      */
-    public ContentStoreDirFixedBlock(File dir, boolean create) throws ErrorOpeningIndex {
-        this.dir = dir;
+    public ContentStoreFixedBlockWriter(File dir, boolean create) throws ErrorOpeningIndex {
+        super(dir);
         if (!dir.exists() && !dir.mkdir())
             throw new ErrorOpeningIndex("Could not create dir: " + dir);
-        tocFile = new File(dir, TOC_FILE_NAME);
-        contentsFile = new File(dir, CONTENTS_FILE_NAME);
         if (create && tocFile.exists()) {
             // Delete the ContentStore files
             if (!tocFile.delete())
@@ -340,7 +144,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                     throw new ErrorOpeningIndex("Could not delete data file: " + f);
             }
         }
-        toc = IntObjectMaps.mutable.empty(); //Maps.mutable.empty();
         if (tocFile.exists())
             readToc();
         tocModified = false;
@@ -368,23 +171,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
                 resource.end();
             }
         };
-        decompresserPool = new SimpleResourcePool<Inflater>(POOL_SIZE) {
-            @Override
-            public Inflater createResource() {
-                return new Inflater();
-            }
-
-            @Override
-            public void destroyResource(Inflater resource) {
-                resource.end();
-            }
-        };
-        zipbufPool = new SimpleResourcePool<byte[]>(POOL_SIZE) {
-            @Override
-            public byte[] createResource() {
-                return new byte[MAX_BLOCK_SIZE_BYTES + 1]; // one larger to detect when buffer space was insufficient
-            }
-        };
     }
 
     /**
@@ -404,7 +190,8 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         nextId = 1;
     }
 
-    private void mapToc(boolean writeable) throws IOException {
+    @Override
+    protected void mapToc(boolean writeable) throws IOException {
         tocRaf = new RandomAccessFile(tocFile, writeable ? "rw" : "r");
         long fl = tocFile.length();
         if (writeable) {
@@ -412,73 +199,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         } // leave 1M room at the end
         tocFileChannel = tocRaf.getChannel();
         tocFileBuffer = tocFileChannel.map(writeable ? MapMode.READ_WRITE : MapMode.READ_ONLY, 0, fl);
-    }
-
-    private void closeMappedToc() {
-        if (tocFileBuffer == null)
-            return; // not mapped
-        try {
-            tocFileChannel.close();
-            tocFileChannel = null;
-            tocRaf.close();
-            tocRaf = null;
-
-            tocFileBuffer = null;
-
-        } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    /**
-     * Read the table of contents from the file
-     */
-    private void readToc() {
-        toc.clear();
-        try {
-            mapToc(false);
-            try {
-                tocFileBuffer.position(0);
-                int n = tocFileBuffer.getInt();
-                totalBlocks = 0;
-                for (int i = 0; i < n; i++) {
-                    TocEntry e = TocEntry.deserialize(tocFileBuffer);
-                    toc.put(e.id, e);
-
-                    // Keep track of the number of blocks
-                    for (int bl : e.blockIndices) {
-                        if (bl > totalBlocks - 1)
-                            totalBlocks = bl + 1;
-                    }
-
-                    // Keep track of what the next ID should be
-                    if (e.id + 1 > nextId)
-                        nextId = e.id + 1;
-                }
-            } finally {
-                closeMappedToc();
-            }
-
-            // Determine occupied blocks
-            boolean[] blockOccupied = new boolean[totalBlocks]; // automatically initialized to false
-            int numOccupied = 0;
-            for (TocEntry e : toc) {
-                for (int bl : e.blockIndices) {
-                    blockOccupied[bl] = true;
-                    numOccupied++;
-                }
-            }
-            // Build the list of free blocks
-            freeBlocks.clear();
-            freeBlocks.ensureCapacity(totalBlocks - numOccupied);
-            for (int i = 0; i < totalBlocks; i++) {
-                if (!blockOccupied[i])
-                    freeBlocks.add(i);
-            }
-
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
     }
 
     private void writeToc() {
@@ -511,14 +231,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
     @Override
     public void close() {
         compresserPool.close();
-        decompresserPool.close();
-        zipbufPool.close();
-
         closeContentsFile();
         if (tocModified) {
             writeToc();
         }
         closeMappedToc();
+        super.close();
     }
 
     /**
@@ -667,115 +385,12 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
      */
     @Override
     public String retrieve(int id) {
-        String[] rv = retrieveParts(id, new int[] { -1 }, new int[] { -1 });
-        return rv == null ? null : rv[0];
+        throw new UnsupportedOperationException("Not supported in index mode");
     }
 
-    /**
-     * Retrieve one or more substrings from the specified content.
-     *
-     * This is more efficient than retrieving the whole content, or retrieving parts
-     * in separate calls, because the file is only opened once and random access is
-     * used to read only the required parts.
-     *
-     * NOTE: if offset and length are both -1, retrieves the whole content. This is
-     * used by the retrieve(id) method.
-     *
-     * @param contentId id of the entry to get substrings from
-     * @param start the starting points of the substrings (in characters). -1 means
-     *            "start of document"
-     * @param end the end points of the substrings (in characters). -1 means "end of
-     *            document"
-     * @return the parts
-     */
     @Override
-    public synchronized String[] retrieveParts(int contentId, int[] start, int[] end) {
-        try {
-            // Find the correct TOC entry
-            TocEntry e = toc.get(contentId);
-            if (e == null || e.deleted)
-                return null;
-
-            // Sanity-check parameters
-            int n = start.length;
-            if (n != end.length)
-                throw new IllegalArgumentException("start and end must be of equal length");
-
-            // Create array for results
-            String[] result = new String[n];
-
-            // Open the file
-            try (FileInputStream fileInputStream = new FileInputStream(contentsFile)) {
-                try (FileChannel fileChannel = fileInputStream.getChannel()) {
-                    // Retrieve the strings requested
-                    for (int i = 0; i < n; i++) {
-                        int a = start[i];
-                        int b = end[i];
-
-                        if (a == -1)
-                            a = 0;
-                        if (b == -1)
-                            b = e.entryLengthCharacters;
-
-                        // Check values
-                        if (a < 0 || b < 0) {
-                            throw new IllegalArgumentException("Illegal values, start = " + a + ", end = " + b);
-                        }
-                        if (a > e.entryLengthCharacters || b > e.entryLengthCharacters) {
-                            throw new IllegalArgumentException("Value(s) out of range, start = " + a
-                                    + ", end = " + b + ", content length = " + e.entryLengthCharacters);
-                        }
-                        if (b <= a) {
-                            throw new IllegalArgumentException(
-                                    "Tried to read empty or negative length snippet (from " + a
-                                            + " to " + b + ")");
-                        }
-
-                        // 1 - determine what blocks to read
-                        int firstBlock = -1, lastBlock = -1;
-                        int bl = 0;
-                        int charOffset = -1;
-                        for (int offs : e.blockCharOffsets) {
-                            if (offs <= a) {
-                                firstBlock = bl; // last block that starts before a
-                                charOffset = offs;
-                            }
-                            if (offs > b && lastBlock == -1) {
-                                lastBlock = bl - 1; // first block that ends after b
-                                break;
-                            }
-                            bl++;
-                        }
-                        if (lastBlock == -1)
-                            lastBlock = bl - 1; // last available block
-
-                        // 2 - read and decode blocks
-                        StringBuilder decoded = new StringBuilder();
-                        for (int j = firstBlock; j <= lastBlock; j++) {
-                            long blockNum = e.getBlockNumber(j);
-                            long readStartOffset = blockNum * BLOCK_SIZE_BYTES;
-                            int bytesToRead = BLOCK_SIZE_BYTES;
-                            ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-                            int bytesRead = fileChannel.read(buffer, readStartOffset);
-                            if (bytesRead < bytesToRead) {
-                                // Apparently, something went wrong.
-                                throw new BlackLabRuntimeException("Not enough bytes read, " + bytesRead
-                                        + " < " + bytesToRead);
-                            }
-                            String decodedBlock = decodeBlock(buffer.array(), 0, bytesRead);
-                            decoded.append(decodedBlock);
-                        }
-
-                        // 3 - take just what we need
-                        int firstChar = a - charOffset;
-                        result[i] = decoded.substring(firstChar, firstChar + b - a);
-                    }
-                }
-            }
-            return result;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+    public String[] retrieveParts(int contentId, int[] start, int[] end) {
+        throw new UnsupportedOperationException("Not supported in index mode");
     }
 
     @Override
@@ -787,31 +402,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         }
         freeBlocks.sortThis();
         tocModified = true;
-    }
-
-    @Override
-    public Set<Integer> idSet() {
-        return CollUtil.toJavaSet(toc.keySet());
-    }
-
-    @Override
-    public boolean isDeleted(int id) {
-        return toc.get(id).deleted;
-    }
-
-    @Override
-    public int docLength(int id) {
-        return toc.get(id).entryLengthCharacters;
-    }
-
-    SimpleResourcePool<Deflater> compresserPool;
-
-    SimpleResourcePool<Inflater> decompresserPool;
-
-    SimpleResourcePool<byte[]> zipbufPool;
-
-    protected void setStoreType() {
-        setStoreType(CONTENT_STORE_TYPE_NAME, CURRENT_VERSION);
     }
 
     protected byte[] encodeBlock() {
@@ -891,32 +481,6 @@ public class ContentStoreDirFixedBlock extends ContentStoreDirAbstract {
         } finally {
             compresserPool.release(compresser);
             zipbufPool.release(zipbuf);
-        }
-    }
-
-    protected String decodeBlock(byte[] buf, int offset, int length) throws IOException {
-        try {
-            // unzip block
-            Inflater decompresser = decompresserPool.acquire();
-            byte[] zipbuf = zipbufPool.acquire();
-            try {
-                decompresser.reset();
-                decompresser.setInput(buf, offset, length);
-                int resultLength = decompresser.inflate(zipbuf);
-                if (resultLength <= 0) {
-                    throw new IOException("Error, inflate returned " + resultLength);
-                }
-                if (!decompresser.finished()) {
-                    // This shouldn't happen because our max block size prevents it
-                    throw new IOException("Unzip buffer size insufficient");
-                }
-                return new String(zipbuf, 0, resultLength, DEFAULT_CHARSET);
-            } finally {
-                decompresserPool.release(decompresser);
-                zipbufPool.release(zipbuf);
-            }
-        } catch (DataFormatException e) {
-            throw new IOException(e);
         }
     }
 

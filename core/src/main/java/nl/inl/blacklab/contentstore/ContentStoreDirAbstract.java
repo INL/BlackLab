@@ -29,6 +29,10 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
      * Dir to store the content and TOC
      */
     protected File dir;
+    
+    protected ContentStoreDirAbstract(File dir) {
+        this.dir = dir;
+    }
 
     protected void setStoreType(String type, String version) {
         VersionFile.write(dir, type, version);
