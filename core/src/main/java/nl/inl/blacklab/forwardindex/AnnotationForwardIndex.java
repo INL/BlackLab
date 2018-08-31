@@ -1,8 +1,20 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -32,15 +44,92 @@ public abstract class AnnotationForwardIndex {
      */
     private static final String CURRENT_VERSION = "5";
 
+    /** The number of cached fiids we check to see if this field is set anywhere. */
+    static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
+
     /**
-     * Indicate how to translate Lucene document ids to forward index ids (by
-     * looking them up in the index).
-     *
-     * Caches the forward index id field.
-     *
-     * @param reader the index
-     * @param annotation annotaion for which this is the forward index
+     * Java has as limit of 2GB for MappedByteBuffer. But this could be worked
+     * around using arrays of MappedByteBuffers, see:
+     * http://stackoverflow.com/questions/5675748/java-memorymapping-big-files
      */
+    private static final int MAX_DIRECT_BUFFER_SIZE = Integer.MAX_VALUE;
+
+    /**
+     * Desired chunk size. Usually just MAX_DIRECT_BUFFER_SIZE, but can be set to be
+     * smaller (for easier testing).
+     *
+     * NOTE: using MAX_DIRECT_BUFFER_SIZE (2GB) failed on Linux 64 bit, so we're
+     * using 1GB for now.
+     */
+    static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
+
+    /** Size of a long in bytes. */
+    static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
+
+    /**
+     * Size of an int in bytes. This will always be 4, according to the standard.
+     */
+    static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
+
+    /**
+     * The number of integer positions to reserve when mapping the file for writing.
+     */
+    static final int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
+
+    /**
+     * The table of contents (where documents start in the tokens file and how long
+     * they are)
+     */
+    ArrayList<TocEntry> toc = new ArrayList<>();
+
+    /** Deleted TOC entries. Always sorted by size. */
+    ArrayList<TocEntry> deletedTocEntries = new ArrayList<>();
+
+    /** The table of contents (TOC) file, docs.dat */
+    File tocFile;
+
+    /** The tokens file (stores indexes into terms.dat) */
+    File tokensFile;
+
+    /** The terms file (stores unique terms) */
+    File termsFile;
+
+    /** The unique terms in our index */
+    Terms terms = null;
+
+    /**
+     * The position (in ints) in the tokens file after the last token written. Note
+     * that the actual file may be larger because we reserve space at the end.
+     */
+    long tokenFileEndPosition = 0;
+
+    /** How we look up forward index id in the index. */
+    FiidLookup fiidLookup;
+
+    /**
+     * If true, we use the new, block-based terms file, that can grow larger than 2
+     * GB.
+     */
+    boolean useBlockBasedTermsFile = true;
+
+    /**
+     * If true, our Terms can be used for NFA matching (Collator is consistent with
+     * other comparisons)
+     */
+    boolean canDoNfaMatching;
+
+    /** The annotation for which we're the forward index */
+    Annotation annotation;
+
+    public AnnotationForwardIndex(File dir, Collators collators, boolean largeTermsFileSupport) {
+        canDoNfaMatching = collators == null ? false : collators.version() != CollatorVersion.V1;
+
+        termsFile = new File(dir, "terms.dat");
+        tocFile = new File(dir, "docs.dat");
+        tokensFile = new File(dir, "tokens.dat");
+        
+        setLargeTermsFileSupport(largeTermsFileSupport);
+    }
 
     /**
      * Convert a Lucene document id to the corresponding forward index id.
@@ -48,7 +137,58 @@ public abstract class AnnotationForwardIndex {
      * @param docId the Lucene doc id
      * @return the forward index id
      */
-    protected abstract int luceneDocIdToFiid(int docId);
+    protected int luceneDocIdToFiid(int docId) {
+        return (int) fiidLookup.get(docId);
+    }
+
+    /**
+     * Read the table of contents from the file
+     */
+    protected void readToc() {
+        toc.clear();
+        deletedTocEntries.clear();
+        try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
+                FileChannel fc = raf.getChannel()) {
+            long fileSize = tocFile.length();
+            MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);
+            int n = buf.getInt();
+            long[] offset = new long[n];
+            int[] length = new int[n];
+            byte[] deleted = new byte[n];
+            LongBuffer lb = buf.asLongBuffer();
+            lb.get(offset);
+            buf.position(buf.position() + SIZEOF_LONG * n);
+            IntBuffer ib = buf.asIntBuffer();
+            ib.get(length);
+            buf.position(buf.position() + SIZEOF_INT * n);
+            buf.get(deleted);
+            toc.ensureCapacity(n);
+            for (int i = 0; i < n; i++) {
+                TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
+                toc.add(e);
+                if (e.deleted) {
+                    deletedTocEntries.add(e);
+                }
+                long end = e.offset + e.length;
+                if (end > tokenFileEndPosition)
+                    tokenFileEndPosition = end;
+            }
+            sortDeletedTocEntries();
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+        toc.trimToSize();
+        deletedTocEntries.trimToSize();
+    }
+
+    protected void sortDeletedTocEntries() {
+        deletedTocEntries.sort(new Comparator<TocEntry>() {
+            @Override
+            public int compare(TocEntry o1, TocEntry o2) {
+                return o1.length - o2.length;
+            }
+        });
+    }
 
     /**
      * Close the forward index. Writes the table of contents to disk if modified.
@@ -128,27 +268,42 @@ public abstract class AnnotationForwardIndex {
      * 
      * @return the Terms object
      */
-    public abstract Terms terms();
+    public Terms terms() {
+        return terms;
+    }
 
     /**
      * @return the number of documents in the forward index
      */
-    public abstract int numDocs();
+    public int numDocs() {
+        return toc.size();
+    }
 
     /**
      * @return the amount of space in free blocks in the forward index.
      */
-    public abstract long freeSpace();
+    public long freeSpace() {
+        long freeSpace = 0;
+        for (TocEntry e : deletedTocEntries) {
+            freeSpace += e.length;
+        }
+        return freeSpace;
+    }
 
     /**
      * @return the number of free blocks in the forward index.
      */
-    public abstract int freeBlocks();
+    public int freeBlocks() {
+        return deletedTocEntries.size();
+    }
+
 
     /**
      * @return total size in bytes of the tokens file.
      */
-    public abstract long totalSize();
+    public long totalSize() {
+        return tokenFileEndPosition;
+    }
 
     /**
      * Gets the length (in tokens) of a document
@@ -156,7 +311,9 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public abstract int docLengthByFiid(int fiid);
+    public int docLengthByFiid(int fiid) {
+        return toc.get(fiid).length;
+    }
 
     public int docLength(int docId) {
         return docLengthByFiid(luceneDocIdToFiid(docId));
@@ -238,17 +395,22 @@ public abstract class AnnotationForwardIndex {
             break;
         }
         Collators collators = new Collators(collator, collVersion);
-        fi = new AnnotationForwardIndexImpl(dir, indexMode, collators, create, largeTermsFileSupport);
+        if (indexMode)
+            fi = new AnnotationForwardIndexWriter(dir, collators, create, largeTermsFileSupport);
+        else {
+            if (create)
+                throw new UnsupportedOperationException("create == true, but not in index mode!");
+            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport);
+        }
         if (annotation != null && fiidLookup != null) {
             fi.setIdTranslateInfo(fiidLookup, annotation);
         }
         return fi;
     }
 
-    protected abstract void setLargeTermsFileSupport(boolean b);
-
-    /** @return the set of all forward index ids */
-    public abstract Set<Integer> idSet();
+    protected void setLargeTermsFileSupport(boolean b) {
+        this.useBlockBasedTermsFile = b;
+    }
 
     /** A task to perform on a document in the forward index. */
     public interface ForwardIndexDocTask {
@@ -272,15 +434,89 @@ public abstract class AnnotationForwardIndex {
         return retrievePartsIntByFiid(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
     }
 
-    public abstract boolean canDoNfaMatching();
-
     /**
      * The annotation for which this is the forward index
      * 
      * @return annotation
      */
-    public abstract Annotation annotation();
+    public Annotation annotation() {
+        return annotation;
+    }
 
-    public abstract void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation);
+    /**
+     * Indicate how to translate Lucene document ids to forward index ids (by
+     * looking them up in the index).
+     *
+     * Caches the forward index id field.
+     * 
+     * @param fiidLookup how to look up fiids
+     * @param annotation annotation for which this is the forward index
+     */
+    public void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation) {
+        this.annotation = annotation;
+        this.fiidLookup = fiidLookup;
+    }
+
+    /** @return the set of all forward index ids */
+    public Set<Integer> idSet() {
+        return new AbstractSet<Integer>() {
+            @Override
+            public boolean contains(Object o) {
+                return !toc.get((Integer) o).deleted;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return toc.size() == deletedTocEntries.size();
+            }
+
+            @Override
+            public Iterator<Integer> iterator() {
+                return new Iterator<Integer>() {
+                    int current = -1;
+                    int next = -1;
+
+                    @Override
+                    public boolean hasNext() {
+                        if (next < 0)
+                            findNext();
+                        return next < toc.size();
+                    }
+
+                    private void findNext() {
+                        next = current + 1;
+                        while (next < toc.size() && toc.get(next).deleted) {
+                            next++;
+                        }
+                    }
+
+                    @Override
+                    public Integer next() {
+                        if (next < 0)
+                            findNext();
+                        if (next >= toc.size())
+                            throw new NoSuchElementException();
+                        current = next;
+                        next = -1;
+                        return current;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return toc.size() - deletedTocEntries.size();
+            }
+        };
+    }
+
+    public boolean canDoNfaMatching() {
+        return canDoNfaMatching;
+    }
 
 }

@@ -13,6 +13,7 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     private Terms terms;
 
     public MockForwardIndex(Terms terms) {
+        super(null, null, true);
         this.terms = terms;
     }
 
