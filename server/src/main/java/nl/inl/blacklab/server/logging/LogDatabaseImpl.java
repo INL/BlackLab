@@ -8,7 +8,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -71,62 +70,63 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
         return result;
     }
     
-    private Connection conn;
+    private SQLiteConnPool pool;
     
     public LogDatabaseImpl(String url) throws IOException {
         try {
-            conn = DriverManager.getConnection(url);
-
-            // Create the tables if they don't exist already
-            execute("BEGIN TRANSACTION");
-            try {
-                execute(String.join("\n", 
-                        "CREATE TABLE IF NOT EXISTS \"requests\" (",
-                        "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
-                        "  `time`  INTEGER NOT NULL,",
-                        "  `timestamp` TEXT NOT NULL,",
-                        "  `corpus`    TEXT NOT NULL,",
-                        "  `type`  TEXT NOT NULL,",
-                        "  `parameters`    TEXT NOT NULL,",
-                        "  `duration_ms`   INTEGER NOT NULL DEFAULT -1,",
-                        "  `results_found` INTEGER NOT NULL DEFAULT -1",
-                        ")"
-                ));
-                execute(String.join("\n", 
-                        "CREATE TABLE IF NOT EXISTS \"request_logs\" (",
-                        "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
-                        "  `time`  INTEGER NOT NULL,",
-                        "  `timestamp` TEXT NOT NULL,",
-                        "  `request`   INTEGER NOT NULL,",
-                        "  `level` INTEGER DEFAULT 0,",
-                        "  `line`  TEXT NOT NULL,",
-                        "  FOREIGN KEY(`request`) REFERENCES requests ( id )",
-                        ")"
-                ));
-                execute(String.join("\n", 
-                        "CREATE TABLE IF NOT EXISTS \"cache_stats\" (",
-                        "  `time`  INTEGER NOT NULL,",
-                        "  `timestamp` TEXT NOT NULL,",
-                        "  `num_searches`  INTEGER NOT NULL,",
-                        "  `num_running`   INTEGER NOT NULL,",
-                        "  `num_paused`    INTEGER NOT NULL,",
-                        "  `size_bytes`    INTEGER NOT NULL,",
-                        "  `free_mem_bytes`    INTEGER NOT NULL,",
-                        "  `largest_entry_bytes`   INTEGER NOT NULL,",
-                        "  `oldest_entry_sec`  INTEGER NOT NULL",
-                        ")"
-                ));
-                
-                // Don't let the database grow too large
-                long threeMonthsAgo = now() - THREE_MONTHS_MS;
-                execute("DELETE FROM request_logs WHERE time < " + threeMonthsAgo);
-                execute("DELETE FROM requests WHERE time < " + threeMonthsAgo);
-                execute("DELETE FROM cache_stats WHERE time < " + threeMonthsAgo);
-                
-                execute("COMMIT");
-            } catch(SQLException e) {
-                execute("ROLLBACK");
-                throw new IOException(e);
+            pool = new SQLiteConnPool(url);
+            try (Connection conn = pool.getConnection()) {
+                conn.setAutoCommit(false);
+                // Create the tables if they don't exist already
+                try {
+                    execute(String.join("\n", 
+                            "CREATE TABLE IF NOT EXISTS \"requests\" (",
+                            "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
+                            "  `time`  INTEGER NOT NULL,",
+                            "  `timestamp` TEXT NOT NULL,",
+                            "  `corpus`    TEXT NOT NULL,",
+                            "  `type`  TEXT NOT NULL,",
+                            "  `parameters`    TEXT NOT NULL,",
+                            "  `duration_ms`   INTEGER NOT NULL DEFAULT -1,",
+                            "  `results_found` INTEGER NOT NULL DEFAULT -1",
+                            ")"
+                    ));
+                    execute(String.join("\n", 
+                            "CREATE TABLE IF NOT EXISTS \"request_logs\" (",
+                            "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
+                            "  `time`  INTEGER NOT NULL,",
+                            "  `timestamp` TEXT NOT NULL,",
+                            "  `request`   INTEGER NOT NULL,",
+                            "  `level` INTEGER DEFAULT 0,",
+                            "  `line`  TEXT NOT NULL,",
+                            "  FOREIGN KEY(`request`) REFERENCES requests ( id )",
+                            ")"
+                    ));
+                    execute(String.join("\n", 
+                            "CREATE TABLE IF NOT EXISTS \"cache_stats\" (",
+                            "  `time`  INTEGER NOT NULL,",
+                            "  `timestamp` TEXT NOT NULL,",
+                            "  `num_searches`  INTEGER NOT NULL,",
+                            "  `num_running`   INTEGER NOT NULL,",
+                            "  `num_paused`    INTEGER NOT NULL,",
+                            "  `size_bytes`    INTEGER NOT NULL,",
+                            "  `free_mem_bytes`    INTEGER NOT NULL,",
+                            "  `largest_entry_bytes`   INTEGER NOT NULL,",
+                            "  `oldest_entry_sec`  INTEGER NOT NULL",
+                            ")"
+                    ));
+                    
+                    // Don't let the database grow too large
+                    long threeMonthsAgo = now() - THREE_MONTHS_MS;
+                    execute("DELETE FROM request_logs WHERE time < " + threeMonthsAgo);
+                    execute("DELETE FROM requests WHERE time < " + threeMonthsAgo);
+                    execute("DELETE FROM cache_stats WHERE time < " + threeMonthsAgo);
+                    
+                    conn.commit();
+                } catch(SQLException e) {
+                    conn.rollback();
+                    throw e;
+                }
             }
         
         } catch (SQLException e) {
@@ -135,23 +135,27 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     }
     
     private void execute(String sql) throws SQLException {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate(sql);
+        try (Connection conn = pool.getConnection()) {
+            try (Statement stmt = conn.createStatement()) {
+                stmt.executeUpdate(sql);
+            }
         }
     }
 
     @Override
     public List<Request> getRequests(long from, long to) {
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT id, corpus, type, parameters, time, timestamp, duration_ms, results_found, size_bytes " +
-                "FROM requests WHERE time >= ? AND time <= ? ORDER BY time")) {
-            stmt.setLong(1, from);
-            stmt.setLong(2, to);
-            try (ResultSet rs = stmt.executeQuery()) {
-                List<Request> results = new ArrayList<>();
-                while (rs.next()) {
-                    results.add(new Request(this, rs));
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT id, corpus, type, parameters, time, timestamp, duration_ms, results_found, size_bytes " +
+                    "FROM requests WHERE time >= ? AND time <= ? ORDER BY time")) {
+                stmt.setLong(1, from);
+                stmt.setLong(2, to);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<Request> results = new ArrayList<>();
+                    while (rs.next()) {
+                        results.add(new Request(this, rs));
+                    }
+                    return results;
                 }
-                return results;
             }
         } catch (SQLException e) {
             throw new LogException(e);
@@ -160,17 +164,19 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     
     @Override
     public List<CacheStats> getCacheStats(long from, long to) {
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT time, timestamp, num_searches, num_running, num_paused, " +
-                "size_bytes, free_mem_bytes, largest_entry_bytes, oldest_entry_sec " +
-                "FROM cache_stats WHERE time >= ? AND time <= ? ORDER BY time")) {
-            stmt.setLong(1, from);
-            stmt.setLong(2, to);
-            try (ResultSet rs = stmt.executeQuery()) {
-                List<CacheStats> results = new ArrayList<>();
-                while (rs.next()) {
-                    results.add(new CacheStats(rs));
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT time, timestamp, num_searches, num_running, num_paused, " +
+                    "size_bytes, free_mem_bytes, largest_entry_bytes, oldest_entry_sec " +
+                    "FROM cache_stats WHERE time >= ? AND time <= ? ORDER BY time")) {
+                stmt.setLong(1, from);
+                stmt.setLong(2, to);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<CacheStats> results = new ArrayList<>();
+                    while (rs.next()) {
+                        results.add(new CacheStats(rs));
+                    }
+                    return results;
                 }
-                return results;
             }
         } catch (SQLException e) {
             throw new LogException(e);
@@ -184,14 +190,16 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
      * @return log lines
      */
     List<SearchLogLine> getRequestLogLines(int id) {
-        try (PreparedStatement stmt = conn.prepareStatement("SELECT request, time, timestamp, level, line FROM request_logs WHERE request = ? ORDER BY time")) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                List<SearchLogLine> results = new ArrayList<>();
-                while (rs.next()) {
-                    results.add(new SearchLogLine(rs));
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT request, time, timestamp, level, line FROM request_logs WHERE request = ? ORDER BY time")) {
+                stmt.setLong(1, id);
+                try (ResultSet rs = stmt.executeQuery()) {
+                    List<SearchLogLine> results = new ArrayList<>();
+                    while (rs.next()) {
+                        results.add(new SearchLogLine(rs));
+                    }
+                    return results;
                 }
-                return results;
             }
         } catch (SQLException e) {
             throw new LogException(e);
@@ -200,29 +208,27 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
 
     @Override
     public void close() throws IOException {
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            throw new IOException(e);
-        }
+        pool.close();
     }
     
     @Override
     public SearchLogger addRequest(String corpus, String type, Map<String, String[]> parameters) {
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO requests (corpus, type, parameters, time, timestamp) VALUES (?, ?, ?, ?, ?)")) {
-            stmt.setString(1, corpus);
-            stmt.setString(2, type);
-            String strParameters = mapToQueryStringArray(parameters);
-            stmt.setString(3, strParameters);
-            long now = now();
-            stmt.setLong(4, now);
-            stmt.setString(5, timestamp(now));
-            stmt.executeUpdate();
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return new SearchLoggerImpl(this, rs.getInt(1));
-                } else {
-                    throw new LogException("Insert didn't generate an id!");
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO requests (corpus, type, parameters, time, timestamp) VALUES (?, ?, ?, ?, ?)")) {
+                stmt.setString(1, corpus);
+                stmt.setString(2, type);
+                String strParameters = mapToQueryStringArray(parameters);
+                stmt.setString(3, strParameters);
+                long now = now();
+                stmt.setLong(4, now);
+                stmt.setString(5, timestamp(now));
+                stmt.executeUpdate();
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        return new SearchLoggerImpl(this, rs.getInt(1));
+                    } else {
+                        throw new LogException("Insert didn't generate an id!");
+                    }
                 }
             }
         } catch (SQLException e) {
@@ -231,11 +237,13 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     }
 
     void requestFinalize(int requestId, int resultsFound, long durationMs) {
-        try (PreparedStatement stmt = conn.prepareStatement("UPDATE requests SET duration_ms = ?, results_found = ? WHERE id = ?")) {
-            stmt.setLong(1, durationMs);
-            stmt.setInt(2, resultsFound);
-            stmt.setInt(3, requestId);
-            stmt.executeUpdate();
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("UPDATE requests SET duration_ms = ?, results_found = ? WHERE id = ?")) {
+                stmt.setLong(1, durationMs);
+                stmt.setInt(2, resultsFound);
+                stmt.setInt(3, requestId);
+                stmt.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new LogException(e);
         }
@@ -248,15 +256,17 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
      * @param line log line
      */
     void requestAddLogLine(int requestId, LogLevel level, String line) {
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO request_logs (request, time, timestamp, level, line) VALUES (?, ?, ?, ?, ?)")) {
-            stmt.setInt(1, requestId);
-            long now = now();
-            stmt.setLong(2, now);
-            stmt.setString(3, timestamp(now));
-            int l = level.intValue();
-            stmt.setInt(4, l);
-            stmt.setString(5, StringUtils.repeat("    ", l - 1) + line);
-            stmt.executeUpdate();
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO request_logs (request, time, timestamp, level, line) VALUES (?, ?, ?, ?, ?)")) {
+                stmt.setInt(1, requestId);
+                long now = now();
+                stmt.setLong(2, now);
+                stmt.setString(3, timestamp(now));
+                int l = level.intValue();
+                stmt.setInt(4, l);
+                stmt.setString(5, StringUtils.repeat("    ", l - 1) + line);
+                stmt.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new LogException(e);
         }
@@ -264,19 +274,21 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     
     @Override
     public void addCacheInfo(int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes, long largestEntryBytes, int oldestEntryAgeSec) {
-        try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_stats (time, timestamp, num_searches, num_running, num_paused, size_bytes, free_mem_bytes, " +
-                "largest_entry_bytes, oldest_entry_sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
-            long now = now();
-            stmt.setLong(1, now);
-            stmt.setString(2, timestamp(now));
-            stmt.setInt(3, numberOfSearches);
-            stmt.setInt(4, numberRunning);
-            stmt.setInt(5, numberPaused);
-            stmt.setLong(6, sizeBytes);
-            stmt.setLong(7, freeMemoryBytes);
-            stmt.setLong(8, largestEntryBytes);
-            stmt.setInt(9, oldestEntryAgeSec);
-            stmt.executeUpdate();
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_stats (time, timestamp, num_searches, num_running, num_paused, size_bytes, free_mem_bytes, " +
+                    "largest_entry_bytes, oldest_entry_sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                long now = now();
+                stmt.setLong(1, now);
+                stmt.setString(2, timestamp(now));
+                stmt.setInt(3, numberOfSearches);
+                stmt.setInt(4, numberRunning);
+                stmt.setInt(5, numberPaused);
+                stmt.setLong(6, sizeBytes);
+                stmt.setLong(7, freeMemoryBytes);
+                stmt.setLong(8, largestEntryBytes);
+                stmt.setInt(9, oldestEntryAgeSec);
+                stmt.executeUpdate();
+            }
         } catch (SQLException e) {
             throw new LogException(e);
         }
