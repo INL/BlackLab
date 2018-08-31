@@ -12,15 +12,4 @@ public abstract class SearchCount extends AbstractSearch<ResultCount> {
         super(queryInfo);
     }
 
-    
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-    
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
-
 }

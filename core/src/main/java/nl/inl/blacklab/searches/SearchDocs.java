@@ -82,10 +82,4 @@ public abstract class SearchDocs extends SearchResults<DocResults> {
         return new SearchFacets(queryInfo(), this, facets);
     }
     
-    @Override
-    public abstract boolean equals(Object obj);
-    
-    @Override
-    public abstract int hashCode();
-    
 }

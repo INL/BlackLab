@@ -23,14 +23,14 @@ public class SearchDocsWindow extends SearchDocs {
     protected DocResults executeInternal() throws InvalidQuery {
         return source.execute().window(first, number);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
+        int result = super.hashCode();
         result = prime * result + first;
         result = prime * result + number;
+        result = prime * result + ((source == null) ? 0 : source.hashCode());
         return result;
     }
 
@@ -38,23 +38,23 @@ public class SearchDocsWindow extends SearchDocs {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
         SearchDocsWindow other = (SearchDocsWindow) obj;
+        if (first != other.first)
+            return false;
+        if (number != other.number)
+            return false;
         if (source == null) {
             if (other.source != null)
                 return false;
         } else if (!source.equals(other.source))
             return false;
-        if (first != other.first)
-            return false;
-        if (number != other.number)
-            return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("window", source, first, number);

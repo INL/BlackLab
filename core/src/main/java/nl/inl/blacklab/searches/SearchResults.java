@@ -70,10 +70,4 @@ public abstract class SearchResults<R extends Results<?>> extends AbstractSearch
         return new SearchCountFromResults<>(queryInfo(), this, CountType.DOCS, fetchAllResults);
     }
     
-    @Override
-    public abstract boolean equals(Object obj);
-    
-    @Override
-    public abstract int hashCode();
-    
 }

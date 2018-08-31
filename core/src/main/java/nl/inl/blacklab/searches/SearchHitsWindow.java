@@ -22,11 +22,11 @@ public class SearchHitsWindow extends SearchHits {
     protected Hits executeInternal() throws InvalidQuery {
         return source.execute().window(first, number);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + first;
         result = prime * result + number;
         result = prime * result + ((source == null) ? 0 : source.hashCode());
@@ -37,7 +37,7 @@ public class SearchHitsWindow extends SearchHits {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -53,7 +53,7 @@ public class SearchHitsWindow extends SearchHits {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("window", source, first, number);

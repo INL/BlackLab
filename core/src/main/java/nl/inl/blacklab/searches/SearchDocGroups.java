@@ -57,10 +57,4 @@ public abstract class SearchDocGroups extends SearchResults<DocGroups> {
         return new SearchDocGroupsWindow(queryInfo(), this, first, number);
     }
     
-    @Override
-    public abstract boolean equals(Object obj);
-    
-    @Override
-    public abstract int hashCode();
-    
 }

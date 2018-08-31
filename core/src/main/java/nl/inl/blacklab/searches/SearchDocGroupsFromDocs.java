@@ -25,11 +25,11 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     protected DocGroups executeInternal() throws InvalidQuery {
         return source.execute().group(property, maxDocs);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + maxDocs;
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
@@ -40,7 +40,7 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -59,7 +59,7 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("group", source, property, maxDocs);

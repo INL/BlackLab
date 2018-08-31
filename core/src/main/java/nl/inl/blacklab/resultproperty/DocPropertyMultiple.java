@@ -45,18 +45,28 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj instanceof DocPropertyMultiple) {
-            return ((DocPropertyMultiple) obj).criteria.equals(criteria);
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((criteria == null) ? 0 : criteria.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return criteria.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        DocPropertyMultiple other = (DocPropertyMultiple) obj;
+        if (criteria == null) {
+            if (other.criteria != null)
+                return false;
+        } else if (!criteria.equals(other.criteria))
+            return false;
+        return true;
     }
 
     public void addCriterium(DocProperty crit) {

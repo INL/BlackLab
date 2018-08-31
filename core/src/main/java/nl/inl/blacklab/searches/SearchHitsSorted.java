@@ -21,11 +21,11 @@ public class SearchHitsSorted extends SearchHits {
     protected Hits executeInternal() throws InvalidQuery {
         return source.execute().sort(property);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         return result;
@@ -35,7 +35,7 @@ public class SearchHitsSorted extends SearchHits {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -52,7 +52,7 @@ public class SearchHitsSorted extends SearchHits {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("sort", source, property);
