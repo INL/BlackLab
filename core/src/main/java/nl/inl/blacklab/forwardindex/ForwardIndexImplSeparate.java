@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
@@ -28,13 +29,22 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     private Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
+    private ExecutorService executorService;
+
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
+        executorService = index.initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;
-            get(annotation);
+            AnnotationForwardIndex afi = get(annotation);
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    afi.initialize();
+                }
+            });
         }
     }
 

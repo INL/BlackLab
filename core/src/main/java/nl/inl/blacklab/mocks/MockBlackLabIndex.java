@@ -4,6 +4,8 @@ import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -57,6 +59,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private SearchCache cache = new SearchCacheDummy();
 
+    /** Thread on which we run initializations (opening forward indexes, etc.).
+     *  Single-threaded because these kinds of initializations are memory and CPU heavy. */
+    private static final ExecutorService initializationExecutorService = Executors.newSingleThreadExecutor();
+    
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata();
@@ -250,6 +256,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ExecutorService initializationExecutorService() {
+        return initializationExecutorService;
     }
 
 }

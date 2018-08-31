@@ -72,6 +72,10 @@ public abstract class Terms {
      * need to store offsets.
      */
     int maxMapSize = DEFAULT_MAX_MAP_SIZE;
+    
+    public void initialize() {
+        // NOP
+    }
 
     /**
      * Get the existing index number of a term, or add it to the term list and

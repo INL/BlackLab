@@ -20,7 +20,6 @@ import java.util.Set;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 
@@ -219,6 +218,10 @@ public abstract class AnnotationForwardIndex {
         tokensFile = new File(dir, "tokens.dat");
         
         setLargeTermsFileSupport(largeTermsFileSupport);
+    }
+    
+    public void initialize() {
+        // NOP
     }
 
     /**

@@ -11,6 +11,8 @@ import java.text.Collator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -112,7 +114,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** Analyzer that doesn't tokenize */
     final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
-
+    
+    /** Thread on which we run initializations (opening forward indexes, etc.).
+     *  Single-threaded because these kinds of initializations are memory and CPU heavy. */
+    private static final ExecutorService initializationExecutorService = Executors.newSingleThreadExecutor();
     
     // Static methods
     //---------------------------------------------------------------
@@ -991,5 +996,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void setCache(SearchCache cache) {
         this.cache = cache;
+    }
+
+    @Override
+    public ExecutorService initializationExecutorService() {
+        return initializationExecutorService;
     }
 }

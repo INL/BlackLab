@@ -102,11 +102,6 @@ class TermsReader extends Terms {
         if (termsFile == null || !termsFile.exists())
             throw new IllegalArgumentException("Terms file not found: " + termsFile);
         this.termsFile = termsFile;
-        
-        // Read the term file and build the term index in the background.
-        new Thread(() -> { 
-            initialize();
-        }).start();
     }
 
     @Override
@@ -166,7 +161,8 @@ class TermsReader extends Terms {
         return true;
     }
 
-    private synchronized void initialize() {
+    @Override
+    public synchronized void initialize() {
         if (initialized)
             return;
         

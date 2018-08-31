@@ -16,6 +16,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -44,6 +45,9 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
     /** Offsets of the mappings into the token file */
     private List<Long> tokensFileChunkOffsetBytes = null;
+    
+    /** Has the tokens file been mapped? */
+    private boolean initialized = false;
 
     AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport) {
         super(dir, collators, largeTermsFileSupport);
@@ -52,26 +56,25 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
         }
 
-        try {
-            if (tocFile.exists()) {
-                readToc();
-                terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
-            } else {
-                throw new IllegalArgumentException("No TOC found, and not in index mode!");
-            }
-            // Memory-map the file for reading.
-            openTokensFileForReading();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+        if (tocFile.exists()) {
+            readToc();
+            terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
+        } else {
+            throw new IllegalArgumentException("No TOC found, and not in index mode!");
         }
+        logger.debug("Opened forward index " + dir);
     }
 
     /**
      * Memory-map the tokens file for reading.
-     * 
-     * @throws IOException
      */
-    private void openTokensFileForReading() throws IOException {
+    @Override
+    public synchronized void initialize() {
+        if (initialized)
+            return;
+        
+        terms.initialize();
+        
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
                 FileChannel tokensFileChannel = tokensFp.getChannel()) {
             // Map the tokens file in chunks of 2GB each. When retrieving documents, we always
@@ -118,7 +121,13 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
                 tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
                 mappedBytes = startOfNextMappingBytes + sizeBytes;
             }
+        } catch (FileNotFoundException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
+        } catch (IOException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
         }
+        
+        initialized = true;
     }
 
     @Override
@@ -133,6 +142,9 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
     @Override
     public List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
+        if (!initialized)
+            initialize();
+        
         TocEntry e = toc.get(fiid);
         if (e == null || e.deleted)
             return null;
