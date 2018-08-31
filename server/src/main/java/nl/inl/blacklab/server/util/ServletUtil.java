@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.util;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -17,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.util.ExUtil;
 
 public class ServletUtil {
     private static final Logger logger = LogManager.getLogger(ServletUtil.class);
@@ -173,8 +173,8 @@ public class ServletUtil {
     public static PrintStream getPrintStream(HttpServletResponse responseObject) {
         try {
             return new PrintStream(responseObject.getOutputStream(), true, DEFAULT_ENCODING.name());
-        } catch (Exception e) {
-            throw ExUtil.wrapRuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

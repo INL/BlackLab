@@ -42,7 +42,7 @@ public class CollUtil {
         };
     }
 
-    public static List<Integer> toList(final IntArrayList increments) {
+    public static List<Integer> toJavaList(final IntArrayList increments) {
         return new AbstractList<Integer>() {
             @Override
             public Integer get(int index) {

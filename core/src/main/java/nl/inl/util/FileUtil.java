@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -47,7 +48,7 @@ public class FileUtil {
     /**
      * The default encoding for opening files.
      */
-    private static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
+    private static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
 
     /**
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
@@ -74,21 +75,6 @@ public class FileUtil {
      */
     public static PrintWriter openForWriting(File file) throws FileNotFoundException {
         return openForWriting(file, DEFAULT_ENCODING);
-    }
-
-    /**
-     * Opens a file for writing.
-     *
-     * Wraps the Writer in a BufferedWriter and PrintWriter for efficient and
-     * convenient access.
-     *
-     * @param file the file to open
-     * @param encoding the encoding to use, e.g. "utf-8"
-     * @return write interface into the file
-     * @throws FileNotFoundException 
-     */
-    public static PrintWriter openForWriting(File file, String encoding) throws FileNotFoundException {
-        return openForWriting(file, Charset.forName(encoding));
     }
 
     /**
@@ -129,20 +115,6 @@ public class FileUtil {
      * @return read interface into the file
      * @throws FileNotFoundException 
      */
-    public static BufferedReader openForReading(File file, String encoding) throws FileNotFoundException {
-        return openForReading(file, Charset.forName(encoding));
-    }
-
-    /**
-     * Opens a file for reading, with the default encoding.
-     *
-     * Wraps the Reader in a BufferedReader for efficient and convenient access.
-     *
-     * @param file the file to open
-     * @param encoding the encoding to use, e.g. "utf-8"
-     * @return read interface into the file
-     * @throws FileNotFoundException 
-     */
     public static BufferedReader openForReading(File file, Charset encoding) throws FileNotFoundException {
         return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));
     }
@@ -155,17 +127,6 @@ public class FileUtil {
      */
     public static List<String> readLines(File inputFile) {
         return readLines(inputFile, DEFAULT_ENCODING);
-    }
-
-    /**
-     * Read a file into a list of lines
-     *
-     * @param inputFile the file to read
-     * @param encoding the encoding to use, e.g. "utf-8"
-     * @return list of lines
-     */
-    public static List<String> readLines(File inputFile, String encoding) {
-        return readLines(inputFile, Charset.forName(encoding));
     }
 
     /**

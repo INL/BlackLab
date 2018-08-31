@@ -252,7 +252,7 @@ public class AnnotationWriter {
     }
 
     public List<Integer> positionIncrements() {
-        return CollUtil.toList(increments);
+        return CollUtil.toJavaList(increments);
     }
 
     public int lastValuePosition() {
