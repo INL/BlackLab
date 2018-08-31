@@ -1,7 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.util.StringUtil;
-
 /**
  * Takes care of serializing/deserializing Hit/DocProperties and -Values with
  * proper escaping.
@@ -10,11 +8,11 @@ public final class PropertySerializeUtil {
 
     private final static String PART_SEPARATOR = ":";
 
-    private final static String PART_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(PART_SEPARATOR);
+    private final static String PART_SEPARATOR_ESC_REGEX = ":";
 
     private final static String MULTIPLE_SEPARATOR = ",";
 
-    private final static String MULTIPLE_SEPARATOR_ESC_REGEX = StringUtil.escapeRegexCharacters(MULTIPLE_SEPARATOR);
+    private final static String MULTIPLE_SEPARATOR_ESC_REGEX = ",";
 
     private PropertySerializeUtil() {
     }

@@ -29,12 +29,13 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
@@ -42,7 +43,6 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -356,7 +356,7 @@ public class IndexTool {
             if (displayName.length() > 0)
                 displayName = " (" + displayName + ")";
             if (desc.length() > 0) {
-                desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
+                desc = "\n      " + WordUtils.wrap(desc, 75, "\n      ", false);
             }
             System.out.println("  " + name + displayName + desc + url);
         }

@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -29,7 +30,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.testutil.DocIndexerExample;
-import nl.inl.util.StringUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
@@ -255,9 +255,9 @@ public class TestIndex {
         Kwics kwics = hits.kwics(ContextSize.get(1));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
-            String left = StringUtil.join(kwic.left(word), " ");
-            String match = StringUtil.join(kwic.match(word), " ");
-            String right = StringUtil.join(kwic.right(word), " ");
+            String left = StringUtils.join(kwic.left(word), " ");
+            String match = StringUtils.join(kwic.match(word), " ");
+            String right = StringUtils.join(kwic.right(word), " ");
             String conc = left + " [" + match + "] " + right;
             results.add(conc.trim());
         }

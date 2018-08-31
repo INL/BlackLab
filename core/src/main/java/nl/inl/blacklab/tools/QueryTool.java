@@ -34,6 +34,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
@@ -85,7 +86,6 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
@@ -465,15 +465,15 @@ public class QueryTool {
                         "-f <file>       Execute batch commands from file, print performance\n" +
                         "                info and exit\n" +
                         "\n" +
-                        "In batch mode, for every command executed, the command is printed\n" +
-                        "to stdout with the elapsed time and (if applicable) the number of\n" +
-                        "hits found (tab-separated). Non-query commands are preceded by @.\n" +
-                        "\n" +
-                        "Batch command files should contain one command per line, or multiple\n" +
-                        "commands on a single line separated by && (use this e.g. to time\n" +
-                        "querying and sorting together). Lines starting with # are comments.\n" +
-                        "Comments are printed on stdout as well. Lines starting with - will\n" +
-                        "not be reported. Start a line with -# for an unreported comment.");
+                        WordUtils.wrap("In batch mode, for every command executed, the command is printed " +
+                        "to stdout with the elapsed time and (if applicable) the number of " +
+                        "hits found (tab-separated). Non-query commands are preceded by @.", 80) +
+                        "\n\n" +
+                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
+                        "commands on a single line separated by && (use this e.g. to time " +
+                        "querying and sorting together). Lines starting with # are comments. " +
+                        "Comments are printed on stdout as well. Lines starting with - will " +
+                        "not be reported. Start a line with -# for an unreported comment.", 80));
     }
 
     /**
@@ -715,7 +715,7 @@ public class QueryTool {
                     else
                         concParts = conc.parts();
                     outprintln(
-                            "\n" + StringUtil.wrapToString(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
+                            "\n" + WordUtils.wrap(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
                 }
             } else if (lcased.startsWith("highlight ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -725,7 +725,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(StringUtil.wrapToString(index.doc(docId).highlightContent(hitsInDoc), 80));
+                    outprintln(WordUtils.wrap(index.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));

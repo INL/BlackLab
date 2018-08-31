@@ -2,12 +2,12 @@ package nl.inl.blacklab.testutil;
 
 import java.nio.file.Paths;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 public class ReconstructTermVector {
 
@@ -53,7 +53,7 @@ public class ReconstructTermVector {
             b.append(i).append(":").append(word).append(" ");
             i++;
         }
-        System.out.println(StringUtil.wrap(b.toString(), 80));
+        System.out.println(WordUtils.wrap(b.toString(), 80));
     }
 
     private static void usage() {

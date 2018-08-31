@@ -20,11 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.helpers.DefaultHandler;
-
-import nl.inl.util.StringUtil;
 
 /**
  * SAX parser with the ability to attach "SAX-path hooks" to process specific
@@ -176,7 +175,7 @@ public class HookableSaxHandler extends DefaultHandler {
 
         @Override
         public String toString() {
-            return (isRelativePath ? "" : "/") + StringUtil.join(elementNames, "/");
+            return (isRelativePath ? "" : "/") + StringUtils.join(elementNames, "/");
         }
 
         public void startElement(String localName) {

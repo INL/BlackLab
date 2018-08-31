@@ -54,7 +54,6 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
 
 /**
  * Determines the structure of a BlackLab index.
@@ -1120,7 +1119,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     public void setDisplayName(String displayName) {
         ensureNotFrozen();
         if (displayName.length() > 80)
-            displayName = StringUtil.abbreviate(displayName, 75);
+            displayName = StringUtils.abbreviate(displayName, 75);
         this.displayName = displayName;
     }
 

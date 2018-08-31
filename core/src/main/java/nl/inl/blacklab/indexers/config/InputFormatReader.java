@@ -12,6 +12,8 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +30,6 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
 
 /**
  * Reads ConfigInputFormat from a YAML or JSON source.
@@ -410,7 +411,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             default:
                 throw new InvalidInputFormatConfig(
-                        "Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
+                        "Unknown key " + e.getKey() + " in annotation " + StringUtils.defaultString(annot.getName()));
             }
         }
         return annot;

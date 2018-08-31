@@ -9,9 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.util.StringUtil;
 
 /**
  * A concrete value of a HitProperty of a Hit
@@ -22,7 +22,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     /**
      * Collator to use for string comparison while sorting/grouping
      */
-    static Collator collator = StringUtil.getDefaultCollator();
+    static Collator collator = BlackLabIndexImpl.defaultCollator();
 
     /**
      * Convert the String representation of a HitPropValue back into the

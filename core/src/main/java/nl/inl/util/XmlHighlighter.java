@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Performs highlighting of the contents of XML elements that we found hits in.
  *
@@ -173,12 +175,6 @@ public class XmlHighlighter {
      */
     private static final String endHighlightTag = "</hl>";
 
-    /**
-     * When cutting a fragment, this is the number of characters of overshoot
-     * allowed when trying to cut at a word boundary.
-     */
-    private static final int OVERSHOOT_ALLOWED = 10;
-
     /** How deep are we inside highlighting tags? */
     private int inHighlightTag;
 
@@ -238,8 +234,7 @@ public class XmlHighlighter {
             if (addVisibleChars) {
                 String visibleChars = xmlContent.substring(positionInContent, tag.start);
                 if (visibleCharsAdded + visibleChars.length() >= stopAfterChars) {
-                    visibleChars = StringUtil.abbreviate(visibleChars, stopAfterChars
-                            - visibleCharsAdded, OVERSHOOT_ALLOWED, false);
+                    visibleChars = StringUtils.abbreviate(visibleChars, "", stopAfterChars - visibleCharsAdded);
                     if (visibleChars.length() < tag.start - positionInContent)
                         wasCut = true;
                     addVisibleChars = false;
