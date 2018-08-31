@@ -55,8 +55,8 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         super(dir);
         if (!dir.exists())
             throw new ErrorOpeningIndex("Dir doesn't exist: " + dir);
-        if (tocFile.exists())
-            readToc();
+        if (!tocFile.exists())
+            throw new ErrorOpeningIndex("Toc file doesn't exist: " + tocFile);
 
         decompresserPool = new SimpleResourcePool<Inflater>(POOL_SIZE) {
             @Override
@@ -70,9 +70,14 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
             }
         };
     }
+    
+    @Override
+    protected void performInitialization() {
+        readToc();
+    }
 
     @Override
-    protected void mapToc(boolean writable) throws IOException {
+    protected synchronized void mapToc(boolean writable) throws IOException {
         if (writable)
             throw new UnsupportedOperationException("writable == true, but not in index mode");
         tocRaf = new RandomAccessFile(tocFile, "r");
@@ -86,6 +91,8 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
      */
     @Override
     public void close() {
+        if (!initialized)
+            initialize();
         decompresserPool.close();
         closeMappedToc();
         super.close();
@@ -99,12 +106,16 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
      */
     @Override
     public String retrieve(int id) {
+        if (!initialized)
+            initialize();
         String[] rv = retrieveParts(id, new int[] { -1 }, new int[] { -1 });
         return rv == null ? null : rv[0];
     }
 
     @Override
     public synchronized String[] retrieveParts(int contentId, int[] start, int[] end) {
+        if (!initialized)
+            initialize();
         try {
             // Find the correct TOC entry
             TocEntry e = toc.get(contentId);
@@ -194,6 +205,8 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     protected String decodeBlock(byte[] buf, int offset, int length) throws IOException {
+        if (!initialized)
+            initialize();
         try {
             // unzip block
             Inflater decompresser = decompresserPool.acquire();

@@ -208,6 +208,8 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     protected IntArrayList freeBlocks = new IntArrayList();
 
     protected SimpleResourcePool<byte[]> zipbufPool;
+    
+    protected boolean initialized = false;
 
     protected ContentStoreFixedBlock(File dir) {
         super(dir);
@@ -223,7 +225,19 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     }
     
     @Override
+    public synchronized final void initialize() {
+        if (initialized)
+            return;
+        performInitialization();
+        initialized = true;
+    }
+    
+    protected abstract void performInitialization();
+
+    @Override
     public void close() {
+        if (!initialized)
+            initialize();
         if (zipbufPool != null)
             zipbufPool.close();
     }
@@ -249,7 +263,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     /**
      * Read the table of contents from the file
      */
-    protected void readToc() {
+    protected synchronized void readToc() {
         toc.clear();
         try {
             mapToc(false);
@@ -299,16 +313,22 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
 
     @Override
     public Set<Integer> idSet() {
+        if (!initialized)
+            initialize();
         return CollUtil.toJavaSet(toc.keySet());
     }
 
     @Override
     public boolean isDeleted(int id) {
+        if (!initialized)
+            initialize();
         return toc.get(id).deleted;
     }
 
     @Override
     public int docLength(int id) {
+        if (!initialized)
+            initialize();
         return toc.get(id).entryLengthCharacters;
     }
 

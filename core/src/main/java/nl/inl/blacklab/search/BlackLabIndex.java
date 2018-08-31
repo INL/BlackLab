@@ -4,7 +4,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.Collator;
-import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -549,7 +548,5 @@ public interface BlackLabIndex extends Closeable {
     void setCache(SearchCache cache);
 
     SearchCache cache();
-
-    ExecutorService initializationExecutorService();
 
 }

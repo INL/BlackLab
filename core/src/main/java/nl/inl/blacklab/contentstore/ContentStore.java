@@ -31,6 +31,36 @@ public abstract class ContentStore {
 
     static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
 
+    public static ContentStore open(File indexXmlDir, boolean indexMode, boolean create) throws ErrorOpeningIndex {
+        String type;
+        if (create)
+            type = "fixedblock";
+        else {
+            VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
+            type = vf.getType();
+        }
+        if (type.equals("fixedblock")) {
+            if (indexMode)
+                return new ContentStoreFixedBlockWriter(indexXmlDir, create);
+            if (create)
+                throw new UnsupportedOperationException("create == true, but not in index mode");
+            return new ContentStoreFixedBlockReader(indexXmlDir);
+        }
+        if (type.equals("utf8zip"))
+            return new ContentStoreDirZip(indexXmlDir, create);
+        if (type.equals("utf8"))
+            return new ContentStoreDirUtf8(indexXmlDir, create);
+        if (type.equals("utf16")) {
+            throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
+        }
+        throw new UnsupportedOperationException("Unknown content store type " + type);
+    }
+
+    /** A task to perform on a document in the content store. */
+    public interface DocTask {
+        void perform(int cid, String contents);
+    }
+
     /**
      * Store a document.
      *
@@ -133,36 +163,6 @@ public abstract class ContentStore {
      */
     public abstract int docLength(int id);
 
-    public static ContentStore open(File indexXmlDir, boolean indexMode, boolean create) throws ErrorOpeningIndex {
-        String type;
-        if (create)
-            type = "fixedblock";
-        else {
-            VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
-            type = vf.getType();
-        }
-        if (type.equals("fixedblock")) {
-            if (indexMode)
-                return new ContentStoreFixedBlockWriter(indexXmlDir, create);
-            if (create)
-                throw new UnsupportedOperationException("create == true, but not in index mode");
-            return new ContentStoreFixedBlockReader(indexXmlDir);
-        }
-        if (type.equals("utf8zip"))
-            return new ContentStoreDirZip(indexXmlDir, create);
-        if (type.equals("utf8"))
-            return new ContentStoreDirUtf8(indexXmlDir, create);
-        if (type.equals("utf16")) {
-            throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
-        }
-        throw new UnsupportedOperationException("Unknown content store type " + type);
-    }
-
-    /** A task to perform on a document in the content store. */
-    public interface DocTask {
-        void perform(int cid, String contents);
-    }
-
     /**
      * Perform a task on each document in the content store.
      * 
@@ -171,5 +171,7 @@ public abstract class ContentStore {
     public void forEachDocument(DocTask task) {
         idSet().stream().forEach(cid -> task.perform(cid, retrieve(cid)));
     }
+
+    public abstract void initialize();
 
 }

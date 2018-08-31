@@ -484,4 +484,9 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         }
     }
 
+    @Override
+    protected void performInitialization() {
+        // NOP
+    }
+
 }

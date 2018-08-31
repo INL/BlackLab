@@ -794,4 +794,9 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         return toc.keySet();
     }
 
+    @Override
+    public void initialize() {
+        // NOP
+    }
+
 }
