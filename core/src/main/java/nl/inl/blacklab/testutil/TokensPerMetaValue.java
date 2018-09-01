@@ -33,7 +33,7 @@ public class TokensPerMetaValue {
         if (args.length >= 2)
             annotatedFieldName = args[1];
 
-        try (BlackLabIndex index = BlackLab.openIndex(new File(indexDir))) {
+        try (BlackLabIndex index = BlackLab.open(new File(indexDir))) {
             // Loop over all metadata fields
             IndexMetadata indexMetadata = index.metadata();
             System.out.println("field\tvalue\tnumberOfDocs\tnumberOfTokens");

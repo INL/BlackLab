@@ -532,7 +532,7 @@ public class QueryTool {
         }
 
         // Create the BlackLab index object
-        index = BlackLab.openIndex(indexDir);
+        index = BlackLab.open(indexDir);
         contentsField = index.mainAnnotatedField();
 
         if (in == null) {

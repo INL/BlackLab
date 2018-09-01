@@ -1,27 +1,34 @@
 package nl.inl.blacklab.search;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 
 /**
- * Main BlackLab instance, from which indexes can be opened.
+ * Main BlackLab class, from which indexes can be opened.
  * 
- * If you don't instantiate this, but call BlackLab.openIndex() directly,
- * an implicit instance will be created that will be closed when you close
- * the last index.
+ * You can either open indices using the static methods in this class,
+ * or you can create() a BlackLabEngine and use that to open indices.
  * 
- * Instantiating this explicitly has the advantage of being able to pass
- * parameters, such as the number of search thread you want (default 4).
+ * The first approach will implicitly create a default BlackLabEngine
+ * in the background, with 4 search threads. If you want a different
+ * number of search threads, call create() to create your own instance
+ * of BlackLabEngine.
+ * 
+ * Don't try to mix these two methods; if an implicit engine exists and
+ * you call create(), or if you call e.g. BlackLab.open() when you've
+ * already created an engine explicitly, an exception will be thrown.
+ * 
+ * If you explicitly create an engine, make sure to close it when you're
+ * done. For the implicit engine, this is done automatically when you
+ * close your last index. 
  */
-public final class BlackLab implements Closeable {
+public final class BlackLab {
     
     private static final int DEFAULT_NUM_SEARCH_THREADS = 4;
 
@@ -29,28 +36,99 @@ public final class BlackLab implements Closeable {
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
      * automatically.
      */
-    private static BlackLab implicitInstance = null;
+    static BlackLabEngine implicitInstance = null;
+    
+    /**
+     * Have we called create()? If so, don't create an implicit instance, but throw an exception.
+     */
+    private static boolean explicitlyCreated = false;
     
     /**
      * Map from IndexReader to BlackLab, for use from inside SpanQuery/Spans classes
      */
-    private static final Map<IndexReader, BlackLab> blackLabFromIndexReader = new IdentityHashMap<>();
+    static final Map<IndexReader, BlackLabEngine> blackLabFromIndexReader = new IdentityHashMap<>();
 
-    public static BlackLab create(int searchThreads) {
-        return new BlackLab(searchThreads);
+    public static BlackLabEngine create(int searchThreads) {
+        if (implicitInstance != null)
+            throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
+        explicitlyCreated = true;
+        return new BlackLabEngine(searchThreads);
     }
     
-    public static BlackLab create() {
-        return new BlackLab(DEFAULT_NUM_SEARCH_THREADS);
+    public static BlackLabEngine create() {
+        return create(DEFAULT_NUM_SEARCH_THREADS);
     }
     
-//    private static BlackLabIndex openIndex(File dir, SearchSettings searchSettings) throws ErrorOpeningIndex {
-//        return BlackLabIndex.open(implicitInstance(), dir, searchSettings);
-//    }
-    
-    public static BlackLabIndex openIndex(File dir) throws ErrorOpeningIndex {
+    public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
         return BlackLabIndex.open(implicitInstance(), dir);
     }
+    
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * Note that in index mode, searching operations may not take the latest changes
+     * into account. It is wisest to only use index mode for indexing, then close
+     * the Searcher and create a regular one for searching.
+     *
+     * @param indexDir the index directory
+     * @param createNewIndex if true, create a new index even if one existed there
+     * @return index writer
+     * @throws ErrorOpeningIndex if the index could not be opened
+     */
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws ErrorOpeningIndex {
+        return openForWriting(indexDir, createNewIndex, (File) null);
+    }
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * Note that in index mode, searching operations may not take the latest changes
+     * into account. It is wisest to only use index mode for indexing, then close
+     * the Searcher and create a regular one for searching.
+     *
+     * @param indexDir the index directory
+     * @param createNewIndex if true, create a new index even if one existed there
+     * @param indexTemplateFile JSON template to use for index structure / metadata
+     * @return index writer
+     * @throws ErrorOpeningIndex if index couldn't be opened
+     */
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
+            throws ErrorOpeningIndex {
+        return new BlackLabIndexImpl(implicitInstance(), indexDir, true, createNewIndex, indexTemplateFile);
+    }
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * Note that in index mode, searching operations may not take the latest changes
+     * into account. It is wisest to only use index mode for indexing, then close
+     * the Searcher and create a regular one for searching.
+     *
+     * @param indexDir the index directory
+     * @param createNewIndex if true, create a new index even if one existed there
+     * @param config input format config to use as template for index structure /
+     *            metadata (if creating new index)
+     * @return index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
+     */
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
+            throws ErrorOpeningIndex {
+        return new BlackLabIndexImpl(BlackLab.implicitInstance(), indexDir, true, createNewIndex, config);
+    }
+
+    /**
+     * Create an empty index.
+     *
+     * @param indexDir where to create the index
+     * @param config format configuration for this index; used to base the index
+     *            metadata on
+     * @return a Searcher for the new index, in index mode
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
+     */
+    public static BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
+        return openForWriting(indexDir, true, config);
+    }
+    
     
     /**
      * Return the implicitly created instance of BlackLab.
@@ -60,9 +138,11 @@ public final class BlackLab implements Closeable {
      * 
      * @return implicitly instantiated BlackLab instance
      */
-    public static synchronized BlackLab implicitInstance() {
+    public static synchronized BlackLabEngine implicitInstance() {
+        if (explicitlyCreated)
+            throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
         if (implicitInstance == null) {
-            implicitInstance = new BlackLab(DEFAULT_NUM_SEARCH_THREADS);
+            implicitInstance = new BlackLabEngine(DEFAULT_NUM_SEARCH_THREADS);
         }
         return implicitInstance;
     }
@@ -71,72 +151,6 @@ public final class BlackLab implements Closeable {
         return blackLabFromIndexReader.get(reader).indexFromReader(reader);
     }
     
-    /**
-     * Map from IndexReader to BlackLabIndex, for use from inside SpanQuery/Spans classes
-     */
-    private Map<IndexReader, BlackLabIndex> searcherFromIndexReader = new IdentityHashMap<>();
-
-    /** Thread on which we run initializations (opening forward indexes, etc.).
-     *  Single-threaded because these kinds of initializations are memory and CPU heavy. */
-    private ExecutorService initializationExecutorService = null;
+    private BlackLab() { }
     
-    /** Thread on which we run searches. Unless we change the default, there will be
-     *  four threads available. */
-    private ExecutorService searchExecutorService = null;
-    
-    private BlackLab(int searchThreads) {
-        initializationExecutorService = Executors.newSingleThreadExecutor();
-        searchExecutorService = Executors.newWorkStealingPool(searchThreads);
-    }
-    
-    @Override
-    public void close() {
-        if (searchExecutorService != null) {
-            searchExecutorService.shutdownNow();
-            searchExecutorService = null;
-        }
-        if (initializationExecutorService != null) {
-            initializationExecutorService.shutdownNow();
-            initializationExecutorService = null;
-        }
-        for (BlackLabIndex index: searcherFromIndexReader.values()) {
-            index.close();
-        }
-        searcherFromIndexReader = null;
-    }
-
-    public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
-        return BlackLabIndex.open(this, indexDir);
-    }
-
-    public synchronized void registerSearcher(IndexReader reader, BlackLabIndex index) {
-        searcherFromIndexReader.put(reader, index);
-        blackLabFromIndexReader.put(reader, this);
-    }
-
-    public synchronized void removeSearcher(BlackLabIndex index) {
-        blackLabFromIndexReader.remove(index.reader());
-        searcherFromIndexReader.remove(index.reader());
-        if (this == implicitInstance && searcherFromIndexReader.isEmpty()) {
-            // We are the implicit instance and our last searcher has been closed. Clean up.
-            try {
-                close();
-            } finally {
-                implicitInstance = null;
-            }
-        }
-    }
-
-    public ExecutorService initializationExecutorService() {
-        return initializationExecutorService;
-    }
-
-    public ExecutorService searchExecutorService() {
-        return searchExecutorService;
-    }
-
-    private BlackLabIndex indexFromReader(IndexReader reader) {
-        return searcherFromIndexReader.get(reader);
-    }
-
 }

@@ -115,7 +115,7 @@ public class Example {
         }
 
         // Create the BlackLab index object
-        index = BlackLab.openIndex(indexDir);
+        index = BlackLab.open(indexDir);
         try {
 
             // Find the word "the"

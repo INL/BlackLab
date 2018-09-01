@@ -253,7 +253,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     
 
     /** BlackLab instance used to create us */
-    private BlackLab blackLab;
+    private BlackLabEngine blackLab;
 
     /** The collator to use for sorting. Defaults to English collator. */
     private Collator collator = BlackLabIndexImpl.defaultCollator;
@@ -338,7 +338,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(BlackLab blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         searchSettings = SearchSettings.defaults();
         try {
@@ -379,7 +379,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param indexTemplateFile index template file to use to create index
      * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(BlackLab blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         searchSettings = SearchSettings.defaults();
         this.indexMode = indexMode;
@@ -1002,7 +1002,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
     
     @Override
-    public BlackLab blackLab() {
+    public BlackLabEngine blackLab() {
         return blackLab;
     }
 }

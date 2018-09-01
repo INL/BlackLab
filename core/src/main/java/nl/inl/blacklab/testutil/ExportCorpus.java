@@ -52,7 +52,7 @@ public class ExportCorpus {
 
     public ExportCorpus(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
-        index = BlackLab.openIndex(indexDir);
+        index = BlackLab.open(indexDir);
         System.out.println("Done.");
     }
 

@@ -6,6 +6,8 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.BlackLabEngine;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -35,12 +37,19 @@ public class SearchManager {
 
     /** Manages all the indices we have available and/or open */
     private IndexManager indexMan;
+
+    /** Main BlackLab object, containing the search executor service */
+    private BlackLabEngine blackLab;
     
     public SearchManager(JsonNode properties) throws ConfigurationException {
         logger.debug("SearchManager created");
 
         // The main config object
         config = new BlsConfig(properties);
+        
+        // Create BlackLab instance with the desired number of search threads
+        int numberOfSearchThreads = config.getCacheConfig().getMaxConcurrentSearches();
+        blackLab = BlackLab.create(numberOfSearchThreads);
 
         // Create the cache
         // Use the performance properties [optional, defaults will be used if missing]
@@ -115,6 +124,10 @@ public class SearchManager {
 
     public void setLogDatabase(LogDatabase logDatabase) {
         newCache.setLogDatabase(logDatabase);
+    }
+
+    public BlackLabEngine blackLabInstance() {
+        return blackLab;
     }
 
 }

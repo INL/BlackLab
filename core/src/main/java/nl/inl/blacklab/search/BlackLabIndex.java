@@ -74,7 +74,7 @@ public interface BlackLabIndex extends Closeable {
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(BlackLab blackLab, File indexDir) throws ErrorOpeningIndex {
+    static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {
         return new BlackLabIndexImpl(blackLab, indexDir, false, false, (File) null);
     }
 
@@ -89,7 +89,7 @@ public interface BlackLabIndex extends Closeable {
      */
     @Deprecated
     static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
-        return BlackLab.openIndex(indexDir);
+        return BlackLab.open(indexDir);
     }
 
     ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
@@ -556,6 +556,6 @@ public interface BlackLabIndex extends Closeable {
      * Get the BlackLab instance that created us.
      * @return BlackLab instance
      */
-    BlackLab blackLab();
+    BlackLabEngine blackLab();
 
 }

@@ -33,7 +33,7 @@ public class GetFieldValues {
         }
 
         Map<String, Set<String>> fieldValues = new HashMap<>();
-        try (BlackLabIndex index = BlackLab.openIndex(indexDir)) {
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
             IndexReader r = index.reader();
 
             Set<String> fieldsToLoad = new HashSet<>();

@@ -16,6 +16,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ContentAccessor;
@@ -57,7 +58,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private SearchCache cache = new SearchCacheDummy();
 
-    private BlackLab blackLab;
+    private BlackLabEngine blackLab;
 
     public MockBlackLabIndex() {
         super();
@@ -260,7 +261,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
     
     @Override
-    public BlackLab blackLab() {
+    public BlackLabEngine blackLab() {
         return blackLab;
     }
 }

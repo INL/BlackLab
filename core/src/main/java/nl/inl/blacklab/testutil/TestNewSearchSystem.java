@@ -31,7 +31,7 @@ public class TestNewSearchSystem {
         }
         File indexDir = new File(args[0]);
         System.out.println("Opening index " + indexDir + "...");
-        try (BlackLabIndex index = BlackLab.openIndex(indexDir)) {
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
                 
             FutureSearchResultCache cache = new FutureSearchResultCache();
             cache.setTrace(true);

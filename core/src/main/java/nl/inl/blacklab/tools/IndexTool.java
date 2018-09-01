@@ -39,6 +39,7 @@ import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -313,7 +314,7 @@ public class IndexTool {
             usage();
             return;
         }
-        try (BlackLabIndexWriter indexWriter = BlackLabIndexWriter.openForWriting(indexDir, false)) {
+        try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
             indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), null));
         }

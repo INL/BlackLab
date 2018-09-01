@@ -67,7 +67,7 @@ public class BatchQuery {
         }
 
         System.err.print("Opening index... ");
-        try (BlackLabIndex index = BlackLab.openIndex(indexDir)) {
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
             System.err.println("done.");
     
             System.out.print("Query\tSearch Time");

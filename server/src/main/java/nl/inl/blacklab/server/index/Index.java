@@ -23,7 +23,6 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -262,7 +261,7 @@ public class Index {
 
         logger.debug("Opening index '" + id + "', dir = " + dir);
         try {
-            index = BlackLab.openIndex(this.dir);
+            index = searchMan.blackLabInstance().open(this.dir);
             if (BlsCache.ENABLE_NEW_CACHE)
                 index.setCache(searchMan.getBlackLabCache());
             logger.debug("Done opening index '" + id + "'");

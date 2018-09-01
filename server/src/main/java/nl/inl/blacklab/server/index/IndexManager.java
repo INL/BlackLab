@@ -17,6 +17,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,6 +30,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -249,9 +251,18 @@ public class IndexManager {
         boolean contentViewable = true; // user may view his own private corpus documents
         Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
-        try (BlackLabIndexWriter indexWriter = BlackLabIndexWriter.create(indexDir, config, displayName, formatIdentifier, contentViewable,
-                TextDirection.LEFT_TO_RIGHT)) {
-            // We're only creating it and closing it right away.
+        try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance().create(indexDir, config)) {
+            IndexMetadataWriter indexMetadata = indexWriter.metadataWriter();
+            if (!StringUtils.isEmpty(displayName))
+                indexMetadata.setDisplayName(displayName);
+            if (config != null && config.getName() != null)
+                indexMetadata.setDocumentFormat(config.getName());
+            else if (!StringUtils.isEmpty(formatIdentifier)) {
+                indexMetadata.setDocumentFormat(formatIdentifier);
+            }
+            indexMetadata.setContentViewable(contentViewable);
+            indexMetadata.setTextDirection(TextDirection.LEFT_TO_RIGHT);
+            indexMetadata.save();
         }
 
         try {
