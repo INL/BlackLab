@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.search;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -49,13 +48,12 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     /** Our thread */
-    class SearchThread extends Thread implements UncaughtExceptionHandler {
+    class SearchTask implements Runnable {
         
         private boolean fetchAllResults;
 
-        public SearchThread(boolean fetchAllResults) {
+        public SearchTask(boolean fetchAllResults) {
             this.fetchAllResults = fetchAllResults;
-            setUncaughtExceptionHandler(this);
         }
         
         /**
@@ -74,18 +72,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                         // Make sure our results object can be paused
                         pausing.setThreadPauser(((Results<?>)result).threadPauser());
                     }
-                } catch (Throwable e) {
-                    // NOTE: we catch Throwable here (while it's normally good practice to
-                    //  catch only Exception and derived classes) because we need to know if
-                    //  our thread crashed or not. The Throwable will be re-thrown by the
-                    //  main thread, so any non-Exception Throwables will then go uncaught
-                    //  as they "should".
-    
-                    // We've also set an UncaughtExceptionHandler (the thread object itself)
-                    // which does the same thing, because apparently some exceptions can occur
-                    // outside the run() method or aren't caught here for some other reason).
-                    // Even then, some low-level ones (like OutOfMemoryError) seem to slip by.
-                    exceptionThrown = e;
                 } finally {
                     initialSearchDone = true;
                 }
@@ -99,16 +85,18 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                         ((ResultCount) result).processedTotal();
                     }
                 }
+            } catch (Throwable e) {
+                // NOTE: we catch Throwable here (while it's normally good practice to
+                //  catch only Exception and derived classes) because we need to know if
+                //  our thread crashed or not. The Throwable will be re-thrown by the
+                //  main thread, so any non-Exception Throwables will then go uncaught
+                //  as they "should".
+                exceptionThrown = e;
             } finally {
                 fullSearchDoneTime = now();
                 fullSearchDone = true;
-                thread = null;
+                future = null;
             }
-        }
-
-        @Override
-        public void uncaughtException(Thread thread, Throwable e) {
-            exceptionThrown = e;
         }
         
     }
@@ -121,9 +109,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     /** Supplier of our result, if the thread hasn't been created yet (cleared by thread) */
     private Supplier<T> supplier;
-    
-    /** Thread running the search */
-    private SearchThread thread;
     
 
     // OUTCOMES
@@ -161,6 +146,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
 
+    private Future<?> future;
+
     /**
      * Construct a cache entry.
      * 
@@ -180,8 +167,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @param block if true, blocks until the result is available
      */
     public void start(boolean block) {
-        thread = new SearchThread(search.fetchAllResults());
-        thread.start();
+        SearchTask runnable = new SearchTask(search.fetchAllResults());
+        future = search.queryInfo().index().blackLab().searchExecutorService().submit(runnable);
         if (block) {
             try {
                 // Wait until result available
@@ -208,10 +195,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     public ThreadPauser threadPauser() {
         return pausing;
-    }
-
-    public Thread thread() {
-        return thread;
     }
 
     public Throwable exceptionThrown() {
@@ -398,10 +381,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (initialSearchDone)
             return false; // cannot cancel
         cancelled = true;
-        Thread theThread = thread; // avoid locking
-        if (interrupt && theThread != null) {
-            theThread.interrupt();
-            thread = null;
+        Future<?> theFuture = future; // avoid locking
+        if (interrupt && theFuture != null) {
+            theFuture.cancel(interrupt);
+            future = null;
         }
         return true;
     }
@@ -424,7 +407,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * Cancel the search, including fetching all hits (if that's being done).
      * 
      * This method exists because the Future contract states that you cannot cancel
-     * a Future after isDone() starts returning true. But out "total counts" are a 
+     * a Future after isDone() starts returning true. But our "total counts" are a 
      * special case, where the thread keeps running to fetch all hits to calculate the
      * total, even when the result object is available (because we want to keep track
      * of the count as it goes).
@@ -445,10 +428,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         }
         if (fullSearchDone)
             return false; // cannot cancel
-        Thread theThread = thread; // avoid locking
-        if (theThread != null) {
-            theThread.interrupt();
-            thread = null;
+        Future<?> theFuture = future; // avoid locking
+        if (theFuture != null) {
+            theFuture.cancel(true);
+            future = null;
         }
         return true;
     }
@@ -543,22 +526,22 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 .startEntry("searchThread")
                 .startMap();
         // Information about thread object, if any
-        Thread thread = entry.thread();
-        if (thread != null) {
-            StackTraceElement[] stackTrace = thread.getStackTrace();
-            StringBuilder stackTraceStr = new StringBuilder();
-            for (StackTraceElement element : stackTrace) {
-                stackTraceStr.append(element.toString()).append("\n");
-            }
-            ds
-                    .entry("name", thread.getName())
-                    .entry("osPriority", thread.getPriority())
-                    .entry("isAlive", thread.isAlive())
-                    .entry("isDaemon", thread.isDaemon())
-                    .entry("isInterrupted", thread.isInterrupted())
-                    .entry("state", thread.getState().toString())
-                    .entry("currentlyExecuting", stackTraceStr.toString());
-        }
+//        Thread thread = entry.thread();
+//        if (thread != null) {
+//            StackTraceElement[] stackTrace = thread.getStackTrace();
+//            StringBuilder stackTraceStr = new StringBuilder();
+//            for (StackTraceElement element : stackTrace) {
+//                stackTraceStr.append(element.toString()).append("\n");
+//            }
+//            ds
+//                    .entry("name", thread.getName())
+//                    .entry("osPriority", thread.getPriority())
+//                    .entry("isAlive", thread.isAlive())
+//                    .entry("isDaemon", thread.isDaemon())
+//                    .entry("isInterrupted", thread.isInterrupted())
+//                    .entry("state", thread.getState().toString())
+//                    .entry("currentlyExecuting", stackTraceStr.toString());
+//        }
         ds.endMap()
                 .endEntry()
                 .endMap();
