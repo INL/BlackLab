@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -34,11 +36,13 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
  */
 public class HitsFromQueryParallel extends Hits {
 
+    private static final boolean DO_PARALLEL = true;
+
     /** Settings such as max. hits to process/count. */
-    SearchSettings searchSettings;
+    private SearchSettings searchSettings;
     
     /** Did we exceed the maximums? */
-    MaxStats maxStats;
+    private MaxStats maxStats;
     
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -82,6 +86,11 @@ public class HitsFromQueryParallel extends Hits {
      * Document the previous hit was in, so we can count separate documents.
      */
     private int previousHitDoc = -1;
+
+    private boolean parallelSpansReaderTasksStarted = false;
+
+    /** If we've started tasks to read spans readers, here's the futures, so we can cancel them if necessary. */
+    private List<Future<?>> futures = new ArrayList<>();
 
     /**
      * Construct a Hits object from a SpanQuery.
@@ -146,12 +155,8 @@ public class HitsFromQueryParallel extends Hits {
                     queryInfo().log(LogLevel.EXPLAIN, "got Spans: " + spans);
                     loggedSpans = true;
                 }
-                spansReaders.add(new SpansReader(spans, context.docBase, hitQueryContext));
-                
-                
-                // TODO: actually start some background tasks fetching hits!
-                
-                
+                if (spans != null)
+                    spansReaders.add(new SpansReader(spans, context.docBase, hitQueryContext));
             }
             currentSpansReader = null;
             itSpansReader = spansReaders.iterator();
@@ -177,6 +182,14 @@ public class HitsFromQueryParallel extends Hits {
      */
     @Override
     protected void ensureResultsRead(int number) {
+        synchronized (this) {
+            if (number < 0 && !parallelSpansReaderTasksStarted) {
+                // We want all the hits. Start tasks to fetch hits from all SpansReaders in parallel.
+                startParallelSpansReaderTasks();
+                parallelSpansReaderTasksStarted = true;
+            }
+        }
+        
         try {
             // Prevent locking when not required
             if (allSourceSpansFullyRead || (number >= 0 && results.size() > number))
@@ -214,8 +227,6 @@ public class HitsFromQueryParallel extends Hits {
     
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
-                    // Get the next hit from the spans, moving to the next
-                    // segment when necessary.
                     Hit hit = null;
                     while (true) {
                         
@@ -235,7 +246,7 @@ public class HitsFromQueryParallel extends Hits {
     
                         // Advance to next hit
                         hitIndexInCurrentSpansReader++;
-                        currentSpansReader.ensureResultsRead(hitIndexInCurrentSpansReader);
+                        currentSpansReader.ensureResultsRead(hitIndexInCurrentSpansReader + 1);
                         List<Hit> spansResults = currentSpansReader.resultsList();
                         if (spansResults.size() <= hitIndexInCurrentSpansReader) {
                             // Done with this one.
@@ -282,6 +293,44 @@ public class HitsFromQueryParallel extends Hits {
             }
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
+        }
+    }
+    
+    /** Read all hits in a number of SpansReaders. */
+    private static final class ReadSpansReaders implements Runnable {
+        private List<SpansReader> readers;
+
+        public ReadSpansReaders(List<SpansReader> readers) {
+            this.readers = readers;
+        }
+        
+        @Override
+        public void run() {
+            for (SpansReader reader: readers) {
+                reader.ensureResultsRead(-1);
+            }
+        }
+    }
+    
+    private void startParallelSpansReaderTasks() {
+        if (DO_PARALLEL) {
+            int maxTasksPerSearch = 3; // TODO: make configurable
+            int tasksToStart = Math.min(maxTasksPerSearch, spansReaders.size());
+            int spansReadersPerTask = (spansReaders.size() + tasksToStart - 1) / tasksToStart;
+            int currentSpansReader = 0;
+            ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
+            for (int i = 0; i < tasksToStart; i++) {
+                List<SpansReader> readers = new ArrayList<>();
+                for (int j = 0; j < spansReadersPerTask && currentSpansReader < spansReaders.size(); j++) {
+                    readers.add(spansReaders.get(currentSpansReader));
+                    currentSpansReader++;
+                }
+                if (!readers.isEmpty()) {
+                    ReadSpansReaders task = new ReadSpansReaders(readers);
+                    futures.add(executorService.submit(task));
+                }
+            }
+            System.err.println("PARALLEL: Started " + tasksToStart + " tasks with " + spansReadersPerTask + " spansReaders each (total " + spansReaders.size() + " readers)");
         }
     }
 

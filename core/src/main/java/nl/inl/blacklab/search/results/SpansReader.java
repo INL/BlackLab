@@ -30,7 +30,7 @@ public class SpansReader {
     private List<Hit> results = new ArrayList<>();
 
     /** Our captured groups, or null if we have none. */
-    protected CapturedGroupsImpl capturedGroups;
+    protected CapturedGroupsImpl capturedGroups = null;
     
     /** Did we completely read our Spans object? */
     private boolean spansFullyRead = true;
@@ -52,11 +52,25 @@ public class SpansReader {
      * @param searchSettings search settings
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected SpansReader(BLSpans spans, int docBase, HitQueryContext hitQueryContext) throws WildcardTermTooBroad {
-        this.hitQueryContext = hitQueryContext;
+    protected SpansReader(BLSpans spans, int docBase, HitQueryContext hitQueryContext) {
         this.docBase = docBase;
         this.spans = spans;
-        spansFullyRead = false;
+        
+        // Update the hit query context with our new spans,
+        // and notify the spans of the hit query context
+        this.hitQueryContext = hitQueryContext.copyWith(spans);
+        spans.setHitQueryContext(this.hitQueryContext); // let captured groups register themselves
+        if (hitQueryContext.numberOfCapturedGroups() > 0) {
+            capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+        }
+        
+        int doc;
+        try {
+            doc = spans.nextDoc();
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+        spansFullyRead = doc == DocIdSetIterator.NO_MORE_DOCS;
     }
 
     public boolean isInterrupted() {
@@ -125,30 +139,16 @@ public class SpansReader {
                     // Pause if asked
                     threadPauser.waitIfPaused();
     
-                    // Update the hit query context with our new spans,
-                    // and notify the spans of the hit query context
-                    hitQueryContext.setSpans(spans);
-                    spans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-                    if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                        capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
-                    }
-
-                    int doc = spans.nextDoc();
-                    if (doc == DocIdSetIterator.NO_MORE_DOCS) {
-                        // Spans exhausted
-                        spansFullyRead = true;
-                    } else {
-                        // Advance to next hit
-                        int start = spans.nextStartPosition();
-                        if (start == Spans.NO_MORE_POSITIONS) {
-                            doc = spans.nextDoc();
-                            if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                                // Go to first hit in doc
-                                start = spans.nextStartPosition();
-                            } else {
-                                // Spans exhausted
-                                spansFullyRead = true;
-                            }
+                    // Advance to next hit
+                    int start = spans.nextStartPosition();
+                    if (start == Spans.NO_MORE_POSITIONS) {
+                        int doc = spans.nextDoc();
+                        if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                            // Go to first hit in doc
+                            start = spans.nextStartPosition();
+                        } else {
+                            // Spans exhausted
+                            spansFullyRead = true;
                         }
                     }
 
