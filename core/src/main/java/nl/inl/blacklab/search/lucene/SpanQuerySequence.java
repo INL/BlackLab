@@ -36,7 +36,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.BlackLabIndexRegistry;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -294,7 +294,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        BlackLabIndex index = BlackLabIndexRegistry.fromIndexReader(reader);
+        BlackLabIndex index = BlackLab.fromIndexReader(reader);
         boolean canDoNfaMatching = false;
         if (index instanceof BlackLabIndexImpl) {
             canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();
@@ -337,7 +337,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        BlackLabIndex index = BlackLabIndexRegistry.fromIndexReader(reader);
+        BlackLabIndex index = BlackLab.fromIndexReader(reader);
         boolean canDoNfaMatching = false;
         if (index instanceof BlackLabIndexImpl) {
             canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();

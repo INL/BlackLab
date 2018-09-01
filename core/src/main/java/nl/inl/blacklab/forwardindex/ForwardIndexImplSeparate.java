@@ -13,7 +13,6 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -35,7 +34,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
-        executorService = BlackLabIndexRegistry.initializationExecutorService();
+        executorService = index.blackLab().initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;

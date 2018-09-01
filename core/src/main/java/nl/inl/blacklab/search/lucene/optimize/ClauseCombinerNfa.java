@@ -6,7 +6,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.BlackLabIndexRegistry;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -165,7 +165,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLabIndexRegistry.fromIndexReader(reader),
+            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
                     right.getField());
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, 1);
             return new SpanQueryFiSeq(left, false, nfaTwoWay, right, 1, fiAccessor);
@@ -177,7 +177,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLabIndexRegistry.fromIndexReader(reader),
+        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
                 left.getField());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
         return new SpanQueryFiSeq(right, true, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);

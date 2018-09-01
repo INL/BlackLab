@@ -56,6 +56,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -531,7 +532,7 @@ public class QueryTool {
         }
 
         // Create the BlackLab index object
-        index = BlackLabIndex.open(indexDir);
+        index = BlackLab.openIndex(indexDir);
         contentsField = index.mainAnnotatedField();
 
         if (in == null) {

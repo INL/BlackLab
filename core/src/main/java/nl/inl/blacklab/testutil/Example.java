@@ -28,6 +28,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -114,7 +115,7 @@ public class Example {
         }
 
         // Create the BlackLab index object
-        index = BlackLabIndex.open(indexDir);
+        index = BlackLab.openIndex(indexDir);
         try {
 
             // Find the word "the"

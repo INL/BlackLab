@@ -16,8 +16,8 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocImpl;
@@ -57,6 +57,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private SearchCache cache = new SearchCacheDummy();
 
+    private BlackLab blackLab;
+
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata();
@@ -65,7 +67,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
-        BlackLabIndexRegistry.registerSearcher(null, this);
+        blackLab = BlackLab.implicitInstance();
+        blackLab.registerSearcher(null, this);
     }
     
     public QueryInfo createDefaultQueryInfo() {
@@ -74,7 +77,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public void close() {
-        BlackLabIndexRegistry.removeSearcher(this);
+        blackLab.removeSearcher(this);
     }
 
     @Override
@@ -188,7 +191,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ForwardIndex forwardIndex(AnnotatedField field) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -255,5 +257,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "()";
+    }
+    
+    @Override
+    public BlackLab blackLab() {
+        return blackLab;
     }
 }

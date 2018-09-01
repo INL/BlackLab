@@ -33,7 +33,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @throws ErrorOpeningIndex if the index could not be opened
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, (File) null);
+        return new BlackLabIndexImpl(BlackLab.implicitInstance(), indexDir, true, createNewIndex, (File) null);
     }
 
     /**
@@ -51,7 +51,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
             throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, indexTemplateFile);
+        return new BlackLabIndexImpl(BlackLab.implicitInstance(), indexDir, true, createNewIndex, indexTemplateFile);
     }
 
     /**
@@ -70,7 +70,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, true, createNewIndex, config);
+        return new BlackLabIndexImpl(BlackLab.implicitInstance(), indexDir, true, createNewIndex, config);
     }
 
     /**

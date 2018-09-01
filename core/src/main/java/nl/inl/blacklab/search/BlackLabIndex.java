@@ -66,27 +66,30 @@ public interface BlackLabIndex extends Closeable {
 
     /**
      * Open an index for reading ("search mode").
-     *
-     * @param indexDir the index directory
-     * @return index object
-     * @throw IndexTooOld if the index format is no longer supported
-     * @throws ErrorOpeningIndex on any error
-     */
-    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, false, false, (File) null);
-    }
-
-    /**
-     * Open an index for reading ("search mode").
-     *
+     * 
+     * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @param settings default search settings
      * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir, SearchSettings settings) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
+    static BlackLabIndex open(BlackLab blackLab, File indexDir) throws ErrorOpeningIndex {
+        return new BlackLabIndexImpl(blackLab, indexDir, false, false, (File) null);
+    }
+
+    /**
+     * Open an index for reading ("search mode").
+     *
+     * @param indexDir the index directory
+     * @return index object
+     * @throw IndexTooOld if the index format is no longer supported
+     * @throws ErrorOpeningIndex on any error
+     * @deprecated use static BlackLab.openIndex() or instantiate BlackLab and call open()
+     */
+    @Deprecated
+    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
+        return BlackLab.openIndex(indexDir);
     }
 
     ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
@@ -548,5 +551,11 @@ public interface BlackLabIndex extends Closeable {
     void setCache(SearchCache cache);
 
     SearchCache cache();
+
+    /**
+     * Get the BlackLab instance that created us.
+     * @return BlackLab instance
+     */
+    BlackLab blackLab();
 
 }

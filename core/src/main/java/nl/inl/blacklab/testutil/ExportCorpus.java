@@ -9,6 +9,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
@@ -51,7 +52,7 @@ public class ExportCorpus {
 
     public ExportCorpus(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
-        index = BlackLabIndex.open(indexDir);
+        index = BlackLab.openIndex(indexDir);
         System.out.println("Done.");
     }
 

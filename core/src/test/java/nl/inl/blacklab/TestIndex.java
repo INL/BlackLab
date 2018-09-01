@@ -19,6 +19,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
@@ -139,7 +140,7 @@ public class TestIndex {
             }
 
             // Create the BlackLab index object
-            index = BlackLabIndex.open(indexDir, null);
+            index = BlackLab.openIndex(indexDir);
             word = index.mainAnnotatedField().annotation("word");
         } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);

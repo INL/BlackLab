@@ -252,6 +252,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //---------------------------------------------------------------
     
 
+    /** BlackLab instance used to create us */
+    private BlackLab blackLab;
+
     /** The collator to use for sorting. Defaults to English collator. */
     private Collator collator = BlackLabIndexImpl.defaultCollator;
 
@@ -323,14 +326,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //---------------------------------------------------------------
     
 
-    public BlackLabIndexImpl(SearchSettings settings) {
-        searchSettings = settings == null ? SearchSettings.defaults() : settings;
-    }
-
-    public BlackLabIndexImpl() {
-        this(null);
-    }
-
     /**
      * Open an index.
      *
@@ -343,8 +338,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
-        this();
+    BlackLabIndexImpl(BlackLab blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
+        this.blackLab = blackLab;
+        searchSettings = SearchSettings.defaults();
         try {
             this.indexMode = indexMode;
 
@@ -374,7 +370,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /**
      * Open an index.
-     *
+     * 
+     * @param blackLab our BlackLab instance 
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -382,24 +379,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param indexTemplateFile index template file to use to create index
      * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile)
-            throws ErrorOpeningIndex {
-        this(indexDir, indexMode, createNewIndex, indexTemplateFile, null);
-    }
-
-    /**
-     * Open an index.
-     *
-     * @param indexDir the index directory
-     * @param indexMode if true, open in index mode; if false, open in search mode.
-     * @param createNewIndex if true, delete existing index in this location if it
-     *            exists.
-     * @param indexTemplateFile index template file to use to create index
-     * @param settings default search settings
-     * @throws ErrorOpeningIndex
-     */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, SearchSettings settings) throws ErrorOpeningIndex {
-        this(settings);
+    BlackLabIndexImpl(BlackLab blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
+        this.blackLab = blackLab;
+        searchSettings = SearchSettings.defaults();
         this.indexMode = indexMode;
 
         try {
@@ -540,7 +522,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
-        BlackLabIndexRegistry.initializationExecutorService().execute(new Runnable() {
+        blackLab.initializationExecutorService().execute(new Runnable() {
             @Override
             public void run() {
                 contentStore.initialize();
@@ -672,7 +654,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
         // Register ourselves in the mapping from IndexReader to Searcher,
         // so we can find the corresponding Searcher object from within Lucene code
-        BlackLabIndexRegistry.registerSearcher(reader, this);
+        blackLab.registerSearcher(reader, this);
 
         // Detect and open the ContentStore for the contents field
         if (!createNewIndex) {
@@ -757,20 +739,33 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void close() {
         try {
-            reader.close();
+            if (reader != null) {
+                reader.close();
+                reader = null;
+            }
             if (indexWriter != null) {
                 indexWriter.commit();
                 indexWriter.close();
+                indexWriter = null;
             }
 
-            contentStores.close();
+            if (contentStores != null) {
+                contentStores.close();
+                contentStores = null;
+            }
 
             // Close the forward indices
-            for (ForwardIndex fi : forwardIndices.values()) {
-                fi.close();
+            if (forwardIndices != null) {
+                for (ForwardIndex fi : forwardIndices.values()) {
+                    fi.close();
+                }
+                forwardIndices = null;
             }
 
-            BlackLabIndexRegistry.removeSearcher(this);
+            if (blackLab != null) {
+                blackLab.removeSearcher(this);
+                blackLab = null;
+            }
 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -1004,5 +999,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "(" + indexLocation + ")";
+    }
+    
+    @Override
+    public BlackLab blackLab() {
+        return blackLab;
     }
 }

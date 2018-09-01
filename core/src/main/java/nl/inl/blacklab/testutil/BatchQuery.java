@@ -4,6 +4,7 @@ import java.io.File;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -66,32 +67,33 @@ public class BatchQuery {
         }
 
         System.err.print("Opening index... ");
-        BlackLabIndex index = BlackLabIndex.open(indexDir);
-        System.err.println("done.");
-
-        System.out.print("Query\tSearch Time");
-        if (determineTotalHits) {
-            System.out.print("\t# Hits\tTotal Time");
-        }
-        System.out.println("");
-
-        for (String query : FileUtil.readLines(inputFile)) {
-            query = query.trim();
-            if (query.length() == 0 || query.charAt(0) == '#')
-                continue; // skip empty lines and #-comments
-            try {
-                Timer t = new Timer();
-                System.out.print(query + "\t");
-                TextPattern tp = CorpusQueryLanguageParser.parse(query);
-                Hits hits = index.find(QueryInfo.create(index), tp, null, null);
-                System.out.print(t.elapsed());
-                if (determineTotalHits) {
-                    System.out.print("\t" + hits.size() + "\t" + t.elapsed());
+        try (BlackLabIndex index = BlackLab.openIndex(indexDir)) {
+            System.err.println("done.");
+    
+            System.out.print("Query\tSearch Time");
+            if (determineTotalHits) {
+                System.out.print("\t# Hits\tTotal Time");
+            }
+            System.out.println("");
+    
+            for (String query : FileUtil.readLines(inputFile)) {
+                query = query.trim();
+                if (query.length() == 0 || query.charAt(0) == '#')
+                    continue; // skip empty lines and #-comments
+                try {
+                    Timer t = new Timer();
+                    System.out.print(query + "\t");
+                    TextPattern tp = CorpusQueryLanguageParser.parse(query);
+                    Hits hits = index.find(QueryInfo.create(index), tp, null, null);
+                    System.out.print(t.elapsed());
+                    if (determineTotalHits) {
+                        System.out.print("\t" + hits.size() + "\t" + t.elapsed());
+                    }
+                    System.out.println("");
+                } catch (Exception e) {
+                    e.printStackTrace(System.err);
+                    System.err.println("Error with query " + query + "; skipping...");
                 }
-                System.out.println("");
-            } catch (Exception e) {
-                e.printStackTrace(System.err);
-                System.err.println("Error with query " + query + "; skipping...");
             }
         }
     }
