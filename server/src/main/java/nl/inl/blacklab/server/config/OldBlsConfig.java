@@ -380,7 +380,8 @@ public class OldBlsConfig extends YamlJsonReader {
 
     private BLConfigLog getBLConfigLog() throws IOException {
         BLConfigLog config = new BLConfigLog();
-        config.setSqliteDatabase(logDatabase.getCanonicalPath());
+        if (logDatabase != null)
+            config.setSqliteDatabase(logDatabase.getCanonicalPath());
         BLConfigTrace trace = new BLConfigTrace();
         trace.setQueryExecution(BlackLabIndexImpl.traceQueryExecution());
         trace.setIndexOpening(BlackLabIndexImpl.traceIndexOpening());
@@ -393,7 +394,7 @@ public class OldBlsConfig extends YamlJsonReader {
     private String getBlsUserIndexDir() throws IOException {
         // User collections dir, these are like collections, but within a user's directory
         File userCollectionsDir = JsonUtil.getFileProp(properties, "userCollectionsDir", null);
-        return userCollectionsDir.getCanonicalPath();
+        return userCollectionsDir == null ? null : userCollectionsDir.getCanonicalPath();
     }
 
     private List<String> getBlsConfigIndexes() throws IOException {
@@ -406,7 +407,8 @@ public class OldBlsConfig extends YamlJsonReader {
                 Entry<String, JsonNode> entry = it.next();
                 JsonNode indexConfig = entry.getValue();
                 File dir = JsonUtil.getFileProp(indexConfig, "dir", null);
-                config.add(dir.getCanonicalPath());
+                if (dir != null)
+                    config.add(dir.getCanonicalPath());
             }
         }
 

@@ -443,6 +443,8 @@ public class IndexManager {
                     @Override
                     public boolean accept(File pathName) {
                         try {
+                            if (userCollectionsDir == null)
+                                return true;
                             return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
                         } catch (IOException e) {
                             throw new RuntimeException(e);
