@@ -63,7 +63,7 @@ public class AuthRequestAttribute {
 
         // Overridden in URL?
         SearchManager searchMan = ((BlackLabServer) servlet).getSearchManager();
-        if (searchMan.config().overrideUserId(request.getRemoteAddr()) && request.getParameter("userid") != null) {
+        if (searchMan.config().getAuthentication().isOverrideIp(request.getRemoteAddr()) && request.getParameter("userid") != null) {
             userId = request.getParameter("userid");
         }
 

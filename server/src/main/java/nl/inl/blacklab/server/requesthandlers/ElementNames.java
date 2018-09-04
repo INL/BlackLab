@@ -38,5 +38,9 @@ public class ElementNames {
             annotation = "annotation";
         }
     }
+
+    public static boolean isUseOldElementNames() {
+        return annotatedField.equals("complexField");
+    }
     
 }

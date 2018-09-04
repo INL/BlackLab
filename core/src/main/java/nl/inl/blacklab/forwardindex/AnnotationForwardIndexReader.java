@@ -62,7 +62,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         } else {
             throw new IllegalArgumentException("No TOC found, and not in index mode!");
         }
-        logger.debug("Opened forward index " + dir);
+        //logger.debug("Opened forward index " + dir);
     }
 
     /**

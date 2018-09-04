@@ -106,7 +106,7 @@ public class QueryTool {
 
     static boolean batchMode = false;
 
-    /** Our BlackLab Searcher object. */
+    /** Our BlackLab index object. */
     BlackLabIndex index;
 
     /** The hits that are the result of our query. */
@@ -322,6 +322,7 @@ public class QueryTool {
      * @throws ErrorOpeningIndex if index could not be opened
      */
     public static void main(String[] args) throws ErrorOpeningIndex {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         LogUtil.setupBasicLoggingConfig();
 
@@ -490,7 +491,7 @@ public class QueryTool {
             throws CorruptIndexException {
         this.index = index;
         this.contentsField = index.mainAnnotatedField();
-        shouldCloseSearcher = false; // caller is responsible
+        shouldCloseIndex = false; // caller is responsible
 
         this.in = in;
         this.out = out;
@@ -503,7 +504,7 @@ public class QueryTool {
             printProgramHead();
         }
 
-        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -540,7 +541,7 @@ public class QueryTool {
             this.err = out; // send errors to the same output writer in web mode
         }
 
-        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -558,16 +559,16 @@ public class QueryTool {
     }
 
     /**
-     * Switch to a different Searcher.
+     * Switch to a different index.
      * 
-     * @param index the new Searcher to use
+     * @param index the new BlackLabIndex to use
      */
-    public void setSearcher(BlackLabIndex index) {
-        if (shouldCloseSearcher)
+    public void setIndex(BlackLabIndex index) {
+        if (shouldCloseIndex)
             index.close();
         this.index = index;
         contentsField = index.mainAnnotatedField();
-        shouldCloseSearcher = false; // caller is responsible
+        shouldCloseIndex = false; // caller is responsible
 
         // Reset results
         hits = null;
@@ -1193,8 +1194,8 @@ public class QueryTool {
     /** Desired context size */
     private ContextSize contextSize;
 
-    /** Are we responsible for closing the Searcher? */
-    private boolean shouldCloseSearcher = true;
+    /** Are we responsible for closing the BlackLabIndex? */
+    private boolean shouldCloseIndex = true;
 
     /**
      * Sort hits by the specified property.
@@ -1367,10 +1368,10 @@ public class QueryTool {
     }
 
     /**
-     * Close the Searcher object.
+     * Close the BlackLabIndex object.
      */
     private void cleanup() {
-        if (shouldCloseSearcher)
+        if (shouldCloseIndex)
             index.close();
     }
 

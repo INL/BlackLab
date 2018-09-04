@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.search;
+package nl.inl.blacklab.server.config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -7,9 +7,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.server.util.JsonUtil;
 
-public class BlsConfigCacheAndPerformance {
+public class OldBlsConfigCacheAndPerformance {
 
-    private static final Logger logger = LogManager.getLogger(BlsConfigCacheAndPerformance.class);
+    private static final Logger logger = LogManager.getLogger(OldBlsConfigCacheAndPerformance.class);
 
     /** Maximum size in MB to target, or -1 for no limit. NOT IMPLEMENTED YET. */
     private long maxSizeMegs = -1;
@@ -92,7 +92,7 @@ public class BlsConfigCacheAndPerformance {
 
     private long maxSearchTimeMs;
 
-    public BlsConfigCacheAndPerformance(JsonNode settings) {
+    public OldBlsConfigCacheAndPerformance(JsonNode settings) {
         this();
 
         if (settings != null) {
@@ -146,7 +146,7 @@ public class BlsConfigCacheAndPerformance {
 
     }
 
-    public BlsConfigCacheAndPerformance() {
+    public OldBlsConfigCacheAndPerformance() {
         maxJobAgeSec = 3600;
         maxNumberOfJobs = 20;
         maxSizeMegs = -1;
@@ -219,6 +219,30 @@ public class BlsConfigCacheAndPerformance {
 
     public long getMaxSearchTimeMs() {
         return maxSearchTimeMs;
+    }
+
+    public BLSConfigCache getBlsConfigCache() {
+        BLSConfigCache result = new BLSConfigCache();
+        result.setClientCacheTimeSec(getClientCacheTimeSec());
+        result.setMaxJobAgeSec(getMaxJobAgeSec());
+        result.setMaxNumberOfJobs(getMaxNumberOfJobs());
+        result.setMaxSizeMegs((int)getMaxSizeMegs());
+        result.setMinFreeMemForSearchMegs(getMinFreeMemForSearchMegs());
+        result.setTargetFreeMemMegs((int)getMinFreeMemTargetMegs());
+        return result;
+    }
+
+    public BLSConfigPerformance getBlsConfigPerformance() {
+        BLSConfigPerformance result = new BLSConfigPerformance();
+        result.setMaxConcurrentSearches(getMaxConcurrentSearches());
+        result.setMaxPausedSearches(getMaxPausedSearches());
+        result.setMaxRunningJobsPerUser(getMaxRunningJobsPerUser());
+        result.setMaxThreadsPerSearch(2);
+        result.setPausingEnabled(enableThreadPausing());
+        result.setAutodetectMaxConcurrent(shouldAutoDetectMaxConcurrent());
+        result.setAbandonedCountPauseTimeSec(abandonedCountPauseTimeSec);
+        result.setAbandonedCountAbortTimeSec(abandonedCountAbortTimeSec);
+        return result;
     }
 
 }

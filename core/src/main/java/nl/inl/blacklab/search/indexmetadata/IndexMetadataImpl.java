@@ -774,17 +774,17 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
                 JsonNode groups = entry.getValue();
-                List<AnnotationGroup> annotationsGroups = new ArrayList<>();
+                List<AnnotationGroup> annotationGroups = new ArrayList<>();
                 for (int i = 0; i < groups.size(); i++) {
                     JsonNode group = groups.get(i);
                     warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
                     String groupName = Json.getString(group, "name", "UNKNOWN");
                     List<String> annotations = Json.getListOfStrings(group, "annotations");
                     boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingAnnotations", false);
-                    annotationsGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
+                    annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
                             addRemainingAnnotations));
                 }
-                annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationsGroups));
+                annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
             }
         }
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
@@ -1224,9 +1224,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
         // Add annotated field annotation groupings info
         for (ConfigAnnotationGroups cfgField: corpusConfig.getAnnotationGroups().values()) {
-            ObjectNode annotatedField = annotGroupsPerField.putObject(cfgField.getName());
+            ArrayNode annotGroups = annotGroupsPerField.putArray(cfgField.getName());
             if (cfgField.getGroups().size() > 0) {
-                ArrayNode annotGroups = annotatedField.putArray("groups");
                 for (ConfigAnnotationGroup cfgAnnotGroup: cfgField.getGroups()) {
                     ObjectNode annotGroup = annotGroups.addObject();
                     annotGroup.put("name", cfgAnnotGroup.getName());

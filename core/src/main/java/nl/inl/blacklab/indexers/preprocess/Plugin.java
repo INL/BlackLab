@@ -1,8 +1,6 @@
 package nl.inl.blacklab.indexers.preprocess;
 
-import java.util.Optional;
-
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Map;
 
 import nl.inl.blacklab.exceptions.PluginException;
 
@@ -13,6 +11,22 @@ import nl.inl.blacklab.exceptions.PluginException;
  * A plugin must define a no-argument constructor.
  */
 public interface Plugin {
+
+    /**
+     * Read a value from our config if present.
+     *
+     * @param config root node of our config object
+     * @param nodeName node to read
+     * @return the value as a string
+     * @throws PluginException on missing key or null value
+     */
+    static String configStr(Map<String, String> config, String nodeName) throws PluginException {
+        String value = config.get(nodeName);
+        if (value == null)
+            throw new PluginException("Missing configuration value " + nodeName);
+
+        return value;
+    }
 
     /**
      * Return a globally unique id for this plugin class. This ID must be constant
@@ -38,5 +52,15 @@ public interface Plugin {
      * @param config the config settings for this plugin
      * @throws PluginException
      */
-    void init(Optional<ObjectNode> config) throws PluginException;
+    void init(Map<String, String> config) throws PluginException;
+    
+    /**
+     * Does this plugin require configuration parameters?
+     * 
+     * If not, the plugin will always be initialized. If so, it will only
+     * be initialized if configuration parameters were specified. 
+     * 
+     * @return true if parameters are required, false if not
+     */
+    boolean needsConfig();
 }

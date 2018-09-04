@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-
 /**
  * Represents the size of the context around a hit.
  * 
@@ -24,10 +22,6 @@ public class ContextSize {
     
     public static ContextSize hitOnly() {
         return get(0);
-    }
-
-    public static ContextSize defaultSize() {
-        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
     }
     
 	private int left;

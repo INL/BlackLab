@@ -10,6 +10,7 @@ While BlackLab 2.0 doesn't include significant changes to BlackLab Server, or to
 
 ## Terminology
 
+- "Searcher" -> "BlackLab index"
 - "complex field" -> "annotated field"
 - "property on a complex field" -> "annotation on an annotated field"
 - "an indexed alternative for a property" (e.g. case- and diacritics-insensitive) -> "an indexed sensitivity for an annotation"
@@ -59,3 +60,8 @@ Index structure:
 Packages:
 - nl.inl.blacklab.search.indexstructure -> .search.indexmetadata
 - nl.inl.blacklab.externalstorage -> .contentstore
+
+# Migrating BlackLab programs
+
+Methods:
+- instead of BlackLabIndex.open(), use BlackLab.open()

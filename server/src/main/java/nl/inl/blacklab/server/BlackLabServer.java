@@ -1,20 +1,14 @@
 package nl.inl.blacklab.server;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
@@ -23,16 +17,15 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.search.ConfigReader;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.config.OldBlsConfig;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -46,8 +39,6 @@ import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
 
 public class BlackLabServer extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
@@ -74,102 +65,8 @@ public class BlackLabServer extends HttpServlet {
         logger.info("BlackLab Server ready.");
     }
     
-    /**
-     * Finds and opens a config file to be read.
-     */
-    private static class ConfigFileReader extends Reader {
-        
-        private static final List<String> exts = Arrays.asList("json", "yaml", "yml");
-
-        private String configFileRead = "(none)";
-        
-        private Reader configFileReader;
-
-        private boolean configFileIsJson;
-
-        public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
-            configFileIsJson = false;
-
-            File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
-            if (configFile != null && configFile.canRead()) {
-                logger.debug("Reading configuration file " + configFile);
-                try {
-                    configFileReader = FileUtil.openForReading(configFile, CONFIG_ENCODING);
-                    configFileRead = configFile.getAbsolutePath();
-                } catch (FileNotFoundException e) {
-                    throw new ConfigurationException("Config file not found", e);
-                }
-                configFileIsJson = configFile.getName().endsWith(".json");
-            }
-
-            if (configFileReader == null) {
-                logger.debug(configFileName + ".(json|yaml) not found in webapps dir; searching classpath...");
-
-                for (String ext : exts) {
-                    InputStream is = getClass().getClassLoader().getResourceAsStream(configFileName + "." + ext);
-                    if (is == null)
-                        continue;
-
-                    logger.debug("Reading configuration file from classpath: " + configFileName);
-                    configFileReader = new BufferedReader(new InputStreamReader(is, CONFIG_ENCODING));
-                    configFileIsJson = ext.equals("json");
-                    configFileRead = configFileName + "." + ext + " (from classpath)";
-                    break;
-                }
-            }
-
-            if (configFileReader == null) {
-                String descDirs = StringUtils.join(searchDirs, ", ");
-                throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
-                        + ", or on classpath. Please place " +
-                        "blacklab-server.json in one of these locations containing at least the following:\n" +
-                        "{\n" +
-                        "  \"indexCollections\": [\n" +
-                        "    \"/my/indices\" \n" +
-                        "  ]\n" +
-                        "}\n\n" +
-                        "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
-            }
-        }
-
-        @Override
-        public void close() throws IOException {
-            configFileReader.close();
-        }
-
-        public boolean isJson() {
-            return configFileIsJson;
-        }
-
-        public String getConfigFileRead() {
-            return configFileRead;
-        }
-
-        @Override
-        public int read(char[] arg0, int arg1, int arg2) throws IOException {
-            return configFileReader.read(arg0, arg1, arg2);
-        }
-
-        /**
-         * Read JSON or YAML from config file, depending on type.
-         * 
-         * @return config structure read
-         * @throws JsonProcessingException on Json error
-         * @throws IOException on any I/O error
-         */
-        public JsonNode getConfig() throws JsonProcessingException, IOException {
-            ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            return mapper.readTree(configFileReader);
-        }
-        
-    }
-
     private void readConfig() throws BlsException {
         try {
-            // load blacklab's internal config before doing anything
-            // we will later overwrite some settings from our own config
-            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
-            ConfigReader.loadDefaultConfig();
 
             File servletPath = new File(getServletContext().getRealPath("."));
             logger.debug("Running from dir: " + servletPath);
@@ -178,18 +75,27 @@ public class BlackLabServer extends HttpServlet {
 
             List<File> searchDirs = new ArrayList<>();
             searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
-            searchDirs.addAll(ConfigReader.getDefaultConfigDirs());
-            try (ConfigFileReader configFile = new ConfigFileReader(searchDirs, configFileName)) {
-                try {
-                    searchManager = new SearchManager(configFile.getConfig());
-                } catch (IOException e) {
-                    throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
+            searchDirs.addAll(BlackLab.defaultConfigDirs());
+            ConfigFileReader configFile = new ConfigFileReader(searchDirs, configFileName);
+            try {
+                BLSConfig config;
+                if (configFile.isOldConfig()) {
+                    // Convert old config to new config structure
+                    config = new OldBlsConfig(configFile.getJsonConfig()).getNewConfig();
+                } else {
+                    config = configFile.getConfig();
                 }
+                // load blacklab's internal config before doing anything
+                // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
+                BlackLab.setConfig(config.getBLConfig());
+                searchManager = new SearchManager(config);
+            } catch (IOException e) {
+                throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
             }
             
             // Open log database
             try {
-                File dbFile = searchManager.config().logDatabase();
+                File dbFile = new File(searchManager.config().getLog().getSqliteDatabase());
                 if (dbFile != null) {
                     String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
                     Class.forName("org.sqlite.JDBC");
@@ -251,7 +157,7 @@ public class BlackLabServer extends HttpServlet {
     @Override
     protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         super.doOptions(req, resp);
-        String allowOrigin = searchManager == null ? "*" : searchManager.config().getAccessControlAllowOrigin();
+        String allowOrigin = searchManager == null ? "*" : searchManager.config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null) {
         	resp.addHeader("Access-Control-Allow-Origin", allowOrigin);
         	resp.addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -283,7 +189,7 @@ public class BlackLabServer extends HttpServlet {
                     responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
                     responseObject.setContentType("text/xml");
                     String allowOrigin = searchManager == null ? "*"
-                            : searchManager.config().getAccessControlAllowOrigin();
+                            : searchManager.config().getProtocol().getAccessControlAllowOrigin();
                     if (allowOrigin != null)
                         responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
                     ServletUtil.writeCacheHeaders(responseObject, 0);
@@ -306,7 +212,7 @@ public class BlackLabServer extends HttpServlet {
         }
 
         // === Create RequestHandler object
-        boolean debugMode = searchManager.config().isDebugMode(request.getRemoteAddr());
+        boolean debugMode = searchManager.config().getDebug().isDebugMode(request.getRemoteAddr());
 
         // The outputType handling is a bit iffy:
         // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
@@ -319,7 +225,7 @@ public class BlackLabServer extends HttpServlet {
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
-            outputType = searchManager.config().defaultOutputType();
+            outputType = ServletUtil.getOutputTypeFromString(searchManager.config().getProtocol().getDefaultOutputType(), DataFormat.XML);
 
         // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
         searchManager.getAuthSystem().persistUser(this, request, responseObject, requestHandler.getUser());
@@ -328,7 +234,7 @@ public class BlackLabServer extends HttpServlet {
         String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");
         boolean isJsonp = callbackFunction.length() > 0;
 
-        int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().clientCacheTimeSec() : 0;
+        int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
 
         boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
@@ -338,7 +244,7 @@ public class BlackLabServer extends HttpServlet {
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
         DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
-        ds.setOmitEmptyProperties(searchManager.config().isOmitEmptyProperties());
+        ds.setOmitEmptyProperties(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
@@ -376,7 +282,7 @@ public class BlackLabServer extends HttpServlet {
             responseObject.setStatus(httpCode);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
         responseObject.setContentType(ServletUtil.getContentType(outputType));
-        String allowOrigin = searchManager.config().getAccessControlAllowOrigin();
+        String allowOrigin = searchManager.config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null)
             responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
         ServletUtil.writeCacheHeaders(responseObject, cacheTime);

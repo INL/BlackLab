@@ -48,7 +48,6 @@ import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.Forbidden;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSettings;
@@ -126,7 +125,7 @@ public class SearchParameters {
                 continue;
             param.put(name, value);
         }
-        param.setDebugMode(searchMan.config().isDebugMode(request.getRemoteAddr()));
+        param.setDebugMode(searchMan.config().getDebug().isDebugMode(request.getRemoteAddr()));
         return param;
     }
 
@@ -365,27 +364,29 @@ public class SearchParameters {
     private SearchSettings getSearchSettings() {
         int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
         int maxRetrieve = getInteger("maxretrieve");
-        if (searchManager.config().maxHitsToRetrieveAllowed() >= 0
-                && maxRetrieve > searchManager.config().maxHitsToRetrieveAllowed()) {
-            maxRetrieve = searchManager.config().maxHitsToRetrieveAllowed();
+        int maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
+        if (maxHitsToProcessAllowed >= 0
+                && maxRetrieve > maxHitsToProcessAllowed) {
+            maxRetrieve = maxHitsToProcessAllowed;
         }
         int maxCount = getInteger("maxcount");
-        if (searchManager.config().maxHitsToCountAllowed() >= 0
-                && maxCount > searchManager.config().maxHitsToCountAllowed()) {
-            maxCount = searchManager.config().maxHitsToCountAllowed();
+        int maxHitsToCountAllowed = searchManager.config().getParameters().getCountHits().getMax();
+        if (maxHitsToCountAllowed >= 0
+                && maxCount > maxHitsToCountAllowed) {
+            maxCount = maxHitsToCountAllowed;
         }
         return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
     }
 
     WindowSettings getWindowSettings() {
         int first = getInteger("first");
-        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().maxPageSize());
+        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().getParameters().getPageSize().getMax());
         return new WindowSettings(first, size);
     }
 
     public ContextSettings getContextSettings() {
         ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
-        int maxContextSize = searchManager.config().maxContextSize();
+        int maxContextSize = searchManager.config().getParameters().getContextSize().getMax();
         if (contextSize.left() > maxContextSize) {
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);
@@ -586,11 +587,7 @@ public class SearchParameters {
             return hitsSample().docs(-1);
         Query docFilterQuery = getFilterQuery();
         if (pattern == null && docFilterQuery == null) {
-            // All docs, if allowed
-            if (searchManager.config().isAllDocsQueryAllowed())
-                docFilterQuery = new MatchAllDocsQuery();
-            else
-                throw new Forbidden("You must specify at least a filter query.");
+            docFilterQuery = new MatchAllDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
         return search.find(docFilterQuery);

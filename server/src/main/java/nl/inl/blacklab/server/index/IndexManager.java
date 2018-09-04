@@ -8,10 +8,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -21,8 +19,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -31,6 +27,7 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -41,7 +38,6 @@ import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
-import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
@@ -80,69 +76,60 @@ public class IndexManager {
 
     private Map<String, Index> indices = new HashMap<>();
 
-    // properties is temp/blacklab-server.json
-    public IndexManager(SearchManager searchMan, JsonNode properties) throws ConfigurationException {
+    public IndexManager(SearchManager searchMan, BLSConfig blsConfig) throws ConfigurationException {
         this.searchMan = searchMan;
 
-        if (properties.has("indices")) {
-            JsonNode indicesMap = properties.get("indices");
-            Iterator<Entry<String, JsonNode>> it = indicesMap.fields();
-            while (it.hasNext()) {
-                Entry<String, JsonNode> entry = it.next();
-                String indexName = entry.getKey();
-                JsonNode indexConfig = entry.getValue();
-
-                try {
-                    File dir = JsonUtil.getFileProp(indexConfig, "dir", null);
-                    Index index = new Index(indexName, dir, searchMan);
-
-                    if (indexConfig.has("pid")) {
-                        // Should be specified in index metadata now, not in
-                        // blacklab-server.json.
-                        logger.warn("blacklab-server.json specifies 'pid' property for index '" + indexName +
-                                "'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'pidField')");
-                        logger.warn("*** the setting from blacklab-server.json will be ignored ***");
-                    }
-
-                    if (indexConfig.has("mayViewContent")) {
-                        logger.warn("blacklab-server.json specifies 'mayViewContent' property for index'" + indexName +
-                                "'; this setting should not be in blacklab-server.json but in the blacklab index metadata! (as 'contentViewable')");
-                        logger.warn("*** the setting from blacklab-server.json will be ignored ***");
-                    }
-
-                    indices.put(indexName, index);
-                } catch (FileNotFoundException | IllegalIndexName e) {
-                    logger.error("Error opening index '" + indexName + "'; " + e.getMessage());
-                }
-            }
-        }
-
-        // Collections, these are lazily loaded, and additions/removals within them should be detected.
+        // List of index collections dirs (and/or single index dirs)
+        List<String> indexes = blsConfig.getIndexLocations();
         collectionsDirs = new ArrayList<>();
-        if (properties.has("indexCollections")) {
-            logger.debug("Scanning indexCollections...");
-            for (JsonNode collectionNode : properties.get("indexCollections")) {
-                File collectionDir = new File(collectionNode.textValue());
-                if (collectionDir.canRead()) {
-                    logger.debug("Found index collection dir: " + collectionDir);
-                    collectionsDirs.add(collectionDir);
-                } else
-                    logger.warn("Configured collection not found or not readable: " + collectionDir);
+        for (String indexPath: indexes) {
+            File indexDir = new File(indexPath);
+            if (!indexDir.exists()) {
+                logger.warn("indexes section contains entry that doesn't exist: " + indexDir);
+                continue;
             }
-        } else {
-            logger.debug("No indexCollections setting found.");
+            if (!indexDir.canRead()) {
+                logger.warn("indexes section contains unreadable entry: " + indexDir);
+                continue;
+            }
+            
+            // Is this a single index, or a collection of indexes?
+            if (BlackLabIndex.isIndex(indexDir)) {
+                // Single index.
+                logger.debug("Single index found: " + indexDir);
+                Index index;
+                try {
+                    index = new Index(indexDir.getName(), indexDir, searchMan);
+                    indices.put(indexDir.getName(), index);
+                } catch (FileNotFoundException | IllegalIndexName e) {
+                    logger.error("Error opening index '" + indexDir + "'; " + e.getMessage());
+                }
+            } else {
+                // Collection of indices, probably..?
+                logger.debug("Index collection dir found: " + indexDir);
+                collectionsDirs.add(indexDir);
+            }
+        }
+        
+        // User collections dir; these are like collections, but within a user's directory
+        userCollectionsDir = null;
+        if (!StringUtils.isEmpty(blsConfig.getUserIndexes())) {
+            File userIndexesDir = new File(blsConfig.getUserIndexes());
+            if (!userIndexesDir.exists())
+                logger.warn("Configured user collections does not exist: " + userIndexesDir);
+            else if (!userIndexesDir.canRead())
+                logger.warn("Configured user collections unreadable: " + userIndexesDir);
+            else {
+                userCollectionsDir = userIndexesDir;
+                userFormatManager = new DocIndexerFactoryUserFormats(userCollectionsDir);
+                DocumentFormats.registerFactory(userFormatManager);
+            }
         }
 
-        // User collections dir, these are like collections, but within a user's directory
-        this.userCollectionsDir = JsonUtil.getFileProp(properties, "userCollectionsDir", null);
-        if (userCollectionsDir == null || !userCollectionsDir.canRead()) {
-            logger.warn("Configured user collections not found or not readable: " + userCollectionsDir);
-            userCollectionsDir = null;
-        } else {
-            userFormatManager = new DocIndexerFactoryUserFormats(userCollectionsDir);
-            DocumentFormats.registerFactory(userFormatManager);
-        }
+        checkAnyIndexesAvailable();
+    }
 
+    private void checkAnyIndexesAvailable() throws ConfigurationException {
         if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
             throw new ConfigurationException(
                     "Configuration error: no readable index locations found. Create " +
@@ -266,6 +253,7 @@ public class IndexManager {
         }
 
         try {
+            logger.debug("Created index: " + indexName + " (" + indexDir + ")");
             indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
         } catch (FileNotFoundException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
@@ -448,13 +436,17 @@ public class IndexManager {
         synchronized (indices) {
             logger.debug("Looking for indices in collectionsDirs...");
             for (File collection : collectionsDirs) {
-                logger.debug("  Scanning collectionsDir: " + collection);
+                logger.debug("Scanning collectionsDir: " + collection);
                 // A file filter that accepts all directories (and files) except the userCollectionsDir,
                 // so if the userCollectionsDir is inside a collectionsDir, it is not suddenly made public
                 IOFileFilter notUserDirFilter = new IOFileFilter() {
                     @Override
                     public boolean accept(File pathName) {
-                        return !pathName.equals(userCollectionsDir);
+                        try {
+                            return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
 
                     @Override
@@ -519,6 +511,7 @@ public class IndexManager {
          * The name of the directory is the UNPREFIXED name of the index, so we need to take care to concatenate the userId and indexName
          * so the index can be recognised as a private index.
          */
+        logger.debug("Scanning userDir: " + userDir);
         for (File f : userDir.listFiles(BlsUtils.readableDirFilter)) {
             if (isPendingDeletion(f)) {
                 BlsUtils.delTree(f);
@@ -535,6 +528,7 @@ public class IndexManager {
                 if (indices.containsKey(indexId))
                     continue;
 
+                logger.debug("User index found: " + indexId + " (" + f + ")");
                 indices.put(indexId, new Index(indexId, f, searchMan));
             } catch (Exception e) {
                 logger.info("Error while loading index " + f.getName() + " at location " + f + "; " + e.getMessage());

@@ -44,7 +44,6 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
-import nl.inl.blacklab.server.search.BlsConfig;
 
 /**
  * Request handler for hit results.
@@ -58,9 +57,6 @@ public class RequestHandlerHits extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        if (BlsConfig.traceRequestHandling)
-            logger.debug("RequestHandlerHits.handle start");
-
         Hits hits = null;
         Hits window = null;
         BlsCacheEntry<?> job = null;
@@ -114,7 +110,7 @@ public class RequestHandlerHits extends RequestHandler {
             hits = hitsInGroup;
 
             int first = Math.max(0, searchParam.getInteger("first"));
-            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
+            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().getParameters().getPageSize().getDefaultValue());
             if (!hitsInGroup.hitsStats().processedAtLeast(first))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
             window = hitsInGroup.window(first, size);
@@ -290,8 +286,6 @@ public class RequestHandlerHits extends RequestHandler {
 
         ds.endMap();
 
-        if (BlsConfig.traceRequestHandling)
-            logger.debug("RequestHandlerHits.handle end");
         return HTTP_OK;
     }
 

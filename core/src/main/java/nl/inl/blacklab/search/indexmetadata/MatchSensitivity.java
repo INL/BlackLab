@@ -69,4 +69,12 @@ public enum MatchSensitivity {
 	    return luceneFieldSuffix();
 	}
 
+    public static MatchSensitivity fromName(String value) {
+        if (value.equalsIgnoreCase("sensitive"))
+            return SENSITIVE;
+        if (value.equalsIgnoreCase("insensitive"))
+            return INSENSITIVE;
+        return fromLuceneFieldSuffix(value);
+    }
+
 }

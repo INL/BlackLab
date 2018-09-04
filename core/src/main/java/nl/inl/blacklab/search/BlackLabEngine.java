@@ -37,9 +37,13 @@ public final class BlackLabEngine implements Closeable {
      *  four threads available. */
     private ExecutorService searchExecutorService = null;
     
-    BlackLabEngine(int searchThreads) {
+    /** How many threads may a single search use? */
+    private int maxThreadsPerSearch;
+    
+    BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();
         searchExecutorService = Executors.newWorkStealingPool(searchThreads);
+        this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
     
     @Override
@@ -65,10 +69,6 @@ public final class BlackLabEngine implements Closeable {
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
-     *
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
      * @return index writer
@@ -80,10 +80,6 @@ public final class BlackLabEngine implements Closeable {
 
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
      *
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
@@ -98,10 +94,6 @@ public final class BlackLabEngine implements Closeable {
 
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * Note that in index mode, searching operations may not take the latest changes
-     * into account. It is wisest to only use index mode for indexing, then close
-     * the Searcher and create a regular one for searching.
      *
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
@@ -121,7 +113,7 @@ public final class BlackLabEngine implements Closeable {
      * @param indexDir where to create the index
      * @param config format configuration for this index; used to base the index
      *            metadata on
-     * @return a Searcher for the new index, in index mode
+     * @return a BlackLabIndexWriter for the new index, in index mode
      * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     public BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -156,6 +148,10 @@ public final class BlackLabEngine implements Closeable {
 
     BlackLabIndex indexFromReader(IndexReader reader) {
         return searcherFromIndexReader.get(reader);
+    }
+
+    public int maxThreadsPerSearch() {
+        return maxThreadsPerSearch;
     }
 
 }

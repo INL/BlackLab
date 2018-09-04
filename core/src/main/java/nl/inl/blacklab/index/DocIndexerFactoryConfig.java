@@ -26,7 +26,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.blacklab.search.ConfigReader;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
@@ -102,7 +102,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             }
         }
 
-        List<File> configDirs = ConfigReader.getDefaultConfigDirs();
+        List<File> configDirs = BlackLab.defaultConfigDirs();
         List<File> formatsDirs = new ArrayList<>();
         for (File dir : configDirs) {
             formatsDirs.add(new File(dir, "formats"));

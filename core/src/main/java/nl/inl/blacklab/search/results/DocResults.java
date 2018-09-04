@@ -384,7 +384,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * Can be used to calculate the total number of tokens in a subcorpus, for
      * example. Note that this does retrieve all results, so it may be slow for
      * large sets. In particular, you should try to call this method only for
-     * DocResults created with Searcher.queryDocuments() (and not ones created with
+     * DocResults created with BlackLabIndex.queryDocuments() (and not ones created with
      * Hits.perDocResults()) to avoid the overhead of fetching hits.
      *
      * @param numProp a numeric property to sum

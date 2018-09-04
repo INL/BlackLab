@@ -48,8 +48,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         if (first < 0)
             first = 0;
         int number = searchParam.getInteger("number");
-        if (number < 0 || number > searchMan.config().maxPageSize())
-            number = searchMan.config().defaultPageSize();
+        if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
+            number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         int numberOfGroupsInWindow = 0;
         numberOfGroupsInWindow = number;
         if (first + number > groups.size())

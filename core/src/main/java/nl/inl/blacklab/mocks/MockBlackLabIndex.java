@@ -16,8 +16,8 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.requestlogging.SearchLogger;
-import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.Doc;
@@ -66,8 +66,8 @@ public class MockBlackLabIndex implements BlackLabIndex {
         analyzer = new BLStandardAnalyzer();
         searchSettings = SearchSettings.defaults();
 
-        // Register ourselves in the mapping from IndexReader to Searcher,
-        // so we can find the corresponding Searcher object from within Lucene code
+        // Register ourselves in the mapping from IndexReader to BlackLabIndex,
+        // so we can find the corresponding BlackLabIndex object from within Lucene code
         blackLab = BlackLab.implicitInstance();
         blackLab.registerSearcher(null, this);
     }
@@ -222,7 +222,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ContextSize defaultContextSize() {
-        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        return ContextSize.get(5);
     }
 
     @Override

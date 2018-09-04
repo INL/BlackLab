@@ -37,7 +37,6 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -53,6 +52,8 @@ public class IndexTool {
     static Map<String, String> indexerParam = new TreeMap<>();
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+        
         // If the current directory contains indexer.properties, read it
         File propFile = new File(".", "indexer.properties");
         if (propFile.canRead())
@@ -261,7 +262,6 @@ public class IndexTool {
         }
 
         // Create the indexer and index the files
-        DownloadCache.setDownloadAllowed(true); // allow downloading linked (metadata) documents
         if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
             indexTemplateFile = null;
         }

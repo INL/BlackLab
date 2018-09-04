@@ -105,7 +105,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (!docs.docsProcessedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().maxExportPageSize();
+            int number = searchMan.config().getParameters().getPageSize().getMax();
             if (searchParam.containsKey("number"))
                 number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
 

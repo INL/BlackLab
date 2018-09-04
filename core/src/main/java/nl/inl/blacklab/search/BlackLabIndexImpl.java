@@ -86,6 +86,20 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected static final Logger logger = LogManager.getLogger(BlackLabIndexImpl.class);
 
+    /** Analyzer based on WhitespaceTokenizer */
+    protected static final Analyzer WHITESPACE_ANALYZER = new BLWhitespaceAnalyzer();
+
+    /** Analyzer for Dutch and other Latin script languages */
+    protected static final Analyzer DEFAULT_ANALYZER = new BLDutchAnalyzer();
+
+    /** Analyzer based on StandardTokenizer */
+    protected static final Analyzer STANDARD_ANALYZER = new BLStandardAnalyzer();
+
+    /** Analyzer that doesn't tokenize */
+    protected static final Analyzer NONTOKENIZING_ANALYZER = new BLNonTokenizingAnalyzer();
+
+    private static final ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
+
     /** Log detailed debug messages about opening an index? */
     static boolean traceIndexOpening = false;
 
@@ -101,17 +115,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /** The collator to use for sorting. Defaults to English collator. */
     private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
-    /** Analyzer based on WhitespaceTokenizer */
-    final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
-
-    /** Analyzer for Dutch and other Latin script languages */
-    final protected static Analyzer defaultAnalyzer = new BLDutchAnalyzer();
-
-    /** Analyzer based on StandardTokenizer */
-    final protected static Analyzer standardAnalyzer = new BLStandardAnalyzer();
-
-    /** Analyzer that doesn't tokenize */
-    final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
     
     // Static methods
     //---------------------------------------------------------------
@@ -218,13 +221,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     static Analyzer analyzerInstance(String analyzerName) {
         analyzerName = analyzerName.toLowerCase();
         if (analyzerName.equals("whitespace")) {
-            return whitespaceAnalyzer;
+            return WHITESPACE_ANALYZER;
         } else if (analyzerName.equals("default")) {
-            return defaultAnalyzer;
+            return DEFAULT_ANALYZER;
         } else if (analyzerName.equals("standard")) {
-            return standardAnalyzer;
+            return STANDARD_ANALYZER;
         } else if (analyzerName.matches("(non|un)tokeniz(ing|ed)")) {
-            return nonTokenizingAnalyzer;
+            return NONTOKENIZING_ANALYZER;
         }
         return null;
     }
@@ -232,10 +235,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public static void setTraceIndexOpening(boolean traceIndexOpening) {
         logger.debug("Trace index opening: " + traceIndexOpening);
         BlackLabIndexImpl.traceIndexOpening = traceIndexOpening;
-    }
-
-    public static boolean traceOptimization() {
-        return traceOptimization;
     }
 
     public static void setTraceOptimization(boolean traceOptimization) {
@@ -246,6 +245,18 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public static void setTraceQueryExecution(boolean traceQueryExecution) {
         logger.debug("Trace query execution: " + traceQueryExecution);
         BlackLabIndexImpl.traceQueryExecution = traceQueryExecution;
+    }
+
+    public static boolean traceOptimization() {
+        return traceOptimization;
+    }
+    
+    public static boolean traceIndexOpening() {
+        return traceIndexOpening;
+    }
+
+    public static boolean traceQueryExecution() {
+        return traceQueryExecution;
     }
 
     // Instance variables
@@ -315,7 +326,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
-
+    
     private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
     /** Search cache to use */
@@ -345,7 +356,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             this.indexMode = indexMode;
 
             try {
-                ConfigReader.applyConfig(this);
+                BlackLab.applyConfigToIndex(this);
             } catch (InvalidConfiguration e) {
                 throw new InvalidConfiguration(e.getMessage() + " (BlackLab configuration file)", e.getCause());
             }
@@ -385,7 +396,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         this.indexMode = indexMode;
 
         try {
-            ConfigReader.applyConfig(this);
+            BlackLab.applyConfigToIndex(this);
 
             openIndex(indexDir, indexMode, createNewIndex);
 
@@ -506,7 +517,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /**
      * Register a ContentStore as a content accessor.
      *
-     * This tells the Searcher how the content of different fields may be accessed.
+     * This tells the BlackLabIndex how the content of different fields may be accessed.
      * This is used for making concordances, for example. Some fields are stored in
      * the Lucene index, while others may be stored on the file system, a database,
      * etc.
@@ -578,10 +589,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         return fi.canDoNfaMatching();
     }
 
-    public static boolean isTraceQueryExecution() {
-        return traceQueryExecution;
-    }
-
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
             throws IOException, CorruptIndexException, LockObtainFailedException {
         if (!indexMode && createNewIndex)
@@ -597,7 +604,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         }
 
         if (traceIndexOpening)
-            logger.debug("Constructing Searcher...");
+            logger.debug("Constructing BlackLabIndex...");
 
         if (indexMode) {
             if (traceIndexOpening)
@@ -652,8 +659,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             reader = DirectoryReader.open(indexWriter, false);
         }
 
-        // Register ourselves in the mapping from IndexReader to Searcher,
-        // so we can find the corresponding Searcher object from within Lucene code
+        // Register ourselves in the mapping from IndexReader to BlackLabIndex,
+        // so we can find the corresponding BlackLabIndex object from within Lucene code
         blackLab.registerSearcher(reader, this);
 
         // Detect and open the ContentStore for the contents field

@@ -1,16 +1,13 @@
 package nl.inl.blacklab.server.search;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import com.fasterxml.jackson.databind.JsonNode;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -21,10 +18,10 @@ import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 
 public class SearchManager {
 
-    private static final Logger logger = LogManager.getLogger(SearchManager.class);
+    //private static final Logger logger = LogManager.getLogger(SearchManager.class);
 
     /** Our config */
-    private BlsConfig config;
+    private BLSConfig config;
 
 //    /** All running searches as well as recently run searches */
 //    private BlsSearchCache cache;
@@ -40,34 +37,31 @@ public class SearchManager {
 
     /** Main BlackLab object, containing the search executor service */
     private BlackLabEngine blackLab;
-    
-    public SearchManager(JsonNode properties) throws ConfigurationException {
-        logger.debug("SearchManager created");
 
-        // The main config object
-        config = new BlsConfig(properties);
+    public SearchManager(BLSConfig config) throws ConfigurationException {
+        this.config = config;
         
         // Create BlackLab instance with the desired number of search threads
-        int numberOfSearchThreads = config.getCacheConfig().getMaxConcurrentSearches();
-        blackLab = BlackLab.create(numberOfSearchThreads);
+        int numberOfSearchThreads = config.getPerformance().getMaxConcurrentSearches();
+        int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
+        blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
 
         // Create the cache
-        // Use the performance properties [optional, defaults will be used if missing]
-//        cache = new BlsSearchCache(this, config.getCacheConfig());
-        newCache = new BlsCache(config.getCacheConfig());
+        newCache = new BlsCache(config);
 
         // Find the indices
-        indexMan = new IndexManager(this, properties);
+        indexMan = new IndexManager(this, config);
 
         // Init auth system
-        authSystem = new AuthManager(config.getAuthClass(), config.getAuthParam());
+        authSystem = new AuthManager(config.getAuthentication());
         
         // Set up the parameter default values
-        SearchParameters.setDefault("number", "" + config.defaultPageSize());
-        SearchParameters.setDefault("wordsaroundhit", "" + config.getDefaultContextSize());
-        SearchParameters.setDefault("maxretrieve", "" + config.getDefaultMaxHitsToRetrieve());
-        SearchParameters.setDefault("maxcount", "" + config.getDefaultMaxHitsToCount());
-        SearchParameters.setDefault("sensitive", config.defaultMatchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
+        BLSConfigParameters param = config.getParameters();
+        SearchParameters.setDefault("number", "" + param.getPageSize().getDefaultValue());
+        SearchParameters.setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
+        SearchParameters.setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
+        SearchParameters.setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
+        SearchParameters.setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
 
     /**
@@ -81,8 +75,7 @@ public class SearchManager {
         newCache.cleanup();
         newCache = null;
         
-//        cache.cleanup();
-//        cache = null;
+        blackLab.close();
 
         // Set other variables to null in case it helps GC
         config = null;
@@ -98,7 +91,7 @@ public class SearchManager {
         return newCache;
     }
 
-    public BlsConfig config() {
+    public BLSConfig config() {
         return config;
     }
 

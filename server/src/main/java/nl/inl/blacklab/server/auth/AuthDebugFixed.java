@@ -41,7 +41,7 @@ public class AuthDebugFixed {
         // Is client on debug IP?
         SearchManager searchMan = ((BlackLabServer) servlet).getSearchManager();
         String ip = request.getRemoteAddr();
-        if (!searchMan.config().isDebugMode(ip) && !searchMan.config().overrideUserId(ip)) {
+        if (!searchMan.config().getDebug().isDebugMode(ip) && !searchMan.config().getAuthentication().isOverrideIp(ip)) {
             return User.anonymous(sessionId);
         }
 

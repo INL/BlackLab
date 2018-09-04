@@ -314,7 +314,7 @@ public class HitsFromQueryParallel extends Hits {
     
     private void startParallelSpansReaderTasks() {
         if (DO_PARALLEL) {
-            int maxTasksPerSearch = 3; // TODO: make configurable
+            int maxTasksPerSearch = queryInfo().index().blackLab().maxThreadsPerSearch();
             int tasksToStart = Math.min(maxTasksPerSearch, spansReaders.size());
             int spansReadersPerTask = (spansReaders.size() + tasksToStart - 1) / tasksToStart;
             int currentSpansReader = 0;

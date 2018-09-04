@@ -9,6 +9,7 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
@@ -42,8 +43,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startEntry("summary").startMap();
         WindowSettings windowSettings = searchParam.getWindowSettings();
         final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
+        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
         final int requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > searchMan.config().maxPageSize() ? searchMan.config().defaultPageSize()
+                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
                         : windowSettings.size();
         int totalResults = groups.size();
         final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first

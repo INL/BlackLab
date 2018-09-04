@@ -85,14 +85,12 @@ public interface BlackLabIndex extends Closeable {
      * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
-     * @deprecated use static BlackLab.openIndex() or instantiate BlackLab and call open()
+     * @deprecated use BlackLab.open()
      */
     @Deprecated
     static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         return BlackLab.open(indexDir);
     }
-
-    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
@@ -104,7 +102,7 @@ public interface BlackLabIndex extends Closeable {
     int hashCode();
     
     /**
-     * Finalize the Searcher object. This closes the IndexSearcher and (depending on
+     * Finalize the index object. This closes the IndexSearcher and (depending on
      * the constructor used) may also close the index reader.
      */
     @Override
