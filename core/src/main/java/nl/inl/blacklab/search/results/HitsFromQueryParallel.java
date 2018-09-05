@@ -316,6 +316,8 @@ public class HitsFromQueryParallel extends Hits {
         if (DO_PARALLEL) {
             int maxTasksPerSearch = queryInfo().index().blackLab().maxThreadsPerSearch();
             int tasksToStart = Math.min(maxTasksPerSearch, spansReaders.size());
+            if (tasksToStart == 0)
+                return; // No spansReaders or maxTasksPerSearch == 0 (!?), avoid divide by zero
             int spansReadersPerTask = (spansReaders.size() + tasksToStart - 1) / tasksToStart;
             int currentSpansReader = 0;
             ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
