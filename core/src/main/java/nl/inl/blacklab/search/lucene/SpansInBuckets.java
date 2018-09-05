@@ -53,6 +53,12 @@ public interface SpansInBuckets {
     /** Initial capacity for HashMap to avoid too much reallocation */
     int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
+    /** Should we reallocate lists/maps if they grow larger than COLLECTION_REALLOC_THRESHOLD?
+     * If no, we potentially use too much memory while searching.
+     * If yes, we potentially create a lot of garbage and fragment the heap.
+     */
+    boolean REALLOCATE_IF_TOO_LARGE = false;
+    
     /** When to reallocate lists/maps to avoid holding on to too much memory */
     int COLLECTION_REALLOC_THRESHOLD = 30000;
     

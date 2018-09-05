@@ -204,10 +204,11 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         return currentDoc;
     }
 
+    @SuppressWarnings("unused")
     private int gatherHitsInternal() throws IOException {
         // NOTE: we could call .clear() here, but we don't want to hold on to
         // a lot of memory indefinitely after encountering one huge bucket.
-        if (bucketSize < COLLECTION_REALLOC_THRESHOLD) {
+        if (!REALLOCATE_IF_TOO_LARGE || bucketSize < COLLECTION_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             bucket.clear();
             if (doCapturedGroups)

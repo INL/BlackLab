@@ -114,8 +114,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
         return gatherEndPointsAtStartPoint();
     }
 
+    @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
-        if (endPoints.size() < COLLECTION_REALLOC_THRESHOLD) {
+        if (!REALLOCATE_IF_TOO_LARGE || endPoints.size() < COLLECTION_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             endPoints.clear();
             capturedGroupsPerEndpoint.clear();
