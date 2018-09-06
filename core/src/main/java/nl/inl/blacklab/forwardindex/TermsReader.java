@@ -23,10 +23,10 @@ import java.nio.channels.FileChannel;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.Arrays;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.factory.Maps;
 
@@ -47,18 +47,30 @@ class TermsReader extends Terms {
 
     protected static final Logger logger = LogManager.getLogger(TermsReader.class);
 
+    /** First index in array and number of elements from array */
+    static class FirstAndNumber {
+        public int first;
+
+        public int number;
+
+        public FirstAndNumber(int first, int number) {
+            this.first = first;
+            this.number = number;
+        }
+
+    }
+
     /**
      * Mapping from term to its unique index number.
      */
-    Map<String, Integer> termIndex;
+    MutableMap<String, Integer> termIndex;
 
     /**
      * The first index in the sortPositionPerIdInsensitive[] array that matches each
      * term, and the number of matching terms that follow. Used while building NFAs
-     * to quickly fetch all indices matching a term case-insensitively. Only valid
-     * in search mode.
+     * to quickly fetch all indices matching a term case-insensitively.
      */
-    Map<CollationKey, FirstAndNumber> termIndexInsensitive;
+    MutableMap<CollationKey, FirstAndNumber> termIndexInsensitive;
 
     /**
      * The index number of each sorting position. Inverse of sortPositionPerId[]
@@ -93,8 +105,8 @@ class TermsReader extends Terms {
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
 
         // We already have the sort order, so TreeMap is not necessary here.
-        this.termIndex = Maps.mutable.empty();
-        this.termIndexInsensitive = Maps.mutable.empty();
+        this.termIndex = null;
+        this.termIndexInsensitive = null;
 
         initialized = false;
         setBlockBasedFile(useBlockBasedTermsFile);
@@ -108,7 +120,7 @@ class TermsReader extends Terms {
     public int indexOf(String term) {
 
         // If we havent' filled termIndex based on terms[] yet, do so now.
-        // (done automatically op open in background thread, so this shouldn't normally block)
+        // (done automatically on open in background thread, so this shouldn't normally block)
         if (!initialized)
             initialize();
 
@@ -122,6 +134,10 @@ class TermsReader extends Terms {
     public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
         if (!initialized)
             initialize();
+        
+        // Make sure idPerSortPosition[Insensitive] is initialized
+        // (we do this lazily because we rarely or never need this for some FIs, and it takes up a significant amount of memory)
+        buildIdPerSortPosition();
         
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
@@ -169,6 +185,9 @@ class TermsReader extends Terms {
         // Read the terms file
         read(termsFile);
 
+        termIndex = Maps.mutable.ofInitialCapacity(terms.length);
+        termIndexInsensitive = Maps.mutable.ofInitialCapacity(terms.length);
+        
         // Build the case-sensitive term index.
         for (int i = 0; i < numberOfTerms; i++) {
             termIndex.put(terms[i], i);
@@ -206,15 +225,12 @@ class TermsReader extends Terms {
     }
 
     private synchronized void read(File termsFile) {
-        termIndex.clear();
-        if (termIndexInsensitive != null)
-            termIndexInsensitive.clear();
         try {
             try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
                 try (FileChannel fc = raf.getChannel()) {
                     long fileLength = termsFile.length();
                     IntBuffer ib = readFromFileChannel(fc, fileLength);
-
+                    
                     // Read the sort order arrays
                     sortPositionPerId = new int[numberOfTerms];
                     sortPositionPerIdInsensitive = new int[numberOfTerms];
@@ -223,26 +239,32 @@ class TermsReader extends Terms {
                     ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
                     ib.get(sortPositionPerIdInsensitive);
 
-                    // Invert sortPositionPerId[] array, so we can later do a binary search through our
-                    // terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
-                    idPerSortPosition = new int[numberOfTerms];
-                    idPerSortPositionInsensitive = new int[numberOfTerms];
-                    Arrays.fill(idPerSortPositionInsensitive, -1);
-                    for (int i = 0; i < numberOfTerms; i++) {
-                        idPerSortPosition[sortPositionPerId[i]] = i;
-                        int x = sortPositionPerIdInsensitive[i];
-                        // Multiple terms can have the same (case-insensitive)
-                        // sort position. Skip over previous terms so each term is
-                        // in the array and we can look at adjacent terms to recover all
-                        // the terms with the same sort position later.
-                        while (idPerSortPositionInsensitive[x] >= 0)
-                            x++;
-                        idPerSortPositionInsensitive[x] = i;
-                    }
+                    buildIdPerSortPosition();
                 }
             }
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    private synchronized void buildIdPerSortPosition() {
+        if (idPerSortPosition == null) {
+            // Invert sortPositionPerId[] array, so we can later do a binary search through our
+            // terms to find a specific one. (only needed to deserialize sort/group criteria from URL)
+            idPerSortPosition = new int[numberOfTerms];
+            idPerSortPositionInsensitive = new int[numberOfTerms];
+            Arrays.fill(idPerSortPositionInsensitive, -1);
+            for (int i = 0; i < numberOfTerms; i++) {
+                idPerSortPosition[sortPositionPerId[i]] = i;
+                int x = sortPositionPerIdInsensitive[i];
+                // Multiple terms can have the same (case-insensitive)
+                // sort position. Skip over previous terms so each term is
+                // in the array and we can look at adjacent terms to recover all
+                // the terms with the same sort position later.
+                while (idPerSortPositionInsensitive[x] >= 0)
+                    x++;
+                idPerSortPositionInsensitive[x] = i;
+            }
         }
     }
     

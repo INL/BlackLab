@@ -33,19 +33,6 @@ public abstract class Terms {
     /** Number of bytes per int */
     protected static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
 
-    /** First index in array and number of elements from array */
-    static class FirstAndNumber {
-        public int first;
-
-        public int number;
-
-        public FirstAndNumber(int first, int number) {
-            this.first = first;
-            this.number = number;
-        }
-
-    }
-
     /** How many terms total are there? (always valid) */
     int numberOfTerms = 0;
 
