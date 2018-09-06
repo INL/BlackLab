@@ -21,17 +21,18 @@ import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.CollationKey;
-import java.text.Collator;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -62,7 +63,7 @@ class TermsReader extends Terms {
      * The most significant 4 bytes of the long are the first term; the least significant
      * 4 bytes are the number of terms.
      */
-    Object2LongMap<CollationKey> termIndexInsensitive;
+    Reference2LongMap<String> termIndexInsensitive;
 
     /**
      * The index number of each sorting position. Inverse of sortPositionPerId[]
@@ -135,17 +136,16 @@ class TermsReader extends Terms {
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
         boolean caseSensitive = sensitivity.isCaseSensitive();
         int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
-        Collator coll = caseSensitive ? collator : collatorInsensitive;
 
         // Yes, use the available term index.
         // NOTE: insensitive index is only available in search mode.
+        term = term.intern();
         if (caseSensitive) {
             // Case-/accent-sensitive. Look up the term's id.
-            results.add(termIndex.getInt(term.intern()));
+            results.add(termIndex.getInt(term));
         } else if (termIndexInsensitive != null) {
             // Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
-            CollationKey key = coll.getCollationKey(term);
-            long firstAndNumber = termIndexInsensitive.getLong(key);
+            long firstAndNumber = termIndexInsensitive.getLong(term);
             if (firstAndNumber != -1) {
                 int start = (int)(firstAndNumber >>> 32);
                 int end = start + (int)firstAndNumber;
@@ -181,7 +181,7 @@ class TermsReader extends Terms {
 
         termIndex = new Reference2IntOpenHashMap<>(terms.length);
         termIndex.defaultReturnValue(-1);
-        termIndexInsensitive = new Object2LongOpenHashMap<>(terms.length);
+        termIndexInsensitive = new Reference2LongOpenHashMap<>(terms.length);
         termIndexInsensitive.defaultReturnValue(-1);
         
         // Build the case-sensitive term index.
@@ -194,7 +194,8 @@ class TermsReader extends Terms {
             // that matches each term, and the number of matching terms that follow.
             // This can be used while building NFAs to quickly fetch all indices matching
             // a term case-insensitively.
-            CollationKey prevTermKey = collatorInsensitive.getCollationKey("");
+            CollationKey prevTermKey = null;
+            ReferenceSet<String> matchingTerms = new ReferenceOpenHashSet<>();
             int currentFirst = -1;
             int currentNumber = -1;
             for (int i = 0; i < numberOfTerms; i++) {
@@ -203,16 +204,25 @@ class TermsReader extends Terms {
                 if (!termKey.equals(prevTermKey)) {
                     if (currentFirst >= 0) {
                         currentNumber = i - currentFirst;
-                        termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
+                        long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
+                        for (String match: matchingTerms) {
+                            termIndexInsensitive.put(match, firstAndNumber);
+                        }
+                        matchingTerms.clear();
                     }
                     currentFirst = i;
                     currentNumber = 0;
                     prevTermKey = termKey;
                 }
+                // Keep track of all matching terms
+                matchingTerms.add(term);
             }
             if (currentFirst >= 0) {
                 currentNumber = numberOfTerms - currentFirst;
-                termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
+                long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
+                for (String match: matchingTerms) {
+                    termIndexInsensitive.put(match, firstAndNumber);
+                }
             }
         }
 

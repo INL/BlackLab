@@ -37,17 +37,11 @@ MEMORY (van 10G heap)
 - ForwardIndex.TocEntry: neemt 540MB in; misschien in losse array vangen..?
   (liefst zelfs gewoon als memory mapped file houden)
 
-- 500MB RuleBasedCollationKeys; kunnen we hier vanaf komen zonder dat het veel trager wordt?
-  Misschien een manier om (veelal) dezelfde String instances te gebruiken als in terms en termIndex?
-  term eerst desensitizen, internen (samen met alle andere term String instances) en die als key gebruiken!
-
-- TermsReader.FirstAndNumber: neemt 400MB in; vervangen door Long? Of door twee int[]?
-
-- 360MB Integer objects. Kunnen we die evt. vervangen door primitives of Internen?
-
 - String[]: 144M, TermsReader.terms. Evt. vervangen door byte[] en indices..??
 
 lastiger:
+- 500MB RuleBasedCollationKeys (nodig omdat we correcte collation order willen aanhouden)
+- 360MB Integer objects. Kunnen we die evt. vervangen door primitives?
 - 35M String instances, samen 1GB: kunnen we meer Strings internen?
   (allerlei sources, lastig te bepalen, en bovendien gebruiken we weinig Strings tijdens matchen, en dan ws. alleen term String instances)
 - DirectByteBufferR 280M: hoe komt dit? Lijkt vooral Lucene
