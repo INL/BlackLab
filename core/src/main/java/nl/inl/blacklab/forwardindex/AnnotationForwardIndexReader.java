@@ -46,8 +46,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Offsets of the mappings into the token file */
     private List<Long> tokensFileChunkOffsetBytes = null;
     
-    /** Has the tokens file been mapped? */
-    private boolean initialized = false;
+    /** Collators to use for terms file */
+    private Collators collators;
 
     AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport) {
         super(dir, collators, largeTermsFileSupport);
@@ -56,13 +56,9 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
         }
 
-        if (tocFile.exists()) {
-            readToc();
-            terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
-        } else {
+        if (!tocFile.exists())
             throw new IllegalArgumentException("No TOC found, and not in index mode!");
-        }
-        //logger.debug("Opened forward index " + dir);
+        this.collators = collators; // for reading terms file in initialize()
     }
 
     /**
@@ -73,6 +69,9 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         if (initialized)
             return;
         
+        readToc();
+        
+        terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
         terms.initialize();
         
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");

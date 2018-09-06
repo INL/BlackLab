@@ -169,10 +169,10 @@ public abstract class AnnotationForwardIndex {
      * The table of contents (where documents start in the tokens file and how long
      * they are)
      */
-    ArrayList<TocEntry> toc = new ArrayList<>();
+    List<TocEntry> toc = null;
 
     /** Deleted TOC entries. Always sorted by size. */
-    ArrayList<TocEntry> deletedTocEntries = new ArrayList<>();
+    List<TocEntry> deletedTocEntries = null;
 
     /** The table of contents (TOC) file, docs.dat */
     File tocFile;
@@ -210,6 +210,9 @@ public abstract class AnnotationForwardIndex {
     /** The annotation for which we're the forward index */
     Annotation annotation;
 
+    /** Has the tokens file been mapped? */
+    protected boolean initialized = false;
+
     public AnnotationForwardIndex(File dir, Collators collators, boolean largeTermsFileSupport) {
         canDoNfaMatching = collators == null ? false : collators.version() != CollatorVersion.V1;
 
@@ -221,7 +224,8 @@ public abstract class AnnotationForwardIndex {
     }
     
     public void initialize() {
-        // NOP
+        // NOP, subclasses may override
+        initialized = true;
     }
 
     /**
@@ -238,8 +242,6 @@ public abstract class AnnotationForwardIndex {
      * Read the table of contents from the file
      */
     protected void readToc() {
-        toc.clear();
-        deletedTocEntries.clear();
         try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
                 FileChannel fc = raf.getChannel()) {
             long fileSize = tocFile.length();
@@ -255,7 +257,8 @@ public abstract class AnnotationForwardIndex {
             ib.get(length);
             buf.position(buf.position() + SIZEOF_INT * n);
             buf.get(deleted);
-            toc.ensureCapacity(n);
+            toc = new ArrayList<>(n);
+            deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {
                 TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
                 toc.add(e);
@@ -270,8 +273,6 @@ public abstract class AnnotationForwardIndex {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-        toc.trimToSize();
-        deletedTocEntries.trimToSize();
     }
 
     protected void sortDeletedTocEntries() {
@@ -362,6 +363,8 @@ public abstract class AnnotationForwardIndex {
      * @return the Terms object
      */
     public Terms terms() {
+        if (!initialized)
+            initialize();
         return terms;
     }
 
@@ -369,6 +372,8 @@ public abstract class AnnotationForwardIndex {
      * @return the number of documents in the forward index
      */
     public int numDocs() {
+        if (!initialized)
+            initialize();
         return toc.size();
     }
 
@@ -376,6 +381,8 @@ public abstract class AnnotationForwardIndex {
      * @return the amount of space in free blocks in the forward index.
      */
     public long freeSpace() {
+        if (!initialized)
+            initialize();
         long freeSpace = 0;
         for (TocEntry e : deletedTocEntries) {
             freeSpace += e.length;
@@ -387,6 +394,8 @@ public abstract class AnnotationForwardIndex {
      * @return the number of free blocks in the forward index.
      */
     public int freeBlocks() {
+        if (!initialized)
+            initialize();
         return deletedTocEntries.size();
     }
 
@@ -395,6 +404,8 @@ public abstract class AnnotationForwardIndex {
      * @return total size in bytes of the tokens file.
      */
     public long totalSize() {
+        if (!initialized)
+            initialize();
         return tokenFileEndPosition;
     }
 
@@ -405,6 +416,8 @@ public abstract class AnnotationForwardIndex {
      * @return length of the document
      */
     public int docLengthByFiid(int fiid) {
+        if (!initialized)
+            initialize();
         return toc.get(fiid).length;
     }
 
@@ -422,6 +435,8 @@ public abstract class AnnotationForwardIndex {
      * @param task the task to perform
      */
     public void forEachDocument(ForwardIndexDocTask task) {
+        if (!initialized)
+            initialize();
         for (Integer fiid: idSet()) {
             int[] tokenIds = retrievePartsIntByFiid(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
             task.perform(fiid, tokenIds);
@@ -458,6 +473,8 @@ public abstract class AnnotationForwardIndex {
 
     /** @return the set of all forward index ids */
     public Set<Integer> idSet() {
+        if (!initialized)
+            initialize();
         return new AbstractSet<Integer>() {
             @Override
             public boolean contains(Object o) {
