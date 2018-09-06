@@ -292,7 +292,7 @@ class TermsWriter extends Terms {
     }
 
     @Override
-    public String get(Integer index) {
+    public String get(int index) {
         assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = "
                 + numberOfTerms + ")";
         return terms[index];

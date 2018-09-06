@@ -190,7 +190,7 @@ public abstract class Terms {
      * @param id the term id
      * @return the corresponding term
      */
-    public abstract String get(Integer id);
+    public abstract String get(int id);
 
     /**
      * @return the number of terms in this object

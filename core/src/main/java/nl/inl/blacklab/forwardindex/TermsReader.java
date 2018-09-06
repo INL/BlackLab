@@ -26,10 +26,12 @@ import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.collections.api.map.MutableMap;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.factory.Maps;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -47,30 +49,20 @@ class TermsReader extends Terms {
 
     protected static final Logger logger = LogManager.getLogger(TermsReader.class);
 
-    /** First index in array and number of elements from array */
-    static class FirstAndNumber {
-        public int first;
-
-        public int number;
-
-        public FirstAndNumber(int first, int number) {
-            this.first = first;
-            this.number = number;
-        }
-
-    }
-
     /**
      * Mapping from term to its unique index number.
      */
-    MutableMap<String, Integer> termIndex;
+    Object2IntMap<String> termIndex;
 
     /**
      * The first index in the sortPositionPerIdInsensitive[] array that matches each
      * term, and the number of matching terms that follow. Used while building NFAs
      * to quickly fetch all indices matching a term case-insensitively.
+     * 
+     * The most significant 4 bytes of the long are the first term; the least significant
+     * 4 bytes are the number of terms.
      */
-    MutableMap<CollationKey, FirstAndNumber> termIndexInsensitive;
+    Object2LongMap<CollationKey> termIndexInsensitive;
 
     /**
      * The index number of each sorting position. Inverse of sortPositionPerId[]
@@ -124,10 +116,10 @@ class TermsReader extends Terms {
         if (!initialized)
             initialize();
 
-        Integer index = termIndex.get(term);
-        if (index != null)
-            return index;
-        return NO_TERM; // term not found
+        int index = termIndex.getInt(term);
+        if (index == -1)
+            return NO_TERM; // term not found
+        return index;
     }
 
     @Override
@@ -149,13 +141,15 @@ class TermsReader extends Terms {
         // NOTE: insensitive index is only available in search mode.
         if (caseSensitive) {
             // Case-/accent-sensitive. Look up the term's id.
-            results.add(termIndex.get(term));
+            results.add(termIndex.getInt(term));
         } else if (termIndexInsensitive != null) {
             // Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
             CollationKey key = coll.getCollationKey(term);
-            FirstAndNumber firstAndNumber = termIndexInsensitive.get(key);
-            if (firstAndNumber != null) {
-                for (int i = firstAndNumber.first; i < firstAndNumber.first + firstAndNumber.number; i++) {
+            long firstAndNumber = termIndexInsensitive.getLong(key);
+            if (firstAndNumber != -1) {
+                int start = (int)(firstAndNumber >>> 32);
+                int end = start + (int)firstAndNumber;
+                for (int i = start; i < end; i++) {
                     results.add(idLookup[i]);
                 }
             }
@@ -185,8 +179,10 @@ class TermsReader extends Terms {
         // Read the terms file
         read(termsFile);
 
-        termIndex = Maps.mutable.ofInitialCapacity(terms.length);
-        termIndexInsensitive = Maps.mutable.ofInitialCapacity(terms.length);
+        termIndex = new Object2IntOpenHashMap<>(terms.length);
+        termIndex.defaultReturnValue(-1);
+        termIndexInsensitive = new Object2LongOpenHashMap<>(terms.length);
+        termIndexInsensitive.defaultReturnValue(-1);
         
         // Build the case-sensitive term index.
         for (int i = 0; i < numberOfTerms; i++) {
@@ -199,20 +195,24 @@ class TermsReader extends Terms {
             // This can be used while building NFAs to quickly fetch all indices matching
             // a term case-insensitively.
             CollationKey prevTermKey = collatorInsensitive.getCollationKey("");
-            FirstAndNumber currentItem = null;
+            int currentFirst = -1;
+            int currentNumber = -1;
             for (int i = 0; i < numberOfTerms; i++) {
                 String term = terms[idPerSortPositionInsensitive[i]];
                 CollationKey termKey = collatorInsensitive.getCollationKey(term);
                 if (!termKey.equals(prevTermKey)) {
-                    if (currentItem != null)
-                        currentItem.number = i - currentItem.first;
-                    currentItem = new FirstAndNumber(i, 0);
-                    termIndexInsensitive.put(termKey, currentItem);
+                    if (currentFirst >= 0) {
+                        currentNumber = i - currentFirst;
+                        termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
+                    }
+                    currentFirst = i;
+                    currentNumber = 0;
                     prevTermKey = termKey;
                 }
             }
-            if (currentItem != null) {
-                currentItem.number = numberOfTerms - currentItem.first;
+            if (currentFirst >= 0) {
+                currentNumber = numberOfTerms - currentFirst;
+                termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
             }
         }
 
@@ -274,7 +274,7 @@ class TermsReader extends Terms {
     }
 
     @Override
-    public String get(Integer index) {
+    public String get(int index) {
         if (!initialized)
             initialize();
         assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = "
