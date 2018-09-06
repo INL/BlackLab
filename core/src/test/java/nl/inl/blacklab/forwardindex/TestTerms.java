@@ -59,7 +59,7 @@ public class TestTerms {
         t.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
-        t = Terms.openForReading(colls, f, true);
+        t = Terms.openForReading(colls, f, true, true);
     }
 
     @After

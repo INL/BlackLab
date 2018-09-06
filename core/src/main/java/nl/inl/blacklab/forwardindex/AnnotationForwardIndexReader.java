@@ -68,7 +68,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Deleted TOC entries. Always sorted by size. */
     List<Integer> deletedTocEntries = null;
 
-    AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport) {
+    /** Build term indexes right away or lazily? */
+    private boolean buildTermIndexesOnInit;
+
+    AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
         super(dir, collators, largeTermsFileSupport);
         
         if (!dir.exists()) {
@@ -78,6 +81,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         if (!tocFile.exists())
             throw new IllegalArgumentException("No TOC found, and not in index mode!");
         this.collators = collators; // for reading terms file in initialize()
+        this.buildTermIndexesOnInit = buildTermIndexesOnInit;
     }
 
     /**
@@ -90,7 +94,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         
         readToc();
         
-        terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile);
+        terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
         terms.initialize();
         
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
@@ -147,7 +151,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         
         initialized = true;
     }
-
+    
     @Override
     public void close() {
         // NOP

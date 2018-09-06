@@ -1,11 +1,14 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.document.Document;
@@ -187,11 +190,18 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         return afi;
     }
 
+    /** For common annotations, always build term indexes right away. For less common ones, do it on demand. Saves memory and startup time. */
+    private static final Set<String> BUILD_TERMINDEXES_ON_INIT = new HashSet<>(Arrays.asList("word", "lemma", "pos")); 
+
+    private static boolean buildTermIndexesOnInit(Annotation annotation) {
+        return BUILD_TERMINDEXES_ON_INIT.contains(annotation.name());
+    }
+
     private AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
         File dir = determineAfiDir(index.indexDirectory(), annotation);
         boolean create = index.indexMode() && index.isEmpty();
         FiidLookup fiidLookup = new FiidLookup(index.reader(), annotation);
-        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, fiidLookup);
+        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, fiidLookup, buildTermIndexesOnInit(annotation));
         synchronized (fis) {
             fis.put(annotation, afi);
         }

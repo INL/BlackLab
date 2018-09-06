@@ -93,7 +93,10 @@ class TermsReader extends Terms {
 
     private File termsFile;
 
-    TermsReader(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
+    /** If true, build the term indexes right away. If false, don't build them until required. */
+    private boolean buildTermIndexesOnInit;
+
+    TermsReader(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
 
@@ -107,15 +110,15 @@ class TermsReader extends Terms {
         if (termsFile == null || !termsFile.exists())
             throw new IllegalArgumentException("Terms file not found: " + termsFile);
         this.termsFile = termsFile;
+        this.buildTermIndexesOnInit = buildTermIndexesOnInit;
     }
 
     @Override
     public int indexOf(String term) {
 
         // If we havent' filled termIndex based on terms[] yet, do so now.
-        // (done automatically on open in background thread, so this shouldn't normally block)
-        if (!initialized)
-            initialize();
+        // (for commonly used AFIs, this is done automatically on open in background thread, so this shouldn't normally block)
+        buildTermIndexes();
         
         int index = termIndex.getInt(term.intern());
         if (index == -1)
@@ -125,12 +128,9 @@ class TermsReader extends Terms {
 
     @Override
     public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-        if (!initialized)
-            initialize();
-        
-        // Make sure idPerSortPosition[Insensitive] is initialized
-        // (we do this lazily because we rarely or never need this for some FIs, and it takes up a significant amount of memory)
-        buildIdPerSortPosition();
+        // Make sure termIndex[Insensitive] and idPerSortPosition[Insensitive] are initialized
+        // (we do this lazily for some AFIs because we rarely or never need this for those, and it takes up a significant amount of memory)
+        buildTermIndexes();
         
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
@@ -158,8 +158,8 @@ class TermsReader extends Terms {
 
     @Override
     public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
-        if (!initialized)
-            initialize();
+        buildTermIndexes();
+        
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
         int[] idLookup = sensitivity.isCaseSensitive() ? sortPositionPerId : sortPositionPerIdInsensitive;
@@ -179,81 +179,63 @@ class TermsReader extends Terms {
         // Read the terms file
         read(termsFile);
 
-        termIndex = new Reference2IntOpenHashMap<>(terms.length);
-        termIndex.defaultReturnValue(-1);
-        termIndexInsensitive = new Reference2LongOpenHashMap<>(terms.length);
-        termIndexInsensitive.defaultReturnValue(-1);
-        
-        // Build the case-sensitive term index.
-        for (int i = 0; i < numberOfTerms; i++) {
-            termIndex.put(terms[i], i);
-        }
-
-        if (termIndexInsensitive != null) {
-            // Now, store the first index in the sortPositionPerIdInsensitive[] array
-            // that matches each term, and the number of matching terms that follow.
-            // This can be used while building NFAs to quickly fetch all indices matching
-            // a term case-insensitively.
-            CollationKey prevTermKey = null;
-            ReferenceSet<String> matchingTerms = new ReferenceOpenHashSet<>();
-            int currentFirst = -1;
-            int currentNumber = -1;
-            for (int i = 0; i < numberOfTerms; i++) {
-                String term = terms[idPerSortPositionInsensitive[i]];
-                CollationKey termKey = collatorInsensitive.getCollationKey(term);
-                if (!termKey.equals(prevTermKey)) {
-                    if (currentFirst >= 0) {
-                        currentNumber = i - currentFirst;
-                        long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
-                        for (String match: matchingTerms) {
-                            termIndexInsensitive.put(match, firstAndNumber);
-                        }
-                        matchingTerms.clear();
-                    }
-                    currentFirst = i;
-                    currentNumber = 0;
-                    prevTermKey = termKey;
-                }
-                // Keep track of all matching terms
-                matchingTerms.add(term);
-            }
-            if (currentFirst >= 0) {
-                currentNumber = numberOfTerms - currentFirst;
-                long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
-                for (String match: matchingTerms) {
-                    termIndexInsensitive.put(match, firstAndNumber);
-                }
-            }
-        }
+        if (buildTermIndexesOnInit)
+            buildTermIndexes();
 
         initialized = true;
     }
 
-    @Override
-    public void clear() {
-        throw new BlackLabRuntimeException("Cannot clear, not in index mode");
-    }
-
-    private synchronized void read(File termsFile) {
-        try {
-            try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
-                try (FileChannel fc = raf.getChannel()) {
-                    long fileLength = termsFile.length();
-                    IntBuffer ib = readFromFileChannel(fc, fileLength);
-                    
-                    // Read the sort order arrays
-                    sortPositionPerId = new int[numberOfTerms];
-                    sortPositionPerIdInsensitive = new int[numberOfTerms];
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
-                    ib.get(sortPositionPerId);
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
-                    ib.get(sortPositionPerIdInsensitive);
-
-                    buildIdPerSortPosition();
+    private synchronized void buildTermIndexes() {
+        if (terms == null)
+            initialize();
+        if (termIndex == null) {
+            termIndex = new Reference2IntOpenHashMap<>(terms.length);
+            termIndex.defaultReturnValue(-1);
+            termIndexInsensitive = new Reference2LongOpenHashMap<>(terms.length);
+            termIndexInsensitive.defaultReturnValue(-1);
+            
+            // Build the case-sensitive term index.
+            for (int i = 0; i < numberOfTerms; i++) {
+                termIndex.put(terms[i], i);
+            }
+    
+            if (termIndexInsensitive != null) {
+                // Now, store the first index in the sortPositionPerIdInsensitive[] array
+                // that matches each term, and the number of matching terms that follow.
+                // This can be used while building NFAs to quickly fetch all indices matching
+                // a term case-insensitively.
+                CollationKey prevTermKey = null;
+                ReferenceSet<String> matchingTerms = new ReferenceOpenHashSet<>();
+                int currentFirst = -1;
+                int currentNumber = -1;
+                buildIdPerSortPosition();
+                for (int i = 0; i < numberOfTerms; i++) {
+                    String term = terms[idPerSortPositionInsensitive[i]];
+                    CollationKey termKey = collatorInsensitive.getCollationKey(term);
+                    if (!termKey.equals(prevTermKey)) {
+                        if (currentFirst >= 0) {
+                            currentNumber = i - currentFirst;
+                            long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
+                            for (String match: matchingTerms) {
+                                termIndexInsensitive.put(match, firstAndNumber);
+                            }
+                            matchingTerms.clear();
+                        }
+                        currentFirst = i;
+                        currentNumber = 0;
+                        prevTermKey = termKey;
+                    }
+                    // Keep track of all matching terms
+                    matchingTerms.add(term);
+                }
+                if (currentFirst >= 0) {
+                    currentNumber = numberOfTerms - currentFirst;
+                    long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
+                    for (String match: matchingTerms) {
+                        termIndexInsensitive.put(match, firstAndNumber);
+                    }
                 }
             }
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -277,7 +259,33 @@ class TermsReader extends Terms {
             }
         }
     }
-    
+
+    @Override
+    public void clear() {
+        throw new BlackLabRuntimeException("Cannot clear, not in index mode");
+    }
+
+    private synchronized void read(File termsFile) {
+        try {
+            try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
+                try (FileChannel fc = raf.getChannel()) {
+                    long fileLength = termsFile.length();
+                    IntBuffer ib = readFromFileChannel(fc, fileLength);
+                    
+                    // Read the sort order arrays
+                    sortPositionPerId = new int[numberOfTerms];
+                    sortPositionPerIdInsensitive = new int[numberOfTerms];
+                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ib.get(sortPositionPerId);
+                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ib.get(sortPositionPerIdInsensitive);
+                }
+            }
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
     @Override
     public void write(File termsFile) {
         throw new BlackLabRuntimeException("Term.write(): not in index mode!");

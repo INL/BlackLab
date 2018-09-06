@@ -82,9 +82,10 @@ public abstract class AnnotationForwardIndex {
      * @param create if true, create a new forward index
      * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
      * @param fiidLookup how to look up fiid given docId 
+     * @param buildTermIndexesOnInit whether to build term indexes right away or lazily
      * @return the forward index object
      */
-    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup) {
+    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup, boolean buildTermIndexesOnInit) {
     
         if (annotation != null && !annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
@@ -140,7 +141,7 @@ public abstract class AnnotationForwardIndex {
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport);
+            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport, buildTermIndexesOnInit);
         }
         if (annotation != null && fiidLookup != null) {
             fi.setIdTranslateInfo(fiidLookup, annotation);
