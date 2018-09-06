@@ -21,9 +21,16 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,6 +55,18 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     
     /** Collators to use for terms file */
     private Collators collators;
+
+    /** Offset of each document */
+    long[] offset;
+    
+    /** Length of each document */
+    int[] length;
+    
+    /** Deleted status of each document */
+    byte[] deleted;
+
+    /** Deleted TOC entries. Always sorted by size. */
+    List<Integer> deletedTocEntries = null;
 
     AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport) {
         super(dir, collators, largeTermsFileSupport);
@@ -90,24 +109,24 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
                 // (or right the first byte after the previous mapping).
 
                 // Look for the largest entryOffset that's no larger than mappedBytes.
-                TocEntry mapNextChunkFrom = null;
-                for (TocEntry e : toc) {
-                    if (e.offset <= mappedBytes && (mapNextChunkFrom == null || e.offset > mapNextChunkFrom.offset))
-                        mapNextChunkFrom = e;
+                int mapNextChunkFrom = -1;
+                for (int i = 0; i < offset.length; i++) {
+                    if (offset[i] <= mappedBytes && (mapNextChunkFrom < 0 || offset[i] > offset[mapNextChunkFrom]))
+                        mapNextChunkFrom = i;
                 }
 
                 // Uses binary search.
-                int min = 0, max = toc.size();
+                int min = 0, max = offset.length;
                 while (max - min > 1) {
                     int middle = (min + max) / 2;
-                    long middleVal = toc.get(middle).offset * SIZEOF_INT;
+                    long middleVal = offset[middle] * SIZEOF_INT;
                     if (middleVal <= mappedBytes) {
                         min = middle;
                     } else {
                         max = middle;
                     }
                 }
-                long startOfNextMappingBytes = toc.get(min).offset * SIZEOF_INT;
+                long startOfNextMappingBytes = offset[min] * SIZEOF_INT;
 
                 // Map this chunk
                 long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
@@ -134,6 +153,45 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         // NOP
     }
     
+    /**
+     * Read the table of contents from the file
+     */
+    protected void readToc() {
+        try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
+                FileChannel fc = raf.getChannel()) {
+            long fileSize = tocFile.length();
+            MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);
+            int n = buf.getInt();
+            offset = new long[n];
+            length = new int[n];
+            deleted = new byte[n];
+            LongBuffer lb = buf.asLongBuffer();
+            lb.get(offset);
+            buf.position(buf.position() + SIZEOF_LONG * n);
+            IntBuffer ib = buf.asIntBuffer();
+            ib.get(length);
+            buf.position(buf.position() + SIZEOF_INT * n);
+            buf.get(deleted);
+            deletedTocEntries = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                if (deleted[i] != 0) {
+                    deletedTocEntries.add(i);
+                }
+                long end = offset[i] + length[i];
+                if (end > tokenFileEndPosition)
+                    tokenFileEndPosition = end;
+            }
+            sortDeletedTocEntries();
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
+    protected void sortDeletedTocEntries() {
+        deletedTocEntries.sort( (o1, o2) -> length[o1] - length[o2] );
+    }
+
+    
     @Override
     public int addDocument(List<String> content, List<Integer> posIncr) {
         throw new UnsupportedOperationException("Not supported in search mode");
@@ -144,8 +202,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         if (!initialized)
             initialize();
         
-        TocEntry e = toc.get(fiid);
-        if (e == null || e.deleted)
+        if (deleted[fiid] != 0)
             return null;
 
         int n = start.length;
@@ -157,17 +214,17 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             if (start[i] == -1)
                 start[i] = 0;
             if (end[i] == -1)
-                end[i] = e.length;
+                end[i] = length[fiid];
             if (start[i] < 0 || end[i] < 0) {
                 throw new IllegalArgumentException("Illegal values, start = " + start[i] + ", end = "
                         + end[i]);
             }
-            if (end[i] > e.length) // Can happen while making KWICs because we don't know the
+            if (end[i] > length[fiid]) // Can happen while making KWICs because we don't know the
                                    // doc length until here
-                end[i] = e.length;
-            if (start[i] > e.length || end[i] > e.length) {
+                end[i] = length[fiid];
+            if (start[i] > length[fiid] || end[i] > length[fiid]) {
                 throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
-                        + ", end = " + end[i] + ", content length = " + e.length);
+                        + ", end = " + end[i] + ", content length = " + length[fiid]);
             }
             if (end[i] <= start[i]) {
                 throw new IllegalArgumentException(
@@ -184,7 +241,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             // Figure out which chunk to access.
             ByteBuffer whichChunk = null;
             long chunkOffsetBytes = -1;
-            long entryOffsetBytes = e.offset * SIZEOF_INT;
+            long entryOffsetBytes = offset[fiid] * SIZEOF_INT;
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
@@ -201,7 +258,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             if (whichChunk == null) {
                 throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
             }
-            whichChunk.position((int) (e.offset * SIZEOF_INT - chunkOffsetBytes));
+            whichChunk.position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
             ib = whichChunk.asIntBuffer();
 
             int snippetLength = end[i] - start[i];
@@ -221,5 +278,116 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public void deleteDocumentByFiid(int fiid) {
         throw new UnsupportedOperationException("Not supported in search mode");
     }
+    
+    /**
+     * @return the number of documents in the forward index
+     */
+    @Override
+    public int numDocs() {
+        if (!initialized)
+            initialize();
+        return offset.length;
+    }
+
+    /**
+     * @return the amount of space in free blocks in the forward index.
+     */
+    @Override
+    public long freeSpace() {
+        if (!initialized)
+            initialize();
+        long freeSpace = 0;
+        for (Integer e : deletedTocEntries) {
+            freeSpace += length[e];
+        }
+        return freeSpace;
+    }
+
+    /**
+     * @return the number of free blocks in the forward index.
+     */
+    @Override
+    public int freeBlocks() {
+        if (!initialized)
+            initialize();
+        return deletedTocEntries.size();
+    }
+
+    /**
+     * Gets the length (in tokens) of a document
+     * 
+     * @param fiid forward index id of a document
+     * @return length of the document
+     */
+    @Override
+    public int docLengthByFiid(int fiid) {
+        if (!initialized)
+            initialize();
+        return length[fiid];
+    }
+
+
+    /** @return the set of all forward index ids */
+    @Override
+    public Set<Integer> idSet() {
+        if (!initialized)
+            initialize();
+        return new AbstractSet<Integer>() {
+            @Override
+            public boolean contains(Object o) {
+                return deleted[(Integer)o] == 0;
+            }
+
+            @Override
+            public boolean isEmpty() {
+                return offset.length == deletedTocEntries.size();
+            }
+
+            @Override
+            public Iterator<Integer> iterator() {
+                return new Iterator<Integer>() {
+                    int current = -1;
+                    int next = -1;
+
+                    @Override
+                    public boolean hasNext() {
+                        if (next < 0)
+                            findNext();
+                        return next < offset.length;
+                    }
+
+                    private void findNext() {
+                        next = current + 1;
+                        while (next < offset.length && deleted[next] != 0) {
+                            next++;
+                        }
+                    }
+
+                    @Override
+                    public Integer next() {
+                        if (next < 0)
+                            findNext();
+                        if (next >= offset.length)
+                            throw new NoSuchElementException();
+                        current = next;
+                        next = -1;
+                        return current;
+                    }
+
+                    @Override
+                    public void remove() {
+                        throw new UnsupportedOperationException();
+                    }
+                };
+            }
+
+            @Override
+            public int size() {
+                return offset.length - deletedTocEntries.size();
+            }
+        };
+    }
+
+    
 
 }

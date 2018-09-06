@@ -1,20 +1,8 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
 import java.text.Collator;
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -165,15 +153,6 @@ public abstract class AnnotationForwardIndex {
         void perform(int fiid, int[] tokenIds);
     }
 
-    /**
-     * The table of contents (where documents start in the tokens file and how long
-     * they are)
-     */
-    List<TocEntry> toc = null;
-
-    /** Deleted TOC entries. Always sorted by size. */
-    List<TocEntry> deletedTocEntries = null;
-
     /** The table of contents (TOC) file, docs.dat */
     File tocFile;
 
@@ -237,53 +216,7 @@ public abstract class AnnotationForwardIndex {
     protected int luceneDocIdToFiid(int docId) {
         return (int) fiidLookup.get(docId);
     }
-
-    /**
-     * Read the table of contents from the file
-     */
-    protected void readToc() {
-        try (RandomAccessFile raf = new RandomAccessFile(tocFile, "r");
-                FileChannel fc = raf.getChannel()) {
-            long fileSize = tocFile.length();
-            MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, 0, fileSize);
-            int n = buf.getInt();
-            long[] offset = new long[n];
-            int[] length = new int[n];
-            byte[] deleted = new byte[n];
-            LongBuffer lb = buf.asLongBuffer();
-            lb.get(offset);
-            buf.position(buf.position() + SIZEOF_LONG * n);
-            IntBuffer ib = buf.asIntBuffer();
-            ib.get(length);
-            buf.position(buf.position() + SIZEOF_INT * n);
-            buf.get(deleted);
-            toc = new ArrayList<>(n);
-            deletedTocEntries = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                TocEntry e = new TocEntry(offset[i], length[i], deleted[i] != 0);
-                toc.add(e);
-                if (e.deleted) {
-                    deletedTocEntries.add(e);
-                }
-                long end = e.offset + e.length;
-                if (end > tokenFileEndPosition)
-                    tokenFileEndPosition = end;
-            }
-            sortDeletedTocEntries();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort(new Comparator<TocEntry>() {
-            @Override
-            public int compare(TocEntry o1, TocEntry o2) {
-                return o1.length - o2.length;
-            }
-        });
-    }
-
+    
     /**
      * Close the forward index. Writes the table of contents to disk if modified.
      */
@@ -371,33 +304,17 @@ public abstract class AnnotationForwardIndex {
     /**
      * @return the number of documents in the forward index
      */
-    public int numDocs() {
-        if (!initialized)
-            initialize();
-        return toc.size();
-    }
+    public abstract int numDocs();
 
     /**
      * @return the amount of space in free blocks in the forward index.
      */
-    public long freeSpace() {
-        if (!initialized)
-            initialize();
-        long freeSpace = 0;
-        for (TocEntry e : deletedTocEntries) {
-            freeSpace += e.length;
-        }
-        return freeSpace;
-    }
+    public abstract long freeSpace();
 
     /**
      * @return the number of free blocks in the forward index.
      */
-    public int freeBlocks() {
-        if (!initialized)
-            initialize();
-        return deletedTocEntries.size();
-    }
+    public abstract int freeBlocks();
 
 
     /**
@@ -415,11 +332,7 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public int docLengthByFiid(int fiid) {
-        if (!initialized)
-            initialize();
-        return toc.get(fiid).length;
-    }
+    public abstract int docLengthByFiid(int fiid);
 
     public int docLength(int docId) {
         return docLengthByFiid(luceneDocIdToFiid(docId));
@@ -470,66 +383,8 @@ public abstract class AnnotationForwardIndex {
         this.annotation = annotation;
         this.fiidLookup = fiidLookup;
     }
-
-    /** @return the set of all forward index ids */
-    public Set<Integer> idSet() {
-        if (!initialized)
-            initialize();
-        return new AbstractSet<Integer>() {
-            @Override
-            public boolean contains(Object o) {
-                return !toc.get((Integer) o).deleted;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return toc.size() == deletedTocEntries.size();
-            }
-
-            @Override
-            public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
-                    int current = -1;
-                    int next = -1;
-
-                    @Override
-                    public boolean hasNext() {
-                        if (next < 0)
-                            findNext();
-                        return next < toc.size();
-                    }
-
-                    private void findNext() {
-                        next = current + 1;
-                        while (next < toc.size() && toc.get(next).deleted) {
-                            next++;
-                        }
-                    }
-
-                    @Override
-                    public Integer next() {
-                        if (next < 0)
-                            findNext();
-                        if (next >= toc.size())
-                            throw new NoSuchElementException();
-                        current = next;
-                        next = -1;
-                        return current;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-
-            @Override
-            public int size() {
-                return toc.size() - deletedTocEntries.size();
-            }
-        };
-    }
+    
+    public abstract Set<Integer> idSet();
 
     public boolean canDoNfaMatching() {
         return canDoNfaMatching;
