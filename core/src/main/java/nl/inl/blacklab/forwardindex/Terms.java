@@ -132,7 +132,7 @@ public abstract class Terms {
                 for (; currentTerm < firstTermInBlock + numTermsThisBlock; currentTerm++) {
                     int offset = termStringOffsets[currentTerm];
                     int length = termStringOffsets[currentTerm + 1] - offset;
-                    String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
+                    String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET).intern();
 
                     // We need to find term for id while searching
                     terms[currentTerm] = str;
@@ -168,7 +168,7 @@ public abstract class Terms {
             for (int id = 0; id < n; id++) {
                 int offset = termStringOffsets[id];
                 int length = termStringOffsets[id + 1] - offset;
-                String str = new String(termStrings, offset, length, DEFAULT_CHARSET);
+                String str = new String(termStrings, offset, length, DEFAULT_CHARSET).intern();
 
                 // We need to find term for id while searching
                 terms[id] = str;

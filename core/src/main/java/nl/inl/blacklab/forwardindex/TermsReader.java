@@ -28,10 +28,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -52,7 +52,7 @@ class TermsReader extends Terms {
     /**
      * Mapping from term to its unique index number.
      */
-    Object2IntMap<String> termIndex;
+    Reference2IntMap<String> termIndex;
 
     /**
      * The first index in the sortPositionPerIdInsensitive[] array that matches each
@@ -115,8 +115,8 @@ class TermsReader extends Terms {
         // (done automatically on open in background thread, so this shouldn't normally block)
         if (!initialized)
             initialize();
-
-        int index = termIndex.getInt(term);
+        
+        int index = termIndex.getInt(term.intern());
         if (index == -1)
             return NO_TERM; // term not found
         return index;
@@ -141,7 +141,7 @@ class TermsReader extends Terms {
         // NOTE: insensitive index is only available in search mode.
         if (caseSensitive) {
             // Case-/accent-sensitive. Look up the term's id.
-            results.add(termIndex.getInt(term));
+            results.add(termIndex.getInt(term.intern()));
         } else if (termIndexInsensitive != null) {
             // Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
             CollationKey key = coll.getCollationKey(term);
@@ -179,7 +179,7 @@ class TermsReader extends Terms {
         // Read the terms file
         read(termsFile);
 
-        termIndex = new Object2IntOpenHashMap<>(terms.length);
+        termIndex = new Reference2IntOpenHashMap<>(terms.length);
         termIndex.defaultReturnValue(-1);
         termIndexInsensitive = new Object2LongOpenHashMap<>(terms.length);
         termIndexInsensitive.defaultReturnValue(-1);
