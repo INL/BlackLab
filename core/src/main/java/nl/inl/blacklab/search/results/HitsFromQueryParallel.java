@@ -287,6 +287,11 @@ public class HitsFromQueryParallel extends Hits {
                 // We've stopped retrieving/counting
                 maxStats.setHitsProcessedExceededMaximum();
                 maxStats.setHitsCountedExceededMaximum();
+                
+                for (SpansReader reader: spansReaders) {
+                    reader.interrupt();
+                }
+                
                 throw e;
             } finally {
                 ensureHitsReadLock.unlock();

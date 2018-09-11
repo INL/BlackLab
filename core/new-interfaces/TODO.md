@@ -24,28 +24,23 @@ FREQUENT TERMS (PREFIX/SUFFIX)
 
 MEMORY (van 10G heap)
 
-- int[]: Terms.sortPositionPerId, etc. (ca. 20MB per stuk, 4 per FI)
-  Object[]: (134MB per stuk) termIndex/termIndexInsensitive/
-                             AnnotationForwardIndex.toc/ContentStore.toc
-  (hebben we deze altijd allemaal nodig? kunnen we ze on-demand genereren? wel trager, maar misschien gebruik je sommige nooit)
-  (kunnen we initial sizing precies maken zodat ze niet steeds reallocated worden en ruimte verspillen?)
-
-  Maak het mogelijk om in indexmetadata.yaml aan te geven dat de FI van een bepaalde annotatie lazily initialized moet worden?
-  [eigenlijk zou je per FI moeten aangeven waar-ie voor gebruikt gaat worden, zodat bepaald kan worden wat je altijd wilt initialiseren,
-   en wat lazily kan omdat het ws. niet nodig zal zijn]
-
-- ForwardIndex.TocEntry: neemt 540MB in; misschien in losse array vangen..?
-  (liefst zelfs gewoon als memory mapped file houden)
-
-- String[]: 144M, TermsReader.terms. Evt. vervangen door byte[] en indices..??
+- ForwardIndex.TocEntry: liefst als memory mapped file houden?
 
 lastiger:
-- 500MB RuleBasedCollationKeys (nodig omdat we correcte collation order willen aanhouden)
 - 360MB Integer objects. Kunnen we die evt. vervangen door primitives?
 - 35M String instances, samen 1GB: kunnen we meer Strings internen?
   (allerlei sources, lastig te bepalen, en bovendien gebruiken we weinig Strings tijdens matchen, en dan ws. alleen term String instances)
 - DirectByteBufferR 280M: hoe komt dit? Lijkt vooral Lucene
 - byte[]: Lucene stuff
+
+
+WELKE FI/TERMS METHODS WORDEN WANNEER GEBRUIKT?
+- Terms.indexOf: deserialize hitpropertycontext (ws. alleen word/lemma/pos)
+- Terms.indexOf(insensitive): NFA matching (ws. alleen word/lemma/pos)
+- Terms.idToSortPosition, toSortOrder, compareSortPosition: hitpropertcontext (ws. word/lemma/pos)
+- Terms.get(int): kwic/concordance (alle annotations)
+- AnnotationForwardIndex.retrieveParts(): kwic/concordances, NFA matching (alle annotations)
+
 
 
 

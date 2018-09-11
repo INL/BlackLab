@@ -44,6 +44,8 @@ public class SpansReader {
 
     private boolean interrupted = false;
 
+    private boolean shouldCancel = false;
+
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -138,6 +140,11 @@ public class SpansReader {
     
                     // Pause if asked
                     threadPauser.waitIfPaused();
+                    
+                    if (shouldCancel) {
+                        // We've been asked to stop fetching hits.
+                        throw new InterruptedException();
+                    }
     
                     // Advance to next hit
                     int start = spans.nextStartPosition();
@@ -175,5 +182,9 @@ public class SpansReader {
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         }
+    }
+
+    public void interrupt() {
+        shouldCancel = true;
     }
 }

@@ -172,9 +172,11 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (block) {
             try {
                 // Wait until result available
-                while (!initialSearchDone) {
+                while (!initialSearchDone && !futureDone() && !cancelled) {
                     Thread.sleep(100);
                 }
+                if (cancelled || futureCancelled())
+                    throw new InterruptedSearch("Search was cancelled");
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);
             }
@@ -301,26 +303,38 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public T get() throws InterruptedException, ExecutionException {
         // Wait until result available
-        while (!initialSearchDone) {
+        while (!initialSearchDone && !futureDone() && !cancelled) {
             Thread.sleep(100);
         }
+        if (cancelled || futureCancelled())
+            throw new InterruptedSearch("Search was cancelled");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
         return result;
+    }
+
+    private boolean futureCancelled() {
+        return future != null && future.isCancelled();
+    }
+
+    private boolean futureDone() {
+        return future != null && future.isDone();
     }
 
     @Override
     public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         // Wait until result available
         long ms = unit.toMillis(time);
-        while (ms > 0 && !initialSearchDone) {
+        while (ms > 0 && !initialSearchDone && !futureDone() && !cancelled) {
             Thread.sleep(100);
             ms -= 100;
         }
-        if (!initialSearchDone)
-            throw new TimeoutException("Result still not available after " + ms + "ms");
+        if (cancelled || futureCancelled())
+            throw new InterruptedSearch("Search was cancelled");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
+        if (!initialSearchDone)
+            throw new TimeoutException("Result still not available after " + ms + "ms");
         return result;
     }
 
@@ -464,6 +478,9 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 .startMap()
                 .entry("type", isCount ? "count" : "search")
                 .entry("status", status())
+                .entry("cancelled", cancelled)
+                .entry("futureStatus", futureStatus())
+                .entry("exceptionThrown", exceptionThrown == null ? "" : exceptionThrown.getClass().getSimpleName())
                 .entry("sizeBytes", numberOfStoredHits() * BlsCache.SIZE_OF_HIT)
                 .entry("userWaitTime", timeUserWaited() / 1000.0)
                 .entry("totalExecTime", timeRunning() / 1000.0)
@@ -498,6 +515,24 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 //            ds.endMap().endEntry();
 //        }
         ds.endMap();
+    }
+
+    private String futureStatus() {
+        if (future == null)
+            return "null";
+        if (future.isCancelled())
+            return "cancelled";
+        if (future.isDone()) {
+            try {
+                future.get();
+            } catch (InterruptedException e) {
+                return "interruptedEx" + e.getMessage();
+            } catch (ExecutionException e) {
+                return "executionEx: " + e.getMessage();
+            }
+            return "done";
+        }
+        return "running";
     }
 
     private static void dataStreamDebugInfo(DataStream ds, BlsCacheEntry<?> entry) {
@@ -547,5 +582,9 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 .endMap();
     }
     
+    @Override
+    public String toString() {
+        return "BlsCacheEntry(" + search + ", " + status() + ")";
+    }
     
 }
