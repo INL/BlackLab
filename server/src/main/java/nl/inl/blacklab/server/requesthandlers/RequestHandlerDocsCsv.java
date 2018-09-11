@@ -115,6 +115,14 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         return Pair.of(docs, groups);
     }
 
+    private boolean includeSearchParameters() {
+        return searchParam.getBoolean("csvsummary");
+    }
+
+    private boolean declareSeparator() {
+        return searchParam.getBoolean("csvsepline");
+    }
+
     private void writeGroups(DocGroups groups, DataStreamPlain ds) throws BlsException {
         searchLogger.setResultsFound(groups.size());
         
@@ -124,11 +132,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             row.addAll(groups.groupCriteria().propNames());
             row.add("count");
 
-            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
-            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
-            addSummaryCommonFieldsCSV(format, printer, searchParam);
-            row.clear();
+            CSVPrinter printer = createHeader(row);
 
             // write the groups
             for (DocGroup group : groups) {
@@ -143,6 +147,16 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         } catch (IOException e) {
             throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_DOCS_CSV1");
         }
+    }
+
+    private CSVPrinter createHeader(List<String> row) throws IOException {
+        // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+        CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
+        if (includeSearchParameters())
+            addSummaryCommonFieldsCSV(format, printer, searchParam);
+        row.clear();
+        return printer;
     }
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
@@ -168,11 +182,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
             row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
 
-            // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
-            CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-            CSVPrinter printer = format.print(new StringBuilder("sep=,\r\n"));
-            addSummaryCommonFieldsCSV(format, printer, searchParam);
-            row.clear();
+            CSVPrinter printer = createHeader(row);
 
             int subtractClosingToken = 1;
             for (DocResult docResult : docs) {
