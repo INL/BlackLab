@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 public interface LogDatabase {
 
@@ -45,6 +47,7 @@ public interface LogDatabase {
     /**
      * Log info about the state of the cache.
      * 
+     * @param snapshot save a snapshot of the cache contents? 
      * @param numberOfSearches number of cached searches
      * @param numberRunning number of running searches
      * @param numberPaused number of paused searches
@@ -53,7 +56,7 @@ public interface LogDatabase {
      * @param largestEntryBytes largest cache entry
      * @param oldestEntryAgeSec oldest cache entry
      */
-    void addCacheInfo(int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes,
+    void addCacheInfo(List<BlsCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes,
             long largestEntryBytes, int oldestEntryAgeSec);
 
 }

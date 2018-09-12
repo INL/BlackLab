@@ -203,6 +203,14 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         return exceptionThrown;
     }
 
+    public String exceptionStacktrace() {
+        if (exceptionThrown == null)
+            return "";
+        StringWriter out = new StringWriter();
+        exceptionThrown.printStackTrace(new PrintWriter(out));
+        return out.toString();
+    }
+
     @Override
     public boolean isCancelled() {
         return cancelled;
@@ -362,7 +370,26 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (isDone()) {
             // 0 ... 9999 : search is finished
             // (the more recently used, the worthier)
-            worthiness = Math.max(0, 9999 - timeSinceLastAccess());
+            
+            // Size score from 1-100; 1M per unit, so 100 corresponds to 100M or larger
+            int sizeScore = Math.max(1, Math.min(100, numberOfStoredHits() * BlsCache.SIZE_OF_HIT / 1000000));
+            
+            // Run time score from 1-10000; 0.03s per unit, so 10000 corresponds to 5 minutes or longer 
+            long runTimeScore = Math.max(1, Math.min(10000, timeRunning() * 10 / 300));
+            
+            // Last accessed score from 1-100: 3s per unit, so 100 corresponds to 5 minutes or longer
+            long lastAccessScore = Math.max(1, Math.min(100, timeSinceLastAccess() / 3000));
+            
+            if (timeSinceLastAccess() < 60000) {
+                // For the first minute of the search, pretend it's a search that took really long
+                // and is really small, so it won't be eliminated from the cache right away.
+                worthiness = 10000 / lastAccessScore;
+            } else {
+                // After a minute, start taking into account the size of the results set and
+                // and the time it will take to recreate it.
+                worthiness = (long)((double)runTimeScore / lastAccessScore / sizeScore);
+            }
+            
         } else if (timeRunning() > YOUTH_THRESHOLD_SEC) {
             // 10000 ... 19999: search has been running for a long time and is counting hits
             // 20000 ... 29999: search has been running for a long time and is retrieving hits
@@ -517,7 +544,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         ds.endMap();
     }
 
-    private String futureStatus() {
+    public String futureStatus() {
         if (future == null)
             return "null";
         if (future.isCancelled())

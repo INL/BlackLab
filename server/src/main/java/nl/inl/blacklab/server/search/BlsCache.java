@@ -40,7 +40,7 @@ public class BlsCache implements SearchCache {
     public static final boolean ENABLE_NEW_CACHE = true;
 
     /** Very rough measure of how large result objects are, based on a Hit (3 ints + 12 bytes object overhead) */
-    static final int SIZE_OF_HIT = 24;
+    public static final int SIZE_OF_HIT = 24;
 
     protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
@@ -238,6 +238,8 @@ public class BlsCache implements SearchCache {
     private LoadManagerThread loadManagerThread;
 
     private long lastCacheLog = 0;
+
+    private long lastCacheSnapshot = 0;
     
     private void initLoadManagement(BLSConfigCache config, BLSConfigPerformance perfConfig) {
         this.config = config;
@@ -298,7 +300,13 @@ public class BlsCache implements SearchCache {
                     oldestEntryAgeMs = s.timeSinceCreation();
             }
             lastCacheLog = System.currentTimeMillis();
-            logDatabase.addCacheInfo(searches.size(), numberRunning, numberPaused, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
+            List<BlsCacheEntry<? extends SearchResult>> snapshot = null;
+            if (lastCacheLog - lastCacheSnapshot > ONE_MINUTE_MS * 5) {
+                // Capture a cache snapshot every 5 minutes
+                snapshot = searches;
+                lastCacheSnapshot = lastCacheLog;
+            }
+            logDatabase.addCacheInfo(snapshot, searches.size(), numberRunning, numberPaused, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
         }
 
         // Sort the searches based on descending "worthiness"

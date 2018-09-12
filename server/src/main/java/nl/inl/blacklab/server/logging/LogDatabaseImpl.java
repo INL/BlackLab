@@ -26,6 +26,9 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.LogException;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.server.search.BlsCache;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 public class LogDatabaseImpl implements Closeable, LogDatabase {
 
@@ -104,6 +107,8 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                     ));
                     execute(String.join("\n", 
                             "CREATE TABLE IF NOT EXISTS \"cache_stats\" (",
+                            "  `id`    INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,",
+                            "  `snapshot` INTEGER NOT NULL DEFAULT 0,",
                             "  `time`  INTEGER NOT NULL,",
                             "  `timestamp` TEXT NOT NULL,",
                             "  `num_searches`  INTEGER NOT NULL,",
@@ -115,12 +120,27 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                             "  `oldest_entry_sec`  INTEGER NOT NULL",
                             ")"
                     ));
+                    execute(String.join("\n", 
+                            "CREATE TABLE IF NOT EXISTS \"cache_entry\" (",
+                            "  `cache_stats_id` INTEGER NOT NULL,",
+                            "  `search` TEXT NOT NULL,",
+                            "  `status` TEXT NOT NULL,",
+                            "  `cancelled` INTEGER NOT NULL,",
+                            "  `future_status` INTEGER NOT NULL,",
+                            "  `exception_thrown` TEXT NOT NULL,",
+                            "  `size_bytes` INTEGER NOT NULL,",
+                            "  `total_time_ms` INTEGER NOT NULL,",
+                            "  `not_accessed_for_ms` INTEGER NOT NULL,",
+                            "  FOREIGN KEY(`cache_stats_id`) REFERENCES cache_stats ( id )",
+                            ")"
+                    ));
                     
                     // Don't let the database grow too large
                     long threeMonthsAgo = now() - THREE_MONTHS_MS;
                     execute("DELETE FROM request_logs WHERE time < " + threeMonthsAgo);
                     execute("DELETE FROM requests WHERE time < " + threeMonthsAgo);
                     execute("DELETE FROM cache_stats WHERE time < " + threeMonthsAgo);
+                    execute("DELETE FROM cache_entry WHERE (SELECT count(*) FROM cache_stats s WHERE s.id = cache_stats_id) = 0");
                     
                     conn.commit();
                 } catch(SQLException e) {
@@ -294,20 +314,66 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     }
     
     @Override
-    public void addCacheInfo(int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes, long largestEntryBytes, int oldestEntryAgeSec) {
+    public void addCacheInfo(List<BlsCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes, long largestEntryBytes, int oldestEntryAgeSec) {
         try (Connection conn = pool.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_stats (time, timestamp, num_searches, num_running, num_paused, size_bytes, free_mem_bytes, " +
-                    "largest_entry_bytes, oldest_entry_sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_stats (snapshot, time, timestamp, num_searches, num_running, num_paused, size_bytes, free_mem_bytes, " +
+                    "largest_entry_bytes, oldest_entry_sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
                 long now = now();
-                stmt.setLong(1, now);
-                stmt.setString(2, timestamp(now));
-                stmt.setInt(3, numberOfSearches);
-                stmt.setInt(4, numberRunning);
-                stmt.setInt(5, numberPaused);
-                stmt.setLong(6, sizeBytes);
-                stmt.setLong(7, freeMemoryBytes);
-                stmt.setLong(8, largestEntryBytes);
-                stmt.setInt(9, oldestEntryAgeSec);
+                stmt.setInt   ( 1, snapshot != null ? 1 : 0);
+                stmt.setLong  ( 2, now);
+                stmt.setString( 3, timestamp(now));
+                stmt.setInt   ( 4, numberOfSearches);
+                stmt.setInt   ( 5, numberRunning);
+                stmt.setInt   ( 6, numberPaused);
+                stmt.setLong  ( 7, sizeBytes);
+                stmt.setLong  ( 8, freeMemoryBytes);
+                stmt.setLong  ( 9, largestEntryBytes);
+                stmt.setInt   (10, oldestEntryAgeSec);
+                stmt.executeUpdate();
+                if (snapshot != null) {
+                    try (ResultSet rs = stmt.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            int cacheStatsId = rs.getInt(1);
+                            for (BlsCacheEntry<? extends SearchResult> entry: snapshot) {
+                                addCacheSnapshotRecord(cacheStatsId, entry);
+                            }
+                        } else {
+                            throw new LogException("Insert didn't generate an id!");
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // don't take BL down because SQLite logging isn't working right (happens when doing lots of requests at once)
+            e.printStackTrace();
+        }
+    }
+
+    private void addCacheSnapshotRecord(int cacheStatsId, BlsCacheEntry<? extends SearchResult> entry) {
+        /*cache_entry\" (",
+                            "  `cache_stats_id` INTEGER NOT NULL,",
+                            "  `search` TEXT NOT NULL,",
+                            "  `status` TEXT NOT NULL,",
+                            "  `cancelled` INTEGER NOT NULL,",
+                            "  `future_status` INTEGER NOT NULL,",
+                            "  `exception_thrown` TEXT NOT NULL,",
+                            "  `size_bytes` INTEGER NOT NULL,",
+                            "  `total_time_sec` INTEGER NOT NULL,",
+                            "  `not_accessed_for_sec` INTEGER NOT NULL,",
+                            "  FOREIGN KEY(`cache_stats_id`) REFERENCES cache_stats ( id )",
+         * */
+        try (Connection conn = pool.getConnection()) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_entry (cache_stats_id, search, status, cancelled, " +
+                    "future_status, exception_thrown, size_bytes, total_time_ms, not_accessed_for_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+                stmt.setInt   (1, cacheStatsId);
+                stmt.setString(2, entry.search().toString());
+                stmt.setString(3, entry.status());
+                stmt.setInt   (4, entry.isCancelled() ? 1 : 0);
+                stmt.setString(5, entry.futureStatus());
+                stmt.setString(6, entry.exceptionStacktrace());
+                stmt.setInt   (7, entry.numberOfStoredHits() * BlsCache.SIZE_OF_HIT);
+                stmt.setLong  (8, entry.timeUserWaited());
+                stmt.setLong  (9, entry.timeSinceLastAccess());
                 stmt.executeUpdate();
             }
         } catch (SQLException e) {
@@ -333,7 +399,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
             
             // Add some requests
             for (int i = 0; i < 3; i++) {
-                log.addCacheInfo(i, 1, 0, i * 1000, 10000 - (i*1000), i * 333, i * 100);
+                log.addCacheInfo(null, i, 1, 0, i * 1000, 10000 - (i*1000), i * 333, i * 100);
                 System.out.println("Request " + i);
                 Map<String, String[]> param = new HashMap<>();
                 param.put("a", new String[] {"b"});

@@ -7,6 +7,8 @@ import java.util.Map;
 
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 public class LogDatabaseDummy implements LogDatabase {
 
@@ -82,7 +84,7 @@ public class LogDatabaseDummy implements LogDatabase {
      * @param oldestEntryAgeSec oldest cache entry
      */
     @Override
-    public void addCacheInfo(int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes,
+    public void addCacheInfo(List<BlsCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, int numberPaused, long sizeBytes, long freeMemoryBytes,
             long largestEntryBytes, int oldestEntryAgeSec) {
         // NOP
     }
