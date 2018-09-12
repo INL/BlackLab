@@ -91,7 +91,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public synchronized void initialize() {
         if (initialized)
             return;
-        logger.debug("START initialize AFI " + tocFile.getParent());
+        //logger.debug("START initialize AFI " + tocFile.getParent());
         
         readToc();
         
@@ -150,7 +150,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             throw BlackLabRuntimeException.wrap(e1);
         }
         
-        logger.debug("END initialize AFI " + tocFile.getParent());
+        //logger.debug("END initialize AFI " + tocFile.getParent());
         initialized = true;
     }
     

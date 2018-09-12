@@ -59,9 +59,9 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * subclass.
  */
 public abstract class RequestHandler {
-    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
-
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
+
+    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 

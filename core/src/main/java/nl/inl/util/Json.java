@@ -1,6 +1,7 @@
 package nl.inl.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -136,6 +137,8 @@ public class Json {
     }
 
     public static List<String> getListOfStrings(JsonNode group, String name) {
+        if (!group.has(name))
+            return Collections.emptyList();
         ArrayNode arr = (ArrayNode) group.get(name);
         List<String> result = new ArrayList<>();
         if (arr != null) {

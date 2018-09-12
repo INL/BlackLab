@@ -1209,10 +1209,24 @@ corpusConfig:
     # Text direction of this corpus (e.g. "LTR", "left-to-right", "RTL", etc.).
     # (default: LTR)
     textDirection: LTR
+    
+    # You can divide annotations for an annotated field into groups, which can
+    # be useful if you want to display them in a tabbed interface.
+    # Our corpus frontend uses this setting.
+    annotationGroups:
+      contents:
+      - name: Basic
+        annotations:
+        - word
+        - lemma
+      - name: Advanced
+        annotations:
+        - pos
+        addRemainingAnnotations: true
 
     # You can divide your metadata fields into groups, which can
     # be useful if you want to display them in a tabbed interface.
-    # Our default corpus interface supports this.
+    # Our corpus frontend uses this setting.
     metadataFieldGroups:
     - name: Tab1
       fields:

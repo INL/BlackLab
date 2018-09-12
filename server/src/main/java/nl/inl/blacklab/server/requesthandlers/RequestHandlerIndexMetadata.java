@@ -1,6 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -136,7 +138,9 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 }
                 if (!addedRemaining && metaGroup.addRemainingFields()) {
                     addedRemaining = true;
-                    for (MetadataField field: metadataFieldsNotInGroups) {
+                    List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
+                    rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
+                    for (MetadataField field: rest) {
                         ds.item("field", field.name());
                     }
                 }
@@ -166,7 +170,9 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                         }
                         if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
                             addedRemainingAnnots = true;
-                            for (Annotation annotation: annotationsNotInGroups) {
+                            List<Annotation> rest = new ArrayList<>(annotationsNotInGroups);
+                            rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
+                            for (Annotation annotation: rest) {
                                 if (!annotation.isInternal())
                                     ds.item("annotation", annotation.name());
                             }

@@ -399,6 +399,7 @@ Here's a commented example of indexmetadata.yaml:
         fields:
         - date
         - keywords
+        addRemainingFields: true  # plus any fields that weren't mentioned yet 
         
       # Information about annotated fields (formerly called "complex fields" in BlackLab)
       complexFields:
