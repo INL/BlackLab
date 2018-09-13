@@ -110,7 +110,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexName != null)
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fd.name())
-                .entry(ElementNames.isAnnotatedField, "false")
+                .entry(ElementNames.isAnnotatedField, false)
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
@@ -185,7 +185,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             ds.entry("indexName", indexName);
         Annotations annotations = fieldDesc.annotations();
         ds.entry("fieldName", fieldDesc.name())
-                .entry(ElementNames.isAnnotatedField, "true")
+                .entry(ElementNames.isAnnotatedField, true)
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
