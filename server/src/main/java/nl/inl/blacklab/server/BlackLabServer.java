@@ -95,12 +95,15 @@ public class BlackLabServer extends HttpServlet {
             
             // Open log database
             try {
-                File dbFile = new File(searchManager.config().getLog().getSqliteDatabase());
-                if (dbFile != null) {
-                    String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
-                    Class.forName("org.sqlite.JDBC");
-                    logDatabase = new LogDatabaseImpl(url);
-                    searchManager.setLogDatabase(logDatabase);
+                String sqliteDatabase = searchManager.config().getLog().getSqliteDatabase();
+                if (searchManager.config().getLog().getSqliteDatabase()!=null) {
+                    File dbFile = new File(sqliteDatabase);
+                    if (dbFile != null) {
+                        String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
+                        Class.forName("org.sqlite.JDBC");
+                        logDatabase = new LogDatabaseImpl(url);
+                        searchManager.setLogDatabase(logDatabase);
+                    }
                 }
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException("Error opening log database", e);
