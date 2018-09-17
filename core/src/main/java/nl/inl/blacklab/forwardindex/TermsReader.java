@@ -21,18 +21,17 @@ import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.CollationKey;
+import java.text.Collator;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2LongMap;
-import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -53,7 +52,7 @@ class TermsReader extends Terms {
     /**
      * Mapping from term to its unique index number.
      */
-    Reference2IntMap<String> termIndex;
+    Object2IntMap<String> termIndex;
 
     /**
      * The first index in the sortPositionPerIdInsensitive[] array that matches each
@@ -63,7 +62,7 @@ class TermsReader extends Terms {
      * The most significant 4 bytes of the long are the first term; the least significant
      * 4 bytes are the number of terms.
      */
-    Reference2LongMap<String> termIndexInsensitive;
+    Object2LongMap<CollationKey> termIndexInsensitive;
 
     /**
      * The index number of each sorting position. Inverse of sortPositionPerId[]
@@ -120,7 +119,7 @@ class TermsReader extends Terms {
         // (for commonly used AFIs, this is done automatically on open in background thread, so this shouldn't normally block)
         buildTermIndexes();
         
-        int index = termIndex.getInt(term.intern());
+        int index = termIndex.getInt(term);
         if (index == -1)
             return NO_TERM; // term not found
         return index;
@@ -135,17 +134,18 @@ class TermsReader extends Terms {
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
         boolean caseSensitive = sensitivity.isCaseSensitive();
-        int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
 
         // Yes, use the available term index.
         // NOTE: insensitive index is only available in search mode.
-        term = term.intern();
         if (caseSensitive) {
             // Case-/accent-sensitive. Look up the term's id.
             results.add(termIndex.getInt(term));
         } else if (termIndexInsensitive != null) {
             // Case-/accent-insensitive. Find the relevant stretch of sort positions and look up the corresponding ids.
-            long firstAndNumber = termIndexInsensitive.getLong(term);
+            int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
+            Collator coll = caseSensitive ? collator : collatorInsensitive;
+            CollationKey key = coll.getCollationKey(term);
+            long firstAndNumber = termIndexInsensitive.getLong(key);            
             if (firstAndNumber != -1) {
                 int start = (int)(firstAndNumber >>> 32);
                 int end = start + (int)firstAndNumber;
@@ -177,10 +177,17 @@ class TermsReader extends Terms {
             return;
         
         // Read the terms file
+        //logger.debug("    START read terms file: " + termsFile);
         read(termsFile);
+        //logger.debug("    END   read terms file: " + termsFile);
 
-        if (buildTermIndexesOnInit)
+        if (buildTermIndexesOnInit) {
+            //logger.debug("    START build term indexes: " + termsFile);
             buildTermIndexes();
+            //logger.debug("    END   build term indexes: " + termsFile);
+        } else {
+            //logger.debug("    SKIP  build term indexes: " + termsFile);
+        }
 
         initialized = true;
     }
@@ -189,9 +196,9 @@ class TermsReader extends Terms {
         if (terms == null)
             initialize();
         if (termIndex == null) {
-            termIndex = new Reference2IntOpenHashMap<>(terms.length);
+            termIndex = new Object2IntOpenHashMap<>(terms.length);
             termIndex.defaultReturnValue(-1);
-            termIndexInsensitive = new Reference2LongOpenHashMap<>(terms.length);
+            termIndexInsensitive = new Object2LongOpenHashMap<>(terms.length);
             termIndexInsensitive.defaultReturnValue(-1);
             
             // Build the case-sensitive term index.
@@ -204,8 +211,7 @@ class TermsReader extends Terms {
                 // that matches each term, and the number of matching terms that follow.
                 // This can be used while building NFAs to quickly fetch all indices matching
                 // a term case-insensitively.
-                CollationKey prevTermKey = null;
-                ReferenceSet<String> matchingTerms = new ReferenceOpenHashSet<>();
+                CollationKey prevTermKey = collatorInsensitive.getCollationKey("");
                 int currentFirst = -1;
                 int currentNumber = -1;
                 buildIdPerSortPosition();
@@ -215,25 +221,16 @@ class TermsReader extends Terms {
                     if (!termKey.equals(prevTermKey)) {
                         if (currentFirst >= 0) {
                             currentNumber = i - currentFirst;
-                            long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
-                            for (String match: matchingTerms) {
-                                termIndexInsensitive.put(match, firstAndNumber);
-                            }
-                            matchingTerms.clear();
+                            termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
                         }
                         currentFirst = i;
                         currentNumber = 0;
                         prevTermKey = termKey;
                     }
-                    // Keep track of all matching terms
-                    matchingTerms.add(term);
                 }
                 if (currentFirst >= 0) {
                     currentNumber = numberOfTerms - currentFirst;
-                    long firstAndNumber = ((long)currentFirst << 32) | currentNumber;
-                    for (String match: matchingTerms) {
-                        termIndexInsensitive.put(match, firstAndNumber);
-                    }
+                    termIndexInsensitive.put(prevTermKey, ((long)currentFirst << 32) | currentNumber );
                 }
             }
         }
