@@ -91,13 +91,19 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public synchronized void initialize() {
         if (initialized)
             return;
-        //logger.debug("START initialize AFI " + tocFile.getParent());
         
+        //logger.debug("  START read TOC " + tocFile);
         readToc();
+        //logger.debug("  END   read TOC " + tocFile);
         
+        //logger.debug("  START read Terms " + tocFile);
         terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
+        //logger.debug("  END   read Terms " + tocFile);
+        //logger.debug("  START Terms.initialize() " + tocFile);
         terms.initialize();
+        //logger.debug("  END   Terms.initialize() " + tocFile);
         
+        //logger.debug("  START map tokens file " + tocFile);
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
                 FileChannel tokensFileChannel = tokensFp.getChannel()) {
             // Map the tokens file in chunks of 2GB each. When retrieving documents, we always
@@ -149,6 +155,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         } catch (IOException e1) {
             throw BlackLabRuntimeException.wrap(e1);
         }
+        //logger.debug("  END map tokens file " + tocFile);
         
         //logger.debug("END initialize AFI " + tocFile.getParent());
         initialized = true;

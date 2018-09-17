@@ -536,7 +536,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         blackLab.initializationExecutorService().execute(new Runnable() {
             @Override
             public void run() {
+                //logger.debug("START initialize CS: " + field.name());
                 contentStore.initialize();
+                //logger.debug("END   initialize CS: " + field.name());
             }
         });
     }

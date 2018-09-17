@@ -11,6 +11,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
@@ -26,6 +28,10 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class ForwardIndexImplSeparate implements ForwardIndex {
 
+    protected static final Logger logger = LogManager.getLogger(ForwardIndexImplSeparate.class);
+
+    private static final boolean AUTO_INIT_FORWARD_INDEXES = true;
+    
     private BlackLabIndex index;
 
     private AnnotatedField field;
@@ -42,12 +48,16 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             if (!annotation.hasForwardIndex())
                 continue;
             AnnotationForwardIndex afi = get(annotation);
-            executorService.execute(new Runnable() {
-                @Override
-                public void run() {
-                    afi.initialize();
-                }
-            });
+            if (AUTO_INIT_FORWARD_INDEXES) {
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        //logger.debug("START initialize AFI: " + annotation.name());
+                        afi.initialize();
+                        //logger.debug("END   initialize AFI: " + annotation.name());
+                    }
+                });
+            }
         }
     }
 
