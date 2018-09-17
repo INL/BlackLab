@@ -76,6 +76,16 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     private SQLiteConnPool pool;
     
     public LogDatabaseImpl(String url) throws IOException {
+        
+        // actually uses /var/cache/tomcat/temp/..
+        final File tmp = new File(System.getProperty("java.io.tmpdir"));
+        if (!tmp.exists() && !tmp.mkdirs()) {
+            throw new IOException("SQLite lib would be extracted to " + tmp + ", but it doesn't exist, and I could not create it. Please fix this or disable SQLite logging.");
+        }
+        if (!tmp.isDirectory() || !tmp.canRead() || !tmp.canWrite()) {
+            throw new IOException("SQLite lib would be extracted to " + tmp + ", but I cannot read from or write to it. Please fix this or disable SQLite logging.");
+        }
+        
         try {
             pool = new SQLiteConnPool(url);
             try (Connection conn = pool.getConnection()) {
