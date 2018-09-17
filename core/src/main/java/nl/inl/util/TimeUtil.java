@@ -19,6 +19,20 @@ public final class TimeUtil {
 
     private TimeUtil() {
     }
+    
+    /**
+     * Return the singular or the plural form of a noun depending on a number.
+     *
+     * This version of the method simply appends an "s" to form the plural. For
+     * irregular plural forms, use the version that takes 3 parameters.
+     *
+     * @param singular the singular to 'pluralize'
+     * @param number if this equals 1, no s is added
+     * @return the possibly pluralized form
+     */
+    private static String pluralize(String singular, long number) {
+        return number == 1 ? singular : singular + "s";
+    }
 
     /**
      * Describe the elapsed time in a human-readable way.
@@ -37,14 +51,14 @@ public final class TimeUtil {
         min %= 60;
         StringBuilder result = new StringBuilder();
         if (hours > 0) {
-            result.append(hours).append(" ").append(StringUtil.pluralize("hour", hours)).append(", ");
+            result.append(hours).append(" ").append(pluralize("hour", hours)).append(", ");
         }
         if (min > 0) {
-            result.append(min).append(" ").append(StringUtil.pluralize("minute", min)).append(", ");
+            result.append(min).append(" ").append(pluralize("minute", min)).append(", ");
         }
-        result.append(sec).append(" ").append(StringUtil.pluralize("second", sec));
+        result.append(sec).append(" ").append(pluralize("second", sec));
         if (reportMsec) {
-            result.append(", ").append(msec).append(" ").append(StringUtil.pluralize("millisecond", msec));
+            result.append(", ").append(msec).append(" ").append(pluralize("millisecond", msec));
         }
         return result.toString();
     }

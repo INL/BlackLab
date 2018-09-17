@@ -28,7 +28,7 @@ public class RequestHandlerDeleteIndex extends RequestHandler {
             } catch (BlsException e) {
                 throw e;
             } catch (Exception e) {
-                return Response.internalError(ds, e, debugMode, 12);
+                return Response.internalError(ds, e, debugMode, "INTERR_DELETING_INDEX_REQH");
             }
         }
 

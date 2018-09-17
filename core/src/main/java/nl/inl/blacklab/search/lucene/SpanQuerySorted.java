@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,7 +10,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Ensure hits from a SpanQuery are sorted by start- or endpoint (within
@@ -85,9 +84,7 @@ class SpanQuerySorted extends BLSpanQuery {
             BLSpans srcSpans = weight.getSpans(context, requiredPostings);
             if (srcSpans == null)
                 return null;
-            Comparator<Hit> comparator = sortByEndpoint ? PerDocumentSortedSpans.cmpEndPoint
-                    : PerDocumentSortedSpans.cmpStartPoint;
-            return new PerDocumentSortedSpans(srcSpans, comparator, eliminateDuplicates);
+            return PerDocumentSortedSpans.get(srcSpans, !sortByEndpoint, eliminateDuplicates);
         }
     }
 
@@ -171,5 +168,11 @@ class SpanQuerySorted extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         return src.forwardMatchingCost();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        src.setQueryInfo(queryInfo);
     }
 }

@@ -12,10 +12,13 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexRegistry;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocImpl;
@@ -55,15 +58,18 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private SearchCache cache = new SearchCacheDummy();
 
+    private BlackLabEngine blackLab;
+
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata();
         analyzer = new BLStandardAnalyzer();
         searchSettings = SearchSettings.defaults();
 
-        // Register ourselves in the mapping from IndexReader to Searcher,
-        // so we can find the corresponding Searcher object from within Lucene code
-        BlackLabIndexRegistry.registerSearcher(null, this);
+        // Register ourselves in the mapping from IndexReader to BlackLabIndex,
+        // so we can find the corresponding BlackLabIndex object from within Lucene code
+        blackLab = BlackLab.implicitInstance();
+        blackLab.registerSearcher(null, this);
     }
     
     public QueryInfo createDefaultQueryInfo() {
@@ -72,7 +78,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public void close() {
-        BlackLabIndexRegistry.removeSearcher(this);
+        blackLab.removeSearcher(this);
     }
 
     @Override
@@ -111,7 +117,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public DocResults queryDocuments(Query documentFilterQuery) {
+    public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
         throw new UnsupportedOperationException();
     }
 
@@ -163,23 +169,14 @@ public class MockBlackLabIndex implements BlackLabIndex {
         throw new UnsupportedOperationException();
     }
 
+
     @Override
-    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) {
+    public Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger searchLogger) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings) throws TooManyClauses {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public QueryExplanation explain(BLSpanQuery query) throws TooManyClauses {
+    public QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -195,7 +192,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ForwardIndex forwardIndex(AnnotatedField field) {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -226,7 +222,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public ContextSize defaultContextSize() {
-        return BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        return ContextSize.get(5);
     }
 
     @Override
@@ -240,12 +236,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+    public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
         throw new UnsupportedOperationException();
     }
     
@@ -259,4 +250,18 @@ public class MockBlackLabIndex implements BlackLabIndex {
         return cache;
     }
 
+    @Override
+    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "()";
+    }
+    
+    @Override
+    public BlackLabEngine blackLab() {
+        return blackLab;
+    }
 }

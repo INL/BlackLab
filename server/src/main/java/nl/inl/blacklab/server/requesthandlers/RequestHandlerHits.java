@@ -10,7 +10,6 @@ import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -33,6 +32,7 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -44,7 +44,6 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
-import nl.inl.blacklab.server.search.BlsConfig;
 
 /**
  * Request handler for hit results.
@@ -58,9 +57,6 @@ public class RequestHandlerHits extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        if (BlsConfig.traceRequestHandling)
-            logger.debug("RequestHandlerHits.handle start");
-
         Hits hits = null;
         Hits window = null;
         BlsCacheEntry<?> job = null;
@@ -85,10 +81,8 @@ public class RequestHandlerHits extends RequestHandler {
             HitGroups hitsGrouped;
             try {
                 hitsGrouped = (HitGroups)job.get();
-            } catch (InterruptedException e) {
-                throw new InterruptedSearch(e);
-            } catch (ExecutionException e) {
-                throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+            } catch (InterruptedException | ExecutionException e) {
+                throw RequestHandler.translateSearchException(e);
             }
 
             PropertyValue viewGroupVal = null;
@@ -116,7 +110,7 @@ public class RequestHandlerHits extends RequestHandler {
             hits = hitsInGroup;
 
             int first = Math.max(0, searchParam.getInteger("first"));
-            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().maxPageSize());
+            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().getParameters().getPageSize().getDefaultValue());
             if (!hitsInGroup.hitsStats().processedAtLeast(first))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
             window = hitsInGroup.window(first, size);
@@ -135,10 +129,8 @@ public class RequestHandlerHits extends RequestHandler {
             docsCount = searchMan.search(user, searchParam.docsCount());
             try {
                 hitsCount = (ResultCount)job.get();
-            } catch (InterruptedException e) {
-                throw new InterruptedSearch(e);
-            } catch (ExecutionException e) {
-                throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+            } catch (InterruptedException | ExecutionException e) {
+                throw RequestHandler.translateSearchException(e);
             }
             
 //            int sleepTime = 10;
@@ -180,6 +172,8 @@ public class RequestHandlerHits extends RequestHandler {
             DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
             totalTokens = perDocResults.intSum(propTokens);
         }
+        
+        searchLogger.setResultsFound(hitsCount.processedSoFar());
 
         // Search is done; construct the results object
 
@@ -202,7 +196,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
             try {
-                QueryExplanation explanation = index.explain(tp, index.mainAnnotatedField());
+                QueryExplanation explanation = index.explain(QueryInfo.create(index), tp, null);
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.originalQuery())
                         .entry("rewrittenQuery", explanation.rewrittenQuery())
@@ -292,8 +286,6 @@ public class RequestHandlerHits extends RequestHandler {
 
         ds.endMap();
 
-        if (BlsConfig.traceRequestHandling)
-            logger.debug("RequestHandlerHits.handle end");
         return HTTP_OK;
     }
 

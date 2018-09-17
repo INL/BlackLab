@@ -57,9 +57,6 @@ public class Kwics {
      * KWICs are the hit words 'centered' with a certain number of context words
      * around them.
      *
-     * The size of the left and right context (in words) may be set using
-     * Searcher.setConcordanceContextSize().
-     *
      * @param contextSize how many words around the hit to retrieve
      * @param fieldName field to use for building KWICs
      *

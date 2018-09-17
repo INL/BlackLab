@@ -34,6 +34,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
@@ -55,6 +56,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.resultproperty.HitPropertyWordLeft;
 import nl.inl.blacklab.resultproperty.HitPropertyWordRight;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
@@ -78,13 +80,13 @@ import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 import nl.inl.util.TimeUtil;
 import nl.inl.util.Timer;
 import nl.inl.util.XmlUtil;
@@ -104,7 +106,7 @@ public class QueryTool {
 
     static boolean batchMode = false;
 
-    /** Our BlackLab Searcher object. */
+    /** Our BlackLab index object. */
     BlackLabIndex index;
 
     /** The hits that are the result of our query. */
@@ -320,6 +322,7 @@ public class QueryTool {
      * @throws ErrorOpeningIndex if index could not be opened
      */
     public static void main(String[] args) throws ErrorOpeningIndex {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         LogUtil.setupBasicLoggingConfig();
 
@@ -464,15 +467,15 @@ public class QueryTool {
                         "-f <file>       Execute batch commands from file, print performance\n" +
                         "                info and exit\n" +
                         "\n" +
-                        "In batch mode, for every command executed, the command is printed\n" +
-                        "to stdout with the elapsed time and (if applicable) the number of\n" +
-                        "hits found (tab-separated). Non-query commands are preceded by @.\n" +
-                        "\n" +
-                        "Batch command files should contain one command per line, or multiple\n" +
-                        "commands on a single line separated by && (use this e.g. to time\n" +
-                        "querying and sorting together). Lines starting with # are comments.\n" +
-                        "Comments are printed on stdout as well. Lines starting with - will\n" +
-                        "not be reported. Start a line with -# for an unreported comment.");
+                        WordUtils.wrap("In batch mode, for every command executed, the command is printed " +
+                        "to stdout with the elapsed time and (if applicable) the number of " +
+                        "hits found (tab-separated). Non-query commands are preceded by @.", 80) +
+                        "\n\n" +
+                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
+                        "commands on a single line separated by && (use this e.g. to time " +
+                        "querying and sorting together). Lines starting with # are comments. " +
+                        "Comments are printed on stdout as well. Lines starting with - will " +
+                        "not be reported. Start a line with -# for an unreported comment.", 80));
     }
 
     /**
@@ -488,7 +491,7 @@ public class QueryTool {
             throws CorruptIndexException {
         this.index = index;
         this.contentsField = index.mainAnnotatedField();
-        shouldCloseSearcher = false; // caller is responsible
+        shouldCloseIndex = false; // caller is responsible
 
         this.in = in;
         this.out = out;
@@ -501,7 +504,7 @@ public class QueryTool {
             printProgramHead();
         }
 
-        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -530,7 +533,7 @@ public class QueryTool {
         }
 
         // Create the BlackLab index object
-        index = BlackLabIndex.open(indexDir);
+        index = BlackLab.open(indexDir);
         contentsField = index.mainAnnotatedField();
 
         if (in == null) {
@@ -538,7 +541,7 @@ public class QueryTool {
             this.err = out; // send errors to the same output writer in web mode
         }
 
-        contextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
+        contextSize = index.defaultContextSize();
 
         wordLists.put("test", Arrays.asList("de", "het", "een", "over", "aan"));
     }
@@ -556,16 +559,16 @@ public class QueryTool {
     }
 
     /**
-     * Switch to a different Searcher.
+     * Switch to a different index.
      * 
-     * @param index the new Searcher to use
+     * @param index the new BlackLabIndex to use
      */
-    public void setSearcher(BlackLabIndex index) {
-        if (shouldCloseSearcher)
+    public void setIndex(BlackLabIndex index) {
+        if (shouldCloseIndex)
             index.close();
         this.index = index;
         contentsField = index.mainAnnotatedField();
-        shouldCloseSearcher = false; // caller is responsible
+        shouldCloseIndex = false; // caller is responsible
 
         // Reset results
         hits = null;
@@ -714,7 +717,7 @@ public class QueryTool {
                     else
                         concParts = conc.parts();
                     outprintln(
-                            "\n" + StringUtil.wrapToString(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
+                            "\n" + WordUtils.wrap(concParts[0] + "[" + concParts[1] + "]" + concParts[2], 80));
                 }
             } else if (lcased.startsWith("highlight ")) {
                 int hitId = parseInt(lcased.substring(8), 1) - 1;
@@ -724,7 +727,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(StringUtil.wrapToString(index.doc(docId).highlightContent(hitsInDoc), 80));
+                    outprintln(WordUtils.wrap(index.doc(docId).highlightContent(hitsInDoc), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));
@@ -1083,7 +1086,7 @@ public class QueryTool {
             Query filter = filterForThisQuery == null ? null : filterForThisQuery;
 
             // Execute search
-            BLSpanQuery spanQuery = index.createSpanQuery(pattern, contentsField, filter);
+            BLSpanQuery spanQuery = index.createSpanQuery(QueryInfo.create(index, contentsField), pattern, filter);
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
             hits = index.find(spanQuery, null);
@@ -1191,8 +1194,8 @@ public class QueryTool {
     /** Desired context size */
     private ContextSize contextSize;
 
-    /** Are we responsible for closing the Searcher? */
-    private boolean shouldCloseSearcher = true;
+    /** Are we responsible for closing the BlackLabIndex? */
+    private boolean shouldCloseIndex = true;
 
     /**
      * Sort hits by the specified property.
@@ -1365,10 +1368,10 @@ public class QueryTool {
     }
 
     /**
-     * Close the Searcher object.
+     * Close the BlackLabIndex object.
      */
     private void cleanup() {
-        if (shouldCloseSearcher)
+        if (shouldCloseIndex)
             index.close();
     }
 

@@ -30,7 +30,7 @@ import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.FileUtil;

@@ -10,6 +10,7 @@ import org.apache.lucene.search.TermQuery;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -30,8 +31,8 @@ public class TestNewSearchSystem {
         }
         File indexDir = new File(args[0]);
         System.out.println("Opening index " + indexDir + "...");
-        try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
-            
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
+                
             FutureSearchResultCache cache = new FutureSearchResultCache();
             cache.setTrace(true);
             index.setCache(cache); //new SearchCacheDebug());

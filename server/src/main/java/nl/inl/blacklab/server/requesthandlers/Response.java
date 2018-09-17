@@ -61,20 +61,20 @@ public class Response {
 
     // Highest internal error code so far: 32
 
-    public static int internalError(DataStream ds, Exception e, boolean debugMode, int code) {
+    public static int internalError(DataStream ds, Exception e, boolean debugMode, String code) {
         logger.debug("INTERNAL ERROR " + code + ":");
         e.printStackTrace();
         ds.internalError(e, debugMode, code);
         return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
-    public static int internalError(DataStream ds, String message, boolean debugMode, int code) {
+    public static int internalError(DataStream ds, String message, boolean debugMode, String code) {
         logger.debug("INTERNAL ERROR " + code + ": " + message);
         ds.internalError(message, debugMode, code);
         return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
-    public static int internalError(DataStream ds, int code) {
+    public static int internalError(DataStream ds, String code) {
         logger.debug("INTERNAL ERROR " + code + " (no message)");
         ds.internalError(code);
         return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;

@@ -4,7 +4,6 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
@@ -12,7 +11,6 @@ import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
@@ -40,10 +38,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         DocGroups groups;
         try {
             groups = groupSearch.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
 
         // Search is done; construct the results object
@@ -52,8 +48,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         if (first < 0)
             first = 0;
         int number = searchParam.getInteger("number");
-        if (number < 0 || number > searchMan.config().maxPageSize())
-            number = searchMan.config().defaultPageSize();
+        if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
+            number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         int numberOfGroupsInWindow = 0;
         numberOfGroupsInWindow = number;
         if (first + number > groups.size())
@@ -67,10 +63,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         ResultCount totalHits;
         try {
             totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
@@ -81,6 +75,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         
         ds.endMap().endEntry();
 
+        searchLogger.setResultsFound(groups.size());
+        
         // The list of groups found
         ds.startEntry("docGroups").startList();
         int i = 0;

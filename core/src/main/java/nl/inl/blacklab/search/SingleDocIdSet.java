@@ -21,7 +21,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 /**
  * A DocIdSet with a single Lucene document id in it.
  *
- * Used by SingleDocIdFilter (or directly by Searcher.createSpanQuery) for
+ * Used by SingleDocIdFilter (or directly by BlackLabIndex.createSpanQuery) for
  * finding hits in a single document (for highlighting).
  */
 public class SingleDocIdSet extends DocIdSet {

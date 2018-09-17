@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -56,6 +57,15 @@ public interface Search<R extends SearchResult> {
      */
     default boolean fetchAllResults() {
         return false;
+    }
+
+    /**
+     * Log details about the search's execution.
+     * @param level log level
+     * @param msg message to log
+     */
+    default void log(LogLevel level, String msg) {
+        queryInfo().log(level, msg);
     }
 
 }

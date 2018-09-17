@@ -16,8 +16,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
@@ -49,7 +47,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class Index {
     
-    private static final Logger logger = LogManager.getLogger(Index.class);
+    //private static final Logger logger = LogManager.getLogger(Index.class);
 
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
 
@@ -185,10 +183,10 @@ public class Index {
     }
 
     /**
-     * Get the current Searcher backing this Index. This is not available while this
+     * Get the current BlackLabIndex backing this Index. This is not available while this
      * index is indexing new data.
      *
-     * @return the currently opened Searcher
+     * @return the currently opened BlackLabIndex
      * @throws InternalServerError when there was an error opening this index
      * @throws ServiceUnavailable when the index is in use.
      */
@@ -206,7 +204,7 @@ public class Index {
 
     /**
      * Get the IndexMetadata for this Index. This could also be gotten from the
-     * internal Searcher or Indexer inside this Index, but this always gets the most
+     * internal BlackLabIndex or Indexer inside this Index, but this always gets the most
      * up-to-date version.
      *
      * @return the index metadata
@@ -228,16 +226,14 @@ public class Index {
 
         // This should literally never happen, after openForSearching either index or indexer must be set
         throw new RuntimeException(
-                "Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no Searcher and no Indexer");
+                "Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no BlackLabIndex and no Indexer");
     }
 
-    public synchronized IndexStatus getStatus() {
+    public synchronized IndexStatus getStatus() throws BlsException {
         if (this.indexer != null && !this.indexer.isClosed())
             return IndexStatus.INDEXING;
-        else if (this.index != null && this.index.isEmpty())
-            return IndexStatus.EMPTY;
-        else
-            return IndexStatus.AVAILABLE; // we're available even when index == null since we open on-demand.
+        
+        return this.blIndex().isEmpty() ? IndexStatus.EMPTY : IndexStatus.AVAILABLE;
     }
 
     /**
@@ -256,15 +252,16 @@ public class Index {
         if (this.index != null)
             return;
 
-        logger.debug("Opening index '" + id + "', dir = " + dir);
+        //logger.debug("    Opening index '" + id + "', dir = " + dir);
         try {
-            index = BlackLabIndex.open(this.dir);
+            index = searchMan.blackLabInstance().open(this.dir);
             if (BlsCache.ENABLE_NEW_CACHE)
                 index.setCache(searchMan.getBlackLabCache());
+            //logger.debug("Done opening index '" + id + "'");
         } catch (IndexTooOld e) {
             throw e;
         } catch (ErrorOpeningIndex e) {
-            throw new InternalServerError("Error opening index: " + dir, 43, e);
+            throw new InternalServerError("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
         }
     }
 
@@ -284,12 +281,12 @@ public class Index {
      */
     public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
         cleanupClosedIndexerOrThrow();
-        close(); // Close any Searcher that is still in search mode
+        close(); // Close any BlackLabIndex that is still in search mode
         try {
             this.indexer = Indexer.openIndex(this.dir);
             indexer.setUseThreads(true);
         } catch (Exception e) {
-            throw new InternalServerError("Could not open index '" + id + "'", 27, e);
+            throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);
         }
 
         return indexer;
@@ -300,8 +297,9 @@ public class Index {
      * is not currently Indexing.
      *
      * @return the listener, or null when there is no ongoing indexing.
+     * @throws BlsException 
      */
-    public synchronized IndexListener getIndexerListener() {
+    public synchronized IndexListener getIndexerListener() throws BlsException {
         // Don't return inderListener for an Indexer that has been closed
         if (this.getStatus() != IndexStatus.INDEXING)
             return null;
@@ -334,7 +332,7 @@ public class Index {
      * Clean up the current Indexer (if any), provided close() has been called on
      * the Indexer. NOTE: we do not close the indexer ourselves on purpose (except
      * when Index.close() is called), instead we just check if it's been closed when
-     * a Searcher or Indexer is requested.
+     * a BlackLabIndex or Indexer is requested.
      *
      * @throws ServiceUnavailable when the current indexer is still indexing
      */

@@ -47,7 +47,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
         Document document = blIndex.doc(luceneDocId).luceneDoc();
         if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 24);
+            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
         Hit hit;
         ContextSize wordsAroundHit;
@@ -71,8 +71,9 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         // Clamp snippet to max size
         int snippetStart = Math.max(0, start - wordsAroundHit.left());
         int snippetEnd = end + wordsAroundHit.left();
-        if (snippetEnd - snippetStart > searchMan.config().maxSnippetSize()) {
-            int clampedWindow = Math.max(0, (searchMan.config().maxSnippetSize() - (end - start)) / 2);
+        int maxContextSize = searchMan.config().getParameters().getContextSize().getMax();
+        if (snippetEnd - snippetStart > maxContextSize) {
+            int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
             snippetStart = Math.max(0, start - clampedWindow);
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");

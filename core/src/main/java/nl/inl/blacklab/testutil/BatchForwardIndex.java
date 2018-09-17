@@ -59,7 +59,7 @@ public class BatchForwardIndex {
         }
 
         System.err.print("Opening forward index... ");
-        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, null);
+        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, null, true);
         System.err.println("done. [#docs: " + fi.numDocs() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");

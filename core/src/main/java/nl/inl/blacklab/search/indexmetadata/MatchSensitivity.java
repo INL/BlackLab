@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import nl.inl.util.StringUtil;
+
 /**
  * Desired match sensitivity.
  * 
@@ -39,6 +41,14 @@ public enum MatchSensitivity {
         throw new IllegalArgumentException("Unknown sensitivity field code: " + code);
     }
 
+    public static MatchSensitivity fromName(String value) {
+        if (value.equalsIgnoreCase("sensitive"))
+            return SENSITIVE;
+        if (value.equalsIgnoreCase("insensitive"))
+            return INSENSITIVE;
+        return fromLuceneFieldSuffix(value);
+    }
+
     private boolean caseSensitive;
     
     private boolean diacriticsSensitive;
@@ -68,5 +78,20 @@ public enum MatchSensitivity {
 	public String toString() {
 	    return luceneFieldSuffix();
 	}
+	
+    public String desensitize(String input) {
+        switch (this) {
+        case CASE_INSENSITIVE:
+            return input.toLowerCase();
+        case DIACRITICS_INSENSITIVE:
+            return StringUtil.stripAccents(input);
+        case INSENSITIVE:
+            return StringUtil.stripAccents(input).toLowerCase();
+        case SENSITIVE:
+            return input;
+        default:
+            throw new UnsupportedOperationException("Unknown sensitivity " + this);
+        }
+    }	
 
 }

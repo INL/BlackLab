@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
@@ -32,7 +33,9 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String propName = searchParam.getString("property");
+        String propName = searchParam.getString("annotation");
+        if (propName.length() == 0)
+            propName = searchParam.getString("property");
         Annotation annotation = cfd.annotation(propName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
@@ -44,12 +47,15 @@ public class RequestHandlerTermFreq extends RequestHandler {
         
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q);
 
+        searchLogger.setResultsFound(tfl.size());
+        
         int first = searchParam.getInteger("first");
         if (first < 0 || first >= tfl.size())
             first = 0;
         int number = searchParam.getInteger("number");
-        if (number < 0 || number > searchMan.config().maxPageSize())
-            number = searchMan.config().defaultPageSize();
+        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
+        if (number < 0 || number > pageSize.getMax())
+            number = pageSize.getDefaultValue();
         int last = first + number;
         if (last > tfl.size())
             last = tfl.size();

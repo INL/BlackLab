@@ -24,7 +24,6 @@ import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits.
@@ -43,9 +42,9 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     protected int currentSpansStart = -1;
 
-    private IntArrayList endPoints = new IntArrayList();
+    private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
-    private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>();
+    private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
 
     private int bucketSize = 0;
 
@@ -115,15 +114,16 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
         return gatherEndPointsAtStartPoint();
     }
 
+    @SuppressWarnings("unused")
     protected int gatherEndPointsAtStartPoint() throws IOException {
-        if (endPoints.size() < ARRAYLIST_REALLOC_THRESHOLD) {
+        if (!REALLOCATE_IF_TOO_LARGE || endPoints.size() < COLLECTION_REALLOC_THRESHOLD) {
             // Not a huge amount of memory, so don't reallocate
             endPoints.clear();
             capturedGroupsPerEndpoint.clear();
         } else {
             // Reallocate in this case to avoid holding on to a lot of memory
-            endPoints = new IntArrayList();
-            capturedGroupsPerEndpoint = new ArrayList<>();
+            endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
+            capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
         }
 
         doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null
@@ -180,11 +180,6 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
     @Override
     public int endPosition(int indexInBucket) {
         return endPoints.get(indexInBucket);
-    }
-
-    @Override
-    public Hit getHit(int indexInBucket) {
-        return Hit.create(docID(), startPosition(indexInBucket), endPosition(indexInBucket));
     }
 
     @Override

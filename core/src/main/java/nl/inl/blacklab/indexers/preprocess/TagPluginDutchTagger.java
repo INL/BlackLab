@@ -7,23 +7,21 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Properties;
 import java.util.jar.Manifest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.PluginException;
 
@@ -40,26 +38,38 @@ public class TagPluginDutchTagger implements TagPlugin {
     private Object converter = null;
 
     private Method handleFile;
+    
+    @Override
+    public boolean needsConfig() {
+        return true;
+    }
 
     @Override
-    public void init(Optional<ObjectNode> configNode) throws PluginException {
-        ObjectNode config = configNode.orElseThrow(() -> new PluginException("This plugin requires configuration"));
+    public void init(Map<String, String> config) throws PluginException {
+        if (config == null)
+            throw new PluginException("This plugin requires a configuration.");
 
-        File jar = new File(configStr(config, PROP_JAR));
-        if (!jar.exists())
-            throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
-        if (!jar.canRead())
-            throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
+        Properties converterProps = new Properties();
+        converterProps.setProperty("word2vecFile", Plugin.configStr(config, PROP_VECTORS));
+        converterProps.setProperty("taggingModel", Plugin.configStr(config, PROP_MODEL));
+        converterProps.setProperty("lexiconPath", Plugin.configStr(config, PROP_LEXICON));
+        converterProps.setProperty("tokenize", "true");
+
+        File jar = new File(Plugin.configStr(config, PROP_JAR));
+        initJar(jar, converterProps);
+    }
+
+    private void initJar(File jar, Properties converterProps)
+            throws PluginException {
         try {
+            if (!jar.exists())
+                throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
+            if (!jar.canRead())
+            throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
             URL jarUrl = jar.toURI().toURL();
             loader = new URLClassLoader(new URL[] { jarUrl }, null);
             assertVersion(loader);
 
-            Properties converterProps = new Properties();
-            converterProps.setProperty("word2vecFile", configStr(config, PROP_VECTORS));
-            converterProps.setProperty("taggingModel", configStr(config, PROP_MODEL));
-            converterProps.setProperty("lexiconPath", configStr(config, PROP_LEXICON));
-            converterProps.setProperty("tokenize", "true");
 
             Class<?> converterClass = loader.loadClass("nl.namescape.tagging.ImpactTaggerLemmatizerClient");
             Method setProperties = converterClass.getMethod("setProperties", Properties.class);
@@ -67,7 +77,9 @@ public class TagPluginDutchTagger implements TagPlugin {
 
             converter = converterClass.getConstructor().newInstance();
             setProperties.invoke(converter, converterProps);
-        } catch (Exception e) {
+        } catch (MalformedURLException | ClassNotFoundException | NoSuchMethodException | SecurityException
+                | InstantiationException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException e) {
             throw new PluginException("Error initializing DutchTaggerLemmatizer plugin", e);
         }
     }
@@ -113,22 +125,6 @@ public class TagPluginDutchTagger implements TagPlugin {
             if (tmpOutput != null)
                 FileUtils.deleteQuietly(tmpOutput.toFile());
         }
-    }
-
-    /**
-     * Read a value from our config if present.
-     *
-     * @param config root node of our config object
-     * @param nodeName node to read
-     * @return the value as a string
-     * @throws PluginException on missing key or null value
-     */
-    private static String configStr(ObjectNode config, String nodeName) throws PluginException {
-        JsonNode n = config.get(nodeName);
-        if (n == null || n instanceof NullNode)
-            throw new PluginException("Missing configuration value " + nodeName);
-
-        return n.asText();
     }
 
     @Override

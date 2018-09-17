@@ -16,21 +16,35 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Comparator;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
-class PerDocumentSortedSpans extends BLSpans {
+final class PerDocumentSortedSpans extends BLSpans {
+    
+    public static PerDocumentSortedSpans startPointEliminateDuplicates(BLSpans src) {
+        return new PerDocumentSortedSpans(src, true, true);
+    }
 
-    final static Comparator<Hit> cmpStartPoint = new SpanComparatorStartPoint();
+    public static PerDocumentSortedSpans startPoint(BLSpans src) {
+        return new PerDocumentSortedSpans(src, true, false);
+    }
 
-    final static Comparator<Hit> cmpEndPoint = new SpanComparatorEndPoint();
+    public static PerDocumentSortedSpans startPoint(BLSpans src, boolean removeDuplicates) {
+        return new PerDocumentSortedSpans(src, true, removeDuplicates);
+    }
+
+    public static PerDocumentSortedSpans endPoint(BLSpans src) {
+        return new PerDocumentSortedSpans(src, false, false);
+    }
+
+    public static PerDocumentSortedSpans get(BLSpans src, boolean sortByStartPoint, boolean removeDuplicates) {
+        return new PerDocumentSortedSpans(src, sortByStartPoint, removeDuplicates);
+    }
 
     private int curDoc = -1;
 
@@ -46,9 +60,9 @@ class PerDocumentSortedSpans extends BLSpans {
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
-    public PerDocumentSortedSpans(BLSpans src, Comparator<Hit> comparator, boolean eliminateDuplicates) {
+    private PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
         // Wrap a HitsPerDocument and show it to the client as a normal, sequential Spans.
-        bucketedSpans = new SpansInBucketsPerDocumentSorted(src, comparator);
+        bucketedSpans = new SpansInBucketsPerDocumentSorted(src, sortByStartPoint);
 
         this.eliminateDuplicates = eliminateDuplicates;
     }
@@ -74,13 +88,6 @@ class PerDocumentSortedSpans extends BLSpans {
         if (indexInBucket >= bucketedSpans.bucketSize())
             return NO_MORE_POSITIONS;
         return curEnd;
-    }
-
-    @Override
-    public Hit getHit() {
-        if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
-            return null;
-        return bucketedSpans.getHit(indexInBucket);
     }
 
     @Override

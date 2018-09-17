@@ -31,6 +31,36 @@ public abstract class ContentStore {
 
     static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
 
+    public static ContentStore open(File indexXmlDir, boolean indexMode, boolean create) throws ErrorOpeningIndex {
+        String type;
+        if (create)
+            type = "fixedblock";
+        else {
+            VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
+            type = vf.getType();
+        }
+        if (type.equals("fixedblock")) {
+            if (indexMode)
+                return new ContentStoreFixedBlockWriter(indexXmlDir, create);
+            if (create)
+                throw new UnsupportedOperationException("create == true, but not in index mode");
+            return new ContentStoreFixedBlockReader(indexXmlDir);
+        }
+        if (type.equals("utf8zip"))
+            return new ContentStoreDirZip(indexXmlDir, create);
+        if (type.equals("utf8"))
+            return new ContentStoreDirUtf8(indexXmlDir, create);
+        if (type.equals("utf16")) {
+            throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
+        }
+        throw new UnsupportedOperationException("Unknown content store type " + type);
+    }
+
+    /** A task to perform on a document in the content store. */
+    public interface DocTask {
+        void perform(int cid, String contents);
+    }
+
     /**
      * Store a document.
      *
@@ -61,12 +91,21 @@ public abstract class ContentStore {
     public abstract String retrieve(int id);
 
     /**
-     * Retrieve substring from a document.
+     * Retrieve one or more substrings from the specified content.
      *
-     * @param id content store document id
-     * @param start start of the substring
-     * @param end end of the substring
-     * @return the substring
+     * This is more efficient than retrieving the whole content, or retrieving parts
+     * in separate calls, because the file is only opened once and random access is
+     * used to read only the required parts.
+     *
+     * NOTE: if offset and length are both -1, retrieves the whole content. This is
+     * used by the retrieve(id) method.
+     *
+     * @param id id of the entry to get substrings from
+     * @param start the starting points of the substrings (in characters). -1 means
+     *            "start of document"
+     * @param end the end points of the substrings (in characters). -1 means "end of
+     *            document"
+     * @return the parts
      */
     public String retrievePart(int id, int start, int end) {
         return retrieveParts(id, new int[] { start }, new int[] { end })[0];
@@ -124,31 +163,6 @@ public abstract class ContentStore {
      */
     public abstract int docLength(int id);
 
-    public static ContentStore open(File indexXmlDir, boolean create) throws ErrorOpeningIndex {
-        String type;
-        if (create)
-            type = "fixedblock";
-        else {
-            VersionFile vf = ContentStoreDirAbstract.getStoreTypeVersion(indexXmlDir);
-            type = vf.getType();
-        }
-        if (type.equals("fixedblock"))
-            return new ContentStoreDirFixedBlock(indexXmlDir, create);
-        if (type.equals("utf8zip"))
-            return new ContentStoreDirZip(indexXmlDir, create);
-        if (type.equals("utf8"))
-            return new ContentStoreDirUtf8(indexXmlDir, create);
-        if (type.equals("utf16")) {
-            throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
-        }
-        throw new UnsupportedOperationException("Unknown content store type " + type);
-    }
-
-    /** A task to perform on a document in the content store. */
-    public interface DocTask {
-        void perform(int cid, String contents);
-    }
-
     /**
      * Perform a task on each document in the content store.
      * 
@@ -157,5 +171,7 @@ public abstract class ContentStore {
     public void forEachDocument(DocTask task) {
         idSet().stream().forEach(cid -> task.perform(cid, retrieve(cid)));
     }
+
+    public abstract void initialize();
 
 }

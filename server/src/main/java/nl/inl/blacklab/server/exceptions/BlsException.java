@@ -13,7 +13,7 @@ public class BlsException extends Exception {
     }
 
     public static InternalServerError indexTooOld(Throwable e) {
-        return new InternalServerError("Index too old to open with this BlackLab version", 43, e);
+        return new InternalServerError("Index too old to open with this BlackLab version", "INTERR_INDEX_TOO_OLD", e);
     }
 
     public static BadRequest wildcardTermTooBroad(WildcardTermTooBroad e) {

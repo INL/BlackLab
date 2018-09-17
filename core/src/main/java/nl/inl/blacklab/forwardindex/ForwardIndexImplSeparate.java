@@ -1,11 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
@@ -28,13 +32,22 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     private Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
+    private ExecutorService executorService;
+
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
+        executorService = index.blackLab().initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;
-            get(annotation);
+            AnnotationForwardIndex afi = get(annotation);
+            executorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    afi.initialize();
+                }
+            });
         }
     }
 
@@ -177,9 +190,18 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         return afi;
     }
 
+    /** For common annotations, always build term indexes right away. For less common ones, do it on demand. Saves memory and startup time. */
+    private static final Set<String> BUILD_TERMINDEXES_ON_INIT = new HashSet<>(Arrays.asList("word", "lemma", "pos")); 
+
+    private static boolean buildTermIndexesOnInit(Annotation annotation) {
+        return BUILD_TERMINDEXES_ON_INIT.contains(annotation.name());
+    }
+
     private AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
-        AnnotationForwardIndex afi = AnnotationForwardIndex.open(determineAfiDir(index.indexDirectory(), annotation),
-                index, annotation);
+        File dir = determineAfiDir(index.indexDirectory(), annotation);
+        boolean create = index.indexMode() && index.isEmpty();
+        FiidLookup fiidLookup = new FiidLookup(index.reader(), annotation);
+        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, fiidLookup, buildTermIndexesOnInit(annotation));
         synchronized (fis) {
             fis.put(annotation, afi);
         }
@@ -198,6 +220,11 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             return !fis.isEmpty();
         }
+    }
+    
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + index.indexDirectory() + "/fi_*)";
     }
 
 }

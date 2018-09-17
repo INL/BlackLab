@@ -32,6 +32,9 @@ public class ConfigCorpus {
     /** How to group metadata fields */
     Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
 
+    /** How to group annotated fields' annotations */
+    Map<String, ConfigAnnotationGroups> annotationGroups = new LinkedHashMap<>();
+
     public ConfigCorpus copy() {
         ConfigCorpus result = new ConfigCorpus();
         result.contentViewable = contentViewable;
@@ -39,6 +42,9 @@ public class ConfigCorpus {
         result.specialFields.putAll(specialFields);
         for (ConfigMetadataFieldGroup g : getMetadataFieldGroups().values()) {
             result.addMetadataFieldGroup(g.copy());
+        }
+        for (ConfigAnnotationGroups g: getAnnotationGroups().values()) {
+            result.addAnnotationGroups(g.copy());
         }
         return result;
     }
@@ -52,11 +58,19 @@ public class ConfigCorpus {
     }
 
     public Map<String, ConfigMetadataFieldGroup> getMetadataFieldGroups() {
-        return metadataFieldGroups;
+        return Collections.unmodifiableMap(metadataFieldGroups);
     }
 
     void addMetadataFieldGroup(ConfigMetadataFieldGroup g) {
         metadataFieldGroups.put(g.getName(), g);
+    }
+    
+    public Map<String, ConfigAnnotationGroups> getAnnotationGroups() {
+        return Collections.unmodifiableMap(annotationGroups);
+    }
+
+    public void addAnnotationGroups(ConfigAnnotationGroups g) {
+        annotationGroups.put(g.getName(), g);        
     }
 
     public boolean isContentViewable() {

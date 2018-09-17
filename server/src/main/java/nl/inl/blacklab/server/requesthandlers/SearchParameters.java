@@ -18,9 +18,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -39,6 +41,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
@@ -87,7 +90,8 @@ public class SearchParameters {
         defaultParameterValues.put("wordstart", "-1");
         defaultParameterValues.put("wordend", "-1");
         defaultParameterValues.put("calc", "");
-        defaultParameterValues.put("property", "word");
+        defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
+        defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultParameterValues.put("waitfortotal", "no");
         defaultParameterValues.put("number", "20");
         defaultParameterValues.put("wordsaroundhit", "5");
@@ -121,7 +125,7 @@ public class SearchParameters {
                 continue;
             param.put(name, value);
         }
-        param.setDebugMode(searchMan.config().isDebugMode(request.getRemoteAddr()));
+        param.setDebugMode(searchMan.config().getDebug().isDebugMode(request.getRemoteAddr()));
         return param;
     }
 
@@ -157,15 +161,19 @@ public class SearchParameters {
             // Alternative views
             "calc", // collocations, or other context-based calculations
             "group", "viewgroup", // grouping hits/docs
-            "property", "sensitive", // for term frequency
-
+            "annotation", "sensitive", // for term frequency
+            
             // How to execute request
             "waitfortotal", // wait until total number of results known?
             "term", // term for autocomplete
             
             // CSV options
             "csvsummary", // include summary of search in the CSV output? [no]
-            "csvsepline" // include separator declaration for Excel? [no]
+            "csvsepline", // include separator declaration for Excel? [no]
+            
+            // Deprecated parameters
+            "property" // now called "annotation"
+            
     );
 
     /** The search manager, for querying default value for missing parameters */
@@ -184,6 +192,8 @@ public class SearchParameters {
     private boolean isDocsOperation;
 
     private List<DocProperty> facetProps;
+
+    private SearchLogger searchLogger;
 
     private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
         this.searchManager = searchManager;
@@ -354,27 +364,29 @@ public class SearchParameters {
     private SearchSettings getSearchSettings() {
         int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
         int maxRetrieve = getInteger("maxretrieve");
-        if (searchManager.config().maxHitsToRetrieveAllowed() >= 0
-                && maxRetrieve > searchManager.config().maxHitsToRetrieveAllowed()) {
-            maxRetrieve = searchManager.config().maxHitsToRetrieveAllowed();
+        int maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
+        if (maxHitsToProcessAllowed >= 0
+                && maxRetrieve > maxHitsToProcessAllowed) {
+            maxRetrieve = maxHitsToProcessAllowed;
         }
         int maxCount = getInteger("maxcount");
-        if (searchManager.config().maxHitsToCountAllowed() >= 0
-                && maxCount > searchManager.config().maxHitsToCountAllowed()) {
-            maxCount = searchManager.config().maxHitsToCountAllowed();
+        int maxHitsToCountAllowed = searchManager.config().getParameters().getCountHits().getMax();
+        if (maxHitsToCountAllowed >= 0
+                && maxCount > maxHitsToCountAllowed) {
+            maxCount = maxHitsToCountAllowed;
         }
         return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
     }
 
     WindowSettings getWindowSettings() {
         int first = getInteger("first");
-        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().maxPageSize());
+        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().getParameters().getPageSize().getMax());
         return new WindowSettings(first, size);
     }
 
     public ContextSettings getContextSettings() {
         ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
-        int maxContextSize = searchManager.config().maxContextSize();
+        int maxContextSize = searchManager.config().getParameters().getContextSize().getMax();
         if (contextSize.left() > maxContextSize) {
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);
@@ -545,7 +557,8 @@ public class SearchParameters {
     }
 
     public SearchHits hits() throws BlsException {
-        return blIndex().search(blIndex().mainAnnotatedField(), getUseCache()).find(getPattern(), getFilterQuery(), getSearchSettings());
+        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        return search.find(getPattern(), getFilterQuery(), getSearchSettings());
     }
 
     public SearchDocs docsWindow() throws BlsException {
@@ -563,18 +576,28 @@ public class SearchParameters {
     }
 
     public SearchCount docsCount() throws BlsException {
-        return hitsSample().docCount();
+        if (getPattern() != null)
+            return hitsSample().docCount();
+        return docs().count();
     }
 
     public SearchDocs docs() throws BlsException {
         TextPattern pattern = getPattern();
         if (pattern != null)
             return hitsSample().docs(-1);
-        return blIndex().search().find(getFilterQuery());
+        Query docFilterQuery = getFilterQuery();
+        if (pattern == null && docFilterQuery == null) {
+            docFilterQuery = new MatchAllDocsQuery();
+        }
+        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        return search.find(docFilterQuery);
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitGroupSettings().groupBy());
+        String groupBy = hitGroupSettings().groupBy();
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
+        if (prop == null)
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
         return hitsSample().group(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
@@ -608,6 +631,10 @@ public class SearchParameters {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public void setLogger(SearchLogger searchLogger) {
+        this.searchLogger = searchLogger;
     }
 
 }

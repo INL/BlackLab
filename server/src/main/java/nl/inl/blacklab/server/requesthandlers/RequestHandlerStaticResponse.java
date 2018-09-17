@@ -22,8 +22,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     /** If it's an internal error, this contains the exception */
     private Exception exception = null;
 
-    /** If it's an internal error, this is nonzero */
-    private int internalErrorCode = 0;
+    /** If it's an internal error, this is nonempty */
+    private String internalErrorCode = "";
 
     private int checkAgainAdviceMs = 0;
 
@@ -79,7 +79,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
 
     // Highest internal error code so far: 31
 
-    public RequestHandlerStaticResponse internalError(Exception e, boolean debugMode, int code) {
+    public RequestHandlerStaticResponse internalError(Exception e, boolean debugMode, String code) {
         logger.debug("INTERNAL ERROR " + code + ":");
         e.printStackTrace();
         this.exception = e;
@@ -89,7 +89,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return this;
     }
 
-    public RequestHandlerStaticResponse internalError(String message, boolean debugMode, int code) {
+    public RequestHandlerStaticResponse internalError(String message, boolean debugMode, String code) {
         logger.debug("INTERNAL ERROR " + code + ": " + message);
         msg = message;
         this.debugMode = debugMode;
@@ -98,7 +98,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return this;
     }
 
-    public RequestHandlerStaticResponse internalError(int code) {
+    public RequestHandlerStaticResponse internalError(String code) {
         logger.debug("INTERNAL ERROR " + code + " (no message)");
         internalErrorCode = code;
         httpCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
@@ -175,7 +175,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         if (checkAgainAdviceMs != 0) {
             ds.statusObject(code, msg, checkAgainAdviceMs);
         }
-        if (internalErrorCode != 0) {
+        if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
                 ds.internalError(exception, debugMode, internalErrorCode);
             else if (msg != null)

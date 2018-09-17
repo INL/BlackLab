@@ -83,7 +83,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                 }
             }
         } catch (IOException e) {
-            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
+            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING1");
         }
 
         if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
@@ -113,7 +113,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                 }
             }
         } catch (IOException e) {
-            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), 41);
+            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING2");
         } finally {
             if (indexError == null) {
                 if (indexer.listener().getFilesProcessed() == 0)

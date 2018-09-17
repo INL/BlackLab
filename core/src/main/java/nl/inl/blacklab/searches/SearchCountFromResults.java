@@ -62,7 +62,7 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
 
     @Override
     public String toString() {
-        return toString("count", source, type);
+        return toString("count", source, type, fetchAllResults);
     }
     
     @Override

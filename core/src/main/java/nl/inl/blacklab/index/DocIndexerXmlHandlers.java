@@ -28,7 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
@@ -43,7 +43,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.MaxDocsReachedException;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -210,7 +210,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             // Stop if required
             if (!docWriter.continueIndexing())
-                throw new MaxDocsReachedException();
+                throw new MaxDocsReached();
         }
     }
 
@@ -423,17 +423,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // System.out.println("END PREFIX MAPPING: " + prefix);
     }
 
-    protected AnnotationWriter addProperty(String propName) {
-        return addProperty(propName, false);
+    protected AnnotationWriter addAnnotation(String propName) {
+        return addAnnotation(propName, false);
     }
 
     @SuppressWarnings("deprecation")
-    protected AnnotationWriter addProperty(String propName, boolean includePayloads) {
+    protected AnnotationWriter addAnnotation(String propName, boolean includePayloads) {
         return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads);
     }
 
     public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
-        return contentsField.addProperty(propName, sensitivity);
+        return contentsField.addAnnotation(propName, sensitivity);
     }
 
     @SuppressWarnings("deprecation")
@@ -445,8 +445,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.mainAnnotation();
-        propPunct = addProperty(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propTags = addProperty(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
+        propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
         // positions
         propTags.setHasForwardIndex(false);
     }
@@ -571,7 +571,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return propPunct;
     }
 
-    public AnnotationWriter getPropStartTag() {
+    public AnnotationWriter tagAnnotation() {
         return propTags;
     }
 
@@ -579,7 +579,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         return propMain;
     }
 
-    public AnnotatedFieldWriter getContentsField() {
+    public AnnotatedFieldWriter mainAnnotatedField() {
         return contentsField;
     }
 
@@ -639,7 +639,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             xmlReader.parse(is);
         } catch (SAXException e) {
             throw new MalformedInputFile(e);
-        } catch (MaxDocsReachedException e) {
+        } catch (MaxDocsReached e) {
             // OK; just stop indexing prematurely
         }
 

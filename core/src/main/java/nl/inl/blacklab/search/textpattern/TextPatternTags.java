@@ -23,7 +23,6 @@ import org.apache.lucene.index.Term;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
-import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.
@@ -79,7 +78,7 @@ public class TextPatternTags extends TextPattern {
     @Override
     public String toString() {
         if (attr != null && !attr.isEmpty())
-            return "TAGS(" + elementName + ", " + StringUtil.join(attr) + ")";
+            return "TAGS(" + elementName + ", " + attr + ")";
         return "TAGS(" + elementName + ")";
     }
 

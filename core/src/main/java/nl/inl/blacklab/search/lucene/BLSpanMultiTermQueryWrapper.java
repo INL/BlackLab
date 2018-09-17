@@ -152,6 +152,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         } else if (wrapped instanceof WildcardQuery) {
             regex = StringUtil.wildcardToRegex(pattern);
         } else if (wrapped instanceof PrefixQuery) {
+            // NOTE: we'd like to use Pattern.quote() here instead, but not sure if Lucene's regex engine supports \Q and \E.
             regex = "^" + StringUtil.escapeRegexCharacters(pattern) + ".*$";
         } else {
             throw new UnsupportedOperationException("Cannot make regex from " + wrapped);
@@ -171,8 +172,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         Query wrapped = query.getWrappedQuery();
         int numberOfChars;
         if (wrapped instanceof RegexpQuery) {
-            String prefixPostfix = findRegexPrefixSuffix(pattern);
-            numberOfChars = prefixPostfix.length();
+            numberOfChars = countRegexWordCharacters(pattern);
         } else if (wrapped instanceof WildcardQuery) {
             numberOfChars = pattern.replaceAll("[\\*\\?]", "").length();
         } else if (wrapped instanceof PrefixQuery) {
@@ -188,20 +188,21 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             throw BlackLabRuntimeException.wrap(e);
         }
         // Make a very rough estimate of the number of terms that could match
-        // this. We tend to guess on the high side, because clauses matching lots
-        // of terms benefit a lot from using NFAs, and clauses that don't match that
+        // this. We tend to over-guess by quite a lot, because clauses matching lots
+        // of terms benefit a lot from using NFAs (more than a single very frequent term),
+        // and clauses that don't match that
         // many likely aren't slowed down a lot by using NFAs. Also, people tend to
         // ask common pre- and suffixes more often than rare ones.
         // All in all, it's really a wild guess, but it's all we have right now.
         switch (numberOfChars) {
         case 1:
-            return n / 10; // bijv. d.*    komt ca. 55000000  keer voor in x termen
+            return n / 2; // e.g. d.*
         case 2:
-            return n / 50; // bijv. di.*   komt ca.  6600000  keer voor in x termen
+            return n / 3; // e.g. de.*
         case 3:
-            return n / 75; // bijv. die.*  komt ca.  4400000  keer voor in x termen
+            return n / 20; // e.g. der.*
         case 4:
-            return n / 1000; // bijv. dier.* komt ca.   108000  keer voor in x termen
+            return n / 100; // e.g. dera.*
         default:
             // 5 or more characters given.
             // We have no idea how many hits we're likely to get from this.
@@ -211,17 +212,19 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     }
 
     /**
-     * Strip everything out of the regex except a fixed prefix and suffix. We use
-     * this to (gu)estimate how slow resolving the terms matching this regex will
+     * Count word characters in the regex.
+     * 
+     * We use this to (gu)estimate how slow resolving the terms matching this regex will
      * likely be.
      *
      * @param pattern regex pattern
-     * @return only the prefix and suffix of the pattern
+     * @return number of word characters in the pattern
      */
-    public static String findRegexPrefixSuffix(String pattern) {
+    public static int countRegexWordCharacters(String pattern) {
         String trimmed = pattern.replaceAll("^\\^(\\(\\?\\-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
-         // only retain prefix and suffix
-        return trimmed.replaceAll("^(\\w+)(\\W(|.*\\W))(\\w+)$", "$1$4");
+        // only retain word characters
+        return trimmed.replaceAll("\\W", "").length();
+        //trimmed.replaceAll("^(\\w*)(\\W(|.*\\W))(\\w*)$", "$1$4"); // only retain prefix and suffix
     }
 
     @Override

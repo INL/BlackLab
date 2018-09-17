@@ -321,9 +321,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 
     }
 
-    // TODO: improve structure to avoid test-specific code
-    final static String TEST_FROM_INPUT_FILE = "dpo_123_0002_master.jpf";
-
     /** Pattern for getting DPO number from image file name */
     private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
@@ -334,12 +331,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     @Override
     public void addMetadata() {
         String fileName;
-        if (docIndexer != null)
-            fileName = docIndexer.getCurrentLuceneDoc().get("imageFileName");
-        else {
-            // TEST
-            fileName = TEST_FROM_INPUT_FILE;
-        }
+        fileName = docIndexer.getCurrentLuceneDoc().get("imageFileName");
 
         Matcher m = PATT_DPO.matcher(fileName);
         if (m.find()) {

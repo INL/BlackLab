@@ -20,7 +20,6 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.results.Hit;
 
 /**
  * Interface to retrieve whole sequences of certain matches (in "buckets")
@@ -44,9 +43,25 @@ import nl.inl.blacklab.search.results.Hit;
  * document.
  */
 public interface SpansInBuckets {
-    /** When to reallocate arraylists to avoid holding on to too much memory */
-    int ARRAYLIST_REALLOC_THRESHOLD = 1000;
+    
+    /** What initial capacity to reserve for lists to avoid too much reallocation */
+    int LIST_INITIAL_CAPACITY = 1000;
+    
+    /** Load factor determines when a HashMap is rehashed to increase its size (percentage filled) */
+    double HASHMAP_DEFAULT_LOAD_FACTOR = 0.75;
+    
+    /** Initial capacity for HashMap to avoid too much reallocation */
+    int HASHMAP_INITIAL_CAPACITY = (int)(LIST_INITIAL_CAPACITY / HASHMAP_DEFAULT_LOAD_FACTOR);
 
+    /** Should we reallocate lists/maps if they grow larger than COLLECTION_REALLOC_THRESHOLD?
+     * If no, we potentially use too much memory while searching.
+     * If yes, we potentially create a lot of garbage and fragment the heap.
+     */
+    boolean REALLOCATE_IF_TOO_LARGE = false;
+    
+    /** When to reallocate lists/maps to avoid holding on to too much memory */
+    int COLLECTION_REALLOC_THRESHOLD = 30000;
+    
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
     interface BucketSpanComparator {
@@ -65,8 +80,6 @@ public interface SpansInBuckets {
     int startPosition(int index);
 
     int endPosition(int index);
-
-    Hit getHit(int index);
 
     /**
      * Go to the next document.

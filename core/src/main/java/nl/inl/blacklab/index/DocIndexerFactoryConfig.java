@@ -26,7 +26,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.blacklab.search.ConfigReader;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
@@ -102,7 +102,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             }
         }
 
-        List<File> configDirs = ConfigReader.getDefaultConfigDirs();
+        List<File> configDirs = BlackLab.defaultConfigDirs();
         List<File> formatsDirs = new ArrayList<>();
         for (File dir : configDirs) {
             formatsDirs.add(new File(dir, "formats"));
@@ -226,6 +226,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             addFormat(format);
             return Optional.of(format);
         } catch (IOException e) {
+            e.printStackTrace(); // TODO: don't sweep this error under the rug please!
             return Optional.empty();
         }
     }
@@ -239,6 +240,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             try {
                 load(e.getKey(), e.getValue());
             } catch (InvalidInputFormatConfig ex) {
+                ex.printStackTrace();
                 logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
                 // an invalid format somehow got saved, or something else went wrong, just ignore this file then
             }

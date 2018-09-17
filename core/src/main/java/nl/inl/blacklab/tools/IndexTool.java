@@ -29,20 +29,20 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -52,6 +52,8 @@ public class IndexTool {
     static Map<String, String> indexerParam = new TreeMap<>();
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+        
         // If the current directory contains indexer.properties, read it
         File propFile = new File(".", "indexer.properties");
         if (propFile.canRead())
@@ -260,7 +262,6 @@ public class IndexTool {
         }
 
         // Create the indexer and index the files
-        DownloadCache.setDownloadAllowed(true); // allow downloading linked (metadata) documents
         if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
             indexTemplateFile = null;
         }
@@ -269,7 +270,7 @@ public class IndexTool {
             indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
             if (useThreads)
                 indexer.setUseThreads(true);
-        } catch (DocumentFormatException e1) {
+        } catch (DocumentFormatNotFound e1) {
             System.err.println(e1.getMessage());
             System.err.println("Please specify a correct format on the command line.");
             usage();
@@ -313,9 +314,9 @@ public class IndexTool {
             usage();
             return;
         }
-        try (BlackLabIndexWriter searcher = BlackLabIndexWriter.openForWriting(indexDir, false)) {
+        try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
-            searcher.delete(LuceneUtil.parseLuceneQuery(deleteQuery, searcher.analyzer(), null));
+            indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), null));
         }
     }
 
@@ -356,7 +357,7 @@ public class IndexTool {
             if (displayName.length() > 0)
                 displayName = " (" + displayName + ")";
             if (desc.length() > 0) {
-                desc = "\n      " + StringUtil.join(StringUtil.wrap(desc, 75), "\n      ");
+                desc = "\n      " + WordUtils.wrap(desc, 75, "\n      ", false);
             }
             System.out.println("  " + name + displayName + desc + url);
         }

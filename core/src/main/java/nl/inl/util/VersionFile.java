@@ -159,7 +159,7 @@ public class VersionFile {
         }
     }
 
-    public void write() {
+    void write() {
         try (PrintWriter w = FileUtil.openForWriting(file)) {
             w.write(type + "||" + version + "\n");
         } catch (FileNotFoundException e) {

@@ -1,7 +1,8 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 /**
@@ -10,15 +11,19 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return new QueryInfo(index, null, true);
+        return create(index, (AnnotatedField)null, true, (SearchLogger)null);
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
-        return new QueryInfo(index, field, true);
+        return create(index, field, true, (SearchLogger)null);
     }
 
-    public static QueryInfo create(BlackLabIndexImpl index, AnnotatedField field, boolean useCache) {
-        return new QueryInfo(index, field, useCache);
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, boolean useCache) {
+        return create(index, field, useCache, (SearchLogger)null);
+    }
+
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
+        return new QueryInfo(index, field, useCache, searchLogger);
     }
 
     private BlackLabIndex index;
@@ -32,11 +37,40 @@ public final class QueryInfo {
     /** Should we use the cache for this query, or bypass it? */
     private boolean useCache;
 
-    private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
+    /** Where we can log details about how the search is executed, or null to skip this logging (or once the search is done) */
+    private SearchLogger searchLogger;
+
+    private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
         super();
         this.index = index;
         this.field = field == null ? index.mainAnnotatedField() : field;
         this.useCache = useCache;
+        this.searchLogger = searchLogger;
+    }
+    
+    /**
+     * Return a copy with a different index.
+     * 
+     * If this is the same index, simply returns this object.
+     * 
+     * @param newIndex index to use
+     * @return QueryInfo with the specified index
+     */
+    public QueryInfo withIndex(BlackLabIndex newIndex) {
+        if (this.index == newIndex)
+            return this;
+        return new QueryInfo(newIndex, field, useCache, searchLogger);
+    }
+    
+    /**
+     * Log to the configured search logger, if any.
+     * 
+     * @param level log level 
+     * @param msg message to log
+     */
+    public void log(LogLevel level, String msg) {
+        if (searchLogger != null)
+            searchLogger.log(level, msg);
     }
 
     /** @return the index that was searched. */
@@ -107,7 +141,10 @@ public final class QueryInfo {
             return false;
         return true;
     }
-    
-    
+
+    public SearchLogger searchLogger() {
+        return searchLogger;
+    }
+
 }
 

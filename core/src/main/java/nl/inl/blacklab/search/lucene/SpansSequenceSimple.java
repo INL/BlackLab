@@ -204,7 +204,7 @@ class SpansSequenceSimple extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansSequenceSimple(" + left + ", " + right + ")";
+        return "SeqSimple(" + left + ", " + right + ")";
     }
 
     @Override

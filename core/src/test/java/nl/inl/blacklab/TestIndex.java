@@ -5,10 +5,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -16,10 +17,10 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.ConfigReader;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -27,8 +28,9 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.testutil.DocIndexerExample;
-import nl.inl.util.StringUtil;
+import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
     
@@ -93,14 +95,6 @@ public class TestIndex {
 
     final static String testFormat = "testformat";
 
-    static {
-        // Ensure repeatable tests. Indexer opens Searcher, which in turn
-        // will look for blacklab.yaml in several directories. We want our
-        // tests to be independent of the local filesystem, so skip this step
-        // for any tests using the TestIndex class.
-        ConfigReader.setIgnoreConfigFile(true);
-    }
-
     /**
      * The BlackLab index object.
      */
@@ -113,8 +107,7 @@ public class TestIndex {
     public TestIndex() {
 
         // Get a temporary directory for our test index
-        indexDir = new File(System.getProperty("java.io.tmpdir"),
-                "BlackLabExample");
+        indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
         if (indexDir.exists()) {
             // Delete the old example dir
             // (NOTE: we also try to do this on exit but it may fail due to
@@ -138,9 +131,9 @@ public class TestIndex {
             }
 
             // Create the BlackLab index object
-            index = BlackLabIndex.open(indexDir, null);
+            index = BlackLab.open(indexDir);
             word = index.mainAnnotatedField().annotation("word");
-        } catch (DocumentFormatException | ErrorOpeningIndex e) {
+        } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
@@ -213,7 +206,7 @@ public class TestIndex {
      */
     public Hits find(String pattern, Query filter) {
         try {
-            return index.find(CorpusQueryLanguageParser.parse(pattern), index.mainAnnotatedField(), filter, null);
+            return index.find(QueryInfo.create(index), CorpusQueryLanguageParser.parse(pattern), filter, null);
         } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -254,9 +247,9 @@ public class TestIndex {
         Kwics kwics = hits.kwics(ContextSize.get(1));
         for (Hit hit : hits) {
             Kwic kwic = kwics.get(hit);
-            String left = StringUtil.join(kwic.left(word), " ");
-            String match = StringUtil.join(kwic.match(word), " ");
-            String right = StringUtil.join(kwic.right(word), " ");
+            String left = StringUtils.join(kwic.left(word), " ");
+            String match = StringUtils.join(kwic.match(word), " ");
+            String right = StringUtils.join(kwic.right(word), " ");
             String conc = left + " [" + match + "] " + right;
             results.add(conc.trim());
         }

@@ -45,16 +45,36 @@ public class TextPatternCaptureGroup extends TextPattern {
     public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         return new SpanQueryCaptureGroup(input.translate(context), groupName, 0, 0);
     }
-
+    
     @Override
-    public boolean equals(Object obj) {
-        // Capture group clauses are unique.
-        return obj == this;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((groupName == null) ? 0 : groupName.hashCode());
+        result = prime * result + ((input == null) ? 0 : input.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return input.hashCode() + groupName.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        TextPatternCaptureGroup other = (TextPatternCaptureGroup) obj;
+        if (groupName == null) {
+            if (other.groupName != null)
+                return false;
+        } else if (!groupName.equals(other.groupName))
+            return false;
+        if (input == null) {
+            if (other.input != null)
+                return false;
+        } else if (!input.equals(other.input))
+            return false;
+        return true;
     }
 
     @Override

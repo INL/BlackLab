@@ -16,6 +16,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -26,9 +27,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
@@ -63,30 +66,31 @@ public interface BlackLabIndex extends Closeable {
 
     /**
      * Open an index for reading ("search mode").
-     *
+     * 
+     * @param blackLab our BlackLab instance
      * @param indexDir the index directory
-     * @return the searcher
+     * @param settings default search settings
+     * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, false, false, (File) null);
+    static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {
+        return new BlackLabIndexImpl(blackLab, indexDir, false, false, (File) null);
     }
 
     /**
      * Open an index for reading ("search mode").
      *
      * @param indexDir the index directory
-     * @param settings default search settings
-     * @return the searcher
+     * @return index object
      * @throw IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
+     * @deprecated use BlackLab.open()
      */
-    static BlackLabIndex open(File indexDir, SearchSettings settings) throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(indexDir, false, false, (File) null, settings);
+    @Deprecated
+    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
+        return BlackLab.open(indexDir);
     }
-
-    ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
@@ -98,7 +102,7 @@ public interface BlackLabIndex extends Closeable {
     int hashCode();
     
     /**
-     * Finalize the Searcher object. This closes the IndexSearcher and (depending on
+     * Finalize the index object. This closes the IndexSearcher and (depending on
      * the constructor used) may also close the index reader.
      */
     @Override
@@ -137,7 +141,7 @@ public interface BlackLabIndex extends Closeable {
     // Search the index
     //---------------------------------------------------------------------------
     
-    BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) throws RegexpTooLarge;
+    BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge;
 
     /**
      * Find hits for a pattern in a field.
@@ -148,13 +152,27 @@ public interface BlackLabIndex extends Closeable {
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad;
+    default Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
+        return find(query, settings, null);
+    }
 
     /**
      * Find hits for a pattern in a field.
-     *
+     * 
+     * @param query the pattern to find
+     * @param settings search settings, or null for default
+     * @param searchLogger where to log details about query execution
+     * @return the hits found
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     */
+    Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger searchLogger) throws WildcardTermTooBroad;
+
+    /**
+     * Find hits for a pattern in a field.
+     * 
+     * @param queryInfo information about the query: field, logger
      * @param pattern the pattern to find
-     * @param field field to find pattern in
      * @param filter determines which documents to search
      * @param settings search settings, or null for default
      *
@@ -163,24 +181,11 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      * @throws RegexpTooLarge 
      */
-    Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings)
-            throws WildcardTermTooBroad, RegexpTooLarge;
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param pattern the pattern to find
-     * @param field field to find pattern in
-     * @param filter determines which documents to search
-     * @param settings search settings, or null for default
-     *
-     * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
-     * @throws RegexpTooLarge 
-     */
-    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
-        return find(pattern, field, filter, searchSettings());
+    default Hits find(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings settings) throws WildcardTermTooBroad, RegexpTooLarge {
+        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
+        if (filter != null)
+            spanQuery = new SpanQueryFiltered(spanQuery, filter);
+        return find(spanQuery, settings, queryInfo.searchLogger());
     }
 
     /**
@@ -195,9 +200,30 @@ public interface BlackLabIndex extends Closeable {
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      * @throws RegexpTooLarge 
+     * @deprecated use version that takes a QueryInfo
      */
+    @Deprecated
+    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+        return find(QueryInfo.create(this, field), pattern, filter, searchSettings());
+    }
+
+    /**
+     * Find hits for a pattern in a field.
+     *
+     * @param pattern the pattern to find
+     * @param field field to find pattern in
+     * @param filter determines which documents to search
+     * @param settings search settings, or null for default
+     *
+     * @return the hits found
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     * @throws RegexpTooLarge
+     * @deprecated use version that takes a QueryInfo
+     */
+    @Deprecated
     default Hits find(TextPattern pattern, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
-        return find(pattern, mainAnnotatedField(), filter, searchSettings());
+        return find(QueryInfo.create(this), pattern, filter, searchSettings());
     }
 
     /**
@@ -206,7 +232,18 @@ public interface BlackLabIndex extends Closeable {
      * @param documentFilterQuery the document-level query
      * @return the matching documents
      */
-    DocResults queryDocuments(Query documentFilterQuery);
+    default DocResults queryDocuments(Query documentFilterQuery) {
+        return queryDocuments(documentFilterQuery, (SearchLogger)null);
+    }
+
+    /**
+     * Perform a document query only (no hits)
+     * 
+     * @param documentFilterQuery the document-level query
+     * @param searchLogger where to log details about query execution
+     * @return the matching documents
+     */
+    DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger);
 
     /**
      * Determine the term frequencies for an annotation sensitivity.
@@ -220,16 +257,18 @@ public interface BlackLabIndex extends Closeable {
     /**
      * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
      * optimized version to be executed by Lucene.
-     *
+     * 
+     * @param queryInfo query info, such as the field to search 
      * @param pattern the pattern to explain
+     * @param filter filter query, or null for none
      * @param field which field to find the pattern in
      * @return the explanation
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      * @throws RegexpTooLarge 
      */
-    default QueryExplanation explain(TextPattern pattern, AnnotatedField field) throws WildcardTermTooBroad, RegexpTooLarge {
-        return explain(createSpanQuery(pattern, field, null));
+    default QueryExplanation explain(QueryInfo queryInfo, TextPattern pattern, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+        return explain(createSpanQuery(queryInfo.withIndex(this), pattern, filter));
     }
 
     /**
@@ -241,8 +280,33 @@ public interface BlackLabIndex extends Closeable {
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
      */
-    QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
+    default QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
+        return explain(query, null);
+    }
+
+
+    /**
+     * Explain how a SpanQuery is rewritten to an optimized version to be executed
+     * by Lucene.
+     *
+     * @param query the query to explain
+     * @param searchLogger where to log details about query optimization
+     * @return the explanation
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     */
+    QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws WildcardTermTooBroad;
     
+    /**
+     * Start building a Search. 
+     * 
+     * @param field field to search
+     * @param useCache whether to use the cache or bypass it
+     * @param searchLogger where to log details about how the search was executed, or null to skip this logging
+     * @return empty search object
+     */
+    SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger);
+
     /**
      * Start building a Search. 
      * 
@@ -250,7 +314,9 @@ public interface BlackLabIndex extends Closeable {
      * @param useCache whether to use the cache or bypass it
      * @return empty search object
      */
-    SearchEmpty search(AnnotatedField field, boolean useCache);
+    default SearchEmpty search(AnnotatedField field, boolean useCache) {
+        return search(field, useCache, null);
+    }
 
     /**
      * Start building a Search. 
@@ -258,7 +324,9 @@ public interface BlackLabIndex extends Closeable {
      * @param field field to search
      * @return empty search object
      */
-    SearchEmpty search(AnnotatedField field);
+    default SearchEmpty search(AnnotatedField field) {
+        return search(field, true);
+    }
     
     /**
      * Start building a Search. 
@@ -481,5 +549,11 @@ public interface BlackLabIndex extends Closeable {
     void setCache(SearchCache cache);
 
     SearchCache cache();
+
+    /**
+     * Get the BlackLab instance that created us.
+     * @return BlackLab instance
+     */
+    BlackLabEngine blackLab();
 
 }

@@ -77,7 +77,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         Doc doc = blIndex.doc(docId);
         Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);
         if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", 9);
+            throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", "INTERR_FETCHING_DOCUMENT_CONTENTS");
         if (!mayView(blIndex.metadata(), document)) {
             return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
         }

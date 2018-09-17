@@ -119,7 +119,7 @@ public class AnnotatedFieldWriter {
         return p;
     }
 
-    public AnnotationWriter addProperty(String name, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(String name, SensitivitySetting sensitivity) {
         return addAnnotation(name, sensitivity, false);
     }
 

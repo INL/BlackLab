@@ -14,13 +14,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.PluginException;
 
@@ -36,12 +32,20 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 
     private Class<?> SimpleInputOutputProcess;
     private Method SimpleInputOutputProcess_handleStream;
+    
+    @Override
+    public boolean needsConfig() {
+        return true;
+    }
 
     @Override
-    public void init(Optional<ObjectNode> configNode) throws PluginException {
-        ObjectNode config = configNode.orElseThrow(() -> new PluginException("This plugin requires a configuration."));
+    public void init(Map<String, String> config) throws PluginException {
+        if (config == null)
+            throw new PluginException("This plugin requires a configuration.");
+        initJar(new File(Plugin.configStr(config, PROP_JAR)));
+    }
 
-        File jar = new File(configStr(config, PROP_JAR));
+    private void initJar(File jar) throws PluginException {
         if (!jar.exists())
             throw new PluginException("Could not find the openConvert jar at location " + jar.toString());
         if (!jar.canRead())
@@ -152,22 +156,6 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
         } catch (IOException e) {
             return false;
         }
-    }
-
-    /**
-     * Read a value from our config if present.
-     *
-     * @param config root node of our config object
-     * @param nodeName node to read
-     * @return the value as a string
-     * @throws PluginException on missing key or null value
-     */
-    private static String configStr(ObjectNode config, String nodeName) throws PluginException {
-        JsonNode n = config.get(nodeName);
-        if (n == null || n instanceof NullNode)
-            throw new PluginException("Missing configuration value " + nodeName);
-
-        return n.asText();
     }
 
     /**

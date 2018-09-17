@@ -38,8 +38,7 @@ public class ThreadPauserImpl implements ThreadPauser {
 
     private long pausedTime = 0;
     
-    
-    public ThreadPauserImpl() {
+    ThreadPauserImpl() {
         thread = Thread.currentThread();
         setToRunningTime = now();
     }

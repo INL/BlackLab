@@ -4,14 +4,13 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -36,18 +35,17 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         HitGroups groups;
         try {
             groups = search.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
 
         ds.startMap();
         ds.startEntry("summary").startMap();
         WindowSettings windowSettings = searchParam.getWindowSettings();
         final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
+        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
         final int requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > searchMan.config().maxPageSize() ? searchMan.config().defaultPageSize()
+                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
                         : windowSettings.size();
         int totalResults = groups.size();
         final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
@@ -59,6 +57,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false);
         ds.endMap().endEntry();
 
+        searchLogger.setResultsFound(groups.size());
+        
         // The list of groups found
         ds.startEntry("hitGroups").startList();
         int i = 0;

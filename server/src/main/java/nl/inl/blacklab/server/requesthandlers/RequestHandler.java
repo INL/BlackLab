@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,8 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -41,8 +42,10 @@ import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -56,9 +59,9 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * subclass.
  */
 public abstract class RequestHandler {
-    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
-
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
+
+    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
@@ -257,7 +260,7 @@ public abstract class RequestHandler {
                                         "status", "autocomplete", "sharing").contains(handlerName)) {
                             handlerName = "debug";
                         }
-
+                        
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
@@ -292,42 +295,60 @@ public abstract class RequestHandler {
 
                         if (!availableHandlers.containsKey(handlerName))
                             return errorObj.unknownOperation(handlerName);
-                        Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
-                        Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
-                                HttpServletRequest.class, User.class, String.class, String.class, String.class);
-                        //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
-                        requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
+                        
+                        @SuppressWarnings("resource")
+                        SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
+                        boolean succesfullyCreatedRequestHandler = false;
+                        try {
+                            Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
+                            Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
+                                    HttpServletRequest.class, User.class, String.class, String.class, String.class);
+                            //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
+                            requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
+                            requestHandler.setLogger(logger);
+                            succesfullyCreatedRequestHandler = true;
+                        } finally {
+                            if (!succesfullyCreatedRequestHandler) {
+                                // Operation didn't complete succesfully. Make sure logger gets closed cleanly.
+                                // (if reqhandler *was* created succesfully, its cleanup() method will close the logger)
+                                try {
+                                    logger.close();
+                                } catch (IOException e) {
+                                    throw new InternalServerError("INTERR_CLOSING_LOGGER");
+                                }
+                            }
+                        }
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (InsufficientMemoryAvailable e) {
                         return errorObj.error("OUT_OF_MEMORY", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-                    } catch (NoSuchMethodException e) {
+                    } catch (ReflectiveOperationException e) {
                         // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);
-                        return errorObj.internalError(e, debugMode, 2);
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATING_REQHANDLER1");
                     } catch (IllegalArgumentException e) {
                         logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 3);
-                    } catch (InstantiationException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 4);
-                    } catch (IllegalAccessException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 5);
-                    } catch (InvocationTargetException e) {
-                        logger.error("Could not create request handler", e);
-                        return errorObj.internalError(e, debugMode, 6);
+                        return errorObj.internalError(e, debugMode, "INTERR_CREATING_REQHANDLER2");
                     }
                 }
             }
             if (requestHandler == null) {
                 return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
-                        10);
+                        "INTERR_WRONG_HTTP_METHOD");
             }
         }
         if (debugMode)
             requestHandler.setDebug(debugMode);
+        
         return requestHandler;
+    }
+
+    protected SearchLogger searchLogger;
+
+    private void setLogger(SearchLogger searchLogger) {
+        this.searchLogger = searchLogger;
+        if (searchParam != null)
+            searchParam.setLogger(searchLogger);
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -404,6 +425,15 @@ public abstract class RequestHandler {
         this.urlPathInfo = urlPathInfo;
         this.user = user;
 
+    }
+    
+    public void cleanup() {
+        try {
+            if (searchLogger != null)
+                searchLogger.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -723,5 +753,21 @@ public abstract class RequestHandler {
                 writeRow(printer, numColumns, e.getKey(), e.getValue());
         }
         writeRow(printer, numColumns, "");
+    }
+
+    protected static BlsException translateSearchException(Exception e) {
+        if (e instanceof InterruptedException) {
+            throw new InterruptedSearch((InterruptedException) e);
+        } else {
+            try {
+                throw e.getCause();
+            } catch (BlackLabException e1) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (BlsException e1) {
+                return e1;
+            } catch (Throwable e1) {
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
+            }
+        }
     }
 }

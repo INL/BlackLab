@@ -25,6 +25,8 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.results.QueryInfo;
+
 /**
  * Makes sure the resulting hits do not contain consecutive duplicate hits.
  * These may arise when e.g. combining multiple SpanFuzzyQueries with OR.
@@ -89,7 +91,7 @@ class SpanQueryUnique extends BLSpanQuery {
             if (srcSpans == null)
                 return null;
             if (!src.hitsStartPointSorted())
-                return new PerDocumentSortedSpans(srcSpans, PerDocumentSortedSpans.cmpStartPoint, true);
+                return PerDocumentSortedSpans.startPointEliminateDuplicates(srcSpans);
             return new SpansUnique(srcSpans);
         }
     }
@@ -173,5 +175,11 @@ class SpanQueryUnique extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         return src.forwardMatchingCost();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        src.setQueryInfo(queryInfo);
     }
 }

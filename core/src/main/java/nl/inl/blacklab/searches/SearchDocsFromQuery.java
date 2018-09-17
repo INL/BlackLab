@@ -19,11 +19,11 @@ public class SearchDocsFromQuery extends SearchDocs {
     protected DocResults executeInternal() throws InvalidQuery {
         return queryInfo().index().queryDocuments(query);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((query == null) ? 0 : query.hashCode());
         return result;
     }
@@ -32,7 +32,7 @@ public class SearchDocsFromQuery extends SearchDocs {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -44,7 +44,7 @@ public class SearchDocsFromQuery extends SearchDocs {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("docquery", query);

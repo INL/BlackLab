@@ -21,8 +21,8 @@ import org.apache.lucene.search.spans.Spans;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -86,6 +86,8 @@ public class HitsFromQuery extends Hits {
      */
     private int previousHitDoc = -1;
 
+    private boolean loggedSpans;
+
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -107,16 +109,18 @@ public class HitsFromQuery extends Hits {
             // Override FI match threshold? (debug use only!)
             long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
             if (searchSettings.fiMatchFactor() != -1) {
+                queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                 ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
             }
             
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): optimize");
+            sourceQuery.setQueryInfo(queryInfo);
+            queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
+            
             BLSpanQuery optimize = sourceQuery.optimize(reader);
+            queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
 
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): rewrite");
             BLSpanQuery spanQuery = optimize.rewrite(reader);
+            queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
             
             // Restore previous FI match threshold
             if (searchSettings.fiMatchFactor() != -1) {
@@ -127,12 +131,8 @@ public class HitsFromQuery extends Hits {
             termContexts = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): createWeight");
             weight = spanQuery.createWeight(index.searcher(), false);
             weight.extractTerms(terms);
-            if (BlackLabIndexImpl.isTraceQueryExecution())
-                logger.debug("Hits(): extract terms");
             for (Term term : terms) {
                 try {
                     threadPauser.waitIfPaused();
@@ -143,15 +143,14 @@ public class HitsFromQuery extends Hits {
             }
 
             currentSourceSpans = null;
-            atomicReaderContexts = reader == null ? null : reader.leaves();
+            loggedSpans = false;
+            atomicReaderContexts = reader.leaves();
             atomicReaderContextIndex = -1;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
 
         sourceSpansFullyRead = false;
-        if (BlackLabIndexImpl.isTraceQueryExecution())
-            logger.debug("Hits(): done");
     }
     
     @Override
@@ -210,27 +209,18 @@ public class HitsFromQuery extends Hits {
                             // Exhausted (or not started yet); get next segment spans.
     
                             atomicReaderContextIndex++;
-                            if (atomicReaderContexts != null && atomicReaderContextIndex >= atomicReaderContexts.size()) {
+                            if (atomicReaderContextIndex >= atomicReaderContexts.size()) {
                                 setFinished();
                                 return;
                             }
-                            if (atomicReaderContexts != null) {
-                                // Get the atomic reader context and get the next Spans from it.
-                                LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
-                                currentDocBase = context.docBase;
-                                BLSpans spans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
-                                currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
-                            } else {
-                                // TESTING
-                                currentDocBase = 0;
-                                if (atomicReaderContextIndex > 0) {
-                                    setFinished();
-                                    return;
-                                }
-                                BLSpans spans = (BLSpans) weight.getSpans(null, Postings.OFFSETS);
-                                currentSourceSpans = spans; //BLSpansWrapper.optWrapSortUniq(spans);
+                            // Get the atomic reader context and get the next Spans from it.
+                            LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+                            currentDocBase = context.docBase;
+                            currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
+                            if (!loggedSpans) {
+                                queryInfo().log(LogLevel.EXPLAIN, "got Spans: " + currentSourceSpans);
+                                loggedSpans = true;
                             }
-    
                             if (currentSourceSpans != null) {
                                 // Update the hit query context with our new spans,
                                 // and notify the spans of the hit query context
@@ -281,14 +271,13 @@ public class HitsFromQuery extends Hits {
                         previousHitDoc = hitDoc;
                     }
                     if (!maxHitsProcessed) {
-                        Hit hit = currentSourceSpans.getHit();
-                        Hit offsetHit = Hit.create(hit.doc() + currentDocBase, hit.start(), hit.end());
+                        Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
                         if (capturedGroups != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(offsetHit, groups);
+                            capturedGroups.put(hit, groups);
                         }
-                        results.add(offsetHit);
+                        results.add(hit);
                         if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }

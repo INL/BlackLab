@@ -28,6 +28,7 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 public class TestQueryRewrite {
@@ -67,7 +68,7 @@ public class TestQueryRewrite {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            QueryExplanation explanation = index.explain(getPatternFromCql(cql), index.mainAnnotatedField());
+            QueryExplanation explanation = index.explain(QueryInfo.create(index), getPatternFromCql(cql), null);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();
                 Assert.assertEquals(before, original.toString());
@@ -189,14 +190,14 @@ public class TestQueryRewrite {
     @Test
     public void testRewriteRepetitionTags() {
         assertRewrite("<s test='1' /> <s test='1' />",
-                "SEQ(TAGS(s, test=1), TAGS(s, test=1))",
+                "SEQ(TAGS(s, {test=1}), TAGS(s, {test=1}))",
                 "REP(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), 2, 2)");
 
         assertRewrite("<s test='1' /> <t test='1' />",
-                "SEQ(TAGS(s, test=1), TAGS(t, test=1))",
+                "SEQ(TAGS(s, {test=1}), TAGS(t, {test=1}))",
                 "SEQ(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), POSFILTER(TAGS(t), TERM(contents%starttag@s:@test__1), STARTS_AT))");
         assertRewrite("<s test='1' /> <s test='2' />",
-                "SEQ(TAGS(s, test=1), TAGS(s, test=2))",
+                "SEQ(TAGS(s, {test=1}), TAGS(s, {test=2}))",
                 "SEQ(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__2), STARTS_AT))");
     }
 

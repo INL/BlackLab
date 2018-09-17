@@ -15,6 +15,7 @@ import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 public class GetFieldValues {
@@ -32,7 +33,7 @@ public class GetFieldValues {
         }
 
         Map<String, Set<String>> fieldValues = new HashMap<>();
-        try (BlackLabIndex index = BlackLabIndex.open(indexDir)) {
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
             IndexReader r = index.reader();
 
             Set<String> fieldsToLoad = new HashSet<>();

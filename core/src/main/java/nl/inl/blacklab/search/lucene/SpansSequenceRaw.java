@@ -328,7 +328,7 @@ class SpansSequenceRaw extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansSequence(" + left + ", " + right + ")";
+        return "Seq(" + left + ", " + right + ")";
     }
 
     @Override

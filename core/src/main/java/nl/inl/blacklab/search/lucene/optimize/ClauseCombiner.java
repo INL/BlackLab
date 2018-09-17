@@ -29,4 +29,7 @@ public abstract class ClauseCombiner {
             all.add(new ClauseCombinerNfa());
         return all;
     }
+    
+    @Override
+    public abstract String toString();
 }

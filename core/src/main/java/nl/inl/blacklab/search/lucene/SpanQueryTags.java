@@ -29,7 +29,7 @@ import org.apache.lucene.search.IndexSearcher;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.util.StringUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  *
@@ -122,7 +122,7 @@ public class SpanQueryTags extends BLSpanQuery {
     @Override
     public String toString(String field) {
         if (attr != null && !attr.isEmpty())
-            return "TAGS(" + tagName + ", " + StringUtil.join(attr) + ")";
+            return "TAGS(" + tagName + ", " + attr + ")";
         return "TAGS(" + tagName + ")";
     }
 
@@ -227,5 +227,11 @@ public class SpanQueryTags extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         return clause.forwardMatchingCost();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        clause.setQueryInfo(queryInfo);
     }
 }

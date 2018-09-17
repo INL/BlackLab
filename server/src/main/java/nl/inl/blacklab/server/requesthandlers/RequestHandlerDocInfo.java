@@ -38,7 +38,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
         Document document = blIndex.doc(luceneDocId).luceneDoc();
         if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", 25);
+            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_INFO");
 
         // Document info
         debug(logger, "REQ doc info: " + indexName + "-" + docId);

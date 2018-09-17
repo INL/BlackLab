@@ -53,8 +53,8 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
         final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
-        final AnnotationWriter propLemma = addProperty("lemma");
-        final AnnotationWriter propPartOfSpeech = addProperty("pos");
+        final AnnotationWriter propLemma = addAnnotation("lemma");
+        final AnnotationWriter propPartOfSpeech = addAnnotation("pos");
 
         registerContentsField();
         

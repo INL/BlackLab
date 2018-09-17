@@ -6,6 +6,9 @@ import nl.inl.blacklab.search.results.SearchResult;
 /**
  * A custom search action.
  * 
+ * When subclassing this, always implement equals() and hashCode(), and make
+ * sure to always call super.equals() and super.hashCode() in them!
+ * 
  * @param <S> source search type
  * @param <T> target result type
  */
@@ -22,12 +25,6 @@ public abstract class SearchCustom<S extends Search<T>, T extends SearchResult> 
      * @return new search operation
      */
     public abstract SearchCustom<S, T> apply(S source);
-
-    @Override
-    public abstract boolean equals(Object obj);
-    
-    @Override
-    public abstract int hashCode();
     
     @Override
     public abstract String toString();

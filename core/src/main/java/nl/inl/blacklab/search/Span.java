@@ -2,6 +2,8 @@ package nl.inl.blacklab.search;
 
 /**
  * A start and end position (no document id).
+ * 
+ * Used for captured groups.
  */
 public class Span {
     private int start, end;

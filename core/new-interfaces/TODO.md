@@ -1,13 +1,65 @@
 PERFORMANCE IMPROVEMENTS MADE SO FAR
+
+CACHE / LONGTERM MEMORY USE
 - don't hold on to references
 - don't keep context info around
 - calculate cache size based on number of objects (mostly hits, so reasonable approximation)
-- don't empty out cache when maximum number of searches is reached
-- 
+- (bug) don't empty out cache when maximum number of searches is reached
 
+FRAGMENTATION, GC OVERHEAD PROBLEMS
+- don't create extra hit objects just to add the docBase in HitsFromQuery
+- don't allocate Hits to sort them in SpansInBucketsAbstract; instead use fastutil's LongArrayList
+  (with start/end of a span encoded in a long) and sort it using LongArrays.quickSort().
+
+GENERAL CPU USAGE
+- use a more efficient approach to sequence matching, matching two clauses with optional gap in between
+  instead of expanding one of the clauses with the gap and matching the result.
+
+FREQUENT TERMS (PREFIX/SUFFIX)
+- greatly favour using NFAs to match regexes, especially with short pre- and suffixes,
+  because finding matching terms is often the slowest part of the matching process
+
+
+
+
+MEMORY (van 10G heap)
+
+- ForwardIndex.TocEntry: liefst als memory mapped file houden?
+
+lastiger:
+- 360MB Integer objects. Kunnen we die evt. vervangen door primitives?
+- 35M String instances, samen 1GB: kunnen we meer Strings internen?
+  (allerlei sources, lastig te bepalen, en bovendien gebruiken we weinig Strings tijdens matchen, en dan ws. alleen term String instances)
+- DirectByteBufferR 280M: hoe komt dit? Lijkt vooral Lucene
+- byte[]: Lucene stuff
+
+
+WELKE FI/TERMS METHODS WORDEN WANNEER GEBRUIKT?
+- Terms.indexOf: deserialize hitpropertycontext (ws. alleen word/lemma/pos)
+- Terms.indexOf(insensitive): NFA matching (ws. alleen word/lemma/pos)
+- Terms.idToSortPosition, toSortOrder, compareSortPosition: hitpropertcontext (ws. word/lemma/pos)
+- Terms.get(int): kwic/concordance (alle annotations)
+- AnnotationForwardIndex.retrieveParts(): kwic/concordances, NFA matching (alle annotations)
+
+
+
+
+FEATURE KOEN:
+- sort/group sensitivity for all properties
+
+
+
+
+fastutil ipv eclipse collections...???
+- Use ByteBufferInputStream for memory-mapped files:
+  http://dsiutils.di.unimi.it/docs/it/unimi/dsi/io/ByteBufferInputStream.html
+
+
+- toch een SpansSequenceWithGap implementeren om expanderen/sorteren te voorkomen?
 
 
 TIMEOUT
+- TREEDT ER TOCH NOG EEN PASSENGER TIMEOUT OP? LANGE SEARCH (140s, 50s count) OP GREYLAB BLIJFT AFBREKEN
 - ProxyTimeout, Timeout opschroeven naar 1800
 - BLS search timeout opschroeven (was 300);
 

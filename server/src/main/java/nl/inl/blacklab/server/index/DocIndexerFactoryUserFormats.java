@@ -185,7 +185,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
         } catch (InvalidInputFormatConfig e) {
             throw new BadRequest("CONFIG_ERROR", e.getMessage());
         } catch (IOException e) {
-            throw new InternalServerError("Could not create user format: " + e.getMessage(), 40);
+            throw new InternalServerError("Could not create user format: " + e.getMessage(), "INTERR_CREATING_USER_FORMAT");
         }
     }
 
@@ -220,7 +220,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
         ConfigInputFormat config = supported.get(formatIdentifier);
         File file = config.getReadFromFile();
         if (!file.delete())
-            throw new InternalServerError("Could not delete format " + formatIdentifier, 35);
+            throw new InternalServerError("Could not delete format " + formatIdentifier, "INTERR_DELETING_FORMAT");
         supported.remove(formatIdentifier);
     }
 

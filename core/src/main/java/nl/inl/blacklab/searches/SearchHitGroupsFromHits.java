@@ -33,14 +33,14 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     protected HitGroups executeInternal() throws InvalidQuery {
         return HitGroups.fromHits(source.execute(), property, maxHits);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
+        result = prime * result + maxHits;
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
-        result = prime * result + maxHits;
         return result;
     }
 
@@ -48,11 +48,13 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
         SearchHitGroupsFromHits other = (SearchHitGroupsFromHits) obj;
+        if (maxHits != other.maxHits)
+            return false;
         if (property == null) {
             if (other.property != null)
                 return false;
@@ -63,11 +65,9 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
                 return false;
         } else if (!source.equals(other.source))
             return false;
-        if (maxHits != other.maxHits)
-            return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("group", source, property, maxHits);

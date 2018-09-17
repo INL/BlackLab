@@ -2,16 +2,20 @@ package nl.inl.blacklab.server.search;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.jobs.User;
 
@@ -31,6 +35,21 @@ public class AuthManager {
     private Method authMethodPersistUser;
 
     public AuthManager(String authClass, Map<String, Object> authParam) throws ConfigurationException {
+        init(authClass, authParam);
+    }
+
+    public AuthManager(BLSConfigAuth authentication) throws ConfigurationException {
+        Map<String, String> system = authentication.getSystem();
+        String authClass = StringUtils.defaultString(system.get("class"));
+        Map<String, String> authParam = new HashMap<>();
+        for (Entry<String, String> entry: system.entrySet()) {
+            if (!entry.getKey().equals("class"))
+                authParam.put(entry.getKey(), entry.getValue());
+        }
+        init(authClass, authParam);
+    }
+
+    private void init(String authClass, Map<String, ? extends Object> authParam) throws ConfigurationException {
         if (authClass.length() > 0) {
             try {
                 if (!authClass.contains(".")) {
@@ -64,7 +83,7 @@ public class AuthManager {
         }
 
         // Is client on debug IP and is there a userid parameter?
-        if (servlet.getSearchManager().config().overrideUserId(request.getRemoteAddr())
+        if (servlet.getSearchManager().config().getAuthentication().isOverrideIp(request.getRemoteAddr())
                 && request.getParameter("userid") != null) {
             return User.loggedIn(request.getParameter("userid"), request.getSession().getId());
         }

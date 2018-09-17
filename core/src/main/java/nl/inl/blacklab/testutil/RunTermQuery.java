@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.BitSet;
 
+import org.apache.commons.text.WordUtils;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
@@ -27,7 +28,6 @@ import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
 
 public class RunTermQuery {
 
@@ -89,7 +89,7 @@ public class RunTermQuery {
             b.append(i + first).append(":").append(word).append(" ");
             i++;
         }
-        System.out.println(StringUtil.wrap(b.toString(), 80));
+        System.out.println(WordUtils.wrap(b.toString(), 80));
     }
 
     private static void doTermVector(int doc, Term term, IndexReader reader) {

@@ -68,6 +68,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             List<Integer> indices = mprop.contextIndicesPerProperty.get(prop);
             if (indices != null) {
                 contextIndicesPerProperty.put(nprop, indices);
+                prop.setContextIndices(indices);
             }
             this.properties.add(nprop);
         }
@@ -120,6 +121,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
                     contextNumbers.add(contextNeeded.indexOf(c));
                 }
                 contextIndicesPerProperty.put(prop, contextNumbers);
+                prop.setContextIndices(contextNumbers);
             }
         }
         contextNeeded = result.isEmpty() ? null : result;
@@ -131,18 +133,28 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj instanceof HitPropertyMultiple) {
-            return ((HitPropertyMultiple) obj).properties.equals(properties);
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((properties == null) ? 0 : properties.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return properties.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HitPropertyMultiple other = (HitPropertyMultiple) obj;
+        if (properties == null) {
+            if (other.properties != null)
+                return false;
+        } else if (!properties.equals(other.properties))
+            return false;
+        return true;
     }
 
     @Override

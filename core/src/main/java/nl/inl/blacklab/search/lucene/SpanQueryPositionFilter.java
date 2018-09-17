@@ -37,8 +37,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
-    static SpanComparatorStartPoint cmpStartPoint = new SpanComparatorStartPoint();
-
     /** Filter operation to apply */
     SpanQueryPositionFilter.Operation op;
 
@@ -93,11 +91,12 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         BLSpanQuery filter = clauses.get(1).rewrite(reader);
 
         if (!invert && op != SpanQueryPositionFilter.Operation.STARTS_AT
-                && op != SpanQueryPositionFilter.Operation.ENDS_AT && producer instanceof SpanQueryAnyToken) {
+                && op != SpanQueryPositionFilter.Operation.ENDS_AT && 
+                producer instanceof SpanQueryAnyToken) {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
             SpanQueryAnyToken tp = (SpanQueryAnyToken) producer;
-            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax());
+            return new SpanQueryFilterNGrams(filter, op, tp.hitsLengthMin(), tp.hitsLengthMax(), leftAdjust, rightAdjust);
         }
 
         if (producer != clauses.get(0) || filter != clauses.get(1)) {
@@ -146,7 +145,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
             if (spansProd == null)
                 return null;
             if (!clauses.get(0).hitsStartPointSorted())
-                spansProd = new PerDocumentSortedSpans(spansProd, PerDocumentSortedSpans.cmpStartPoint, false);
+                spansProd = PerDocumentSortedSpans.startPoint(spansProd);
             BLSpans spansFilter = filterWeight.getSpans(context, requiredPostings);
             if (spansFilter == null) {
                 // No filter hits. If it's a positive filter, that means no producer hits can match.
@@ -160,7 +159,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                 filter = new SpansInBucketsPerDocument(spansFilter);
             } else {
                 // Not sorted yet; sort buckets
-                filter = new SpansInBucketsPerDocumentSorted(spansFilter, cmpStartPoint);
+                filter = new SpansInBucketsPerDocumentSorted(spansFilter, true);
             }
             return new SpansPositionFilter(spansProd, filter, filterFixedLength, op, invert, leftAdjust, rightAdjust);
         }

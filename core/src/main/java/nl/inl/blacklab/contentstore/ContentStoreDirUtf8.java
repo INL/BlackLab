@@ -289,7 +289,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
      * @param create if true, create a new content store
      */
     public ContentStoreDirUtf8(File dir, boolean create) {
-        this.dir = dir;
+        super(dir);
         if (!dir.exists() && !dir.mkdir())
             throw new BlackLabRuntimeException("Could not create dir: " + dir);
         tocFile = new File(dir, "toc.dat");
@@ -362,8 +362,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             fl += writeMapReserve;
         } // leave 1M room at the end
         tocFileChannel = tocRaf.getChannel();
-        tocFileBuffer = tocFileChannel.map(writeable ? MapMode.READ_WRITE : MapMode.READ_ONLY, 0,
-                fl);
+        tocFileBuffer = tocFileChannel.map(writeable ? MapMode.READ_WRITE : MapMode.READ_ONLY, 0, fl);
     }
 
     private void closeMappedToc() {
@@ -706,7 +705,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             // Create array for results
             String[] result = new String[n];
 
-            // Open the correct file
+            // Open the file
             try (FileInputStream fileInputStream = new FileInputStream(getContentFile(e.fileId))) {
                 try (FileChannel fileChannel = fileInputStream.getChannel()) {
                     // Retrieve the strings requested
@@ -793,6 +792,11 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     @Override
     public Set<Integer> idSet() {
         return toc.keySet();
+    }
+
+    @Override
+    public void initialize() {
+        // NOP
     }
 
 }

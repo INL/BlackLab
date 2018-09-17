@@ -16,7 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.Kwic;
@@ -106,10 +105,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 job = searchMan.searchNonBlocking(user, searchParam.hitsSample());
                 hits = (Hits) job.get();
             }
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        } catch (ExecutionException e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getCause().getMessage());
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
         }
 
         // apply window settings
@@ -120,7 +117,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().maxExportPageSize();
+            int number = searchMan.config().getParameters().getPageSize().getMax();
             if (searchParam.containsKey("number"))
                 number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
 
@@ -130,6 +127,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeGroups(HitGroups groups, DataStreamPlain ds) throws BlsException {
+        searchLogger.setResultsFound(groups.size());
         try {
             // Write the header
             List<String> row = new ArrayList<>();
@@ -149,7 +147,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             printer.flush();
             ds.plain(printer.getOut().toString());
         } catch (IOException e) {
-            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_HITS_CSV1");
         }
     }
 
@@ -197,6 +195,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeHits(Hits hits, DataStreamPlain ds) throws BlsException {
+        searchLogger.setResultsFound(hits.size());
+
         final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
         List<Annotation> otherTokenProperties = new ArrayList<>();
 
@@ -250,7 +250,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             printer.flush();
             ds.plain(printer.getOut().toString());
         } catch (IOException e) {
-            throw new InternalServerError("Cannot write response: " + e.getMessage(), 42);
+            throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_HITS_CSV2");
         }
     }
 

@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * A named, ordered list of metadata fields.
  * 
@@ -12,11 +15,15 @@ import java.util.stream.Stream;
  */
 public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
+    static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
+    
     private MetadataFields metadataFieldsAccessor;
 
     private String name;
 
     private List<String> fieldNamesInGroup;
+
+    private List<MetadataField> fieldsInGroup = null;
 
     boolean addRemainingFields = false;
 
@@ -41,25 +48,28 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         return addRemainingFields;
     }
 
+    private void ensureFieldsFetched() {
+        if (fieldsInGroup == null) {
+            fieldsInGroup = new ArrayList<>();
+            for (String fieldName: fieldNamesInGroup) {
+                if (metadataFieldsAccessor.exists(fieldName))
+                    fieldsInGroup.add(metadataFieldsAccessor.get(fieldName));
+                else
+                    logger.warn("Field '" + fieldName + "' in metadata group '" + name + "' does not exist!");
+            }
+        }
+    }
+
     @Override
     public Iterator<MetadataField> iterator() {
-        Iterator<String> it = fieldNamesInGroup.iterator();
-        return new Iterator<MetadataField>() {
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-
-            @Override
-            public MetadataField next() {
-                return metadataFieldsAccessor.get(it.next());
-            }
-        };
+        ensureFieldsFetched();
+        return fieldsInGroup.iterator();
     }
 
     @Override
     public Stream<MetadataField> stream() {
-        return fieldNamesInGroup.stream().map(name -> metadataFieldsAccessor.get(name));
+        ensureFieldsFetched();
+        return fieldsInGroup.stream();
     }
 
 }

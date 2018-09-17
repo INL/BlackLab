@@ -4,6 +4,10 @@ import nl.inl.blacklab.search.Pausible;
 
 public interface ThreadPauser extends Pausible {
 
+    static ThreadPauser create() {
+        return new ThreadPauserImpl();
+    }
+
     @Override
     void pause(boolean paused);
 

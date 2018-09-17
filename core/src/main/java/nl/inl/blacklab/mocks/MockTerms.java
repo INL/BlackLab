@@ -50,7 +50,7 @@ public class MockTerms extends Terms {
     }
 
     @Override
-    public String get(Integer id) {
+    public String get(int id) {
         return words[id];
     }
 

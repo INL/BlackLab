@@ -46,6 +46,8 @@ public class TestContentStoreDirFixedBlock {
 
     String[] doc = new String[4];
 
+    private boolean currentlyWriteMode;
+
     @Before
     public void setUp() {
 
@@ -56,7 +58,7 @@ public class TestContentStoreDirFixedBlock {
         dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
 
         try {
-            store = new ContentStoreDirFixedBlock(dir, false);
+            store = new ContentStoreFixedBlockWriter(dir, true);
             try {
 
                 // Create four different documents that span different numbers of 4K blocks.
@@ -77,7 +79,8 @@ public class TestContentStoreDirFixedBlock {
             } finally {
                 store.close(); // close so everything is guaranteed to be written
             }
-            store = new ContentStoreDirFixedBlock(dir, false);
+            store = new ContentStoreFixedBlockWriter(dir, false);
+            currentlyWriteMode = true;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -85,13 +88,15 @@ public class TestContentStoreDirFixedBlock {
 
     @After
     public void tearDown() {
-        store.close();
+        if (store != null)
+            store.close();
         // Try to remove (some files may be locked though)
         UtilsForTesting.removeBlackLabTestDirs();
     }
 
     @Test
     public void testRetrieve() {
+        ensureMode(false);
         // Retrieve strings
         for (int i = 0; i < doc.length; i++) {
             Assert.assertEquals(doc[i], store.retrieve(i + 1));
@@ -100,6 +105,7 @@ public class TestContentStoreDirFixedBlock {
 
     @Test
     public void testRetrievePart() {
+        ensureMode(false);
         String[] parts = store.retrieveParts(2, new int[] { 5, 15 }, new int[] { 7, 18 });
         Assert.assertEquals(doc[1].substring(5, 7), parts[0]);
         Assert.assertEquals(doc[1].substring(15, 18), parts[1]);
@@ -108,6 +114,7 @@ public class TestContentStoreDirFixedBlock {
     @Test
     public void testDelete() {
         store.delete(2);
+        ensureMode(false);
         Assert.assertNull(store.retrieve(2));
         Assert.assertEquals(doc[0], store.retrieve(1));
     }
@@ -116,6 +123,7 @@ public class TestContentStoreDirFixedBlock {
     public void testDeleteReuse() {
         store.delete(2);
         store.store(doc[3]);
+        ensureMode(false);
         Assert.assertEquals(doc[3], store.retrieve(5));
     }
 
@@ -137,6 +145,7 @@ public class TestContentStoreDirFixedBlock {
             if (i >= OPERATIONS / 2 && !testedClear) {
                 // Halfway through the test, clear the whole content store.
                 testedClear = true;
+                ensureMode(true);
                 store.clear();
                 stored.clear();
                 storedKeys.clear();
@@ -147,16 +156,20 @@ public class TestContentStoreDirFixedBlock {
                 int keyIndex = random.nextInt(stored.size());
                 Integer key = storedKeys.remove(keyIndex);
                 String docContents = stored.remove(key);
+                ensureMode(false);
                 assertDocumentStored(random, docContents, key);
+                ensureMode(true);
                 store.delete(key);
                 Assert.assertTrue(store.isDeleted(key));
             } else {
                 // Choose random document. Insert it and assert it was stored correctly.
                 int docIndex = random.nextInt(doc.length);
                 String docContents = doc[docIndex];
+                ensureMode(true);
                 int key = store.store(docContents);
                 storedKeys.add(key);
                 stored.put(key, docContents);
+                ensureMode(false);
                 assertDocumentStored(random, docContents, key);
             }
         }
@@ -173,6 +186,7 @@ public class TestContentStoreDirFixedBlock {
         Assert.assertEquals(liveDocs, storedKeys.size());
 
         // Finally, check that all documents are still stored correctly
+        ensureMode(false);
         for (int key : storedKeys) {
             String value = stored.get(key);
             assertDocumentStored(random, value, key);
@@ -194,18 +208,27 @@ public class TestContentStoreDirFixedBlock {
             Assert.assertEquals(docPart, retrievedPart);
         }
     }
+    
+    public void ensureMode(boolean write) {
+        if (currentlyWriteMode == write)
+            return;
+        try {
+            store.close();
+            store = ContentStore.open(dir, write, false);
+            currentlyWriteMode = write;
+        } catch (ErrorOpeningIndex e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
 
     @Test
-    public void testCloseReopen() throws ErrorOpeningIndex {
-        store.close();
-        store = new ContentStoreDirFixedBlock(dir, false);
+    public void testCloseReopen() {
+        ensureMode(false);
         Assert.assertEquals(doc[0], store.retrieve(1));
     }
 
     @Test
-    public void testCloseReopenAppend() throws ErrorOpeningIndex {
-        store.close();
-        store = new ContentStoreDirFixedBlock(dir, false);
+    public void testCloseReopenAppend() {
         Assert.assertEquals(5, store.store("test"));
     }
 }

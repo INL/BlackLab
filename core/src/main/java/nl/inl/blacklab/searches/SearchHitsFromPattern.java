@@ -20,6 +20,8 @@ public class SearchHitsFromPattern extends SearchHits {
 
     SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings searchSettings) {
         super(queryInfo);
+        if (pattern == null)
+            throw new IllegalArgumentException("Must specify a pattern");
         this.pattern = pattern;
         this.filter = filter;
         this.searchSettings = searchSettings;
@@ -34,16 +36,16 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     protected Hits executeInternal() throws WildcardTermTooBroad, RegexpTooLarge {
-        return queryInfo().index().find(pattern, queryInfo().field(), filter, searchSettings);
+        return queryInfo().index().find(queryInfo(), pattern, filter, searchSettings);
     }
-
+    
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = prime * result + ((filter == null) ? 0 : filter.hashCode());
-        result = prime * result + ((searchSettings == null) ? 0 : searchSettings.hashCode());
         result = prime * result + ((pattern == null) ? 0 : pattern.hashCode());
+        result = prime * result + ((searchSettings == null) ? 0 : searchSettings.hashCode());
         return result;
     }
 
@@ -51,7 +53,7 @@ public class SearchHitsFromPattern extends SearchHits {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj == null)
+        if (!super.equals(obj))
             return false;
         if (getClass() != obj.getClass())
             return false;
@@ -61,19 +63,19 @@ public class SearchHitsFromPattern extends SearchHits {
                 return false;
         } else if (!filter.equals(other.filter))
             return false;
-        if (searchSettings == null) {
-            if (other.searchSettings != null)
-                return false;
-        } else if (!searchSettings.equals(other.searchSettings))
-            return false;
         if (pattern == null) {
             if (other.pattern != null)
                 return false;
         } else if (!pattern.equals(other.pattern))
             return false;
+        if (searchSettings == null) {
+            if (other.searchSettings != null)
+                return false;
+        } else if (!searchSettings.equals(other.searchSettings))
+            return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         if (filter == null)

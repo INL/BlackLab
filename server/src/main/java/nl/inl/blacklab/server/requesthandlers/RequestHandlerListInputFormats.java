@@ -183,7 +183,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             try (BufferedReader reader = config.getFormatFile()) {
                 ds.startMap()
                         .entry("formatName", urlResource)
-                        .entry("configFileType", FilenameUtils.getExtension(config.getReadFromFile().getName()))
+                        .entry("configFileType", FilenameUtils.getExtension(config.getReadFromFile().getName()).toLowerCase())
                         .entry("configFile", IOUtils.toString(reader))
                         .endMap();
                 return HTTP_OK;

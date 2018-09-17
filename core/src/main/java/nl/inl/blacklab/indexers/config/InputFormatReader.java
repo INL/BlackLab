@@ -12,6 +12,8 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,7 +30,6 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
-import nl.inl.util.StringUtil;
 
 /**
  * Reads ConfigInputFormat from a YAML or JSON source.
@@ -185,6 +186,9 @@ public class InputFormatReader extends YamlJsonReader {
             case "metadataFieldGroups":
                 readMetadataFieldGroups(e, corpusConfig);
                 break;
+            case "annotationGroups":
+                readAllAnnotationGroups(e, corpusConfig);
+                break;
             default:
                 throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in corpusConfig");
             }
@@ -242,6 +246,45 @@ public class InputFormatReader extends YamlJsonReader {
                 }
             }
             cfg.addMetadataFieldGroup(g);
+        }
+    }
+
+    private static void readAllAnnotationGroups(Entry<String, JsonNode> afagEntry, ConfigCorpus cfg) {
+        Iterator<Entry<String, JsonNode>> itFields = obj(afagEntry.getValue(), "annotated fields annotation groupings").fields();
+        while (itFields.hasNext()) {
+            Entry<String, JsonNode> entry = itFields.next();
+            ConfigAnnotationGroups g = new ConfigAnnotationGroups(entry.getKey());
+            readAnnotationGroups(entry, g);
+            cfg.addAnnotationGroups(g);
+        }
+    }
+
+    private static void readAnnotationGroups(Entry<String, JsonNode> entry, ConfigAnnotationGroups cfg) {
+        Iterator<JsonNode> itGroups = array(entry.getValue(), "annotated field annotation groups").elements();
+        while (itGroups.hasNext()) {
+            JsonNode group = itGroups.next();
+            Iterator<Entry<String, JsonNode>> itGroup = obj(group, "annotated field annotation group").fields();
+            ConfigAnnotationGroup g = new ConfigAnnotationGroup();
+            List<String> fields = new ArrayList<>();
+            while (itGroup.hasNext()) {
+                Entry<String, JsonNode> e = itGroup.next();
+                switch (e.getKey()) {
+                case "name":
+                    g.setName(str(e));
+                    break;
+                case "annotations":
+                    readStringList(e, fields);
+                    g.addAnnotations(fields);
+                    break;
+                case "addRemainingAnnotations":
+                    g.setAddRemainingAnnotations(bool(e));
+                    break;
+                default:
+                    throw new InvalidInputFormatConfig(
+                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
+                }
+            }
+            cfg.addGroup(g);
         }
     }
 
@@ -368,7 +411,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             default:
                 throw new InvalidInputFormatConfig(
-                        "Unknown key " + e.getKey() + " in annotation " + StringUtil.nullToEmpty(annot.getName()));
+                        "Unknown key " + e.getKey() + " in annotation " + StringUtils.defaultString(annot.getName()));
             }
         }
         return annot;

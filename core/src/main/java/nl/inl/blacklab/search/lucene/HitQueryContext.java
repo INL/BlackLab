@@ -33,6 +33,13 @@ public class HitQueryContext {
         this(null);
     }
 
+    public HitQueryContext copyWith(BLSpans spans) {
+        HitQueryContext result = new HitQueryContext(spans);
+        result.groupNames = groupNames;
+        result.numberOfTimesGroupRegistered = numberOfTimesGroupRegistered;
+        return result;
+    }
+
     /**
      * Set our Spans object.
      *

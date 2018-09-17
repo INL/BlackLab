@@ -12,12 +12,8 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
+import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.YamlJsonReader;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.Plugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
@@ -40,10 +36,10 @@ public class PluginManager {
         public PluginException initializationException;
 
         public final T plugin;
-        public final Optional<ObjectNode> config;
+        private final Map<String, String> configMap;
 
-        public PluginData(T plugin, Optional<ObjectNode> config) {
-            this.config = config;
+        public PluginData(T plugin, Map<String, String> configMap) {
+            this.configMap = configMap;
             this.plugin = plugin;
         }
     }
@@ -66,10 +62,10 @@ public class PluginManager {
     private static Map<String, PluginData<TagPlugin>> tagPlugins = new HashMap<>();
 
     // Nothing to do; initialization happens when the blacklab config is loaded.
-    // The blacklab Config is automatically loaded when the first Searcher is
+    // The blacklab Config is automatically loaded when the first BlackLabIndex is
     // opened, or earlier by a user library.
     // So plugin formats should always be visible by the time they're needed.
-    // (except when trying to query available formats before opening a searcher or
+    // (except when trying to query available formats before opening an index or
     // loading a config...this is an edge case)
     private PluginManager() {
     }
@@ -92,15 +88,14 @@ public class PluginManager {
      * }
      *            </pre>
      */
-    public static void initPlugins(ObjectNode pluginConfig) {
+    public static void initPlugins(BLConfigPlugins pluginConfig) {
         if (isInitialized)
             throw new IllegalStateException("PluginManager already initialized");
         isInitialized = true;
 
         logger.debug("Initializing plugin system...");
-
-        JsonNode delayNode = pluginConfig.get(PROP_DELAY_INITIALIZATION);
-        boolean delayInitialization = (delayNode != null && !(delayNode instanceof NullNode) && delayNode.asBoolean());
+        
+        boolean delayInitialization = pluginConfig.isDelayInitialization();
 
         // First load all plugins, so we have the full list of plugins available.
         convertPlugins = loadPlugins(ConvertPlugin.class, pluginConfig);
@@ -124,10 +119,11 @@ public class PluginManager {
     }
 
     private static <T extends Plugin> Map<String, PluginData<T>> loadPlugins(Class<T> pluginClass,
-            ObjectNode pluginConfig) {
+            BLConfigPlugins pluginConfig) {
         Map<String, PluginData<T>> plugins = new HashMap<>();
 
         Iterator<T> it = ServiceLoader.load(pluginClass).iterator();
+        Map<String, Map<String, String>> pluginParamConfig = pluginConfig.getPlugins();
         while (it.hasNext()) {
             String id = null;
 
@@ -140,12 +136,12 @@ public class PluginManager {
                     continue;
                 }
 
-                Optional<ObjectNode> config = Optional.ofNullable(pluginConfig.get(plugin.getId())) // get key + optional value
-                        .filter(n -> !(n instanceof NullNode)) // if value
-                        .map(n -> YamlJsonReader.obj(n, plugin.getId())); // get value
-
-                PluginData<T> data = new PluginData<>(plugin, config);
-                plugins.put(id, data);
+                // Config available, or plugin needs no config?
+                if (!plugin.needsConfig() || pluginParamConfig.containsKey(id)) {
+                    // Yes, add the plugin data to our map.
+                    PluginData<T> data = new PluginData<>(plugin, pluginParamConfig.get(id));
+                    plugins.put(id, data);
+                }
             } catch (ServiceConfigurationError e) {
                 logger.error("Plugin failed to load: " + e.getMessage(), e);
             } catch (Exception e) {
@@ -201,7 +197,7 @@ public class PluginManager {
 
             try {
                 logger.debug("Initializing plugin " + data.plugin.getDisplayName());
-                data.plugin.init(data.config);
+                data.plugin.init(data.configMap);
                 logger.debug("Initialized plugin " + data.plugin.getDisplayName());
             } catch (PluginException e) {
                 data.initializationException = e;

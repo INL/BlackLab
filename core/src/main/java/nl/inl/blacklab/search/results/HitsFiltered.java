@@ -7,7 +7,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -42,7 +41,7 @@ public class HitsFiltered extends Hits {
             // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
             // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigates by
             // implementing a ForwardIndex that stores documents linearly, making it just a single read.
-            Contexts contexts = new Contexts(hits, contextsNeeded, BlackLabIndex.DEFAULT_CONTEXT_SIZE);
+            Contexts contexts = new Contexts(hits, contextsNeeded, property.needsContextSize(queryInfo().index()));
             filterProperty = property.copyWith(hits, contexts);
         } else {
             filterProperty = property.copyWith(hits, null);

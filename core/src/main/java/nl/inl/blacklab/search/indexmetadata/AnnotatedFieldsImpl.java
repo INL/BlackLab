@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -15,6 +16,11 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
      */
     private AnnotatedFieldImpl mainContentsField;
 
+    /**
+     * Logical groups of annotations, for presenting them in the user interface.
+     */
+    private Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
+    
     public AnnotatedFieldsImpl() {
         annotatedFields = new TreeMap<>();
     }
@@ -67,5 +73,18 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void setMainContentsField(AnnotatedFieldImpl mainContentsField) {
         this.mainContentsField = mainContentsField;
+    }
+
+    public void clearAnnotationGroups() {
+        annotationGroupsPerField.clear();
+    }
+
+    public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
+        annotationGroupsPerField.put(fieldName, annotationGroups);
+    }
+    
+    @Override
+    public AnnotationGroups annotationGroups(String fieldName) {
+        return annotationGroupsPerField.get(fieldName);
     }
 }

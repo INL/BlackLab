@@ -52,6 +52,7 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -85,6 +86,20 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected static final Logger logger = LogManager.getLogger(BlackLabIndexImpl.class);
 
+    /** Analyzer based on WhitespaceTokenizer */
+    protected static final Analyzer WHITESPACE_ANALYZER = new BLWhitespaceAnalyzer();
+
+    /** Analyzer for Dutch and other Latin script languages */
+    protected static final Analyzer DEFAULT_ANALYZER = new BLDutchAnalyzer();
+
+    /** Analyzer based on StandardTokenizer */
+    protected static final Analyzer STANDARD_ANALYZER = new BLStandardAnalyzer();
+
+    /** Analyzer that doesn't tokenize */
+    protected static final Analyzer NONTOKENIZING_ANALYZER = new BLNonTokenizingAnalyzer();
+
+    private static final ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
+
     /** Log detailed debug messages about opening an index? */
     static boolean traceIndexOpening = false;
 
@@ -99,18 +114,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** The collator to use for sorting. Defaults to English collator. */
     private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
-
-    /** Analyzer based on WhitespaceTokenizer */
-    final protected static Analyzer whitespaceAnalyzer = new BLWhitespaceAnalyzer();
-
-    /** Analyzer for Dutch and other Latin script languages */
-    final protected static Analyzer defaultAnalyzer = new BLDutchAnalyzer();
-
-    /** Analyzer based on StandardTokenizer */
-    final protected static Analyzer standardAnalyzer = new BLStandardAnalyzer();
-
-    /** Analyzer that doesn't tokenize */
-    final protected static Analyzer nonTokenizingAnalyzer = new BLNonTokenizingAnalyzer();
 
     
     // Static methods
@@ -218,13 +221,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     static Analyzer analyzerInstance(String analyzerName) {
         analyzerName = analyzerName.toLowerCase();
         if (analyzerName.equals("whitespace")) {
-            return whitespaceAnalyzer;
+            return WHITESPACE_ANALYZER;
         } else if (analyzerName.equals("default")) {
-            return defaultAnalyzer;
+            return DEFAULT_ANALYZER;
         } else if (analyzerName.equals("standard")) {
-            return standardAnalyzer;
+            return STANDARD_ANALYZER;
         } else if (analyzerName.matches("(non|un)tokeniz(ing|ed)")) {
-            return nonTokenizingAnalyzer;
+            return NONTOKENIZING_ANALYZER;
         }
         return null;
     }
@@ -232,10 +235,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public static void setTraceIndexOpening(boolean traceIndexOpening) {
         logger.debug("Trace index opening: " + traceIndexOpening);
         BlackLabIndexImpl.traceIndexOpening = traceIndexOpening;
-    }
-
-    public static boolean traceOptimization() {
-        return traceOptimization;
     }
 
     public static void setTraceOptimization(boolean traceOptimization) {
@@ -248,9 +247,24 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         BlackLabIndexImpl.traceQueryExecution = traceQueryExecution;
     }
 
+    public static boolean traceOptimization() {
+        return traceOptimization;
+    }
+    
+    public static boolean traceIndexOpening() {
+        return traceIndexOpening;
+    }
+
+    public static boolean traceQueryExecution() {
+        return traceQueryExecution;
+    }
+
     // Instance variables
     //---------------------------------------------------------------
     
+
+    /** BlackLab instance used to create us */
+    private BlackLabEngine blackLab;
 
     /** The collator to use for sorting. Defaults to English collator. */
     private Collator collator = BlackLabIndexImpl.defaultCollator;
@@ -312,7 +326,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
-
+    
     private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
     /** Search cache to use */
@@ -322,14 +336,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     // Constructors
     //---------------------------------------------------------------
     
-
-    public BlackLabIndexImpl(SearchSettings settings) {
-        searchSettings = settings == null ? SearchSettings.defaults() : settings;
-    }
-
-    public BlackLabIndexImpl() {
-        this(null);
-    }
 
     /**
      * Open an index.
@@ -343,13 +349,14 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
-        this();
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
+        this.blackLab = blackLab;
+        searchSettings = SearchSettings.defaults();
         try {
             this.indexMode = indexMode;
 
             try {
-                ConfigReader.applyConfig(this);
+                BlackLab.applyConfigToIndex(this);
             } catch (InvalidConfiguration e) {
                 throw new InvalidConfiguration(e.getMessage() + " (BlackLab configuration file)", e.getCause());
             }
@@ -374,7 +381,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /**
      * Open an index.
-     *
+     * 
+     * @param blackLab our BlackLab instance 
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -382,28 +390,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      * @param indexTemplateFile index template file to use to create index
      * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile)
-            throws ErrorOpeningIndex {
-        this(indexDir, indexMode, createNewIndex, indexTemplateFile, null);
-    }
-
-    /**
-     * Open an index.
-     *
-     * @param indexDir the index directory
-     * @param indexMode if true, open in index mode; if false, open in search mode.
-     * @param createNewIndex if true, delete existing index in this location if it
-     *            exists.
-     * @param indexTemplateFile index template file to use to create index
-     * @param settings default search settings
-     * @throws ErrorOpeningIndex
-     */
-    BlackLabIndexImpl(File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile, SearchSettings settings) throws ErrorOpeningIndex {
-        this(settings);
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
+        this.blackLab = blackLab;
+        searchSettings = SearchSettings.defaults();
         this.indexMode = indexMode;
 
         try {
-            ConfigReader.applyConfig(this);
+            BlackLab.applyConfigToIndex(this);
 
             openIndex(indexDir, indexMode, createNewIndex);
 
@@ -474,31 +467,30 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public BLSpanQuery createSpanQuery(TextPattern pattern, AnnotatedField field, Query filter) throws RegexpTooLarge {
+    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
-        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(field));
+        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
     }
+    
+    protected AnnotatedField fieldFromQuery(BLSpanQuery q) {
+        return annotatedField(q.getField());
+    }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
-        QueryInfo queryInfo = QueryInfo.create(this, annotatedField(query.getField()));
+    public Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger logger) throws WildcardTermTooBroad {
+        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true, logger);
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public Hits find(TextPattern pattern, AnnotatedField field, Query filter, SearchSettings settings)
-            throws WildcardTermTooBroad, RegexpTooLarge {
-        return find(createSpanQuery(pattern, field, filter), settings);
-    }
-
-    @Override
-    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
+    public QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws WildcardTermTooBroad {
         try {
             IndexReader indexReader = reader();
+            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true, searchLogger));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -525,7 +517,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /**
      * Register a ContentStore as a content accessor.
      *
-     * This tells the Searcher how the content of different fields may be accessed.
+     * This tells the BlackLabIndex how the content of different fields may be accessed.
      * This is used for making concordances, for example. Some fields are stored in
      * the Lucene index, while others may be stored on the file system, a database,
      * etc.
@@ -538,6 +530,15 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      */
     protected void registerContentStore(Field field, ContentStore contentStore) {
         contentStores.put(field, contentStore);
+        
+        // Start reading the content store's TOC in the background, so it doesn't
+        // trigger on the first search
+        blackLab.initializationExecutorService().execute(new Runnable() {
+            @Override
+            public void run() {
+                contentStore.initialize();
+            }
+        });
     }
     
     @Override
@@ -577,8 +578,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this), documentFilterQuery);
+    public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
+        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true, searchLogger), documentFilterQuery);
     }
     
     public boolean canDoNfaMatching() {
@@ -586,10 +587,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             return false;
         ForwardIndex fi = forwardIndices.values().iterator().next();
         return fi.canDoNfaMatching();
-    }
-
-    public static boolean isTraceQueryExecution() {
-        return traceQueryExecution;
     }
 
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
@@ -607,7 +604,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         }
 
         if (traceIndexOpening)
-            logger.debug("Constructing Searcher...");
+            logger.debug("Constructing BlackLabIndex...");
 
         if (indexMode) {
             if (traceIndexOpening)
@@ -662,9 +659,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             reader = DirectoryReader.open(indexWriter, false);
         }
 
-        // Register ourselves in the mapping from IndexReader to Searcher,
-        // so we can find the corresponding Searcher object from within Lucene code
-        BlackLabIndexRegistry.registerSearcher(reader, this);
+        // Register ourselves in the mapping from IndexReader to BlackLabIndex,
+        // so we can find the corresponding BlackLabIndex object from within Lucene code
+        blackLab.registerSearcher(reader, this);
 
         // Detect and open the ContentStore for the contents field
         if (!createNewIndex) {
@@ -687,7 +684,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                     if (dir.exists()) {
                         if (traceIndexOpening)
                             logger.debug("    " + dir + "...");
-                        registerContentStore(field, ContentStore.open(dir, false));
+                        registerContentStore(field, ContentStore.open(dir, indexMode, false));
                     }
                 }
             }
@@ -749,20 +746,33 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void close() {
         try {
-            reader.close();
+            if (reader != null) {
+                reader.close();
+                reader = null;
+            }
             if (indexWriter != null) {
                 indexWriter.commit();
                 indexWriter.close();
+                indexWriter = null;
             }
 
-            contentStores.close();
+            if (contentStores != null) {
+                contentStores.close();
+                contentStores = null;
+            }
 
             // Close the forward indices
-            for (ForwardIndex fi : forwardIndices.values()) {
-                fi.close();
+            if (forwardIndices != null) {
+                for (ForwardIndex fi : forwardIndices.values()) {
+                    fi.close();
+                }
+                forwardIndices = null;
             }
 
-            BlackLabIndexRegistry.removeSearcher(this);
+            if (blackLab != null) {
+                blackLab.removeSearcher(this);
+                blackLab = null;
+            }
 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -789,7 +799,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     protected ContentStore openContentStore(Field field) throws ErrorOpeningIndex {
         File contentStoreDir = new File(indexLocation, "cs_" + field.name());
-        ContentStore contentStore = ContentStore.open(contentStoreDir, isEmptyIndex);
+        ContentStore contentStore = ContentStore.open(contentStoreDir, indexMode, isEmptyIndex);
         registerContentStore(field, contentStore);
         return contentStore;
     }
@@ -979,13 +989,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field) {
-        return search(field, true);
-    }
-
-    @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        return new SearchEmpty(QueryInfo.create(this, field, useCache));
+    public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
+        return new SearchEmpty(QueryInfo.create(this, field, useCache, searchLogger));
     }
     
     @Override
@@ -996,5 +1001,15 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void setCache(SearchCache cache) {
         this.cache = cache;
+    }
+    
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "(" + indexLocation + ")";
+    }
+    
+    @Override
+    public BlackLabEngine blackLab() {
+        return blackLab;
     }
 }

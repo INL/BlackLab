@@ -28,12 +28,14 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
@@ -113,7 +115,7 @@ public class Example {
         }
 
         // Create the BlackLab index object
-        index = BlackLabIndex.open(indexDir);
+        index = BlackLab.open(indexDir);
         try {
 
             // Find the word "the"
@@ -183,7 +185,7 @@ public class Example {
      */
     static void findPattern(TextPattern tp) throws WildcardTermTooBroad, RegexpTooLarge {
         // Execute the search
-        Hits hits = index.find(tp, index.mainAnnotatedField(), null, null);
+        Hits hits = index.find(QueryInfo.create(index), tp, null, null);
         Hits sortedHits = hits.sort(new HitPropertyHitText(index));
 
         // Display the concordances

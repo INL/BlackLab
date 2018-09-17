@@ -15,5 +15,13 @@ public class InterruptedSearch extends BlackLabRuntimeException {
     public InterruptedSearch(InterruptedException e) {
         super(e);
     }
+
+    public InterruptedSearch(String message) {
+        super(message);
+    }
+    
+    public InterruptedSearch(String message, InterruptedException e) {
+        super(message, e);
+    }
     
 }
