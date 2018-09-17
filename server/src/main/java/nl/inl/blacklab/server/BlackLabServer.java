@@ -95,8 +95,9 @@ public class BlackLabServer extends HttpServlet {
             
             // Open log database
             try {
-                File dbFile = new File(searchManager.config().getLog().getSqliteDatabase());
-                if (dbFile != null) {
+                String sqliteDatabase = searchManager.config().getLog().getSqliteDatabase();
+                if (sqliteDatabase != null) {
+                    File dbFile = new File(sqliteDatabase);
                     String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
                     Class.forName("org.sqlite.JDBC");
                     logDatabase = new LogDatabaseImpl(url);
