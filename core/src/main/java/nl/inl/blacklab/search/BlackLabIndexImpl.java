@@ -748,6 +748,11 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     @Override
     public void close() {
         try {
+            if (blackLab != null) {
+                blackLab.removeSearcher(this);
+                blackLab = null;
+            }
+
             if (reader != null) {
                 reader.close();
                 reader = null;
@@ -769,11 +774,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                     fi.close();
                 }
                 forwardIndices = null;
-            }
-
-            if (blackLab != null) {
-                blackLab.removeSearcher(this);
-                blackLab = null;
             }
 
         } catch (IOException e) {
