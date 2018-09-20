@@ -79,13 +79,13 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         HitProperty result;
         switch (typeNum) {
         case 0:
-            result = HitPropertyDocumentDecade.deserializeProp(index, ignoreSensitivity(info));
+            result = HitPropertyDocumentDecade.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
             break;
         case 1:
             result = HitPropertyDocumentId.deserializeProp();
             break;
         case 2:
-            result = HitPropertyDocumentStoredField.deserializeProp(ignoreSensitivity(info));
+            result = HitPropertyDocumentStoredField.deserializeProp(ResultProperty.ignoreSensitivity(info));
             break;
         case 3:
             result = HitPropertyHitText.deserializeProp(index, field, info);
@@ -118,12 +118,6 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         if (reverse)
             result = result.reverse();
         return result;
-    }
-
-    private static String ignoreSensitivity(String info) {
-        if (info.endsWith(":s") || info.endsWith(":i"))
-            return info.substring(0, info.length() - 3);
-        return info;
     }
 
     /** The Hits object we're looking at */

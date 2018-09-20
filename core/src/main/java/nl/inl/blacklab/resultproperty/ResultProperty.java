@@ -12,6 +12,21 @@ import java.util.List;
 public interface ResultProperty<T> extends Comparator<T>, Serializable {
 
     /**
+     * Strip sensitivity information.
+     * 
+     * When deserializing, we ignore sensitivity option for non-context properties.
+     * Eventually, we will implement this for these properties.
+     * 
+     * @param info input string
+     * @return stripped string
+     */
+    static String ignoreSensitivity(String info) {
+        if (info.endsWith(":s") || info.endsWith(":i"))
+            return info.substring(0, info.length() - 3);
+        return info;
+    }
+    
+    /**
      * Get the property value for a specific result.
      * @param hit result to get property value for
      * @return property value
