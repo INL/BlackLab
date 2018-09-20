@@ -22,7 +22,7 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      */
     static String ignoreSensitivity(String info) {
         if (info.endsWith(":s") || info.endsWith(":i"))
-            return info.substring(0, info.length() - 3);
+            return info.substring(0, info.length() - 2);
         return info;
     }
     
