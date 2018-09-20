@@ -76,8 +76,11 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
             reverse = true;
             serialized = serialized.substring(1);
         }
+        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
+        String propName = parts[0];
+        //MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
         HitGroupProperty result;
-        if (serialized.equalsIgnoreCase("identity"))
+        if (propName.equalsIgnoreCase("identity"))
             result = propIdentity;
         else
             result = propSize;
