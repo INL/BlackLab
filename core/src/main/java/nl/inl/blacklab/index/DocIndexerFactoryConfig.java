@@ -47,6 +47,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
     protected Map<String, ConfigInputFormat> supported = new HashMap<>();
 
+    protected Map<String, String> formatErrors = new HashMap<>();
+    
     /**
      * Return a config from the supported list, or load it if it's in the unloaded
      * list.
@@ -67,7 +69,11 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             File f = unloaded.get(formatIdentifier);
             // remove before load to avoid infinite recursion on circular dependencies
             unloaded.remove(formatIdentifier);
-            return load(formatIdentifier, f);
+            try {
+                return load(formatIdentifier, f);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         // If unknown return null, can't help it.
@@ -97,7 +103,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                     InputFormatReader.read(reader, false, format, finder);
                     addFormat(format);
                 }
-            } catch (IOException e) {
+            } catch (InvalidInputFormatConfig | IOException e) {
+                formatErrors.put(formatIdentifier, e.getMessage());
                 throw BlackLabRuntimeException.wrap(e);
             }
         }
@@ -217,7 +224,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
             loadUnloaded();
     }
 
-    protected Optional<ConfigInputFormat> load(String formatIdentifier, File f) {
+    protected Optional<ConfigInputFormat> load(String formatIdentifier, File f) throws IOException {
         try {
             ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
             InputFormatReader.read(f, format, finder);
@@ -225,9 +232,11 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
             addFormat(format);
             return Optional.of(format);
-        } catch (IOException e) {
-            e.printStackTrace(); // TODO: don't sweep this error under the rug please!
-            return Optional.empty();
+        } catch (InvalidInputFormatConfig | IOException e) {
+            formatErrors.put(formatIdentifier, e.getMessage());
+            throw e;
+//            //e.printStackTrace(); // TODO: don't sweep this error under the rug please!
+//            return Optional.empty();
         }
     }
 
@@ -239,7 +248,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
             try {
                 load(e.getKey(), e.getValue());
-            } catch (InvalidInputFormatConfig ex) {
+            } catch (IOException | InvalidInputFormatConfig ex) {
                 ex.printStackTrace();
                 logger.warn("Cannot load user format " + e.getValue() + ": " + ex.getMessage());
                 // an invalid format somehow got saved, or something else went wrong, just ignore this file then
@@ -299,5 +308,12 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         d.setDocumentName(documentName);
         d.setDocument(b, cs);
         return d;
+    }
+
+    @Override
+    public String formatError(String formatIdentifier) {
+        if (isSupported(formatIdentifier))
+            return null;
+        return formatErrors.get(formatIdentifier);
     }
 }

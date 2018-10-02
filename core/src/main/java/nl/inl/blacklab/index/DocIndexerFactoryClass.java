@@ -242,4 +242,9 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
+
+    @Override
+    public String formatError(String formatIdentifier) {
+        return null;
+    }
 }

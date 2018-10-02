@@ -198,4 +198,14 @@ public interface DocIndexerFactory {
      */
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException;
+
+
+    
+    /**
+     * If this format exists but has an error, return the error.
+     * 
+     * @param formatIdentifier format to check for errors
+     * @return null if not found or no errors, the error otherwise  
+     */
+    String formatError(String formatIdentifier);
 }

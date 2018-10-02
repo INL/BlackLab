@@ -106,7 +106,27 @@ public class DocumentFormats {
     public static boolean isSupported(String formatIdentifier) {
         return getFactory(formatIdentifier) != null;
     }
+    
+    /**
+     * If this format exists but has an error, return the error.
+     * 
+     * @param formatIdentifier format to check for errors
+     * @return null if not found or no errors, the error otherwise  
+     */
+    public static String formatError(String formatIdentifier) {
+        if (formatIdentifier == null || formatIdentifier.isEmpty())
+            return null;
 
+        for (int i = factories.size() - 1; i >= 0; i--) {
+            if (factories.get(i).isSupported(formatIdentifier))
+                return null;
+            String result = factories.get(i).formatError(formatIdentifier);
+            if (result != null)
+                return result;
+        }
+        return null;
+    }
+    
     /**
      * Returns a list of all registered document formats for all factories, ordered
      * by descending priority. Note that this list might contain duplicates if
