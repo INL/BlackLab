@@ -41,6 +41,13 @@ Also see the [Change log](changelog.html).
 			<td><a href='https://github.com/INL/BlackLab/archive/master.zip'>Source (zip)</a></td>
 			<td>In-development version</td>
 		</tr>
+        <tr>
+            <td>v1.7.2</td>
+            <td><a href='https://github.com/INL/BlackLab/releases/download/v1.7.2/blacklab-1.7.2.jar'>Binary (jar)</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v1.7.2.tar.gz'>Source (tgz)</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v1.7.2.zip'>Source (zip)</a></td>
+            <td>Bugfixes (Timeout, XPath match ordering)</td>
+        </tr>
 		<tr>
 			<td>v1.7.1</td>
 			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.7.1/blacklab-1.7.1.jar'>Binary (jar)</a></td>
@@ -61,13 +68,6 @@ Also see the [Change log](changelog.html).
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.5.0.tar.gz'>Source (tgz)</a></td>
 			<td><a href='https://github.com/INL/BlackLab/archive/v1.5.0.zip'>Source (zip)</a></td>
 			<td>Heavily refactored BlackLab Server to be more modular.</td>
-		</tr>
-		<tr>
-			<td>v1.4.1</td>
-			<td><a href='https://github.com/INL/BlackLab/releases/download/v1.4.1/blacklab-1.4.1.jar'>Binary (jar)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.4.1.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/v1.4.1.zip'>Source (zip)</a></td>
-			<td>Added HitsSample, HitPropertyContextWords and subproperties (experimental).</td>
 		</tr>
 	</tbody>
 </table>
