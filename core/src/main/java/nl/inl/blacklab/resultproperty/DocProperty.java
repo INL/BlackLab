@@ -119,16 +119,16 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
         DocProperty result;
         switch (typeNum) {
         case 0:
-            result = DocPropertyDecade.deserialize(info);
+            result = DocPropertyDecade.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
         case 1:
             result = DocPropertyNumberOfHits.deserialize();
             break;
         case 2:
-            result = DocPropertyStoredField.deserialize(info);
+            result = DocPropertyStoredField.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
         case 3:
-            result = DocPropertyAnnotatedFieldLength.deserialize(info);
+            result = DocPropertyAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
         default:
             logger.debug("Unknown DocProperty '" + type + "'");
