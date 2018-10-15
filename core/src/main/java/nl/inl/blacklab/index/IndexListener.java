@@ -145,28 +145,28 @@ public class IndexListener implements ErrorHandler {
     /**
      * The indexing process started
      */
-    public void indexStart() {
+    public synchronized void indexStart() {
         indexStartTime = System.currentTimeMillis();
     }
 
     /**
      * The indexing process ended
      */
-    public void indexEnd() {
+    public synchronized void indexEnd() {
         indexTime = System.currentTimeMillis() - indexStartTime;
     }
 
     /**
      * The close process started
      */
-    public void closeStart() {
+    public synchronized void closeStart() {
         closeStartTime = System.currentTimeMillis();
     }
 
     /**
      * The close process ended
      */
-    public void closeEnd() {
+    public synchronized void closeEnd() {
         closeTime = System.currentTimeMillis() - closeStartTime;
     }
 
@@ -182,11 +182,11 @@ public class IndexListener implements ErrorHandler {
         return closeTime;
     }
 
-    public void indexerCreated(Indexer indexer) {
+    public synchronized void indexerCreated(Indexer indexer) {
         createTime = System.currentTimeMillis();
     }
 
-    public void indexerClosed() {
+    public synchronized void indexerClosed() {
         totalTime = System.currentTimeMillis() - createTime;
     }
 
@@ -203,7 +203,7 @@ public class IndexListener implements ErrorHandler {
     }
 
     @Override
-    public boolean errorOccurred(Throwable e, String path, File f) {
+    public synchronized boolean errorOccurred(Throwable e, String path, File f) {
         errors++;
         return true;
     }

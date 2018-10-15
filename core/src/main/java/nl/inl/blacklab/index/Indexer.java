@@ -110,7 +110,22 @@ public interface Indexer {
     // TODO this should call close() on running FileProcessors
     void close();
 
+    /**
+     * @return true iff indexer is closed
+     * @deprecated changed to isOpen to match Lucene
+     */
+    @Deprecated
     boolean isClosed();
+    
+    /**
+     * Is this indexer open?
+     * 
+     * An indexer can be closed unexpectedly if e.g. the GC overhead limit
+     * is exceeded.
+     * 
+     * @return true if the indexer is open, false if not
+     */
+    boolean isOpen();
 
     /**
      * Updates the specified Document in the index.

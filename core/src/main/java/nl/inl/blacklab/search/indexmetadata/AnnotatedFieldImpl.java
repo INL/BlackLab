@@ -191,7 +191,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      * 
      * @param parts parts of the Lucene index field name
      */
-    void processIndexField(String[] parts) {
+    synchronized void processIndexField(String[] parts) {
         ensureNotFrozen();
     
         // See if this is a builtin bookkeeping field or a annotation.
@@ -239,7 +239,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         }
     }
 
-    public AnnotationImpl getOrCreateAnnotation(String name) {
+    public synchronized AnnotationImpl getOrCreateAnnotation(String name) {
         ensureNotFrozen();
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
@@ -249,14 +249,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return pd;
     }
 
-    void putAnnotation(AnnotationImpl annotDesc) {
+    synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
         annotationsDisplayOrder.add(annotDesc);
         annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
-    void detectMainAnnotation(IndexReader reader) {
+    synchronized void detectMainAnnotation(IndexReader reader) {
         ensureNotFrozen();
         if (mainAnnotationName != null && mainAnnotationName.length() > 0) {
             // Main annotation name was set from index metadata before we
@@ -297,7 +297,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         mainAnnotation = firstAnnotation;
     }
 
-    void setMainAnnotationName(String mainAnnotationName) {
+    synchronized void setMainAnnotationName(String mainAnnotationName) {
         ensureNotFrozen();
         this.mainAnnotationName = mainAnnotationName;
         if (annots.containsKey(mainAnnotationName))
@@ -309,7 +309,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         this.noForwardIndexAnnotations = noForwardIndexAnnotations;
     }
 
-    void setDisplayOrder(List<String> displayOrder) {
+    synchronized void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
         this.displayOrder.clear();
         this.displayOrder.addAll(displayOrder);
@@ -317,7 +317,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     @Override
-    public AnnotatedFieldImpl freeze() {
+    synchronized public AnnotatedFieldImpl freeze() {
         this.frozen = true;
         this.annots.values().forEach(annotation -> annotation.freeze());
         return this;

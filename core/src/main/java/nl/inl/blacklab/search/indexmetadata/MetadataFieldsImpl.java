@@ -189,7 +189,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     // Methods that mutate data
     // ------------------------------------
 
-    public MetadataField register(String fieldName) {
+    public synchronized MetadataField register(String fieldName) {
         ensureNotFrozen();
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
@@ -219,7 +219,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         metadataGroups.put(name, metadataGroup);
     }
 
-    public void put(String fieldName, MetadataFieldImpl fieldDesc) {
+    public synchronized void put(String fieldName, MetadataFieldImpl fieldDesc) {
         ensureNotFrozen();
         metadataFieldInfos.put(fieldName, fieldDesc);
     }
@@ -272,7 +272,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     }
 
     @Override
-    public synchronized MetadataFieldsImpl freeze() {
+    public MetadataFieldsImpl freeze() {
         this.frozen = true;
         for (MetadataFieldImpl field: metadataFieldInfos.values()) {
             field.freeze();

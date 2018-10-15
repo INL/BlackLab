@@ -230,7 +230,7 @@ public class Index {
     }
 
     public synchronized IndexStatus getStatus() throws BlsException {
-        if (this.indexer != null && !this.indexer.isClosed())
+        if (this.indexer != null && this.indexer.isOpen())
             return IndexStatus.INDEXING;
         
         return this.blIndex().isEmpty() ? IndexStatus.EMPTY : IndexStatus.AVAILABLE;
@@ -318,7 +318,7 @@ public class Index {
         }
 
         // if we're currently indexing, force close the indexer
-        if (this.indexer != null && !this.indexer.isClosed()) {
+        if (this.indexer != null && this.indexer.isOpen()) {
             this.indexer.close();
         }
 
@@ -340,7 +340,7 @@ public class Index {
         if (this.indexer == null)
             return;
 
-        if (!this.indexer.isClosed())
+        if (this.indexer.isOpen())
             throw new ServiceUnavailable("Index '" + id + "' is currently indexing a file, please try again later.");
 
         // close() was already called on the indexer externally

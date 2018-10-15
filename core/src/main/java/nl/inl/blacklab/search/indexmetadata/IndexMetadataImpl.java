@@ -1039,7 +1039,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         }
     }
 
-    private AnnotatedFieldImpl getOrCreateAnnotatedField(String name) {
+    private synchronized AnnotatedFieldImpl getOrCreateAnnotatedField(String name) {
         ensureNotFrozen();
         AnnotatedFieldImpl cfd = null;
         if (annotatedFields.exists(name))
@@ -1070,7 +1070,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
      * @return registered annotated field
      */
     @Override
-    public AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
+    public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         ensureNotFrozen();
         
         String fieldName = fieldWriter.name();
@@ -1104,7 +1104,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     }
 
     @Override
-    public MetadataField registerMetadataField(String fieldName) {
+    public synchronized MetadataField registerMetadataField(String fieldName) {
         ensureNotFrozen();
         return metadataFields.register(fieldName);
     }

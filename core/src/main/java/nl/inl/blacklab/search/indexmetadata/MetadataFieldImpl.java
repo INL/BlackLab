@@ -212,7 +212,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * @param value field value
      * @return this object
      */
-    public MetadataFieldImpl addValue(String value) {
+    public synchronized MetadataFieldImpl addValue(String value) {
         ensureNotFrozen();
         // If we've seen a value, assume we'll get to see all values;
         // when it turns out there's too many or they're too long,

@@ -100,6 +100,10 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
+            
+            if (!indexer.continueIndexing())
+                return;
+            
             // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
             // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
             // meantime
@@ -125,73 +129,73 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    protected DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
+    private DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
     /** Our index */
-    protected BlackLabIndexWriter indexWriter;
+    private BlackLabIndexWriter indexWriter;
 
     /** Stop after indexing this number of docs. -1 if we shouldn't stop. */
-    protected int maxNumberOfDocsToIndex = -1;
+    private int maxNumberOfDocsToIndex = -1;
 
     /** Should we terminate indexing? (e.g. because of an error) */
-    boolean terminateIndexing = false;
+    private boolean terminateIndexing = false;
 
     /**
      * Where to report indexing progress.
      */
-    protected IndexListener listener = null;
+    private IndexListener listener = null;
 
     /**
      * Have we reported our creation and the start of indexing to the listener yet?
      */
-    protected boolean createAndIndexStartReported = false;
+    private boolean createAndIndexStartReported = false;
 
     /**
      * When we encounter a zip or tgz file, do we descend into it like it was a
      * directory?
      */
-    boolean processArchivesAsDirectories = true;
+    private boolean processArchivesAsDirectories = true;
 
     /**
      * Recursively index files inside a directory? (or archive file, if
      * processArchivesAsDirectories == true)
      */
-    protected boolean defaultRecurseSubdirs = true;
+    private boolean defaultRecurseSubdirs = true;
 
     /**
      * Format of the documents we're going to be indexing, used to create the
      * correct type of DocIndexer.
      */
-    protected String formatIdentifier;
+    private String formatIdentifier;
 
     /**
      * Parameters we should pass to our DocIndexers upon instantiation.
      */
-    protected Map<String, String> indexerParam;
+    private Map<String, String> indexerParam;
 
     /** How to index metadata fields (tokenized) */
-    protected FieldType metadataFieldTypeTokenized;
+    private FieldType metadataFieldTypeTokenized;
 
     /** How to index metadata fields (untokenized) */
-    protected FieldType metadataFieldTypeUntokenized;
+    private FieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
-    protected List<File> linkedFileDirs = new ArrayList<>();
+    private List<File> linkedFileDirs = new ArrayList<>();
 
     /**
      * If a file cannot be found in the linkedFileDirs, use this to retrieve it (if
      * present)
      */
-    protected Function<String, File> linkedFileResolver;
+    private Function<String, File> linkedFileResolver;
 
     /** Index using multiple threads? */
-    protected boolean useThreads = false;
+    private boolean useThreads = false;
 
     // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was 
     // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex 
     // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write 
     // the updated indexMetadata
-    boolean hasRollback = false;
+    private boolean hasRollback = false;
 
     /** Was this Indexer closed? */
     private boolean closed = false;
@@ -369,13 +373,13 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void setListener(IndexListener listener) {
+    public synchronized void setListener(IndexListener listener) {
         this.listener = listener;
         listener(); // report creation and start of indexing, if it hadn't been reported yet
     }
 
     @Override
-    public IndexListener listener() {
+    public synchronized IndexListener listener() {
         if (listener == null) {
             listener = new IndexListenerReportConsole();
         }
@@ -433,8 +437,14 @@ class IndexerImpl implements DocWriter, Indexer {
     }
     
     @Override
+    @Deprecated
     public boolean isClosed() {
-        return closed;
+        return !isOpen();
+    }
+    
+    @Override
+    public boolean isOpen() {
+        return !closed && indexWriter.isOpen();
     }
 
     /**
@@ -496,12 +506,12 @@ class IndexerImpl implements DocWriter, Indexer {
         try {
             docIndexerWrapper.file(documentName, reader);
         } catch (MalformedInputFile e) {
-            listener.errorOccurred(e, documentName, null);
+            listener().errorOccurred(e, documentName, null);
             logger.error("Parsing " + documentName + " failed:");
             e.printStackTrace();
             logger.error("(continuing indexing)");
         } catch (Exception e) {
-            listener.errorOccurred(e, documentName, null);
+            listener().errorOccurred(e, documentName, null);
             logger.error("Parsing " + documentName + " failed:");
             e.printStackTrace();
             logger.error("(continuing indexing)");
@@ -548,6 +558,8 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     @Override
     public synchronized boolean continueIndexing() {
+        if (!indexWriter.isOpen())
+            return false;
         if (terminateIndexing)
             return false;
         if (maxNumberOfDocsToIndex >= 0) {

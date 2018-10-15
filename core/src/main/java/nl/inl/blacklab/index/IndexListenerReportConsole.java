@@ -42,11 +42,11 @@ public class IndexListenerReportConsole extends IndexListener {
         reportProgress();
     }
 
-    private void reportProgress() {
+    private synchronized void reportProgress() {
         reportProgress(false);
     }
 
-    private void reportProgress(boolean force) {
+    private synchronized void reportProgress(boolean force) {
         double elapsed = getElapsed();
         if (elapsed == 0)
             elapsed = 0.1;
@@ -95,7 +95,7 @@ public class IndexListenerReportConsole extends IndexListener {
     }
 
     @Override
-    public void indexEnd() {
+    public synchronized void indexEnd() {
         super.indexEnd();
         reportProgress(true);
         System.out.println(
@@ -103,14 +103,15 @@ public class IndexListenerReportConsole extends IndexListener {
     }
 
     @Override
-    public boolean errorOccurred(Throwable e, String path, File f) {
+    public synchronized boolean errorOccurred(Throwable e, String path, File f) {
         System.out.println("An error occurred during indexing!");
         System.out.println("error: " + e.getMessage() + " (in " + path + ")");
+        e.printStackTrace();
         return super.errorOccurred(e, path, f);
     }
 
     @Override
-    public void warning(String msg) {
+    public synchronized void warning(String msg) {
         System.out.println("WARNING: " + msg);
     }
 

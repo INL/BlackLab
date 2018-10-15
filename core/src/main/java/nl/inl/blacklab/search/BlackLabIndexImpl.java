@@ -1014,4 +1014,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public BlackLabEngine blackLab() {
         return blackLab;
     }
+
+    @Override
+    public boolean isOpen() {
+        return indexWriter.isOpen();
+    }
 }

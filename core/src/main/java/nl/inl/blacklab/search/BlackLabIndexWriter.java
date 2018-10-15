@@ -53,4 +53,14 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     Annotation getOrCreateAnnotation(AnnotatedField field, String annotName);
 
+    /**
+     * Is the indexer still open?
+     * 
+     * It can be closed unexpectedly if e.g. the GC overhead limit is exceeded.
+     * If that happened, we should stop indexing. 
+     * 
+     * @return true if the indexer was closed, false if not
+     */
+    boolean isOpen();
+
 }
