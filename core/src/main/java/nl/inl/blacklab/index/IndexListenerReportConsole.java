@@ -78,16 +78,57 @@ public class IndexListenerReportConsole extends IndexListener {
                 curTokensSpeed = overallTokenSpeed;
             curTokensSpeed = curTokensSpeed * 0.7 + lastTokensSpeed * 0.3;
 
+            long indexTimeSoFar = System.currentTimeMillis() - getIndexStartTime();
             System.out
-                    .printf("%d docs done (%d MB, %dk tokens). Average speed %.1fk tokens/s (%.1f MB/s), " +
-                            "currently %.1fk tokens/s (%.1f MB/s)%n",
-                            getDocsDone(), (int) mbDone, (int) kTokensDone, overallTokenSpeed,
-                            overallSpeed, curTokensSpeed, curSpeed);
+                    .printf("%s docs (%s, %s tokens); avg. %.1fk tok/s (%.1f MB/s); " +
+                            "currently %.1fk tok/s (%.1f MB/s); %s elapsed%n",
+                            formatNumber(getDocsDone()), formatSizeBytes(totalCharsDone), formatNumber(totalTokensDone), overallTokenSpeed,
+                            overallSpeed, curTokensSpeed, curSpeed, formatTimeMs(indexTimeSoFar));
 
             prevCharsDoneReported = totalCharsDone;
             prevTokensDoneReported = totalTokensDone;
             prevReportTime = elapsed;
         }
+    }
+
+    private static String formatTimeMs(long t) {
+        if (t < 1000)
+            return t + " ms";
+        t /= 1000;
+        if (t < 60)
+            return t + " sec";
+        t /= 60;
+        if (t < 60)
+            return t + " min";
+        int h = (int)(t / 60);
+        t %= 60;
+        return String.format("%dh %02dmin", h, t);
+    }
+
+    private static String formatSizeBytes(double sz) {
+        if (sz < 1000)
+            return String.format("%d B", (int)sz);
+        sz /= 1000;
+        if (sz < 1000)
+            return String.format("%d kB", (int)sz);
+        sz /= 1000;
+        if (sz < 1000)
+            return String.format("%d MB", (int)sz);
+        sz /= 1000.0;
+        return String.format("%.1f GB", sz);
+    }
+
+    private static String formatNumber(double n) {
+        if (n < 1000)
+            return String.format("%d", (int)n);
+        n /= 1000;
+        if (n < 1000)
+            return String.format("%.1fk", n);
+        n /= 1000;
+        if (n < 1000)
+            return String.format("%.1fM", n);
+        n /= 1000;
+        return String.format("%.2fG", n);
     }
 
     private double getElapsed() {
