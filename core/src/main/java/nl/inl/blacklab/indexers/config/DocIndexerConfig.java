@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -160,11 +162,21 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "chatFormatAgeToMonths":
                 result = opChatFormatAgeToMonths(result);
                 break;
+            case "strip":
+                result = opStrip(result, param);
+                break;
             default:
                 // In the future, we'll support user plugins here
                 throw new UnsupportedOperationException("Unknown processing step method " + method);
             }
         }
+        return result;
+    }
+
+    private String opStrip(String result, Map<String, String> param) {
+        // Trim character/string from beginning and end
+        String stripChars = param.containsKey("chars") ? param.get("chars") : " ";
+        result = StringUtils.strip(result, stripChars);
         return result;
     }
 
