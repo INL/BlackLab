@@ -14,7 +14,9 @@
 * Sort matches for XPaths (VTD-XML does breadth-first search and doesn't 
   necessarily return matches in document order; this can be a problem for 
   more complex XPaths).
-* Made timeout longer for hits queries to avoid Timeout error. 
+* Made timeout longer for hits queries to avoid Timeout error.
+* Jackson and commons-compress libraries were updated because of patch 
+  security vulnerabilities. 
 
 ## Improvements up to v1.7.1
 
