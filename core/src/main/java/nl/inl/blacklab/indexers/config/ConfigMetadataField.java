@@ -187,7 +187,7 @@ public class ConfigMetadataField {
     }
 
     public void addDisplayValues(Map<String, String> displayValues) {
-        displayValues.putAll(displayValues);
+        this.displayValues.putAll(displayValues);
     }
 
     public List<String> getDisplayOrder() {
