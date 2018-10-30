@@ -79,6 +79,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.entry("documentFormat", formatIdentifier);
             if (indexMetadata.tokenCount() > 0)
                 ds.entry("tokenCount", indexMetadata.tokenCount());
+            if (blIndex.reader().numDocs() > 0) 
+                ds.entry("documentCount", blIndex.reader().numDocs());
 
             ds.startEntry("versionInfo").startMap()
                     .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
