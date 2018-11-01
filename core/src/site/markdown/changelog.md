@@ -18,6 +18,22 @@
   the response is available. Only the "total results" count will be 
   reported asynchronously unless the "waitfortotal" parameters is true.
 
+## Improvements up to v1.7.2
+
+### New
+* Issue warning if unrecognized params passed to Auth* class.
+
+### Changed
+* Rewrite queries like [lemma=".*"] to [] for efficiency
+
+### Fixed
+* Sort matches for XPaths (VTD-XML does breadth-first search and doesn't 
+  necessarily return matches in document order; this can be a problem for 
+  more complex XPaths).
+* Made timeout longer for hits queries to avoid Timeout error.
+* Jackson and commons-compress libraries were updated because of patch 
+  security vulnerabilities. 
+  
 ## Improvements up to v1.7.1
 
 ### Changed
