@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -191,7 +192,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
-                .entry("mainProperty", annotations.main().name());
+                .entry(ElementNames.mainProperty, annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();

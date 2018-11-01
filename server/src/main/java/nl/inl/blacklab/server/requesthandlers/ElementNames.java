@@ -18,6 +18,8 @@ public class ElementNames {
     public static String annotations;
     
     public static String annotation;
+
+    public static String mainProperty;
     
     static {
         setUseOldElementNames(false);
@@ -30,12 +32,14 @@ public class ElementNames {
             annotatedFields = "complexFields";
             annotations = "properties";
             annotation = "property";
+            mainProperty = "mainProperty";
         } else {
             isAnnotatedField = "isAnnotatedField";
             annotatedField = "annotatedField";
             annotatedFields = "annotatedFields";
             annotations = "annotations";
             annotation = "annotation";
+            mainProperty = "mainAnnotation";
         }
     }
 
