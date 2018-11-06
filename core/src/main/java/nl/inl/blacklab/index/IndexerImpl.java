@@ -58,7 +58,7 @@ import nl.inl.util.UnicodeStream;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
- * 
+ *
  * Not thread-safe, although indexing itself can use thread in certain cases
  * (only when using configuration file based indexing right now)
  */
@@ -75,11 +75,11 @@ class IndexerImpl implements DocWriter, Indexer {
 
         @Override
         public void file(String path, InputStream is, File file) throws IOException, MalformedInputFile, PluginException {
-            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream 
+            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
             // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
             // the BOM (if present) and exposes the correct character set for this stream (if present)
             // This way we can later use the charset to decode the input
-            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the 
+            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the
             // default encoding to our DocIndexer
             // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
             // In the case of binary data docIndexers, they should always ignore the encoding anyway
@@ -100,12 +100,12 @@ class IndexerImpl implements DocWriter, Indexer {
         }
 
         private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
-            
+
             if (!indexer.continueIndexing())
                 return;
-            
+
             // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
-            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the 
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
             // meantime
             listener().fileStarted(documentName);
             int docsDoneBefore = indexWriter.writer().numDocs();
@@ -191,9 +191,9 @@ class IndexerImpl implements DocWriter, Indexer {
     /** Index using multiple threads? */
     private boolean useThreads = false;
 
-    // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was 
-    // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex 
-    // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write 
+    // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was
+    // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex
+    // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write
     // the updated indexMetadata
     private boolean hasRollback = false;
 
@@ -237,11 +237,57 @@ class IndexerImpl implements DocWriter, Indexer {
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
      * @throws IOException
-     * @throws ErrorOpeningIndex 
+     * @throws ErrorOpeningIndex
      */
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
         init(directory, create, formatIdentifier, indexTemplateFile);
+    }
+    
+    /**
+     * Open an indexer for the provided writer.
+     *
+     * @param writer the writer
+     * @param formatIdentifier (optional) - the formatIdentifier to use when indexing data through this indexer.
+     *      If omitted, uses the default formatIdentifier stored in the indexMetadata. If that is missing too, throws DocumentFormatNotFound.
+     */
+    IndexerImpl(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
+        if (writer == null) {
+            throw new NullPointerException();
+        }
+
+        this.indexWriter = writer;
+
+        if (!DocumentFormats.isSupported(formatIdentifier)) {
+            formatIdentifier = writer.metadataWriter().documentFormat();
+            if (!DocumentFormats.isSupported(formatIdentifier)) {
+                String message = formatIdentifier == null ? "No formatIdentifier"
+                        : "Unknown formatIdentifier '" + formatIdentifier + "'";
+                throw new DocumentFormatNotFound(
+                        message + ", and could not determine the default documentFormat for index " + writer.name());
+            }
+        }
+        this.formatIdentifier = formatIdentifier;
+
+        // TODO
+        metadataFieldTypeTokenized = new FieldType();
+        metadataFieldTypeTokenized.setStored(true);
+        //metadataFieldTypeTokenized.setIndexed(true);
+        metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        metadataFieldTypeTokenized.setTokenized(true);
+        metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
+        metadataFieldTypeTokenized.setStoreTermVectors(true);
+        metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
+        metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);
+        metadataFieldTypeTokenized.freeze();
+
+        metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
+        metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+        //metadataFieldTypeUntokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
+        metadataFieldTypeUntokenized.setStoreTermVectors(false);
+        metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
+        metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
+        metadataFieldTypeUntokenized.freeze();
     }
 
     protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
@@ -251,8 +297,8 @@ class IndexerImpl implements DocWriter, Indexer {
             if (indexTemplateFile != null) {
                 indexWriter = BlackLab.openForWriting(directory, true, indexTemplateFile);
 
-                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index 
-                // has written it might be null
+                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index
+                // has written it (might be null)
                 final String defaultFormatIdentifier = indexWriter.metadataWriter().documentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
@@ -271,7 +317,7 @@ class IndexerImpl implements DocWriter, Indexer {
                     String formatError = DocumentFormats.formatError(formatIdentifier);
                     if (formatError == null)
                         formatError = "format not found";
-                    throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " + 
+                    throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                             formatError);
 //                    throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
 //                            + "' not found (or format config contains an error) when creating new index in "
@@ -305,7 +351,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 String formatError = DocumentFormats.formatError(formatIdentifier);
                 if (formatError == null)
                     formatError = "format not found";
-                throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " + 
+                throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                         formatError);
 //                throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
 //                        + "' not found (or format config contains an error) when creating new index in " + directory);
@@ -393,7 +439,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     /**
      * Log an exception that occurred during indexing
-     * 
+     *
      * @param msg log message
      * @param e the exception
      */
@@ -432,16 +478,16 @@ class IndexerImpl implements DocWriter, Indexer {
         // Signal that we're completely done now
         listener().closeEnd();
         listener().indexerClosed();
-        
+
         closed = true;
     }
-    
+
     @Override
     @Deprecated
     public boolean isClosed() {
         return !isOpen();
     }
-    
+
     @Override
     public boolean isOpen() {
         return !closed && indexWriter.isOpen();
@@ -458,7 +504,7 @@ class IndexerImpl implements DocWriter, Indexer {
         indexWriter.writer().addDocument(document);
         listener().luceneDocumentAdded();
     }
-    
+
     @Override
     public void update(Term term, Document document) throws IOException {
         indexWriter.writer().updateDocument(term, document);
@@ -607,7 +653,7 @@ class IndexerImpl implements DocWriter, Indexer {
      * Get the parameters we would like to be passed to the DocIndexer class.
      *
      * Used by DocIndexer classes to get their parameters.
-     * 
+     *
      * @return the parameters
      */
     @Override
