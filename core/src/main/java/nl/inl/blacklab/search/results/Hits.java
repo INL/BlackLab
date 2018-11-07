@@ -239,7 +239,8 @@ public abstract class Hits extends Results<Hit> {
         boolean emptyResultSet = !hitsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
                 (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
-            throw new IllegalArgumentException("First hit out of range");
+            //throw new IllegalArgumentException("First hit out of range");
+            return Hits.emptyList(queryInfo());
         }
 
         // Auto-clamp number
