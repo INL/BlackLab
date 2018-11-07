@@ -99,7 +99,7 @@ public class RequestHandlerHits extends RequestHandler {
 			} else {
 				// Since we're going to always launch a totals count anyway, just do it right away
 				// then construct a window on top of the total
-				job = searchMan.search(user, searchParam.hitsTotal(), false); // always launch totals nonblocking!
+				job = searchMan.search(user, searchParam.hitsTotal(), searchParam.getBoolean("waitfortotal")); // always launch totals nonblocking, unless waitfortotal
 				JobHitsTotal jobTotal = (JobHitsTotal) job;
 
 				int sleepTime = 10;
