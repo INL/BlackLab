@@ -132,6 +132,10 @@ public class RequestHandlerHits extends RequestHandler {
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
+            if (searchParam.getBoolean("waitfortotal")) {
+                // Wait until all hits have been counted.
+                hitsCount.countedTotal();
+            }
             
 //            int sleepTime = 10;
 //            int totalSleepTime = 0;
