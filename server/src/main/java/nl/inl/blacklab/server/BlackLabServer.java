@@ -206,6 +206,7 @@ public class BlackLabServer extends HttpServlet {
 					ServletUtil.writeCacheHeaders(responseObject, 0);
 
 					// === Write the response that was captured in buf
+					logger.error("Error reading config", e);
 					try {
 						Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
 						realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
