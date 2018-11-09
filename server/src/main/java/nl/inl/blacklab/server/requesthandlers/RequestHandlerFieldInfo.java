@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -104,7 +103,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     public static void describeMetadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues) {
         ds.startMap();
         // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); 
+        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
 
         // Assemble response
         if (indexName != null)
@@ -159,7 +158,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
         ds.endMap();
     }
-    
+
     public static String sensitivitySettingDesc(Annotation annotation) {
         String sensitivityDesc;
         if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE)) {
@@ -178,13 +177,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         return sensitivityDesc;
     }
 
-    public static void describeAnnotatedField(DataStream ds, String indexName, 
+    public static void describeAnnotatedField(DataStream ds, String indexName,
             AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
         Annotations annotations = fieldDesc.annotations();
-        ds.entry("fieldName", fieldDesc.name())
+        ds
+                .entry("fieldName", fieldDesc.name())
                 .entry(ElementNames.isAnnotatedField, true)
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
@@ -192,6 +192,10 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
                 .entry("mainProperty", annotations.main().name());
+        ds.startEntry("displayOrder").startList();
+        annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
+        ds.endList().endEntry();
+
         ds.startEntry(ElementNames.annotations).startMap();
         for (Annotation annotation: annotations) {
             ds.startAttrEntry(ElementNames.annotation, "name", annotation.name()).startMap();
