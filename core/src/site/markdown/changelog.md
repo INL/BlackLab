@@ -2,6 +2,11 @@
 
 ## Improvements in HEAD
 
+## Improvements up to v1.7.3
+
+### Fixed
+* Fixed waitfortotal parameter not working.
+   
 ## Improvements up to v1.7.2
 
 ### New
