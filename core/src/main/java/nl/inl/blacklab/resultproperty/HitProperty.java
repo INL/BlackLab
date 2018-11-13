@@ -16,7 +16,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -24,6 +23,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -73,44 +73,50 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             type = type.substring(1);
         }
         String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("decade", "docid", "field", "hit", "left", "right", "wordleft", "wordright",
-                "context", "hitposition", "doc");
-        int typeNum = types.indexOf(type);
         HitProperty result;
-        switch (typeNum) {
-        case 0:
+        switch (type) {
+        case "decade":
             result = HitPropertyDocumentDecade.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
             break;
-        case 1:
+        case "docid":
             result = HitPropertyDocumentId.deserializeProp();
             break;
-        case 2:
+        case "field":
             result = HitPropertyDocumentStoredField.deserializeProp(ResultProperty.ignoreSensitivity(info));
             break;
-        case 3:
+        case "hit":
             result = HitPropertyHitText.deserializeProp(index, field, info);
             break;
-        case 4:
+        case "left":
             result = HitPropertyLeftContext.deserializeProp(index, field, info);
             break;
-        case 5:
+        case "right":
             result = HitPropertyRightContext.deserializeProp(index, field, info);
             break;
-        case 6:
+        case "wordleft":
             result = HitPropertyWordLeft.deserializeProp(index, field, info);
             break;
-        case 7:
+        case "wordright":
             result = HitPropertyWordRight.deserializeProp(index, field, info);
             break;
-        case 8:
+        case "context":
             result = HitPropertyContextWords.deserializeProp(index, field, info);
             break;
-        case 9:
+        case "hitposition":
             result = HitPropertyHitPosition.deserializeProp();
             break;
-        case 10:
+        case "doc":
             result = HitPropertyDoc.deserializeProp(index);
             break;
+            
+        case "fieldlen":
+            throw new BlackLabRuntimeException("Grouping hit results by " + type + " is not yet supported");
+            /*result = HitPropertyDocumentAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
+            break;*/
+            
+        case "numhits":
+            throw new BlackLabRuntimeException("Cannot group hit results by " + type);
+            
         default:
             logger.debug("Unknown HitProperty '" + type + "'");
             return null;
