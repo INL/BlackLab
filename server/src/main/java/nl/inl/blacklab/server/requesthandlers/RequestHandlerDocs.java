@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
@@ -129,8 +128,6 @@ public class RequestHandlerDocs extends RequestHandler {
         search = searchWindow;
     
         // Also determine the total number of hits
-        // (usually nonblocking, unless "waitfortotal=yes" was passed)
-        boolean block = searchParam.getBoolean("waitfortotal");
         BlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
         
         try {
@@ -140,6 +137,8 @@ public class RequestHandlerDocs extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         
+        // If "waitfortotal=yes" was passed, block until all results have been fetched
+        boolean block = searchParam.getBoolean("waitfortotal");
         if (block)
             totalDocResults.size(); // fetch all
         
@@ -153,13 +152,10 @@ public class RequestHandlerDocs extends RequestHandler {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
-        int totalTokens = -1;
+        long totalTokens = -1;
         if (includeTokenCount) {
             // Determine total number of tokens in result set
-            //TODO: use background job?
-            String fieldName = blIndex.mainAnnotatedField().name();
-            DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
-            totalTokens = totalDocResults.intSum(propTokens);
+            totalTokens = totalDocResults.tokensInMatchingDocs();
         }
 
         // Search is done; construct the results object

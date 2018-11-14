@@ -100,5 +100,10 @@ public class MockAnnotatedField implements AnnotatedField {
     public String offsetsField() {
         return null;
     }
+
+    @Override
+    public boolean hasTokenLengthDocValues() {
+        return false;
+    }
     
 }

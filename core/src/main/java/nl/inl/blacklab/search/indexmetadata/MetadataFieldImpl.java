@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.lucene.index.DocValuesType;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -72,6 +74,11 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     private boolean frozen;
 
+    /**
+     * Type of DocValues stored for this field, or NONE if no DocValues were stored.
+     */
+    private DocValuesType docValuesType;
+
     MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
         this.type = type;
@@ -130,6 +137,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @Override
     public String offsetsField() {
         return name();
+    }
+
+    public DocValuesType docValuesType() {
+        return docValuesType;
     }
 
     // Methods that mutate data
@@ -263,6 +274,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         ensureNotFrozen();
         this.uiType = uiType;
         return this;
+    }
+
+    public void setDocValuesType(DocValuesType docValuesType) {
+        this.docValuesType = docValuesType;
     }
 
 }

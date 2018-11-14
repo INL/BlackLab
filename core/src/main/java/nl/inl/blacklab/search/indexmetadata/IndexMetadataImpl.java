@@ -924,7 +924,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             for (int i = 0; i < fis.size(); i++) {
                 FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
-
+                
                 // Parse the name to see if it is a metadata field or part of an annotated field.
                 String[] parts;
                 if (name.endsWith("Numeric")) {
@@ -944,6 +944,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                                 .setUnknownCondition(
                                         UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
                         metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
+                        metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
                         metadataFields.put(name, metadataFieldDesc);
                     }
                 } else {
@@ -956,7 +957,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
                     // Get or create descriptor object.
                     AnnotatedFieldImpl cfd = getOrCreateAnnotatedField(parts[0]);
-                    cfd.processIndexField(parts);
+                    cfd.processIndexField(parts, fi);
                 }
             } // even if we have metadata, we still have to detect annotations/sensitivities
         }

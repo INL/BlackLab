@@ -13,6 +13,8 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.DocValuesType;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -88,6 +90,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     /** Is the field length in tokens stored? */
     private boolean lengthInTokens;
+
+    /** Does the length field contain DocValues? */
+    private DocValuesType lengthInTokensDocValuesType = DocValuesType.NONE;
 
     /** Are there XML tag locations stored for this field? */
     private boolean xmlTags;
@@ -190,8 +195,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      * field. See what type it is and update our fields accordingly.
      * 
      * @param parts parts of the Lucene index field name
+     * @param fi the field's FieldInfo structure 
      */
-    synchronized void processIndexField(String[] parts) {
+    synchronized void processIndexField(String[] parts, FieldInfo fi) {
         ensureNotFrozen();
     
         // See if this is a builtin bookkeeping field or a annotation.
@@ -216,6 +222,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             case LENGTH_TOKENS:
                 // Annotated field has length in tokens
                 lengthInTokens = true;
+                lengthInTokensDocValuesType = fi.getDocValuesType();
                 return;
             }
             throw new BlackLabRuntimeException();
@@ -332,6 +339,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     public String offsetsField() {
         AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
+    }
+
+    @Override
+    public boolean hasTokenLengthDocValues() {
+        return lengthInTokensDocValuesType != DocValuesType.NONE;
     }
 
 }

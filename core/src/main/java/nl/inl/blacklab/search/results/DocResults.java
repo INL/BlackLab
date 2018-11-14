@@ -25,13 +25,19 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.Weight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
@@ -119,15 +125,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return per-document results
      */
     public static DocResults fromQuery(QueryInfo queryInfo, Query query) {
-        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
-        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-        List<DocResult> results = new ArrayList<>();
-        try {
-            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-        return DocResults.fromList(queryInfo, results, (SampleParameters)null, (WindowStats)null);
+        return new DocResults(queryInfo, query);
     }
 
     /**
@@ -164,6 +162,17 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     private SampleParameters sampleParameters;
 
     private int maxHitsToStorePerDoc = 0;
+    
+    /** The Query this was created from, or null if it wasn't created from a Query.
+     * 
+     * If created from a query, we can re-execute that query to e.g. count tokens in matching documents.
+     */
+    private Query query;
+    
+    /**
+     * Total number of tokens in the matched documents, or negative if not available.
+     */
+    private long tokenCount = -1;
     
     /**
      * Construct an empty DocResults.
@@ -205,6 +214,19 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         this.results = results;
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
+    }
+    
+    private DocResults(QueryInfo queryInfo, Query query) {
+        this(queryInfo);
+        this.query = query;
+        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+        results = new ArrayList<>();
+        try {
+            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
    
     @Override
@@ -463,6 +485,49 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
+    }
+    
+    /**
+     * Count total number of tokens in matching documents.
+     * 
+     * This is fast if the query was created from a Query object (and the index contains DocValues),
+     * but slower if it was created from Hits or a list of DocResult objects.
+     * 
+     * @return total number of tokens in matching documents.
+     */
+    public long tokensInMatchingDocs() {
+        if (tokenCount < 0) {
+            int totalTokens = -1;
+            if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
+                // Fast approach: use the DocValues for the token length field
+                try {
+                    totalTokens = 0;
+                    Weight weight = query.createWeight(queryInfo().index().searcher(), false);
+                    int dummyClosingToken = 1; // the count is always 1 too high because of the closing token (position for closing tags)
+                    for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
+                        Scorer scorer = weight.scorer(r);
+                        DocIdSetIterator it = scorer.iterator();
+                        NumericDocValues tokenLengthValues = DocValues.getNumeric(r.reader(), queryInfo().index().mainAnnotatedField().tokenLengthField());
+                        while (true) {
+                            int docId = it.nextDoc();
+                            if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                                break;
+                            totalTokens += tokenLengthValues.get(docId) - dummyClosingToken;
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException("Error determining token count", e);
+                }
+            } else {
+                // Slow approach: get the stored field value from each Document
+                //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
+                String fieldName = queryInfo().index().mainAnnotatedField().name();
+                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
+                totalTokens = intSum(propTokens);
+            }
+            tokenCount = totalTokens;
+        }
+        return tokenCount;
     }
     
 }

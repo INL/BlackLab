@@ -12,8 +12,6 @@ import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -168,13 +166,11 @@ public class RequestHandlerHits extends RequestHandler {
         BlackLabIndex index = hits.index();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
-        int totalTokens = -1;
+        long totalTokens = -1;
         if (includeTokenCount) {
             perDocResults = hits.perDocResults(Results.NO_LIMIT);
             // Determine total number of tokens in result set
-            String fieldName = index.mainAnnotatedField().name();
-            DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
-            totalTokens = perDocResults.intSum(propTokens);
+            totalTokens = perDocResults.tokensInMatchingDocs();
         }
         
         searchLogger.setResultsFound(hitsCount.processedSoFar());
