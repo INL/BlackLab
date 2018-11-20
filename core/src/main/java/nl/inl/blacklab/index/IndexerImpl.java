@@ -253,7 +253,7 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     IndexerImpl(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         if (writer == null) {
-            throw new NullPointerException();
+            throw new BlackLabRuntimeException("writer == null");
         }
 
         this.indexWriter = writer;
