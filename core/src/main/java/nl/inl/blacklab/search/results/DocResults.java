@@ -502,20 +502,19 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 // Fast approach: use the DocValues for the token length field
                 try {
                     totalTokens = 0;
-                    Weight weight = query.createWeight(queryInfo().index().searcher(), false);
+                    Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
                     int dummyClosingToken = 1; // the count is always 1 too high because of the closing token (position for closing tags)
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
-                        if (scorer == null) {
-                            continue;
-                        }
-                        DocIdSetIterator it = scorer.iterator();
-                        NumericDocValues tokenLengthValues = DocValues.getNumeric(r.reader(), queryInfo().index().mainAnnotatedField().tokenLengthField());
-                        while (true) {
-                            int docId = it.nextDoc();
-                            if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                                break;
-                            totalTokens += tokenLengthValues.get(docId) - dummyClosingToken;
+                        if (scorer != null) {
+                            DocIdSetIterator it = scorer.iterator();
+                            NumericDocValues tokenLengthValues = DocValues.getNumeric(r.reader(), queryInfo().index().mainAnnotatedField().tokenLengthField());
+                            while (true) {
+                                int docId = it.nextDoc();
+                                if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                                    break;
+                                totalTokens += tokenLengthValues.get(docId) - dummyClosingToken;
+                            }
                         }
                     }
                 } catch (IOException e) {
