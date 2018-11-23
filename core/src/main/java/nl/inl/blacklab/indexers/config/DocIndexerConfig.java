@@ -186,10 +186,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         result = result.trim();
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A 
-            return result.replaceAll("^([^\\(]+)(\\s*\\(.+\\))?$", "$1");
+            return result.replaceAll("^([^\\(]+)(\\s*\\(.*\\))?$", "$1");
         } else {
             //  Get feature: A(b=c,d=e) -> e  (if field == d)
-            String featuresString = result.replaceAll("^[^\\(]+(\\s*\\((.+)\\))?$", "$2");
+            String featuresString = result.replaceAll("^[^\\(]+(\\s*\\((.*)\\))?$", "$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
                 .filter(featParts -> featParts[0].trim().equals(field))

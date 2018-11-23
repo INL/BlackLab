@@ -7,6 +7,7 @@ public class TestProcessingOperations {
     
     @Test
     public void testOpPartOfSpeechParse() {
+        Assert.assertEquals("NOU-C", DocIndexerConfig.opParsePartOfSpeech("NOU-C()", "_"));
         Assert.assertEquals("NOU-C", DocIndexerConfig.opParsePartOfSpeech("NOU-C(gender=f,number=pl)", "_"));
         Assert.assertEquals("f", DocIndexerConfig.opParsePartOfSpeech("NOU-C(gender=f,number=pl)", "gender"));
         Assert.assertEquals("pl", DocIndexerConfig.opParsePartOfSpeech("NOU-C(gender=f,number=pl)", "number"));
