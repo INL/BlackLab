@@ -306,9 +306,12 @@ public class AnnotationWriter {
         // annotation), while still being able to add a value to this position later (for example,
         // when we encounter an XML close tag.
         int lastIndex = values.size() - 1;
-        if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && increment == 0) {
-            // Change the last value but don't change the increment.
+        if (lastIndex >= 0 && values.get(lastIndex).length() == 0) {
+            // Change the last value and its position increment
             values.set(lastIndex, storedValue);
+            if (increment > 0)
+                increments.set(lastIndex, increments.get(lastIndex) + increment);
+            lastValuePosition += increment; // keep track of position of last token
             return;
         }
 
