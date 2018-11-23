@@ -62,7 +62,7 @@ annotatedFields:
       displayName: PoS
       basePath: folia:pos  # subsequent XPaths are relative to this
       valuePath: "@class"
-      subAnnotations:
+      subannotations:
       - name: folia:head
         valuePath: "@head"
       - forEachPath: folia:feat

@@ -485,7 +485,7 @@ annotatedFields:
       basePath: pos         # "base element" to match for this annotation.
                             # (other XPath expressions for this annotation are relative to this)
       valuePath: "@class"   # main value for the annotation
-      subAnnotations:       # structure of each subannotation is the same as a regular annotation
+      subannotations:       # structure of each subannotation is the same as a regular annotation
       - name: head         
         valuePath: "@head"  # "main" part of speech is found in head attribute of <pos/> element
       - forEachPath: "feat" # other features are found in <feat/> elements
@@ -1063,7 +1063,7 @@ annotatedFields:
       valuePath: "@class"    # (relative to basePath)
 
       # Subannotations that will be indexed at the same token position
-      subAnnotations:
+      subannotations:
 
         # A single subannotation
       - name: head

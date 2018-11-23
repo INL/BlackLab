@@ -402,7 +402,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "uiType":
                 annot.setUiType(str(e));
                 break;
-            case "subAnnotations":
+            case "subannotations":
                 if (isSubannotation)
                     throw new InvalidInputFormatConfig("Subannotations may not have their own subannotations");
                 readSubAnnotations(e, annot);
