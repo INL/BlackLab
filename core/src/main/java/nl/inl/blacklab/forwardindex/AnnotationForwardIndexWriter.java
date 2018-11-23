@@ -251,7 +251,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             // Close the FileChannel and RandomAccessFile
             if (writeTokensFileChannel != null) {
                 // Cannot truncate if still mapped; cannot force demapping.
-                //tokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
+                if (File.separatorChar != '\\')
+                    writeTokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
                 writeTokensFileChannel.close();
             }
             if (writeTokensFp != null)
