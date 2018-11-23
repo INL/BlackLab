@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * Subannotation descriptor.
@@ -8,14 +9,27 @@ import java.util.Collection;
  * Really only differ in the return value of subName() and isSubannotation();
  */
 final class Subannotation implements Annotation {
+    
+    private final IndexMetadata indexMetadata;
 
     private final AnnotationImpl mainAnnotation;
     
     private final String subName;
 
-    Subannotation(AnnotationImpl annotationImpl, String subName) {
+    Subannotation(IndexMetadata indexMetadata, AnnotationImpl annotationImpl, String subName) {
+        this.indexMetadata = indexMetadata;
         mainAnnotation = annotationImpl;
         this.subName = subName;
+    }
+    
+    @Override
+    public IndexMetadata indexMetadata() {
+        return indexMetadata;
+    }
+    
+    @Override
+    public Annotation parentAnnotation() {
+        return mainAnnotation;
     }
 
     @Override
@@ -79,6 +93,11 @@ final class Subannotation implements Annotation {
     }
 
     @Override
+    public Set<String> subannotationNames() {
+        throw new UnsupportedOperationException("Subsubannotations don't exist");
+    }
+
+    @Override
     public String subName() {
         return subName;
     }
@@ -117,5 +136,10 @@ final class Subannotation implements Annotation {
         } else if (!subName.equals(other.subName))
             return false;
         return true;
+    }
+
+    @Override
+    public void setSubAnnotation(Annotation parentAnnotation) {
+        throw new UnsupportedOperationException("Can only call this for new-style indexes");
     }
 }

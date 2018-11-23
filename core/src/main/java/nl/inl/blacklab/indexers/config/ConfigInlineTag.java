@@ -48,4 +48,10 @@ public class ConfigInlineTag {
         this.displayAs = displayAs;
     }
 
+    @Override
+    public String toString() {
+        return "ConfigInlineTag [displayAs=" + displayAs + "]";
+    }
+
+    
 }

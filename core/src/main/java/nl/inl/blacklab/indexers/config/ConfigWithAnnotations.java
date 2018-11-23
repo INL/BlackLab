@@ -8,4 +8,6 @@ public interface ConfigWithAnnotations {
 
     Map<String, ConfigAnnotation> getAnnotations();
 
+    Map<String, ConfigAnnotation> getAnnotationsFlattened();
+
 }

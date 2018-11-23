@@ -731,13 +731,17 @@ metadata:
       replace: " "
 ```
 
-These are all the available processing steps:
+These are all the available generic processing steps:
 
 - `replace(find, replace)`: do a regex search for 'find' and replace each match with 'replace'. Group references may be used.
 - `default(value)` or `default(field)`: if the field is empty, set its value to either the specified value or the value of the specified field. If you refer to a field, make sure it is defined before this field (fields are processed in order).
 - `append(value)` or `append(field)`: append the specified value or the value of the specified field, using a space as the separator character. You may also specify a different `separator` is you wish, including the empty string (`""`).
 - `split(separator, keep)`: split the field's value on the given separator and keep only the part indicated by keep (a 1-based integer). If `keep` is omitted, keep the first part. If `separator` is omitted, use `;`.
 - `strip(chars)`: strip specified chars from beginning and end. If `chars` is omitted, use space.
+
+These processing steps are more specific to certain data formats:
+- `parsePos(posExpr, fieldName)`: parse common part of speech expressions of the form `A(b=c,d=e)` where A is the main part of speech (e.g. 'N' for noun), and b=c is a part of speech feature such as number=plural, etc. If you don't specify field (or specify an underscore _ for field), the main part of speech is extracted. If you specify a feature name (e.g. "number"), that feature is extracted.   
+- `chatFormatAgeToMonths(chatFormatAge)`: convert age as reported in CHAT format to number of months
 
 If you would like a new processing step to be added, please let us know.
 

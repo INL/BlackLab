@@ -4,14 +4,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
+    
+    private IndexMetadata indexMetadata;
     
     /** The field this is an annotation for. */
     private AnnotatedField field;
@@ -46,25 +51,36 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     private AnnotationSensitivity offsetsAlternative;
 
-    public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
-        this.offsetsAlternative = sensitivity(offsetsAlternative);
-    }
-
     private boolean frozen;
+    
+    /** Names of our subannotations, if declared (new-style index) and if we have any */
+    private Set<String> subAnnotationNames = new HashSet<>();
 
-    /** Our subannotations. This is not actually considered state, just cache, because all 
+    /** Our subannotations (if we have an old-style index, where subannotations aren't declared).
+     *  This is not actually considered state, just cache, because all 
      *  subannotations are valid (we don't know which ones were indexed).
      */
     Map<String, Subannotation> cachedSubs = new HashMap<>();
     
-    AnnotationImpl(AnnotatedField field) {
-        this(field, null);
+    /**
+     * If this is a subannotation, what is its parent annotation?
+     */
+    private Annotation mainAnnotation = null;
+
+    AnnotationImpl(IndexMetadata indexMetadata, AnnotatedField field) {
+        this(indexMetadata, field, null);
     }
 
-    AnnotationImpl(AnnotatedField field, String name) {
+    AnnotationImpl(IndexMetadata indexMetadata, AnnotatedField field, String name) {
+        this.indexMetadata = indexMetadata;
         this.field = field;
         this.name = name;
         forwardIndex = false;
+    }
+    
+    @Override
+    public IndexMetadata indexMetadata() {
+        return indexMetadata;
     }
     
     @Override
@@ -260,24 +276,56 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return true;
     }
     
+    public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
+        this.offsetsAlternative = sensitivity(offsetsAlternative);
+    }
+
     @Override
     public Annotation subannotation(String subName) {
+        if (!indexMetadata().subannotationsStoredWithParent())
+            throw new BlackLabRuntimeException("Can only call this for old-style indexes");
         Subannotation subAnnotation = cachedSubs.get(subName);
         if (subAnnotation == null) {
-            subAnnotation = new Subannotation(this, subName);
+            subAnnotation = new Subannotation(indexMetadata, this, subName);
             cachedSubs.put(subName, subAnnotation);
         }
         return subAnnotation;
     }
+    
+    @Override
+    public Set<String> subannotationNames() {
+        return subAnnotationNames;
+    }
+    
+    /**
+     * Indicate that this is a subannotation.
+     * 
+     * @param parentAnnotation our parent annotation, e.g. "pos" for "pos_number"
+     */
+    @Override
+    public void setSubAnnotation(Annotation parentAnnotation) {
+        ensureNotFrozen();
+        this.mainAnnotation = parentAnnotation;
+    }
 
     @Override
     public String subName() {
-        return null;
+        throw new BlackLabRuntimeException("Only valid for old-style indexes");
     }
 
     @Override
     public boolean isSubannotation() {
-        return false;
+        return mainAnnotation != null;
+    }
+    
+    @Override
+    public Annotation parentAnnotation() {
+        return mainAnnotation;
+    }
+
+    public void setSubannotationNames(List<String> names) {
+        subAnnotationNames.clear();
+        subAnnotationNames.addAll(names);
     }
 
 }

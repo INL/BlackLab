@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /** Configuration for annotated (formerly "complex") fields in our XML */
 public class ConfigAnnotatedField implements ConfigWithAnnotations {
@@ -37,6 +38,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     /** Inline tags within body text */
     private List<ConfigInlineTag> inlineTags = new ArrayList<>();
+
+    private Map<String, ConfigAnnotation> annotationsFlattened;
 
     ConfigAnnotatedField(String fieldName) {
         setName(fieldName);
@@ -101,8 +104,9 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     }
 
     @Override
-    public void addAnnotation(ConfigAnnotation annotation) {
+    public synchronized void addAnnotation(ConfigAnnotation annotation) {
         this.annotations.put(annotation.getName(), annotation);
+        annotationsFlattened = null;
     }
 
     public void addStandoffAnnotation(ConfigStandoffAnnotations standoff) {
@@ -138,6 +142,23 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return Collections.unmodifiableMap(annotations);
     }
 
+    @Override
+    public synchronized Map<String, ConfigAnnotation> getAnnotationsFlattened() {
+        if (annotationsFlattened == null) {
+            annotationsFlattened = new LinkedHashMap<>();
+            for (Entry<String, ConfigAnnotation> entry: annotations.entrySet()) {
+                annotationsFlattened.put(entry.getKey(), entry.getValue());
+                List<ConfigAnnotation> subannot = entry.getValue().getSubAnnotations();
+                if (!subannot.isEmpty()) {
+                    for (ConfigAnnotation a: subannot) {
+                        annotationsFlattened.put(a.getName(), a);
+                    }
+                }
+            }
+        }
+        return annotationsFlattened;
+    }
+
     public List<ConfigStandoffAnnotations> getStandoffAnnotations() {
         return Collections.unmodifiableList(standoffAnnotations);
     }
@@ -156,6 +177,11 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    @Override
+    public String toString() {
+        return "ConfigAnnotatedField [name=" + name + "]";
     }
 
 }

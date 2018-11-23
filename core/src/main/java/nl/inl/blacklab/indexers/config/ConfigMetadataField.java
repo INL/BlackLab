@@ -207,4 +207,9 @@ public class ConfigMetadataField {
         displayOrder.addAll(fields);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigMetadataField [name=" + name + "]";
+    }
+
 }

@@ -36,6 +36,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -553,7 +554,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
 
         // Find matches for this annotation.
-        findAnnotationMatches(annotation, null, valuePath, indexAtPositions);
+        findAnnotationMatches(annotation, valuePath, indexAtPositions);
 
         // For each configured subannotation...
         for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
@@ -583,14 +584,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         // Also apply process defined in named subannotation, if any
                         value = processString(value, actualSubAnnot.getProcess());
                     }
-                    subAnnotation(annotation.getName(), name, value, indexAtPositions);
+                    // Index the value with the actual annotation it's for
+                    annotation(annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name, value, 1, indexAtPositions);
                 }
                 releaseAutoPilot(apForEach);
                 releaseAutoPilot(apName);
                 navpop();
             } else {
                 // Regular metadata field; just the fieldName and an XPath expression for the value
-                findAnnotationMatches(annotation, subAnnot, valuePath, indexAtPositions);
+                findAnnotationMatches(subAnnot, valuePath, indexAtPositions);
             }
             releaseAutoPilot(apValue);
         }
@@ -601,7 +603,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
-    protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath,
+    protected void findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
             List<Integer> indexAtPositions)
             throws XPathParseException, XPathEvalException, NavException {
         AutoPilot apValuePath = acquireAutoPilot(valuePath);
@@ -613,10 +615,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 apEvalToString.resetXPath();
                 String annotValue = apEvalToString.evalXPathToString();
                 annotValue = processString(annotValue, annotation.getProcess());
-                if (subAnnot == null)
-                    annotation(annotation.getName(), annotValue, firstValue ? 1 : 0, indexAtPositions);
-                else
-                    subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
+                int increment = firstValue ? 1 : 0;
+                annotation(annotation.getName(), annotValue, increment, indexAtPositions);
                 firstValue = false;
             }
             releaseAutoPilot(apEvalToString);
@@ -631,10 +631,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Single value expected
             String annotValue = apValuePath.evalXPathToString();
             annotValue = processString(annotValue, annotation.getProcess());
-            if (subAnnot == null)
-                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
-            else
-                subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
+            annotation(annotation.getName(), annotValue, 1, indexAtPositions);
         }
         releaseAutoPilot(apValuePath);
     }

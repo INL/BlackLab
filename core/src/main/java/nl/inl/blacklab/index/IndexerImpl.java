@@ -275,7 +275,7 @@ class IndexerImpl implements DocWriter, Indexer {
         //metadataFieldTypeTokenized.setIndexed(true);
         metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         metadataFieldTypeTokenized.setTokenized(true);
-        metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
+        metadataFieldTypeTokenized.setOmitNorms(true); // <-- depending on setting?
         metadataFieldTypeTokenized.setStoreTermVectors(true);
         metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
         metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);
@@ -379,7 +379,7 @@ class IndexerImpl implements DocWriter, Indexer {
         //metadataFieldTypeTokenized.setIndexed(true);
         metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
         metadataFieldTypeTokenized.setTokenized(true);
-        metadataFieldTypeTokenized.setOmitNorms(true); // @@@ <-- depending on setting?
+        metadataFieldTypeTokenized.setOmitNorms(true); // <-- depending on setting?
         metadataFieldTypeTokenized.setStoreTermVectors(true);
         metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
         metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);

@@ -255,7 +255,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                     }
 
                     // For each annotation
-                    for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
+                    for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
                         // Either column number of name
                         String value;
                         if (annotation.isValuePathInteger()) {

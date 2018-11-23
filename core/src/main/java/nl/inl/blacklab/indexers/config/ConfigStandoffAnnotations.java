@@ -68,10 +68,20 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     public Map<String, ConfigAnnotation> getAnnotations() {
         return annotations;
     }
+    
+    @Override
+    public Map<String, ConfigAnnotation> getAnnotationsFlattened() {
+        throw new UnsupportedOperationException();
+    }
 
     @Override
     public void addAnnotation(ConfigAnnotation annotation) {
         this.annotations.put(annotation.getName(), annotation);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigStandoffAnnotations [path=" + path + "]";
+    }
+    
 }

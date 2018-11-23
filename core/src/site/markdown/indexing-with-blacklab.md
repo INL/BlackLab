@@ -5,7 +5,7 @@
 * <a href="#add-custom-format">Add support for your own custom format</a>
 * <a href="#using-legacy-docindexers">Using legacy DocIndexers</a>
     * <a href="#passing-indexing-parameters">Passing indexing parameters</a>
-    * <a href="#sensitivity">Configuring case- and diacritics sensitivity per property</a>
+    * <a href="#sensitivity">Configuring case- and diacritics sensitivity per annotation</a>
     * <a href="#index-struct">Configuring the index structure</a>
     * <a href="#custom-docindexers">Custom DocIndexers</a>
     * <a href="#metadata">Metadata</a>
@@ -114,17 +114,17 @@ To pass parameters via a property file, use the --indexparam option:
 
 NOTE: in addition to the --indexparam parameter, IndexTool will always look for a file named indexer.properties in the current directory, the input directory, the parent of the input directory, or the index directory. If the file is found in any of these locations, it is read and the values are used as indexing parameters. 
 
-Use the DocIndexer.getParameter(name[, defaultValue]) method to retrieve parameters inside your DocIndexer. For an example of using DocIndexer parameters, see the DocIndexerTeiBase and MetadataFetcherSonarCmdi in the nl.inl.blacklab.indexers package. They use parameters to configure property names and where to fetch metadata from, respectively.
+Use the DocIndexer.getParameter(name[, defaultValue]) method to retrieve parameters inside your DocIndexer. For an example of using DocIndexer parameters, see the DocIndexerTeiBase and MetadataFetcherSonarCmdi in the nl.inl.blacklab.indexers package. They use parameters to configure annotation names and where to fetch metadata from, respectively.
 
 Configuring an external metadata fetcher (see "Metadata from an external source" below) and case- and diacritics sensitivity (see next section) is also done using a indexing parameter for now. Note that this parameter passing mechanism predates the index structure file (see "Configuring the index structure" below) and is likely to be deprecated in favour of that in future versions.
 
 <a id="sensitivity"></a>
 
-### Configuring case- and diacritics sensitivity per property
+### Configuring case- and diacritics sensitivity per annotation
 
 (if you use a [configuration file](how-to-configure-indexing.html) to index your files, you can specify this there)
 
-You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each property, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
+You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each annotation, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
 
 If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i").
 
@@ -154,7 +154,7 @@ There's a [commented example of indexstructure.yaml](how-to-configure-indexing.h
 
 Please note: the settings pidField, titleField, authorField, dateField refer to the name of the field in the Lucene index, not an XML element name.
 
-### When and how to disable the forward index for a property
+### When and how to disable the forward index for an annotation
 
 (if you use a [configuration file](how-to-configure-indexing.html) to index your files, you can specify this there)
 
@@ -163,11 +163,11 @@ quickly answer the question "what value appears in position X of document Y?". T
 snippets (such as for keyword-in-context (KWIC) views), to sort and group based on context words (such as sorting on the word left of the hit) and will in the future be used to speed up certain query types.
 
 However, forward indices take up a lot of disk space and can take up a lot of memory, and they are not always needed for every 
-property. You should probably have a forward index for at least the word and punct properties, and for any property you'd like to sort/group on or that you use heavily in searching, or that you'd like to display in KWIC views. But if you add a property that is only used in certain special cases, you can decide to disable the forward index for that property. You can do this by adding the property name to the "noForwardIndexProps" space-separated list in the indextemplate.json file shown above.
+annotation. You should probably have a forward index for at least the word and punct annotations, and for any annotation you'd like to sort/group on or that you use heavily in searching, or that you'd like to display in KWIC views. But if you add an annotation that is only used in certain special cases, you can decide to disable the forward index for that annotation. You can do this by adding the annotation name to the "noForwardIndexProps" space-separated list in the indextemplate.json file shown above.
 
 A note about forward indices and indexing multiple values at a single corpus position: as of right now, the forward index will only store the first value indexed at any position. We would like to expand this so that it is possible to quickly retrieve all values indexed at a corpus position, but that is not the case now.
 
-Note that if you want KWICs or snippets that include properties without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass usecontent=orig to BlackLab Server, or call Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE).
+Note that if you want KWICs or snippets that include annotations without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass usecontent=orig to BlackLab Server, or call Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE).
 
 <a id="custom-docindexers"></a>
 
@@ -185,15 +185,15 @@ If you have an XML format in which each word has its own XML tag, containing any
 
 The constructor of your indexing class should call the superclass constructor, declare any annotations (e.g. lemma, pos) you're going to index and finally add hooks (called handlers) for each XML element you want to do something with.
 
-Declaring annotations (formerly called "properties" in BlackLab) is done using the DocIndexerXmlHandlers.addProperty(String). Store the result in a final variable so you can access it from your custom handlers. Note that the "main property" (usually called "word") and the "punct" property (whitespace and punctuation between words) have already been created by DocIndexerXmlHandlers; retrieve them using the getMainProperty() and getPropPunct() methods.
+Declaring annotations (formerly called "properties" in BlackLab) is done using the DocIndexerXmlHandlers.addAnnotation(String). Store the result in a final variable so you can access it from your custom handlers. Note that the "main annotation" (usually called "word") and the "punct" annotation (whitespace and punctuation between words) have already been created by DocIndexerXmlHandlers; retrieve them using the mainAnnotation() and punctAnnotation() methods.
 
 Adding a handler is done using the DocIndexerXmlHandlers.addHandler(String, ElementHandler) method. The first parameter is an xpath-like expression that indicates the element to handle. The expression looks like xpath but is very limited: only element names separated by slashes; it may start with either a single (absolute path) or a double (relative path) slash. DocIndexerXmlHandlers defines several default ElementHandlers: ElementHandler (does nothing but keep track of whether we're inside this element), DocumentElementHandler (creates and adds document to the index), several metadata handlers that deal with different types of metadata elements (assuming the document contains its own metadata - see below for external metadata), InlineTagHandler (adds inline tags from the content to the index, such as &lt;p&gt;, &lt;s&gt; (sentence), &lt;b&gt;), several word handlers (indexes words and whitespace/punctuation between words). You can also easily create or derive your own, usually as an anonymous inner class that overrides the startElement() and endElement() methods.
 
 You need to add a handler for your document element (signifying the start and end of your logical documents; probably just use DocumentElementHandler), your word element (signifying a word to index; probably derive from WordHandlerBase), and any inline tags you wish to index (probably just use InlineTagHandler). Optionally, you may want to add a simple ElementHandler for your "body" tag, if you wish to restrict what part of the document is actually indexed; in this case, you should expand your word and inline tag handlers to check that you're inside this body element before processing the matched element. 
 
-A word handler derived from DefaultWordHandler might retrieve lemma and part of speech from the attributes of the start tag and add them to the properties you declared at the top of your DocIndexer-constructor. You can do this using the AnnotationWriter.addValue() method. DefaultWordHandler takes care of adding values to the standard properties word and punct. For this, DefaultWordHandler assumes the word is simply the word element's text content. DefaultWordHandler also stores the character positions before and after the word (which are needed if you want to highlight in the original XML).
+A word handler derived from DefaultWordHandler might retrieve lemma and part of speech from the attributes of the start tag and add them to the annotations you declared at the top of your DocIndexer-constructor. You can do this using the AnnotationWriter.addValue() method. DefaultWordHandler takes care of adding values to the standard annotations word and punct. For this, DefaultWordHandler assumes the word is simply the word element's text content. DefaultWordHandler also stores the character positions before and after the word (which are needed if you want to highlight in the original XML).
 
-An important note about adding values to properties: it is crucial that you call AnnotationWriter.addValue() to each property an equal number of times! Each time you call addValue(), you move that property to the next corpus position, but other properties do not automatically move to the next corpus position; it is up to you to make sure all properties stay at the same corpus position. If a property has no value at a certain position, just add an empty string. 
+An important note about adding values to annotations: it is crucial that you call AnnotationWriter.addValue() to each annotation an equal number of times! Each time you call addValue(), you move that annotation to the next corpus position, but other annotations do not automatically move to the next corpus position; it is up to you to make sure all annotations stay at the same corpus position. If a annotation has no value at a certain position, just add an empty string. 
 
 You should probably call consumeCharacterContent(), which clears the buffer of captured text content in the document, at the start of a document (or at the start of the body element, if you handle that separately). This prevents the first punct value containing already captured text content you don't want. Similarly, before storing the document, you should add one last punct value (using consumeCharacterContent() to get the value to store), so the last bit of whitespace/punctuation isn't skipped. BlackLab assumes that there's always an extra "dummy" token containing only the last bit of whitespace/punctuation.
 
@@ -201,13 +201,13 @@ The [tutorial](add-input-format.html) develops a simple TEI DocIndexer using the
 
 <a id="multiple-values"></a>
 
-#### Multiple values at one position, position gaps and adding property values at an earlier position
+#### Multiple values at one position, position gaps and adding annotation values at an earlier position
 
 NOTE: this applies if you're implementing your own DocIndexer class. The other appraoch, using a [configuration file](how-to-configure-indexing.html), does support standoff annotations but has no support for multiple values at one position (yet). Please let us know if you need this. 
 
-The AnnotationWriter.addValue(String) method adds a value to a property ("annotation layer") at the next corpus position. Sometimes you may want to add multiple values at a single corpus position, or you may want to skip a number of corpus positions. This can be done using the AnnotationWriter.addValue(String, Integer) method; the second parameter is the increment compared to the previous value. The default value for the increment is 1, meaning each value is indexed at the next corpus position.
+The AnnotationWriter.addValue(String) method adds a value to an annotation at the next corpus position. Sometimes you may want to add multiple values at a single corpus position, or you may want to skip a number of corpus positions. This can be done using the AnnotationWriter.addValue(String, Integer) method; the second parameter is the increment compared to the previous value. The default value for the increment is 1, meaning each value is indexed at the next corpus position.
 
-To add multiple values to a single corpus position, only use the default increment of 1 for the first value you want to add at this position; for all subsequent values at this position, use an increment of 0. Note: if the value you added first was the empty string, adding the next value with an increment of 0 will overwrite this empty string. This can be convenient if you're not sure whether you want to add any values at a particular location, but you want to make sure the property stays at the correct corpus position regardless.
+To add multiple values to a single corpus position, only use the default increment of 1 for the first value you want to add at this position; for all subsequent values at this position, use an increment of 0. Note: if the value you added first was the empty string, adding the next value with an increment of 0 will overwrite this empty string. This can be convenient if you're not sure whether you want to add any values at a particular location, but you want to make sure the annotation stays at the correct corpus position regardless.
 
 To skip a number of corpus positions when adding a value, use an increment that is higher than 1. So to skip one position (and therefore leave a "gap" one wide), use an increment of 2.
 
@@ -215,43 +215,19 @@ Finally, you may sometimes wish to add values to an earlier corpus position. Say
 
 <a id="subproperties"></a>
 
-#### Subproperties, for e.g. making part of speech features separately searchable (EXPERIMENTAL)
+#### Subannotations, for e.g. making part of speech features separately searchable (EXPERIMENTAL)
 
-(if you use a [configuration file](how-to-configure-indexing.html), this can be configured there)
-
-Note that this feature is experimental and details may change in future versions.
-
-Part of speech sometimes consists of several features in addition to the main PoS, e.g. "NOU-C(gender=n,number=sg)". It would be nice to be able to search each of these features separately without resorting to complex regular expressions. You can use the feature described above (multiple values at one position) to achieve this. We call this approach "subproperties", because you index the values of several "subproperties" in a single Lucene field.
-
-To add subproperties to a property, first add the main property value (in this case, the whole PoS expression "NOU-C(gender=n,number=sg)"), followed by several other tokens at the same position (position increments of zero):
-
-  propPartOfSpeech.addValue(subPropertyName + AnnotatedFieldNameUtil.ASCII_UNIT_SEPARATOR + subPropertyValue, 0);
-
-In our example, you might add three subproperty values: main=NOU-C (the "main" part of speech), gender=n and number=sg.
-
-Then, to query these subproperties, use the following CQL extension syntax:
-
-  [pos/main="NOU-C" & pos/gender="n" & pos/number="sg"]
-  
-These will effectively be translated into something like this:
-
-  [pos="main#NOU-C" & pos="gender#n" & pos="number#sg"]
-  
-Except we don't use the hash sign as a separator, and we do some internal tricks to ensure wildcard and regex queries work properly.
-
-Note that these subproperties will not have their own forward index; only the main property has one, and it includes only the first value indexed at any location, so the subproperty values aren't stored there either.
-
-Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
+(you should use a [configuration file](how-to-configure-indexing.html) for this)
 
 <a id="payloads"></a>
 
-#### Storing extra information with property values, using payloads
+#### Storing extra information with annotation values, using payloads
 
 (the [configuration file](how-to-configure-indexing.html) approach does not support this yet; let us know if you need this)
 
-It is possible to add payloads to property values. When calling addProperty() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use AnnotationWriter.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
+It is possible to add payloads to annotation values. When calling addAnnotation() at the start of the constructor, make sure to use the version that takes a boolean called 'includePayloads', and set it to true. Then use AnnotationWriter.addPayload(). You can use null if a particular value has no payload. There's also a addPayloadAtIndex() method to add payloads some time after adding the value itself, but that requires knowing the index in the value list of the value you want to add a payload for, so you should store this index when you add the value.
 
-One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' property. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
+One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHandler. When you use InlineTagHandler to index an inline element, say a sentence tag, BlackLab will add a value (or several values, if the element has attributes) to the built-in 'starttag' annotation. When it encounters the end tag, it wil update the start tag value with a payload indication the element length. This is used when searching to determine what matches occur inside certain XML tags.
 
 <a id="nonxml"></a>
 
@@ -406,7 +382,7 @@ Here's a commented example of indexmetadata.yaml:
       
         # Information about the contents field
         contents:
-          mainProperty: word         # used for concordances; contains char. offsets
+          mainProperty: word         # main annotation. used for concordances; contains char. offsets
           displayName: contents      # (optional) how to display in GUI
           description: The text contents of the document.
           noForwardIndexProps: ''    # (optional) space-separated list of annotation (property)

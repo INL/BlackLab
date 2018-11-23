@@ -420,7 +420,7 @@ public final class LuceneUtil {
      * @param fieldName field in the Lucene index to enumerate terms from
      * @return subproperties and their values
      */
-    public static Map<String, Set<String>> getSubprops(IndexReader index, String fieldName) {
+    public static Map<String, Set<String>> getOldSingleFieldSubprops(IndexReader index, String fieldName) {
         Map<String, Set<String>> results = new TreeMap<>();
         try {
             for (LeafReaderContext leafReader : index.leaves()) {

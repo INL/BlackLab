@@ -105,4 +105,9 @@ public class ConfigCorpus {
         this.description = description;
     }
 
+    @Override
+    public String toString() {
+        return "ConfigCorpus [displayName=" + displayName + "]";
+    }
+
 }

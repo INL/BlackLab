@@ -40,4 +40,9 @@ public class ConfigProcessStep {
         this.param.put(name, value);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigProcessStep [method=" + method + ", param=" + param + "]";
+    }
+    
 }

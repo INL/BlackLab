@@ -71,4 +71,9 @@ public class ConfigLinkValue {
         this.process.add(p);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigLinkValue [valuePath=" + valuePath + "]";
+    }
+
 }

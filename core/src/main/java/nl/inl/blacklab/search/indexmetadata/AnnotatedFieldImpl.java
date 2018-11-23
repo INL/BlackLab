@@ -73,6 +73,8 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
+    private IndexMetadata indexMetadata;
+    
     /** This field's annotations, sorted by name */
     private Map<String, AnnotationImpl> annots;
     
@@ -110,8 +112,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     private AnnotationsImpl annotationsImpl;
 
-    AnnotatedFieldImpl(String name) {
+    AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
+        this.indexMetadata = indexMetadata;
         annots = new TreeMap<String, AnnotationImpl>();
         annotationsDisplayOrder = new ArrayList<>();
         annotationOrderComparator = new Comparator<AnnotationImpl>() {
@@ -250,7 +253,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         ensureNotFrozen();
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
-            pd = new AnnotationImpl(this, name);
+            pd = new AnnotationImpl(indexMetadata, this, name);
             putAnnotation(pd);
         }
         return pd;

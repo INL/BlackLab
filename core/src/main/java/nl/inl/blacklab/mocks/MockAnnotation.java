@@ -1,20 +1,35 @@
 package nl.inl.blacklab.mocks;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockAnnotation implements Annotation {
+    
+    private IndexMetadata indexMetadata;
     
     private AnnotatedField field;
 
     private String name;
     
     public MockAnnotation(String name) {
+        this(null, name);
+    }
+    
+    public MockAnnotation(IndexMetadata indexMetadata, String name) {
+        this.indexMetadata = indexMetadata;
         this.name = name;
+    }
+    
+    @Override
+    public IndexMetadata indexMetadata() {
+        return indexMetadata;
     }
     
     public void setField(AnnotatedField field) {
@@ -92,6 +107,11 @@ public class MockAnnotation implements Annotation {
     }
 
     @Override
+    public Annotation parentAnnotation() {
+        return null;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -120,6 +140,16 @@ public class MockAnnotation implements Annotation {
         } else if (!name.equals(other.name))
             return false;
         return true;
+    }
+
+    @Override
+    public Set<String> subannotationNames() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void setSubAnnotation(Annotation parentAnnotation) {
+        throw new UnsupportedOperationException();
     }
     
 }

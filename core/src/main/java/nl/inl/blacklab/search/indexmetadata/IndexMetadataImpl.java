@@ -165,6 +165,15 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     private boolean frozen;
 
     /**
+     * If true, subannotations are stored in the same Lucene field as their main annotation (old approach).
+     * If false (the new indexing default), subannotations get their own Lucene field.
+     * 
+     * This boolean is initialized to true, and we set it to false if we encounter subannotation declarations
+     * in the index metadata, because that means we're dealing with a modern index.
+     */
+    private boolean subannotationsStoredWithMain = true;
+
+    /**
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      *
@@ -433,6 +442,12 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 annot.put("displayName", annotation.displayName());
                 annot.put("description", annotation.description());
                 annot.put("uiType", annotation.uiType());
+                if (annotation.subannotationNames().size() > 0) {
+                    ArrayNode subannots = annot.putArray("subannotations");
+                    for (String subannotName: annotation.subannotationNames()) {
+                        subannots.add(subannotName);
+                    }
+                }
             }
         }
 
@@ -842,7 +857,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 JsonNode fieldConfig = entry.getValue();
                 warnUnknownKeys("in annotated field config for '" + fieldName + "'", fieldConfig,
                         KEYS_ANNOTATED_FIELD_CONFIG);
-                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
+                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(this, fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 String mainAnnotationName = Json.getString(fieldConfig, "mainProperty", "");
@@ -857,7 +872,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                     while (itAnnot.hasNext()) {
                         JsonNode jsonAnnotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
-                        AnnotationImpl annotation = new AnnotationImpl(fieldDesc);
+                        AnnotationImpl annotation = new AnnotationImpl(this, fieldDesc);
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {
@@ -873,6 +888,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                                 break;
                             case "uiType":
                                 annotation.setUiType(opt.getValue().textValue());
+                                break;
+                            case "subannotations":
+                                subannotationsStoredWithMain = false; // new-style index
+                                annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
                                 break;
                             default:
                                 logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName
@@ -961,6 +980,21 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 }
             } // even if we have metadata, we still have to detect annotations/sensitivities
         }
+        
+        // Link subannotations to their parent annotation
+        if (!subannotationsStoredWithMain) {
+            for (AnnotatedField f: annotatedFields) {
+                Annotations annot = f.annotations();
+                for (Annotation a: annot) {
+                    if (a.subannotationNames().size() > 0) {
+                        // Link these subannotations back to their parent annotation
+                        for (String name: a.subannotationNames()) {
+                            annot.get(name).setSubAnnotation(a);
+                        }
+                    }
+                }
+            }
+        }
 
         metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
@@ -1046,7 +1080,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         if (annotatedFields.exists(name))
             cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
-            cfd = new AnnotatedFieldImpl(name);
+            cfd = new AnnotatedFieldImpl(this, name);
             annotatedFields.put(name, cfd);
         }
         return cfd;
@@ -1276,14 +1310,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             ArrayNode noForwardIndexAnnotations = g.putArray("noForwardIndexProps");
             ArrayNode annotations = g.putArray("annotations");
             for (ConfigAnnotation a: f.getAnnotations().values()) {
-                displayOrder.add(a.getName());
-                if (!a.createForwardIndex())
-                    noForwardIndexAnnotations.add(a.getName());
-                ObjectNode annotation = annotations.addObject();
-                annotation.put("name", a.getName());
-                annotation.put("displayName", a.getDisplayName());
-                annotation.put("description", a.getDescription());
-                annotation.put("uiType", a.getUiType());
+                addAnnotationInfo(a, displayOrder, noForwardIndexAnnotations, annotations);
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
@@ -1303,6 +1330,27 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         }
     }
 
+    private void addAnnotationInfo(ConfigAnnotation annotation, ArrayNode displayOrder, ArrayNode noForwardIndexAnnotations,
+            ArrayNode annotations) {
+        String annotationName = annotation.getName();
+        displayOrder.add(annotationName);
+        if (!annotation.createForwardIndex())
+            noForwardIndexAnnotations.add(annotationName);
+        ObjectNode annotationNode = annotations.addObject();
+        annotationNode.put("name", annotationName);
+        annotationNode.put("displayName", annotation.getDisplayName());
+        annotationNode.put("description", annotation.getDescription());
+        annotationNode.put("uiType", annotation.getUiType());
+        if (annotation.getSubAnnotations().size() > 0) {
+            subannotationsStoredWithMain = false; // this is a new-style index
+            ArrayNode subannots = annotationNode.putArray("subannotations");
+            for (ConfigAnnotation s: annotation.getSubAnnotations()) {
+                addAnnotationInfo(s, displayOrder, noForwardIndexAnnotations, annotations);
+                subannots.add(s.getName());
+            }
+        }
+    }
+
     @Override
     public IndexMetadata freeze() {
         this.frozen = true;
@@ -1314,6 +1362,11 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     @Override
     public boolean isFrozen() {
         return this.frozen;
+    }
+    
+    @Override
+    public boolean subannotationsStoredWithParent() {
+        return subannotationsStoredWithMain;
     }
 
 }

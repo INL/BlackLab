@@ -33,7 +33,7 @@ public class ConfigAnnotation {
      * If null: regular annotation definition. Otherwise, find all nodes matching
      * this XPath, then evaluate name and valuePath as XPaths for each matching
      * node, adding a subannotation value for each. NOTE: forEach is only supported
-     * for subannotations, because all main annotations need to be known from the start.
+     * for subannotations. All subannotations need to be declared at the start, however.
      */
     private String forEachPath;
 
@@ -237,6 +237,11 @@ public class ConfigAnnotation {
 
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
+    }
+
+    @Override
+    public String toString() {
+        return "ConfigAnnotation [name=" + name + "]";
     }
 
 }

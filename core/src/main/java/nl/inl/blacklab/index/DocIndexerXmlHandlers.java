@@ -429,11 +429,11 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
     @SuppressWarnings("deprecation")
     protected AnnotationWriter addAnnotation(String propName, boolean includePayloads) {
-        return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads);
+        return contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), includePayloads);
     }
 
     public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
-        return contentsField.addAnnotation(propName, sensitivity);
+        return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
     @SuppressWarnings("deprecation")

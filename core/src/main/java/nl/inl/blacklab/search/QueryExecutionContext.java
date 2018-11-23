@@ -52,12 +52,11 @@ public class QueryExecutionContext {
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
         this.index = index;
-        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
-        this.subpropPrefix = annotation.isSubannotation() ? sep + annotation.subName() + sep : "";
+        this.subpropPrefix = annotation.subpropValuePrefix();
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
     }
-    
+
     public QueryExecutionContext withAnnotation(Annotation annotation) {
         return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }

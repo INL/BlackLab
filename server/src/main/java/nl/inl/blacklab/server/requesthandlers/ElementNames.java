@@ -21,6 +21,10 @@ public class ElementNames {
 
     public static String mainProperty;
     
+    public static String subannotation;
+    
+    public static String subannotations;
+    
     static {
         setUseOldElementNames(false);
     }
@@ -33,6 +37,8 @@ public class ElementNames {
             annotations = "properties";
             annotation = "property";
             mainProperty = "mainProperty";
+            subannotation = "subproperty";
+            subannotations = "subproperties";
         } else {
             isAnnotatedField = "isAnnotatedField";
             annotatedField = "annotatedField";
@@ -40,6 +46,8 @@ public class ElementNames {
             annotations = "annotations";
             annotation = "annotation";
             mainProperty = "mainAnnotation";
+            subannotation = "subannotation";
+            subannotations = "subannotations";
         }
     }
 

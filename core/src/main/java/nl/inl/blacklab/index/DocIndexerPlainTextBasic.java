@@ -71,7 +71,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 getSensitivitySetting(mainPropName), false);
         propMain = contentsField.mainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
-        propPunct = contentsField.addAnnotation(propName, getSensitivitySetting(propName), false);
+        propPunct = contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), false);
         IndexMetadataWriter indexMetadata = indexer.indexWriter().metadataWriter();
         indexMetadata.registerAnnotatedField(contentsField);
     }
@@ -106,7 +106,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         return propPunct;
     }
 
-    public AnnotationWriter getMainProperty() {
+    public AnnotationWriter getMainAnnotation() {
         return propMain;
     }
 
@@ -125,8 +125,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         return propMain.lastValuePosition() + 1;
     }
 
-    public AnnotationWriter addProperty(String propName, SensitivitySetting sensitivity) {
-        return contentsField.addAnnotation(propName, sensitivity);
+    public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
+        return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
     @Override

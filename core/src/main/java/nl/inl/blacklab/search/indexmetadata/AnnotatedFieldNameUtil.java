@@ -46,9 +46,16 @@ public final class AnnotatedFieldNameUtil {
     public static final String LEMMA_ANNOT_NAME = "lemma";
 
     /**
-     * For annotations combined in a single Lucene field, this is the separator
-     * between the name prefix of an indexed value and the actual value of the
-     * annotation
+     * Subannotations are indexed in a separate field, prefixed with their main
+     * annotation name, so a subannotation of "pos" named "number" will be indexed
+     * in a field "pos_number". This is the separator used for this prefix.
+     */
+    public static final String SUBANNOTATION_FIELD_PREFIX_SEPARATOR = "_";
+    
+    /**
+     * For annotations combined in a single Lucene field (the old way of indexing
+     * subannotations), this was the separator between the name prefix of an indexed 
+     * value and the actual value of the annotation
      */
     public static final String SUBANNOTATION_SEPARATOR = "\u001F";
 

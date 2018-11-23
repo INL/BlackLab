@@ -50,4 +50,9 @@ public class ConfigAnnotationGroups {
         this.groups.addAll(groups);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigAnnotationGroups [name=" + name + "]";
+    }
+    
 }

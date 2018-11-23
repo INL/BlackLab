@@ -472,4 +472,9 @@ public class ConfigInputFormat {
         this.helpUrl = helpUrl;
     }
 
+    @Override
+    public String toString() {
+        return "ConfigInputFormat [name=" + name + "]";
+    }
+
 }

@@ -73,4 +73,9 @@ public class ConfigMetadataBlock {
         return fieldsByName.get(fieldName);
     }
 
+    @Override
+    public String toString() {
+        return "ConfigMetadataBlock [containerPath=" + containerPath + "]";
+    }
+
 }

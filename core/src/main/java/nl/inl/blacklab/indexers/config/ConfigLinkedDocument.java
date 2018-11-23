@@ -136,4 +136,10 @@ public class ConfigLinkedDocument {
     public void setDocumentPath(String documentPath) {
         this.documentPath = documentPath;
     }
+
+    @Override
+    public String toString() {
+        return "ConfigLinkedDocument [name=" + name + "]";
+    }
+    
 }
