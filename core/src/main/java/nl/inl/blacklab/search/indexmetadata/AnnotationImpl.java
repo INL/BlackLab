@@ -121,7 +121,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     @Override
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
         if (!hasSensitivity(sensitivity))
-            throw new UnsupportedOperationException("Specified sensitivity not present for field " + luceneFieldPrefix());
+            throw new UnsupportedOperationException("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
         return new AnnotationSensitivity() {
             @Override
             public Annotation annotation() {
