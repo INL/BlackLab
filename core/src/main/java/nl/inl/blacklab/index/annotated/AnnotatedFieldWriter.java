@@ -162,13 +162,14 @@ public class AnnotatedFieldWriter {
      *            Document.
      */
     public void clear(boolean reuseBuffers) {
-        if (reuseBuffers) {
-            start.clear();
-            end.clear();
-        } else {
+        // Don't reuse buffers, reclaim memory so we don't run out
+//        if (reuseBuffers) {
+//            start.clear();
+//            end.clear();
+//        } else {
             start = new IntArrayList();
             end = new IntArrayList();
-        }
+//        }
 
         for (AnnotationWriter p : annotations.values()) {
             p.clear(reuseBuffers);

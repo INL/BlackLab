@@ -392,15 +392,19 @@ public class AnnotationWriter {
         // In theory, we don't need to clear the cached values between documents, but
         // for large data sets, this would keep getting larger and larger, so we do
         // it anyway.
-        storedValues.clear(); // We can always reuse storedValues; it's exclusively owned by this
+//        storedValues.clear(); // We can always reuse storedValues; it's exclusively owned by this
+        storedValues = new HashMap<>();
 
-        if (reuseBuffers) {
-            values.clear();
-            increments.clear();
-        } else {
+        // Don't reuse buffers, reclaim memory so we don't run out
+//        if (reuseBuffers) {
+//            values.clear();
+//            increments.clear();
+//            payloads.clear();
+//        } else {
             values = new ArrayList<>();
             increments = new IntArrayList();
-        }
+            payloads = new ArrayList<>();
+//        }
     }
 
     public boolean hasPayload() {
