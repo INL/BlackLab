@@ -554,7 +554,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
 
         // Find matches for this annotation.
-        findAnnotationMatches(annotation, valuePath, indexAtPositions);
+        String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
 
         // For each configured subannotation...
         for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
@@ -591,8 +591,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(apName);
                 navpop();
             } else {
-                // Regular metadata field; just the fieldName and an XPath expression for the value
-                findAnnotationMatches(subAnnot, valuePath, indexAtPositions);
+                // Regular subannotation; just the fieldName and an XPath expression for the value
+                String subValuePath = subAnnot.getValuePath();
+                String reuseValue = subValuePath.equals(valuePath) ? annotValue : null;
+                findAnnotationMatches(subAnnot, valuePath, indexAtPositions, reuseValue);
             }
             releaseAutoPilot(apValue);
         }
@@ -603,37 +605,46 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
-    protected void findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions)
+    protected String findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
+            List<Integer> indexAtPositions, String reuseValueFromParentAnnot)
             throws XPathParseException, XPathEvalException, NavException {
-        AutoPilot apValuePath = acquireAutoPilot(valuePath);
-        if (annotation.isMultipleValues()) {
-            // Multiple matches will be indexed at the same position.
-            AutoPilot apEvalToString = acquireAutoPilot(".");
-            boolean firstValue = true;
-            while (apValuePath.evalXPath() != -1) {
-                apEvalToString.resetXPath();
-                String annotValue = apEvalToString.evalXPathToString();
-                annotValue = processString(annotValue, annotation.getProcess());
-                int increment = firstValue ? 1 : 0;
-                annotation(annotation.getName(), annotValue, increment, indexAtPositions);
-                firstValue = false;
-            }
-            releaseAutoPilot(apEvalToString);
-
-            // No annotations have been added, the result of the xPath query must have been empty.
-            if (firstValue) {
-                // Add default value
-                String annotValue = processString("", annotation.getProcess());
+        String annotValueForReuse = null;
+        if (reuseValueFromParentAnnot == null) {
+            AutoPilot apValuePath = acquireAutoPilot(valuePath);
+            if (annotation.isMultipleValues()) {
+                // Multiple matches will be indexed at the same position.
+                AutoPilot apEvalToString = acquireAutoPilot(".");
+                boolean firstValue = true;
+                while (apValuePath.evalXPath() != -1) {
+                    apEvalToString.resetXPath();
+                    String annotValue = apEvalToString.evalXPathToString();
+                    annotValue = processString(annotValue, annotation.getProcess());
+                    int increment = firstValue ? 1 : 0;
+                    annotation(annotation.getName(), annotValue, increment, indexAtPositions);
+                    firstValue = false;
+                }
+                releaseAutoPilot(apEvalToString);
+    
+                // No annotations have been added, the result of the xPath query must have been empty.
+                if (firstValue) {
+                    // Add default value
+                    String annotValue = processString("", annotation.getProcess());
+                    annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+                }
+            } else {
+                // Single value expected
+                annotValueForReuse = apValuePath.evalXPathToString();
+                String annotValue = processString(annotValueForReuse, annotation.getProcess());
                 annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
+            releaseAutoPilot(apValuePath);
         } else {
-            // Single value expected
-            String annotValue = apValuePath.evalXPathToString();
-            annotValue = processString(annotValue, annotation.getProcess());
+            // We can reuse the value from the parent annotation, with different processing
+            annotValueForReuse = reuseValueFromParentAnnot;
+            String annotValue = processString(annotValueForReuse, annotation.getProcess());
             annotation(annotation.getName(), annotValue, 1, indexAtPositions);
         }
-        releaseAutoPilot(apValuePath);
+        return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath
     }
 
     @Override
