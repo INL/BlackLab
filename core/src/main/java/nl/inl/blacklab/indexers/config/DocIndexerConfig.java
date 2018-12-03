@@ -98,6 +98,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our annotated field
+            if (af.isDummyForStoringLinkedDocuments())
+                continue;
             List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotationsFlattened().values());
             if (annotations.isEmpty())
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());

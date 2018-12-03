@@ -41,6 +41,9 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     private Map<String, ConfigAnnotation> annotationsFlattened;
 
+    /** If true, this is a dummy annotated field that only exists to store linked documents, e.g. "metadata". */
+    private boolean dummyForStoringLinkedDocument = false;
+
     ConfigAnnotatedField(String fieldName) {
         setName(fieldName);
     }
@@ -48,6 +51,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     public void validate() {
         String t = "annotated field";
         ConfigInputFormat.req(name, t, "name");
+        if (dummyForStoringLinkedDocument)
+            return; // dummy doesn't need anything other than a name
         ConfigInputFormat.req(containerPath, t, "containerPath");
         ConfigInputFormat.req(wordPath, t, "wordPath");
         for (ConfigAnnotation a : annotations.values())
@@ -60,6 +65,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public ConfigAnnotatedField copy() {
         ConfigAnnotatedField result = new ConfigAnnotatedField(name);
+        result.dummyForStoringLinkedDocument = dummyForStoringLinkedDocument;
         result.setDisplayName(displayName);
         result.setDescription(description);
         result.setContainerPath(containerPath);
@@ -182,6 +188,16 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     @Override
     public String toString() {
         return "ConfigAnnotatedField [name=" + name + "]";
+    }
+
+    public static ConfigAnnotatedField createDummyForStoringLinkedDocument(String name) {
+        ConfigAnnotatedField f = new ConfigAnnotatedField(name);
+        f.dummyForStoringLinkedDocument = true;
+        return f;
+    }
+
+    public boolean isDummyForStoringLinkedDocuments() {
+        return dummyForStoringLinkedDocument;
     }
 
 }

@@ -210,7 +210,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
-            processAnnotatedField(annotatedField);
+            if (!annotatedField.isDummyForStoringLinkedDocuments())
+                processAnnotatedField(annotatedField);
         }
 
         // For each configured metadata block..

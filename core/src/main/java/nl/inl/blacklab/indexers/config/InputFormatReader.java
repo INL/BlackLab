@@ -161,6 +161,15 @@ public class InputFormatReader extends YamlJsonReader {
                 throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
             }
         }
+        
+        // Ensure that if we have any linked documents we want to store (like metadata), there exists an
+        // annotated field where we can store it (even if it has no annotations).
+        for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
+            if (ld.shouldStore() && cfg.getAnnotatedField(ld.getName()) == null) {
+                // Field doesn't exit yet. Create a dummy field for it.
+                cfg.addAnnotatedField(ConfigAnnotatedField.createDummyForStoringLinkedDocument(ld.getName()));
+            }
+        }
     }
 
     private static void readCorpusConfig(Entry<String, JsonNode> ccEntry, ConfigCorpus corpusConfig) {
