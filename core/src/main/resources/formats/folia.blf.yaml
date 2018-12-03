@@ -63,8 +63,30 @@ annotatedFields:
       basePath: folia:pos  # subsequent XPaths are relative to this
       valuePath: "@class"
       subannotations:
-      - name: folia:head
+      - name: head
         valuePath: "@head"
+      - name: buiging
+      - name: conjtype
+      - name: dial
+      - name: genus
+      - name: getal
+      - name: getal-n
+      - name: graad
+      - name: lwtype
+      - name: naamval
+      - name: npagr
+      - name: ntype
+      - name: numtype
+      - name: pdtype
+      - name: persoon
+      - name: positie
+      - name: pvagr
+      - name: pvtijd
+      - name: spectype
+      - name: status
+      - name: vwtype
+      - name: vztype
+      - name: wvorm
       - forEachPath: folia:feat
         namePath: "@subset"
         valuePath: "@class"
