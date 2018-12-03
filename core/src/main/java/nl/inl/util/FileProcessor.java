@@ -142,7 +142,7 @@ public class FileProcessor implements AutoCloseable {
             };
             try (FileProcessor proc = new FileProcessor(true, false, true)) {
                 proc.setFileHandler(fileCapturer);
-                proc.processFile(f);
+                proc.processFile(f, "");
             } catch (FileNotFoundException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -154,6 +154,9 @@ public class FileProcessor implements AutoCloseable {
             try {
                 ZipFile z = ZipHandleManager.openZip(f);
                 ZipEntry e = z.getEntry(pathInsideArchive);
+                if (e == null) {
+                    throw new BlackLabRuntimeException("Linked document " + pathInsideArchive + " not found in archive " + f);
+                }
                 try (InputStream is = z.getInputStream(e)) {
                     return IOUtils.toByteArray(is);
                 }
@@ -350,9 +353,10 @@ public class FileProcessor implements AutoCloseable {
      * {@link #processInputStream(String, InputStream, File)}.
      *
      * @param file file, directory or archive to process
+     * @param pathSoFar path so far, so we can report the path to the file
      * @throws FileNotFoundException
      */
-    public void processFile(File file) throws FileNotFoundException {
+    public void processFile(File file, String pathSoFar) throws FileNotFoundException {
         if (!file.exists())
             throw new FileNotFoundException("Input file or dir not found: " + file);
 
@@ -360,6 +364,7 @@ public class FileProcessor implements AutoCloseable {
             return;
 
         if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
+            pathSoFar += "/" + file.getName();
             for (File childFile : FileUtil.listFilesSorted(file)) {
                 if (closed)
                     return;
@@ -371,10 +376,10 @@ public class FileProcessor implements AutoCloseable {
                 }
 
                 if (recurseSubdirs || !childFile.isDirectory())
-                    processFile(childFile);
+                    processFile(childFile, pathSoFar);
             }
         } else {
-            processInputStream(file.getName(), new FileInputStream(file), file);
+            processInputStream(pathSoFar + "/" + file.getName(), new FileInputStream(file), file);
         }
     }
 

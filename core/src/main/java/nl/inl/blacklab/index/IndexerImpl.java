@@ -588,7 +588,7 @@ class IndexerImpl implements DocWriter, Indexer {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processFile(file);
+            proc.processFile(file, "");
         } catch (FileNotFoundException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

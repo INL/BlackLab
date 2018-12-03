@@ -238,7 +238,7 @@ public class TestFileProcessor {
         try (FileProcessor proc = new FileProcessor(useThreads, recurseSubdirs, processArchives)) {
             proc.setFileHandler(fileHandler);
             proc.setErrorHandler(errorHandler);
-            proc.processFile(this.inputFile);
+            proc.processFile(this.inputFile, "");
         }
 
         if (!shouldTriggerException) {
