@@ -113,7 +113,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
-                fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
+                if (!annot.isForEach())
+                    fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {

@@ -1345,8 +1345,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             subannotationsStoredWithMain = false; // this is a new-style index
             ArrayNode subannots = annotationNode.putArray("subannotations");
             for (ConfigAnnotation s: annotation.getSubAnnotations()) {
-                addAnnotationInfo(s, displayOrder, noForwardIndexAnnotations, annotations);
-                subannots.add(s.getName());
+                if (!s.isForEach()) {
+                    addAnnotationInfo(s, displayOrder, noForwardIndexAnnotations, annotations);
+                    subannots.add(s.getName());
+                }
             }
         }
     }
