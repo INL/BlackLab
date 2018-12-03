@@ -542,6 +542,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
 
         String valuePath = annotation.getValuePath();
+        if (valuePath == null) {
+            // No valuePath given. Assume this will be captures using forEach.
+            return;
+        }
 
         // See if we want to capture any values and substitute them into the XPath
         int i = 1;

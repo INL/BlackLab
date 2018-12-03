@@ -90,7 +90,7 @@ public class ConfigAnnotation {
     public void validate() {
         String t = "annotation";
         ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
-        ConfigInputFormat.req(valuePath, t, "valuePath");
+        //ConfigInputFormat.req(valuePath, t, "valuePath");
         for (ConfigAnnotation s : subannotations)
             s.validate();
         for (ConfigProcessStep step : process)
@@ -128,7 +128,7 @@ public class ConfigAnnotation {
 
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
-        if (valuePath.matches("\\d+"))
+        if (valuePath != null && valuePath.matches("\\d+"))
             valuePathInt = Integer.parseInt(valuePath);
     }
 
