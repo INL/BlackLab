@@ -46,4 +46,8 @@ public interface AnnotatedField extends Field {
      */
     boolean hasTokenLengthDocValues();
 
+    default boolean isDummyFieldToStoreLinkedDocuments() {
+        return annotations().isEmpty();
+    }
+
 }

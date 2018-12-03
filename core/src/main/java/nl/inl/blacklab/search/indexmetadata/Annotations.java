@@ -56,4 +56,6 @@ public interface Annotations extends Iterable<Annotation> {
         return get(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
     }
 
+    boolean isEmpty();
+
 }

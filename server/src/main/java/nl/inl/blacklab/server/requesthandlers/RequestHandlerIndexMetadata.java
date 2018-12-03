@@ -101,6 +101,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             ds.startEntry(ElementNames.annotatedFields).startMap();
             // Annotated fields
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
+                if (field.isDummyFieldToStoreLinkedDocuments())
+                    continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
                 ds.startAttrEntry(ElementNames.annotatedField, "name", field.name());
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();

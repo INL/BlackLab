@@ -180,6 +180,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
     public static void describeAnnotatedField(DataStream ds, String indexName,
             AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+        if (fieldDesc.isDummyFieldToStoreLinkedDocuments())
+            return; // skip this, not really an annotated field, just exists to store linked (metadata) document.
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
@@ -191,8 +193,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
-                .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
-                .entry(ElementNames.mainProperty, annotations.main().name());
+                .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
+        ds.entry(ElementNames.mainProperty, annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();

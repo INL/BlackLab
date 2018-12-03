@@ -69,6 +69,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         public boolean exists(String name) {
             return annots.containsKey(name);
         }
+
+        @Override
+        public boolean isEmpty() {
+            return annots.isEmpty();
+        }
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
