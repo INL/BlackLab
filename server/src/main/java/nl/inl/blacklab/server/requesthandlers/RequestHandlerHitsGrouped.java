@@ -4,6 +4,11 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -25,7 +30,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
-
+    
     @Override
     public int handle(DataStream ds) throws BlsException {
         // Get the window we're interested in
@@ -62,12 +67,35 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         // The list of groups found
         ds.startEntry("hitGroups").startList();
         int i = 0;
+        DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
+        DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
+        DocGroups subcorpusGrouped = null;
+        long tokensInSubcorpus = 0;
+        if (metadataGroupProperties != null) {
+            // We're grouping on metadata. We need to know the subcorpus per group. 
+            subcorpusGrouped = subcorpus.group(metadataGroupProperties, -1);
+        } else {
+            // We're not grouping on metadata. We only need to know the total subcorpus size.
+            tokensInSubcorpus = subcorpus.tokensInMatchingDocs();
+        }
         for (HitGroup group : groups) {
             if (i >= first && i < first + requestedWindowSize) {
+                
+                if (metadataGroupProperties != null) {
+                    // Find size of corresponding subcorpus group
+                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
+                    DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
+                    tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
+                }
+                
+                // Calculate relative group size
+                double relativeFrequency = (double)group.size() / tokensInSubcorpus;
+                
                 ds.startItem("hitgroup").startMap();
                 ds.entry("identity", group.identity().serialize())
                         .entry("identityDisplay", group.identity().toString())
-                        .entry("size", group.size());
+                        .entry("size", group.size())
+                        .entry("relativeFrequency", relativeFrequency);
                 ds.endMap().endItem();
             }
             i++;

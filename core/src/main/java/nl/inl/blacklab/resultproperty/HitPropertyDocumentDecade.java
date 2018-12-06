@@ -149,5 +149,16 @@ public class HitPropertyDocumentDecade extends HitProperty {
             return false;
         return true;
     }
+
+    @Override
+    public DocProperty docPropsOnly() {
+        DocPropertyDecade result = new DocPropertyDecade(fieldName);
+        return reverse ? result.reverse() : result;
+    }
+
+    @Override
+    public PropertyValue docPropValues(PropertyValue value) {
+        return value;
+    }
     
 }

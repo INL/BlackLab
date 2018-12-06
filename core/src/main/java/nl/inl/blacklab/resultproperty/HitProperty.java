@@ -320,4 +320,33 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         return true;
     }
 
+    /**
+     * Return only the DocProperty portion (if any) of this HitProperty, if any.
+     * 
+     * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
+     * return the latter as a DocPropertyStoredField.
+     * 
+     * This is used for calculting the relative frequency when grouping on a metadata field.
+     * 
+     * @return metadata portion of this property, or null if there is none
+     */
+    public DocProperty docPropsOnly() {
+        return null;
+    }
+
+    /**
+     * Return only the values corresponding to DocProperty's of the given PropertyValue, if any.
+     * 
+     * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
+     * return the latter of the two values in the supplied PropertyValue.
+     * 
+     * This is used for calculting the relative frequency when grouping on a metadata field.
+     * 
+     * @param value value to extract the values corresponding to DocProperty's from
+     * @return metadata portion of this value, or null if there is none
+     */
+    public PropertyValue docPropValues(PropertyValue value) {
+        return null;
+    }
+
 }

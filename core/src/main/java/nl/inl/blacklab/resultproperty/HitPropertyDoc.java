@@ -90,5 +90,16 @@ public class HitPropertyDoc extends HitProperty {
             return false;
         return true;
     }
+
+    @Override
+    public DocProperty docPropsOnly() {
+        DocPropertyId result = new DocPropertyId();
+        return reverse ? result.reverse() : result;
+    }
+
+    @Override
+    public PropertyValue docPropValues(PropertyValue value) {
+        return value;
+    }
     
 }

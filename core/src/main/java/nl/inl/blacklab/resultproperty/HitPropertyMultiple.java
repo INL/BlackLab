@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -235,5 +236,24 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             values[i] = properties.get(i).serialize();
         }
         return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+    }
+
+    @Override
+    public DocProperty docPropsOnly() {
+        return new DocPropertyMultiple(properties.stream().map(hp -> hp.docPropsOnly()).collect(Collectors.toList()));
+    }
+
+    @Override
+    public PropertyValue docPropValues(PropertyValue value) {
+        List<PropertyValue> result = new ArrayList<>();
+        List<PropertyValue> values = value.values();
+        int i = 0;
+        for (HitProperty prop: properties) {
+            PropertyValue v = prop.docPropValues(values.get(i));
+            if (v != null)
+                result.add(v);
+            i++;
+        }
+        return value;
     }
 }

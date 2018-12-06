@@ -592,6 +592,24 @@ public class SearchParameters {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
         return search.find(docFilterQuery);
     }
+    
+    /**
+     * Return our subcorpus.
+     * 
+     * The subcorpus is defined as all documents satisfying the metadata query.
+     * If no metadata query is given, the subcorpus is all documents in the corpus.
+     * 
+     * @return subcorpus
+     * @throws BlsException
+     */
+    public SearchDocs subcorpus() throws BlsException {
+        Query docFilterQuery = getFilterQuery();
+        if (docFilterQuery == null) {
+            docFilterQuery = new MatchAllDocsQuery();
+        }
+        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        return search.find(docFilterQuery);
+    }
 
     public SearchHitGroups hitsGrouped() throws BlsException {
         String groupBy = hitGroupSettings().groupBy();
