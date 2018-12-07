@@ -16,7 +16,15 @@ import com.fasterxml.jackson.databind.JsonNode;
  * A metadata field in an index.
  */
 public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
-    private static final int MAX_METADATA_VALUES_TO_STORE = 50;
+    private static int maxMetadataValuesToStore = 50;
+    
+    public static void setMaxMetadataValuesToStore(int n) {
+        maxMetadataValuesToStore = n;
+    }
+
+    public static int maxMetadataValuesToStore() {
+        return maxMetadataValuesToStore;
+    }
 
     /**
      * The field type: text, untokenized or numeric.
@@ -241,7 +249,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
             values.put(value, values.get(value) + 1);
         } else {
             // New value; add it
-            if (values.size() >= MAX_METADATA_VALUES_TO_STORE) {
+            if (values.size() >= maxMetadataValuesToStore) {
                 // We can't store thousands of unique values;
                 // Stop storing now and indicate that there's more.
                 valueListComplete = ValueListComplete.NO;
