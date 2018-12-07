@@ -1,12 +1,13 @@
 package nl.inl.blacklab.server.config;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class BLSConfigAuth {
     
-    Map<String, String> system = null;
+    Map<String, String> system = new HashMap<>();
     
     List<String> overrideUserIdIps = Collections.emptyList();
 
