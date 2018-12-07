@@ -1,14 +1,53 @@
 # Change Log
 
-## Improvements in HEAD
+## Improvements in 2.0.0-RC1
 
 ### New
 * New Search system that allows better optimization and integrates result
   caching, allowing you to define an application-specific cache behaviour.
 
-### Changed
+### Fixed
+* Fixed a concurrency bug that could cause a search to get stuck.
+* Fixed some smaller bugs in indexing and searching.
+
+### API changes
 * Completely refactored Java API to be more clear and consistent.
+* What we used to call "complex field" (e.g. contents of document, 
+  with word, lemma and pos annotations) is now called "annotated field".
+  What we used to call a "property" of such a field (e.g. word, lemma, 
+  pos) is now called an "annotation".
+  BLS element names that included "complexField" and "property" have been
+  changed to say "annotation" instead. Many references to "property" in the code have
+  been changed to "annotation" as well. For the old behaviour, set
+  protocol.useOldElementNames to true in the blacklab-server configuration file.
+* There is a new version of the blacklab and blacklab-server configuration 
+  files. The old version still works but will be removed in the future.
+  See migration-guide.md for the details of the new format. 
 * Almost all objects in a search are now (effectively) immutable.
+* (only for advanced Java library usage)
+  Made the concept of a BlackLab instance ("BlackLabEngine") explicit, so you can 
+  e.g. decide how many threads you want your BlackLabEngine to have (shared by all 
+  indexes you open using this engine). To do this, explicitly call BlackLabEngine.createEngine()
+  and use BlackLabEngine.open() on the resulting object instead of BlackLab.open() (which will 
+  use an "implicit engine").
+
+### Changed
+* Speeded up searches by allowing hits to be fetched in parallel
+* Calculating tokens in a subcorpus (using includetokencount=true on a docs query with 
+  just a metadata filter) is much faster (through the use of DocValues). 
+* In new indexes, subannotations are part of the index structure. As a result of this,
+  you can enumerate the subannotations and their values much more efficiently.
+  You can also specify any metadata you can specify for a regular annotation,
+  such as displayName, uiType, etc. Querying subannotations should be more efficient 
+  as well.
+* Indexing should use less memory now.
+* Sparse annotations take up less disk space.
+* Forward indexes take up less memory while searching, and are initialized in the 
+  background for quicker startup.
+* A number of new metadata settings are supported, such as annotationGroups.
+  More extensive documentation will follow.
+* Added optional detailed SQLite logging for diagnosing performance issues.
+* Many smaller improvements.
 
 ### Removed
 * Really old index formats (pre 1.4 or so) are no longer supported.
