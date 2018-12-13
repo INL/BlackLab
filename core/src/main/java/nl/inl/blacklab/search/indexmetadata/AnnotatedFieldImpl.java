@@ -310,9 +310,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         // (note that not having any offsets makes it impossible to highlight the
         // original content, but this may not be an issue. We probably need
         // a better way to keep track of the main annotation)
-        logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
-                + ") is main annotation");
-        mainAnnotation = firstAnnotation;
+        if (firstAnnotation != null) {
+            logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
+                    + ") is main annotation");
+            mainAnnotation = firstAnnotation;
+        }
     }
 
     synchronized void setMainAnnotationName(String mainAnnotationName) {
