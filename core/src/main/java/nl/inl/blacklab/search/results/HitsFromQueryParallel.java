@@ -259,8 +259,8 @@ public class HitsFromQueryParallel extends Hits {
                         } else {
                             // We're at the next hit
                             hit = spansResults.get(hitIndexInCurrentSpansReader);
-                            if (currentSpansReader.capturedGroups != null) {
-                                capturedGroupsForHit = currentSpansReader.capturedGroups.get(hit);
+                            if (currentSpansReader.capturedGroups() != null) {
+                                capturedGroupsForHit = currentSpansReader.capturedGroups().get(hit);
                             }
                             break;
                         }
