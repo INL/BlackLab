@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -34,7 +35,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -242,11 +242,11 @@ public class RequestHandlerHits extends RequestHandler {
                 ds.startEntry("captureGroups").startList();
 
                 for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                    ds.startEntry("group");
+                    ds.startItem("group").startMap();
                     ds.entry("name", capturedGroup.getKey());
                     ds.entry("start", capturedGroup.getValue().start());
                     ds.entry("end", capturedGroup.getValue().end());
-                    ds.endEntry();
+                    ds.endMap().endItem();
                 }
 
                 ds.endList().endEntry();
