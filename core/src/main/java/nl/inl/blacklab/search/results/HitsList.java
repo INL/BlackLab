@@ -42,7 +42,21 @@ public class HitsList extends Hits {
             }
         }
     }
-    
+
+    /**
+     * Make a wrapper Hits object for a list of Hit objects.
+     *
+     * Does not copy the list, but reuses it.
+     *
+     * @param queryInfo query info
+     * @param hits the list of hits to wrap, or null for a new list
+     * @param capturedGroups the list of hits to wrap, or null for no captured groups
+     */
+    protected HitsList(QueryInfo queryInfo, List<Hit> hits, CapturedGroups capturedGroups) {
+        this(queryInfo, hits);
+        this.capturedGroups = (CapturedGroupsImpl) capturedGroups;
+    }
+
     /**
      * Create a list of hits from three arrays.
      *

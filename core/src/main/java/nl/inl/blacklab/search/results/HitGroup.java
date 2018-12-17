@@ -29,8 +29,8 @@ public class HitGroup extends Group<Hit> {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }
 
-    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
-        return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
+    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, CapturedGroups capturedGroups, int totalSize) {
+        return new HitGroup(queryInfo, groupIdentity, storedResults, capturedGroups, totalSize);
     }
 
     public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
@@ -48,10 +48,11 @@ public class HitGroup extends Group<Hit> {
      *
      * @param queryInfo query info
      * @param storedResults the hits we actually stored
+     * @param capturedGroups captured groups for hits in this group
      * @param totalSize total group size
      */
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, int totalSize) {
-        super(groupIdentity, Hits.fromList(queryInfo, storedResults), totalSize);
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<Hit> storedResults, CapturedGroups capturedGroups, int totalSize) {
+        super(groupIdentity, Hits.fromList(queryInfo, storedResults, capturedGroups), totalSize);
     }
 
     /**
