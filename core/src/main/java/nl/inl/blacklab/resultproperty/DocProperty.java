@@ -15,13 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -114,22 +114,34 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
         String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("decade", "numhits", "field", "fieldlen");
-        int typeNum = types.indexOf(type);
         DocProperty result;
-        switch (typeNum) {
-        case 0:
+        switch (type) {
+        case "decade":
             result = DocPropertyDecade.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
-        case 1:
+        case "numhits":
             result = DocPropertyNumberOfHits.deserialize();
             break;
-        case 2:
+        case "field":
             result = DocPropertyStoredField.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
-        case 3:
+        case "fieldlen":
             result = DocPropertyAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
             break;
+            
+        case "docid":
+        case "doc":
+            throw new BlackLabRuntimeException("Grouping doc results by " + type + " is not yet supported");
+            
+        case "hit":
+        case "left":
+        case "right":
+        case "wordleft":
+        case "wordright":
+        case "context":
+        case "hitposition":
+            throw new BlackLabRuntimeException("Cannot group doc results by " + type);
+            
         default:
             logger.debug("Unknown DocProperty '" + type + "'");
             return null;

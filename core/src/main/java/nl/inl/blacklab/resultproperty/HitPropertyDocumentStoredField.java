@@ -132,5 +132,16 @@ public class HitPropertyDocumentStoredField extends HitProperty {
             return false;
         return true;
     }
+
+    @Override
+    public DocProperty docPropsOnly() {
+        DocProperty result = new DocPropertyStoredField(fieldName, friendlyName);
+        return reverse ? result.reverse() : result;
+    }
+
+    @Override
+    public PropertyValue docPropValues(PropertyValue value) {
+        return value;
+    }
     
 }

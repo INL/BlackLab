@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
@@ -158,6 +159,15 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             default:
                 throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
+            }
+        }
+        
+        // Ensure that if we have any linked documents we want to store (like metadata), there exists an
+        // annotated field where we can store it (even if it has no annotations).
+        for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
+            if (ld.shouldStore() && cfg.getAnnotatedField(ld.getName()) == null) {
+                // Field doesn't exit yet. Create a dummy field for it.
+                cfg.addAnnotatedField(ConfigAnnotatedField.createDummyForStoringLinkedDocument(ld.getName()));
             }
         }
     }
@@ -336,25 +346,28 @@ public class InputFormatReader extends YamlJsonReader {
     private static void readAnnotations(Entry<String, JsonNode> annotsEntry, ConfigWithAnnotations af) {
         Iterator<JsonNode> itAnnotations = array(annotsEntry).elements();
         while (itAnnotations.hasNext()) {
-            af.addAnnotation(readAnnotation(false, itAnnotations.next()));
+            af.addAnnotation(readAnnotation(null, itAnnotations.next()));
         }
     }
 
     private static void readSubAnnotations(Entry<String, JsonNode> saEntry, ConfigAnnotation annot) {
         Iterator<JsonNode> itAnnotations = array(saEntry).elements();
         while (itAnnotations.hasNext()) {
-            annot.addSubAnnotation(readAnnotation(true, itAnnotations.next()));
+            annot.addSubAnnotation(readAnnotation(annot, itAnnotations.next()));
         }
     }
 
-    protected static ConfigAnnotation readAnnotation(boolean isSubAnnotation, JsonNode a) {
+    protected static ConfigAnnotation readAnnotation(ConfigAnnotation parentAnnot, JsonNode a) {
         Iterator<Entry<String, JsonNode>> itAnnotation = obj(a, "annotation").fields();
         ConfigAnnotation annot = new ConfigAnnotation();
         while (itAnnotation.hasNext()) {
             Entry<String, JsonNode> e = itAnnotation.next();
+            boolean isSubannotation = parentAnnot != null;
             switch (e.getKey()) {
             case "name":
-                annot.setName(str(e));
+                String name = str(e);
+                String fullName = parentAnnot == null ? name : parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
+                annot.setName(fullName);
                 break;
             case "value":
                 annot.setValuePath(fixedStringToXpath(str(e)));
@@ -369,12 +382,12 @@ public class InputFormatReader extends YamlJsonReader {
                 });
                 break;
             case "forEachPath":
-                if (!isSubAnnotation)
+                if (!isSubannotation)
                     throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
                 annot.setForEachPath(str(e));
                 break;
             case "namePath":
-                if (!isSubAnnotation)
+                if (!isSubannotation)
                     throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
                 annot.setName(str(e));
                 break;
@@ -391,15 +404,15 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setBasePath(str(e));
                 break;
             case "sensitivity":
-                if (isSubAnnotation)
+                if (isSubannotation)
                     throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings");
                 annot.setSensitivity(SensitivitySetting.fromStringValue(str(e)));
                 break;
             case "uiType":
                 annot.setUiType(str(e));
                 break;
-            case "subAnnotations":
-                if (isSubAnnotation)
+            case "subannotations":
+                if (isSubannotation)
                     throw new InvalidInputFormatConfig("Subannotations may not have their own subannotations");
                 readSubAnnotations(e, annot);
                 break;

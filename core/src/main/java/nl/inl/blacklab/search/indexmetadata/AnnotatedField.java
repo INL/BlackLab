@@ -38,4 +38,16 @@ public interface AnnotatedField extends Field {
         return offsetsSensitivity.luceneField();
     }
 
+    /**
+     * Was the field that stores the length of this field in tokens
+     * indexed with DocValues?
+     * 
+     * @return true if it was, false if not
+     */
+    boolean hasTokenLengthDocValues();
+
+    default boolean isDummyFieldToStoreLinkedDocuments() {
+        return annotations().isEmpty();
+    }
+
 }

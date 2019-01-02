@@ -8,13 +8,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.lucene.index.DocValuesType;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * A metadata field in an index.
  */
 public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
-    private static final int MAX_METADATA_VALUES_TO_STORE = 50;
+    private static int maxMetadataValuesToStore = 50;
+    
+    public static void setMaxMetadataValuesToStore(int n) {
+        maxMetadataValuesToStore = n;
+    }
+
+    public static int maxMetadataValuesToStore() {
+        return maxMetadataValuesToStore;
+    }
 
     /**
      * The field type: text, untokenized or numeric.
@@ -71,6 +81,11 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * Doing so anyway will throw an exception.
      */
     private boolean frozen;
+
+    /**
+     * Type of DocValues stored for this field, or NONE if no DocValues were stored.
+     */
+    private DocValuesType docValuesType;
 
     MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
@@ -130,6 +145,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @Override
     public String offsetsField() {
         return name();
+    }
+
+    public DocValuesType docValuesType() {
+        return docValuesType;
     }
 
     // Methods that mutate data
@@ -230,7 +249,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
             values.put(value, values.get(value) + 1);
         } else {
             // New value; add it
-            if (values.size() >= MAX_METADATA_VALUES_TO_STORE) {
+            if (values.size() >= maxMetadataValuesToStore) {
                 // We can't store thousands of unique values;
                 // Stop storing now and indicate that there's more.
                 valueListComplete = ValueListComplete.NO;
@@ -263,6 +282,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         ensureNotFrozen();
         this.uiType = uiType;
         return this;
+    }
+
+    public void setDocValuesType(DocValuesType docValuesType) {
+        this.docValuesType = docValuesType;
     }
 
 }

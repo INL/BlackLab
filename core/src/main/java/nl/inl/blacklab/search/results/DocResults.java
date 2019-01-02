@@ -25,13 +25,19 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.search.Weight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
@@ -42,7 +48,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * A list of DocResult objects (document-level query results).
  */
 public class DocResults extends Results<DocResult> implements ResultGroups<Hit> {
-    
+
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
         private final QueryInfo queryInfo;
@@ -76,7 +82,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             return false;
         }
     }
-    
+
     /**
      * Construct an empty DocResults.
      * @param queryInfo query info
@@ -85,10 +91,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public static DocResults empty(QueryInfo queryInfo) {
         return new DocResults(queryInfo);
     }
-    
+
     /**
      * Construct a DocResults from a list of results.
-     * 
+     *
      * @param queryInfo query info
      * @param results results
      * @param sampleParameters sample parameters (if this is a sample)
@@ -98,10 +104,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         return new DocResults(queryInfo, results, sampleParameters, windowStats);
     }
-    
+
     /**
      * Construct a DocResults from a Hits instance.
-     * 
+     *
      * @param queryInfo query info
      * @param hits hits to get document results from
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
@@ -119,15 +125,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @return per-document results
      */
     public static DocResults fromQuery(QueryInfo queryInfo, Query query) {
-        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
-        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-        List<DocResult> results = new ArrayList<>();
-        try {
-            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-        return DocResults.fromList(queryInfo, results, (SampleParameters)null, (WindowStats)null);
+        return new DocResults(queryInfo, query);
     }
 
     /**
@@ -152,11 +150,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     Lock ensureResultsReadLock;
 
-    /** Largest number of hits in a single document */ 
+    /** Largest number of hits in a single document */
     private int mostHitsInDocument = 0;
 
     private int totalHits = 0;
-    
+
     private int resultObjects = 0;
 
     private WindowStats windowStats;
@@ -164,7 +162,18 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     private SampleParameters sampleParameters;
 
     private int maxHitsToStorePerDoc = 0;
-    
+
+    /** The Query this was created from, or null if it wasn't created from a Query.
+     *
+     * If created from a query, we can re-execute that query to e.g. count tokens in matching documents.
+     */
+    private Query query;
+
+    /**
+     * Total number of tokens in the matched documents, or negative if not available.
+     */
+    private long tokenCount = -1;
+
     /**
      * Construct an empty DocResults.
      * @param queryInfo
@@ -173,10 +182,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         super(queryInfo);
         groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
-    
+
     /**
      * Construct per-document results objects from a Hits object
-     * 
+     *
      * @param queryInfo query info
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
@@ -188,7 +197,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
     }
-    
+
     /**
      * Wraps a list of DocResult objects with the DocResults interface.
      *
@@ -206,17 +215,30 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
     }
-   
+
+    private DocResults(QueryInfo queryInfo, Query query) {
+        this(queryInfo);
+        this.query = query;
+        // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
+        //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
+        results = new ArrayList<>();
+        try {
+            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
     @Override
     public WindowStats windowStats() {
         return windowStats;
     }
-   
+
     @Override
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
-    
+
     @Override
     public <P extends ResultProperty<DocResult>> DocResults sort(P sortProp) {
         List<DocResult> sorted = Results.doSort(this, sortProp);
@@ -241,7 +263,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public int docsProcessedSoFar() {
         return resultsProcessedSoFar();
     }
-    
+
     /**
      * Get the number of documents in this results set.
      *
@@ -267,7 +289,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         try {
             if (doneProcessingAndCounting() || (index >= 0 && results.size() > index))
                 return;
-    
+
             while (!ensureResultsReadLock.tryLock()) {
                 /*
                 * Another thread is already counting, we don't want to straight up block until it's done
@@ -278,16 +300,16 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 if (doneProcessingAndCounting() || (index >= 0 && results.size() >= index))
                     return;
             }
-    
+
             try {
                 // Fill list of document results
                 PropertyValueDoc doc = partialDocId;
                 List<Hit> docHits = partialDocHits;
                 partialDocId = null;
                 partialDocHits = null;
-    
+
                 while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
-    
+
                     Hit hit = sourceHitsIterator.next();
                     PropertyValueDoc val = groupByDoc.get(hit);
                     if (!val.equals(doc)) {
@@ -355,7 +377,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 groupSize++;
             groupSizes.put(groupId, groupSize);
         }
-        List<DocGroup> results = new ArrayList<DocGroup>();
+        List<DocGroup> results = new ArrayList<>();
         for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
             results.add(docGroup);
@@ -365,7 +387,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
 
     /**
      * Get a window into the doc results
-     * 
+     *
      * @param first first document result to include
      * @param number maximum number of document results to include
      * @return the window
@@ -431,7 +453,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
-        List<DocResult> truncatedGroups = new ArrayList<DocResult>();
+        List<DocResult> truncatedGroups = new ArrayList<>();
         for (DocResult group: results) {
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
@@ -442,27 +464,72 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
         return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, (WindowStats)null);
     }
-    
+
     @Override
     public boolean doneProcessingAndCounting() {
         return sourceHitsIterator == null || !sourceHitsIterator.hasNext();
     }
-    
+
     @Override
     public Map<PropertyValue, ? extends Group<Hit>> getGroupMap() {
         throw new UnsupportedOperationException();
     }
-    
+
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
     }
-    
+
+    /**
+     * Count total number of tokens in matching documents.
+     *
+     * This is fast if the query was created from a Query object (and the index contains DocValues),
+     * but slower if it was created from Hits or a list of DocResult objects.
+     *
+     * @return total number of tokens in matching documents.
+     */
+    public long tokensInMatchingDocs() {
+        if (tokenCount < 0) {
+            int totalTokens = -1;
+            if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
+                // Fast approach: use the DocValues for the token length field
+                try {
+                    totalTokens = 0;
+                    Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
+                    int dummyClosingToken = 1; // the count is always 1 too high because of the closing token (position for closing tags)
+                    for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
+                        Scorer scorer = weight.scorer(r);
+                        if (scorer != null) {
+                            DocIdSetIterator it = scorer.iterator();
+                            NumericDocValues tokenLengthValues = DocValues.getNumeric(r.reader(), queryInfo().index().mainAnnotatedField().tokenLengthField());
+                            while (true) {
+                                int docId = it.nextDoc();
+                                if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                                    break;
+                                totalTokens += tokenLengthValues.get(docId) - dummyClosingToken;
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException("Error determining token count", e);
+                }
+            } else {
+                // Slow approach: get the stored field value from each Document
+                //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
+                String fieldName = queryInfo().index().mainAnnotatedField().name();
+                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
+                totalTokens = intSum(propTokens);
+            }
+            tokenCount = totalTokens;
+        }
+        return tokenCount;
+    }
+
 }

@@ -26,9 +26,11 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.NumericDocValuesField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -107,20 +109,20 @@ public class AnnotatedFieldWriter {
         return start.size();
     }
 
-    public AnnotationWriter addAnnotation(String name, SensitivitySetting sensitivity, boolean includePayloads) {
+    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, SensitivitySetting sensitivity, boolean includePayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
-        if (noForwardIndexAnnotations.contains(name)) {
+        if (noForwardIndexAnnotations.contains(name) || annot != null && !annot.createForwardIndex()) {
             p.setHasForwardIndex(false);
         }
         annotations.put(name, p);
         return p;
     }
 
-    public AnnotationWriter addAnnotation(String name, SensitivitySetting sensitivity) {
-        return addAnnotation(name, sensitivity, false);
+    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, SensitivitySetting sensitivity) {
+        return addAnnotation(annot, name, sensitivity, false);
     }
 
     public void addStartChar(int startChar) {
@@ -142,7 +144,10 @@ public class AnnotatedFieldWriter {
         // (Also note that this is the actual number of words + 1,
         //  because we always store a dummy "closing token" at the end
         //  that doesn't contain a word but may contain trailing punctuation)
-        doc.add(new IntField(AnnotatedFieldNameUtil.lengthTokensField(fieldName), numberOfTokens(), Field.Store.YES));
+        String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
+        int lengthTokensValue = numberOfTokens();
+        doc.add(new IntField(lengthTokensFieldName, lengthTokensValue, Field.Store.YES));
+        doc.add(new NumericDocValuesField(lengthTokensFieldName, lengthTokensValue)); // docvalues for fast retrieval
     }
 
     /**
@@ -157,13 +162,14 @@ public class AnnotatedFieldWriter {
      *            Document.
      */
     public void clear(boolean reuseBuffers) {
-        if (reuseBuffers) {
-            start.clear();
-            end.clear();
-        } else {
+        // Don't reuse buffers, reclaim memory so we don't run out
+//        if (reuseBuffers) {
+//            start.clear();
+//            end.clear();
+//        } else {
             start = new IntArrayList();
             end = new IntArrayList();
-        }
+//        }
 
         for (AnnotationWriter p : annotations.values()) {
             p.clear(reuseBuffers);

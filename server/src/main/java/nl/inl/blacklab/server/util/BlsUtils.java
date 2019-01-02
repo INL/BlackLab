@@ -163,7 +163,7 @@ public class BlsUtils {
     // (as allowed under the Apache License 2.0)
     public static boolean isSymlink(File file) throws IOException {
         if (file == null)
-            throw new NullPointerException("File must not be null");
+            throw new IOException("File must not be null");
         File canon;
         if (file.getParent() == null) {
             canon = file;

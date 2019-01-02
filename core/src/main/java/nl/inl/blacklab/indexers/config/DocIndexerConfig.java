@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
@@ -97,7 +98,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         for (ConfigAnnotatedField af : config.getAnnotatedFields().values()) {
 
             // Define the properties that make up our annotated field
-            List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotations().values());
+            if (af.isDummyForStoringLinkedDocuments())
+                continue;
+            List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotationsFlattened().values());
             if (annotations.isEmpty())
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
@@ -105,23 +108,24 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     getSensitivitySetting(mainAnnotation), false);
             addAnnotatedField(fieldWriter);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
                     getSensitivitySetting(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME), true);
             annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
-                fieldWriter.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
+                if (!annot.isForEach())
+                    fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
-                    fieldWriter.addAnnotation(annot.getName(), getSensitivitySetting(annot), false);
+                    fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
                 }
             }
             if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
-                fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+                fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
             if (docWriter != null) {
@@ -165,12 +169,37 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "strip":
                 result = opStrip(result, param);
                 break;
+            case "parsePos":
+            {
+                // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
+                String field = param.containsKey("field") ? param.get("field") : "_";
+                result = opParsePartOfSpeech(result, field);
+                break;
+            }
             default:
                 // In the future, we'll support user plugins here
                 throw new UnsupportedOperationException("Unknown processing step method " + method);
             }
         }
         return result;
+    }
+
+    static String opParsePartOfSpeech(String result, String field) {
+        // Trim character/string from beginning and end
+        result = result.trim();
+        if (field.equals("_")) {
+            //  Get main pos: A(b=c,d=e) -> A 
+            return result.replaceAll("^([^\\(]+)(\\s*\\(.*\\))?$", "$1");
+        } else {
+            //  Get feature: A(b=c,d=e) -> e  (if field == d)
+            String featuresString = result.replaceAll("^[^\\(]+(\\s*\\((.*)\\))?$", "$2");
+            return Arrays.stream(featuresString.split(","))
+                .map(feat -> feat.split("="))
+                .filter(featParts -> featParts[0].trim().equals(field))
+                .map(featParts -> featParts[1].trim())
+                .findFirst()
+                .orElse("");
+        }
     }
 
     private String opStrip(String result, Map<String, String> param) {

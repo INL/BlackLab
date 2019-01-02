@@ -183,7 +183,7 @@ public class HitsFromQueryParallel extends Hits {
     @Override
     protected void ensureResultsRead(int number) {
         synchronized (this) {
-            if (number < 0 && !parallelSpansReaderTasksStarted) {
+            if (number < 0 && !parallelSpansReaderTasksStarted && !allSourceSpansFullyRead) {
                 // We want all the hits. Start tasks to fetch hits from all SpansReaders in parallel.
                 startParallelSpansReaderTasks();
                 parallelSpansReaderTasksStarted = true;
@@ -288,8 +288,10 @@ public class HitsFromQueryParallel extends Hits {
                 maxStats.setHitsProcessedExceededMaximum();
                 maxStats.setHitsCountedExceededMaximum();
                 
-                for (SpansReader reader: spansReaders) {
-                    reader.interrupt();
+                if (spansReaders != null) {
+                    for (SpansReader reader: spansReaders) {
+                        reader.interrupt();
+                    }
                 }
                 
                 throw e;

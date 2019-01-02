@@ -200,6 +200,9 @@ public class OldConfigReader extends YamlJsonReader {
             case "zipFilesMaxOpen":
                 config.setZipFilesMaxOpen(integer(e));
                 break;
+            case "maxMetadataValuesToStore":
+                config.setMaxMetadataValuesToStore(integer(e));
+                break;
             default:
                 throw new InvalidConfiguration("Unknown key " + e.getKey() + " in indexing section");
             }

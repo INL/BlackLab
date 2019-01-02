@@ -1,10 +1,13 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
+import java.util.Set;
 
 /** An annotation on an annotated field. */
 public interface Annotation {
-	
+
+    IndexMetadata indexMetadata();
+    
 	/** @return field for which this is an annotation */
 	AnnotatedField field();
 
@@ -16,8 +19,26 @@ public interface Annotation {
 	 */
     String subName();
     
+    /**
+     * Is this a subannotation?
+     * @return true if is, false if not
+     */
     boolean isSubannotation();
+    
+    /**
+     * If this is a subannotation, return its parent annotation.
+     * 
+     * @return parent annotation or null if this is not a subannotation
+     */
+    Annotation parentAnnotation();
 
+    /**
+     * What type of UI should be shown for this annotation?
+     * 
+     * Note that BlackLab doesn't do anything with this value; it is merely a convenience for the frontend.
+     * 
+     * @return desired UI type
+     */
     String uiType();
 
     String description();
@@ -82,6 +103,8 @@ public interface Annotation {
     /**
      * Get subannotation descriptor.
      * 
+     * Only valid for old-style indexes! (IndexMetadata.subannotationsStoredWithParent() == true)
+     * 
      * Note that subannotations are not (yet) declared in index structure,
      * so this will always succeed, even if the subannotation wasn't actually
      * indexed. In that case, no hits will be found.
@@ -90,6 +113,15 @@ public interface Annotation {
      * @return subannotation descriptor
      */
     Annotation subannotation(String subName);
+
+    /**
+     * Get names of the subannotations for this annotation.
+     * 
+     * Only valid for new-style indexes! (IndexMetadata.subannotationsStoredWithParent() == false)
+     * 
+     * @return names of annotations that are considered subannotations of this annotation
+     */
+    Set<String> subannotationNames();
     
     @Override
     boolean equals(Object obj);
@@ -97,5 +129,21 @@ public interface Annotation {
     @Override
     int hashCode();
 
+    /**
+     * Return prefix for the value we're searching for, if any.
+     * 
+     * We used to index subannotations in the same field as their parent annotation,
+     * with the values prefixed. We don't do this anymore, but for old indexes,
+     * this is still relevant.
+     * 
+     * @return
+     */
+    default String subpropValuePrefix() {
+        if (isSubannotation() && indexMetadata().subannotationsStoredWithParent())
+            return AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR + subName() + AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
+        return "";
+    }
+
+    void setSubAnnotation(Annotation parentAnnotation);
     
 }

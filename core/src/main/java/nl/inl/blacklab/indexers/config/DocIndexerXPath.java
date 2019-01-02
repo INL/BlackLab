@@ -36,6 +36,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
@@ -209,7 +210,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
-            processAnnotatedField(annotatedField);
+            if (!annotatedField.isDummyForStoringLinkedDocuments())
+                processAnnotatedField(annotatedField);
         }
 
         // For each configured metadata block..
@@ -539,104 +541,118 @@ public class DocIndexerXPath extends DocIndexerConfig {
             apBase.evalXPath();
             releaseAutoPilot(apBase);
         }
-
-        String valuePath = annotation.getValuePath();
-
-        // See if we want to capture any values and substitute them into the XPath
-        int i = 1;
-        for (String captureValuePath : annotation.getCaptureValuePaths()) {
-            AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
-            String value = apCaptureValuePath.evalXPathToString();
-            releaseAutoPilot(apCaptureValuePath);
-            valuePath = valuePath.replace("$" + i, value);
-            i++;
-        }
-
-        // Find matches for this annotation.
-        findAnnotationMatches(annotation, null, valuePath, indexAtPositions);
-
-        // For each configured subannotation...
-        for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
-            // Subannotation configs without a valuePath are just for
-            // adding information about subannotations captured in forEach's,
-            // such as extra processing steps
-            if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
-                continue;
-
-            // Capture this subannotation value
-            AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
-            if (subAnnot.isForEach()) {
-                // "forEach" subannotation specification
-                // (allows us to capture multiple subannotations with 3 XPath expressions)
-                navpush();
-                AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
-                AutoPilot apName = acquireAutoPilot(subAnnot.getName());
-                while (apForEach.evalXPath() != -1) {
-                    // Find the name and value for this forEach match
-                    apName.resetXPath();
-                    String name = apName.evalXPathToString();
-                    apValue.resetXPath();
-                    String value = apValue.evalXPathToString();
-                    value = processString(value, subAnnot.getProcess());
-                    ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(name);
-                    if (actualSubAnnot != null) {
-                        // Also apply process defined in named subannotation, if any
-                        value = processString(value, actualSubAnnot.getProcess());
-                    }
-                    subAnnotation(annotation.getName(), name, value, indexAtPositions);
-                }
-                releaseAutoPilot(apForEach);
-                releaseAutoPilot(apName);
-                navpop();
-            } else {
-                // Regular metadata field; just the fieldName and an XPath expression for the value
-                findAnnotationMatches(annotation, subAnnot, valuePath, indexAtPositions);
+        try {
+            String valuePath = annotation.getValuePath();
+            if (valuePath == null) {
+                // No valuePath given. Assume this will be captures using forEach.
+                return;
             }
-            releaseAutoPilot(apValue);
-        }
-
-        if (basePath != null) {
-            // We pushed when we navigated to the base element; pop now.
-            navpop();
+    
+            // See if we want to capture any values and substitute them into the XPath
+            int i = 1;
+            for (String captureValuePath : annotation.getCaptureValuePaths()) {
+                AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
+                String value = apCaptureValuePath.evalXPathToString();
+                releaseAutoPilot(apCaptureValuePath);
+                valuePath = valuePath.replace("$" + i, value);
+                i++;
+            }
+    
+            // Find matches for this annotation.
+            String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
+    
+            // For each configured subannotation...
+            for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
+                // Subannotation configs without a valuePath are just for
+                // adding information about subannotations captured in forEach's,
+                // such as extra processing steps
+                if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
+                    continue;
+    
+                // Capture this subannotation value
+                AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
+                if (subAnnot.isForEach()) {
+                    // "forEach" subannotation specification
+                    // (allows us to capture multiple subannotations with 3 XPath expressions)
+                    navpush();
+                    AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
+                    AutoPilot apName = acquireAutoPilot(subAnnot.getName());
+                    while (apForEach.evalXPath() != -1) {
+                        // Find the name and value for this forEach match
+                        apName.resetXPath();
+                        String name = apName.evalXPathToString();
+                        apValue.resetXPath();
+                        String value = apValue.evalXPathToString();
+                        value = processString(value, subAnnot.getProcess());
+                        ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(name);
+                        if (actualSubAnnot != null) {
+                            // Also apply process defined in named subannotation, if any
+                            value = processString(value, actualSubAnnot.getProcess());
+                        }
+                        // Index the value with the actual annotation it's for
+                        annotation(annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name, value, 1, indexAtPositions);
+                    }
+                    releaseAutoPilot(apForEach);
+                    releaseAutoPilot(apName);
+                    navpop();
+                } else {
+                    // Regular subannotation; just the fieldName and an XPath expression for the value
+                    String subValuePath = subAnnot.getValuePath();
+                    String reuseValue = subValuePath.equals(valuePath) ? annotValue : null;
+                    findAnnotationMatches(subAnnot, subValuePath, indexAtPositions, reuseValue);
+                }
+                releaseAutoPilot(apValue);
+            }
+        } finally {
+            if (basePath != null) {
+                // We pushed when we navigated to the base element; pop now.
+                navpop();
+            }
         }
     }
 
-    protected void findAnnotationMatches(ConfigAnnotation annotation, ConfigAnnotation subAnnot, String valuePath,
-            List<Integer> indexAtPositions)
+    protected String findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
+            List<Integer> indexAtPositions, String reuseValueFromParentAnnot)
             throws XPathParseException, XPathEvalException, NavException {
-        AutoPilot apValuePath = acquireAutoPilot(valuePath);
-        if (annotation.isMultipleValues()) {
-            // Multiple matches will be indexed at the same position.
-            AutoPilot apEvalToString = acquireAutoPilot(".");
-            boolean firstValue = true;
-            while (apValuePath.evalXPath() != -1) {
-                apEvalToString.resetXPath();
-                String annotValue = apEvalToString.evalXPathToString();
-                annotValue = processString(annotValue, annotation.getProcess());
-                if (subAnnot == null)
-                    annotation(annotation.getName(), annotValue, firstValue ? 1 : 0, indexAtPositions);
-                else
-                    subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
-                firstValue = false;
-            }
-            releaseAutoPilot(apEvalToString);
-
-            // No annotations have been added, the result of the xPath query must have been empty.
-            if (firstValue) {
-                // Add default value
-                String annotValue = processString("", annotation.getProcess());
+        String annotValueForReuse = null;
+        if (reuseValueFromParentAnnot == null) {
+            navpush();
+            AutoPilot apValuePath = acquireAutoPilot(valuePath);
+            if (annotation.isMultipleValues()) {
+                // Multiple matches will be indexed at the same position.
+                AutoPilot apEvalToString = acquireAutoPilot(".");
+                boolean firstValue = true;
+                while (apValuePath.evalXPath() != -1) {
+                    apEvalToString.resetXPath();
+                    String annotValue = apEvalToString.evalXPathToString();
+                    annotValue = processString(annotValue, annotation.getProcess());
+                    int increment = firstValue ? 1 : 0;
+                    annotation(annotation.getName(), annotValue, increment, indexAtPositions);
+                    firstValue = false;
+                }
+                releaseAutoPilot(apEvalToString);
+    
+                // No annotations have been added, the result of the xPath query must have been empty.
+                if (firstValue) {
+                    // Add default value
+                    String annotValue = processString("", annotation.getProcess());
+                    annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+                }
+            } else {
+                // Single value expected
+                annotValueForReuse = apValuePath.evalXPathToString();
+                String annotValue = processString(annotValueForReuse, annotation.getProcess());
                 annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
+            releaseAutoPilot(apValuePath);
+            navpop();
         } else {
-            // Single value expected
-            String annotValue = apValuePath.evalXPathToString();
-            annotValue = processString(annotValue, annotation.getProcess());
-            if (subAnnot == null)
-                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
-            else
-                subAnnotation(annotation.getName(), subAnnot.getName(), annotValue, indexAtPositions);
+            // We can reuse the value from the parent annotation, with different processing
+            annotValueForReuse = reuseValueFromParentAnnot;
+            String annotValue = processString(annotValueForReuse, annotation.getProcess());
+            annotation(annotation.getName(), annotValue, 1, indexAtPositions);
         }
-        releaseAutoPilot(apValuePath);
+        return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath
     }
 
     @Override

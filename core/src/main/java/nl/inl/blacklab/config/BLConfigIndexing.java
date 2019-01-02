@@ -1,5 +1,7 @@
 package nl.inl.blacklab.config;
 
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
+
 public class BLConfigIndexing {
     boolean downloadAllowed = false;
     
@@ -10,6 +12,8 @@ public class BLConfigIndexing {
     int downloadCacheMaxFileSizeMegs = 100;
     
     int zipFilesMaxOpen = 10;
+    
+    int maxMetadataValuesToStore = MetadataFieldImpl.maxMetadataValuesToStore();
 
     public boolean isDownloadAllowed() {
         return downloadAllowed;
@@ -50,4 +54,14 @@ public class BLConfigIndexing {
     public void setZipFilesMaxOpen(int zipFilesMaxOpen) {
         this.zipFilesMaxOpen = zipFilesMaxOpen;
     }
+
+    public int getMaxMetadataValuesToStore() {
+        return maxMetadataValuesToStore;
+    }
+
+    public void setMaxMetadataValuesToStore(int maxMetadataValuesToStore) {
+        this.maxMetadataValuesToStore = maxMetadataValuesToStore;
+        MetadataFieldImpl.setMaxMetadataValuesToStore(maxMetadataValuesToStore);
+    }
+    
 }

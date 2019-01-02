@@ -13,6 +13,8 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.DocValuesType;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -67,10 +69,17 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         public boolean exists(String name) {
             return annots.containsKey(name);
         }
+
+        @Override
+        public boolean isEmpty() {
+            return annots.isEmpty();
+        }
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
+    private IndexMetadata indexMetadata;
+    
     /** This field's annotations, sorted by name */
     private Map<String, AnnotationImpl> annots;
     
@@ -89,6 +98,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     /** Is the field length in tokens stored? */
     private boolean lengthInTokens;
 
+    /** Does the length field contain DocValues? */
+    private DocValuesType lengthInTokensDocValuesType = DocValuesType.NONE;
+
     /** Are there XML tag locations stored for this field? */
     private boolean xmlTags;
 
@@ -105,8 +117,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     private AnnotationsImpl annotationsImpl;
 
-    AnnotatedFieldImpl(String name) {
+    AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
+        this.indexMetadata = indexMetadata;
         annots = new TreeMap<String, AnnotationImpl>();
         annotationsDisplayOrder = new ArrayList<>();
         annotationOrderComparator = new Comparator<AnnotationImpl>() {
@@ -190,8 +203,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      * field. See what type it is and update our fields accordingly.
      * 
      * @param parts parts of the Lucene index field name
+     * @param fi the field's FieldInfo structure 
      */
-    synchronized void processIndexField(String[] parts) {
+    synchronized void processIndexField(String[] parts, FieldInfo fi) {
         ensureNotFrozen();
     
         // See if this is a builtin bookkeeping field or a annotation.
@@ -216,6 +230,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             case LENGTH_TOKENS:
                 // Annotated field has length in tokens
                 lengthInTokens = true;
+                lengthInTokensDocValuesType = fi.getDocValuesType();
                 return;
             }
             throw new BlackLabRuntimeException();
@@ -243,7 +258,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         ensureNotFrozen();
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
-            pd = new AnnotationImpl(this, name);
+            pd = new AnnotationImpl(indexMetadata, this, name);
             putAnnotation(pd);
         }
         return pd;
@@ -268,6 +283,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             mainAnnotationName = null;
             //return;
         }
+        
+        if (annots.isEmpty())
+            return; // dummy field for storing linked documents; has no annotations
     
         AnnotationImpl firstAnnotation = null;
         for (AnnotationImpl pr : annots.values()) {
@@ -332,6 +350,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     public String offsetsField() {
         AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
+    }
+
+    @Override
+    public boolean hasTokenLengthDocValues() {
+        return lengthInTokensDocValuesType != DocValuesType.NONE;
     }
 
 }

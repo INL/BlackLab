@@ -12,7 +12,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -68,7 +67,8 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
 
     protected static <T> List<T> doWindow(Results<T> results, int first, int number) {
         if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
-            throw new BlackLabRuntimeException("First hit out of range");
+            //throw new BlackLabRuntimeException("First hit out of range");
+            return Collections.emptyList();
         }
     
         // Auto-clamp number

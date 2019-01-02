@@ -34,6 +34,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.logging.LogDatabaseImpl;
+import nl.inl.blacklab.server.requesthandlers.ElementNames;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -88,6 +89,7 @@ public class BlackLabServer extends HttpServlet {
                 // load blacklab's internal config before doing anything
                 // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
                 BlackLab.setConfig(config.getBLConfig());
+                ElementNames.setUseOldElementNames(config.getProtocol().isUseOldElementNames());
                 searchManager = new SearchManager(config);
             } catch (IOException e) {
                 throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);

@@ -33,7 +33,7 @@ public class ConfigAnnotation {
      * If null: regular annotation definition. Otherwise, find all nodes matching
      * this XPath, then evaluate name and valuePath as XPaths for each matching
      * node, adding a subannotation value for each. NOTE: forEach is only supported
-     * for subannotations, because all main annotations need to be known from the start.
+     * for subannotations. All subannotations need to be declared at the start, however.
      */
     private String forEachPath;
 
@@ -54,7 +54,7 @@ public class ConfigAnnotation {
      * (i.e. there's no subsubannotations), although we could process more levels if
      * desired.
      */
-    private List<ConfigAnnotation> subAnnotations = new ArrayList<>();
+    private List<ConfigAnnotation> subannotations = new ArrayList<>();
 
     /** Our subannotations (except forEach's) by name. */
     private Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
@@ -90,8 +90,8 @@ public class ConfigAnnotation {
     public void validate() {
         String t = "annotation";
         ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
-        ConfigInputFormat.req(valuePath, t, "valuePath");
-        for (ConfigAnnotation s : subAnnotations)
+        //ConfigInputFormat.req(valuePath, t, "valuePath");
+        for (ConfigAnnotation s : subannotations)
             s.validate();
         for (ConfigProcessStep step : process)
             step.validate();
@@ -106,7 +106,7 @@ public class ConfigAnnotation {
         result.setUiType(uiType);
         result.setBasePath(basePath);
         result.captureValuePaths.addAll(captureValuePaths);
-        for (ConfigAnnotation a : subAnnotations) {
+        for (ConfigAnnotation a : subannotations) {
             result.addSubAnnotation(a.copy());
         }
         result.setForwardIndex(forwardIndex);
@@ -128,7 +128,7 @@ public class ConfigAnnotation {
 
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
-        if (valuePath.matches("\\d+"))
+        if (valuePath != null && valuePath.matches("\\d+"))
             valuePathInt = Integer.parseInt(valuePath);
     }
 
@@ -149,7 +149,7 @@ public class ConfigAnnotation {
     }
 
     public List<ConfigAnnotation> getSubAnnotations() {
-        return Collections.unmodifiableList(subAnnotations);
+        return Collections.unmodifiableList(subannotations);
     }
 
     public ConfigAnnotation getSubAnnotation(String name) {
@@ -157,7 +157,7 @@ public class ConfigAnnotation {
     }
 
     public void addSubAnnotation(ConfigAnnotation subAnnotation) {
-        subAnnotations.add(subAnnotation);
+        subannotations.add(subAnnotation);
         if (!subAnnotation.isForEach())
             subAnnotationsByName.put(subAnnotation.getName(), subAnnotation);
     }
@@ -237,6 +237,11 @@ public class ConfigAnnotation {
 
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
+    }
+
+    @Override
+    public String toString() {
+        return "ConfigAnnotation [name=" + name + "]";
     }
 
 }

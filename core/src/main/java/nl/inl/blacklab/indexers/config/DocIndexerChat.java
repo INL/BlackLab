@@ -590,7 +590,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         String[] words = line.trim().split("\\s+");
         for (String word : words) {
             beginWord();
-            for (ConfigAnnotation annot : currentAnnotatedField.getAnnotations().values()) {
+            for (ConfigAnnotation annot : currentAnnotatedField.getAnnotationsFlattened().values()) {
                 String processed = processString(word, annot.getProcess());
                 annotation(annot.getName(), processed, 1, null);
             }

@@ -63,5 +63,16 @@ public class HitPropertyDocumentId extends HitProperty {
     public String serialize() {
         return serializeReverse() + "docid";
     }
+
+    @Override
+    public DocProperty docPropsOnly() {
+        DocPropertyId result = new DocPropertyId();
+        return reverse ? result.reverse() : result;
+    }
+
+    @Override
+    public PropertyValue docPropValues(PropertyValue value) {
+        return value;
+    }
     
 }

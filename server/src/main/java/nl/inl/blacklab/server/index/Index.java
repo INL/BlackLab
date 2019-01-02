@@ -46,7 +46,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  * suddenly be closed, or begin indexing new data, or even be deleted.
  */
 public class Index {
-    
+
     //private static final Logger logger = LogManager.getLogger(Index.class);
 
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
@@ -209,7 +209,7 @@ public class Index {
      *
      * @return the index metadata
      * @throws InternalServerError if index couldn't be opened
-     * @throws IndexTooOld if the index was too old to open by this versio of BlackLab 
+     * @throws IndexTooOld if the index was too old to open by this versio of BlackLab
      */
     public synchronized IndexMetadata getIndexMetadata() throws InternalServerError, IndexTooOld {
         try {
@@ -232,7 +232,7 @@ public class Index {
     public synchronized IndexStatus getStatus() throws BlsException {
         if (this.indexer != null && this.indexer.isOpen())
             return IndexStatus.INDEXING;
-        
+
         return this.blIndex().isEmpty() ? IndexStatus.EMPTY : IndexStatus.AVAILABLE;
     }
 
@@ -244,7 +244,7 @@ public class Index {
      * @throws ServiceUnavailable if the index could not be opened due to currently
      *             ongoing indexing
      * @throws InternalServerError if there was some other error opening the index
-     * @throws IndexTooOld if the index was too old to open by this version of BlackLab 
+     * @throws IndexTooOld if the index was too old to open by this version of BlackLab
      */
     private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError, IndexTooOld {
         cleanupClosedIndexerOrThrow();
@@ -283,7 +283,7 @@ public class Index {
         cleanupClosedIndexerOrThrow();
         close(); // Close any BlackLabIndex that is still in search mode
         try {
-            this.indexer = Indexer.openIndex(this.dir);
+            this.indexer = Indexer.openIndex(searchMan.blackLabInstance().openForWriting(this.dir, false), null);
             indexer.setUseThreads(true);
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);
@@ -297,7 +297,7 @@ public class Index {
      * is not currently Indexing.
      *
      * @return the listener, or null when there is no ongoing indexing.
-     * @throws BlsException 
+     * @throws BlsException
      */
     public synchronized IndexListener getIndexerListener() throws BlsException {
         // Don't return inderListener for an Indexer that has been closed

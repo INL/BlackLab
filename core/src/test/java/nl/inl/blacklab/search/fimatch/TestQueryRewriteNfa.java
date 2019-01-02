@@ -50,8 +50,10 @@ public class TestQueryRewriteNfa {
     @AfterClass
     public static void tearDown() {
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
-        index.close();
-        testIndex.close();
+        if (index != null)
+            index.close();
+        if (testIndex != null)
+            testIndex.close();
     }
 
     static TextPattern getPatternFromCql(String cqlQuery) {

@@ -61,4 +61,9 @@ public class ConfigAnnotationGroup {
         this.addRemainingAnnotations = addRemainingAnnotations;
     }
 
+    @Override
+    public String toString() {
+        return "ConfigAnnotationGroup [name=" + name + "]";
+    }
+
 }

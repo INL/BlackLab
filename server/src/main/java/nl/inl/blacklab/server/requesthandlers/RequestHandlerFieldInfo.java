@@ -104,7 +104,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     public static void describeMetadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues) {
         ds.startMap();
         // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES); 
+        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
 
         // Assemble response
         if (indexName != null)
@@ -159,7 +159,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
         ds.endMap();
     }
-    
+
     public static String sensitivitySettingDesc(Annotation annotation) {
         String sensitivityDesc;
         if (annotation.hasSensitivity(MatchSensitivity.SENSITIVE)) {
@@ -178,20 +178,27 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         return sensitivityDesc;
     }
 
-    public static void describeAnnotatedField(DataStream ds, String indexName, 
+    public static void describeAnnotatedField(DataStream ds, String indexName,
             AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+        if (fieldDesc.isDummyFieldToStoreLinkedDocuments())
+            return; // skip this, not really an annotated field, just exists to store linked (metadata) document.
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
         Annotations annotations = fieldDesc.annotations();
-        ds.entry("fieldName", fieldDesc.name())
+        ds
+                .entry("fieldName", fieldDesc.name())
                 .entry(ElementNames.isAnnotatedField, true)
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
-                .entry("hasLengthTokens", fieldDesc.hasLengthTokens())
-                .entry("mainProperty", annotations.main().name());
+                .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
+        ds.entry(ElementNames.mainProperty, annotations.main().name());
+        ds.startEntry("displayOrder").startList();
+        annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
+        ds.endList().endEntry();
+
         ds.startEntry(ElementNames.annotations).startMap();
         for (Annotation annotation: annotations) {
             ds.startAttrEntry(ElementNames.annotation, "name", annotation.name()).startMap();
@@ -207,7 +214,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("isInternal", annotation.isInternal());
             AnnotationSensitivity as = annotation.sensitivity(annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE);
             String luceneField = as.luceneField();
-            if (showValuesFor.contains(annotation.name())) {
+            if (annotationMatches(annotation.name(), showValuesFor)) {
                 Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField,
                         MAX_FIELD_VALUES + 1);
                 ds.startEntry("values").startList();
@@ -222,24 +229,50 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 ds.endList().endEntry();
                 ds.entry("valueListComplete", values.size() <= MAX_FIELD_VALUES);
             }
-            if (showSubpropsFor.contains(annotation.name())) {
-                Map<String, Set<String>> subprops = LuceneUtil.getSubprops(index.reader(), luceneField);
-                ds.startEntry("subproperties").startMap();
-                for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
-                    String name = subprop.getKey();
-                    Set<String> values = subprop.getValue();
-                    ds.startAttrEntry("subproperty", "name", name).startList();
-                    for (String value : values) {
-                        ds.item("value", value);
+            boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
+            if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
+                if (subannotationsStoredWithParent) {
+                    // Older index, where the subannotations are stored in the same Lucene field as their parent annotation.
+                    // Detecting these requires enumerating all terms, so only do it when asked.
+                    Map<String, Set<String>> subprops = LuceneUtil.getOldSingleFieldSubprops(index.reader(), luceneField);
+                    ds.startEntry(ElementNames.subannotations).startMap();
+                    for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
+                        String name = subprop.getKey();
+                        Set<String> values = subprop.getValue();
+                        ds.startAttrEntry(ElementNames.subannotation, "name", name).startList();
+                        for (String value : values) {
+                            ds.item("value", value);
+                        }
+                        ds.endList().endAttrEntry();
                     }
-                    ds.endList().endAttrEntry();
+                    ds.endMap().endEntry();
+                } else if (!annotation.subannotationNames().isEmpty()) {
+                    // Newer index, where the subannotations are stored in their own Lucene fields.
+                    // Always show these.
+                    ds.startEntry(ElementNames.subannotations).startList();
+                    for (String name: annotation.subannotationNames()) {
+                        ds.item(ElementNames.subannotation, name);
+                    }
+                    ds.endList().endEntry();
                 }
-                ds.endMap().endEntry();
+            }
+            if (annotation.isSubannotation()) {
+                ds.entry("parentAnnotation", annotation.parentAnnotation().name());
             }
             ds.endMap().endAttrEntry();
         }
         ds.endMap().endEntry();
         ds.endMap();
+    }
+
+    private static boolean annotationMatches(String name, Set<String> showValuesFor) {
+        //return showValuesFor.contains(name);
+        for (String expr: showValuesFor) {
+            if (name.matches("^" + expr + "$")) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

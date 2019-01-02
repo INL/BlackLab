@@ -306,7 +306,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     .append("<span class=\"word\">");
 
             // Extract lemma
-            if (lemmaAnnot != null && lemmaAnnot != wordAnnot) {
+            if (lemmaAnnot != null && lemmaAnnot != wordAnnot && lemmaAnnot.getValuePath() != null) {
                 xslt.append("<xsl:attribute name=\"title\">")
                         .append("<xsl:value-of select='"
                                 + XslGenerator.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()) + "'/>")

@@ -61,4 +61,10 @@ public class ConfigMetadataFieldGroup {
         this.addRemainingFields = addRemainingFields;
     }
 
+    @Override
+    public String toString() {
+        return "ConfigMetadataFieldGroup [name=" + name + "]";
+    }
+
+    
 }

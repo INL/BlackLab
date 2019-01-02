@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -142,7 +142,7 @@ public class FileProcessor implements AutoCloseable {
             };
             try (FileProcessor proc = new FileProcessor(true, false, true)) {
                 proc.setFileHandler(fileCapturer);
-                proc.processFile(f);
+                proc.processFile(f, "");
             } catch (FileNotFoundException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -154,6 +154,9 @@ public class FileProcessor implements AutoCloseable {
             try {
                 ZipFile z = ZipHandleManager.openZip(f);
                 ZipEntry e = z.getEntry(pathInsideArchive);
+                if (e == null) {
+                    throw new BlackLabRuntimeException("Linked document " + pathInsideArchive + " not found in archive " + f);
+                }
                 try (InputStream is = z.getInputStream(e)) {
                     return IOUtils.toByteArray(is);
                 }
@@ -165,7 +168,7 @@ public class FileProcessor implements AutoCloseable {
         }
     }
 
-    
+
     /**
      * Restrict the files we handle to a file glob? Note that this pattern is not
      * applied to directories, and directories within archives. It is also not
@@ -233,9 +236,30 @@ public class FileProcessor implements AutoCloseable {
         setFileNameGlob("*");
 
         // We always use an ExecutorService to call our handlers to simplify our code
-        // When not using threads, the service is just a fancy wrapper around doing task.run() on the calling thread.
+        // When not using threads, the service is just a fancy wrapper around doing task.run() directly inside the calling thread.
         if (useThreads) {
-            executor = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 1));
+            // NOTE: we need to create our own executor instead of using Executors.newFixedThreadPool()
+            // Because that implementation has an unbounded job queue by default, we run the risk that we queue 50k jobs and eat up all memory
+            // So we provide our own queue that will block when it's full.
+            // We could just provide a default LinkedBlockingDeque, but the default behavior for the executor is to reject all jobs while the queue is full.
+            // To get around this, override the queue.offer() function used internally by the executor to queue jobs,
+            // and make it blocking (instead of returning false instantly, which would make the executor reject the job)
+            executor = new ThreadPoolExecutor(
+                Math.max(1, Runtime.getRuntime().availableProcessors() - 1),
+                Math.max(1, Runtime.getRuntime().availableProcessors() - 1), Integer.MAX_VALUE,
+                TimeUnit.DAYS,
+                new LinkedBlockingDeque<Runnable>(50) {
+                    @Override
+                    public boolean offer(Runnable r) {
+                        try {
+                            return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
+                        } catch (InterruptedException e) {
+                            return false;
+                        }
+                    }
+                }
+            );
+
             // Never throw RejectedExecutionException in the main thread
             // (this can rarely happen when the FileProcessor shut down from another thread (usually a task thread that encountered an exception?)
             // just in between checking state and submitting)
@@ -329,9 +353,10 @@ public class FileProcessor implements AutoCloseable {
      * {@link #processInputStream(String, InputStream, File)}.
      *
      * @param file file, directory or archive to process
+     * @param pathSoFar path so far, so we can report the path to the file
      * @throws FileNotFoundException
      */
-    public void processFile(File file) throws FileNotFoundException {
+    public void processFile(File file, String pathSoFar) throws FileNotFoundException {
         if (!file.exists())
             throw new FileNotFoundException("Input file or dir not found: " + file);
 
@@ -339,6 +364,7 @@ public class FileProcessor implements AutoCloseable {
             return;
 
         if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
+            pathSoFar += "/" + file.getName();
             for (File childFile : FileUtil.listFilesSorted(file)) {
                 if (closed)
                     return;
@@ -350,10 +376,10 @@ public class FileProcessor implements AutoCloseable {
                 }
 
                 if (recurseSubdirs || !childFile.isDirectory())
-                    processFile(childFile);
+                    processFile(childFile, pathSoFar);
             }
         } else {
-            processInputStream(file.getName(), new FileInputStream(file), file);
+            processInputStream(pathSoFar + "/" + file.getName(), new FileInputStream(file), file);
         }
     }
 

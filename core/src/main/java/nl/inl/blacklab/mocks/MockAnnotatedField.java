@@ -72,6 +72,11 @@ public class MockAnnotatedField implements AnnotatedField {
             public Annotation get(String name) {
                 return annotations.stream().filter(a -> a.name().equals(name)).findFirst().orElse(null);
             }
+
+            @Override
+            public boolean isEmpty() {
+                return annotations.isEmpty();
+            }
             
         };
     }
@@ -99,6 +104,11 @@ public class MockAnnotatedField implements AnnotatedField {
     @Override
     public String offsetsField() {
         return null;
+    }
+
+    @Override
+    public boolean hasTokenLengthDocValues() {
+        return false;
     }
     
 }

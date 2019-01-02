@@ -58,6 +58,10 @@ class TokenStreamWithOffsets extends TokenStream {
     private IntIterator startCharIt;
 
     private IntIterator endCharIt;
+    
+    private int currentStartChar = -1;
+
+    private int currentEndChar = -1;
 
     public TokenStreamWithOffsets(List<String> tokens, IntArrayList increments, IntArrayList startChar,
             IntArrayList endChar) {
@@ -77,10 +81,18 @@ class TokenStreamWithOffsets extends TokenStream {
     final public boolean incrementToken() {
         // Capture token contents
         if (iterator.hasNext()) {
+            // Set the term and position increment
             String term = iterator.next();
             termAttr.copyBuffer(term.toCharArray(), 0, term.length());
-            positionIncrementAttr.setPositionIncrement(incrementIt.next());
-            offsetAttr.setOffset(startCharIt.next(), endCharIt.next());
+            int positionIncrement = incrementIt.next();
+            positionIncrementAttr.setPositionIncrement(positionIncrement);
+            
+            // Find the appropriate start and end chars and set the offset
+            for (int i = 0; i < positionIncrement; i++) {
+                currentStartChar = startCharIt.next();
+                currentEndChar = endCharIt.next();
+            }
+            offsetAttr.setOffset(currentStartChar, currentEndChar);
             return true;
         }
         return false;

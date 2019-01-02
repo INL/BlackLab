@@ -630,6 +630,8 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
         AnnotationWriter annotation = getAnnotation(name);
+        if (annotation == null)
+            throw new InvalidInputFormatConfig("Tried to index annotation " + name + ", but it wasn't declared.");
         if (indexAtPositions == null) {
             if (name.equals("word"))
                 trace(value + " ");
@@ -639,25 +641,6 @@ public abstract class DocIndexerBase extends DocIndexer {
                 annotation.addValueAtPosition(value, position);
             }
         }
-    }
-
-    /**
-     * Index a subannotation.
-     *
-     * Can be used to add subannotation(s) at the current position (indexAtPositions
-     * == null), or to add annotations at specific positions (indexAtPositions
-     * contains positions). The latter is used for standoff annotations.
-     *
-     * @param mainName annotation name
-     * @param subName subannotation name
-     * @param value annotation value
-     * @param indexAtPositions if null: index at the current position; otherwise:
-     *            index at these positions
-     */
-    protected void subAnnotation(String mainName, String subName, String value, List<Integer> indexAtPositions) {
-        String sep = AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
-        String newVal = sep + subName + sep + value;
-        annotation(mainName, newVal, 0, indexAtPositions); // increment 0 because we don't want to advance to the next token yet
     }
 
     @Override

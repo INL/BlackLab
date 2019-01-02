@@ -40,6 +40,16 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
      *
      * @param criteria the desired criteria
      */
+    public DocPropertyMultiple(List<DocProperty> criteria) {
+        this.criteria = new ArrayList<>(criteria);
+    }
+
+    /**
+     * Quick way to create group criteria. Just call this method with the
+     * GroupCriterium object(s) you want.
+     *
+     * @param criteria the desired criteria
+     */
     public DocPropertyMultiple(DocProperty... criteria) {
         this.criteria = new ArrayList<>(Arrays.asList(criteria));
     }

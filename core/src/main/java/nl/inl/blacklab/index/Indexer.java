@@ -24,7 +24,7 @@ public interface Indexer {
     static Indexer createNewIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, true);
     }
-    
+
     static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, true, formatIdentifier, null);
     }
@@ -32,9 +32,13 @@ public interface Indexer {
     static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, false);
     }
-    
+
     static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, false, formatIdentifier, null);
+    }
+
+    static Indexer openIndex(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
+        return new IndexerImpl(writer, formatIdentifier);
     }
 
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
@@ -65,7 +69,7 @@ public interface Indexer {
     /**
      * Should we recursively index files in subdirectories (and archives files, if
      * that setting is on)?
-     * 
+     *
      * @param recurseSubdirs true if we should recurse into subdirs
      */
     void setRecurseSubdirs(boolean recurseSubdirs);
@@ -74,7 +78,7 @@ public interface Indexer {
 
     /**
      * Set the listener object that receives messages about indexing progress.
-     * 
+     *
      * @param listener the listener object to report to
      */
     void setListener(IndexListener listener);
@@ -92,7 +96,7 @@ public interface Indexer {
 
     /**
      * Set number of documents after which we should stop. Useful when testing.
-     * 
+     *
      * @param n number of documents after which to stop
      */
     void setMaxNumberOfDocsToIndex(int n);
@@ -116,13 +120,13 @@ public interface Indexer {
      */
     @Deprecated
     boolean isClosed();
-    
+
     /**
      * Is this indexer open?
-     * 
+     *
      * An indexer can be closed unexpectedly if e.g. the GC overhead limit
      * is exceeded.
-     * 
+     *
      * @return true if the indexer is open, false if not
      */
     boolean isOpen();
@@ -156,10 +160,10 @@ public interface Indexer {
      * @param documentName some (preferably unique) name for this document (for
      *            example, the file name or path)
      * @param reader where to index from
-     * 
+     *
      * @throws IOException if an I/O error occurred
      * @throws MalformedInputFile if the input file was invalid
-     * @throws PluginException if an error in a plugin occurred 
+     * @throws PluginException if an error in a plugin occurred
      */
     void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
 
@@ -175,7 +179,7 @@ public interface Indexer {
 
     /**
      * Index the file or directory specified.
-     * 
+     *
      * Indexes all files in a directory or archive (previously only indexed *.xml;
      * specify a glob if you want this behaviour back, see
      * {@link #index(File, String)}.
@@ -199,21 +203,21 @@ public interface Indexer {
 
     /**
      * Get our index directory
-     * 
+     *
      * @return the index directory
      */
     File indexLocation();
-    
+
     /**
      * The index we're writing to.
-     * 
+     *
      * @return index writer
      */
     BlackLabIndexWriter indexWriter();
-    
+
     /**
      * Set parameters we would like to be passed to the DocIndexer class
-     * 
+     *
      * @param indexerParam the parameters
      */
     void setIndexerParam(Map<String, String> indexerParam);
