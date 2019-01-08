@@ -35,6 +35,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
@@ -80,7 +82,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     private List<FragmentPosition> fragPosStack = new ArrayList<>();
 
     /** The config for the annotated field we're currently processing. */
-    private ConfigAnnotatedField currentAnnotatedField;
+    private ConfigAnnotatedField currentAnnotatedFieldConfig;
 
     @Override
     public void close() {
@@ -256,6 +258,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // (there's usually only one, but there's no reason to limit it)
         navpush();
         AutoPilot bodies = acquireAutoPilot(annotatedField.getContainerPath());
+        AnnotatedFieldWriter annotatedFieldWriter = getAnnotatedField(annotatedField.getName());
         while (bodies.evalXPath() != -1) {
 
             // First we find all inline elements (stuff like s, p, b, etc.) and store
@@ -332,10 +335,25 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 beginWord();
 
                 // For each configured annotation...
+                int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
                 for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
                     processAnnotation(annotation, null);
+                    AnnotationWriter annotWriter = getAnnotation(annotation.getName());
+                    int lvp = annotWriter.lastValuePosition();
+                    if (lastValuePosition < lvp) {
+                        lastValuePosition = lvp;
+                    }
                 }
 
+                // Add empty values to all lagging annotations
+                for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
+                    while (prop.lastValuePosition() < lastValuePosition) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                    }
+                }
+                
                 fragPos = FragmentPosition.AFTER_CLOSE_TAG;
                 endWord();
             }
@@ -603,6 +621,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 releaseAutoPilot(apValue);
             }
+            
         } finally {
             if (basePath != null) {
                 // We pushed when we navigated to the base element; pop now.
@@ -841,8 +860,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     protected void setCurrentAnnotatedField(ConfigAnnotatedField annotatedField) {
-        currentAnnotatedField = annotatedField;
-        setCurrentAnnotatedFieldName(currentAnnotatedField.getName());
+        currentAnnotatedFieldConfig = annotatedField;
+        setCurrentAnnotatedFieldName(currentAnnotatedFieldConfig.getName());
     }
 
 }

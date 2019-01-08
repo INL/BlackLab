@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -235,6 +236,21 @@ public class RequestHandlerHits extends RequestHandler {
             ds.entry("docPid", pid);
             ds.entry("start", hit.start());
             ds.entry("end", hit.end());
+
+            if (window.hasCapturedGroups()) {
+                Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
+                ds.startEntry("captureGroups").startList();
+
+                for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+                    ds.startItem("group").startMap();
+                    ds.entry("name", capturedGroup.getKey());
+                    ds.entry("start", capturedGroup.getValue().start());
+                    ds.entry("end", capturedGroup.getValue().end());
+                    ds.endMap().endItem();
+                }
+
+                ds.endList().endEntry();
+            }
 
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                 // Add concordance from original XML
