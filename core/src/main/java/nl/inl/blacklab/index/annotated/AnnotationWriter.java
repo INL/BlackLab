@@ -403,7 +403,9 @@ public class AnnotationWriter {
 //        } else {
             values = new ArrayList<>();
             increments = new IntArrayList();
-            payloads = new ArrayList<>();
+            if (payloads != null) {
+                payloads = new ArrayList<>();
+            }
 //        }
     }
 

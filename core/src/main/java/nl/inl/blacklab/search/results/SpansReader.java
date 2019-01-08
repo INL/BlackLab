@@ -30,7 +30,7 @@ public class SpansReader {
     private List<Hit> results = new ArrayList<>();
 
     /** Our captured groups, or null if we have none. */
-    protected CapturedGroupsImpl capturedGroups = null;
+    private CapturedGroupsImpl capturedGroups = null;
     
     /** Did we completely read our Spans object? */
     private boolean spansFullyRead = true;
@@ -187,4 +187,9 @@ public class SpansReader {
     public void interrupt() {
         shouldCancel = true;
     }
+    
+    public CapturedGroupsImpl capturedGroups() {
+        return capturedGroups;
+    }
+
 }

@@ -161,6 +161,10 @@ public class HitsFromQueryParallel extends Hits {
             currentSpansReader = null;
             itSpansReader = spansReaders.iterator();
             hitIndexInCurrentSpansReader = -1;
+
+            if (hitQueryContext.numberOfCapturedGroups() > 0) {
+                capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+            }
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -228,6 +232,7 @@ public class HitsFromQueryParallel extends Hits {
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
                     Hit hit = null;
+                    Span[] capturedGroupsForHit = null;
                     while (true) {
                         
                         if (currentSpansReader == null) {
@@ -254,6 +259,9 @@ public class HitsFromQueryParallel extends Hits {
                         } else {
                             // We're at the next hit
                             hit = spansResults.get(hitIndexInCurrentSpansReader);
+                            if (currentSpansReader.capturedGroups() != null) {
+                                capturedGroupsForHit = currentSpansReader.capturedGroups().get(hit);
+                            }
                             break;
                         }
                     }
@@ -272,10 +280,8 @@ public class HitsFromQueryParallel extends Hits {
                         previousHitDoc = hit.doc();
                     }
                     if (!maxHitsProcessed) {
-                        if (capturedGroups != null) {
-                            Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
-                            hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                        if (capturedGroups != null && capturedGroupsForHit != null) {
+                            capturedGroups.put(hit, capturedGroupsForHit);
                         }
                         results.add(hit);
                         if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
