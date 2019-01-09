@@ -128,15 +128,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
-            CapturedGroupsImpl capturedGroups = null;
-            if (hits.capturedGroups() != null) {
-                capturedGroups = new CapturedGroupsImpl(hits.capturedGroups().names());
-                for (Hit hit : hitList) {
-                    capturedGroups.put(hit, hits.capturedGroups().get(hit));
-                }
-            }
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, capturedGroups, groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
             results.add(group);
         }
