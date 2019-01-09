@@ -53,6 +53,20 @@ public abstract class Hits extends Results<Hit> {
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
+     * Does not copy the list, but reuses it.
+     *
+     * @param queryInfo information about the original query
+     * @param hits the list of hits to wrap, or null for empty Hits object
+     * @param capturedGroups the list of hits to wrap, or null for no captured groups
+     * @return hits found
+     */
+    public static Hits fromList(QueryInfo queryInfo, List<Hit> hits, CapturedGroups capturedGroups) {
+        return new HitsList(queryInfo, hits, capturedGroups);
+    }
+
+    /**
+     * Make a wrapper Hits object for a list of Hit objects.
+     *
      * Will create Hit objects from the arrays. Mainly useful for testing.
      * 
      * @param queryInfo information about the original query
