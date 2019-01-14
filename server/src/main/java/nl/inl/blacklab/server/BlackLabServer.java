@@ -65,7 +65,7 @@ public class BlackLabServer extends HttpServlet {
         super.init();
         logger.info("BlackLab Server ready.");
     }
-    
+
     private void readConfig() throws BlsException {
         try {
 
@@ -94,7 +94,7 @@ public class BlackLabServer extends HttpServlet {
             } catch (IOException e) {
                 throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
             }
-            
+
             // Open log database
             try {
                 String sqliteDatabase = searchManager.config().getLog().getSqliteDatabase();
@@ -108,7 +108,7 @@ public class BlackLabServer extends HttpServlet {
             } catch (IOException | ClassNotFoundException e) {
                 throw new RuntimeException("Error opening log database", e);
             }
-            
+
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);
         } catch (IOException e) {
@@ -118,7 +118,7 @@ public class BlackLabServer extends HttpServlet {
 
     /**
      * Process POST requests (add data to index)
-     * 
+     *
      * @throws ServletException
      */
     @Override
@@ -128,7 +128,7 @@ public class BlackLabServer extends HttpServlet {
 
     /**
      * Process PUT requests (create index)
-     * 
+     *
      * @throws ServletException
      */
     @Override
@@ -163,7 +163,7 @@ public class BlackLabServer extends HttpServlet {
         String allowOrigin = searchManager == null ? "*" : searchManager.config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null) {
         	resp.addHeader("Access-Control-Allow-Origin", allowOrigin);
-        	resp.addHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        	resp.addHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
         	resp.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         }
     }
@@ -242,7 +242,7 @@ public class BlackLabServer extends HttpServlet {
         boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : "blacklabResponse";
-        
+
         // === Handle the request
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
@@ -307,7 +307,7 @@ public class BlackLabServer extends HttpServlet {
 
     @Override
     public void destroy() {
-        
+
         try {
             if (logDatabase != null)
                 logDatabase.close();
@@ -324,7 +324,7 @@ public class BlackLabServer extends HttpServlet {
 
     /**
      * Provides a short description of this servlet.
-     * 
+     *
      * @return the description
      */
     @Override
