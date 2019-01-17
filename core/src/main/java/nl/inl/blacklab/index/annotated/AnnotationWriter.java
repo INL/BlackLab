@@ -367,8 +367,22 @@ public class AnnotationWriter {
                         // correct it.
                         increments.set(n + 1, increments.get(n + 1) - incr);
                     }
+                    break;
                 }
                 curPos -= increments.get(i); // go to previous value position
+            }
+            if (curPos == 0 && position >= 0) {
+                // Value should be inserted at the first position.
+                int n = 0;
+                values.add(n, storedValue);
+                int incr = position - curPos;
+                increments.addAtIndex(n, incr);
+                if (increments.size() > n + 1 && incr > 0) {
+                    // Inserted value wasn't the last value, so the
+                    // increment for the value after this is now wrong;
+                    // correct it.
+                    increments.set(n + 1, increments.get(n + 1) - incr);
+                }
             }
         }
 
