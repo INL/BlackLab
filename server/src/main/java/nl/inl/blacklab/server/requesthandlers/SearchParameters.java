@@ -277,7 +277,7 @@ public class SearchParameters {
         return getString("indexname");
     }
 
-    private BlackLabIndex blIndex() {
+    public BlackLabIndex blIndex() {
         try {
             return searchManager.getIndexManager().getIndex(getIndexName()).blIndex();
         } catch (Exception e) {

@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -66,6 +68,11 @@ public class DocPropertyId extends DocProperty {
     @Override
     public DocProperty reverse() {
         return new DocPropertyId(this, true);
+    }
+
+    @Override
+    public Query query(PropertyValue value) {
+        return null;
     }
 
 }

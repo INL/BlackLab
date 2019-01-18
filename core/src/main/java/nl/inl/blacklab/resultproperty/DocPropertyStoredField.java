@@ -15,7 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+
+import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene
@@ -114,6 +122,25 @@ public class DocPropertyStoredField extends DocProperty {
         } else if (!fieldName.equals(other.fieldName))
             return false;
         return true;
+    }
+
+    @Override
+    public Query query(PropertyValue value) {
+        if (value.toString().isEmpty())
+            return null; // @@@ cannot search for empty string (should use unknown value..?)
+        final boolean tokenizeField = false;
+        if (tokenizeField) {
+            String strValue = "\"" + value.toString().replaceAll("\\\"", "\\\\\"") + "\"";
+            try {
+                // @@@ NOTE: not all fields are tokenized! Some are lowercased but not tokenized...
+                return LuceneUtil.parseLuceneQuery(strValue, new BLDutchAnalyzer(), fieldName); // @@@ analyzer should be customizable
+            } catch (ParseException e) {
+                return null;
+            }
+        } else {
+            return new TermQuery(new Term(fieldName, StringUtil.stripAccents(value.toString().toLowerCase())));
+        }
+        //return new TermQuery(new Term(fieldName, strValue));
     }
 
 }

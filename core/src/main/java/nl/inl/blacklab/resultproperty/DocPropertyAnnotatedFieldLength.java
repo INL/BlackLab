@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
 
@@ -115,7 +117,10 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             return false;
         return true;
     }
-    
-    
+
+    @Override
+    public Query query(PropertyValue value) {
+        return null;
+    }
 
 }

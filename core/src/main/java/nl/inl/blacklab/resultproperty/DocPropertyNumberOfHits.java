@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -71,6 +73,11 @@ public class DocPropertyNumberOfHits extends DocProperty {
     @Override
     public DocProperty reverse() {
         return new DocPropertyNumberOfHits(this, true);
+    }
+
+    @Override
+    public Query query(PropertyValue value) {
+        return null;
     }
 
 }

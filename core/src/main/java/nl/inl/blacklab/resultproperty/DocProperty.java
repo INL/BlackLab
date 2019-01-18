@@ -20,6 +20,7 @@ import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.results.DocResult;
@@ -200,5 +201,12 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
             return false;
         return true;
     }
+
+    /**
+     * Generate a query matching the specified value for our property.
+     * @param value value to match
+     * @return query
+     */
+    public abstract Query query(PropertyValue value);
     
 }

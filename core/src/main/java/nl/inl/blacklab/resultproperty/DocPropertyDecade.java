@@ -15,6 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermRangeQuery;
+import org.apache.lucene.util.BytesRef;
+
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -130,6 +134,14 @@ public class DocPropertyDecade extends DocProperty {
         } else if (!fieldName.equals(other.fieldName))
             return false;
         return true;
+    }
+
+    @Override
+    public Query query(PropertyValue value) {
+        int decade = Integer.parseInt(value.toString());
+        String lowerValue = Integer.toString(decade);
+        String upperValue = Integer.toString(decade + 9);
+        return new TermRangeQuery(fieldName, new BytesRef(lowerValue), new BytesRef(upperValue), true, true);
     }
 
 }
