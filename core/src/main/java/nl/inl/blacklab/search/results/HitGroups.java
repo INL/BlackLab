@@ -129,7 +129,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             PropertyValue groupId = e.getKey();
             List<Hit> hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
             results.add(group);
         }

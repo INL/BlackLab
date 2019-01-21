@@ -340,7 +340,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
      * return the latter of the two values in the supplied PropertyValue.
      * 
-     * This is used for calculting the relative frequency when grouping on a metadata field.
+     * This is used for calculating the relative frequency when grouping on a metadata field.
      * 
      * @param value value to extract the values corresponding to DocProperty's from
      * @return metadata portion of this value, or null if there is none

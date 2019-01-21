@@ -25,6 +25,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
@@ -48,6 +50,8 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * A list of DocResult objects (document-level query results).
  */
 public class DocResults extends Results<DocResult> implements ResultGroups<Hit> {
+
+    static final Logger logger = LogManager.getLogger(DocResults.class);
 
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
@@ -500,6 +504,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             int totalTokens = -1;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
+                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
                     totalTokens = 0;
                     Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
@@ -523,6 +528,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             } else {
                 // Slow approach: get the stored field value from each Document
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
+                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
                 totalTokens = intSum(propTokens);

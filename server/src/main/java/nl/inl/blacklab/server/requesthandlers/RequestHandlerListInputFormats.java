@@ -303,27 +303,24 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
             String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
             xslt.append(XslGenerator.beginTemplate(wordBase))
-                    .append("<span class=\"word\">");
+                    .append("<span class=\"word\" data-toggle=\"tooltip\">");
 
             // Extract lemma
             if (lemmaAnnot != null && lemmaAnnot != wordAnnot && lemmaAnnot.getValuePath() != null) {
-                xslt.append("<xsl:attribute name=\"title\">")
+                xslt.append("<xsl:attribute name=\"data-lemma\">")
                         .append("<xsl:value-of select='"
-                                + XslGenerator.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()) + "'/>")
-                        .append("</xsl:attribute>")
-                        .append("<xsl:attribute name=\"data-toggle\">")
-                        .append("<xsl:text>tooltip</xsl:text>")
+                                + XslGenerator.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()).replace("'", "&apos;") + "'/>")
                         .append("</xsl:attribute>");
             }
 
             // extract word
             xslt.append("<xsl:value-of select=\""
-                    + XslGenerator.joinXpath(wordAnnot.getBasePath(), wordAnnot.getValuePath()) + "\"/>")
-                    .append("<xsl:text> </xsl:text>"); // space between words.
+                    + XslGenerator.joinXpath(wordAnnot.getBasePath(), wordAnnot.getValuePath()).replace("'", "&apos;") + "\"/>");
 
             // end word template
             xslt.append("</span>")
-                    .append(XslGenerator.endTemplate);
+                .append("<xsl:text> </xsl:text>") // space between words.
+                .append(XslGenerator.endTemplate);
 
             // Generate rules for inline tags
             for (ConfigInlineTag inlineTag : f.getInlineTags()) {
@@ -382,7 +379,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             xslt.append(
                     "<xsl:template match=\"/\" mode=\"pass2\">" +
                             "<xsl:choose>" +
-                            "<xsl:when test=\"" + wordBase + "\">" +
+                            "<xsl:when test=\"" + wordBase.replace("\"", "\"\"") + "\">" +
                             "<xsl:apply-templates/>" +
                             "</xsl:when>" +
                             "<xsl:otherwise>" +

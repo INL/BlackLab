@@ -134,7 +134,7 @@ public class AnnotationWriter {
      * names and filters for each way.
      */
     private Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
-    
+
     /** The main sensitivity (the one that gets character offsets if desired) */
     private String mainSensitivity;
 
@@ -171,7 +171,7 @@ public class AnnotationWriter {
 
     /**
      * Construct a AnnotationWriter object
-     * 
+     *
      * @param fieldWriter fieldwriter for our field
      * @param name annotation name
      * @param sensitivity ways to index this annotation, with respect to case- and
@@ -273,7 +273,7 @@ public class AnnotationWriter {
 
     /**
      * Add a value to the annotation.
-     * 
+     *
      * @param value value to add
      */
     final public void addValue(String value) {
@@ -367,8 +367,22 @@ public class AnnotationWriter {
                         // correct it.
                         increments.set(n + 1, increments.get(n + 1) - incr);
                     }
+                    break;
                 }
                 curPos -= increments.get(i); // go to previous value position
+            }
+            if (curPos == -1) {
+                // Value should be inserted at the first position.
+                int n = 0;
+                values.add(n, storedValue);
+                int incr = position - curPos;
+                increments.addAtIndex(n, incr);
+                if (increments.size() > n + 1 && incr > 0) {
+                    // Inserted value wasn't the last value, so the
+                    // increment for the value after this is now wrong;
+                    // correct it.
+                    increments.set(n + 1, increments.get(n + 1) - incr);
+                }
             }
         }
 
@@ -412,14 +426,14 @@ public class AnnotationWriter {
     public boolean hasPayload() {
         return payloads != null;
     }
-    
+
     public AnnotatedField field() {
         return fieldWriter.field();
     }
-    
+
     @Override
     public String toString() {
         return "AnnotationWriter(" + field() + "." + annotationName + ")";
     }
-    
+
 }

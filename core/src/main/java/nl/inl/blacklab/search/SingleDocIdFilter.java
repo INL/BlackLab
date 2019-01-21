@@ -22,7 +22,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  */
 public class SingleDocIdFilter extends Query {
 
-    int luceneDocId;
+    final int luceneDocId;
 
     public SingleDocIdFilter(int luceneDocId) {
         this.luceneDocId = luceneDocId;
@@ -92,4 +92,8 @@ public class SingleDocIdFilter extends Query {
         return "SingleDocIdFilter(" + luceneDocId + ")";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && luceneDocId == ((SingleDocIdFilter)obj).luceneDocId;
+    }
 }

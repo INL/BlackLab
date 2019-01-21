@@ -1,5 +1,14 @@
 # Change Log
 
+## Improvements in HEAD
+
+### New
+* BLS now reports capture groups (in a captureGroups element for each hit) (by @severian)
+
+### Fixed
+* Capture groups work with parallel hit fetching (by @severian)
+* HitGroups retain capture group information (by @severian)
+
 ## Improvements in 2.0.0-RC1
 
 ### New
