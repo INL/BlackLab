@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.transform.Source;
 
 import org.apache.lucene.document.Document;
 
@@ -28,9 +29,12 @@ public class RequestHandlerDocContents extends RequestHandler {
 
     boolean surroundWithRootElement;
 
-    Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
+    public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
+
             "(?:\\s+standalone\\s*=\\s*([\"'])(?:yes|no)\\3)?\\s*\\?>\\s*");
+    public static final Pattern NAMESPACE = Pattern.compile(" xmlns:[^=]+=\"[^\"]+\"");
+    public static final Pattern PREFIX = Pattern.compile("<[a-z]+:[^ ]+ | [a-z]+:[^=]+=\"");
 
     public RequestHandlerDocContents(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -110,6 +114,16 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (surroundWithRootElement) {
             // We've already outputted the XML declaration; don't do so again
             outputXmlDeclaration = false;
+            // here we may need to include namespace declarations
+            if (PREFIX.matcher(content).find()) {
+                // ophalen document root
+                String root = doc.contentsByCharPos(doc.index().mainAnnotatedField(), 0, 1024);
+                Matcher m = NAMESPACE.matcher(root);
+                while (m.find()) {
+                    System.out.println(m.group());
+                }
+            }
+
         }
         Matcher m = XML_DECL.matcher(content);
         boolean hasXmlDeclaration = m.find();
