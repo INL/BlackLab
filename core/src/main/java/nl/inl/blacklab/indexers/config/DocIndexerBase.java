@@ -10,10 +10,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
@@ -144,6 +146,11 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     private MetadataFetcher metadataFetcher;
 
+    /**
+     * What annotations where skipped because they were not declared?
+     */
+    Set<String> skippedAnnotations = new HashSet<>();
+    
     protected String getContentStoreName() {
         return contentStoreName;
     }
@@ -612,7 +619,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             punctuation.setLength(0);
     }
-
+    
     /**
      * Index an annotation.
      *
@@ -630,15 +637,21 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
         AnnotationWriter annotation = getAnnotation(name);
-        if (annotation == null)
-            throw new InvalidInputFormatConfig("Tried to index annotation " + name + ", but it wasn't declared.");
-        if (indexAtPositions == null) {
-            if (name.equals("word"))
-                trace(value + " ");
-            annotation.addValue(value, increment);
+        if (annotation != null) {
+            if (indexAtPositions == null) {
+                if (name.equals("word"))
+                    trace(value + " ");
+                annotation.addValue(value, increment);
+            } else {
+                for (Integer position : indexAtPositions) {
+                    annotation.addValueAtPosition(value, position);
+                }
+            }
         } else {
-            for (Integer position : indexAtPositions) {
-                annotation.addValueAtPosition(value, position);
+            // Annotation not declared; report, but keep going
+            if (!skippedAnnotations.contains(name)) {
+                skippedAnnotations.add(name);
+                logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
     }
