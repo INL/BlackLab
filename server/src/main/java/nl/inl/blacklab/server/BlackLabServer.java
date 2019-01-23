@@ -239,7 +239,7 @@ public class BlackLabServer extends HttpServlet {
         PrintWriter out = new PrintWriter(buf);
         DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
         ds.setOmitEmptyProperties(searchManager.config().getProtocol().isOmitEmptyProperties());
-        // TODO here we need to be able to add namespaces, or we make the requesthandler add a namespace wrapper
+        // here we need to be able to add namespaces, for this the root element needs xmlns attributes
         if (requestHandler.omitBlackLabResponseRootElement()) {
             ds.startDocument(rootEl);
         } else {
