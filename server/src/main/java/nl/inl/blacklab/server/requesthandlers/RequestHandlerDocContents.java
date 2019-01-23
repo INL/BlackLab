@@ -69,12 +69,6 @@ public class RequestHandlerDocContents extends RequestHandler {
         return !surroundWithRootElement;
     }
 
-    private final List<String> namespaceDeclarations = new ArrayList<>(2);
-
-    public List<String> getNamespaceDeclarations() {
-        return namespaceDeclarations;
-    }
-
     @Override
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
@@ -128,9 +122,10 @@ public class RequestHandlerDocContents extends RequestHandler {
                 String root = doc.contentsByCharPos(doc.index().mainAnnotatedField(), 0, 1024);
                 Matcher m = NAMESPACE.matcher(root);
                 while (m.find()) {
-                    namespaceDeclarations.add(m.group());
+                    ds.addNamespaceToRoot(m.group());
                 }
             }
+            ds.closeRoot();
 
         }
         Matcher m = XML_DECL.matcher(content);

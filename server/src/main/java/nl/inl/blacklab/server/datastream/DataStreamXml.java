@@ -54,19 +54,30 @@ public class DataStreamXml extends DataStream {
 
     @Override
     public DataStream startDocument(String rootEl) {
-        if (rootEl == null)
-            return this;
-        return startDocument(rootEl,Optional.empty());
+        return startDocument(rootEl,false);
     }
 
     @Override
-    public DataStream startDocument(String rootEl, Optional<List<String>> namespcaeDeclarations) {
+    public DataStream startDocumentLeaveOpen(String rootEl) {
+        return startDocument(rootEl,true);
+    }
+
+    @Override
+    public DataStream closeRoot() {
+        return endOpenEl();
+    }
+
+    @Override
+    public DataStream addNamespaceToRoot(String namespaceDeclaration) {
+        return print(" " + namespaceDeclaration);
+    }
+
+    private DataStream startDocument(String rootEl, boolean noClose) {
         if (rootEl == null)
             return this;
         outputProlog();
         startOpenEl(rootEl);
-        namespcaeDeclarations.orElse(Collections.emptyList()).forEach(s -> print(" " + s));
-        return endOpenEl();
+        return noClose ? this : endOpenEl();
     }
 
     @Override

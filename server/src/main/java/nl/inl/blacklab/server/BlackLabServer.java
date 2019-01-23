@@ -1,29 +1,6 @@
 package nl.inl.blacklab.server;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import nl.inl.blacklab.server.requesthandlers.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.server.config.BLSConfig;
@@ -36,8 +13,24 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.logging.LogDatabaseImpl;
+import nl.inl.blacklab.server.requesthandlers.ElementNames;
+import nl.inl.blacklab.server.requesthandlers.RequestHandler;
+import nl.inl.blacklab.server.requesthandlers.Response;
+import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class BlackLabServer extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
@@ -247,7 +240,11 @@ public class BlackLabServer extends HttpServlet {
         DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
         ds.setOmitEmptyProperties(searchManager.config().getProtocol().isOmitEmptyProperties());
         // TODO here we need to be able to add namespaces, or we make the requesthandler add a namespace wrapper
-        ds.startDocument(rootEl);
+        if (requestHandler.omitBlackLabResponseRootElement()) {
+            ds.startDocument(rootEl);
+        } else {
+            ds.startDocumentLeaveOpen(rootEl);
+        }
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
         DataStream es = DataStream.create(outputType, errorOut, prettyPrint, callbackFunction);

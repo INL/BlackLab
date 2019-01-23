@@ -197,7 +197,9 @@ public abstract class DataStream {
     }
 
     public abstract DataStream startDocument(String rootEl);
-    public abstract DataStream startDocument(String rootEl, Optional<List<String>> namespcaeDeclarations);
+    public abstract DataStream startDocumentLeaveOpen(String rootEl);
+    public abstract DataStream closeRoot();
+    public abstract DataStream addNamespaceToRoot(String namespaceDeclaration);
 
     public abstract DataStream endDocument(String rootEl);
 
