@@ -2,7 +2,9 @@ package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -54,8 +56,16 @@ public class DataStreamXml extends DataStream {
     public DataStream startDocument(String rootEl) {
         if (rootEl == null)
             return this;
+        return startDocument(rootEl,Optional.empty());
+    }
+
+    @Override
+    public DataStream startDocument(String rootEl, Optional<List<String>> namespcaeDeclarations) {
+        if (rootEl == null)
+            return this;
         outputProlog();
         startOpenEl(rootEl);
+        namespcaeDeclarations.orElse(Collections.emptyList()).forEach(s -> print(" " + s));
         return endOpenEl();
     }
 

@@ -1,11 +1,12 @@
 package nl.inl.blacklab.server.datastream;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.util.ServletUtil;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.util.ServletUtil;
+import java.util.Optional;
 
 /**
  * Class to stream out XML or JSON data.
@@ -196,6 +197,7 @@ public abstract class DataStream {
     }
 
     public abstract DataStream startDocument(String rootEl);
+    public abstract DataStream startDocument(String rootEl, Optional<List<String>> namespcaeDeclarations);
 
     public abstract DataStream endDocument(String rootEl);
 

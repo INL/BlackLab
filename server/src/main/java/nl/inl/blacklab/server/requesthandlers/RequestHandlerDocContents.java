@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,7 +29,7 @@ import nl.inl.blacklab.server.util.BlsUtils;
  */
 public class RequestHandlerDocContents extends RequestHandler {
 
-    boolean surroundWithRootElement;
+    private boolean surroundWithRootElement;
 
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
@@ -65,6 +67,12 @@ public class RequestHandlerDocContents extends RequestHandler {
     @Override
     public boolean omitBlackLabResponseRootElement() {
         return !surroundWithRootElement;
+    }
+
+    private final List<String> namespaceDeclarations = new ArrayList<>(2);
+
+    public List<String> getNamespaceDeclarations() {
+        return namespaceDeclarations;
     }
 
     @Override
@@ -120,7 +128,7 @@ public class RequestHandlerDocContents extends RequestHandler {
                 String root = doc.contentsByCharPos(doc.index().mainAnnotatedField(), 0, 1024);
                 Matcher m = NAMESPACE.matcher(root);
                 while (m.find()) {
-                    System.out.println(m.group());
+                    namespaceDeclarations.add(m.group());
                 }
             }
 
