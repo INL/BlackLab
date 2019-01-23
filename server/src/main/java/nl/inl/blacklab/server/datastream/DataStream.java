@@ -109,13 +109,13 @@ public abstract class DataStream {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
     }
 
-    PrintWriter out;
+    protected final PrintWriter out;
 
-    int indent = 0;
+    private int indent = 0;
 
-    boolean prettyPrint;
+    private boolean prettyPrint;
 
-    boolean prettyPrintPref;
+    private final boolean prettyPrintPref;
 
     /** Should contextList omit empty properties if possible? */
     protected boolean omitEmptyProperties = false;
@@ -197,9 +197,15 @@ public abstract class DataStream {
     }
 
     public abstract DataStream startDocument(String rootEl);
-    public abstract DataStream startDocumentLeaveOpen(String rootEl);
-    public abstract DataStream closeRoot();
-    public abstract DataStream addNamespaceToRoot(String namespaceDeclaration);
+
+    /**
+     * empty implementation, start a r
+     * @param rootEl
+     * @return
+     */
+    public DataStream startDocumentLeaveOpen(String rootEl) {return this;};
+    public DataStream closeRoot() {return this;};
+    public DataStream addNamespaceToRoot(String namespaceDeclaration) {return this;};
 
     public abstract DataStream endDocument(String rootEl);
 
@@ -340,6 +346,7 @@ public abstract class DataStream {
                 .startEntry("cats")
                 .startMap()
                 .startAttrEntry("cat", "name", "Sylvie")
+                .startAttrEntry("cat", "prefix:missing", "notdeclared")
                 .startList()
                 .item("place", "Voorschoten")
                 .endList()

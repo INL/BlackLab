@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +38,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
             "(?:\\s+standalone\\s*=\\s*([\"'])(?:yes|no)\\3)?\\s*\\?>\\s*");
     public static final Pattern NAMESPACE = Pattern.compile(" xmlns:[^=]+=\"[^\"]+\"");
-    public static final Pattern PREFIX = Pattern.compile("<[a-z]+:[^ ]+ | [a-z]+:[^=]+=\"");
+    public static final Pattern PREFIX = Pattern.compile("<([a-z]+):[^ ]+ |<([a-z]+):[^>]+>| ([a-z]+):[^=]+=\"");
 
     public RequestHandlerDocContents(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -116,13 +118,29 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (surroundWithRootElement) {
             // We've already outputted the XML declaration; don't do so again
             outputXmlDeclaration = false;
+            Matcher cm = PREFIX.matcher(content);
+            Set<String> prefixes = new HashSet<>(2);
+            while(cm.find()) {
+                // collect unique prefixes that need to be bound
+                String prefix = cm.group(1) == null ? cm.group(2) == null ? cm.group(3) : cm.group(2) : cm.group(1);
+                if (!prefixes.contains(prefix)) {
+                    prefixes.add(prefix);
+                }
+            }
             // here we may need to include namespace declarations
-            if (PREFIX.matcher(content).find()) {
-                // ophalen document root
+            if (!prefixes.isEmpty()) {
+                // retrieve the first bit of the document, try to find namespaces
                 String root = doc.contentsByCharPos(doc.index().mainAnnotatedField(), 0, 1024);
                 Matcher m = NAMESPACE.matcher(root);
+                Set<String> namespaces = new HashSet<>(2);
                 while (m.find()) {
+                    //collect namespaces that bind prefixes
+                    namespaces.add(m.group());
                     ds.addNamespaceToRoot(m.group());
+                }
+                // see if a prefix isn't bound
+                if (prefixes.stream().noneMatch(s -> namespaces.stream().anyMatch(s1 -> s1.startsWith(" xmlns:" + s)))) {
+                    throw new InternalServerError(String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.",prefixes.toString(),docPid, namespaces.toString()));
                 }
             }
             ds.closeRoot();

@@ -48,6 +48,21 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
+    public DataStream startDocumentLeaveOpen(String rootEl) {
+        return this;
+    }
+
+    @Override
+    public DataStream closeRoot() {
+        return this;
+    }
+
+    @Override
+    public DataStream addNamespaceToRoot(String namespaceDeclaration) {
+        return this;
+    }
+
+    @Override
     public DataStream endDocument(String rootEl) {
         if (isJsonp) {
             print(");");
