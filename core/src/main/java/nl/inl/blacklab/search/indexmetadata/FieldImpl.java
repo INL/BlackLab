@@ -86,5 +86,10 @@ public abstract class FieldImpl implements Field {
         FieldImpl other = (FieldImpl) obj;
         return fieldName.equals(other.fieldName);
     }
+    
+    @Override
+    public String toString() {
+        return fieldName;
+    }
 
 }

@@ -39,6 +39,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -450,8 +451,13 @@ public abstract class DocIndexerBase extends DocIndexer {
                     useUnknownValue = false;
                     break;
                 }
-                if (useUnknownValue)
+                if (useUnknownValue) {
+                    if (empty) {
+                        // Don't count this as a value, count the unknown value
+                        ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(currentValue);
+                    }
                     addMetadataField(optTranslateFieldName(fd.name()), fd.unknownValue());
+                }
             }
         }
 
