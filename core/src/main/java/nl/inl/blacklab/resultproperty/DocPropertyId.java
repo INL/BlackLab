@@ -17,6 +17,7 @@ package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -71,7 +72,7 @@ public class DocPropertyId extends DocProperty {
     }
 
     @Override
-    public Query query(PropertyValue value) {
+    public Query query(BlackLabIndex index, PropertyValue value) {
         return null;
     }
 

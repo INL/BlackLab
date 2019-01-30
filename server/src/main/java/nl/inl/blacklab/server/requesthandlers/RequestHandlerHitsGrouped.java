@@ -105,9 +105,16 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 }
                 
                 // Calculate relative group size
-                if (tokensInSubcorpus == 0)
-                    tokensInSubcorpus = 1; // prevent division by zero...
-                double relativeFrequency = (double)group.size() / tokensInSubcorpus;
+                double relativeFrequency;
+                if (tokensInSubcorpus <= 0) {
+                    // Could not determine subcorpus size.
+                    // This happens with certain grouping criteria (e.g. DocPropertyDecade), or 
+                    // when grouping on a metadata field and one of the group identities is the
+                    // empty string (we can't search for that value).
+                    relativeFrequency = 0;
+                } else {
+                    relativeFrequency = (double)group.size() / tokensInSubcorpus;
+                }
                 
                 ds.startItem("hitgroup").startMap();
                 ds.entry("identity", group.identity().serialize())
@@ -128,8 +135,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     }
 
     private long findSubcorpusSize(DocProperty property, PropertyValue value) {
+        if (!property.canConstructQuery(searchParam.blIndex(), value))
+            return -1; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
-        Query query = property.query(value); // analyzer....!
+        Query query = property.query(searchParam.blIndex(), value); // analyzer....!
         if (query == null) {
             query = new MatchAllDocsQuery();
         }

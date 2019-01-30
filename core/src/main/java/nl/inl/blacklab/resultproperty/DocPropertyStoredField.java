@@ -15,12 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
@@ -125,15 +129,15 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public Query query(PropertyValue value) {
+    public Query query(BlackLabIndex index, PropertyValue value) {
+        MetadataField metadataField = index.metadataField(fieldName);
         if (value.toString().isEmpty())
-            return null; // @@@ cannot search for empty string (should use unknown value..?)
-        final boolean tokenizeField = false;
-        if (tokenizeField) {
+            return null; // Cannot search for empty string (to avoid this problem, configure ans "Unknown value")
+        if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
             String strValue = "\"" + value.toString().replaceAll("\\\"", "\\\\\"") + "\"";
             try {
-                // @@@ NOTE: not all fields are tokenized! Some are lowercased but not tokenized...
-                return LuceneUtil.parseLuceneQuery(strValue, new BLDutchAnalyzer(), fieldName); // @@@ analyzer should be customizable
+                Analyzer analyzer = BlackLabIndexImpl.analyzerInstance(metadataField.analyzerName());
+                return LuceneUtil.parseLuceneQuery(strValue, analyzer, fieldName);
             } catch (ParseException e) {
                 return null;
             }
@@ -141,6 +145,11 @@ public class DocPropertyStoredField extends DocProperty {
             return new TermQuery(new Term(fieldName, StringUtil.stripAccents(value.toString().toLowerCase())));
         }
         //return new TermQuery(new Term(fieldName, strValue));
+    }
+    
+    @Override
+    public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
+        return !value.toString().isEmpty();
     }
 
 }

@@ -26,6 +26,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -181,12 +182,12 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public Query query(PropertyValue value) {
+    public Query query(BlackLabIndex index, PropertyValue value) {
         PropertyValue[] values = ((PropertyValueMultiple)value).value();
         Builder bqb = new BooleanQuery.Builder();
         int n = 0;
         for (int i = 0; i < criteria.size(); i++) {
-            Query q = criteria.get(i).query(values[i]);
+            Query q = criteria.get(i).query(index, values[i]);
             if (q != null) {
                 bqb.add(q, Occur.MUST);
                 n++;
@@ -195,6 +196,16 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         if (n > 0)
             return bqb.build();
         return null;
+    }
+    
+    @Override
+    public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
+        PropertyValue[] values = ((PropertyValueMultiple)value).value();
+        for (int i = 0; i < criteria.size(); i++) {
+            if (!canConstructQuery(index, values[i]))
+                return false;
+        }
+        return true;
     }
     
 }
