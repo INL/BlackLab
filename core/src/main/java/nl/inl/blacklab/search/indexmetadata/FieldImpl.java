@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
@@ -21,10 +23,7 @@ public abstract class FieldImpl implements Field {
 
     FieldImpl(String fieldName, String displayName) {
         this.fieldName = fieldName;
-        if (displayName == null)
-            this.displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
-        else
-            this.displayName = displayName;
+        this.displayName = StringUtils.defaultIfEmpty(displayName, "");
     }
 
     /**
@@ -48,6 +47,9 @@ public abstract class FieldImpl implements Field {
      */
     @Override
     public String displayName() {
+        if (StringUtils.isEmpty(displayName)) {
+            displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
+        }
         return displayName;
     }
 
