@@ -69,7 +69,7 @@ public class IndexTool {
         Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
         boolean addingFiles = true;
         String deleteQuery = null;
-        boolean useThreads = false;
+        boolean useThreads = true;
         List<File> linkedFileDirs = new ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
@@ -331,9 +331,7 @@ public class IndexTool {
                         + "Options:\n"
                         + "  --maxdocs <n>          Stop after indexing <n> documents\n"
                         + "  --linked-file-dir <d>  Look in directory <d> for linked (e.g. metadata) files\n"
-                        + "  --[no]threads          Enable/disable multithreaded indexing (experimental)\n"
-                        + "                         Currently disabled by default. Once properly tested,\n"
-                        + "                         we will change the default to enabled.\n"
+                        + "  --nothreads            Disable multithreaded indexing (enabled by default)\n"
                         + "\n"
                         + "Deprecated options (not needed anymore with .yaml format configs):\n"
                         + "  --indexparam <file>    Read properties file with parameters for DocIndexer\n"

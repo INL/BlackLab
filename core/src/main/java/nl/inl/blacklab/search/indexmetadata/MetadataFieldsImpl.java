@@ -219,6 +219,18 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         metadataGroups.put(name, metadataGroup);
     }
 
+    /**
+     * Check if field exists, or create a default (tokenized) field for it if not.
+     * 
+     * @param name
+     */
+    public void ensureFieldExists(String name) {
+        if (!exists(name)) {
+            ensureNotFrozen();
+            put(name, new MetadataFieldImpl(name, FieldType.TOKENIZED));
+        }
+    }
+
     public synchronized void put(String fieldName, MetadataFieldImpl fieldDesc) {
         ensureNotFrozen();
         metadataFieldInfos.put(fieldName, fieldDesc);
@@ -283,6 +295,11 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     @Override
     public synchronized boolean isFrozen() {
         return this.frozen;
+    }
+    
+    @Override
+    public String toString() {
+        return metadataFieldInfos.keySet().toString(); 
     }
 
 }

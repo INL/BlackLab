@@ -811,6 +811,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
+                for (String f: fields) {
+                    ((MetadataFieldsImpl)metadataFields()).ensureFieldExists(f);
+                }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
                         addRemainingFields);

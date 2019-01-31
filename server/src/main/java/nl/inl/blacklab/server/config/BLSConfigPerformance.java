@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 
 public class BLSConfigPerformance {
     
+    static final int MAX_CONCURRENT_SEARCHES_AT_LEAST = 4;
+
     private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
     
     boolean autodetectMaxConcurrent = false;
@@ -30,7 +32,7 @@ public class BLSConfigPerformance {
     public void setMaxConcurrentSearches(int maxConcurrentSearches) {
         this.maxConcurrentSearches = maxConcurrentSearches;
         if (maxConcurrentSearches <= 0) {
-            int n = Math.max(Runtime.getRuntime().availableProcessors(), 1);
+            int n = Math.max(Runtime.getRuntime().availableProcessors(), MAX_CONCURRENT_SEARCHES_AT_LEAST);
             logger.debug("maxConcurrentSearches autodetect: setting to " + n);
             maxConcurrentSearches = n;
         }
@@ -75,7 +77,7 @@ public class BLSConfigPerformance {
     public void setAutodetectMaxConcurrent(boolean autodetectMaxConcurrent) {
         this.autodetectMaxConcurrent = autodetectMaxConcurrent;
         if (autodetectMaxConcurrent) {
-            int n = Math.max(Runtime.getRuntime().availableProcessors(), 1);
+            int n = Math.max(Runtime.getRuntime().availableProcessors(), MAX_CONCURRENT_SEARCHES_AT_LEAST);
             logger.debug("maxConcurrentSearches autodetect: setting to " + n);
             maxConcurrentSearches = n;
         }

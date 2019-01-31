@@ -27,6 +27,8 @@ public class ConfigMetadataField {
 
     /** How to process annotation values (if at all) */
     private List<ConfigProcessStep> process = new ArrayList<>();
+    
+    private Map<String, String> mapValues = new HashMap<>();
 
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
@@ -74,6 +76,7 @@ public class ConfigMetadataField {
     public ConfigMetadataField copy() {
         ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
         cp.setProcess(process);
+        cp.setMapValues(mapValues);
         cp.setDisplayName(displayName);
         cp.setDescription(description);
         cp.setType(type);
@@ -202,6 +205,11 @@ public class ConfigMetadataField {
         this.process.clear();
         this.process.addAll(process);
     }
+    
+    public void setMapValues(Map<String, String> mapValues) {
+        this.mapValues.clear();
+        this.mapValues.putAll(mapValues);
+    }
 
     public void addDisplayOrder(List<String> fields) {
         displayOrder.addAll(fields);
@@ -210,6 +218,10 @@ public class ConfigMetadataField {
     @Override
     public String toString() {
         return "ConfigMetadataField [name=" + name + "]";
+    }
+
+    public Map<String, String> getMapValues() {
+        return mapValues;
     }
 
 }

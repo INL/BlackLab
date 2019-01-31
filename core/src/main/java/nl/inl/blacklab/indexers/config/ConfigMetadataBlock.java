@@ -51,6 +51,16 @@ public class ConfigMetadataBlock {
     public ConfigMetadataField getField(String name) {
         return fieldsByName.get(name);
     }
+    
+    public ConfigMetadataField getOrCreateField(String name) {
+        ConfigMetadataField f = getField(name);
+        if (f == null) {
+            f = new ConfigMetadataField();
+            f.setName(name);
+            addMetadataField(f);
+        }
+        return f;
+    }
 
     public void addMetadataField(ConfigMetadataField f) {
         // If no custom analyzer specified, inherit from block
