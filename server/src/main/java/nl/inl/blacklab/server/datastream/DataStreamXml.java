@@ -2,7 +2,9 @@ package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
@@ -52,11 +54,30 @@ public class DataStreamXml extends DataStream {
 
     @Override
     public DataStream startDocument(String rootEl) {
+        return startDocument(rootEl,false);
+    }
+
+    @Override
+    public DataStream startDocumentLeaveOpen(String rootEl) {
+        return startDocument(rootEl,true);
+    }
+
+    @Override
+    public DataStream closeRoot() {
+        return endOpenEl();
+    }
+
+    @Override
+    public DataStream addNamespaceToRoot(String namespaceDeclaration) {
+        return print(" " + namespaceDeclaration);
+    }
+
+    private DataStream startDocument(String rootEl, boolean noClose) {
         if (rootEl == null)
             return this;
         outputProlog();
         startOpenEl(rootEl);
-        return endOpenEl();
+        return noClose ? this : endOpenEl();
     }
 
     @Override

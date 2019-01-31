@@ -1,11 +1,12 @@
 package nl.inl.blacklab.server.datastream;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.util.ServletUtil;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.util.ServletUtil;
+import java.util.Optional;
 
 /**
  * Class to stream out XML or JSON data.
@@ -108,13 +109,13 @@ public abstract class DataStream {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
     }
 
-    PrintWriter out;
+    protected final PrintWriter out;
 
-    int indent = 0;
+    private int indent = 0;
 
-    boolean prettyPrint;
+    private boolean prettyPrint;
 
-    boolean prettyPrintPref;
+    private final boolean prettyPrintPref;
 
     /** Should contextList omit empty properties if possible? */
     protected boolean omitEmptyProperties = false;
@@ -196,6 +197,15 @@ public abstract class DataStream {
     }
 
     public abstract DataStream startDocument(String rootEl);
+
+    /**
+     * empty implementation, start a r
+     * @param rootEl
+     * @return
+     */
+    public DataStream startDocumentLeaveOpen(String rootEl) {return this;};
+    public DataStream closeRoot() {return this;};
+    public DataStream addNamespaceToRoot(String namespaceDeclaration) {return this;};
 
     public abstract DataStream endDocument(String rootEl);
 
@@ -336,6 +346,7 @@ public abstract class DataStream {
                 .startEntry("cats")
                 .startMap()
                 .startAttrEntry("cat", "name", "Sylvie")
+                .startAttrEntry("cat", "prefix:missing", "notdeclared")
                 .startList()
                 .item("place", "Voorschoten")
                 .endList()
