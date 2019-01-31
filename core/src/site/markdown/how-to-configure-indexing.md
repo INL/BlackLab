@@ -704,9 +704,28 @@ Currently the files and exact version of OpenConvert are not publically availabl
 
 ## Processing values 
 
-It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc.
+It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible.
 
-It is possible to perform string processing on [standoff](\#subproperties) (sub)annotations, metadata values, and linkValues (in the linked document section, see "Linking to external (metadata) files").
+To perform simple value mapping (only supported for metadata fields at the moment), add the "mapValues" key to a metadata field, like this:
+
+```yaml
+metadata:
+  containerPath: metadata
+  fields:
+  - name: speciesGroup
+    valuePath: species
+    
+    # Map (translate) values (key will be translated to corresponding value)
+    # In this example: translate species to the group they belong to
+    mapValues:
+      dog: mammals
+      cat: mammals
+      shark: fish
+      herring: fish
+      # etc.
+```
+
+To perform string processing on [standoff](\#subproperties) (sub)annotations, metadata values, and linkValues (in the linked document section, see "Linking to external (metadata) files").
 
 For example, to process a metadata field value, simply add a "process" key with a list of actions to perform, like so:
 
@@ -744,6 +763,8 @@ These processing steps are more specific to certain data formats:
 - `chatFormatAgeToMonths(chatFormatAge)`: convert age as reported in CHAT format to number of months
 
 If you would like a new processing step to be added, please let us know.
+
+NOTE: value mapping using `mapValues` is applied *after* any processing steps.
 
 <a id="metadata"></a>
 

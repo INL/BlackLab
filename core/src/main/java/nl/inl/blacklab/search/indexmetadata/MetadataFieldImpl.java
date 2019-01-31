@@ -261,6 +261,36 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
 
     /**
+     * Remove a previously added value so we can keep track of unique 
+     * values of this field correctly
+     *
+     * @param value field value to remove
+     * @return this object
+     */
+    public synchronized MetadataFieldImpl removeValue(String value) {
+        ensureNotFrozen();
+        
+        // If we've seen a value, assume we'll get to see all values;
+        // when it turns out there's too many or they're too long,
+        // we'll change the value to NO.
+        if (valueListComplete == ValueListComplete.UNKNOWN)
+            valueListComplete = ValueListComplete.YES;
+    
+        if (values.containsKey(value)) {
+            // Seen this value before; decrement frequency
+            int n = values.get(value) - 1;
+            if (n > 0)
+                values.put(value, n);
+            else
+                values.remove(value);
+        } else {
+            // That's weird; maybe it was a really long value, or there
+            // were too many values to store. Just accept it and move on.
+        }
+        return this;
+    }
+
+    /**
      * Reset the information that is dependent on input data (i.e. list of values,
      * etc.) because we're going to (re-)index the data.
      * @return this field

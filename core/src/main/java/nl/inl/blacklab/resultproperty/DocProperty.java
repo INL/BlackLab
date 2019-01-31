@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 
 /**
@@ -204,9 +205,20 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
 
     /**
      * Generate a query matching the specified value for our property.
+     * @param index our index (for finding field properties such as tokenized or not, analyzer, unknown value)
      * @param value value to match
      * @return query
      */
-    public abstract Query query(PropertyValue value);
+    public abstract Query query(BlackLabIndex index, PropertyValue value);
+
+    /**
+     * Can we create a query matching the specified value for our property?
+     * @param index our index (for finding field properties such as tokenized or not, analyzer, unknown value)
+     * @param value value to match
+     * @return true if we can, false if we can't
+     */
+    public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
+        return false;
+    }
     
 }

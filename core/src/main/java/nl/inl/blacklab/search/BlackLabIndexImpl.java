@@ -218,7 +218,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      *            (default|whitespace|standard|nontokenizing)
      * @return the analyzer, or null if the name wasn't recognized
      */
-    static Analyzer analyzerInstance(String analyzerName) {
+    public static Analyzer analyzerInstance(String analyzerName) {
         analyzerName = analyzerName.toLowerCase();
         if (analyzerName.equals("whitespace")) {
             return WHITESPACE_ANALYZER;

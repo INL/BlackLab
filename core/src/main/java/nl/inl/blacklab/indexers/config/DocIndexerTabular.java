@@ -270,7 +270,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             else
                                 value = "";
                         }
-                        value = processString(value, annotation.getProcess());
+                        value = processString(value, annotation.getProcess(), null);
                         if (annotation.isMultipleValues()) {
                             // Multiple values possible. Split on multipleValuesSeparator.
                             boolean first = true;

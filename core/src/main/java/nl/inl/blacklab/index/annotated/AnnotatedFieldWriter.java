@@ -177,10 +177,7 @@ public class AnnotatedFieldWriter {
     }
 
     public AnnotationWriter annotation(String name) {
-        AnnotationWriter p = annotations.get(name);
-        if (p == null)
-            throw new IllegalArgumentException("Undefined annotation '" + name + "'");
-        return p;
+        return annotations.get(name);
     }
 
     public boolean hasAnnotation(String name) {
@@ -192,11 +189,19 @@ public class AnnotatedFieldWriter {
     }
 
     public AnnotationWriter tagsAnnotation() {
-        return annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        AnnotationWriter rv = annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        if (rv == null) {
+            throw new IllegalArgumentException("Undefined annotation '" + AnnotatedFieldNameUtil.TAGS_ANNOT_NAME + "'");
+        }
+        return rv;
     }
 
     public AnnotationWriter punctAnnotation() {
-        return annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        AnnotationWriter rv = annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        if (rv == null) {
+            throw new IllegalArgumentException("Undefined annotation '" + AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME + "'");
+        }
+        return rv;
     }
 
     public String name() {

@@ -26,7 +26,7 @@ public class OldBlsConfigCacheAndPerformance {
     /** How much free memory we should try to target when cleaning the cache. */
     private long minFreeMemTargetMegs;
 
-    private int maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
+    private int maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, BLSConfigPerformance.MAX_CONCURRENT_SEARCHES_AT_LEAST);
 
     private boolean autoDetectMaxConcurrent = true;
 
@@ -129,7 +129,7 @@ public class OldBlsConfigCacheAndPerformance {
             maxConcurrentSearches = JsonUtil.getIntProp(serverLoadSettings, "maxConcurrentSearches", -1);
             autoDetectMaxConcurrent = maxConcurrentSearches <= 0;
             if (autoDetectMaxConcurrent) {
-                maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
+                maxConcurrentSearches = Math.max(Runtime.getRuntime().availableProcessors() - 1, BLSConfigPerformance.MAX_CONCURRENT_SEARCHES_AT_LEAST);
                 logger.debug("Autodetect maxConcurrentSearches: " + maxConcurrentSearches);
             }
 
@@ -194,7 +194,7 @@ public class OldBlsConfigCacheAndPerformance {
     }
 
     public void autoAdjustMaxConcurrent() {
-        int n = Math.max(Runtime.getRuntime().availableProcessors() - 1, 1);
+        int n = Math.max(Runtime.getRuntime().availableProcessors() - 1, BLSConfigPerformance.MAX_CONCURRENT_SEARCHES_AT_LEAST);
         if (n != maxConcurrentSearches) {
             logger.debug("maxConcurrentSearches autodetect: changed from " + maxConcurrentSearches + " to " + n);
             maxConcurrentSearches = n;

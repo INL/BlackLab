@@ -435,7 +435,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
         while (apMetadataBlock.evalXPath() != -1) {
 
             // For each configured metadata field...
-            for (ConfigMetadataField f : b.getFields()) {
+            List<ConfigMetadataField> fields = b.getFields();
+            for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
+                ConfigMetadataField f = fields.get(i);
 
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
@@ -457,12 +459,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         String fieldName = apFieldName.evalXPathToString();
                         apMetadata.resetXPath();
                         String metadataValue = apMetadata.evalXPathToString();
-                        metadataValue = processString(metadataValue, f.getProcess());
-                        ConfigMetadataField metadataField = b.getField(fieldName);
-                        if (metadataField != null) {
-                            // Also execute process defined for named metadata field, if any
-                            metadataValue = processString(metadataValue, metadataField.getProcess());
-                        }
+                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
+                        // Also execute process defined for named metadata field, if any
+                        ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
+                        metadataValue = processString(metadataValue, metadataField.getProcess(), metadataField.getMapValues());
                         addMetadataField(fieldName, metadataValue);
                     }
                     releaseAutoPilot(apMetaForEach);
@@ -471,7 +471,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
                     String metadataValue = apMetadata.evalXPathToString();
-                    metadataValue = processString(metadataValue, f.getProcess());
+                    metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
                     addMetadataField(f.getName(), metadataValue);
                 }
                 releaseAutoPilot(apMetadata);
@@ -510,7 +510,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // Fetch value from Lucene doc
                 result = currentLuceneDoc.get(valueField);
             }
-            result = processString(result, linkValue.getProcess());
+            result = processString(result, linkValue.getProcess(), null);
             results.add(result);
         }
 
@@ -601,11 +601,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         String name = apName.evalXPathToString();
                         apValue.resetXPath();
                         String value = apValue.evalXPathToString();
-                        value = processString(value, subAnnot.getProcess());
+                        value = processString(value, subAnnot.getProcess(), null);
                         ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(name);
                         if (actualSubAnnot != null) {
                             // Also apply process defined in named subannotation, if any
-                            value = processString(value, actualSubAnnot.getProcess());
+                            value = processString(value, actualSubAnnot.getProcess(), null);
                         }
                         // Index the value with the actual annotation it's for
                         annotation(annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name, value, 1, indexAtPositions);
@@ -644,7 +644,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 while (apValuePath.evalXPath() != -1) {
                     apEvalToString.resetXPath();
                     String annotValue = apEvalToString.evalXPathToString();
-                    annotValue = processString(annotValue, annotation.getProcess());
+                    annotValue = processString(annotValue, annotation.getProcess(), null);
                     int increment = firstValue ? 1 : 0;
                     annotation(annotation.getName(), annotValue, increment, indexAtPositions);
                     firstValue = false;
@@ -654,13 +654,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // No annotations have been added, the result of the xPath query must have been empty.
                 if (firstValue) {
                     // Add default value
-                    String annotValue = processString("", annotation.getProcess());
+                    String annotValue = processString("", annotation.getProcess(), null);
                     annotation(annotation.getName(), annotValue, 1, indexAtPositions);
                 }
             } else {
                 // Single value expected
                 annotValueForReuse = apValuePath.evalXPathToString();
-                String annotValue = processString(annotValueForReuse, annotation.getProcess());
+                String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
                 annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
             releaseAutoPilot(apValuePath);
@@ -668,7 +668,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         } else {
             // We can reuse the value from the parent annotation, with different processing
             annotValueForReuse = reuseValueFromParentAnnot;
-            String annotValue = processString(annotValueForReuse, annotation.getProcess());
+            String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
             annotation(annotation.getName(), annotValue, 1, indexAtPositions);
         }
         return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath

@@ -532,8 +532,17 @@ public class InputFormatReader extends YamlJsonReader {
         Iterator<JsonNode> itFields = array(mfsEntry).elements();
         while (itFields.hasNext()) {
             JsonNode fld = itFields.next();
+            String name = fld.has("name") ? fld.get("name").asText() : null;
+            ConfigMetadataField f;
+            if (name != null) {
+                // If field exists, modify existing field.
+                // This is mostly because of forward references to fields; the field instance
+                // would be created by the reference, and the field properties will be added when
+                // they are parsed later in the file.
+                f = b.getOrCreateField(name);
+            } else
+                f = new ConfigMetadataField();
             Iterator<Entry<String, JsonNode>> itField = obj(fld, "metadata field").fields();
-            ConfigMetadataField f = new ConfigMetadataField();
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
@@ -553,6 +562,11 @@ public class InputFormatReader extends YamlJsonReader {
                 case "process":
                     f.setProcess(readProcess(e));
                     break;
+                case "mapValues":
+                    Map<String, String> mapValues = new HashMap<>();
+                    readStringMap(e, mapValues);
+                    f.setMapValues(mapValues);
+                    break;
                 case "displayName":
                     f.setDisplayName(str(e));
                     break;
@@ -569,7 +583,7 @@ public class InputFormatReader extends YamlJsonReader {
                     f.setUnknownCondition(UnknownCondition.fromStringValue(str(e)));
                     break;
                 case "unknownValue":
-                    f.setUiType(str(e));
+                    f.setUnknownValue(str(e));
                     break;
                 case "analyzer":
                     f.setAnalyzer(str(e));
@@ -586,7 +600,7 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in metadata field " + f.getName());
+                            "Unknown key " + e.getKey() + " in metadata field " + StringUtils.defaultString(f.getName(), "(unnamed)"));
                 }
             }
             b.addMetadataField(f);

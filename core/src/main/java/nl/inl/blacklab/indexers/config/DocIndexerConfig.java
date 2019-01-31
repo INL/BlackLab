@@ -146,7 +146,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         init();
     }
 
-    protected String processString(String result, List<ConfigProcessStep> process) {
+    protected String processString(String result, List<ConfigProcessStep> process, Map<String, String> mapValues) {
         for (ConfigProcessStep step : process) {
             String method = step.getMethod();
             Map<String, String> param = step.getParam();
@@ -180,6 +180,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // In the future, we'll support user plugins here
                 throw new UnsupportedOperationException("Unknown processing step method " + method);
             }
+        }
+        if (mapValues != null && !mapValues.isEmpty()) {
+            // Finally, apply any value mappings specified.
+            String mappedResult = mapValues.get(result);
+            if (mappedResult != null)
+                result = mappedResult;
         }
         return result;
     }
@@ -298,7 +304,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     protected String processMetadataValue(String name, String value) {
         ConfigMetadataField f = config.getMetadataField(name);
         if (f != null) {
-            value = processString(value, f.getProcess());
+            value = processString(value, f.getProcess(), f.getMapValues());
         }
         return value;
     }
