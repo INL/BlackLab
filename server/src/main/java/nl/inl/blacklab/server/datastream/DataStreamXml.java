@@ -64,6 +64,7 @@ public class DataStreamXml extends DataStream {
 
     @Override
     public DataStream closeRoot() {
+        openRoot=false;
         return endOpenEl();
     }
 
@@ -72,16 +73,19 @@ public class DataStreamXml extends DataStream {
         return print(" " + namespaceDeclaration);
     }
 
+    private boolean openRoot;
     private DataStream startDocument(String rootEl, boolean noClose) {
         if (rootEl == null)
             return this;
         outputProlog();
         startOpenEl(rootEl);
+        openRoot=noClose;
         return noClose ? this : endOpenEl();
     }
 
     @Override
     public DataStream endDocument(String rootEl) {
+        if (openRoot) endOpenEl();
         if (rootEl == null)
             return this;
         startCompact();
