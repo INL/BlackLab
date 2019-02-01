@@ -125,7 +125,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     static CorpusSize findSubcorpusSize(SearchParameters searchParam, DocProperty property, PropertyValue value, boolean countTokens) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
-            return null; // cannot determine subcorpus size of empty value
+            return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
         Query query = property.query(searchParam.blIndex(), value); // analyzer....!
         if (query == null) {

@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.results;
 
 public final class CorpusSize {
     
+    public static final CorpusSize EMPTY = new CorpusSize(0, 0);
+
     public static CorpusSize get(int documents, long tokens) {
         return new CorpusSize(documents, tokens);
     }
