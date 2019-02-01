@@ -155,7 +155,7 @@ public class RequestHandlerDocs extends RequestHandler {
         long totalTokens = -1;
         if (includeTokenCount) {
             // Determine total number of tokens in result set
-            totalTokens = totalDocResults.tokensInMatchingDocs();
+            totalTokens = totalDocResults.subcorpusSize().getTokens();
         }
 
         // Search is done; construct the results object
@@ -176,7 +176,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
         ds.startEntry("docFields");

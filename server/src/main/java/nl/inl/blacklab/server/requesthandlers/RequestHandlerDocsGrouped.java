@@ -4,6 +4,9 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
@@ -67,26 +70,58 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        
+        // The list of groups found
+        DocProperty metadataGroupProperties = null;
+        CorpusSize subcorpusSize = null;
+        if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+            logger.debug("## Init relative frequencies: get doc props");
+            metadataGroupProperties = groups.groupCriteria();
+            logger.debug("## Init relative frequencies: determine subcorpus");
+            DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
+            if (metadataGroupProperties == null) {
+                // We're not grouping on metadata. We only need to know the total subcorpus size.
+                logger.debug("## NOT grouping on metadata, count tokens in total subcorpus");
+                subcorpusSize = subcorpus.subcorpusSize(false);
+                logger.debug("## (docs in total subcorpus: " + subcorpusSize.getDocuments() + ")");
+            }
+            logger.debug("## Done init relative frequencies");
+        }
+        
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, null);
         
         ds.endMap().endEntry();
 
         searchLogger.setResultsFound(groups.size());
         
-        // The list of groups found
-        ds.startEntry("docGroups").startList();
         int i = 0;
+        ds.startEntry("docGroups").startList();
         for (DocGroup group : groups) {
             if (i >= first && i < first + number) {
+                
+                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
+                    // Find size of corresponding subcorpus group
+                    PropertyValue docPropValues = group.identity();
+                    //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
+                    //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, metadataGroupProperties, docPropValues, false);
+                    logger.debug("## docs in subcorpus group: " + subcorpusSize.getDocuments());
+                }
+                
                 ds.startItem("docgroup").startMap()
                         .entry("identity", group.identity().serialize())
                         .entry("identityDisplay", group.identity().toString())
-                        .entry("size", group.size())
-                        .endMap().endItem();
+                        .entry("size", group.size());
+                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                    if (subcorpusSize != null) {
+                        addSubcorpusSize(ds, subcorpusSize);
+                    }
+                }
+                ds.endMap().endItem();
             }
             i++;
         }

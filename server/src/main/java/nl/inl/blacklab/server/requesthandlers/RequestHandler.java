@@ -29,6 +29,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
@@ -670,7 +671,7 @@ public abstract class RequestHandler {
         }
     }
 
-    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean countFailed) {
+    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
         ds.entry("stillCounting", !hitsStats.done());
@@ -680,6 +681,17 @@ public abstract class RequestHandler {
                 .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
         ds.entry("numberOfDocs", countFailed ? -1 : docsStats.countedSoFar())
                 .entry("numberOfDocsRetrieved", docsStats.processedSoFar());
+        if (subcorpusSize != null) {
+            addSubcorpusSize(ds, subcorpusSize);
+        }
+    }
+
+    static void addSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
+        ds.startEntry("subcorpusSize").startMap()
+            .entry("documents", subcorpusSize.getDocuments());
+        if (subcorpusSize.getTokens() >= 0)
+            ds.entry("tokens", subcorpusSize.getTokens());
+        ds.endMap().endEntry();
     }
 
     protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed) {

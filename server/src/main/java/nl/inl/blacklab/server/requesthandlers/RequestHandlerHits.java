@@ -171,7 +171,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (includeTokenCount) {
             perDocResults = hits.perDocResults(Results.NO_LIMIT);
             // Determine total number of tokens in result set
-            totalTokens = perDocResults.tokensInMatchingDocs();
+            totalTokens = perDocResults.subcorpusSize().getTokens();
         }
         
         searchLogger.setResultsFound(hitsCount.processedSoFar());
@@ -188,7 +188,7 @@ public class RequestHandlerHits extends RequestHandler {
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window
         addSummaryCommonFields(ds, searchParam, job.timeUserWaited(), totalTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0);
+        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
         ds.startEntry("docFields");
