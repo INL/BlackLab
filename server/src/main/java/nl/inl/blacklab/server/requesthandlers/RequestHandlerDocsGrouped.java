@@ -75,17 +75,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         DocProperty metadataGroupProperties = null;
         CorpusSize subcorpusSize = null;
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-            logger.debug("## Init relative frequencies: get doc props");
             metadataGroupProperties = groups.groupCriteria();
-            logger.debug("## Init relative frequencies: determine subcorpus");
-            DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
-            if (metadataGroupProperties == null) {
-                // We're not grouping on metadata. We only need to know the total subcorpus size.
-                logger.debug("## NOT grouping on metadata, count tokens in total subcorpus");
-                subcorpusSize = subcorpus.subcorpusSize(false);
-                logger.debug("## (docs in total subcorpus: " + subcorpusSize.getDocuments() + ")");
-            }
-            logger.debug("## Done init relative frequencies");
         }
         
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
@@ -108,15 +98,17 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                     PropertyValue docPropValues = group.identity();
                     //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
                     //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, metadataGroupProperties, docPropValues, false);
-                    logger.debug("## docs in subcorpus group: " + subcorpusSize.getDocuments());
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, metadataGroupProperties, docPropValues, true);
                 }
+                
+                int numberOfHitsInGroup = group.totalTokens();
                 
                 ds.startItem("docgroup").startMap()
                         .entry("identity", group.identity().serialize())
                         .entry("identityDisplay", group.identity().toString())
                         .entry("size", group.size());
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                    ds.entry("numberOfTokens", numberOfHitsInGroup);
                     if (subcorpusSize != null) {
                         addSubcorpusSize(ds, subcorpusSize);
                     }

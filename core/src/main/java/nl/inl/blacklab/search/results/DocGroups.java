@@ -139,7 +139,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
-            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size());
+            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());
             truncatedGroups.add(newGroup);
         }
         return DocGroups.fromList(queryInfo(), truncatedGroups, groupBy, (SampleParameters)null, windowStats);

@@ -365,6 +365,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public DocGroups group(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
+        Map<PropertyValue, Integer> groupTokenSizes = new HashMap<>();
+        
+        String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
+        
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
             List<DocResult> group = groupLists.get(groupId);
@@ -375,15 +379,22 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
-            if (groupSize == null)
+            Integer groupTokenSize = groupTokenSizes.get(groupId);
+            int subtractClosingToken = 1;
+            int docLengthTokens = Integer.parseInt(r.identity().luceneDoc().get(tokenLengthFieldName)) - subtractClosingToken;
+            if (groupSize == null) {
                 groupSize = 1;
-            else
+                groupTokenSize = docLengthTokens;
+            } else {
                 groupSize++;
+                groupTokenSize += docLengthTokens;
+            }
             groupSizes.put(groupId, groupSize);
+            groupTokenSizes.put(groupId, groupTokenSize);
         }
         List<DocGroup> results = new ArrayList<>();
         for (Map.Entry<PropertyValue, List<DocResult>> e : groupLists.entrySet()) {
-            DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()));
+            DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
         return DocGroups.fromList(queryInfo(), results, (DocProperty)groupBy, (SampleParameters)null, (WindowStats)null);
