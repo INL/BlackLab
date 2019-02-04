@@ -140,7 +140,7 @@ public class FileProcessor implements AutoCloseable {
                     return file;
                 }
             };
-            try (FileProcessor proc = new FileProcessor(true, false, true)) {
+            try (FileProcessor proc = new FileProcessor(1, false, true)) {
                 proc.setFileHandler(fileCapturer);
                 proc.processFile(f, "");
             } catch (FileNotFoundException e) {
@@ -230,24 +230,23 @@ public class FileProcessor implements AutoCloseable {
      */
     private boolean aborted = false;
 
-    public FileProcessor(boolean useThreads, boolean recurseSubdirs, boolean processArchives) {
+    public FileProcessor(final int numberOfThreadsToUse, boolean recurseSubdirs, boolean processArchives) {
         this.recurseSubdirs = recurseSubdirs;
         this.processArchives = processArchives;
         setFileNameGlob("*");
 
         // We always use an ExecutorService to call our handlers to simplify our code
         // When not using threads, the service is just a fancy wrapper around doing task.run() directly inside the calling thread.
-        if (useThreads) {
+        if (numberOfThreadsToUse > 1) {
             // NOTE: we need to create our own executor instead of using Executors.newFixedThreadPool()
             // Because that implementation has an unbounded job queue by default, we run the risk that we queue 50k jobs and eat up all memory
             // So we provide our own queue that will block when it's full.
             // We could just provide a default LinkedBlockingDeque, but the default behavior for the executor is to reject all jobs while the queue is full.
             // To get around this, override the queue.offer() function used internally by the executor to queue jobs,
             // and make it blocking (instead of returning false instantly, which would make the executor reject the job)
-            executor = new ThreadPoolExecutor(
-                Math.max(1, Runtime.getRuntime().availableProcessors() - 1),
-                Math.max(1, Runtime.getRuntime().availableProcessors() - 1), Integer.MAX_VALUE,
-                TimeUnit.DAYS,
+            int cpuCores = Runtime.getRuntime().availableProcessors();
+            int actualThreadsToUse = Math.max(1, Math.min(cpuCores - 1, numberOfThreadsToUse)); // no more than (cores-1), but at least 1
+            executor = new ThreadPoolExecutor(actualThreadsToUse, actualThreadsToUse, Integer.MAX_VALUE, TimeUnit.DAYS,
                 new LinkedBlockingDeque<Runnable>(50) {
                     @Override
                     public boolean offer(Runnable r) {

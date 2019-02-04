@@ -69,7 +69,7 @@ public class IndexTool {
         Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
         boolean addingFiles = true;
         String deleteQuery = null;
-        boolean useThreads = true;
+        int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
@@ -87,10 +87,18 @@ public class IndexTool {
                 String name = arg.substring(2);
                 switch (name) {
                 case "threads":
-                    useThreads = true;
+                    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                        try {
+                            numberOfThreadsToUse = Integer.parseInt(args[i + 1]);
+                        } catch (NumberFormatException e) {
+                            numberOfThreadsToUse = 2;
+                        }
+                    } else
+                        numberOfThreadsToUse = 2;
+                    propFile = new File(args[i + 1]);
                     break;
                 case "nothreads":
-                    useThreads = false;
+                    numberOfThreadsToUse = 1;
                     break;
                 case "linked-file-dir":
                     if (i + 1 == args.length) {
@@ -268,8 +276,7 @@ public class IndexTool {
         Indexer indexer;
         try {
             indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
-            if (useThreads)
-                indexer.setUseThreads(true);
+            indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         } catch (DocumentFormatNotFound e1) {
             System.err.println(e1.getMessage());
             System.err.println("Please specify a correct format on the command line.");

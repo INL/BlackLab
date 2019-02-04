@@ -21,6 +21,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -284,7 +285,7 @@ public class Index {
         close(); // Close any BlackLabIndex that is still in search mode
         try {
             this.indexer = Indexer.openIndex(searchMan.blackLabInstance().openForWriting(this.dir, false), null);
-            indexer.setUseThreads(true);
+            indexer.setNumberOfThreadsToUse(BlackLab.config().getIndexing().getNumberOfThreads());
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);
         }

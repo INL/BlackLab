@@ -211,8 +211,6 @@ public final class BlackLab {
      */
     public synchronized static BlackLabConfig config() {
         if (blackLabConfig == null) {
-            if (globalSettingsApplied)
-                throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
             blackLabConfig = new BlackLabConfig();
         }
         return blackLabConfig;

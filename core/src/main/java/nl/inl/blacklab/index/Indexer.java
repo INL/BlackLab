@@ -235,6 +235,9 @@ public interface Indexer {
 
     void setLinkedFileResolver(Function<String, File> resolver);
 
+    @Deprecated
     void setUseThreads(boolean useThreads);
+
+    void setNumberOfThreadsToUse(int numberOfThreadsToUse);
 
 }
