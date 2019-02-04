@@ -42,6 +42,12 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 
 public class BlackLabServer extends HttpServlet {
+    
+    /**
+     * Root element to use for XML responses.
+     */
+    public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
+
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
     static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
@@ -241,7 +247,7 @@ public class BlackLabServer extends HttpServlet {
 
         boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
-        String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : "blacklabResponse";
+        String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : BLACKLAB_RESPONSE_ROOT_ELEMENT;
 
         // === Handle the request
         StringWriter buf = new StringWriter();

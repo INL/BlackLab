@@ -22,7 +22,7 @@ public class DataStreamXml extends DataStream {
         super(out, prettyPrint);
     }
 
-    private DataStream startOpenEl(String name) {
+    public DataStream startOpenEl(String name) {
         tagStack.add(name);
         return indent().print("<").print(name);
     }
@@ -31,7 +31,7 @@ public class DataStreamXml extends DataStream {
         return print(" ").print(key).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
     }
 
-    private DataStream endOpenEl() {
+    public DataStream endOpenEl() {
         return print(">").upindent().newline();
     }
 
@@ -40,7 +40,7 @@ public class DataStreamXml extends DataStream {
         return endOpenEl();
     }
 
-    private DataStream closeEl() {
+    public DataStream closeEl() {
         String name = tagStack.remove(tagStack.size() - 1);
         return downindent().indent().print("</").print(name).print(">").newline();
     }
