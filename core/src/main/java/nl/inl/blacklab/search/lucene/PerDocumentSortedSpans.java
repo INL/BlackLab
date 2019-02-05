@@ -56,6 +56,8 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     private boolean eliminateDuplicates;
 
+    private boolean sortByStartPoint;
+
     private int prevStart, prevEnd;
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
@@ -65,6 +67,7 @@ final class PerDocumentSortedSpans extends BLSpans {
         bucketedSpans = new SpansInBucketsPerDocumentSorted(src, sortByStartPoint);
 
         this.eliminateDuplicates = eliminateDuplicates;
+        this.sortByStartPoint = sortByStartPoint;
     }
 
     @Override
@@ -150,7 +153,8 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     @Override
     public String toString() {
-        return bucketedSpans.toString();
+        String name = "sort" + (sortByStartPoint ? "Start" : "End") + (eliminateDuplicates ? "Uniq" : "");
+        return name + "(" + bucketedSpans.toString() + ")";
     }
 
     @Override

@@ -238,7 +238,7 @@ class SpansNGrams extends BLSpans {
 
     @Override
     public String toString() {
-        return "AnyToken()";
+        return "NGRAMS(" + min + ", " + max + ")";
     }
 
     @Override

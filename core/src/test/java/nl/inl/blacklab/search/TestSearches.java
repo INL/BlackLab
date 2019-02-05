@@ -399,6 +399,22 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 
+    @Test
+    public void testNGramsNotContaining() {
+        expected = Arrays.asList(
+                "noot [noot aap aap] aap"
+                );
+        BlackLabIndex index = testIndex.index();
+        HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
+        Annotation annotation = index.mainAnnotatedField().mainAnnotation();
+        Terms terms = index.annotationForwardIndex(annotation).terms();
+        int[] words = new int[] { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
+        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words);
+        // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
+        // there used to be an issue with determining doc length that messed this up
+        Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));
+    }
+
     // Backreferences not implemented yet
     @Ignore
     @Test

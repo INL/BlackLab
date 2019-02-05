@@ -116,7 +116,7 @@ class SpansPositionFilter extends BLSpans {
         alreadyAtFirstMatch = false;
 
         // Are we done yet?
-        if (producerDoc == NO_MORE_DOCS /*|| filterDoc == NO_MORE_DOCS*/)
+        if (producerDoc == NO_MORE_DOCS)
             return NO_MORE_DOCS;
 
         // Advance container
