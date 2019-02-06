@@ -221,6 +221,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             addVersionInfo(jsonRoot);
             ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
             fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
+            fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
+            fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
             for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
                 fieldInfo.put(e.getKey(), e.getValue());
             }
@@ -353,6 +355,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme", "DEFAULT");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
+        fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
+        fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
         if (metadataFields.titleField() != null)
             fieldInfo.put("titleField", metadataFields.titleField().name());
         if (metadataFields.authorField() != null)
@@ -484,7 +488,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
          */
 
         FieldType type = FieldType.TOKENIZED;
-        if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num"))
+        if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num") || fieldName.equals("metadataCid"))
             type = FieldType.NUMERIC;
         return type;
     }
@@ -1291,8 +1295,8 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 if (!f.getAnalyzer().equals(defaultAnalyzer))
                     g.put("analyzer", f.getAnalyzer());
                 g.put("uiType", f.getUiType());
-                g.put("unknownCondition", f.getUnknownCondition().stringValue());
-                g.put("unknownValue", f.getUnknownValue());
+                g.put("unknownCondition", (f.getUnknownCondition() == null ? config.getMetadataDefaultUnknownCondition() : f.getUnknownCondition()).stringValue());
+                g.put("unknownValue", f.getUnknownValue() == null ? config.getMetadataDefaultUnknownValue() : f.getUnknownValue());
                 ObjectNode h = g.putObject("displayValues");
                 for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
                     h.put(e.getKey(), e.getValue());

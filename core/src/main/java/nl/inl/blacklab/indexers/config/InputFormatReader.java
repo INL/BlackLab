@@ -142,6 +142,12 @@ public class InputFormatReader extends YamlJsonReader {
             case "metadataDefaultAnalyzer":
                 cfg.setMetadataDefaultAnalyzer(str(e));
                 break;
+            case "metadataDefaultUnknownCondition":
+                cfg.setMetadataDefaultUnknownCondition(UnknownCondition.fromStringValue(str(e)));
+                break;
+            case "metadataDefaultUnknownValue":
+                cfg.setMetadataDefaultUnknownValue(str(e));
+                break;
             case "metadata":
                 readMetadata(e, cfg);
                 break;

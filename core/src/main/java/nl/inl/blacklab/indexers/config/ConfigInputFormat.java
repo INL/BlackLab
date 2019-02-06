@@ -25,6 +25,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.InputFormatReader.BaseFormatFinder;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 
 /**
@@ -109,6 +110,10 @@ public class ConfigInputFormat {
     /** What default analyzer to use if not overridden */
     private String metadataDefaultAnalyzer = "default";
 
+    private UnknownCondition metadataDefaultUnknownCondition = UnknownCondition.NEVER;
+
+    private String metadataDefaultUnknownValue = "unknown";
+
     /** Blocks of embedded metadata */
     private List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
 
@@ -188,6 +193,8 @@ public class ConfigInputFormat {
         store = baseFormat.shouldStore();
         indexFieldAs.putAll(baseFormat.getIndexFieldAs());
         metadataDefaultAnalyzer = baseFormat.getMetadataDefaultAnalyzer();
+        metadataDefaultUnknownCondition = baseFormat.getMetadataDefaultUnknownCondition();
+        metadataDefaultUnknownValue = baseFormat.getMetadataDefaultUnknownValue();
         for (ConfigMetadataBlock b : baseFormat.getMetadataBlocks()) {
             addMetadataBlock(b.copy());
         }
@@ -475,6 +482,22 @@ public class ConfigInputFormat {
     @Override
     public String toString() {
         return "ConfigInputFormat [name=" + name + "]";
+    }
+
+    public UnknownCondition getMetadataDefaultUnknownCondition() {
+        return metadataDefaultUnknownCondition;
+    }
+
+    public String getMetadataDefaultUnknownValue() {
+        return metadataDefaultUnknownValue;
+    }
+
+    public void setMetadataDefaultUnknownCondition(UnknownCondition unknownCondition) {
+        this.metadataDefaultUnknownCondition = unknownCondition;
+    }
+
+    public void setMetadataDefaultUnknownValue(String unknownValue) {
+        this.metadataDefaultUnknownValue = unknownValue;
     }
 
 }

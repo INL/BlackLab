@@ -30,7 +30,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
@@ -51,8 +50,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.StringUtil;
 
 /**
@@ -93,10 +90,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             currentLuceneDoc = new Document();
             // Store attribute values from the tag as metadata fields
             for (int i = 0; i < attributes.getLength(); i++) {
-                addMetadataField(attributes.getLocalName(i),
-                        attributes.getValue(i));
+                addMetadataField(attributes.getLocalName(i), attributes.getValue(i));
             }
-            currentLuceneDoc.add(new Field("fromInputFile", documentName, docWriter.metadataFieldType(false)));
+            addMetadataField("fromInputFile", documentName);
             addMetadataFieldsFromParameters();
             docWriter.listener().documentStarted(documentName);
         }
@@ -161,35 +157,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 m.addMetadata();
             }
 
-            // See what metadatafields are missing or empty and add unknown value
-            // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadataWriter();
-            for (MetadataField fd: indexMetadata.metadataFields()) {
-                boolean missing = false, empty = false;
-                String currentValue = currentLuceneDoc.get(fd.name());
-                if (currentValue == null)
-                    missing = true;
-                else if (currentValue.length() == 0)
-                    empty = true;
-                UnknownCondition cond = fd.unknownCondition();
-                boolean useUnknownValue = false;
-                switch (cond) {
-                case EMPTY:
-                    useUnknownValue = empty;
-                    break;
-                case MISSING:
-                    useUnknownValue = missing;
-                    break;
-                case MISSING_OR_EMPTY:
-                    useUnknownValue = missing | empty;
-                    break;
-                case NEVER:
-                    useUnknownValue = false;
-                    break;
-                }
-                if (useUnknownValue)
-                    addMetadataField(fd.name(), fd.unknownValue());
-            }
+            addMetadataToDocument();
 
             try {
                 // Add Lucene doc to indexer

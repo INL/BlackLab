@@ -252,7 +252,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         String field = param.get("field");
         String value;
         if (field != null)
-            value = currentLuceneDoc.get(field);
+            value = getMetadataField(field);
         else
             value = param.get("value");
         if (value != null && value.length() > 0) {
@@ -268,7 +268,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String field = param.get("field");
             String value;
             if (field != null)
-                value = currentLuceneDoc.get(field);
+                value = getMetadataField(field);
             else
                 value = param.get("value");
             if (value != null)

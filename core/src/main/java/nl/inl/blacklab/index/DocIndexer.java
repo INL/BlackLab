@@ -46,10 +46,14 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.indexers.config.DocIndexerBase;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -75,6 +79,12 @@ public abstract class DocIndexer implements AutoCloseable {
      * we're indexing)
      */
     protected Document currentLuceneDoc;
+    
+    /**
+     * Document metadata. Added at the end to deal with unknown values, multiple occurrences
+     * (only the first is actually indexed, because of DocValues, among others), etc.
+     */
+    private Map<String, String> metadataFieldValues = new HashMap<>();
 
     /**
      * Parameters passed to this indexer
@@ -347,6 +357,10 @@ public abstract class DocIndexer implements AutoCloseable {
     protected void warn(String msg) {
         docWriter.listener().warning(msg);
     }
+    
+    public String getMetadataField(String name) {
+        return metadataFieldValues.get(name);
+    }
 
     public void addMetadataField(String name, String value) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
@@ -358,6 +372,83 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
+        if (!metadataFieldValues.containsKey(name)) // only store the first value found (DocValues, and this is the value .get() returns anyway)
+            metadataFieldValues.put(name, value);
+    }
+
+    /**
+     * Translate a field name before adding it to the Lucene document.
+     *
+     * By default, simply returns the input. May be overridden to change the name of
+     * a metadata field as it is indexed.
+     *
+     * @param from original metadata field name
+     * @return new name
+     */
+    protected String optTranslateFieldName(String from) {
+        return from;
+    }
+    
+    /**
+     * When all metadata values have been set, call this to add the to the Lucene document.
+     * 
+     * We do it this way because we don't want to add multiple values for a field (DocValues and 
+     * Document.get() only deal with the first value added), and we want to set an "unknown value"
+     * in certain conditions, depending on the configuration.
+     */
+    public void addMetadataToDocument() {
+        // See what metadatafields are missing or empty and add unknown value if desired.
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
+        Map<String, String> unknownValuesToUse = new HashMap<>();
+        for (MetadataField fd: indexMetadata.metadataFields()) {
+            if (fd.type() == FieldType.NUMERIC)
+                continue;
+            boolean missing = false, empty = false;
+            String currentValue = getMetadataField(fd.name());
+            if (currentValue == null)
+                missing = true;
+            else if (currentValue.length() == 0)
+                empty = true;
+            UnknownCondition cond = fd.unknownCondition();
+            boolean useUnknownValue = false;
+            switch (cond) {
+            case EMPTY:
+                useUnknownValue = empty;
+                break;
+            case MISSING:
+                useUnknownValue = missing;
+                break;
+            case MISSING_OR_EMPTY:
+                useUnknownValue = missing || empty;
+                break;
+            case NEVER:
+                useUnknownValue = false;
+                break;
+            }
+            if (useUnknownValue) {
+                if (empty) {
+                    // Don't count this as a value, count the unknown value
+                    ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(currentValue);
+                }
+                unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
+            }
+        }
+        for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
+            metadataFieldValues.put(e.getKey(), e.getValue());
+        }
+        for (Entry<String, String> e: metadataFieldValues.entrySet()) {
+            addMetadataFieldToDocument(e.getKey(), e.getValue());
+        }
+        metadataFieldValues.clear();
+    }
+
+    protected void addMetadataValuesToDocIndexer(DocIndexerBase docIndexerBase) {
+        for (Entry<String, String> e: metadataFieldValues.entrySet()) {
+            docIndexerBase.addMetadataField(e.getKey(), e.getValue());
+        }
+    }
+    
+    private void addMetadataFieldToDocument(String name, String value) {
         IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
         indexMetadata.registerMetadataField(name);
 
@@ -374,11 +465,9 @@ public abstract class DocIndexer implements AutoCloseable {
             type = shouldBeType;
         }
 
-        boolean alreadyHasAValue = currentLuceneDoc.getField(name) != null;
         if (type != FieldType.NUMERIC) {
             currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
-            if (!alreadyHasAValue)
-                currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
+            currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
             String numFieldName = name;
@@ -397,8 +486,7 @@ public abstract class DocIndexer implements AutoCloseable {
             }
             IntField nf = new IntField(numFieldName, n, Store.YES);
             currentLuceneDoc.add(nf);
-            if (!alreadyHasAValue)
-                currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
+            currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
         }
     }
 
@@ -410,6 +498,9 @@ public abstract class DocIndexer implements AutoCloseable {
      * don't get lowercased or de-accented. Because metadata queries are always
      * desensitized, you can't use uppercase or accented letters in these values or
      * they will never be found. This should be addressed.
+     *
+     * NOTE2: This way of adding metadata values is deprecated. Use an input format config 
+     * file instead, and configure a field with a fixed value.
      */
     protected void addMetadataFieldsFromParameters() {
         for (Entry<String, String> e : parameters.entrySet()) {

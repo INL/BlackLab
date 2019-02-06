@@ -508,7 +508,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(apLinkPath);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
-                result = currentLuceneDoc.get(valueField);
+                result = getMetadataField(valueField);
             }
             result = processString(result, linkValue.getProcess(), null);
             results.add(result);

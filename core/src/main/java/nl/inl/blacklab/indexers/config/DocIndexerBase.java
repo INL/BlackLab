@@ -19,7 +19,6 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
@@ -37,10 +36,6 @@ import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
-import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 
@@ -278,6 +273,7 @@ public abstract class DocIndexerBase extends DocIndexer {
                     ldi.contentStoreName = storeWithName;
                 }
                 ldi.indexSpecificDocument(documentPath);
+                ldi.addMetadataValuesToDocIndexer(this);
             } else {
                 throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
@@ -357,13 +353,10 @@ public abstract class DocIndexerBase extends DocIndexer {
         traceln("START DOCUMENT");
         if (!indexingIntoExistingLuceneDoc) {
             currentLuceneDoc = new Document();
-            if (docWriter != null)
-                currentLuceneDoc.add(new Field("fromInputFile", documentName, docWriter.metadataFieldType(false)));
-
-            // DEPRECATED for these types of indexer, but still supported for now
-            addMetadataFieldsFromParameters();
+            addMetadataField("fromInputFile", documentName);
+            addMetadataFieldsFromParameters(); // DEPRECATED for these types of indexer, but still supported for now
         }
-        if (docWriter != null)
+        if (docWriter != null && !indexingIntoExistingLuceneDoc)
             docWriter.listener().documentStarted(documentName);
     }
 
@@ -425,42 +418,10 @@ public abstract class DocIndexerBase extends DocIndexer {
                 m.addMetadata();
             }
 
-            // See what metadatafields are missing or empty and add unknown value
-            // if desired.
-            IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
-            for (MetadataField fd: indexMetadata.metadataFields()) {
-                boolean missing = false, empty = false;
-                String currentValue = currentLuceneDoc.get(fd.name());
-                if (currentValue == null)
-                    missing = true;
-                else if (currentValue.length() == 0)
-                    empty = true;
-                UnknownCondition cond = fd.unknownCondition();
-                boolean useUnknownValue = false;
-                switch (cond) {
-                case EMPTY:
-                    useUnknownValue = empty;
-                    break;
-                case MISSING:
-                    useUnknownValue = missing;
-                    break;
-                case MISSING_OR_EMPTY:
-                    useUnknownValue = missing || empty;
-                    break;
-                case NEVER:
-                    useUnknownValue = false;
-                    break;
-                }
-                if (useUnknownValue) {
-                    if (empty) {
-                        // Don't count this as a value, count the unknown value
-                        ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(currentValue);
-                    }
-                    addMetadataField(optTranslateFieldName(fd.name()), fd.unknownValue());
-                }
-            }
         }
 
+        if (!indexingIntoExistingLuceneDoc)
+            addMetadataToDocument();
         try {
             // Add Lucene doc to indexer, if not existing already
             if (docWriter != null && !indexingIntoExistingLuceneDoc)
@@ -480,7 +441,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             reportCharsProcessed();
             reportTokensProcessed();
         }
-        if (docWriter != null)
+        if (docWriter != null && !indexingIntoExistingLuceneDoc)
             docWriter.listener().documentDone(documentName);
 
         currentLuceneDoc = null;
@@ -535,19 +496,6 @@ public abstract class DocIndexerBase extends DocIndexer {
      * Also set the content id field so we know how to retrieve it later.
      */
     protected abstract void storeDocument();
-
-    /**
-     * Translate a field name before adding it to the Lucene document.
-     *
-     * By default, simply returns the input. May be overridden to change the name of
-     * a metadata field as it is indexed.
-     *
-     * @param from original metadata field name
-     * @return new name
-     */
-    protected String optTranslateFieldName(String from) {
-        return from;
-    }
 
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
         if (isOpenTag) {
