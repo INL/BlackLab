@@ -165,12 +165,12 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         return Collections.unmodifiableList(criteria);
     }
 
-    public static DocPropertyMultiple deserialize(String info) {
+    public static DocPropertyMultiple deserialize(BlackLabIndex index, String info) {
         String[] strValues = PropertySerializeUtil.splitMultiple(info);
         DocProperty[] values = new DocProperty[strValues.length];
         int i = 0;
         for (String strValue : strValues) {
-            values[i] = DocProperty.deserialize(strValue);
+            values[i] = DocProperty.deserialize(index, strValue);
             i++;
         }
         return new DocPropertyMultiple(values);

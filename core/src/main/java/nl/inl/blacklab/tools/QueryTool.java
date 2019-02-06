@@ -1227,7 +1227,7 @@ public class QueryTool {
                 HitProperty p2 = new HitPropertyHitText(index, contentsField.annotation("pos"));
                 crit = new HitPropertyMultiple(p1, p2);
             } else if (index.metadataFields().exists(sortBy)) {
-                crit = new HitPropertyDocumentStoredField(sortBy);
+                crit = new HitPropertyDocumentStoredField(index, sortBy);
             }
 
         }

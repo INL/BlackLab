@@ -103,7 +103,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need 
         // some more testing to see if everything is correct if we change this
         String sortBy = searchParam.getString("sort");
-        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
+        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(blIndex(), sortBy) : null;
         DocResults docsSorted = group.storedResults();
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);

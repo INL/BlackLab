@@ -37,6 +37,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -371,8 +374,11 @@ public abstract class DocIndexer implements AutoCloseable {
             type = shouldBeType;
         }
 
+        boolean alreadyHasAValue = currentLuceneDoc.getField(name) != null;
         if (type != FieldType.NUMERIC) {
             currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
+            if (!alreadyHasAValue)
+                currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
             String numFieldName = name;
@@ -391,6 +397,8 @@ public abstract class DocIndexer implements AutoCloseable {
             }
             IntField nf = new IntField(numFieldName, n, Store.YES);
             currentLuceneDoc.add(nf);
+            if (!alreadyHasAValue)
+                currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
         }
     }
 

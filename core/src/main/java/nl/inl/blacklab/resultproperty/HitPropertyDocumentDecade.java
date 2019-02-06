@@ -15,12 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.io.IOException;
-
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Contexts;
@@ -37,22 +33,31 @@ public class HitPropertyDocumentDecade extends HitProperty {
     public static final int UNKNOWN_VALUE = 10000000;
 
     static HitPropertyDocumentDecade deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentDecade(index.metadataField(info));
+        return new HitPropertyDocumentDecade(index, index.metadataField(info));
     }
+
+    private BlackLabIndex index;
 
     IndexReader reader;
 
     String fieldName;
 
+    private DocPropertyDecade docPropertyDocumentDecade;
+
     HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.reader = hits == null ? null : hits.index().reader();
+        this.index = prop.index;
+        this.reader = index.reader();
         this.fieldName = prop.fieldName;
+        this.docPropertyDocumentDecade = prop.docPropertyDocumentDecade;
     }
 
-    public HitPropertyDocumentDecade(MetadataField field) {
+    public HitPropertyDocumentDecade(BlackLabIndex index, MetadataField field) {
         super();
+        this.index = index;
+        this.reader = index.reader();
         this.fieldName = field.name();
+        this.docPropertyDocumentDecade = new DocPropertyDecade(index, fieldName);
     }
 
     @Override
@@ -62,62 +67,19 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     @Override
     public PropertyValueDecade get(Hit result) {
-        try {
-            Document d = reader.document(result.doc());
-            String strYear = d.get(fieldName);
-            int year;
-            try {
-                year = Integer.parseInt(strYear);
-                year -= year % 10;
-            } catch (NumberFormatException e) {
-                year = UNKNOWN_VALUE;
-            }
-            return new PropertyValueDecade(year);
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return new PropertyValueDecade(docPropertyDocumentDecade.get(result.doc()));
     }
 
     @Override
     public int compare(Hit a, Hit b) {
-        try {
-            Document d = reader.document(a.doc());
-            String strYearA = d.get(fieldName);
-            if (strYearA == null)
-                strYearA = "";
-            d = reader.document(b.doc());
-            String strYearB = d.get(fieldName);
-            if (strYearB == null)
-                strYearB = "";
-            if (strYearA.length() == 0) // sort missing year at the end
-                return strYearB.length() == 0 ? 0 : (reverse ? -1 : 1);
-            if (strYearB.length() == 0) // sort missing year at the end
-                return reverse ? 1 : -1;
-            int aYear;
-            try {
-                aYear = Integer.parseInt(strYearA);
-                aYear -= aYear % 10;
-            } catch (NumberFormatException e) {
-                aYear = UNKNOWN_VALUE;
-            }
-            int bYear;
-            try {
-                bYear = Integer.parseInt(strYearB);
-                bYear -= bYear % 10;
-            } catch (NumberFormatException e) {
-                bYear = UNKNOWN_VALUE;
-            }
-
-            return reverse ? bYear - aYear : aYear - bYear;
-
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        int aDecade = docPropertyDocumentDecade.get(a.doc());
+        int bDecade = docPropertyDocumentDecade.get(b.doc());
+        return reverse ? bDecade - aDecade : aDecade - bDecade;
     }
 
     @Override
     public String name() {
-        return "document: decade";
+        return "document: " + docPropertyDocumentDecade.name();
     }
 
     @Override
@@ -152,8 +114,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     @Override
     public DocProperty docPropsOnly() {
-        DocPropertyDecade result = new DocPropertyDecade(fieldName);
-        return reverse ? result.reverse() : result;
+        return reverse ? docPropertyDocumentDecade.reverse() : docPropertyDocumentDecade;
     }
 
     @Override

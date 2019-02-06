@@ -402,7 +402,7 @@ public class SearchParameters {
             if (facets == null) {
                 return null;
             }
-            DocProperty propMultipleFacets = DocProperty.deserialize(facets);
+            DocProperty propMultipleFacets = DocProperty.deserialize(blIndex(), facets);
             if (propMultipleFacets == null)
                 return null;
             facetProps = new ArrayList<>();
@@ -426,7 +426,7 @@ public class SearchParameters {
         DocProperty groupProp = null;
         if (groupBy == null || groupBy.length() == 0)
             return null;
-        groupProp = DocProperty.deserialize(groupBy);
+        groupProp = DocProperty.deserialize(blIndex(), groupBy);
         if (groupProp == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
         return new DocGroupSettings(groupProp);
@@ -460,7 +460,7 @@ public class SearchParameters {
         String sortBy = getString("sort");
         if (sortBy == null || sortBy.length() == 0)
             return null;
-        DocProperty sortProp = DocProperty.deserialize(sortBy);
+        DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy);
         if (sortProp == null)
             return null;
         return new DocSortSettings(sortProp);

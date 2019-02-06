@@ -82,7 +82,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
             result = HitPropertyDocumentId.deserializeProp();
             break;
         case "field":
-            result = HitPropertyDocumentStoredField.deserializeProp(ResultProperty.ignoreSensitivity(info));
+            result = HitPropertyDocumentStoredField.deserializeProp(index, ResultProperty.ignoreSensitivity(info));
             break;
         case "hit":
             result = HitPropertyHitText.deserializeProp(index, field, info);

@@ -28,20 +28,40 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public class DocPropertyDecade extends DocProperty {
 
+    private BlackLabIndex index;
+    
     private String fieldName;
+    
+    private DocPropertyStoredField docPropStoredField;
 
     DocPropertyDecade(DocPropertyDecade prop, boolean invert) {
         super(prop, invert);
+        index = prop.index;
         fieldName = prop.fieldName;
+        docPropStoredField = prop.docPropStoredField;
     }
 
-    public DocPropertyDecade(String fieldName) {
+    public DocPropertyDecade(BlackLabIndex index, String fieldName) {
+        this.index = index;
         this.fieldName = fieldName;
+        docPropStoredField = new DocPropertyStoredField(index, fieldName);
+    }
+
+    public int get(int docId) {
+        String strYear = docPropStoredField.get(docId);
+        int year;
+        try {
+            year = Integer.parseInt(strYear);
+            year -= year % 10;
+        } catch (NumberFormatException e) {
+            year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
+        }
+        return year;
     }
 
     @Override
     public PropertyValueDecade get(DocResult result) {
-        String strYear = result.identity().luceneDoc().get(fieldName);
+        String strYear = docPropStoredField.get(result).value;
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -98,8 +118,8 @@ public class DocPropertyDecade extends DocProperty {
         return "decade";
     }
 
-    public static DocPropertyDecade deserialize(String info) {
-        return new DocPropertyDecade(info);
+    public static DocPropertyDecade deserialize(BlackLabIndex index, String info) {
+        return new DocPropertyDecade(index, info);
     }
 
     @Override

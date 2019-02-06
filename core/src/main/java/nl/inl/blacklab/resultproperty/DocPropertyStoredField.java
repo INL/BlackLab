@@ -15,12 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
+
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -35,27 +44,130 @@ import nl.inl.util.StringUtil;
  * be "author", "year", and such.
  */
 public class DocPropertyStoredField extends DocProperty {
+    
+    /** Lucene field name */
     private String fieldName;
+    
+    /** Display name for the field */
     private String friendlyName;
+    
+    /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
+    private Map<Integer, SortedDocValues> docValues = null;
+
+    /** Our index */
+    private BlackLabIndex index;
     
     public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
         super(prop, invert);
+        this.index = prop.index;
         this.fieldName = prop.fieldName;
         this.friendlyName = prop.friendlyName;
     }
 
-    public DocPropertyStoredField(String fieldName) {
-        this(fieldName, fieldName);
+    public DocPropertyStoredField(BlackLabIndex index, String fieldName) {
+        this(index, fieldName, fieldName);
     }
 
-    public DocPropertyStoredField(String fieldName, String friendlyName) {
+    public DocPropertyStoredField(BlackLabIndex index, String fieldName, String friendlyName) {
+        this.index = index;
         this.fieldName = fieldName;
         this.friendlyName = friendlyName;
+
+        if (!fieldName.endsWith("Numeric")) { // TODO: use actual data from IndexMetadata
+            docValues = new TreeMap<>();
+            try {
+                for (LeafReaderContext rc : index.reader().leaves()) {
+                    LeafReader r = rc.reader();
+                    SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
+                    if (sortedDocValues != null) {
+                        docValues.put(rc.docBase, sortedDocValues);
+                    }
+                }
+                if (docValues.isEmpty()) {
+                    // We don't actually have DocValues.
+                    docValues = null;
+                }
+            } catch (IOException e) {
+                BlackLabRuntimeException.wrap(e);
+            }
+        }
+    }
+
+    public String get(int docId) {
+        if  (docValues != null) {
+            // Find the fiid in the correct segment
+            Entry<Integer, SortedDocValues> prev = null;
+            for (Entry<Integer, SortedDocValues> e : docValues.entrySet()) {
+                Integer docBase = e.getKey();
+                if (docBase > docId) {
+                    // Previous segment (the highest docBase lower than docId) is the right one
+                    Integer prevDocBase = prev.getKey();
+                    SortedDocValues prevDocValues = prev.getValue();
+                    return prevDocValues.get(docId - prevDocBase).utf8ToString();
+                }
+                prev = e;
+            }
+            // Last segment is the right one
+            Integer prevDocBase = prev.getKey();
+            SortedDocValues prevDocValues = prev.getValue();
+            return prevDocValues.get(docId - prevDocBase).utf8ToString();
+        }
+        // We don't have DocValues; just get the property from the document.
+        try {
+            return index.reader().document(docId).get(fieldName);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException("Could not fetch document " + docId, e);
+        }
+    }
+
+    public String get(PropertyValueDoc doc) {
+        if  (docValues != null) {
+            // Find the fiid in the correct segment
+            int docId = doc.id();
+            Entry<Integer, SortedDocValues> prev = null;
+            for (Entry<Integer, SortedDocValues> e : docValues.entrySet()) {
+                Integer docBase = e.getKey();
+                if (docBase > docId) {
+                    // Previous segment (the highest docBase lower than docId) is the right one
+                    Integer prevDocBase = prev.getKey();
+                    SortedDocValues prevDocValues = prev.getValue();
+                    return prevDocValues.get(docId - prevDocBase).utf8ToString();
+                }
+                prev = e;
+            }
+            // Last segment is the right one
+            Integer prevDocBase = prev.getKey();
+            SortedDocValues prevDocValues = prev.getValue();
+            return prevDocValues.get(docId - prevDocBase).utf8ToString();
+        }
+        // We don't have DocValues; just get the property from the document.
+        return doc.luceneDoc().get(fieldName);
     }
 
     @Override
     public PropertyValueString get(DocResult result) {
-        return new PropertyValueString(result.identity().luceneDoc().get(fieldName));
+        return new PropertyValueString(get(result.identity()));
+    }
+
+    /**
+     * Compares two docs on this property
+     * 
+     * @param docId1 first doc
+     * @param docId2 second doc
+     * @return 0 if equal, negative if a < b, positive if a > b.
+     */
+    public int compare(int docId1, int docId2) {
+        String sa = get(docId1);
+        String sb = get(docId2);
+        if (sa.isEmpty()) { // sort empty string at the end
+            if (sb.isEmpty())
+                return 0;
+            else
+                return reverse ? -1 : 1;
+        }
+        if (sb.isEmpty()) // sort empty string at the end
+            return reverse ? 1 : -1;
+        return reverse ? PropertyValueString.collator.compare(sb, sa) : PropertyValueString.collator.compare(sa, sb);
     }
 
     /**
@@ -81,7 +193,7 @@ public class DocPropertyStoredField extends DocProperty {
         }
         if (sb.length() == 0) // sort empty string at the end
             return reverse ? 1 : -1;
-        return reverse ? sb.compareTo(sa) : sa.compareTo(sb);
+        return reverse ? PropertyValue.collator.compare(sb, sa) : PropertyValue.collator.compare(sa, sb);
     }
 
     @Override
@@ -89,8 +201,8 @@ public class DocPropertyStoredField extends DocProperty {
         return friendlyName;
     }
 
-    public static DocPropertyStoredField deserialize(String info) {
-        return new DocPropertyStoredField(info);
+    public static DocPropertyStoredField deserialize(BlackLabIndex index, String info) {
+        return new DocPropertyStoredField(index, info);
     }
 
     @Override

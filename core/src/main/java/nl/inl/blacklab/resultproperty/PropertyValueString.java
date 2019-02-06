@@ -45,4 +45,12 @@ public class PropertyValueString extends PropertyValue {
     public String serialize() {
         return PropertySerializeUtil.combineParts("str", value);
     }
+
+    public int length() {
+        return value.length();
+    }
+    
+    public boolean isEmpty() {
+        return value.isEmpty();
+    }
 }

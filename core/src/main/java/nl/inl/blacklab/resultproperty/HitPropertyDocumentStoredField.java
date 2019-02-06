@@ -15,12 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.io.IOException;
-
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Results;
@@ -31,31 +28,34 @@ import nl.inl.blacklab.search.results.Results;
  */
 public class HitPropertyDocumentStoredField extends HitProperty {
     
-    static HitPropertyDocumentStoredField deserializeProp(String info) {
-        return new HitPropertyDocumentStoredField(info);
+    static HitPropertyDocumentStoredField deserializeProp(BlackLabIndex index, String info) {
+        return new HitPropertyDocumentStoredField(index, info);
     }
 
+    BlackLabIndex index;
+    
     IndexReader reader;
 
     String fieldName;
 
-    private String friendlyName;
+    private DocPropertyStoredField docPropStoredField;
 
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.reader = hits == null ? null : hits.index().reader();
+        this.index = hits == null ? null : hits.index();
+        this.reader = index.reader();
         this.fieldName = prop.fieldName;
-        this.friendlyName = prop.friendlyName;
+        this.docPropStoredField = prop.docPropStoredField;
     }
 
-    public HitPropertyDocumentStoredField(String fieldName, String friendlyName) {
+    public HitPropertyDocumentStoredField(BlackLabIndex index, String fieldName, String friendlyName) {
         super();
         this.fieldName = fieldName;
-        this.friendlyName = friendlyName;
+        this.docPropStoredField = new DocPropertyStoredField(index, fieldName, friendlyName);
     }
 
-    public HitPropertyDocumentStoredField(String fieldName) {
-        this(fieldName, fieldName);
+    public HitPropertyDocumentStoredField(BlackLabIndex index, String fieldName) {
+        this(index, fieldName, fieldName);
     }
 
     @Override
@@ -65,42 +65,18 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public PropertyValueString get(Hit result) {
-        try {
-            Document d = reader.document(result.doc());
-            String value = d.get(fieldName);
-            if (value == null)
-                value = "";
-            return new PropertyValueString(value);
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return new PropertyValueString(docPropStoredField.get(result.doc()));
     }
 
     @Override
     public int compare(Hit a, Hit b) {
-        try {
-            Document d = reader.document(a.doc());
-            String va = d.get(fieldName);
-            if (va == null)
-                va = "";
-            d = reader.document(b.doc());
-            String vb = d.get(fieldName);
-            if (vb == null)
-                vb = "";
-            if (va.length() == 0) // sort empty string at the end
-                return vb.length() == 0 ? 0 : (reverse ? -1 : 1);
-            if (vb.length() == 0) // sort empty string at the end
-                return reverse ? 1 : -1;
-
-            return reverse ? PropertyValue.collator.compare(vb, va) : PropertyValue.collator.compare(va, vb);
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        int result = docPropStoredField.compare(a.doc(), b.doc());
+        return reverse ? -result : result;
     }
 
     @Override
     public String name() {
-        return "document: " + friendlyName;
+        return "document: " + docPropStoredField.name();
     }
 
     @Override
@@ -135,8 +111,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public DocProperty docPropsOnly() {
-        DocProperty result = new DocPropertyStoredField(fieldName, friendlyName);
-        return reverse ? result.reverse() : result;
+        return reverse ? docPropStoredField.reverse() : docPropStoredField;
     }
 
     @Override

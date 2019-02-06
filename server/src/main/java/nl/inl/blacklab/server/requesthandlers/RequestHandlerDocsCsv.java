@@ -86,7 +86,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
                 // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
                 if (sortBy != null) {
-                    DocProperty sortProp = DocProperty.deserialize(sortBy);
+                    DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy);
                     if (sortProp == null)
                         throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
                     docs = docs.sort(sortProp);
