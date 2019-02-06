@@ -56,7 +56,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     public String defaultAnalyzerName() {
         return defaultAnalyzerName;
     }
-
+    
     @Override
     public Iterator<MetadataField> iterator() {
         final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
@@ -309,6 +309,11 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     @Override
     public String toString() {
         return metadataFieldInfos.keySet().toString(); 
+    }
+
+    @Override
+    public List<String> names() {
+        return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
 }

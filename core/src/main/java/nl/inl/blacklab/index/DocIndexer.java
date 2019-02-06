@@ -27,6 +27,7 @@ import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -46,7 +47,6 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.indexers.config.DocIndexerBase;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -84,7 +84,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * Document metadata. Added at the end to deal with unknown values, multiple occurrences
      * (only the first is actually indexed, because of DocValues, among others), etc.
      */
-    private Map<String, String> metadataFieldValues = new HashMap<>();
+    protected Map<String, String> metadataFieldValues = new HashMap<>();
 
     /**
      * Parameters passed to this indexer
@@ -372,8 +372,13 @@ public abstract class DocIndexer implements AutoCloseable {
             return;
         }
 
-        if (!metadataFieldValues.containsKey(name)) // only store the first value found (DocValues, and this is the value .get() returns anyway)
+        value = value.trim();
+        if (!value.isEmpty() && !metadataFieldValues.containsKey(name)) { // only store the first value found (DocValues, and this is the value .get() returns anyway)
             metadataFieldValues.put(name, value);
+            
+            IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
+            indexMetadata.registerMetadataField(name);
+        }
     }
 
     /**
@@ -400,7 +405,9 @@ public abstract class DocIndexer implements AutoCloseable {
         // See what metadatafields are missing or empty and add unknown value if desired.
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
         Map<String, String> unknownValuesToUse = new HashMap<>();
-        for (MetadataField fd: indexMetadata.metadataFields()) {
+        List<String> fields = indexMetadata.metadataFields().names();
+        for (int i = 0; i < fields.size(); i++) {
+            MetadataField fd = indexMetadata.metadataField(fields.get(i));
             if (fd.type() == FieldType.NUMERIC)
                 continue;
             boolean missing = false, empty = false;
@@ -441,16 +448,10 @@ public abstract class DocIndexer implements AutoCloseable {
         }
         metadataFieldValues.clear();
     }
-
-    protected void addMetadataValuesToDocIndexer(DocIndexerBase docIndexerBase) {
-        for (Entry<String, String> e: metadataFieldValues.entrySet()) {
-            docIndexerBase.addMetadataField(e.getKey(), e.getValue());
-        }
-    }
     
     private void addMetadataFieldToDocument(String name, String value) {
         IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
-        indexMetadata.registerMetadataField(name);
+        //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);
         FieldType type = desc.type();

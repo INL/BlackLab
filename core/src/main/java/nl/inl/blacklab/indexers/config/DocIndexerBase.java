@@ -268,12 +268,12 @@ public abstract class DocIndexerBase extends DocIndexer {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
+                ldi.metadataFieldValues = metadataFieldValues;
                 if (storeWithName != null) {
                     // If specified, store in this content store and under this name instead of the default
                     ldi.contentStoreName = storeWithName;
                 }
                 ldi.indexSpecificDocument(documentPath);
-                ldi.addMetadataValuesToDocIndexer(this);
             } else {
                 throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());

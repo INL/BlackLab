@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /** Metadata fields in an index. */
@@ -53,5 +54,7 @@ public interface MetadataFields extends Iterable<MetadataField> {
 	 * @return true if it exists, false if not
 	 */
     boolean exists(String name);
+
+    List<String> names();
 	
 }
