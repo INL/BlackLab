@@ -43,9 +43,13 @@ public class FiidLookup {
         try {
             for (LeafReaderContext rc : reader.leaves()) {
                 LeafReader r = rc.reader();
-                @SuppressWarnings("resource")
-                UninvertingReader uninv = new UninvertingReader(r, fields);
-                NumericDocValues numericDocValues = uninv.getNumericDocValues(fiidFieldName);
+                NumericDocValues numericDocValues = r.getNumericDocValues(fiidFieldName);
+                if (numericDocValues == null) {
+                    // Use UninvertingReader to simulate DocValues (slower)
+                    @SuppressWarnings("resource")
+                    UninvertingReader uninv = new UninvertingReader(r, fields);
+                    numericDocValues = uninv.getNumericDocValues(fiidFieldName);
+                }
                 if (numericDocValues != null) {
                     cachedFiids.put(rc.docBase, numericDocValues);
                 }
@@ -54,7 +58,7 @@ public class FiidLookup {
                 // We don't actually have DocValues.
                 cachedFiids = null;
             } else {
-                // See if there are actual values store
+                // See if there are actual values stored
                 // [this check was introduced when we used the old FieldCache, no longer necessary?]
                 int numToCheck = Math.min(AnnotationForwardIndex.NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
                 if (!hasFiids(numToCheck))

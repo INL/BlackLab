@@ -76,11 +76,13 @@ public class DocPropertyStoredField extends DocProperty {
         if (!fieldName.endsWith("Numeric")) { // TODO: use actual data from IndexMetadata
             docValues = new TreeMap<>();
             try {
-                for (LeafReaderContext rc : index.reader().leaves()) {
-                    LeafReader r = rc.reader();
-                    SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
-                    if (sortedDocValues != null) {
-                        docValues.put(rc.docBase, sortedDocValues);
+                if (index.reader() != null) { // skip for MockIndex (testing)
+                    for (LeafReaderContext rc : index.reader().leaves()) {
+                        LeafReader r = rc.reader();
+                        SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
+                        if (sortedDocValues != null) {
+                            docValues.put(rc.docBase, sortedDocValues);
+                        }
                     }
                 }
                 if (docValues.isEmpty()) {
