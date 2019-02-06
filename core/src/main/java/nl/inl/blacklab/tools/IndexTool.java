@@ -90,12 +90,12 @@ public class IndexTool {
                     if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
                         try {
                             numberOfThreadsToUse = Integer.parseInt(args[i + 1]);
+                            i++;
                         } catch (NumberFormatException e) {
                             numberOfThreadsToUse = 2;
                         }
                     } else
                         numberOfThreadsToUse = 2;
-                    propFile = new File(args[i + 1]);
                     break;
                 case "nothreads":
                     numberOfThreadsToUse = 1;
