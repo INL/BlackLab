@@ -122,7 +122,7 @@ public class RequestHandlerDocContents extends RequestHandler {
             while(cm.find()) {
                 // collect unique prefixes that need to be bound
                 String prefix = cm.group(1) == null ? cm.group(2) == null ? cm.group(3) : cm.group(2) : cm.group(1);
-                if (!prefixes.contains(prefix)) {
+                if (!prefixes.contains(prefix) && !prefix.equals("xml")) { // ignore special xml prefix
                     prefixes.add(prefix);
                 }
             }
@@ -139,7 +139,9 @@ public class RequestHandlerDocContents extends RequestHandler {
                 }
                 // see if a prefix isn't bound
                 if (prefixes.stream().noneMatch(s -> namespaces.stream().anyMatch(s1 -> s1.startsWith(" xmlns:" + s)))) {
-                    throw new InternalServerError(String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.",prefixes.toString(),docPid, namespaces.toString()));
+                    String msg = String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.",prefixes.toString(),docPid, namespaces.toString());
+                    logger.warn(msg);
+                    //throw new InternalServerError(msg);
                 }
             }
             ds.endOpenEl();
