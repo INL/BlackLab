@@ -585,4 +585,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         return corpusSize;
     }
 
+    public Query query() {
+        return query;
+    }
+
 }

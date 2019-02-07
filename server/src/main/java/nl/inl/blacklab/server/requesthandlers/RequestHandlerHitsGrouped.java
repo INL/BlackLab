@@ -4,7 +4,9 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -66,12 +68,13 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         
         // The list of groups found
         DocProperty metadataGroupProperties = null;
+        DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
         if (INCLUDE_RELATIVE_FREQ) {
             logger.debug("## Init relative frequencies: get doc props");
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
             logger.debug("## Init relative frequencies: determine subcorpus");
-            DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
+            subcorpus = searchMan.search(user, searchParam.subcorpus());
             if (metadataGroupProperties == null) {
                 // We're not grouping on metadata. We only need to know the total subcorpus size.
                 logger.debug("## NOT grouping on metadata, count tokens in total subcorpus");
@@ -97,7 +100,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
                     //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
-                    subcorpusSize = findSubcorpusSize(searchParam, metadataGroupProperties, docPropValues, true);
+                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                     logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
                 
@@ -123,13 +126,19 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         return HTTP_OK;
     }
 
-    static CorpusSize findSubcorpusSize(SearchParameters searchParam, DocProperty property, PropertyValue value, boolean countTokens) {
+    static CorpusSize findSubcorpusSize(SearchParameters searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value, boolean countTokens) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
         Query query = property.query(searchParam.blIndex(), value); // analyzer....!
         if (query == null) {
-            query = new MatchAllDocsQuery();
+            query = metadataFilterQuery;
+        } else {
+            // Combine with subcorpus query
+            Builder builder = new BooleanQuery.Builder();
+            builder.add(metadataFilterQuery, Occur.MUST);
+            builder.add(query, Occur.MUST);
+            query = builder.build();
         }
         // Determine number of tokens in this subcorpus
         return searchParam.blIndex().queryDocuments(query).subcorpusSize(countTokens);

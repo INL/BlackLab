@@ -73,9 +73,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         
         // The list of groups found
         DocProperty metadataGroupProperties = null;
+        DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria();
+            subcorpus = searchMan.search(user, searchParam.subcorpus());
         }
         
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
@@ -98,7 +100,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                     PropertyValue docPropValues = group.identity();
                     //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
                     //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, metadataGroupProperties, docPropValues, true);
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                 }
                 
                 int numberOfHitsInGroup = group.totalTokens();
