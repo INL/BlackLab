@@ -174,7 +174,7 @@ public class RequestHandlerDocs extends RequestHandler {
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
-            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);
+            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
         if (includeTokenCount)

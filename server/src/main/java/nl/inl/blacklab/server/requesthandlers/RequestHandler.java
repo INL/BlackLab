@@ -694,7 +694,7 @@ public abstract class RequestHandler {
         ds.endMap().endEntry();
     }
 
-    protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed) {
+    protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ds.entry("stillCounting", false);
         if (isViewDocGroup) {
@@ -717,6 +717,9 @@ public abstract class RequestHandler {
             // Documents-only search (no hits). Get the info from the DocResults.
             ds.entry("numberOfDocs", docResults.size())
                     .entry("numberOfDocsRetrieved", docResults.size());
+        }
+        if (subcorpusSize != null) {
+            addSubcorpusSize(ds, subcorpusSize);
         }
     }
 

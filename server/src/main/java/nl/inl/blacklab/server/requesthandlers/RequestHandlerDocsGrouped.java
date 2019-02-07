@@ -75,16 +75,22 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
+        boolean hasPattern = searchParam.hasPattern();
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria();
             subcorpus = searchMan.search(user, searchParam.subcorpus());
+            if (!hasPattern) {
+                // We don't need to report subcorpus size per group if we didn't search on a pattern
+                // (because in that case, subcorpus size is always equal to group size)
+                subcorpusSize = subcorpus.subcorpusSize();
+            }
         }
         
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
         if (totalHits == null)
-            addNumberOfResultsSummaryDocResults(ds, false, docResults, false);
+            addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, null);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
         
         ds.endMap().endEntry();
 
@@ -95,11 +101,9 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         for (DocGroup group : groups) {
             if (i >= first && i < first + number) {
                 
-                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
+                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
-                    //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
-                    //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
                     subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                 }
                 
@@ -111,7 +115,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                         .entry("size", group.size());
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
                     ds.entry("numberOfTokens", numberOfHitsInGroup);
-                    if (subcorpusSize != null) {
+                    if (hasPattern) {
                         addSubcorpusSize(ds, subcorpusSize);
                     }
                 }
