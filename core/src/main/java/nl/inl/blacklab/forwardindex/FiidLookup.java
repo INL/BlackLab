@@ -37,8 +37,6 @@ public class FiidLookup {
     public FiidLookup(IndexReader reader, Annotation annotation) {
         this.fiidFieldName = annotation.forwardIndexIdField();
         this.reader = reader;
-        Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-        fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);
         cachedFiids = new TreeMap<>();
         try {
             for (LeafReaderContext rc : reader.leaves()) {
@@ -46,6 +44,8 @@ public class FiidLookup {
                 NumericDocValues numericDocValues = r.getNumericDocValues(fiidFieldName);
                 if (numericDocValues == null) {
                     // Use UninvertingReader to simulate DocValues (slower)
+                    Map<String, UninvertingReader.Type> fields = new TreeMap<>();
+                    fields.put(fiidFieldName, UninvertingReader.Type.INTEGER);
                     @SuppressWarnings("resource")
                     UninvertingReader uninv = new UninvertingReader(r, fields);
                     numericDocValues = uninv.getNumericDocValues(fiidFieldName);

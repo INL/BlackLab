@@ -128,7 +128,7 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
             result = DocPropertyStoredField.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
         case "fieldlen":
-            result = DocPropertyAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
+            result = DocPropertyAnnotatedFieldLength.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
             
         case "docid":

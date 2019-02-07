@@ -107,14 +107,14 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                     subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                 }
                 
-                int numberOfHitsInGroup = group.totalTokens();
+                long numberOfTokens = group.totalTokens();
                 
                 ds.startItem("docgroup").startMap()
                         .entry("identity", group.identity().serialize())
                         .entry("identityDisplay", group.identity().toString())
                         .entry("size", group.size());
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-                    ds.entry("numberOfTokens", numberOfHitsInGroup);
+                    ds.entry("numberOfTokens", numberOfTokens);
                     if (hasPattern) {
                         addSubcorpusSize(ds, subcorpusSize);
                     }

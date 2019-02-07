@@ -365,9 +365,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public DocGroups group(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
-        Map<PropertyValue, Integer> groupTokenSizes = new HashMap<>();
+        Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
         
         String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
+        DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
         
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
@@ -379,9 +380,8 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
-            Integer groupTokenSize = groupTokenSizes.get(groupId);
-            int subtractClosingToken = 1;
-            int docLengthTokens = Integer.parseInt(r.identity().luceneDoc().get(tokenLengthFieldName)) - subtractClosingToken;
+            Long groupTokenSize = groupTokenSizes.get(groupId);
+            long docLengthTokens = fieldLengthProp.get(r.identity().id());
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -576,7 +576,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
                 logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();
-                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(fieldName);
+                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
                 numberOfTokens = countTokens ? intSum(propTokens) : -1;
                 numberOfDocuments = size();
             }
