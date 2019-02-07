@@ -103,7 +103,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need 
         // some more testing to see if everything is correct if we change this
         String sortBy = searchParam.getString("sort");
-        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(sortBy) : null;
+        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(blIndex(), sortBy) : null;
         DocResults docsSorted = group.storedResults();
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);
@@ -155,7 +155,7 @@ public class RequestHandlerDocs extends RequestHandler {
         long totalTokens = -1;
         if (includeTokenCount) {
             // Determine total number of tokens in result set
-            totalTokens = totalDocResults.tokensInMatchingDocs();
+            totalTokens = totalDocResults.subcorpusSize().getTokens();
         }
 
         // Search is done; construct the results object
@@ -174,9 +174,9 @@ public class RequestHandlerDocs extends RequestHandler {
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
-            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed);
+            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
         ds.startEntry("docFields");

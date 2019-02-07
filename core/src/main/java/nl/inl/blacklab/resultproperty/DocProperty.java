@@ -94,14 +94,14 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
         return reverse ? "-" : "";
     }
 
-    public static DocProperty deserialize(String serialized) {
+    public static DocProperty deserialize(BlackLabIndex index, String serialized) {
         if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {
                 reverse = true;
                 serialized = serialized.substring(2, serialized.length() - 1);
             }
-            DocProperty result = DocPropertyMultiple.deserialize(serialized);
+            DocProperty result = DocPropertyMultiple.deserialize(index, serialized);
             if (reverse)
                 result = result.reverse();
             return result;
@@ -119,16 +119,16 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
         DocProperty result;
         switch (type) {
         case "decade":
-            result = DocPropertyDecade.deserialize(ResultProperty.ignoreSensitivity(info));
+            result = DocPropertyDecade.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
         case "numhits":
             result = DocPropertyNumberOfHits.deserialize();
             break;
         case "field":
-            result = DocPropertyStoredField.deserialize(ResultProperty.ignoreSensitivity(info));
+            result = DocPropertyStoredField.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
         case "fieldlen":
-            result = DocPropertyAnnotatedFieldLength.deserialize(ResultProperty.ignoreSensitivity(info));
+            result = DocPropertyAnnotatedFieldLength.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
             
         case "docid":

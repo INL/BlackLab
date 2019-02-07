@@ -188,8 +188,8 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     private Function<String, File> linkedFileResolver;
 
-    /** Index using multiple threads? */
-    private boolean useThreads = false;
+    /** Index using multiple threads or just one? */
+    private int numberOfThreadsToUse = 1;
 
     // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was
     // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex
@@ -566,7 +566,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(this.useThreads, this.defaultRecurseSubdirs,
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs,
                 this.processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
@@ -583,8 +583,8 @@ class IndexerImpl implements DocWriter, Indexer {
     // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
     @Override
     public void index(File file, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(useThreads, this.defaultRecurseSubdirs,
-                this.processArchivesAsDirectories)) {
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs,
+                processArchivesAsDirectories)) {
             proc.setFileNameGlob(fileNameGlob);
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
@@ -723,13 +723,19 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
+    @Deprecated
     public void setUseThreads(boolean useThreads) {
-        this.useThreads = useThreads;
+        this.setNumberOfThreadsToUse(useThreads ? 2 : 1);
+    }
+
+    @Override
+    public void setNumberOfThreadsToUse(int numberOfThreadsToUse) {
+        this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // TODO some of the class-based docIndexers don't support theaded indexing
         if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for format " + formatIdentifier);
-            this.useThreads = false;
+            this.numberOfThreadsToUse = 1;
         }
     }
 }

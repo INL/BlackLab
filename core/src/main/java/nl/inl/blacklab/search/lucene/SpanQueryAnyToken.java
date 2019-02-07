@@ -87,7 +87,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
             @Override
             public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-                return new SpansNGrams(context.reader(), luceneField, realMin, max);
+                return new SpansNGrams(context.reader(), getField(), realMin, max);
             }
         };
     }

@@ -46,7 +46,7 @@ public class TokensPerMetaValue {
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
                                 new BLDutchAnalyzer(), field.name());
                         DocResults docs = index.queryDocuments(filter);
-                        int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(annotatedFieldName));
+                        int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(index, annotatedFieldName));
                         System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
                                 + totalNumberOfTokens);
                     }

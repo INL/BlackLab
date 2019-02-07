@@ -56,7 +56,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     public String defaultAnalyzerName() {
         return defaultAnalyzerName;
     }
-
+    
     @Override
     public Iterator<MetadataField> iterator() {
         final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
@@ -200,7 +200,13 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
                 mf = metadataFieldInfos.get(fieldName);
             else {
                 // Not registered yet; do so now.
-                mf = new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
+                FieldType fieldType = FieldType.TOKENIZED;
+                if (fieldName.equals("fromInputFile")) {
+                    // internal bookkeeping field, never tokenize this
+                    // (probably better to register this field properly, but this works for now)
+                    fieldType = FieldType.UNTOKENIZED;
+                }
+                mf = new MetadataFieldImpl(fieldName, fieldType);
                 mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
                 mf.setUnknownValue(defaultUnknownValue);
                 metadataFieldInfos.put(fieldName, mf);
@@ -227,7 +233,10 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     public void ensureFieldExists(String name) {
         if (!exists(name)) {
             ensureNotFrozen();
-            put(name, new MetadataFieldImpl(name, FieldType.TOKENIZED));
+            MetadataFieldImpl mf = new MetadataFieldImpl(name, FieldType.TOKENIZED);
+            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
+            mf.setUnknownValue(defaultUnknownValue);
+            metadataFieldInfos.put(name, mf);
         }
     }
 
@@ -300,6 +309,11 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     @Override
     public String toString() {
         return metadataFieldInfos.keySet().toString(); 
+    }
+
+    @Override
+    public List<String> names() {
+        return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
 }

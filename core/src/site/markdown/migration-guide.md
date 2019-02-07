@@ -286,6 +286,10 @@ indexing:
 
     # Max. number of zip files to keep opened
     zipFilesMaxOpen: 10
+    
+    # Number of threads to use for indexing operations
+    # (more threads is faster, but uses more memory)
+    numberOfThreads: 2
 
 
 # Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or 

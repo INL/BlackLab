@@ -108,13 +108,13 @@ public abstract class DataStream {
         error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
     }
 
-    PrintWriter out;
+    protected final PrintWriter out;
 
-    int indent = 0;
+    private int indent = 0;
 
-    boolean prettyPrint;
+    private boolean prettyPrint;
 
-    boolean prettyPrintPref;
+    private final boolean prettyPrintPref;
 
     /** Should contextList omit empty properties if possible? */
     protected boolean omitEmptyProperties = false;
@@ -336,6 +336,7 @@ public abstract class DataStream {
                 .startEntry("cats")
                 .startMap()
                 .startAttrEntry("cat", "name", "Sylvie")
+                .startAttrEntry("cat", "prefix:missing", "notdeclared")
                 .startList()
                 .item("place", "Voorschoten")
                 .endList()

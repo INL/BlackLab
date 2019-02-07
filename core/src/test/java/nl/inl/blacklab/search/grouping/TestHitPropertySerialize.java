@@ -49,7 +49,7 @@ public class TestHitPropertySerialize {
     public void testHitPropertySerialize() {
         HitProperty prop;
 
-        prop = new HitPropertyDocumentDecade(decadeField);
+        prop = new HitPropertyDocumentDecade(mockIndex, decadeField);
         Assert.assertEquals("decade:decade", prop.serialize());
 
         prop = new HitPropertyDocumentId().reverse();
@@ -73,10 +73,10 @@ public class TestHitPropertySerialize {
     public void testDocPropertySerialize() {
         DocProperty prop;
 
-        prop = new DocPropertyDecade("decade").reverse();
+        prop = new DocPropertyDecade(mockIndex, "decade").reverse();
         String exp = "-decade:decade";
         Assert.assertEquals(exp, prop.serialize());
-        Assert.assertEquals(exp, DocProperty.deserialize(exp).serialize());
+        Assert.assertEquals(exp, DocProperty.deserialize(mockIndex, exp).serialize());
     }
 
     @Test

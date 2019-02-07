@@ -35,12 +35,12 @@ public class ConfigMetadataField {
 
     /**
      * When to index the unknownValue: NEVER|MISSING|EMPTY|MISSING_OR_EMPTY
-     * (default: NEVER)
+     * (null = use configured default value)
      */
-    private UnknownCondition unknownCondition = UnknownCondition.NEVER;
+    private UnknownCondition unknownCondition = null;
 
-    /** What to index when unknownCondition is true (default: unknown) */
-    private String unknownValue = "unknown";
+    /** What to index when unknownCondition is true (null = use configured default value) */
+    private String unknownValue = null;
 
     /** Analyzer to use for this field */
     private String analyzer = "";

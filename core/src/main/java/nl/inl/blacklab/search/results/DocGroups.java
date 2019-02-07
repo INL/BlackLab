@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
@@ -38,7 +39,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
      * @param windowStats window stats if this is a window, null otherwise
      * @return document groups
      */
-    public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
+    public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats);
     }
     
@@ -50,13 +51,13 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     
     private int resultObjects = 0;
 
-    private ResultProperty<DocResult> groupBy;
+    private DocProperty groupBy;
     
     private WindowStats windowStats;
     
     private SampleParameters sampleParameters;
     
-    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, ResultProperty<DocResult> groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
+    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
         this.groupBy = groupBy;
         this.windowStats = windowStats;
@@ -103,7 +104,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     }
 
     @Override
-    public ResultProperty<DocResult> groupCriteria() {
+    public DocProperty groupCriteria() {
         return groupBy;
     }
     
@@ -138,7 +139,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
-            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size());
+            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());
             truncatedGroups.add(newGroup);
         }
         return DocGroups.fromList(queryInfo(), truncatedGroups, groupBy, (SampleParameters)null, windowStats);

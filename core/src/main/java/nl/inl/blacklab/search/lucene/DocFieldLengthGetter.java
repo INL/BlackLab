@@ -154,9 +154,9 @@ class DocFieldLengthGetter implements Closeable {
         }
 
         // Calculate the total field length by adding all the term frequencies.
-        // (much slower)
+        // (much slower, and not actually correct if there's not a value for every word. but should happen anymore, we should always have a length field nowadays)
         try {
-            Terms vector = reader.getTermVector(doc, fieldName);
+            Terms vector = reader.getTermVector(doc, AnnotatedFieldNameUtil.annotationField(fieldName, AnnotatedFieldNameUtil.WORD_ANNOT_NAME, "i"));
             TermsEnum termsEnum = vector.iterator();
             int termFreq = 0;
             while (termsEnum.next() != null) {

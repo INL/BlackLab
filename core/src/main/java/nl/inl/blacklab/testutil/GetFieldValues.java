@@ -48,7 +48,6 @@ public class GetFieldValues {
 
             int numDocs = r.numDocs();
             for (int i = 1; i < numDocs; i++) {
-                //Document d = r.document(i, fieldSelector);
                 r.document(i, fieldVisitor);
                 Document d = fieldVisitor.getDocument();
                 for (String fieldName : fieldNames) {

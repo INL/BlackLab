@@ -235,7 +235,7 @@ public class TestFileProcessor {
         LoggingFileHandler fileHandler = new LoggingFileHandler(shouldTriggerException);
         LoggingErrorHandler errorHandler = new LoggingErrorHandler();
 
-        try (FileProcessor proc = new FileProcessor(useThreads, recurseSubdirs, processArchives)) {
+        try (FileProcessor proc = new FileProcessor(useThreads ? 2 : 1, recurseSubdirs, processArchives)) {
             proc.setFileHandler(fileHandler);
             proc.setErrorHandler(errorHandler);
             proc.processFile(this.inputFile, "");

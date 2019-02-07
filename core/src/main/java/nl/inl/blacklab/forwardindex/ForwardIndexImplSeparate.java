@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.NumericDocValuesField;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
@@ -139,7 +140,9 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             AnnotationForwardIndex afi = get(annotation);
             List<Integer> posIncrThisAnnot = posIncr.get(annotation);
             int fiid = afi.addDocument(e.getValue(), posIncrThisAnnot);
-            document.add(new IntField(annotation.forwardIndexIdField(), fiid, Store.YES));
+            String fieldName = annotation.forwardIndexIdField();
+            document.add(new IntField(fieldName, fiid, Store.YES));
+            document.add(new NumericDocValuesField(fieldName, fiid)); // for fast retrieval (FiidLookup)
         }
     }
 

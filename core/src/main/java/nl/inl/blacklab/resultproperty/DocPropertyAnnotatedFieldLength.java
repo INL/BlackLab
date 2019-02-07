@@ -15,8 +15,18 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.search.Query;
+import java.io.IOException;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.uninverting.UninvertingReader;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
@@ -27,27 +37,87 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
-    public static DocPropertyAnnotatedFieldLength deserialize(String info) {
-        return new DocPropertyAnnotatedFieldLength(info);
+    public static DocPropertyAnnotatedFieldLength deserialize(BlackLabIndex index, String info) {
+        return new DocPropertyAnnotatedFieldLength(index, info);
     }
 
     private String fieldName;
     
     private String friendlyName;
 
+    /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
+    private Map<Integer, NumericDocValues> docValues = null;
+    
+    private BlackLabIndex index;
+
     DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, boolean invert) {
         super(prop, invert);
+        index = prop.index;
         fieldName = prop.fieldName;
         friendlyName = prop.friendlyName;
     }
 
-    public DocPropertyAnnotatedFieldLength(String fieldName, String friendlyName) {
+    public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName, String friendlyName) {
+        this.index = index;
         this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         this.friendlyName = friendlyName;
+        docValues = new TreeMap<>();
+        try {
+            for (LeafReaderContext rc : index.reader().leaves()) {
+                LeafReader r = rc.reader();
+                NumericDocValues numericDocValues = r.getNumericDocValues(fieldName);
+                if (numericDocValues == null) {
+                    // Use UninvertingReader to simulate DocValues (slower)
+                    Map<String, UninvertingReader.Type> fields = new TreeMap<>();
+                    fields.put(fieldName, UninvertingReader.Type.INTEGER);
+                    @SuppressWarnings("resource")
+                    UninvertingReader uninv = new UninvertingReader(r, fields);
+                    numericDocValues = uninv.getNumericDocValues(fieldName);
+                }
+                if (numericDocValues != null) {
+                    docValues.put(rc.docBase, numericDocValues);
+                }
+            }
+            if (docValues.isEmpty()) {
+                // We don't actually have DocValues.
+                docValues = null;
+            }
+        } catch (IOException e) {
+            BlackLabRuntimeException.wrap(e);
+        }
     }
 
-    public DocPropertyAnnotatedFieldLength(String fieldName) {
-        this(fieldName, fieldName + " length");
+    public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName) {
+        this(index, fieldName, fieldName + " length");
+    }
+
+    public long get(int docId) {
+        if (docValues != null) {
+            // Find the fiid in the correct segment
+            Entry<Integer, NumericDocValues> prev = null;
+            for (Entry<Integer, NumericDocValues> e : docValues.entrySet()) {
+                Integer docBase = e.getKey();
+                if (docBase > docId) {
+                    // Previous segment (the highest docBase lower than docId) is the right one
+                    Integer prevDocBase = prev.getKey();
+                    NumericDocValues prevDocValues = prev.getValue();
+                    return prevDocValues.get(docId - prevDocBase);
+                }
+                prev = e;
+            }
+            // Last segment is the right one
+            Integer prevDocBase = prev.getKey();
+            NumericDocValues prevDocValues = prev.getValue();
+            return prevDocValues.get(docId - prevDocBase);
+        }
+        
+        // Not cached; find fiid by reading stored value from Document now
+        try {
+            return Long.parseLong(index.reader().document(docId).get(fieldName));
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+
     }
 
     @Override
