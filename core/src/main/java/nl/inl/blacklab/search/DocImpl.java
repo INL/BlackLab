@@ -56,6 +56,11 @@ public class DocImpl implements Doc {
         }
         return document;
     }
+    
+    @Override
+    public boolean isLuceneDocCached() {
+        return document != null;
+    }
 
     @Override
     public void characterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,

@@ -22,7 +22,7 @@ public class PropertyValueDecade extends PropertyValueInt {
     public String toString() {
         if (value == HitPropertyDocumentDecade.UNKNOWN_VALUE)
             return "unknown";
-        int year = value - value % 10;
+        long year = value - value % 10;
         return year + "-" + (year + 9);
     }
 
@@ -30,6 +30,6 @@ public class PropertyValueDecade extends PropertyValueInt {
     public String serialize() {
         if (value == HitPropertyDocumentDecade.UNKNOWN_VALUE)
             return "unknown";
-        return PropertySerializeUtil.combineParts("dec", Integer.toString(value));
+        return PropertySerializeUtil.combineParts("dec", Long.toString(value));
     }
 }

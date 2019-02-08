@@ -92,6 +92,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     public long get(int docId) {
+        long subtractClosingToken = 1;
         if (docValues != null) {
             // Find the fiid in the correct segment
             Entry<Integer, NumericDocValues> prev = null;
@@ -108,23 +109,30 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase);
+            return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
         }
         
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return Long.parseLong(index.reader().document(docId).get(fieldName));
+            return Long.parseLong(index.reader().document(docId).get(fieldName)) - subtractClosingToken;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
 
+    private long get(PropertyValueDoc identity) {
+        if (identity.value().isLuceneDocCached()) {
+            // if we already have the document, get the value from there
+            long subtractClosingToken = 1;
+            return Long.parseLong(identity.luceneDoc().get(fieldName)) - subtractClosingToken;
+        } else
+            return get(identity.id());
     }
 
     @Override
     public PropertyValueInt get(DocResult result) {
         try {
-            int subtractClosingToken = 1;
-            int length = Integer.parseInt(result.identity().luceneDoc().get(fieldName)) - subtractClosingToken;
+            long length = get(result.identity());
             return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
             return new PropertyValueInt(0);

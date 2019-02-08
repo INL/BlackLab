@@ -1,25 +1,26 @@
 package nl.inl.blacklab.resultproperty;
 
 public class PropertyValueInt extends PropertyValue {
-    int value;
+    long value;
 
     @Override
-    public Integer value() {
+    public Long value() {
         return value;
     }
 
-    public PropertyValueInt(int value) {
+    public PropertyValueInt(long value) {
         this.value = value;
     }
 
     @Override
     public int compareTo(Object o) {
-        return value - ((PropertyValueInt) o).value;
+        long ovalue = ((PropertyValueInt) o).value;
+        return value == ovalue ? 0 : (value > ovalue ? 1 : -1);
     }
 
     @Override
     public int hashCode() {
-        return ((Integer) value).hashCode();
+        return Long.hashCode(value);
     }
 
     @Override
@@ -44,11 +45,11 @@ public class PropertyValueInt extends PropertyValue {
 
     @Override
     public String toString() {
-        return Integer.toString(value);
+        return Long.toString(value);
     }
 
     @Override
     public String serialize() {
-        return PropertySerializeUtil.combineParts("int", Integer.toString(value));
+        return PropertySerializeUtil.combineParts("int", Long.toString(value));
     }
 }
