@@ -897,6 +897,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                             case "uiType":
                                 annotation.setUiType(opt.getValue().textValue());
                                 break;
+                            case "isInternal":
+                                if (opt.getValue().booleanValue())
+                                    annotation.setInternal();
+                                break;
                             case "subannotations":
                                 subannotationsStoredWithMain = false; // new-style index
                                 annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
