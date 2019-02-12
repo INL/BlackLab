@@ -18,6 +18,7 @@ package nl.inl.blacklab.search;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestIndex;
@@ -244,6 +245,7 @@ public class TestQueryRewrite {
                 "REP(POSFILTER(TAGS(s), TERM(contents%word@i:a), CONTAINING), 2, 2)");
     }
 
+    @Ignore
     @Test
     public void testRewriteProblematicNegativeClauses() {
         assertRewriteResult("'b' [word != 'a']",
