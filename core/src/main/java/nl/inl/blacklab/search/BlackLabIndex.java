@@ -12,7 +12,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -141,7 +141,7 @@ public interface BlackLabIndex extends Closeable {
     // Search the index
     //---------------------------------------------------------------------------
     
-    BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge;
+    BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery;
 
     /**
      * Find hits for a pattern in a field.
@@ -179,9 +179,9 @@ public interface BlackLabIndex extends Closeable {
      * @return the hits found
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
-     * @throws RegexpTooLarge 
+     * @throws InvalidQuery 
      */
-    default Hits find(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings settings) throws WildcardTermTooBroad, RegexpTooLarge {
+    default Hits find(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings settings) throws InvalidQuery {
         BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
@@ -199,11 +199,11 @@ public interface BlackLabIndex extends Closeable {
      * @return the hits found
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
-     * @throws RegexpTooLarge 
+     * @throws InvalidQuery 
      * @deprecated use version that takes a QueryInfo
      */
     @Deprecated
-    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws InvalidQuery {
         return find(QueryInfo.create(this, field), pattern, filter, searchSettings());
     }
 
@@ -218,11 +218,11 @@ public interface BlackLabIndex extends Closeable {
      * @return the hits found
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
-     * @throws RegexpTooLarge
+     * @throws InvalidQuery
      * @deprecated use version that takes a QueryInfo
      */
     @Deprecated
-    default Hits find(TextPattern pattern, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+    default Hits find(TextPattern pattern, Query filter) throws InvalidQuery {
         return find(QueryInfo.create(this), pattern, filter, searchSettings());
     }
 
@@ -265,9 +265,9 @@ public interface BlackLabIndex extends Closeable {
      * @return the explanation
      * @throws WildcardTermTooBroad if a wildcard or regular expression term
      *             is overly broad
-     * @throws RegexpTooLarge 
+     * @throws InvalidQuery 
      */
-    default QueryExplanation explain(QueryInfo queryInfo, TextPattern pattern, Query filter) throws WildcardTermTooBroad, RegexpTooLarge {
+    default QueryExplanation explain(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery {
         return explain(createSpanQuery(queryInfo.withIndex(this), pattern, filter));
     }
 

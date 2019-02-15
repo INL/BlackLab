@@ -10,6 +10,7 @@ import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -206,6 +207,8 @@ public class RequestHandlerHits extends RequestHandler {
                 throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
             } catch (WildcardTermTooBroad e) {
                 throw BlsException.wildcardTermTooBroad(e);
+            } catch (InvalidQuery e) {
+                throw new BadRequest("INVALID_QUERY", e.getMessage());
             }
         }
         ds.endMap().endEntry();

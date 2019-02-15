@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
@@ -41,7 +41,7 @@ public class TextPatternRepetition extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         BLSpanQuery baseTranslated = base.translate(context);
 
         if (min == 1 && max == 1)

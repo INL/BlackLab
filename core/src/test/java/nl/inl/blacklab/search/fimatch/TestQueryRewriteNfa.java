@@ -24,8 +24,6 @@ import org.junit.Test;
 import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -78,7 +76,7 @@ public class TestQueryRewriteNfa {
             }
             BLSpanQuery rewritten = explanation.rewrittenQuery();
             Assert.assertEquals(after, rewritten.toString());
-        } catch (WildcardTermTooBroad | RegexpTooLarge e) {
+        } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }

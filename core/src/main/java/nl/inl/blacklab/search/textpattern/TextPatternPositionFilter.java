@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
@@ -73,7 +73,7 @@ public class TextPatternPositionFilter extends TextPatternCombiner {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         BLSpanQuery trContainers = clauses.get(0).translate(context);
         BLSpanQuery trSearch = clauses.get(1).translate(context);
         return new SpanQueryPositionFilter(trContainers, trSearch, op, invert, leftAdjust, rightAdjust);

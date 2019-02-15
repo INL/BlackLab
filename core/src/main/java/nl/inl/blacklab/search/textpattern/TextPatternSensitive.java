@@ -15,7 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -62,7 +62,7 @@ public class TextPatternSensitive extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         return input.translate(context.withSensitive(sensitivity));
     }
 

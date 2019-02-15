@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.List;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -41,8 +42,9 @@ public abstract class TextPattern {
      * @param context query execution context to use
      * @return result of the translation
      * @throws RegexpTooLarge if a regular expression was too large
+     * @throws InvalidQuery if something else was wrong about the query (e.g. error in regex expression)
      */
-    public abstract BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge;
+    public abstract BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery;
 
     @Override
     public abstract String toString();
