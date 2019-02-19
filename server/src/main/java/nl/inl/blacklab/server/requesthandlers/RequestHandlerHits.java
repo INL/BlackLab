@@ -43,6 +43,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
@@ -109,11 +110,10 @@ public class RequestHandlerHits extends RequestHandler {
             // We should have retrieved all the hits already, as JobGroups always counts all hits.
             hits = hitsInGroup;
 
-            int first = Math.max(0, searchParam.getInteger("first"));
-            int size = Math.min(Math.max(0, searchParam.getInteger("number")), searchMan.config().getParameters().getPageSize().getDefaultValue());
-            if (!hitsInGroup.hitsStats().processedAtLeast(first))
+            WindowSettings windowSettings = searchParam.getWindowSettings();
+            if (!hitsInGroup.hitsStats().processedAtLeast(windowSettings.first()))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
-            window = hitsInGroup.window(first, size);
+            window = hitsInGroup.window(windowSettings.first(), windowSettings.size());
             
             hitsCount = hitsInGroup.hitsStats();
             docsCount = hitsInGroup.docsStats();
