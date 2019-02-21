@@ -733,9 +733,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             throw new IndexTooOld(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
-        if (!tagLengthInPayload)
-            throw new IndexTooOld(
-                    "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+        if (!tagLengthInPayload) {
+            logger.warn("Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
+            //throw new IndexTooOld("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
+        }
 
         // Specified in index metadata file?
         String namingScheme;
