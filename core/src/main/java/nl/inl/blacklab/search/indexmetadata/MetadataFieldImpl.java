@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValuesType;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,6 +18,11 @@ import com.fasterxml.jackson.databind.JsonNode;
  * A metadata field in an index.
  */
 public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
+    
+    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
+
+    private static final int MAX_VALUE_STORE_LENGTH = 256;
+
     private static int maxMetadataValuesToStore = 50;
     
     public static void setMaxMetadataValuesToStore(int n) {
@@ -239,9 +246,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         if (valueListComplete == ValueListComplete.UNKNOWN)
             valueListComplete = ValueListComplete.YES;
     
-        if (value.length() > 100) {
+        if (value.length() > MAX_VALUE_STORE_LENGTH) {
             // Value too long to store.
             valueListComplete = ValueListComplete.NO;
+            logger.warn("Metadata field " + name() + " includes a value too long to store (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false.");
             return this;
         }
         if (values.containsKey(value)) {
