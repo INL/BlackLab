@@ -23,7 +23,6 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -92,7 +91,7 @@ public class IndexManager {
                 logger.warn("indexes section contains unreadable entry: " + indexDir);
                 continue;
             }
-            
+
             // Is this a single index, or a collection of indexes?
             if (BlackLabIndex.isIndex(indexDir)) {
                 // Single index.
@@ -110,7 +109,7 @@ public class IndexManager {
                 collectionsDirs.add(indexDir);
             }
         }
-        
+
         // User collections dir; these are like collections, but within a user's directory
         userCollectionsDir = null;
         if (!StringUtils.isEmpty(blsConfig.getUserIndexes())) {
@@ -248,7 +247,6 @@ public class IndexManager {
                 indexMetadata.setDocumentFormat(formatIdentifier);
             }
             indexMetadata.setContentViewable(contentViewable);
-            indexMetadata.setTextDirection(TextDirection.LEFT_TO_RIGHT);
             indexMetadata.save();
         }
 
