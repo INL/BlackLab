@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -40,7 +41,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
     public boolean isCacheAllowed() {
         return false; // because status might change (or you might reindex)
     }
-    
+
     String optSpecialFieldName(MetadataFields metadataFields, String type) {
         MetadataField specialField = metadataFields.special(type);
         return specialField == null ? "" : specialField.name();
@@ -79,7 +80,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.entry("documentFormat", formatIdentifier);
             if (indexMetadata.tokenCount() > 0)
                 ds.entry("tokenCount", indexMetadata.tokenCount());
-            if (blIndex.reader().numDocs() > 0) 
+            if (blIndex.reader().numDocs() > 0)
                 ds.entry("documentCount", blIndex.reader().numDocs());
 
             ds.startEntry("versionInfo").startMap()
@@ -152,12 +153,13 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.endMap().endItem();
             }
             ds.endList().endEntry();
-            
+
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {
                 AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
                 if (groups != null) {
-                    Set<Annotation> annotationsNotInGroups = new HashSet<>(f.annotations().stream().collect(Collectors.toList()));
+                    // LinkedHashSet - preserve order!
+                    Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
                     for (AnnotationGroup group : groups) {
                         for (Annotation annotation: group) {
                             annotationsNotInGroups.remove(annotation);
@@ -174,9 +176,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                         }
                         if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
                             addedRemainingAnnots = true;
-                            List<Annotation> rest = new ArrayList<>(annotationsNotInGroups);
-                            rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
-                            for (Annotation annotation: rest) {
+                            for (Annotation annotation: annotationsNotInGroups) {
                                 if (!annotation.isInternal())
                                     ds.item("annotation", annotation.name());
                             }

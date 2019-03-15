@@ -36,7 +36,7 @@ import nl.inl.util.Json;
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
 public class InputFormatReader extends YamlJsonReader {
-    
+
     public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
     }
@@ -167,7 +167,7 @@ public class InputFormatReader extends YamlJsonReader {
                 throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
             }
         }
-        
+
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
         for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
@@ -428,6 +428,9 @@ public class InputFormatReader extends YamlJsonReader {
             case "multipleValues":
                 annot.setMultipleValues(bool(e));
                 break;
+            case "isInternal":
+                annot.setInternal(bool(e));
+                break;
             default:
                 throw new InvalidInputFormatConfig(
                         "Unknown key " + e.getKey() + " in annotation " + StringUtils.defaultString(annot.getName()));
@@ -438,7 +441,7 @@ public class InputFormatReader extends YamlJsonReader {
 
     /**
      * Convert a fixed string value to an XPath expression yielding that value.
-     * 
+     *
      * @param s fixed string the XPath should evaluate to
      * @return XPath expression
      */
