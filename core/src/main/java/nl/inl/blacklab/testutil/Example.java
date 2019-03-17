@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
@@ -181,9 +180,9 @@ public class Example {
      *
      * @param tp the text pattern to search for
      * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
-     * @throws RegexpTooLarge 
+     * @throws InvalidQuery 
      */
-    static void findPattern(TextPattern tp) throws WildcardTermTooBroad, RegexpTooLarge {
+    static void findPattern(TextPattern tp) throws InvalidQuery {
         // Execute the search
         Hits hits = index.find(QueryInfo.create(index), tp, null, null);
         Hits sortedHits = hits.sort(new HitPropertyHitText(index));

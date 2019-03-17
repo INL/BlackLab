@@ -670,4 +670,5 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         return metadataFetcher;
     }
+    
 }

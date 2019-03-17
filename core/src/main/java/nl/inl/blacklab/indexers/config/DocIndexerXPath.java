@@ -13,10 +13,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -456,7 +458,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     while (apMetaForEach.evalXPath() != -1) {
                         // Find the fieldName and value for this forEach match
                         apFieldName.resetXPath();
-                        String fieldName = apFieldName.evalXPathToString();
+                        String origFieldName = apFieldName.evalXPathToString();
+                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
+                        if (!origFieldName.equals(fieldName)) {
+                            warnSanitized(origFieldName, fieldName);
+                        }
                         apMetadata.resetXPath();
                         String metadataValue = apMetadata.evalXPathToString();
                         metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
@@ -480,6 +486,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
         releaseAutoPilot(apMetadataBlock);
         navpop();
+    }
+    
+    private static Set<String> reportedSanitizedNames = new HashSet<>();
+
+    private synchronized static void warnSanitized(String origFieldName, String fieldName) {
+        if (!reportedSanitizedNames.contains(origFieldName)) {
+            logger.warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
+            reportedSanitizedNames.add(origFieldName);
+        }
     }
 
     protected void processLinkedDocument(ConfigLinkedDocument ld) throws XPathParseException {

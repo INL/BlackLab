@@ -35,6 +35,11 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      * frontend, ignored by BlackLab itself.
      */
     private String uiType = "";
+    
+    /**
+     * Is this an internal annotation, not relevant for a search interface (e.g. punct, starttag)
+     */
+    private boolean isInternal;
 
     /** Reference to match sensitivities this annotation has */
     private Set<AnnotationSensitivity> alternatives = new HashSet<>();
@@ -51,7 +56,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     private AnnotationSensitivity offsetsAlternative;
 
-    private boolean frozen;
+    private boolean frozen = false;
     
     /** Names of our subannotations, if declared (new-style index) and if we have any */
     private Set<String> subAnnotationNames = new HashSet<>();
@@ -74,7 +79,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     AnnotationImpl(IndexMetadata indexMetadata, AnnotatedField field, String name) {
         this.indexMetadata = indexMetadata;
         this.field = field;
-        this.name = name;
+        this.setName(name);
         forwardIndex = false;
     }
     
@@ -158,8 +163,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     @Override
     public boolean isInternal() {
-        return name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME) ||
-                name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
+        return isInternal;
     }
 
     @Override
@@ -219,7 +223,19 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     public AnnotationImpl setName(String propName) {
         ensureNotFrozen();
         this.name = propName;
+        this.isInternal |= nameImpliesInternal();
         return this;
+    }
+    
+    public AnnotationImpl setInternal() {
+        ensureNotFrozen();
+        this.isInternal = true;
+        return this;
+    }
+
+    private boolean nameImpliesInternal() {
+        return name != null && (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME) ||
+                name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
     }
 
     public AnnotationImpl setUiType(String uiType) {

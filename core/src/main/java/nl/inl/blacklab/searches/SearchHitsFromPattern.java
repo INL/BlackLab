@@ -2,6 +2,7 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.results.Hits;
@@ -35,7 +36,7 @@ public class SearchHitsFromPattern extends SearchHits {
      * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
      */
     @Override
-    protected Hits executeInternal() throws WildcardTermTooBroad, RegexpTooLarge {
+    protected Hits executeInternal() throws InvalidQuery {
         return queryInfo().index().find(queryInfo(), pattern, filter, searchSettings);
     }
     

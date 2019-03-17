@@ -123,27 +123,11 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     public String get(PropertyValueDoc doc) {
-        if  (docValues != null) {
-            // Find the fiid in the correct segment
-            int docId = doc.id();
-            Entry<Integer, SortedDocValues> prev = null;
-            for (Entry<Integer, SortedDocValues> e : docValues.entrySet()) {
-                Integer docBase = e.getKey();
-                if (docBase > docId) {
-                    // Previous segment (the highest docBase lower than docId) is the right one
-                    Integer prevDocBase = prev.getKey();
-                    SortedDocValues prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase).utf8ToString();
-                }
-                prev = e;
-            }
-            // Last segment is the right one
-            Integer prevDocBase = prev.getKey();
-            SortedDocValues prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase).utf8ToString();
+        if (doc.value().isLuceneDocCached()) {
+            // We have the Document already, get the property from there
+            return doc.luceneDoc().get(fieldName);
         }
-        // We don't have DocValues; just get the property from the document.
-        return doc.luceneDoc().get(fieldName);
+        return get(doc.id());
     }
 
     @Override

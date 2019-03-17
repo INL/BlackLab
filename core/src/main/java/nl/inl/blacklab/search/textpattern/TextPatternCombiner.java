@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -40,7 +40,7 @@ public abstract class TextPatternCombiner extends TextPattern {
     }
 
     @Override
-    public abstract BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge;
+    public abstract BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery;
 
     public final void addClause(TextPattern clause) {
         clauses.add(clause);

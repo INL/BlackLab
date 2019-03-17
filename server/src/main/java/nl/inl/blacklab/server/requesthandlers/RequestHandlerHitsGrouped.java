@@ -71,17 +71,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
         if (INCLUDE_RELATIVE_FREQ) {
-            logger.debug("## Init relative frequencies: get doc props");
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-            logger.debug("## Init relative frequencies: determine subcorpus");
             subcorpus = searchMan.search(user, searchParam.subcorpus());
-            if (metadataGroupProperties == null) {
-                // We're not grouping on metadata. We only need to know the total subcorpus size.
-                logger.debug("## NOT grouping on metadata, count tokens in total subcorpus");
-                subcorpusSize = subcorpus.subcorpusSize();
-                logger.debug("## (tokens in total subcorpus: " + subcorpusSize.getTokens() + ")");
-            }
-            logger.debug("## Done init relative frequencies");
+            subcorpusSize = subcorpus.subcorpusSize();
         }
         
         addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false, subcorpusSize);

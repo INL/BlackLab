@@ -79,11 +79,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria();
             subcorpus = searchMan.search(user, searchParam.subcorpus());
-            if (!hasPattern) {
-                // We don't need to report subcorpus size per group if we didn't search on a pattern
-                // (because in that case, subcorpus size is always equal to group size)
-                subcorpusSize = subcorpus.subcorpusSize();
-            }
+            subcorpusSize = subcorpus.subcorpusSize();
         }
         
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);

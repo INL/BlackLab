@@ -64,7 +64,7 @@ public class DocIntFieldGetter implements Closeable {
      * @param doc the document
      * @return value of the int field
      */
-    public int getFieldValue(int doc) {
+    public synchronized int getFieldValue(int doc) {
 
         // Cached doc values?
         if (docValues != null) {

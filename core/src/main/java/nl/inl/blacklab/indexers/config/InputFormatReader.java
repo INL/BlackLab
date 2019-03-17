@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,6 +38,8 @@ import nl.inl.util.Json;
  * Reads ConfigInputFormat from a YAML or JSON source.
  */
 public class InputFormatReader extends YamlJsonReader {
+
+    protected static final Logger logger = LogManager.getLogger(InputFormatReader.class);
     
     public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
@@ -167,7 +171,7 @@ public class InputFormatReader extends YamlJsonReader {
                 throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
             }
         }
-        
+
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
         for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
@@ -373,7 +377,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "name":
                 String name = str(e);
                 String fullName = parentAnnot == null ? name : parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
-                annot.setName(fullName);
+                annot.setName(warnSanitizeXmlElementName(fullName));
                 break;
             case "value":
                 annot.setValuePath(fixedStringToXpath(str(e)));
@@ -428,6 +432,9 @@ public class InputFormatReader extends YamlJsonReader {
             case "multipleValues":
                 annot.setMultipleValues(bool(e));
                 break;
+            case "isInternal":
+                annot.setInternal(bool(e));
+                break;
             default:
                 throw new InvalidInputFormatConfig(
                         "Unknown key " + e.getKey() + " in annotation " + StringUtils.defaultString(annot.getName()));
@@ -438,7 +445,7 @@ public class InputFormatReader extends YamlJsonReader {
 
     /**
      * Convert a fixed string value to an XPath expression yielding that value.
-     * 
+     *
      * @param s fixed string the XPath should evaluate to
      * @return XPath expression
      */
@@ -533,6 +540,13 @@ public class InputFormatReader extends YamlJsonReader {
             }
         }
     }
+    
+    private static String warnSanitizeXmlElementName(String name) {
+        String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
+        if (!sanitized.equals(name))
+            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + name + "'");
+        return sanitized;
+    }
 
     private static void readMetadataFields(Entry<String, JsonNode> mfsEntry, ConfigMetadataBlock b) {
         Iterator<JsonNode> itFields = array(mfsEntry).elements();
@@ -545,7 +559,7 @@ public class InputFormatReader extends YamlJsonReader {
                 // This is mostly because of forward references to fields; the field instance
                 // would be created by the reference, and the field properties will be added when
                 // they are parsed later in the file.
-                f = b.getOrCreateField(name);
+                f = b.getOrCreateField(warnSanitizeXmlElementName(name));
             } else
                 f = new ConfigMetadataField();
             Iterator<Entry<String, JsonNode>> itField = obj(fld, "metadata field").fields();
@@ -553,6 +567,8 @@ public class InputFormatReader extends YamlJsonReader {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
                 case "name":
+                    f.setName(warnSanitizeXmlElementName(str(e)));
+                    break;
                 case "namePath":
                     f.setName(str(e));
                     break;

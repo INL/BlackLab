@@ -47,7 +47,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -467,7 +467,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
+    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery {
         // Convert to SpanQuery
         //pattern = pattern.rewrite();
         BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));

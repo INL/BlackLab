@@ -92,7 +92,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     /** What keys may occur under metadataFieldGroups group? */
     private static final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
             "name", "fields", "addRemainingFields"));
-    
+
     /** What keys may occur under annotationGroups group? */
     private static final Set<String> KEYS_ANNOTATION_GROUP = new HashSet<>(Arrays.asList(
             "name", "annotations", "addRemainingAnnotations"));
@@ -167,7 +167,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     /**
      * If true, subannotations are stored in the same Lucene field as their main annotation (old approach).
      * If false (the new indexing default), subannotations get their own Lucene field.
-     * 
+     *
      * This boolean is initialized to true, and we set it to false if we encounter subannotation declarations
      * in the index metadata, because that means we're dealing with a modern index.
      */
@@ -243,7 +243,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     /**
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
-     * 
+     *
      * @param reader the index of which we want to know the structure
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
@@ -329,7 +329,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * Encode the index structure to an (in-memory) JSON structure.
-     * 
+     *
      * @return json structure
      */
     private ObjectNode encodeToJson() {
@@ -447,6 +447,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 annot.put("displayName", annotation.displayName());
                 annot.put("description", annotation.description());
                 annot.put("uiType", annotation.uiType());
+                annot.put("isInternal", annotation.isInternal());
                 if (annotation.subannotationNames().size() > 0) {
                     ArrayNode subannots = annot.putArray("subannotations");
                     for (String subannotName: annotation.subannotationNames()) {
@@ -559,7 +560,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * Get a description of the index, if specified
-     * 
+     *
      * @return the description
      */
     @Override
@@ -569,7 +570,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * Is the content freely viewable by all users, or is it restricted?
-     * 
+     *
      * @return true if the full content may be retrieved by anyone
      */
     @Override
@@ -579,7 +580,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * What's the text direction of this corpus?
-     * 
+     *
      * @return text direction
      */
     @Override
@@ -602,7 +603,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * What version of the index format is this?
-     * 
+     *
      * @return the index format version
      */
     @Override
@@ -612,7 +613,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * When was this index created?
-     * 
+     *
      * @return date/time stamp
      */
     @Override
@@ -622,7 +623,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * When was this index last modified?
-     * 
+     *
      * @return date/time stamp
      */
     @Override
@@ -632,7 +633,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * When was the BlackLab.jar used for indexing built?
-     * 
+     *
      * @return date/time stamp
      */
     @Override
@@ -642,7 +643,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
 
     /**
      * When was the BlackLab.jar used for indexing built?
-     * 
+     *
      * @return date/time stamp
      */
     @Override
@@ -733,9 +734,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             throw new IndexTooOld(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
-        if (!tagLengthInPayload)
-            throw new IndexTooOld(
-                    "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+        if (!tagLengthInPayload) {
+            logger.warn("Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
+            //throw new IndexTooOld("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
+        }
 
         // Specified in index metadata file?
         String namingScheme;
@@ -897,6 +899,10 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                             case "uiType":
                                 annotation.setUiType(opt.getValue().textValue());
                                 break;
+                            case "isInternal":
+                                if (opt.getValue().booleanValue())
+                                    annotation.setInternal();
+                                break;
                             case "subannotations":
                                 subannotationsStoredWithMain = false; // new-style index
                                 annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
@@ -951,7 +957,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             for (int i = 0; i < fis.size(); i++) {
                 FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
-                
+
                 // Parse the name to see if it is a metadata field or part of an annotated field.
                 String[] parts;
                 if (name.endsWith("Numeric")) {
@@ -988,7 +994,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
                 }
             } // even if we have metadata, we still have to detect annotations/sensitivities
         }
-        
+
         // Link subannotations to their parent annotation
         if (!subannotationsStoredWithMain) {
             for (AnnotatedField f: annotatedFields) {
@@ -1115,7 +1121,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     @Override
     public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
         ensureNotFrozen();
-        
+
         String fieldName = fieldWriter.name();
         AnnotatedFieldImpl cf;
         if (annotatedFields.exists(fieldName)) {
@@ -1126,9 +1132,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             // time and will be detected at search time.
             cf = getOrCreateAnnotatedField(fieldName);
         }
-        
-        // Make sure all the annotations, their sensitivities, the offset sensitivity, whether 
-        // they have a forward index, and the main annotation are all registered correctly.  
+
+        // Make sure all the annotations, their sensitivities, the offset sensitivity, whether
+        // they have a forward index, and the main annotation are all registered correctly.
         for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
             AnnotationImpl annotation = cf.getOrCreateAnnotation(annotationWriter.name());
             for (String suffix: annotationWriter.sensitivitySuffixes()) {
@@ -1323,9 +1329,13 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
-                    displayOrder.add(a.getName());
-                    if (!a.createForwardIndex())
-                        noForwardIndexAnnotations.add(a.getName());
+//                    displayOrder.add(a.getName());
+
+                    addAnnotationInfo(a, displayOrder, noForwardIndexAnnotations, annotations);
+
+//                    if (!a.createForwardIndex())
+//                        noForwardIndexAnnotations.add(a.getName());
+
                 }
             }
         }
@@ -1350,6 +1360,9 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         annotationNode.put("displayName", annotation.getDisplayName());
         annotationNode.put("description", annotation.getDescription());
         annotationNode.put("uiType", annotation.getUiType());
+        if (annotation.isInternal()) {
+            annotationNode.put("isInternal", annotation.isInternal());
+        }
         if (annotation.getSubAnnotations().size() > 0) {
             subannotationsStoredWithMain = false; // this is a new-style index
             ArrayNode subannots = annotationNode.putArray("subannotations");
@@ -1374,7 +1387,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     public boolean isFrozen() {
         return this.frozen;
     }
-    
+
     @Override
     public boolean subannotationsStoredWithParent() {
         return subannotationsStoredWithMain;

@@ -373,5 +373,33 @@ public final class AnnotatedFieldNameUtil {
     public static boolean isValidXmlElementName(String name) {
         return REGEX_VALID_XML_ELEMENT_NAME.matcher(name).matches();
     }
+    
+    /**
+     * Sanitize name if necessary, replacing characters forbidden in XML element names with an underscore.
+     *
+     * @param name name to sanitize
+     * @param replaceChar what to replace illegal characters with
+     * @return sanitized name
+     */
+    public static String sanitizeXmlElementName(String name) {
+        return sanitizeXmlElementName(name, "_");
+    }
+    
+    /**
+     * Sanitize name if necessary, replacing characters forbidden in XML element names.
+     * 
+     * Also prepends an underscore if the name start in an invalid way (with the letters "xml" or not with letter or underscore).
+     *
+     * @param name name to sanitize
+     * @param replaceChar what to replace illegal characters with (used as regex replace string)
+     * @return sanitized name
+     */
+    public static String sanitizeXmlElementName(String name, String replaceChar) {
+        name = name.replaceAll("[^\\p{L}0-9\\-_\\.]", replaceChar); // can only contain letters, digits, dashes, underscores and periods
+        if (!name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
+            name = "_" + name;
+        }
+        return name;
+    }
 
 }

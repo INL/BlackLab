@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -40,7 +41,7 @@ public class TextPatternRegex extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern result = rewrite();
         if (result != this)
             return result.translate(context);
@@ -49,6 +50,8 @@ public class TextPatternRegex extends TextPatternTerm {
             return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
                     new Term(context.luceneField(),
                             context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+        } catch (IllegalArgumentException e) {
+            throw new InvalidQuery(e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {
             // If we pass in a really large regular expression, like a huge
             // list of words combined with OR, stack overflow occurs inside

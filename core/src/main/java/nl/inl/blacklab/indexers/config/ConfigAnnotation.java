@@ -74,6 +74,15 @@ public class ConfigAnnotation {
     /** Can this annotation have multiple values at one token position? [false] */
     private boolean multipleValues = false;
 
+    /**
+     * Is this an internal annotation?
+     * BlackLab always generates some internal annotations for every index, these are (usually) not values users are interested in,
+     *  so they are marked with "isInternal" in the indexStructure/indexMetadata so clients can ignore them.
+     * We also allow users to explicitly mark their own annotations as "internal" annotations.
+     * BlackLab itself does not use this flag.
+     */
+    private boolean internal = false;
+
     public ConfigAnnotation() {
     }
 
@@ -237,6 +246,14 @@ public class ConfigAnnotation {
 
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
+    }
+
+    public void setInternal(boolean internal) {
+        this.internal = internal;
+    }
+
+    public boolean isInternal() {
+        return this.internal;
     }
 
     @Override

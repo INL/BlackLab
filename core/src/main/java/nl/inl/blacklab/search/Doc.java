@@ -46,6 +46,12 @@ public interface Doc {
     Document luceneDoc();
     
     /**
+     * Have we loaded and cached the Lucene document?
+     * @return true iff we have loaded the Lucene document already
+     */
+    boolean isLuceneDocCached();
+    
+    /**
      * Get part of the contents of a field from a Lucene Document.
      *
      * This takes into account that some fields are stored externally in content stores

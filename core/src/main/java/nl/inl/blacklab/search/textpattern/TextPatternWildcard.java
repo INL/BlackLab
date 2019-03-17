@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.textpattern;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.WildcardQuery;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
@@ -35,7 +36,7 @@ public class TextPatternWildcard extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
+    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern result = rewrite();
         if (result != this)
             return result.translate(context);
