@@ -102,7 +102,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase);
+                    return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
                 }
                 prev = e;
             }
