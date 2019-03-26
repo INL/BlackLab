@@ -15,13 +15,16 @@ public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
+    
+    private boolean reverseOnDisplay = false;
 
-    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value) {
+    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
         super(index, annotation);
         this.sensitivity = sensitivity;
         this.valueTokenId = value;
         this.valueSortOrder = new int[value.length];
         terms.toSortOrder(value, valueSortOrder, sensitivity);
+        this.reverseOnDisplay = reverseOnDisplay;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return false;
     }
 
-    public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
+    public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info, boolean reverseOnDisplay) {
         String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         Annotation annotation = field.annotation(propName);
@@ -53,18 +56,30 @@ public class PropertyValueContextWords extends PropertyValueContext {
         for (int i = 2; i < parts.length; i++) {
             ids[i - 2] = termsObj.deserializeToken(parts[i]);
         }
-        return new PropertyValueContextWords(index, annotation, sensitivity, ids);
+        return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
     }
 
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
-        for (int v : valueTokenId) {
-            String word = v < 0 ? "-" : terms.get(v);
-            if (word.length() > 0) {
-                if (b.length() > 0)
-                    b.append(" ");
-                b.append(word);
+        if (reverseOnDisplay) {
+            for (int i = valueTokenId.length - 1; i >= 0; i--) {
+                int v = valueTokenId[i];
+                String word = v < 0 ? "-" : terms.get(v);
+                if (word.length() > 0) {
+                    if (b.length() > 0)
+                        b.append(" ");
+                    b.append(word);
+                }
+            }
+        } else {
+            for (int v : valueTokenId) {
+                String word = v < 0 ? "-" : terms.get(v);
+                if (word.length() > 0) {
+                    if (b.length() > 0)
+                        b.append(" ");
+                    b.append(word);
+                }
             }
         }
         return b.toString();
@@ -73,7 +88,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
     @Override
     public String serialize() {
         String[] parts = new String[valueTokenId.length + 3];
-        parts[0] = "cws";
+        parts[0] = reverseOnDisplay ? "cwsr" : "cws";
         parts[1] = annotation.name();
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {

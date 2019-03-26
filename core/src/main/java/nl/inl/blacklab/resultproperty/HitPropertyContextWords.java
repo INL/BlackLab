@@ -280,6 +280,7 @@ public class HitPropertyContextWords extends HitProperty {
 
         int[] dest = new int[totalWords];
         int destIndex = 0;
+        boolean allPartsReversed = true;
         for (ContextPart ctxPart : words) {
             // Determine anchor position, direction to move in, and edge of part (left/hit/right)
             int srcStartIndex, srcDirection, firstInvalidSrcIndex;
@@ -311,6 +312,7 @@ public class HitPropertyContextWords extends HitProperty {
             // Determine start position, stop position
             boolean valuesToCopy = true;
             if (srcDirection > 0) {
+                allPartsReversed = false;
                 firstInvalidSrcIndex = Math.min(firstInvalidSrcIndex,
                         srcStartIndex + ctxPart.firstWord + ctxPart.maxLength);
                 if (firstWordSrcIndex >= firstInvalidSrcIndex)
@@ -337,7 +339,7 @@ public class HitPropertyContextWords extends HitProperty {
                 destIndex++;
             }
         }
-        return new PropertyValueContextWords(index, annotation, sensitivity, dest);
+        return new PropertyValueContextWords(index, annotation, sensitivity, dest, allPartsReversed);
     }
 
     // OPT: provide specific compare() method that compares contexts in-place
