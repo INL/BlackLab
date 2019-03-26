@@ -14,6 +14,10 @@ public class PropertyValueMultiple extends PropertyValue {
         this.value = value;
     }
 
+    public PropertyValueMultiple(List<PropertyValue> result) {
+        this.value = result.toArray(new PropertyValue[0]);
+    }
+
     @Override
     public PropertyValue[] value() {
         return value;

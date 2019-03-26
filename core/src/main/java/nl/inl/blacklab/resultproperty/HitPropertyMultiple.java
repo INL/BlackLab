@@ -240,7 +240,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public DocProperty docPropsOnly() {
-        return new DocPropertyMultiple(properties.stream().map(hp -> hp.docPropsOnly()).collect(Collectors.toList()));
+        return new DocPropertyMultiple(properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList()));
     }
 
     @Override
@@ -254,6 +254,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
                 result.add(v);
             i++;
         }
-        return value;
+        return new PropertyValueMultiple(result);
     }
 }
