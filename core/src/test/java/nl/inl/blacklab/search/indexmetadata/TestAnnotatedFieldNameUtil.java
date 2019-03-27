@@ -63,4 +63,15 @@ public class TestAnnotatedFieldNameUtil {
                 AnnotatedFieldNameUtil.getNameComponents(AnnotatedFieldNameUtil.bookkeepingField("contents", "lemma", "fiid")));
 
     }
+    
+    @Test
+    public void testSanitizeXmlElementName() {
+        Assert.assertEquals("word", AnnotatedFieldNameUtil.sanitizeXmlElementName("word"));
+        Assert.assertEquals("_0word", AnnotatedFieldNameUtil.sanitizeXmlElementName("0word"));
+        Assert.assertEquals("_xmlword", AnnotatedFieldNameUtil.sanitizeXmlElementName("xmlword"));
+        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun-word"));
+        Assert.assertEquals("fun.word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun.word"));
+        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun_word"));
+        Assert.assertEquals("word0", AnnotatedFieldNameUtil.sanitizeXmlElementName("word0"));
+    }
 }

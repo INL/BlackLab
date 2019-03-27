@@ -395,8 +395,8 @@ public final class AnnotatedFieldNameUtil {
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name, String replaceChar) {
-        name = name.replaceAll("[^\\p{L}0-9\\-_\\.]", replaceChar); // can only contain letters, digits, dashes, underscores and periods
-        if (!name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
+        name = name.replaceAll("[^\\p{L}0-9_\\.]", replaceChar); // can only contain letters, digits, underscores and periods
+        if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }
         return name;
