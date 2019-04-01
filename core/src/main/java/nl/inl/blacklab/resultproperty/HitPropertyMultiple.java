@@ -240,7 +240,10 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public DocProperty docPropsOnly() {
-        return new DocPropertyMultiple(properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList()));
+        List<DocProperty> crit = properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList());
+        if (crit.isEmpty())
+            return null;
+        return new DocPropertyMultiple(crit);
     }
 
     @Override
