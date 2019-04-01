@@ -147,8 +147,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
 
     public Results(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
-        if (queryInfo.resultsObjectId() < 0)
-            queryInfo.setResultsObjectId(hitsObjId); // We're the original query. set the id.
+//        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
         threadPauser = ThreadPauser.create();
         results = new ArrayList<>();
     }
