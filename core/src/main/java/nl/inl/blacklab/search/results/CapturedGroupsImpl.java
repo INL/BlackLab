@@ -69,6 +69,8 @@ public class CapturedGroupsImpl implements CapturedGroups {
         Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
         List<String> names = names();
         Span[] groups = capturedGroups.get(hit);
+        if (groups == null)
+            return null;
         for (int i = 0; i < names.size(); i++) {
             result.put(names.get(i), groups[i]);
         }
