@@ -245,11 +245,13 @@ public class RequestHandlerHits extends RequestHandler {
                 ds.startEntry("captureGroups").startList();
 
                 for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                    ds.startItem("group").startMap();
-                    ds.entry("name", capturedGroup.getKey());
-                    ds.entry("start", capturedGroup.getValue().start());
-                    ds.entry("end", capturedGroup.getValue().end());
-                    ds.endMap().endItem();
+                    if (capturedGroup.getValue() != null) {
+                        ds.startItem("group").startMap();
+                        ds.entry("name", capturedGroup.getKey());
+                        ds.entry("start", capturedGroup.getValue().start());
+                        ds.entry("end", capturedGroup.getValue().end());
+                        ds.endMap().endItem();
+                    }
                 }
 
                 ds.endList().endEntry();
