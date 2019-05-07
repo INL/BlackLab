@@ -106,7 +106,7 @@ public abstract class RequestHandler {
      */
     public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode,
             DataFormat outputType) {
-        
+
         // See if a user is logged in
         SearchManager searchManager = servlet.getSearchManager();
         User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
@@ -127,12 +127,12 @@ public abstract class RequestHandler {
         String urlPathInfo = parts.length >= 3 ? parts[2] : "";
         boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
-        
+
         // Debug feature: sleep for x ms before carrying out the request
         if (debugMode && !doDebugSleep(request)) {
             return errorObj.error("ROUGH_AWAKENING", "I was taking a nice nap, but something disturbed me", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
         }
-        
+
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
         boolean isYourPrivateIndex = false;
@@ -261,7 +261,7 @@ public abstract class RequestHandler {
                                         "status", "autocomplete", "sharing").contains(handlerName)) {
                             handlerName = "debug";
                         }
-                        
+
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
@@ -296,7 +296,7 @@ public abstract class RequestHandler {
 
                         if (!availableHandlers.containsKey(handlerName))
                             return errorObj.unknownOperation(handlerName);
-                        
+
                         @SuppressWarnings("resource")
                         SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
                         boolean succesfullyCreatedRequestHandler = false;
@@ -340,7 +340,7 @@ public abstract class RequestHandler {
         }
         if (debugMode)
             requestHandler.setDebug(debugMode);
-        
+
         return requestHandler;
     }
 
@@ -427,7 +427,7 @@ public abstract class RequestHandler {
         this.user = user;
 
     }
-    
+
     public void cleanup() {
         try {
             if (searchLogger != null)
@@ -487,7 +487,7 @@ public abstract class RequestHandler {
 
     /**
      * Child classes should override this to handle the request.
-     * 
+     *
      * @param ds output stream
      * @return the response object
      *
@@ -502,14 +502,34 @@ public abstract class RequestHandler {
      * @param ds where to stream information
      * @param index our index
      * @param document Lucene document
+     * @param multipleValues write out multiple metadata values or only the first one?
      */
-    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, boolean multipleValues) {
         ds.startMap();
         IndexMetadata indexMetadata = index.metadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
-            String value = document.get(f.name());
-            if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView"))
-                ds.entry(f.name(), value);
+            if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
+                continue;
+            }
+            if (multipleValues) {
+                String[] values = document.getValues(f.name());
+                if (values.length == 0) {
+                    continue;
+                }
+
+                ds.startEntry(f.name()).startList();
+                for (String v : values) {
+                    ds.item("value", v);
+                }
+                ds.endList().endEntry();
+             } else {
+                 String value = document.get(f.name());
+                 if (value == null) {
+                     continue;
+                 }
+
+                 ds.entry(f.name(), value);
+             }
         }
         int subtractClosingToken = 1;
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
@@ -523,7 +543,7 @@ public abstract class RequestHandler {
     /**
      * a document may be viewed when a contentViewable metadata field with a value
      * true is registered with either the document or with the index metadata.
-     * 
+     *
      * @param indexMetadata our index metadata
      * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
@@ -639,7 +659,7 @@ public abstract class RequestHandler {
         if (status != IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", status.toString());
         }
-        
+
         // Information about hit sampling
         SampleParameters sample = searchParam.getSampleSettings();
         if (sample != null) {
@@ -654,7 +674,7 @@ public abstract class RequestHandler {
         ds.entry("searchTime", searchTime);
         if (countTime != 0)
             ds.entry("countTime", countTime);
-        
+
         // Information about grouping operation
         if (groups != null) {
             ds.entry("numberOfGroups", groups.size())
@@ -707,7 +727,7 @@ public abstract class RequestHandler {
             }
             ds.entry("numberOfHits", numberOfHits)
                     .entry("numberOfHitsRetrieved", numberOfHits);
-   
+
             int numberOfDocsCounted = docResults.size();
             if (countFailed)
                 numberOfDocsCounted = -1;

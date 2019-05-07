@@ -32,7 +32,7 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
  * Request handler for the doc results.
  */
 public class RequestHandlerDocs extends RequestHandler {
-    
+
     public RequestHandlerDocs(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
@@ -44,7 +44,7 @@ public class RequestHandlerDocs extends RequestHandler {
     DocResults window;
     private DocResults docResults;
     private long totalTime;
-    
+
     @Override
     public int handle(DataStream ds) throws BlsException {
         // Do we want to view a single group after grouping?
@@ -55,28 +55,30 @@ public class RequestHandlerDocs extends RequestHandler {
         if (viewGroup == null)
             viewGroup = "";
         int response = 0;
-        
+
+        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
+
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
             originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
         }
-        
+
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
-            
+
             // View a single group in a grouped docs resultset
-            response = doViewGroup(ds, viewGroup);
-            
+            response = doViewGroup(ds, viewGroup, listMultipleMetadataValues);
+
         } else {
             // Regular set of docs (no grouping first)
-            response = doRegularDocs(ds);
+            response = doRegularDocs(ds, listMultipleMetadataValues);
         }
         return response;
     }
 
-    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
+    private int doViewGroup(DataStream ds, String viewGroup, boolean listMultipleMetadataValues) throws BlsException {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
-    
+
         BlsCacheEntry<DocGroups> docGroupFuture;
         // Yes. Group, then show hits from the specified group
         search = docGroupFuture = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
@@ -86,28 +88,28 @@ public class RequestHandlerDocs extends RequestHandler {
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
         }
-    
+
         PropertyValue viewGroupVal = null;
         viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
         if (viewGroupVal == null)
             return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                     "Parameter 'viewgroup' has an illegal value: " + viewGroup);
-    
+
         DocGroup group = groups.get(viewGroupVal);
         if (group == null)
             return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
-    
+
         // NOTE: sortBy is automatically applied to regular results, but not to results within groups
         // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-        // There is probably no reason why we can't just sort/use the sort of the input results, but we need 
+        // There is probably no reason why we can't just sort/use the sort of the input results, but we need
         // some more testing to see if everything is correct if we change this
         String sortBy = searchParam.getString("sort");
         DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(blIndex(), sortBy) : null;
         DocResults docsSorted = group.storedResults();
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);
-    
+
         int first = searchParam.getInteger("first");
         if (first < 0)
             first = 0;
@@ -116,39 +118,39 @@ public class RequestHandlerDocs extends RequestHandler {
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         totalDocResults = docsSorted;
         window = docsSorted.window(first, number);
-        
+
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = 0; // TODO searchGrouped.userWaitTime();
-        return doResponse(ds, true);
+        return doResponse(ds, true, listMultipleMetadataValues);
     }
 
-    private int doRegularDocs(DataStream ds) throws BlsException {
+    private int doRegularDocs(DataStream ds, boolean listMultipleMetadataValues) throws BlsException {
         BlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
         search = searchWindow;
-    
+
         // Also determine the total number of hits
         BlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
-        
+
         try {
             window = searchWindow.get();
             totalDocResults = total.get();
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
         }
-        
+
         // If "waitfortotal=yes" was passed, block until all results have been fetched
         boolean block = searchParam.getBoolean("waitfortotal");
         if (block)
             totalDocResults.size(); // fetch all
-        
+
         docResults = totalDocResults;
         totalTime = total.threwException() ? -1 : total.timeUserWaited();
-        
-        return doResponse(ds, false);
+
+        return doResponse(ds, false, listMultipleMetadataValues);
 }
 
-    private int doResponse(DataStream ds, boolean isViewGroup) throws BlsException {
+    private int doResponse(DataStream ds, boolean isViewGroup, boolean listMultipleMetadataValues) throws BlsException {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
@@ -183,7 +185,7 @@ public class RequestHandlerDocs extends RequestHandler {
         RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
         ds.endEntry();
         ds.endMap().endEntry();
-        
+
         searchLogger.setResultsFound(docsStats.processedSoFar());
 
         // The hits and document info
@@ -203,7 +205,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, blIndex, document);
+            dataStreamDocumentInfo(ds, blIndex, document, listMultipleMetadataValues);
             ds.endEntry();
 
             // Snippets

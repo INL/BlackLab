@@ -40,6 +40,8 @@ public class RequestHandlerDocInfo extends RequestHandler {
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_INFO");
 
+        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
+
         // Document info
         debug(logger, "REQ doc info: " + indexName + "-" + docId);
 
@@ -47,7 +49,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
                 .entry("docPid", docId);
 
         ds.startEntry("docInfo");
-        dataStreamDocumentInfo(ds, blIndex, document);
+        dataStreamDocumentInfo(ds, blIndex, document, listMultipleMetadataValues);
         ds.endEntry();
 
         ds.startEntry("docFields");

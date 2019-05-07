@@ -143,7 +143,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     /**
      * Create AutoPilot and declare namespaces on it.
-     * 
+     *
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
      * @throws XPathParseException
@@ -190,9 +190,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
             vg.enableIgnoredWhiteSpace(true);
             try {
                 vg.parse(config.isNamespaceAware());
-    
+
                 nav = vg.getNav();
-    
+
                 // Find all documents
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
                 while (documents.evalXPath() != -1) {
@@ -357,7 +357,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             prop.addPayload(null);
                     }
                 }
-                
+
                 fragPos = FragmentPosition.AFTER_CLOSE_TAG;
                 endWord();
             }
@@ -465,22 +465,53 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         if (!origFieldName.equals(fieldName)) {
                             warnSanitized(origFieldName, fieldName);
                         }
-                        apMetadata.resetXPath();
-                        String metadataValue = apMetadata.evalXPathToString();
-                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                        // Also execute process defined for named metadata field, if any
                         ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
-                        metadataValue = processString(metadataValue, metadataField.getProcess(), metadataField.getMapValues());
-                        addMetadataField(fieldName, metadataValue);
+
+                        apMetadata.resetXPath();
+
+                        if (f.isMultipleValues() || metadataField.isMultipleValues()) {
+                            // Multiple matches will be indexed at the same position.
+                            AutoPilot apEvalToString = acquireAutoPilot(".");
+                            while (apMetadata.evalXPath() != -1) {
+                                apEvalToString.resetXPath();
+                                String unprocessedValue = apEvalToString.evalXPathToString();
+                                for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                                    // Also execute process defined for named metadata field, if any
+                                    for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
+                                        addMetadataField(fieldName, processedValue);
+                                    }
+                                }
+                            }
+                            releaseAutoPilot(apEvalToString);
+                        } else {
+                            String metadataValue = apMetadata.evalXPathToString();
+                            metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
+                            // Also execute process defined for named metadata field, if any
+                            metadataValue = processString(metadataValue, metadataField.getProcess(), metadataField.getMapValues());
+                            addMetadataField(fieldName, metadataValue);
+                        }
                     }
                     releaseAutoPilot(apMetaForEach);
                     releaseAutoPilot(apFieldName);
                     navpop();
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
-                    String metadataValue = apMetadata.evalXPathToString();
-                    metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                    addMetadataField(f.getName(), metadataValue);
+                    if (f.isMultipleValues()) {
+                        // Multiple matches will be indexed at the same position.
+                        AutoPilot apEvalToString = acquireAutoPilot(".");
+                        while (apMetadata.evalXPath() != -1) {
+                            apEvalToString.resetXPath();
+                            String unprocessedValue = apEvalToString.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                                addMetadataField(f.getName(), value);
+                            }
+                        }
+                        releaseAutoPilot(apEvalToString);
+                    } else {
+                        String metadataValue = apMetadata.evalXPathToString();
+                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
+                        addMetadataField(f.getName(), metadataValue);
+                    }
                 }
                 releaseAutoPilot(apMetadata);
             }
@@ -489,7 +520,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         releaseAutoPilot(apMetadataBlock);
         navpop();
     }
-    
+
     private static Set<String> reportedSanitizedNames = new HashSet<>();
 
     private synchronized static void warnSanitized(String origFieldName, String fieldName) {
@@ -525,7 +556,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(apLinkPath);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
-                result = getMetadataField(valueField);
+                result = getMetadataField(valueField).get(0);
             }
             result = processString(result, linkValue.getProcess(), null);
             results.add(result);
@@ -582,7 +613,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // No valuePath given. Assume this will be captures using forEach.
                 return;
             }
-    
+
             // See if we want to capture any values and substitute them into the XPath
             int i = 1;
             for (String captureValuePath : annotation.getCaptureValuePaths()) {
@@ -592,10 +623,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 valuePath = valuePath.replace("$" + i, value);
                 i++;
             }
-    
+
             // Find matches for this annotation.
             String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
-    
+
             // For each configured subannotation...
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
                 // Subannotation configs without a valuePath are just for
@@ -603,7 +634,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // such as extra processing steps
                 if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
                     continue;
-    
+
                 // Capture this subannotation value
                 AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
                 if (subAnnot.isForEach()) {
@@ -638,7 +669,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 releaseAutoPilot(apValue);
             }
-            
+
         } finally {
             if (basePath != null) {
                 // We pushed when we navigated to the base element; pop now.
@@ -660,19 +691,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 boolean firstValue = true;
                 while (apValuePath.evalXPath() != -1) {
                     apEvalToString.resetXPath();
-                    String annotValue = apEvalToString.evalXPathToString();
-                    annotValue = processString(annotValue, annotation.getProcess(), null);
-                    int increment = firstValue ? 1 : 0;
-                    annotation(annotation.getName(), annotValue, increment, indexAtPositions);
-                    firstValue = false;
+                    String unprocessedValue = apEvalToString.evalXPathToString();
+                    for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
+                        int increment = firstValue ? 1 : 0;
+                        annotation(annotation.getName(), value, increment, indexAtPositions);
+                        firstValue = false;
+                    }
                 }
                 releaseAutoPilot(apEvalToString);
-    
+
                 // No annotations have been added, the result of the xPath query must have been empty.
                 if (firstValue) {
-                    // Add default value
-                    String annotValue = processString("", annotation.getProcess(), null);
-                    annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+                    // Add default value(s)
+                    for (String value : processStringMultipleValues("", annotation.getProcess(), null)) {
+                        int increment = firstValue ? 1 : 0;
+                        annotation(annotation.getName(), value, increment, indexAtPositions);
+                    }
                 }
             } else {
                 // Single value expected

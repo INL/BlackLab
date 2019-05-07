@@ -62,6 +62,9 @@ public class RequestHandlerHits extends RequestHandler {
         Hits window = null;
         BlsCacheEntry<?> job = null;
 
+        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null
+                && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
+
         // Do we want to view a single group after grouping?
         String groupBy = searchParam.getString("group");
         if (groupBy == null)
@@ -74,14 +77,14 @@ public class RequestHandlerHits extends RequestHandler {
         ResultsStats hitsCount;
         ResultsStats docsCount;
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
-            
+
             // Viewing a single group in a grouped hits results
-            
+
             // Group, then show hits from the specified group
             job = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
             HitGroups hitsGrouped;
             try {
-                hitsGrouped = (HitGroups)job.get();
+                hitsGrouped = (HitGroups) job.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
@@ -114,21 +117,21 @@ public class RequestHandlerHits extends RequestHandler {
             if (!hitsInGroup.hitsStats().processedAtLeast(windowSettings.first()))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
             window = hitsInGroup.window(windowSettings.first(), windowSettings.size());
-            
+
             hitsCount = hitsInGroup.hitsStats();
             docsCount = hitsInGroup.docsStats();
-            
+
         } else {
-            
+
             // Regular hits search
-            
+
             // Since we're going to always launch a totals count anyway, just do it right away
             // then construct a window on top of the total
             hits = searchMan.search(user, searchParam.hitsSample());
             job = searchMan.searchNonBlocking(user, searchParam.hitsCount()); // always launch totals nonblocking!
             docsCount = searchMan.search(user, searchParam.docsCount());
             try {
-                hitsCount = (ResultCount)job.get();
+                hitsCount = (ResultCount) job.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
@@ -136,7 +139,7 @@ public class RequestHandlerHits extends RequestHandler {
                 // Wait until all hits have been counted.
                 hitsCount.countedTotal();
             }
-            
+
 //            int sleepTime = 10;
 //            int totalSleepTime = 0;
 
@@ -148,7 +151,6 @@ public class RequestHandlerHits extends RequestHandler {
 
             window = searchMan.search(user, searchParam.hitsWindow());
 
-            
 //            hits.hitsStats().processedAtLeast(first + size);
 //
 //            // We blocked, so if we don't have the page available, the request is out of bounds.
@@ -174,7 +176,7 @@ public class RequestHandlerHits extends RequestHandler {
             // Determine total number of tokens in result set
             totalTokens = perDocResults.subcorpusSize().getTokens();
         }
-        
+
         searchLogger.setResultsFound(hitsCount.processedSoFar());
 
         // Search is done; construct the results object
@@ -290,7 +292,7 @@ public class RequestHandlerHits extends RequestHandler {
                     doc = index.doc(hit.doc()).luceneDoc();
                     lastPid = pid;
                 }
-                dataStreamDocumentInfo(ds, index, doc);
+                dataStreamDocumentInfo(ds, index, doc, listMultipleMetadataValues);
                 ds.endAttrEntry();
             }
         }
@@ -314,7 +316,8 @@ public class RequestHandlerHits extends RequestHandler {
         ContextSize contextSize = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
         ds.startMap().startEntry("tokenFrequencies").startMap();
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
-        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize, sensitivity);
+        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
+                sensitivity);
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }
