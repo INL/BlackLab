@@ -125,7 +125,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     private void writeGroups(DocGroups groups, DataStreamPlain ds) throws BlsException {
         searchLogger.setResultsFound(groups.size());
-        
+
         try {
             // Write the header
             List<String> row = new ArrayList<>();
@@ -160,9 +160,9 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     }
 
     private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
-        
+
         searchLogger.setResultsFound(docs.size());
-        
+
         try {
             IndexMetadata indexMetadata = this.blIndex().metadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
@@ -184,6 +184,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
             CSVPrinter printer = createHeader(row);
 
+            StringBuilder sb = new StringBuilder();
+
             int subtractClosingToken = 1;
             for (DocResult docResult : docs) {
                 Document doc = docResult.identity().luceneDoc();
@@ -203,10 +205,52 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                 // other fields in order of appearance
                 for (String fieldId : metadataFieldIds) {
-                    row.add(doc.get(fieldId));
+                    // we must support multiple values in a single csv cell
+                    // we must also support values containing quotes/whitespace/commas
+                    // this mean we must delimit individual values, we do this by surrounding them by quotes and separating them with a single space
+                    // existing quotes will be escaped by doubling them as per the csv escaping conventions
+
+                    // essentially transform
+                    // a value containing "quotes"
+                    // a "value" containing , as well as "quotes"
+
+                    // into
+                    // "a value containing ""quotes""" "a ""value"" containing , as well as ""quotes"""
+
+                    // decoders must split the value on whitespace outside quotes, then strip outside quotes, then replace the doubled quotes with singular quotes
+
+                    boolean firstValue = true;
+                    for (String value : doc.getValues(fieldId)) {
+                        int offset = 0, strlen = value.length();
+
+                        if (!firstValue) {
+                            sb.append(" ");
+                        }
+                        sb.append('"');
+                        while (offset < strlen) {
+                            int codepoint = value.codePointAt(offset);
+                            offset += Character.charCount(codepoint);
+                            sb.appendCodePoint(codepoint);
+                            if (codepoint == '"') {
+                                sb.appendCodePoint(codepoint);
+                            }
+                        }
+
+                        sb.append('"');
+                        firstValue = false;
+                    }
+
+                    row.add(sb.toString());
+                    sb.setLength(0);
                 }
 
-                printer.printRecord(row);
+                Appendable app = printer.getOut();
+                for (String cell : row) {
+                    app.append(cell).append(',');
+                }
+                printer.println();
+//                printer.getOut().append()
+//                printer.printRecord(row);
             }
 
             printer.flush();
