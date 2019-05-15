@@ -179,27 +179,29 @@ public class DocIndexerXPath extends DocIndexerConfig {
     public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
 
-        // Parse use VTD-XML
-        vg = new VTDGen();
-        vg.setDoc(inputDocument);
-        // Whitespace in between elements is normally ignored,
-        // but we explicitly allow whitespace in between elements to be collected here.
-        // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
-        // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
-        vg.enableIgnoredWhiteSpace(true);
-        try {
-            vg.parse(config.isNamespaceAware());
-
-            nav = vg.getNav();
-
-            // Find all documents
-            AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
-            while (documents.evalXPath() != -1) {
-                indexDocument();
+        if (inputDocument.length > 0) { // VTD doesn't like empty documents
+            // Parse use VTD-XML
+            vg = new VTDGen();
+            vg.setDoc(inputDocument);
+            // Whitespace in between elements is normally ignored,
+            // but we explicitly allow whitespace in between elements to be collected here.
+            // This allows punctuation xpath to match this whitespace, in case punctuation/whitespace in the document isn't contained in a dedicated element or attribute.
+            // This doesn't mean that this whitespace is always used, it just enables the punctuation xpath to find this whitespace if it explicitly matches it.
+            vg.enableIgnoredWhiteSpace(true);
+            try {
+                vg.parse(config.isNamespaceAware());
+    
+                nav = vg.getNav();
+    
+                // Find all documents
+                AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
+                while (documents.evalXPath() != -1) {
+                    indexDocument();
+                }
+                releaseAutoPilot(documents);
+            } catch (VTDException e) {
+                throw new MalformedInputFile("Error indexing file: " + documentName, e);
             }
-            releaseAutoPilot(documents);
-        } catch (VTDException e) {
-            throw new MalformedInputFile("Error indexing file: " + documentName, e);
         }
     }
 

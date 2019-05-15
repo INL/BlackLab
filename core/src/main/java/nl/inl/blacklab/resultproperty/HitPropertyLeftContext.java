@@ -69,7 +69,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         // Copy the desired part of the context
         int n = contextHitStart;
         if (n <= 0)
-            return new PropertyValueContextWords(index, annotation, sensitivity, new int[0]);
+            return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], true);
         int[] dest = new int[n];
         int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         System.arraycopy(context, contextStart, dest, 0, n);
@@ -82,7 +82,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
             dest[i] = dest[o];
             dest[o] = t;
         }
-        return new PropertyValueContextWords(index, annotation, sensitivity, dest);
+        return new PropertyValueContextWords(index, annotation, sensitivity, dest, true);
     }
 
     @Override

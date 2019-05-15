@@ -53,20 +53,21 @@ public abstract class PropertyValue implements Comparable<Object> {
         String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
         String type = parts[0].toLowerCase();
         String info = parts.length > 1 ? parts[1] : "";
-        List<String> types = Arrays.asList("cwo", "cws", "dec", "int", "str", "doc");
+        List<String> types = Arrays.asList("cwo", "cws", "cwsr", "dec", "int", "str", "doc");
         int typeNum = types.indexOf(type);
         switch (typeNum) {
         case 0:
             return PropertyValueContextWord.deserialize(index, field, info);
-        case 1:
-            return PropertyValueContextWords.deserialize(index, field, info);
-        case 2:
-            return PropertyValueDecade.deserialize(info);
+        case 1: // cws  (context words)
+        case 2: // cwsr (context words, reverse order. e.g. left context)
+            return PropertyValueContextWords.deserialize(index, field, info, type.equals("cwsr"));
         case 3:
-            return PropertyValueInt.deserialize(info);
+            return PropertyValueDecade.deserialize(info);
         case 4:
-            return PropertyValueString.deserialize(info);
+            return PropertyValueInt.deserialize(info);
         case 5:
+            return PropertyValueString.deserialize(info);
+        case 6:
             return PropertyValueDoc.deserialize(index, info);
         }
         logger.debug("Unknown HitPropValue '" + type + "'");

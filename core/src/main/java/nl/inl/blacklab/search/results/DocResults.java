@@ -552,7 +552,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
-                    int dummyClosingToken = 1; // the count is always 1 too high because of the closing token (position for closing tags)
+                    int subtractClosingToken = 1; // the count is always 1 too high because of the closing token (position for closing tags)
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
@@ -564,7 +564,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                                     break;
                                 numberOfDocuments++;
                                 if (countTokens)
-                                    numberOfTokens += tokenLengthValues.get(docId) - dummyClosingToken;
+                                    numberOfTokens += tokenLengthValues.get(docId) - subtractClosingToken;
                             }
                         }
                     }

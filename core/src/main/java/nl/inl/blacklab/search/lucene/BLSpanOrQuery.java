@@ -199,6 +199,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             BLSpanOrQuery result = new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
             result.setHitsAreFixedLength(fixedHitLength);
             result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+            result.setField(getRealField());
             return result;
         }
 
