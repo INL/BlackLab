@@ -38,7 +38,7 @@ public class AnnotationGroup implements Iterable<Annotation> {
 
     public List<Annotation> annotations() {
         AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(name -> f.annotation(name)).collect(Collectors.toList());
+        return annotations.stream().map(name -> f.annotation(name)).filter(a -> a != null).collect(Collectors.toList());
     }
 
     public boolean addRemainingAnnotations() {
