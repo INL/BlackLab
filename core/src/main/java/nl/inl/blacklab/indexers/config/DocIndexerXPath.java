@@ -349,6 +349,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                 }
 
+                fragPos = FragmentPosition.AFTER_CLOSE_TAG;
+                endWord();
+                
                 // Add empty values to all lagging annotations
                 for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
                     while (prop.lastValuePosition() < lastValuePosition) {
@@ -358,8 +361,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                 }
 
-                fragPos = FragmentPosition.AFTER_CLOSE_TAG;
-                endWord();
             }
             navpop();
 
