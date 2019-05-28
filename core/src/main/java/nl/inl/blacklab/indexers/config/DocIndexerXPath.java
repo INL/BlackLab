@@ -349,6 +349,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                 }
 
+                fragPos = FragmentPosition.AFTER_CLOSE_TAG;
+                endWord();
+                
                 // Add empty values to all lagging annotations
                 for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
                     while (prop.lastValuePosition() < lastValuePosition) {
@@ -357,9 +360,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             prop.addPayload(null);
                     }
                 }
-                
-                fragPos = FragmentPosition.AFTER_CLOSE_TAG;
-                endWord();
             }
             navpop();
 
@@ -597,6 +597,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
     
             // For each configured subannotation...
+            Set<String> alreadySeen = new HashSet<String>(); // keep track of which annotation have multiple values so we can use the correct position increment 
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
                 // Subannotation configs without a valuePath are just for
                 // adding information about subannotations captured in forEach's,
@@ -612,6 +613,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     navpush();
                     AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
                     AutoPilot apName = acquireAutoPilot(subAnnot.getName());
+                    alreadySeen.clear();
                     while (apForEach.evalXPath() != -1) {
                         // Find the name and value for this forEach match
                         apName.resetXPath();
@@ -619,13 +621,21 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         apValue.resetXPath();
                         String value = apValue.evalXPathToString();
                         value = processString(value, subAnnot.getProcess(), null);
-                        ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(name);
+                        String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
+                        ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
                         if (actualSubAnnot != null) {
                             // Also apply process defined in named subannotation, if any
                             value = processString(value, actualSubAnnot.getProcess(), null);
                         }
                         // Index the value with the actual annotation it's for
-                        annotation(annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name, value, 1, indexAtPositions);
+                        if (!alreadySeen.contains(subannotationName)) {
+                            // First occurrence of this annotation
+                            annotation(subannotationName, value, 1, indexAtPositions);
+                            alreadySeen.add(subannotationName);
+                        } else {
+                            // Subsequent occurrence of this annotation
+                            annotation(subannotationName, value, 0, indexAtPositions);
+                        }
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);

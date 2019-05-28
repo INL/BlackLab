@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Integer setting with a default and maximum value.
+ * 
+ * Please note that setting a max of -1 is interpreted as Integer.MAX_VALUE,
+ * effectively setting no limit.
  */
 public class DefaultMax {
     
@@ -23,7 +26,7 @@ public class DefaultMax {
     
     DefaultMax(int def, int max) {
         this.defaultValue = def;
-        this.max = max;
+        setMax(max);
     }
 
     public int getDefaultValue() {
@@ -39,7 +42,7 @@ public class DefaultMax {
     }
 
     public void setMax(int max) {
-        this.max = max;
+        this.max = max == -1 ? Integer.MAX_VALUE : max;
     }
     
     
