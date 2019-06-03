@@ -62,6 +62,8 @@ import nl.inl.util.UnicodeStream;
 public abstract class DocIndexer implements AutoCloseable {
 
     protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
+    
+    public static final int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 1;
 
     protected DocWriter docWriter;
 
@@ -468,6 +470,11 @@ public abstract class DocIndexer implements AutoCloseable {
 
         if (type != FieldType.NUMERIC) {
             currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
+            if (value.length() > MAX_DOCVALUES_LENGTH) {
+                // If a value is too long (more than 32K), just truncate it.
+                // This should be very rare and would generally only affect sorting/grouping, if anything. 
+                value = value.substring(0, MAX_DOCVALUES_LENGTH);
+            }
             currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
