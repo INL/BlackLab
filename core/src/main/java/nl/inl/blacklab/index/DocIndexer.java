@@ -474,17 +474,16 @@ public abstract class DocIndexer implements AutoCloseable {
             // If a value is too long (more than 32K), just truncate it a bit.
             // This should be very rare and would generally only affect sorting/grouping, if anything. 
             if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
-                while (true) {
-                    // See if it's really too large
-                    byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
-                    if (utf8.length > MAX_DOCVALUES_LENGTH) {
-                        // assume all characters take two bytes, truncate and try again
-                        int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
-                        int truncateAt = value.length() - 2 * overshoot;
-                        if (truncateAt < 1)
-                            truncateAt = 1;
-                        value = value.substring(0, truncateAt);
-                    }
+                // While it's really too large
+                byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
+                while (utf8.length > MAX_DOCVALUES_LENGTH) {
+                    // assume all characters take two bytes, truncate and try again
+                    int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
+                    int truncateAt = value.length() - 2 * overshoot;
+                    if (truncateAt < 1)
+                        truncateAt = 1;
+                    value = value.substring(0, truncateAt);
+                    utf8 = value.getBytes(StandardCharsets.UTF_8);
                 }
             }
             currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
