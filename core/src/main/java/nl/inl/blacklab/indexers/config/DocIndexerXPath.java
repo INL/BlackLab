@@ -360,7 +360,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             prop.addPayload(null);
                     }
                 }
-
             }
             navpop();
 

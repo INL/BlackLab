@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -64,6 +65,8 @@ import nl.inl.util.UnicodeStream;
 public abstract class DocIndexer implements AutoCloseable {
 
     protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
+
+    public static final int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
     protected DocWriter docWriter;
 
@@ -475,7 +478,22 @@ public abstract class DocIndexer implements AutoCloseable {
         if (type != FieldType.NUMERIC) {
             for (String value : values) {
                 currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
-                currentLuceneDoc.add(new SortedSetDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
+                // If a value is too long (more than 32K), just truncate it a bit.
+                // This should be very rare and would generally only affect sorting/grouping, if anything.
+                if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
+                    // While it's really too large
+                    byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    while (utf8.length > MAX_DOCVALUES_LENGTH) {
+                        // assume all characters take two bytes, truncate and try again
+                        int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
+                        int truncateAt = value.length() - 2 * overshoot;
+                        if (truncateAt < 1)
+                            truncateAt = 1;
+                        value = value.substring(0, truncateAt);
+                        utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    }
+                    currentLuceneDoc.add(new SortedSetDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
+                }
             }
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
@@ -498,7 +516,6 @@ public abstract class DocIndexer implements AutoCloseable {
                 IntField nf = new IntField(numFieldName, n, Store.YES);
                 currentLuceneDoc.add(nf);
                 currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
-
             }
         }
     }
