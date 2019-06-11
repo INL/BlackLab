@@ -407,42 +407,44 @@ public class BlsCache implements SearchCache {
         // STEP 2: make sure the most worthy searches get the CPU, and pause
         //         any others to avoid bringing down the server.
 
-        int coresLeft = perfConfig.getMaxConcurrentSearches();
-        int pauseSlotsLeft = perfConfig.getMaxPausedSearches();
-        for (BlsCacheEntry<?> search : searches) {
-            if (search.isDone()) {
-                // Finished search. Keep in cache?
+        // LEXION CHANGE: we've commented out step 2, as it causes deadlocks under heavy load.
 
-                // NOTE: we'll leave this to removeOldSearches() for now.
-                // Later we'll integrate the two.
-            } else {
-                // Running search. Run, pause or abort?
-                boolean isCount = search.search() instanceof SearchCount;
-                if (isCount && search.timeSinceLastAccess() > perfConfig.getAbandonedCountPauseTimeSec() * 1000L
-                        && pauseSlotsLeft > 0) {
-                    // This is a long-running count that seems to have been abandoned by the client.
-                    // First we'll pause it so it doesn't consume CPU resources. Eventually we'll
-                    // abort it so its memory is freed up.
-                    if (search.timeSinceLastAccess() <= perfConfig.getAbandonedCountAbortTimeSec() * 1000L) {
-                        pauseSlotsLeft--;
-                        applyAction(search, ServerLoadQueryAction.PAUSE, "abandoned count");
-                    } else {
-                        applyAction(search, ServerLoadQueryAction.ABORT, "abandoned count");
-                    }
-                } else if (coresLeft > 0) {
-                    // A core is available. Run the search.
-                    coresLeft--;
-                    applyAction(search, ServerLoadQueryAction.UNPAUSE, "core available");
-                } else if (pauseSlotsLeft > 0) {
-                    // No cores, but a pause slot is left. Pause it.
-                    pauseSlotsLeft--;
-                    applyAction(search, ServerLoadQueryAction.PAUSE, "no cores left");
-                } else {
-                    // No cores or pause slots. Abort the search.
-                    applyAction(search, ServerLoadQueryAction.ABORT, "no cores or pause slots left");
-                }
-            }
-        }
+//        int coresLeft = perfConfig.getMaxConcurrentSearches();
+//        int pauseSlotsLeft = perfConfig.getMaxPausedSearches();
+//        for (BlsCacheEntry<?> search : searches) {
+//            if (search.isDone()) {
+//                // Finished search. Keep in cache?
+//
+//                // NOTE: we'll leave this to removeOldSearches() for now.
+//                // Later we'll integrate the two.
+//            } else {
+//                // Running search. Run, pause or abort?
+//                boolean isCount = search.search() instanceof SearchCount;
+//                if (isCount && search.timeSinceLastAccess() > perfConfig.getAbandonedCountPauseTimeSec() * 1000L
+//                        && pauseSlotsLeft > 0) {
+//                    // This is a long-running count that seems to have been abandoned by the client.
+//                    // First we'll pause it so it doesn't consume CPU resources. Eventually we'll
+//                    // abort it so its memory is freed up.
+//                    if (search.timeSinceLastAccess() <= perfConfig.getAbandonedCountAbortTimeSec() * 1000L) {
+//                        pauseSlotsLeft--;
+//                        applyAction(search, ServerLoadQueryAction.PAUSE, "abandoned count");
+//                    } else {
+//                        applyAction(search, ServerLoadQueryAction.ABORT, "abandoned count");
+//                    }
+//                } else if (coresLeft > 0) {
+//                    // A core is available. Run the search.
+//                    coresLeft--;
+//                    applyAction(search, ServerLoadQueryAction.UNPAUSE, "core available");
+//                } else if (pauseSlotsLeft > 0) {
+//                    // No cores, but a pause slot is left. Pause it.
+//                    pauseSlotsLeft--;
+//                    applyAction(search, ServerLoadQueryAction.PAUSE, "no cores left");
+//                } else {
+//                    // No cores or pause slots. Abort the search.
+//                    applyAction(search, ServerLoadQueryAction.ABORT, "no cores or pause slots left");
+//                }
+//            }
+//        }
     }
 
     /**
