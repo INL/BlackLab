@@ -15,6 +15,8 @@ public class BLSConfigDebug {
     }
 
     public boolean isDebugMode(String ip) {
-        return addresses.contains(ip);
+        // LEXION Change: Always allow debug info.
+        return true;
+//        return addresses.contains(ip);
     }
 }
