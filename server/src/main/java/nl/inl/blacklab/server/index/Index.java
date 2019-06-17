@@ -315,6 +315,8 @@ public class Index {
     public synchronized void close() {
         if (this.index != null) {
             this.index.close();
+            searchMan.getBlackLabCache().removeSearchesForIndex(this.index);
+
             this.index = null;
         }
 
@@ -326,7 +328,6 @@ public class Index {
         this.indexer = null;
 
 //        searchMan.getCache().clearCacheForIndex(this.id);
-        searchMan.getBlackLabCache().removeSearchesForIndex(this.index);
     }
 
     /**

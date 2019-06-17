@@ -77,7 +77,7 @@ public class BlsCache implements SearchCache {
      * @param index the index
      */
     @Override
-    public void removeSearchesForIndex(BlackLabIndex index) {
+    public synchronized void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
@@ -96,7 +96,7 @@ public class BlsCache implements SearchCache {
      * @param cancelRunning if true, cancels all running searches as well.
      */
     @Override
-    public void clear(boolean cancelRunning) {
+    public synchronized void clear(boolean cancelRunning) {
         for (BlsCacheEntry<? extends SearchResult> cachedSearch : searches.values()) {
             if (!cachedSearch.isSearchDone())
                 cachedSearch.cancelSearch();
