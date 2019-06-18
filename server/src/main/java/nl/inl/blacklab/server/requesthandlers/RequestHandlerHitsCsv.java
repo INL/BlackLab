@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -20,7 +20,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
@@ -204,16 +204,24 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private boolean includeSearchParameters() {
-        return searchParam.getBoolean("csvsummary");
+        return true; //return searchParam.getBoolean("csvsummary");
     }
 
     private boolean declareSeparator() {
-        return searchParam.getBoolean("csvsepline");
+        return true; //return searchParam.getBoolean("csvsepline");
     }
 
-    private static void writeHit(Kwic kwic, Annotation mainTokenProperty, List<Annotation> otherTokenProperties, String docPid,
-            String docTitle, ArrayList<String> row) {
+    private static void writeHit(
+        Kwic kwic,
+        Document doc,
+        Annotation mainTokenProperty,
+        List<Annotation> otherTokenProperties,
+        String docPid,
+        List<MetadataField> metadataFieldsToWrite,
+        ArrayList<String> row
+    ) {
         row.clear();
+
 
         /*
          * Order of kwic/hitProps is always the same:
@@ -221,21 +229,29 @@ public class RequestHandlerHitsCsv extends RequestHandler {
          * - other (non-internal) properties (in order of declaration in the index)
          * - word itself
          */
-        row.add(docPid);
-        row.add(docTitle);
-
         // Only kwic supported, original document output not supported in csv currently.
         Annotation punct = mainTokenProperty.field().annotations().punct();
+        row.add(docPid);
         row.add(StringUtils.join(interleave(kwic.left(punct), kwic.left(mainTokenProperty)).toArray()));
-        row.add(StringUtils.join(interleave(kwic.match(punct), kwic.match(mainTokenProperty)).toArray())); // what to do about punctuation and whitespace?
+        row.add(StringUtils.join(interleave(kwic.match(punct), kwic.match(mainTokenProperty)).toArray()));
         row.add(StringUtils.join(interleave(kwic.right(punct), kwic.right(mainTokenProperty)).toArray()));
 
         // Add all other properties in this word
         for (Annotation otherProp : otherTokenProperties)
             row.add(StringUtils.join(kwic.match(otherProp), " "));
+
+        // other fields in order of appearance
+        for (MetadataField field : metadataFieldsToWrite)
+            row.add(csvEscape(doc.getValues(field.name())));
     }
 
-    private void writeHits(Hits hits, HitGroups groups, List<Annotation> annotationsToWrite, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
+    private void writeHits(
+        Hits hits,
+        HitGroups groups,
+        List<Annotation> annotationsToWrite,
+        DocResults subcorpusResults,
+        DataStreamPlain ds
+    ) throws BlsException {
         searchLogger.setResultsFound(hits.size());
 
         final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
@@ -244,48 +260,41 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
             ArrayList<String> row = new ArrayList<>();
 
-            row.addAll(Arrays.asList("docPid", "docName", "left_context", "context", "right_context"));
+            row.addAll(Arrays.asList("docPid", "left_context", "context", "right_context"));
+
             for (Annotation a : annotationsToWrite) {
                 row.add(a.name());
             }
+            // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the normal hit response does
+            // Since it results in a MASSIVE amount of repeated data.
+            List<MetadataField> metadataFieldsToWrite = searchParam.containsKey("listmetadatavalues") ? new ArrayList<>(getMetadataToWrite()) : Collections.emptyList();
+            for (MetadataField f : metadataFieldsToWrite) {
+                 row.add(f.name());
+            }
+
             CSVPrinter printer = createHeader(row);
             if (includeSearchParameters()) {
                 hits.hitsStats().countedTotal(); // block for a bit
                 addSummaryCsvHits(printer, row.size(), hits, groups, subcorpusResults.subcorpusSize());
             }
 
-            // Write the hits
-            // We cannot use hitsPerDoc unfortunately, because the hits will come out sorted by their document, and we need a global order
-            // So we need to manually retrieve the documents and their data
-            Map<Integer, Pair<String, String>> luceneIdToPidAndTitle = new HashMap<>();
+            Map<Integer, Document> luceneDocs = new HashMap<>();
             Kwics kwics = hits.kwics(blIndex().defaultContextSize());
             for (Hit hit : hits) {
-                String pid;
-                String title;
-
-                if (!luceneIdToPidAndTitle.containsKey(hit.doc())) {
-                    Document doc = blIndex().doc(hit.doc()).luceneDoc();
-                    pid = getDocumentPid(blIndex(), hit.doc(), doc);
-                    String titleField = blIndex().metadataFields().special(MetadataFields.TITLE).name();
-                    title = doc.get(titleField);
-
-                    if (title == null || title.isEmpty())
-                        title = "unknown (pid: " + pid + ")";
-
-                    luceneIdToPidAndTitle.put(hit.doc(), Pair.of(pid, title));
-                } else {
-                    Pair<String, String> p = luceneIdToPidAndTitle.get(hit.doc());
-                    pid = p.getLeft();
-                    title = p.getRight();
+                Document doc = luceneDocs.get(hit.doc());
+                if (doc == null) {
+                    doc = blIndex().doc(hit.doc()).luceneDoc();
+                    luceneDocs.put(hit.doc(), doc);
                 }
-
-                writeHit(kwics.get(hit), mainTokenProperty, annotationsToWrite, pid, title, row);
+                writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, getDocumentPid(blIndex(), hit.doc(), doc), metadataFieldsToWrite, row);
                 printer.printRecord(row);
             }
             printer.flush();
             ds.plain(printer.getOut().toString());
         } catch (IOException e) {
             throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_HITS_CSV2");
+        } catch (BlsException e) {
+            throw e;
         }
     }
 
@@ -319,5 +328,47 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             out.add(largest.get(i));
 
         return out;
+    }
+
+    /*
+     * We must support multiple values in a single csv cell.
+     * We must also support values containing quotes/whitespace/commas.
+     *
+     * This mean we must delimit individual values, we do this by surrounding them by quotes and separating them with a single space
+     *
+     * Existing quotes will be escaped by doubling them as per the csv escaping conventions
+     * Essentially transform
+     *      a value containing "quotes"
+     *      a "value" containing , as well as "quotes"
+     * into
+     *      "a value containing ""quotes"""
+     *      "a ""value"" containing , as well as ""quotes"""
+     *
+     * Decoders must split the value on whitespace outside quotes, then strip outside quotes, then replace the doubled quotes with singular quotes
+    */
+    private static String csvEscape(String[] strings) {
+        StringBuilder sb = new StringBuilder();
+        boolean firstValue = true;
+        for (String value : strings) {
+            int offset = 0, strlen = value.length();
+
+            if (!firstValue) {
+                sb.append(" ");
+            }
+            sb.append('"');
+            while (offset < strlen) {
+                int codepoint = value.codePointAt(offset);
+                offset += Character.charCount(codepoint);
+                sb.appendCodePoint(codepoint);
+                if (codepoint == '"') {
+                    sb.appendCodePoint(codepoint);
+                }
+            }
+
+            sb.append('"');
+            firstValue = false;
+        }
+
+        return sb.toString();
     }
 }
