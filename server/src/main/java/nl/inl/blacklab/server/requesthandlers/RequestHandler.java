@@ -5,13 +5,15 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Map.Entry;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +28,9 @@ import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -35,6 +40,8 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Facets;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -504,10 +511,9 @@ public abstract class RequestHandler {
      * @param document Lucene document
      * @param multipleValues write out multiple metadata values or only the first one?
      */
-    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, boolean multipleValues) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, boolean multipleValues, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
-        IndexMetadata indexMetadata = index.metadata();
-        for (MetadataField f: indexMetadata.metadataFields()) {
+        for (MetadataField f: metadataFieldsToList) {
             if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
                 continue;
             }
@@ -536,8 +542,55 @@ public abstract class RequestHandler {
 
         if (tokenLengthField != null)
             ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractClosingToken);
-        ds.entry("mayView", mayView(indexMetadata, document))
+        ds.entry("mayView", mayView(index.metadata(), document))
                 .endMap();
+    }
+
+    /**
+     * Returns the annotations to write out, as specified by the (optional) "listvalues" query parameter.
+     * By default, all annotations are returned.
+     * Annotations are returned in requested order, or in their definition/display order.
+     * @throws BlsException
+     */
+    public List<Annotation> getAnnotationsToWrite() throws BlsException {
+        AnnotatedFields fields = this.blIndex().annotatedFields();
+        Set<String> requestedAnnotations = searchParam.listValuesFor();
+
+        List<Annotation> ret = new ArrayList<>();
+        for (AnnotatedField f : fields) {
+            for (Annotation a : f.annotations()) {
+                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
+                    ret.add(a);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * Returns a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
+     * By default, all metadata fields are returned.
+     * Special fields (pidField, titleField, etc...) are always returned.
+     * @throws BlsException
+     */
+    public Set<MetadataField> getMetadataToWrite() throws BlsException {
+        MetadataFields fields = this.blIndex().metadataFields();
+        Set<String> requestedFields = searchParam.listMetadataValuesFor();
+
+        Set<MetadataField> ret = new HashSet<>();
+        ret.add(fields.special(MetadataFields.AUTHOR));
+        ret.add(fields.special(MetadataFields.DATE));
+        ret.add(fields.special(MetadataFields.PID));
+        ret.add(fields.special(MetadataFields.TITLE));
+        for (MetadataField field  : fields) {
+            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
+                ret.add(field);
+            }
+        }
+        ret.remove(null); // for missing special fields.
+
+        return ret;
     }
 
     /**
@@ -765,29 +818,76 @@ public abstract class RequestHandler {
     /**
      * Output most of the fields of the search summary.
      *
-     * @param format csv fomat/printer to write output to, note that the format must
-     *            contain at least 2 columns.
-     * @param printer
+     * @param numColumns number of columns to output per row, minimum 2
+     * @param printer the output printer
      * @param searchParam original search parameters
+     * @param groups (optional) if results are grouped, the groups
+     * @param subcorpusSize global sub corpus information (i.e. inter-group)
      */
     // TODO tidy up csv handling
-    protected void addSummaryCommonFieldsCSV(CSVFormat format, CSVPrinter printer, SearchParameters searchParam) {
-        final int numColumns = format.getHeader().length;
-        if (numColumns < 2)
-            throw new IllegalArgumentException("Csv must contain at least 2 columns");
-
-        // Our search parameters
-        writeRow(printer, numColumns, "searchParam");
-        for (Entry<String, String> e : searchParam.getParameters().entrySet()) {
-            // ugly -- mimic normal summaryCommonFields
-            if ("samplenum".equals(e.getKey()))
-                writeRow(printer, numColumns, "sampleSize", e.getValue());
-            else if ("sample".equals(e.getKey()))
-                writeRow(printer, numColumns, "samplePercentage", e.getValue());
-            else
-                writeRow(printer, numColumns, e.getKey(), e.getValue());
+    private static <T> void addSummaryCsvCommon(
+        CSVPrinter printer,
+        int numColumns,
+        SearchParameters searchParam,
+        ResultGroups<T> groups,
+        CorpusSize subcorpusSize
+    ) {
+        for (Entry<String, String> param : searchParam.getParameters().entrySet()) {
+            if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
+                continue;
+            writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
         }
-        writeRow(printer, numColumns, "");
+
+        writeRow(printer, numColumns, "summary.subcorpusSize.documents", subcorpusSize.getDocuments());
+        writeRow(printer, numColumns, "summary.subcorpusSize.tokens", subcorpusSize.getTokens());
+
+        if (groups != null) {
+            writeRow(printer, numColumns, "summary.numberOfGroups", groups.size());
+            writeRow(printer, numColumns, "summary.largestGroupSize", groups.largestGroupSize());
+        }
+
+        SampleParameters sample = searchParam.getSampleSettings();
+        if (sample != null) {
+            writeRow(printer, numColumns, "summary.sampleSeed", sample.seed());
+            if (sample.isPercentage())
+                writeRow(printer, numColumns, "summary.samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
+            else
+                writeRow(printer, numColumns, "summary.sampleSize", sample.numberOfHitsSet());
+        }
+    }
+
+    /**
+     *
+     * @param printer
+     * @param numColumns
+     * @param hitStats
+     * @param docStats
+     * @param groups (optional) if grouped
+     * @param subcorpusSize (optional) if available
+     */
+    protected void addSummaryCsvHits(CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
+        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+        writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
+        writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
+    }
+
+    /**
+     * @param printer
+     * @param numColumns
+     * @param docResults all docs as the input for groups, or contents of a specific group (viewgroup)
+     * @param groups (optional) if grouped
+     */
+    protected void addSummaryCsvDocs(
+            CSVPrinter printer,
+            int numColumns,
+            DocResults docResults,
+            DocGroups groups,
+            CorpusSize subcorpusSize
+            ) {
+        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+
+        writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
+        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().collect(Collectors.summingInt(r -> r.size())));
     }
 
     protected static BlsException translateSearchException(Exception e) {

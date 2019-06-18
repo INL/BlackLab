@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -18,6 +17,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
@@ -35,6 +35,21 @@ import nl.inl.blacklab.server.jobs.User;
  * Request handler for hit results.
  */
 public class RequestHandlerDocsCsv extends RequestHandler {
+    private static class Result {
+        public final DocResults docs;
+        public final DocGroups groups;
+        public final DocResults subcorpusResults;
+        public final boolean isViewGroup;
+
+        public Result(DocResults docs, DocGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
+            super();
+            this.docs = docs;
+            this.groups = groups;
+            this.subcorpusResults = subcorpusResults;
+            this.isViewGroup = isViewGroup;
+        }
+    }
+
     public RequestHandlerDocsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
@@ -52,7 +67,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
      * @throws BlsException
      */
     // TODO share with regular RequestHandlerHits
-    private Pair<DocResults, DocGroups> getDocs() throws BlsException {
+    private Result getDocs() throws BlsException {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -66,10 +81,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
         DocResults docs = null;
         DocGroups groups = null;
+        DocResults subcorpusResults = searchMan.search(user, searchParam.subcorpus());
 
         if (groupBy != null) {
             groups = searchMan.search(user, searchParam.docsGrouped());
-            // don't set docs yet - only return docs if we're looking within a specific group
+            docs = searchMan.search(user, searchParam.docs());
 
             if (viewGroup != null) {
                 PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -112,7 +128,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             docs = docs.window(first, number);
         }
 
-        return Pair.of(docs, groups);
+        return new Result(docs, groups, subcorpusResults, viewGroup != null);
     }
 
     private boolean includeSearchParameters() {
@@ -123,22 +139,55 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         return searchParam.getBoolean("csvsepline");
     }
 
-    private void writeGroups(DocGroups groups, DataStreamPlain ds) throws BlsException {
+    private CSVPrinter createHeader(List<String> row) throws IOException {
+        // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
+        CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
+        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
+
+        return printer;
+    }
+
+    private void writeGroups(DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
         searchLogger.setResultsFound(groups.size());
 
         try {
             // Write the header
             List<String> row = new ArrayList<>();
             row.addAll(groups.groupCriteria().propNames());
-            row.add("count");
+            row.add("size"); // size of the group in documents
+            if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                row.add("numberOfTokens"); // tokens across all documents with hits in group
+                // tokens across all document in group including docs without hits
+                // might be equal to size+numberOfTokens, if the query didn't include a cql query
+                // but don't bother omitting this data.
+                row.add("subcorpusSize.tokens");
+                row.add("subcorpusSize.documents");
+            }
 
             CSVPrinter printer = createHeader(row);
+            if (includeSearchParameters()) {
+                addSummaryCsvDocs(printer, row.size(), inputDocsForGroups, groups, subcorpusResults.subcorpusSize());
+            }
 
             // write the groups
             for (DocGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Integer.toString(group.storedResults().size()));
+                row.add(Integer.toString(group.size()));
+                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                    row.add(Long.toString(group.totalTokens()));
+
+                    if (searchParam.hasPattern()) {
+                        PropertyValue docPropValues = group.identity();
+                        CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues, true);
+                        row.add(groupSubcorpusSize.getTokens() > 0 ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
+                        row.add(groupSubcorpusSize.getDocuments() > 0 ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
+                    } else {
+                        row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
+                        row.add(Integer.toString(group.storedResults().subcorpusSize().getDocuments()));
+                    }
+                }
+
                 printer.printRecord(row);
             }
 
@@ -149,17 +198,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         }
     }
 
-    private CSVPrinter createHeader(List<String> row) throws IOException {
-        // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
-        CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
-        if (includeSearchParameters())
-            addSummaryCommonFieldsCSV(format, printer, searchParam);
-        row.clear();
-        return printer;
-    }
-
-    private void writeDocs(DocResults docs, DataStreamPlain ds) throws BlsException {
+    private void writeDocs(DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize, DataStreamPlain ds) throws BlsException {
 
         searchLogger.setResultsFound(docs.size());
 
@@ -175,14 +214,16 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = indexMetadata.metadataFields().stream().map(f -> f.name()).collect(Collectors.toList());
+            Collection<String> metadataFieldIds = this.getMetadataToWrite().stream().map(f -> f.name())
+                    .collect(Collectors.toList());
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");
             metadataFieldIds.remove("mayView");
 
-            row.addAll(metadataFieldIds); // NOTE: don't add display names, CSVPrinter can't handle duplicate names
+            row.addAll(metadataFieldIds); // NOTE: use the raw field IDs for headers, not the display names, CSVPrinter can't handle duplicate names
 
             CSVPrinter printer = createHeader(row);
+            addSummaryCsvDocs(printer, row.size(), docs, fromGroups, globalSubcorpusSize.subcorpusSize());
 
             StringBuilder sb = new StringBuilder();
 
@@ -249,8 +290,6 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     app.append(cell).append(',');
                 }
                 printer.println();
-//                printer.getOut().append()
-//                printer.printRecord(row);
             }
 
             printer.flush();
@@ -262,11 +301,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Pair<DocResults, DocGroups> result = getDocs();
-        if (result.getLeft() != null)
-            writeDocs(result.getLeft(), (DataStreamPlain) ds);
+        Result result = getDocs();
+        if (result.groups == null || result.isViewGroup)
+            writeDocs(result.docs, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
         else
-            writeGroups(result.getRight(), (DataStreamPlain) ds);
+            writeGroups(result.docs, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
 
         return HTTP_OK;
     }

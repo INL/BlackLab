@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,7 +25,9 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -220,10 +224,13 @@ public class RequestHandlerHits extends RequestHandler {
         ContextSettings contextSettings = searchParam.getContextSettings();
         Concordances concordances = null;
         Kwics kwics = null;
+        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
         if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
             concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
         else
             kwics = window.kwics(contextSettings.size());
+
+        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
         for (Hit hit : window) {
             ds.startItem("hit").startMap();
 
@@ -268,9 +275,9 @@ public class RequestHandlerHits extends RequestHandler {
             } else {
                 // Add KWIC info
                 Kwic c = kwics.get(hit);
-                ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
+                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             }
             ds.endMap().endItem();
         }
@@ -292,7 +299,7 @@ public class RequestHandlerHits extends RequestHandler {
                     doc = index.doc(hit.doc()).luceneDoc();
                     lastPid = pid;
                 }
-                dataStreamDocumentInfo(ds, index, doc, listMultipleMetadataValues);
+                dataStreamDocumentInfo(ds, index, doc, listMultipleMetadataValues, metadataFieldsTolist);
                 ds.endAttrEntry();
             }
         }

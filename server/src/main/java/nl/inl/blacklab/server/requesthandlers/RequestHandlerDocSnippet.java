@@ -1,6 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -10,6 +12,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
@@ -81,7 +84,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         hit = Hit.create(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
         Hits hits = Hits.fromList(QueryInfo.create(blIndex), Arrays.asList(hit));
-        getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null);
+        getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
         return HTTP_OK;
     }
 
@@ -100,7 +103,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      * @param docPid if not null, include doc pid, hit start and end info
      */
     public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
-            boolean useOrigContent, boolean isFragment, String docPid) {
+            boolean useOrigContent, boolean isFragment, String docPid, Set<Annotation> annotationsTolist) {
         ds.startMap();
         if (docPid != null) {
             // Add basic hit info
@@ -124,11 +127,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             Kwics kwics = singleHit.kwics(wordsAroundHit);
             Kwic c = kwics.get(hit);
             if (!isFragment) {
-                ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
+                ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
             } else {
-                ds.contextList(c.annotations(), c.tokens());
+                ds.contextList(c.annotations(), annotationsTolist, c.tokens());
             }
         }
         ds.endMap();

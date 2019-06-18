@@ -102,6 +102,7 @@ public class SearchParameters {
         defaultParameterValues.put("usecache", "yes");
         defaultParameterValues.put("explain", "no");
         defaultParameterValues.put("listvalues", "");
+        defaultParameterValues.put("listmetadatavalues", "");
         defaultParameterValues.put("subprops", "");
         defaultParameterValues.put("csvsummary", "no");
         defaultParameterValues.put("csvsepline", "no");
@@ -148,7 +149,13 @@ public class SearchParameters {
             "hitstart", "hitend", // doc snippets
             "wordstart", "wordend",
             "explain", // explain query rewriting?
-            "listvalues", // on field info page, show (non-sub) values for annotation?
+
+            // on field info page, show (non-sub) values for annotation?
+            // also controls which annotations' values are sent back with hits
+            "listvalues",
+            // on document info page, list the values for which metadata fields?
+            //also controls which metadata fields are sent back with search hits and document search results
+            "listmetadatavalues",
             // EXPERIMENTAL, mostly for part of speech, limited to 500 values
             "subprops", // on field info page, show all subannotations and values for annotation
             // EXPERIMENTAL, mostly for part of speech
@@ -162,18 +169,18 @@ public class SearchParameters {
             "calc", // collocations, or other context-based calculations
             "group", "viewgroup", // grouping hits/docs
             "annotation", "sensitive", // for term frequency
-            
+
             // How to execute request
             "waitfortotal", // wait until total number of results known?
             "term", // term for autocomplete
-            
+
             // CSV options
             "csvsummary", // include summary of search in the CSV output? [no]
             "csvsepline", // include separator declaration for Excel? [no]
-            
+
             // Deprecated parameters
             "property" // now called "annotation"
-            
+
     );
 
     /** The search manager, for querying default value for missing parameters */
@@ -356,7 +363,7 @@ public class SearchParameters {
         }
         return p;
     }
-    
+
     boolean getUseCache() {
         return debugMode ? getBoolean("usecache") : true;
     }
@@ -508,14 +515,27 @@ public class SearchParameters {
         return new HitSortSettings(sortProp);
     }
 
+    /**
+     * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
+     * IDs are not validated and may not actually exist!
+     */
     public Set<String> listValuesFor() {
         String par = getString("listvalues").trim();
-        return new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+    }
+
+    /**
+     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
+     * IDs are not validated and may not actually exist!
+     */
+    public Set<String> listMetadataValuesFor() {
+        String par = getString("listmetadatavalues").trim();
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
     }
 
     public Set<String> listSubpropsFor() {
         String par = getString("subprops").trim();
-        return new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
     }
 
     public boolean containsKey(String key) {
@@ -592,13 +612,13 @@ public class SearchParameters {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
         return search.find(docFilterQuery);
     }
-    
+
     /**
      * Return our subcorpus.
-     * 
+     *
      * The subcorpus is defined as all documents satisfying the metadata query.
      * If no metadata query is given, the subcorpus is all documents in the corpus.
-     * 
+     *
      * @return subcorpus
      * @throws BlsException
      */

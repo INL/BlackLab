@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,6 +14,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -122,7 +126,7 @@ public class RequestHandlerDocs extends RequestHandler {
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = 0; // TODO searchGrouped.userWaitTime();
-        return doResponse(ds, true, listMultipleMetadataValues);
+        return doResponse(ds, true, listMultipleMetadataValues, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
     }
 
     private int doRegularDocs(DataStream ds, boolean listMultipleMetadataValues) throws BlsException {
@@ -147,10 +151,10 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = totalDocResults;
         totalTime = total.threwException() ? -1 : total.timeUserWaited();
 
-        return doResponse(ds, false, listMultipleMetadataValues);
+        return doResponse(ds, false, listMultipleMetadataValues, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
 }
 
-    private int doResponse(DataStream ds, boolean isViewGroup, boolean listMultipleMetadataValues) throws BlsException {
+    private int doResponse(DataStream ds, boolean isViewGroup, boolean listMultipleMetadataValues, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
@@ -205,7 +209,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, blIndex, document, listMultipleMetadataValues);
+            dataStreamDocumentInfo(ds, blIndex, document, listMultipleMetadataValues, metadataFieldsToList);
             ds.endEntry();
 
             // Snippets
@@ -231,9 +235,9 @@ public class RequestHandlerDocs extends RequestHandler {
                     } else {
                         // Add KWIC info
                         Kwic c = kwics.get(hit);
-                        ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
-                                .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
-                                .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
+                        ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
+                                .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
+                                .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
                     }
                     ds.endMap().endItem();
                 }

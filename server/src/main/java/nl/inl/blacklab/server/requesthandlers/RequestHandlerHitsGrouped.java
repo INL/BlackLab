@@ -29,19 +29,19 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
  * Request handler for grouped hit results.
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
-    
-    static boolean INCLUDE_RELATIVE_FREQ = true; 
+
+    static public boolean INCLUDE_RELATIVE_FREQ = true;
 
     public RequestHandlerHitsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
-    
+
     @Override
     public int handle(DataStream ds) throws BlsException {
         // Get the window we're interested in
         BlsCacheEntry<HitGroups> search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
-        
+
         // Search is done; construct the results object
         HitGroups groups;
         try {
@@ -65,7 +65,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), 0, groups, ourWindow);
         ResultCount hitsStats = searchMan.search(user, searchParam.hitsCount());
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
-        
+
         // The list of groups found
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
@@ -75,18 +75,18 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             subcorpus = searchMan.search(user, searchParam.subcorpus());
             subcorpusSize = subcorpus.subcorpusSize();
         }
-        
+
         addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false, subcorpusSize);
         ds.endMap().endEntry();
 
         searchLogger.setResultsFound(groups.size());
-        
+
         int i = 0;
         ds.startEntry("hitGroups").startList();
         for (HitGroup group : groups) {
             if (i >= first && i < first + requestedWindowSize) {
                 logger.debug("## Group number " + i);
-                
+
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
@@ -95,9 +95,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                     logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
-                
+
                 int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
-                
+
                 ds.startItem("hitgroup").startMap();
                 ds.entry("identity", group.identity().serialize())
                         .entry("identityDisplay", group.identity().toString())
