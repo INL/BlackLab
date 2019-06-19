@@ -289,6 +289,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 while (apPunct.evalXPath() != -1) {
                     apEvalToString.resetXPath();
                     String punct = apEvalToString.evalXPathToString();
+                    // If punctPath matches an empty tag, replace it with a space.
+                    // Deals with e.g. <lb/> (line break) tags in TEI.
+                    if (punct.isEmpty())
+                        punct = " ";
                     collectPunct(tagsAndPunct, punct);
                 }
                 navpop();
