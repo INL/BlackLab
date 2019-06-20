@@ -4,14 +4,15 @@
 	<version position="right" />
 	
 	<bannerLeft>
-		<name>BlackLab</name>
-		<src>images/logo-blacklab.png</src>
+        <name>INL</name>
+        <src>images/logo_2_ivd-nt_transparant.png</src>
+        <href>http://www.ivdnt.org/</href>
 	</bannerLeft>
 
 	<bannerRight>
-		<name>INL</name>
-		<src>images/logo-inl.png</src>
-		<href>http://www.inl.nl/</href>
+        <name>BlackLab</name>
+        <src>images/logo-blacklab.png</src>
+        <href>/BlackLab/</href>
 	</bannerRight>
 
 	<skin>

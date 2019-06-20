@@ -48,10 +48,11 @@ public class RequestHandlerServerInfo extends RequestHandler {
                 synchronized (index) {
                     IndexMetadata indexMetadata = index.getIndexMetadata();
                     IndexStatus status = index.getStatus();
-    
+
                     ds.entry("displayName", indexMetadata.displayName());
+                    ds.entry("description", indexMetadata.description());
                     ds.entry("status", status);
-    
+
                     if (status.equals(IndexStatus.INDEXING)) {
                         IndexListener indexProgress = index.getIndexerListener();
                         synchronized (indexProgress) {
@@ -62,7 +63,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
                                     .endMap().endEntry();
                         }
                     }
-    
+
                     String formatIdentifier = indexMetadata.documentFormat();
                     if (formatIdentifier != null && formatIdentifier.length() > 0)
                         ds.entry("documentFormat", formatIdentifier);
