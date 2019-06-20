@@ -13,8 +13,8 @@ body>.container-fluid {
 
 #banner {
     padding: 20px;
-    background-color: #eee;
-    background-image: url(../images/header.jpg);
+    background-color: #359FF0;
+    /*background-image: url(../images/header.jpg);*/
 }
 
 /* Stick the INL logo to the side of the screen */
