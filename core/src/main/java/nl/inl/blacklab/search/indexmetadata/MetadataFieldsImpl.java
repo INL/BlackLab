@@ -158,7 +158,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     }
 
     /**
-     * Find the first (alphabetically) field whose name contains the search string.
+     * Find the first (alphabetically) field whose name matches (case-insensitively) the search string.
      *
      * @param search the string to search for
      * @return the field name, or null if no fields matched
@@ -167,13 +167,13 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         // Find documents with title in the name
         List<MetadataField> fieldsFound = new ArrayList<>();
         for (MetadataField field: metadataFieldInfos.values()) {
-            if (field.type() == FieldType.TOKENIZED && field.name().toLowerCase().contains(search))
+            if (field.type() == FieldType.TOKENIZED && field.name().equalsIgnoreCase(search))
                 fieldsFound.add(field);
         }
         if (fieldsFound.isEmpty())
             return null;
         
-        // Sort (so we get titleLevel1 not titleLevel2 for example)
+        // Sort (so we always return the same field if more than one matches
         fieldsFound.sort( (a, b) -> a.name().compareTo(b.name()) );
         return fieldsFound.get(0);
     }
