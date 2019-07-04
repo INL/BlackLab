@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -20,7 +21,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternOr;
  * Fills gaps in a template string with column values from TSV data.
  *
  * URL parameters:
- * 
+ *
  * <p>
  * <ul>
  * <li>template: The string with gaps to be filled (default: @@) in it
@@ -45,6 +46,7 @@ public class GapFiller {
     private static final String OUTPUT_SEPARATOR = "|";
 
     private static final String GAP_REGEX = "@@";
+    private static final Pattern GAP_REGEX_PATT = Pattern.compile(GAP_REGEX, Pattern.DOTALL);
 
     public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
@@ -115,7 +117,7 @@ public class GapFiller {
     }
 
     public static boolean hasGaps(String patt) {
-        return patt.matches(".*" + GAP_REGEX + ".*");
+        return GAP_REGEX_PATT.matcher(patt).find();
     }
 
 }
