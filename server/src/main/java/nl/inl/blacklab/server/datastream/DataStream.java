@@ -263,33 +263,33 @@ public abstract class DataStream {
         return startEntry(key).value(value).endEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, String value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, String value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, Object value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, Object value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, int value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, int value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, long value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, long value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, double value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, double value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public DataStream attrEntry(String elementName, String attrName, String key, boolean value) {
-        return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, boolean value) {
+        return startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry();
     }
 
-    public abstract DataStream startAttrEntry(String elementName, String attrName, String key);
+    public abstract DataStream startAttrEntry(String elementName, String attrName, String attrValue);
 
-    public abstract DataStream startAttrEntry(String elementName, String attrName, int key);
+    public abstract DataStream startAttrEntry(String elementName, String attrName, int attrValue);
 
     public abstract DataStream endAttrEntry();
 

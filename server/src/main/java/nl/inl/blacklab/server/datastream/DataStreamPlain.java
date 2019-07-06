@@ -73,7 +73,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
+    public DataStream startAttrEntry(String elementName, String attrName, int attrValue) {
         return this;
     }
 

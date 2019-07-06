@@ -168,51 +168,51 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, Object value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, Object value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, long value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, long value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, String value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, String value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, int value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, int value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, double value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, double value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream attrEntry(String elementName, String attrName, String key, boolean value) {
-        return indent().startCompact().startAttrEntry(elementName, attrName, key).value(value).endAttrEntry()
+    public DataStream attrEntry(String elementName, String attrName, String attrValue, boolean value) {
+        return indent().startCompact().startAttrEntry(elementName, attrName, attrValue).value(value).endAttrEntry()
                 .endCompact().newline();
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, String key) {
+    public DataStream startAttrEntry(String elementName, String attrName, String attrValue) {
         startOpenEl(elementName);
-        attr(attrName, key);
+        attr(attrName, attrValue);
         return endOpenEl();
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
-        return startEntry(Integer.toString(key));
+    public DataStream startAttrEntry(String elementName, String attrName, int attrValue) {
+        return startEntry(Integer.toString(attrValue));
     }
 
     @Override

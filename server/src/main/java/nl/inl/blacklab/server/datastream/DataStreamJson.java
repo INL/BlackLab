@@ -103,13 +103,13 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, String key) {
-        return startEntry(key);
+    public DataStream startAttrEntry(String elementName, String attrName, String attrValue) {
+        return startEntry(attrValue);
     }
 
     @Override
-    public DataStream startAttrEntry(String elementName, String attrName, int key) {
-        return startEntry(Integer.toString(key));
+    public DataStream startAttrEntry(String elementName, String attrName, int attrValue) {
+        return startEntry(Integer.toString(attrValue));
     }
 
     @Override
