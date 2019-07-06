@@ -497,14 +497,14 @@ public abstract class RequestHandler {
                 ds.entry(f.name(), value);
             }
         }
-        ds.startEntry("displayNames");
+        ds.startEntry("displayNames").startMap();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String displayName = f.displayName();
             if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
                 ds.entry(f.name(),displayName);
             }
         }
-        ds.endEntry();
+        ds.endMap().endEntry();
 
         int subtractClosingToken = 1;
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
