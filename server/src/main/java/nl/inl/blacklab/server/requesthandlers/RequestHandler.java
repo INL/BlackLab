@@ -493,12 +493,18 @@ public abstract class RequestHandler {
         IndexMetadata indexMetadata = index.metadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String value = document.get(f.name());
-            String displayName = f.displayName();
-            String group = f.group();
-            if (value != null && !value.equals("lengthInTokens") && !value.equals("mayView")) {
-                ds.attrEntry(f.name(), "displayName", displayName,value);
+            if (value != null && !f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
+                ds.entry(f.name(), value);
             }
         }
+        ds.startEntry("displayNames");
+        for (MetadataField f: indexMetadata.metadataFields()) {
+            String displayName = f.displayName();
+            if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
+                ds.entry(f.name(),displayName);
+            }
+        }
+        ds.endEntry();
 
         int subtractClosingToken = 1;
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
