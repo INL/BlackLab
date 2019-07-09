@@ -13,6 +13,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.util.ParseUtil;
 
 /**
  * Get information about the structure of an index.
@@ -40,7 +41,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_INFO");
 
-        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
+        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null && ParseUtil.strToBool(this.request.getParameter("multiplevalues"));
 
         // Document info
         debug(logger, "REQ doc info: " + indexName + "-" + docId);
