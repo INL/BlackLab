@@ -1,31 +1,19 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotationGroup;
-import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.*;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.jobs.User;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Get information about the structure of an index.
@@ -125,34 +113,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             }
             ds.endMap().endEntry();
 
-            MetadataFieldGroups metaGroups = indexMetadata.metadataFields().groups();
-            Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(indexMetadata.metadataFields().stream().collect(Collectors.toSet()));
-            for (MetadataFieldGroup metaGroup : metaGroups) {
-                for (MetadataField field: metaGroup) {
-                    metadataFieldsNotInGroups.remove(field);
-                }
-            }
-            ds.startEntry("metadataFieldGroups").startList();
-            boolean addedRemaining = false;
-            for (MetadataFieldGroup metaGroup : metaGroups) {
-                ds.startItem("metadataFieldGroup").startMap();
-                ds.entry("name", metaGroup.name());
-                ds.startEntry("fields").startList();
-                for (MetadataField field: metaGroup) {
-                    ds.item("field", field.name());
-                }
-                if (!addedRemaining && metaGroup.addRemainingFields()) {
-                    addedRemaining = true;
-                    List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                    rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
-                    for (MetadataField field: rest) {
-                        ds.item("field", field.name());
-                    }
-                }
-                ds.endList().endEntry();
-                ds.endMap().endItem();
-            }
-            ds.endList().endEntry();
+            dataStreamMetadataGroupInfo(ds,blIndex);
 
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {
