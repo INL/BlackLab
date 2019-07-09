@@ -518,6 +518,7 @@ public class SearchParameters {
     /**
      * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
      * IDs are not validated and may not actually exist!
+     * @return which annotations to list
      */
     public Set<String> listValuesFor() {
         String par = getString("listvalues").trim();
@@ -527,6 +528,7 @@ public class SearchParameters {
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
      * IDs are not validated and may not actually exist!
+     * @return which metadata fields to list
      */
     public Set<String> listMetadataValuesFor() {
         String par = getString("listmetadatavalues").trim();

@@ -1,5 +1,27 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -7,8 +29,26 @@ import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.*;
-import nl.inl.blacklab.search.results.*;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Facets;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -23,21 +63,6 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.Document;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -488,6 +513,7 @@ public abstract class RequestHandler {
      * @param index our index
      * @param document Lucene document
      * @param multipleValues write out multiple metadata values or only the first one?
+     * @param metadataFieldsToList fields to include in the document info
      */
     public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, boolean multipleValues, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
@@ -516,6 +542,7 @@ public abstract class RequestHandler {
              }
         }
         ds.startEntry("displayNames").startMap();
+        IndexMetadata indexMetadata = index.metadata();
         for (MetadataField f: indexMetadata.metadataFields()) {
             String displayName = f.displayName();
             if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
@@ -569,9 +596,12 @@ public abstract class RequestHandler {
     }
 
     /**
-     * Returns the annotations to write out, as specified by the (optional) "listvalues" query parameter.
+     * Returns the annotations to write out.
+     * 
      * By default, all annotations are returned.
      * Annotations are returned in requested order, or in their definition/display order.
+     * 
+     * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      * @throws BlsException
      */
     public List<Annotation> getAnnotationsToWrite() throws BlsException {
@@ -591,9 +621,12 @@ public abstract class RequestHandler {
     }
 
     /**
-     * Returns a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
+     * Returns a list of metadata fields to write out.
+     * 
      * By default, all metadata fields are returned.
      * Special fields (pidField, titleField, etc...) are always returned.
+     * 
+     * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      * @throws BlsException
      */
     public Set<MetadataField> getMetadataToWrite() throws BlsException {

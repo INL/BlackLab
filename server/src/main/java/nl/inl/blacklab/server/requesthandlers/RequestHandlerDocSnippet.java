@@ -101,6 +101,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      * @param isFragment if false, separates hit into left/match/right; otherwise,
      *            just returns whole fragment
      * @param docPid if not null, include doc pid, hit start and end info
+     * @param annotationsTolist what annotations to include
      */
     public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
             boolean useOrigContent, boolean isFragment, String docPid, Set<Annotation> annotationsTolist) {

@@ -418,7 +418,7 @@ public abstract class DocIndexer implements AutoCloseable {
             List<String> currentValue = getMetadataField(fd.name());
             if (currentValue == null)
                 missing = true;
-            else if (currentValue.size() == 0 || currentValue.stream().allMatch(String::isEmpty))
+            else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
                 empty = true;
             UnknownCondition cond = fd.unknownCondition();
             boolean useUnknownValue = false;
