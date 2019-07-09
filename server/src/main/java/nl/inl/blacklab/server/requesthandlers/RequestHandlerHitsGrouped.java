@@ -30,7 +30,7 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
 
-    static public boolean INCLUDE_RELATIVE_FREQ = true;
+    public static final boolean INCLUDE_RELATIVE_FREQ = true;
 
     public RequestHandlerHitsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {

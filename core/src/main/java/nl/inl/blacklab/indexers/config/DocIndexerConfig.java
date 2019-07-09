@@ -303,7 +303,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      * <pre>
      * - "separator" for the separator (defaults to ;),
      * - "keep" for the keep index, accepts numbers or the special string "all" (defaults to -1)
-     *      if "keep" <= 0 returns the entire result as a single string.
+     *      if "keep" <= 0 returns the first part.
      *      if "keep" > number of splits return empty string.
      *      if "keep" == "all" return all parts
      * </pre>
