@@ -492,8 +492,8 @@ public abstract class DocIndexer implements AutoCloseable {
                         value = value.substring(0, truncateAt);
                         utf8 = value.getBytes(StandardCharsets.UTF_8);
                     }
-                    currentLuceneDoc.add(new SortedSetDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
                 }
+                currentLuceneDoc.add(new SortedSetDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
             }
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
