@@ -207,11 +207,11 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>wordstart </td>
-		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. NOTE: partial contents XML output will be wrapped in &#60;blacklabResponse/&#62; element to ensure a single root element.</td>
+		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. NOTE: partial contents XML output will be wrapped in &#60;blacklabResponse/&#62; element to ensure a single root element. NOTE: when greater than -1 content before the first word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>wordend </td>
-		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end.</td>
+		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end. NOTE when greater than -1 content after the last word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>block (deprecated)</td>
