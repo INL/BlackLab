@@ -378,11 +378,11 @@ public abstract class DocIndexer implements AutoCloseable {
         }
 
         value = value.trim();
-//        if (!value.isEmpty() && !metadataFieldValues.containsKey(name)) { // only store the first value found (DocValues, and this is the value .get() returns anyway)
+        if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
             IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
             indexMetadata.registerMetadataField(name);
-//        }
+        }
     }
 
     /**
