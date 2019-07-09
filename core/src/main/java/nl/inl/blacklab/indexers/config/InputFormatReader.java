@@ -554,12 +554,14 @@ public class InputFormatReader extends YamlJsonReader {
             JsonNode fld = itFields.next();
             String name = fld.has("name") ? fld.get("name").asText() : null;
             ConfigMetadataField f;
+            boolean existingField = false;
             if (name != null) {
                 // If field exists, modify existing field.
                 // This is mostly because of forward references to fields; the field instance
                 // would be created by the reference, and the field properties will be added when
                 // they are parsed later in the file.
                 f = b.getOrCreateField(warnSanitizeXmlElementName(name));
+                existingField = true;
             } else
                 f = new ConfigMetadataField();
             Iterator<Entry<String, JsonNode>> itField = obj(fld, "metadata field").fields();
@@ -628,7 +630,8 @@ public class InputFormatReader extends YamlJsonReader {
                             "Unknown key " + e.getKey() + " in metadata field " + StringUtils.defaultString(f.getName(), "(unnamed)"));
                 }
             }
-            b.addMetadataField(f);
+            if (!existingField)
+                b.addMetadataField(f);
         }
     }
 
