@@ -880,7 +880,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             AnnotatedField field = e.getKey();
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
-                fi.get(annotation).deleteDocumentByLuceneDoc(d);
+                if (annotation.hasForwardIndex())
+                    fi.get(annotation).deleteDocumentByLuceneDoc(d);
             }
         }
     }
