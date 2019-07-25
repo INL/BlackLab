@@ -506,7 +506,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         while (apMetadata.evalXPath() != -1) {
                             apEvalToString.resetXPath();
                             String unprocessedValue = apEvalToString.evalXPathToString();
-                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
                                 addMetadataField(f.getName(), value);
                             }
                         }
