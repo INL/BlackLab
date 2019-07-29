@@ -17,12 +17,24 @@
         <module>server</module>
     </modules>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <doclint>none</doclint>
+    </properties>
+
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
+
+    <organization>
+        <name>Instituut voor Nederlandse Taal (INT)</name>
+        <url>https://www.ivdnt.org/</url>
+    </organization>
 
     <scm>
         <url>https://github.com/INL/BlackLab</url>
@@ -30,13 +42,18 @@
         <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
     </scm>
 
+    <issueManagement>
+        <url>https://github.com/INL/BlackLab/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
     <developers>
         <developer>
             <id>jan-niestadt</id>
             <name>Jan Niestadt</name>
-            <email>jan.niestadt@inl.nl</email>
+            <email>jan.niestadt@ivdnt.org</email>
             <url>https://github.com/jan-niestadt</url>
-            <organization>INL</organization>
+            <organization>INT</organization>
             <organizationUrl>http://www.inl.nl</organizationUrl>
             <roles>
                 <role>developer</role>
@@ -47,10 +64,23 @@
         <developer>
             <id>JesseDeDoes</id>
             <name>Jesse de Does</name>
-            <email>jesse.dedoes@inl.nl</email>
+            <email>jesse.dedoes@ivdnt.org</email>
             <url>https://github.com/JesseDeDoes</url>
+            <organization>INT</organization>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Amsterdam</timezone>
+        </developer>
+        
+        <developer>
+            <id>KCMertens</id>
+            <name>Koen Mertens</name>
+            <email>koen.mertens@ivdnt.org</email>
+            <url>https://github.com/KCMertens</url>
             <organization>INL</organization>
-            <organizationUrl>http://www.inl.nl</organizationUrl>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>

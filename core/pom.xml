@@ -13,59 +13,6 @@
 
     <name>BlackLab</name>
     <description>BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene. It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast and feature-rich search interface on our historical and contemporary text corpora. </description>
-    <url>https://github.com/INL/BlackLab</url>
-
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-
-    <scm>
-        <url>https://github.com/INL/BlackLab</url>
-        <connection>scm:git:git://github.com/INL/BlackLab.git</connection>
-        <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
-    </scm>
-
-    <organization>
-        <name>Instituut voor Nederlandse Taal (INT)</name>
-        <url>http://www.inl.nl</url>
-    </organization>
-
-    <developers>
-        <developer>
-            <id>jan-niestadt</id>
-            <name>Jan Niestadt</name>
-            <email>jan.niestadt@inl.nl</email>
-            <url>https://github.com/jan-niestadt</url>
-            <organization>INL</organization>
-            <organizationUrl>http://www.inl.nl</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <timezone>Europe/Amsterdam</timezone>
-        </developer>
-
-        <developer>
-            <id>JesseDeDoes</id>
-            <name>Jesse de Does</name>
-            <email>jesse.dedoes@inl.nl</email>
-            <url>https://github.com/JesseDeDoes</url>
-            <organization>INL</organization>
-            <organizationUrl>http://www.inl.nl</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <timezone>Europe/Amsterdam</timezone>
-        </developer>
-    </developers>
-
-    <!-- Where to report issues -->
-    <issueManagement>
-        <url>https://github.com/INL/BlackLab/issues</url>
-        <system>GitHub Issues</system>
-    </issueManagement>
 
     <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
     <distributionManagement>
@@ -421,10 +368,6 @@
             </build>
         </profile>
     </profiles>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
 

@@ -13,47 +13,6 @@
 
     <name>BlackLab Server</name>
     <description>BlackLab Server is a REST webservice on top of corpus search engine BlackLab. It allows you to use BlackLab from any programming language.</description>
-    <url>https://github.com/INL/BlackLab-server</url>
-
-    <licenses>
-        <license>
-            <name>Apache 2</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
-        </license>
-    </licenses>
-
-    <scm>
-        <url>https://github.com/INL/BlackLab-server</url>
-        <connection>scm:git:git://github.com/INL/BlackLab-server.git</connection>
-        <developerConnection>scm:git:git@github.com:INL/BlackLab-server.git</developerConnection>
-    </scm>
-
-    <organization>
-        <name>INL</name>
-        <url>http://www.inl.nl</url>
-    </organization>
-
-    <developers>
-        <developer>
-            <id>jan-niestadt</id>
-            <name>Jan Niestadt</name>
-            <email>jan.niestadt@inl.nl</email>
-            <url>https://github.com/jan-niestadt</url>
-            <organization>INL</organization>
-            <organizationUrl>http://www.inl.nl</organizationUrl>
-            <roles>
-                <role>developer</role>
-            </roles>
-            <timezone>Europe/Amsterdam</timezone>
-        </developer>
-    </developers>
-
-    <issueManagement>
-        <url>https://github.com/INL/BlackLab-server/issues</url>
-        <system>GitHub Issues</system>
-    </issueManagement>
 
     <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
     <distributionManagement>
@@ -249,10 +208,6 @@
             </build>
         </profile>
     </profiles>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
 
