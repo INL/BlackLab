@@ -214,10 +214,11 @@ public class IndexManager {
         String userId = Index.getUserId(indexId);
         String indexName = Index.getIndexName(indexId);
 
-        if (!canCreateIndex(userId))
-            throw new BadRequest("CANNOT_CREATE_INDEX ",
-                    "Could not create index. You already have the maximum of "
-                            + IndexManager.MAX_USER_INDICES + " indices.");
+        // Lexion Change: We don't want to limit the maximum number of indices.
+//        if (!canCreateIndex(userId))
+//            throw new BadRequest("CANNOT_CREATE_INDEX ",
+//                    "Could not create index. You already have the maximum of "
+//                            + IndexManager.MAX_USER_INDICES + " indices.");
 
         if (userCollectionsDir == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
