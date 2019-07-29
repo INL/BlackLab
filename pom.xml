@@ -76,7 +76,7 @@
     </developers>
 
     <contributors>
-        <developer>
+        <contributor>
             <id>JesseDeDoes</id>
             <name>Jesse de Does</name>
             <email>jesse.dedoes@ivdnt.org</email>
@@ -87,7 +87,7 @@
                 <role>developer</role>
             </roles>
             <timezone>Europe/Amsterdam</timezone>
-        </developer>
+        </contributor>
         
         <contributor>
             <name>Eduard Drenth</name>
