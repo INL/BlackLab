@@ -758,7 +758,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 reader = null;
             }
             if (indexWriter != null) {
-                logger.debug("Committing and closing indexWriter");
                 indexWriter.commit();
                 indexWriter.close();
                 indexWriter = null;
