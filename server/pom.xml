@@ -57,27 +57,6 @@
                 <version>6.1.10</version>
             </plugin>
 
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.4</version>
-                <dependencies>
-
-                    <!-- SSH/SCP (copy to local server) -->
-                    <dependency>
-                        <groupId>org.apache.maven.wagon</groupId>
-                        <artifactId>wagon-ssh</artifactId>
-                        <version>2.9</version>
-                    </dependency>
-                    <dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
-                        <groupId>org.apache.maven.wagon</groupId>
-                        <artifactId>wagon-ssh-external</artifactId>
-                        <version>2.9</version>
-                    </dependency>
-
-                </dependencies>
-            </plugin>
-
             <!-- Creates a release version -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -343,12 +322,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.5</version>
+                <version>3.12.0</version>
                 <configuration>
                     <linkXref>true</linkXref>
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
-                    <targetJdk>1.7</targetJdk>
+                    <targetJdk>1.8</targetJdk>
                     <!-- <excludes> <exclude>**/queryParser/**/*</exclude> <exclude>**/util/json/**/*</exclude> 
                         </excludes> -->
                 </configuration>

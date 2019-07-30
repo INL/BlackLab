@@ -156,6 +156,38 @@
                 </executions>
             </plugin>
 
+            <!-- Generates project site -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.7.1</version>
+                <dependencies>
+
+                    <!-- SSH/SCP (copy to local server) -->
+                    <dependency>
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh</artifactId>
+                        <version>2.9</version>
+                    </dependency>
+                    <dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh-external</artifactId>
+                        <version>2.9</version>
+                    </dependency>
+
+                </dependencies>
+            </plugin>
+
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <notimestamp>true</notimestamp>
+                </configuration>
+            </plugin>
+
             <!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven Central) -->
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>

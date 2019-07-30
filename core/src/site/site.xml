@@ -23,9 +23,9 @@
 
 	<body>
 	
-		<head>
+		<head><![CDATA[
 			<link href='http://fonts.googleapis.com/css?family=Nunito:300' rel='stylesheet' type='text/css' />
-		</head>
+		]]></head>
 	
 		<breadcrumbs>
 			<item name="INT" href="http://www.ivdnt.org/"/>
