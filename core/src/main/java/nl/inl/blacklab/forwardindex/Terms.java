@@ -28,7 +28,7 @@ public abstract class Terms {
      * mapped file in Java, and Windows doesn't allow truncating a mapped file). The
      * lower value on Windows prevents too much wasted space.
      */
-    protected static final int DEFAULT_MAX_MAP_SIZE = File.separatorChar == '\\' ? 100000000 : Integer.MAX_VALUE - 100;
+    protected static final int DEFAULT_MAX_MAP_SIZE = File.separatorChar == '\\' ? 100_000_000 : Integer.MAX_VALUE - 100;
 
     /** Number of bytes per int */
     protected static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;

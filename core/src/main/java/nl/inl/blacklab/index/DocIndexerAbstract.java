@@ -31,7 +31,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      * Write content chunks per 10M (i.e. don't keep all content in memory at all
      * times)
      */
-    private static final long WRITE_CONTENT_CHUNK_SIZE = 10000000;
+    private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
 
     protected boolean skippingCurrentDocument = false;
 

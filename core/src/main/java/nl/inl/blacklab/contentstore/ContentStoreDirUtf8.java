@@ -194,7 +194,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     /**
      * How much to reserve at the end of mapped file for writing
      */
-    private int writeMapReserve = 1000000; // 1M
+    private int writeMapReserve = 1_000_000; // 1M
 
     /**
      * Set the size of the write reserve (the amount of space allocated at the end
@@ -212,7 +212,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
      * Preferred size of data files. Note that the data files consist only of whole
      * documents, so this size may be exceeded.
      */
-    private long dataFileSizeHint = 100000000; // 100M
+    private long dataFileSizeHint = 100_000_000; // 100M
 
     /**
      * Next content ID.

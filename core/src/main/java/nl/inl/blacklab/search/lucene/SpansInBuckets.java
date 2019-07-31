@@ -60,7 +60,7 @@ public interface SpansInBuckets {
     boolean REALLOCATE_IF_TOO_LARGE = false;
     
     /** When to reallocate lists/maps to avoid holding on to too much memory */
-    int COLLECTION_REALLOC_THRESHOLD = 30000;
+    int COLLECTION_REALLOC_THRESHOLD = 30_000;
     
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 

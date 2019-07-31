@@ -699,7 +699,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         // Make sure large wildcard/regex expansions succeed
         if (traceIndexOpening)
             logger.debug("  Setting maxClauseCount...");
-        BooleanQuery.setMaxClauseCount(100000);
+        BooleanQuery.setMaxClauseCount(100_000);
 
         // Open the forward indices
         if (!createNewIndex) {

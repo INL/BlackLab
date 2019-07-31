@@ -601,7 +601,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
     
             // For each configured subannotation...
-            Set<String> alreadySeen = new HashSet<String>(); // keep track of which annotation have multiple values so we can use the correct position increment 
+            Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment 
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
                 // Subannotation configs without a valuePath are just for
                 // adding information about subannotations captured in forEach's,

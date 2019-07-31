@@ -16,7 +16,7 @@ public final class SearchSettings {
     }
     
     /** How many hits to process by default */
-    public static final int DEFAULT_MAX_PROCESS = 10000000;
+    public static final int DEFAULT_MAX_PROCESS = 10_000_000;
     
     /** How many hits to count by default */
     public static final int DEFAULT_MAX_COUNT = Results.NO_LIMIT;

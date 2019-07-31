@@ -120,7 +120,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
         this.indexMetadata = indexMetadata;
-        annots = new TreeMap<String, AnnotationImpl>();
+        annots = new TreeMap<>();
         annotationsDisplayOrder = new ArrayList<>();
         annotationOrderComparator = new Comparator<AnnotationImpl>() {
             @Override
