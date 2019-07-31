@@ -148,7 +148,7 @@ public class ContextualQueryLanguageParser {
             GeneratedContextualQueryLanguageParser parser = new GeneratedContextualQueryLanguageParser(new StringReader(query));
             parser.wrapper = this;
             return parser.query();
-        } catch (ParseException | TokenMgrException e) {
+        } catch (ParseException | TokenMgrError e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
     }

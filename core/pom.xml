@@ -12,7 +12,12 @@
     <packaging>jar</packaging>
 
     <name>BlackLab</name>
-    <description>BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene. It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast and feature-rich search interface on our historical and contemporary text corpora. </description>
+    <description>
+        BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene.
+        It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated,
+        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast 
+        and feature-rich search interface on our historical and contemporary text corpora.
+    </description>
 
     <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
     <distributionManagement>
@@ -31,7 +36,7 @@
         <pluginManagement>
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse 
-                    m2e settings only. It has no influence on the Maven build itself. -->
+                    m2e settings only. It has no influence on the Maven build itself.
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -41,28 +46,9 @@
                             <pluginExecutions>
                                 <pluginExecution>
                                     <pluginExecutionFilter>
-                                        <groupId>
-                                            org.apache.maven.plugins
-                                        </groupId>
-                                        <artifactId>
-                                            maven-antrun-plugin
-                                        </artifactId>
-                                        <versionRange>
-                                            [1.3,)
-                                        </versionRange>
-                                        <goals>
-                                            <goal>run</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>com.helger.maven</groupId>
-                                        <artifactId>ph-javacc-maven-plugin</artifactId>
-                                        <versionRange>[4.1.3,)</versionRange>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>javacc-maven-plugin</artifactId>
+                                        <versionRange>[2.6,)</versionRange>
                                         <goals>
                                             <goal>javacc</goal>
                                         </goals>
@@ -74,7 +60,7 @@
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
                     </configuration>
-                </plugin>
+                </plugin> -->
 
             </plugins>
 
@@ -82,7 +68,8 @@
 
         <plugins>
 
-            <!-- Copies dependencies to target/lib, so we can run programs from blacklab.jar -->
+            <!-- Copies dependencies to target/lib, so we can run programs 
+                from blacklab.jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
@@ -125,15 +112,13 @@
             </plugin>
 
             <!-- JavaCC plugin for generating query parsers from .jj definition 
-                files -->
+                files
             <plugin>
-
-                <groupId>com.helger.maven</groupId>
-                <artifactId>ph-javacc-maven-plugin</artifactId>
-                <version>4.1.3</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>javacc-maven-plugin</artifactId>
+                <version>2.6</version>
                 <executions>
                     <execution>
-                        <id>javacc</id>
                         <goals>
                             <goal>javacc</goal>
                         </goals>
@@ -147,10 +132,10 @@
                     <dependency>
                         <groupId>net.java.dev.javacc</groupId>
                         <artifactId>javacc</artifactId>
-                        <version>7.0.4</version>
+                        <version>6.1.2</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
             <!-- Creates a release version -->
             <plugin>
@@ -231,13 +216,6 @@
             </plugin>
 
         </plugins>
-
-	<!-- This seems redundant, but if it's not here, Eclipse tends to get confused -->
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
 
     </build>
 
@@ -480,7 +458,7 @@
                     </reportSet>
                 </reportSets>
             </plugin>
-            
+
             <!-- Unit test reports -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

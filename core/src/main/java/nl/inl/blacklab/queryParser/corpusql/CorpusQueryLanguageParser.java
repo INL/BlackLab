@@ -36,7 +36,7 @@ public class CorpusQueryLanguageParser {
             GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
             parser.wrapper = this;
             return parser.query();
-        } catch (ParseException | TokenMgrException e) {
+        } catch (ParseException | TokenMgrError e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
     }
