@@ -473,49 +473,35 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                         apMetadata.resetXPath();
 
-                        if (f.isMultipleValues() || metadataField.isMultipleValues()) {
-                            // Multiple matches will be indexed at the same position.
-                            AutoPilot apEvalToString = acquireAutoPilot(".");
-                            while (apMetadata.evalXPath() != -1) {
-                                apEvalToString.resetXPath();
-                                String unprocessedValue = apEvalToString.evalXPathToString();
-                                for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
-                                    // Also execute process defined for named metadata field, if any
-                                    for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
-                                        addMetadataField(fieldName, processedValue);
-                                    }
+                        // Multiple matches will be indexed at the same position.
+                        AutoPilot apEvalToString = acquireAutoPilot(".");
+                        while (apMetadata.evalXPath() != -1) {
+                            apEvalToString.resetXPath();
+                            String unprocessedValue = apEvalToString.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                                // Also execute process defined for named metadata field, if any
+                                for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
+                                    addMetadataField(fieldName, processedValue);
                                 }
                             }
-                            releaseAutoPilot(apEvalToString);
-                        } else {
-                            String metadataValue = apMetadata.evalXPathToString();
-                            metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                            // Also execute process defined for named metadata field, if any
-                            metadataValue = processString(metadataValue, metadataField.getProcess(), metadataField.getMapValues());
-                            addMetadataField(fieldName, metadataValue);
                         }
+                        releaseAutoPilot(apEvalToString);
                     }
                     releaseAutoPilot(apMetaForEach);
                     releaseAutoPilot(apFieldName);
                     navpop();
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
-                    if (f.isMultipleValues()) {
-                        // Multiple matches will be indexed at the same position.
-                        AutoPilot apEvalToString = acquireAutoPilot(".");
-                        while (apMetadata.evalXPath() != -1) {
-                            apEvalToString.resetXPath();
-                            String unprocessedValue = apEvalToString.evalXPathToString();
-                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                                addMetadataField(f.getName(), value);
-                            }
+                    // Multiple matches will be indexed at the same position.
+                    AutoPilot apEvalToString = acquireAutoPilot(".");
+                    while (apMetadata.evalXPath() != -1) {
+                        apEvalToString.resetXPath();
+                        String unprocessedValue = apEvalToString.evalXPathToString();
+                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                            addMetadataField(f.getName(), value);
                         }
-                        releaseAutoPilot(apEvalToString);
-                    } else {
-                        String metadataValue = apMetadata.evalXPathToString();
-                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                        addMetadataField(f.getName(), metadataValue);
                     }
+                    releaseAutoPilot(apEvalToString);
                 }
                 releaseAutoPilot(apMetadata);
             }

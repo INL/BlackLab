@@ -25,9 +25,6 @@ public class ConfigMetadataField {
      */
     private String forEachPath;
     
-    /** Should this metadata field capture multiple values? */
-    private boolean isMultipleValues = false; 
-
     /** How to process annotation values (if at all) */
     private List<ConfigProcessStep> process = new ArrayList<>();
     
@@ -78,7 +75,6 @@ public class ConfigMetadataField {
 
     public ConfigMetadataField copy() {
         ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
-        cp.setMultipleValues(isMultipleValues);
         cp.setProcess(process);
         cp.setMapValues(mapValues);
         cp.setDisplayName(displayName);
@@ -113,10 +109,6 @@ public class ConfigMetadataField {
         this.valuePath = valuePath;
     }
     
-    public void setMultipleValues(boolean multipleValues) { 
-        this.isMultipleValues = multipleValues;
-    }
-    
     public String getName() {
         return name;
     }
@@ -125,10 +117,6 @@ public class ConfigMetadataField {
         return valuePath;
     }
     
-    public boolean isMultipleValues() { 
-        return this.isMultipleValues;
-    }
-
     public String getForEachPath() {
         return forEachPath;
     }

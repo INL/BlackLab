@@ -625,9 +625,6 @@ public class InputFormatReader extends YamlJsonReader {
                     readStringMap(e, values);
                     f.addDisplayValues(values);
                     break;
-                case "multipleValues":
-                    f.setMultipleValues(e.getValue().asBoolean());
-                    break;
                 default:
                     throw new InvalidInputFormatConfig(
                             "Unknown key " + e.getKey() + " in metadata field " + StringUtils.defaultString(f.getName(), "(unnamed)"));
