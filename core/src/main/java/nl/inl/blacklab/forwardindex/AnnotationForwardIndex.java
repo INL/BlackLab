@@ -61,7 +61,7 @@ public abstract class AnnotationForwardIndex {
     /**
      * The number of integer positions to reserve when mapping the file for writing.
      */
-    static final int WRITE_MAP_RESERVE = 250000; // 250K integers = 1M bytes
+    static final int WRITE_MAP_RESERVE = 250_000; // 250K integers = 1M bytes
 
     /** Different versions of insensitive collator */
     public enum CollatorVersion {

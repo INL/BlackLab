@@ -33,13 +33,13 @@ public class DownloadCache {
     private static boolean fileDownloadAllowed = false;
 
     /** Maximum size of (linked, e.g. metadata) files downloaded */
-    private static long maxDownloadedFileSize = 10000000;
+    private static long maxDownloadedFileSize = 10_000_000;
 
     /** Maximum age of downloaded file in sec */
     private static int maxDownloadAgeSec = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static int maxDownloadFolderSize = 100000000;
+    private static int maxDownloadFolderSize = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;
@@ -210,7 +210,7 @@ public class DownloadCache {
     }
 
     public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
-        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1000000L;
+        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1_000_000L;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }
@@ -232,7 +232,7 @@ public class DownloadCache {
     }
 
     public static void setSizeMegs(int maxDownloadFolderSizeMegs) {
-        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1000000;
+        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1_000_000;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }

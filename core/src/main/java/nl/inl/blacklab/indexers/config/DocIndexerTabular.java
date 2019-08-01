@@ -9,12 +9,15 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -274,7 +277,12 @@ public class DocIndexerTabular extends DocIndexerConfig {
                         if (annotation.isMultipleValues()) {
                             // Multiple values possible. Split on multipleValuesSeparator.
                             boolean first = true;
-                            for (String v : value.split(multipleValuesSeparator, -1)) {
+                            List<String> values = Arrays.asList(value.split(multipleValuesSeparator, -1));
+                            if (!annotation.isAllowDuplicateValues()) {
+                                // Discard any duplicate values from the list
+                                values = values.stream().distinct().collect(Collectors.toList());
+                            }
+                            for (String v : values) {
                                 annotation(annotation.getName(), v, first ? 1 : 0, null);
                                 first = false;
                             }

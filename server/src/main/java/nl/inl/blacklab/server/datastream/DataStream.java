@@ -263,6 +263,12 @@ public abstract class DataStream {
     public DataStream entry(String key, boolean value) {
         return startEntry(key).value(value).endEntry();
     }
+    
+    /* NOTE: the attrEntry methods that follow mirror the entry methods above.
+     *       Both sets of methods are intended only for entries in maps.
+     *       The attrEntry versions are specifically meant for the case where you're not sure
+     *       your keys are valid XML element names. They will use a different XML serialization using
+     *       an attribute for the key. */
 
     public DataStream attrEntry(String elementName, String attrName, String key, String value) {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();

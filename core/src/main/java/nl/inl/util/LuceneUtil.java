@@ -115,6 +115,7 @@ public final class LuceneUtil {
     public static Query parseLuceneQuery(String luceneQuery, Analyzer analyzer, String defaultField)
             throws ParseException {
         QueryParser qp = new QueryParser(defaultField, analyzer);
+        qp.setAllowLeadingWildcard(true);
         return qp.parse(luceneQuery);
     }
 

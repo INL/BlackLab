@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 

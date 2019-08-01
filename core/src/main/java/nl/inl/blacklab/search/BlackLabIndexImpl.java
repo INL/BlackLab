@@ -699,7 +699,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         // Make sure large wildcard/regex expansions succeed
         if (traceIndexOpening)
             logger.debug("  Setting maxClauseCount...");
-        BooleanQuery.setMaxClauseCount(100000);
+        BooleanQuery.setMaxClauseCount(100_000);
 
         // Open the forward indices
         if (!createNewIndex) {
@@ -880,7 +880,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             AnnotatedField field = e.getKey();
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
-                fi.get(annotation).deleteDocumentByLuceneDoc(d);
+                if (annotation.hasForwardIndex())
+                    fi.get(annotation).deleteDocumentByLuceneDoc(d);
             }
         }
     }
@@ -905,6 +906,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     @Override
     public void delete(Query q) {
+        logger.debug("Delete query: " + q);
         if (!indexMode)
             throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
         try {
@@ -913,18 +915,23 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 // Execute the query, iterate over the docs and delete from FI and CS.
                 IndexSearcher s = new IndexSearcher(freshReader);
                 Weight w = s.createNormalizedWeight(q, false);
+                logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
                 for (LeafReaderContext leafContext : freshReader.leaves()) {
                     Scorer scorer = w.scorer(leafContext);
-                    if (scorer == null)
-                        return; // no matching documents
+                    if (scorer == null) {
+                        logger.debug("  No hits in leafcontext");
+                        continue; // no matching documents
+                    }
 
                     // Iterate over matching docs
                     DocIdSetIterator it = scorer.iterator();
+                    logger.debug("  Iterate over matching docs in leaf");
                     while (true) {
                         int docId = it.nextDoc() + leafContext.docBase;
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
                         Document d = freshReader.document(docId);
+                        logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile") + " from FI and CS");
 
                         deleteFromForwardIndices(d);
 
@@ -937,6 +944,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             }
 
             // Finally, delete the documents from the Lucene index
+            logger.debug("  Delete docs from Lucene index");
             indexWriter.deleteDocuments(q);
 
         } catch (IOException e) {

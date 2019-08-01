@@ -40,8 +40,10 @@
         <exclude name="PreserveStackTrace" />
         <exclude name="SwitchStmtsShouldHaveDefault" />
         <exclude name="AccessorMethodGeneration" />
+        <exclude name="AvoidReassigningLoopVariables" />
 
         <!-- Might not need re-examination -->
+        <exclude name="ForLoopVariableCount" />
         <exclude name="SystemPrintln" />
         <exclude name="AvoidReassigningParameters" />
         <exclude name="UseVarargs" />
@@ -68,6 +70,8 @@
         <exclude name="PrematureDeclaration" />
 
         <!-- Might not need re-examination -->
+        <exclude name="FieldNamingConventions" />
+        <exclude name="LinguisticNaming" />
         <exclude name="OnlyOneReturn" />
         <exclude name="IdenticalCatchBranches" />
         <exclude name="EmptyMethodInAbstractClassShouldBeAbstract" />
@@ -102,6 +106,7 @@
     <rule ref="category/java/design.xml">
 
         <!-- Re-examine these in particular -->
+        <exclude name="AvoidUncheckedExceptionsInSignatures" />
         <exclude name="AvoidThrowingRawExceptionTypes" />
         <exclude name="ExcessiveClassLength" />
         <exclude name="ExcessiveMethodLength" />
@@ -138,6 +143,7 @@
     <rule ref="category/java/errorprone.xml">
 
         <!-- Re-examine these in particular -->
+        <exclude name="CloseResource" />
         <exclude name="AvoidDuplicateLiterals" />
         <exclude name="ConstructorCallsOverridableMethod" />
         <exclude name="DoNotCallSystemExit" />
@@ -149,6 +155,7 @@
         <exclude name="AvoidCatchingThrowable" />
 
         <!-- Might not need re-examination -->
+        <exclude name="MissingSerialVersionUID" />
         <exclude name="AvoidFieldNameMatchingTypeName" />
         <exclude name="NullAssignment" />
         <exclude name="AssignmentInOperand" />

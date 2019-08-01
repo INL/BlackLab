@@ -64,7 +64,7 @@ public final class LogUtil {
             appender.start();
             config.addAppender(appender);
             AppenderRef ref = AppenderRef.createAppenderRef("Console", null, null);
-            AppenderRef[] refs = new AppenderRef[] { ref };
+            AppenderRef[] refs = { ref };
             LoggerConfig loggerConfig = LoggerConfig.createLogger(false, level, "org.apache.logging.log4j",
                     "true", refs, null, config, null);
             loggerConfig.addAppender(appender, null, null);

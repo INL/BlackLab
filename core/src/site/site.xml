@@ -4,31 +4,31 @@
 	<version position="right" />
 	
 	<bannerLeft>
-        <name>INL</name>
-        <src>images/logo_2_ivd-nt_transparant.png</src>
-        <href>http://www.ivdnt.org/</href>
+            <name>Dutch Language Institute (INT)</name>
+            <src>images/logo_2_ivd-nt_transparant.png</src>
+            <href>http://www.ivdnt.org/</href>
 	</bannerLeft>
 
 	<bannerRight>
-        <name>BlackLab</name>
-        <src>images/logo-blacklab.png</src>
-        <href>/BlackLab/</href>
+            <name>BlackLab</name>
+            <src>images/logo-blacklab.png</src>
+            <href>/BlackLab/</href>
 	</bannerRight>
 
 	<skin>
 		<groupId>org.apache.maven.skins</groupId>
 		<artifactId>maven-fluido-skin</artifactId>
-		<version>1.4</version>
+		<version>1.7</version>
 	</skin>
 
 	<body>
 	
-		<head>
+		<head><![CDATA[
 			<link href='http://fonts.googleapis.com/css?family=Nunito:300' rel='stylesheet' type='text/css' />
-		</head>
+		]]></head>
 	
 		<breadcrumbs>
-			<item name="INL" href="http://www.inl.nl/"/>
+			<item name="INT" href="http://www.ivdnt.org/"/>
 			<item name="BlackLab" href="index.html"/>
 	    </breadcrumbs>
 	

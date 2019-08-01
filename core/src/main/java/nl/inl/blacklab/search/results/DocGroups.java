@@ -136,7 +136,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
-        List<DocGroup> truncatedGroups = new ArrayList<DocGroup>();
+        List<DocGroup> truncatedGroups = new ArrayList<>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
             DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());

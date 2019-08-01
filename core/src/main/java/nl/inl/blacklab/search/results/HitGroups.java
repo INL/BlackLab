@@ -247,7 +247,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
-        List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
+        List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);

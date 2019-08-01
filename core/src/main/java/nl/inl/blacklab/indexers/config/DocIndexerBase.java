@@ -568,7 +568,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             reportCharsProcessed();
             reportTokensProcessed();
         }
-        if (punctuation.length() > 10000)
+        if (punctuation.length() > 10_000)
             punctuation = new StringBuilder(); // let's not hold on to this much memory
         else
             punctuation.setLength(0);

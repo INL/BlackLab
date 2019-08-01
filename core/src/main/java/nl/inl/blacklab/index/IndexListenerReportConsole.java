@@ -55,10 +55,10 @@ public class IndexListenerReportConsole extends IndexListener {
             long totalCharsDone = getCharsProcessed();
             long charsDoneSinceLastReport = totalCharsDone - prevCharsDoneReported;
 
-            double lastMbDone = charsDoneSinceLastReport / 1000000.0;
+            double lastMbDone = charsDoneSinceLastReport / 1_000_000.0;
             double lastSpeed = lastMbDone / secondsSinceLastReport;
 
-            double mbDone = totalCharsDone / 1000000.0;
+            double mbDone = totalCharsDone / 1_000_000.0;
             double overallSpeed = mbDone / elapsed;
 
             if (curSpeed < 0)

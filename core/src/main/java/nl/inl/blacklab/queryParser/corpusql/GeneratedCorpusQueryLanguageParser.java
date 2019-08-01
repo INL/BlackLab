@@ -49,7 +49,7 @@ public class GeneratedCorpusQueryLanguageParser implements GeneratedCorpusQueryL
   }
 
   final public TextPattern constrainedQuery() throws ParseException {TextPattern a = null;
- MatchFilter b = null;
+        MatchFilter b = null;
     a = complexQuery();
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 14:{
@@ -83,12 +83,12 @@ if (b == null)
       ;
     }
 if (b == null)
-   {if ("" != null) return a;}
+                        {if ("" != null) return a;}
         if (b.toString().equals("->"))
             {if ("" != null) return new MatchFilterImplication(a, c);}
-  if (b.toString().equals("&"))
-   {if ("" != null) return new MatchFilterAnd(a, c);}
-  {if ("" != null) return new MatchFilterOr(a, c);}
+                if (b.toString().equals("&"))
+                        {if ("" != null) return new MatchFilterAnd(a, c);}
+                {if ("" != null) return new MatchFilterOr(a, c);}
     throw new Error("Missing return statement in function");
   }
 
@@ -107,11 +107,11 @@ if (b == null)
       ;
     }
 if (b == null)
-   {if ("" != null) return v;}
+                        {if ("" != null) return v;}
         if (b.toString().equals("="))
             {if ("" != null) return new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE);}
-  if (b.toString().equals("!="))
-   {if ("" != null) return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));}
+                if (b.toString().equals("!="))
+                        {if ("" != null) return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));}
     throw new Error("Missing return statement in function");
   }
 
@@ -135,9 +135,9 @@ if (b == null)
   }
 
   final public MatchFilter constraintValue() throws ParseException {MatchFilter v = null;
- String q = null;
- Token s = null;
- String l = null;
+        String q = null;
+        Token s = null;
+        String l = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:{
@@ -244,19 +244,19 @@ if (op == null)
       ;
     }
 if (b == null)
-   {if ("" != null) return query;}
+                        {if ("" != null) return query;}
         if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator only supported within global constraints");}
-  if (b.toString().equals("&"))
-   {if ("" != null) return new TextPatternAnd(query, rest);}
-  {if ("" != null) return new TextPatternOr(query, rest);}
+                if (b.toString().equals("&"))
+                        {if ("" != null) return new TextPatternAnd(query, rest);}
+                {if ("" != null) return new TextPatternOr(query, rest);}
     throw new Error("Missing return statement in function");
   }
 
 /* a sequence of token constraints */
   final public TextPattern sequence() throws ParseException {TextPattern first = null;
- TextPattern result = null;
- TextPattern[] tag = null;
+        TextPattern result = null;
+        TextPattern[] tag = null;
     Token t2 = null;
     first = sequencePart();
     if (jj_2_1(2)) {
@@ -265,9 +265,9 @@ if (b == null)
       ;
     }
 if (result == null)
-   result = first;
+                        result = first;
 
-  {if ("" != null) return result;}
+                {if ("" != null) return result;}
     throw new Error("Missing return statement in function");
   }
 
@@ -357,17 +357,17 @@ attr.put(name.toString(), value);
 
 /* continuation of a sequence (after the first part) */
   final public TextPattern sequenceRest(TextPattern first) throws ParseException {Token op = null;
- TextPattern rest = null;
+        TextPattern rest = null;
     rest = sequence();
 if (rest == null)
-   {if ("" != null) return first;}
-  {if ("" != null) return new TextPatternSequence(first, rest);}
+                        {if ("" != null) return first;}
+                {if ("" != null) return new TextPatternSequence(first, rest);}
     throw new Error("Missing return statement in function");
   }
 
 /* a repetition specifier */
   final public Integer[] repetitionAmount() throws ParseException {Token t = null, t2 = null;
- Integer[] minMax = new Integer[2];
+        Integer[] minMax = new Integer[2];
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 24:{
       jj_consume_token(24);
@@ -408,11 +408,11 @@ minMax[0] = minMax[1] = wrapper.num(t); {if ("" != null) return minMax;}
           }
           jj_consume_token(28);
 minMax[0] = wrapper.num(t);
-  if (t2 == null)
-   minMax[1] = BLSpanQuery.MAX_UNLIMITED;
-  else
-   minMax[1] = wrapper.num(t2);
-  {if ("" != null) return minMax;}
+                if (t2 == null)
+                        minMax[1] = BLSpanQuery.MAX_UNLIMITED;
+                else
+                        minMax[1] = wrapper.num(t2);
+                {if ("" != null) return minMax;}
           break;
           }
         default:
@@ -451,8 +451,8 @@ minMax[0] = wrapper.num(t);
 
 /* sequence part: one part in a sequence, possibly with a repetition operator */
   final public TextPattern sequencePart() throws ParseException {TextPattern m = null;
- Integer[] rep = null;
- String label = null;
+        Integer[] rep = null;
+        String label = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case NAME:
     case NUMBER:{
@@ -492,18 +492,18 @@ minMax[0] = wrapper.num(t);
       ;
     }
 if (rep != null)
-  {
+                {
             if (m instanceof TextPatternAnyToken)
             {
                 TextPatternAnyToken any = (TextPatternAnyToken)m;
                 m = any.repeat(rep[0], rep[1]);
             } else
                 m = new TextPatternRepetition(m, rep[0], rep[1]);
-  }
-  if (label != null) {
-      m = new TextPatternCaptureGroup(m, label);
-  }
-  {if ("" != null) return m;}
+                }
+                if (label != null) {
+                    m = new TextPatternCaptureGroup(m, label);
+                }
+                {if ("" != null) return m;}
     throw new Error("Missing return statement in function");
   }
 
@@ -528,7 +528,7 @@ if (rep != null)
 
 /* position: a simple attribute value or complex attribute expression between square brackets */
   final public TextPattern position() throws ParseException {TextPattern m = null;
- String f = null;
+        String f = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:{
@@ -590,7 +590,7 @@ if (m == null)
 /* expression inside square brackets: an attribute clause, or multiple 
    attribute clauses combined with boolean operators */
   final public TextPattern positionLong() throws ParseException {TextPattern a = null, c = null;
- Token b = null;
+        Token b = null;
     a = positionLongPart();
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 30:
@@ -605,12 +605,12 @@ if (m == null)
       ;
     }
 if (b == null)
-   {if ("" != null) return a;}
+                        {if ("" != null) return a;}
         if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator only supported within global constraints");}
-  if (b.toString().equals("&"))
-   {if ("" != null) return new TextPatternAnd(a, c);}
-  {if ("" != null) return new TextPatternOr(a, c);}
+                if (b.toString().equals("&"))
+                        {if ("" != null) return new TextPatternAnd(a, c);}
+                {if ("" != null) return new TextPatternOr(a, c);}
     throw new Error("Missing return statement in function");
   }
 
@@ -645,8 +645,8 @@ if (b == null)
 
 /* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
   final public TextPattern attValuePair() throws ParseException {TextPattern v = null;
- String annot;
- String f = null;
+        String annot;
+        String f = null;
     if (jj_2_5(2)) {
       annot = propName();
       jj_consume_token(15);
@@ -717,24 +717,24 @@ if (b == null)
       ;
     }
 String propName = t.toString();
-  if (subAnnot == null)
-   {if ("" != null) return propName;}
-  {if ("" != null) return propName + "/" + subAnnot.toString();}
+                if (subAnnot == null)
+                        {if ("" != null) return propName;}
+                {if ("" != null) return propName + "/" + subAnnot.toString();}
     throw new Error("Missing return statement in function");
   }
 
 /* value expression: a value or multiple values combined with boolean operators */
   final public TextPattern value() throws ParseException {TextPattern a = null, c = null;
- Token b = null;
+        Token b = null;
     if (jj_2_6(3)) {
       a = valuePart();
       b = booleanOperator();
       c = value();
 if (b.toString().equals("->"))
             {if (true) throw new UnsupportedOperationException("Implication operator only supported within global constraints");}
-  if (b.toString().equals("&"))
-   {if ("" != null) return new TextPatternAnd(a, c);}
-  {if ("" != null) return new TextPatternOr(a, c);}
+                if (b.toString().equals("&"))
+                        {if ("" != null) return new TextPatternAnd(a, c);}
+                {if ("" != null) return new TextPatternOr(a, c);}
     } else {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case QUOTED_STRING:
@@ -755,7 +755,7 @@ if (b.toString().equals("->"))
 
 /* value: a quoted string, a value expression between parens, or a negated value */
   final public TextPattern valuePart() throws ParseException {TextPattern m = null;
- String t = null;
+        String t = null;
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case QUOTED_STRING:
     case SINGLE_QUOTED_STRING:{
@@ -826,65 +826,16 @@ if (b.toString().equals("->"))
     finally { jj_save(5, xla); }
   }
 
-  private boolean jj_3R_15()
+  private boolean jj_3R_23()
  {
-    if (jj_3R_6()) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_21()) jj_scanpos = xsp;
-    return false;
-  }
-
-  private boolean jj_3R_14()
- {
-    if (jj_3R_5()) return true;
-    if (jj_scan_token(16)) return true;
-    if (jj_3R_6()) return true;
+    if (jj_3R_28()) return true;
+    if (jj_scan_token(33)) return true;
     return false;
   }
 
   private boolean jj_3_1()
  {
     if (jj_3R_2()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_4()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_5()) {
-    jj_scanpos = xsp;
-    if (jj_3R_14()) {
-    jj_scanpos = xsp;
-    if (jj_3R_15()) return true;
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3_5()
- {
-    if (jj_3R_5()) return true;
-    if (jj_scan_token(15)) return true;
-    if (jj_3R_6()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_29()
- {
-    if (jj_scan_token(21)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_scan_token(22)) jj_scanpos = xsp;
-    if (jj_scan_token(NAME)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_23()
- {
-    if (jj_3R_28()) return true;
-    if (jj_scan_token(33)) return true;
     return false;
   }
 
@@ -909,6 +860,16 @@ if (b.toString().equals("->"))
   private boolean jj_3R_41()
  {
     if (jj_scan_token(19)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_29()
+ {
+    if (jj_scan_token(21)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_scan_token(22)) jj_scanpos = xsp;
+    if (jj_scan_token(NAME)) return true;
     return false;
   }
 
@@ -1037,12 +998,6 @@ if (b.toString().equals("->"))
     return false;
   }
 
-  private boolean jj_3R_34()
- {
-    if (jj_3R_9()) return true;
-    return false;
-  }
-
   private boolean jj_3R_26()
  {
     if (jj_scan_token(17)) return true;
@@ -1078,6 +1033,12 @@ if (b.toString().equals("->"))
   private boolean jj_3R_17()
  {
     if (jj_3R_22()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_34()
+ {
+    if (jj_3R_9()) return true;
     return false;
   }
 
@@ -1173,23 +1134,6 @@ if (b.toString().equals("->"))
     return false;
   }
 
-  private boolean jj_3R_31()
- {
-    if (jj_3R_34()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_22()
- {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_scan_token(12)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(13)) return true;
-    }
-    return false;
-  }
-
   private boolean jj_3R_21()
  {
     if (jj_3R_27()) return true;
@@ -1207,12 +1151,68 @@ if (b.toString().equals("->"))
     return false;
   }
 
+  private boolean jj_3R_31()
+ {
+    if (jj_3R_34()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_22()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_scan_token(12)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(13)) return true;
+    }
+    return false;
+  }
+
   private boolean jj_3R_5()
  {
     if (jj_scan_token(NAME)) return true;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_16()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3R_15()
+ {
+    if (jj_3R_6()) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_21()) jj_scanpos = xsp;
+    return false;
+  }
+
+  private boolean jj_3R_14()
+ {
+    if (jj_3R_5()) return true;
+    if (jj_scan_token(16)) return true;
+    if (jj_3R_6()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_4()
+ {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3_5()) {
+    jj_scanpos = xsp;
+    if (jj_3R_14()) {
+    jj_scanpos = xsp;
+    if (jj_3R_15()) return true;
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3_5()
+ {
+    if (jj_3R_5()) return true;
+    if (jj_scan_token(15)) return true;
+    if (jj_3R_6()) return true;
     return false;
   }
 

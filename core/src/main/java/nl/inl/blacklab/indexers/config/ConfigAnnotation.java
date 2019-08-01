@@ -73,6 +73,9 @@ public class ConfigAnnotation {
 
     /** Can this annotation have multiple values at one token position? [false] */
     private boolean multipleValues = false;
+    
+    /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
+    private boolean allowDuplicateValues = true;
 
     /**
      * Is this an internal annotation?
@@ -120,6 +123,7 @@ public class ConfigAnnotation {
         }
         result.setForwardIndex(forwardIndex);
         result.setMultipleValues(multipleValues);
+        result.setAllowDuplicateValues(allowDuplicateValues);
         return result;
     }
 
@@ -246,6 +250,14 @@ public class ConfigAnnotation {
 
     public void setMultipleValues(boolean multipleValues) {
         this.multipleValues = multipleValues;
+    }
+
+    public boolean isAllowDuplicateValues() {
+        return allowDuplicateValues;
+    }
+
+    public void setAllowDuplicateValues(boolean allowDuplicateValues) {
+        this.allowDuplicateValues = allowDuplicateValues;
     }
 
     public void setInternal(boolean internal) {

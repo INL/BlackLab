@@ -207,7 +207,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             // 5 or more characters given.
             // We have no idea how many hits we're likely to get from this.
             // Let's assume not too many, so we will likely use regular reverse matching.
-            return n > 1000000 ? n / 1000000 : 1;
+            return n > 1_000_000 ? n / 1_000_000 : 1;
         }
     }
 
