@@ -669,6 +669,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
             navpush();
             AutoPilot apValuePath = acquireAutoPilot(valuePath);
             if (annotation.isMultipleValues()) {
+                // If we don't want duplicates, keep track of the values we've indexed
+                Set<String> valuesAlreadyIndexed = null;
+                if (!annotation.isAllowDuplicateValues())
+                    valuesAlreadyIndexed = new HashSet<>();
+                
                 // Multiple matches will be indexed at the same position.
                 AutoPilot apEvalToString = acquireAutoPilot(".");
                 boolean firstValue = true;
@@ -676,9 +681,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     apEvalToString.resetXPath();
                     String annotValue = apEvalToString.evalXPathToString();
                     annotValue = processString(annotValue, annotation.getProcess(), null);
-                    int increment = firstValue ? 1 : 0;
-                    annotation(annotation.getName(), annotValue, increment, indexAtPositions);
-                    firstValue = false;
+                    if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(annotValue)) {
+                        // We don't care about duplicates or we do and this is not a duplicate.
+                        // Index the value.
+                        int increment = firstValue ? 1 : 0;
+                        annotation(annotation.getName(), annotValue, increment, indexAtPositions);
+                        firstValue = false;
+                        if (valuesAlreadyIndexed != null) {
+                            // Keep track of values seen so we can discard duplicates
+                            valuesAlreadyIndexed.add(annotValue);
+                        }
+                    }
                 }
                 releaseAutoPilot(apEvalToString);
     
