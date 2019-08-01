@@ -60,8 +60,6 @@ public class RequestHandlerDocs extends RequestHandler {
             viewGroup = "";
         int response = 0;
 
-        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
-
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
@@ -71,16 +69,16 @@ public class RequestHandlerDocs extends RequestHandler {
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
 
             // View a single group in a grouped docs resultset
-            response = doViewGroup(ds, viewGroup, listMultipleMetadataValues);
+            response = doViewGroup(ds, viewGroup);
 
         } else {
             // Regular set of docs (no grouping first)
-            response = doRegularDocs(ds, listMultipleMetadataValues);
+            response = doRegularDocs(ds);
         }
         return response;
     }
 
-    private int doViewGroup(DataStream ds, String viewGroup, boolean listMultipleMetadataValues) throws BlsException {
+    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
         BlsCacheEntry<DocGroups> docGroupFuture;
@@ -126,10 +124,10 @@ public class RequestHandlerDocs extends RequestHandler {
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = 0; // TODO searchGrouped.userWaitTime();
-        return doResponse(ds, true, listMultipleMetadataValues, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
+        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
     }
 
-    private int doRegularDocs(DataStream ds, boolean listMultipleMetadataValues) throws BlsException {
+    private int doRegularDocs(DataStream ds) throws BlsException {
         BlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
         search = searchWindow;
 
@@ -151,10 +149,10 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = totalDocResults;
         totalTime = total.threwException() ? -1 : total.timeUserWaited();
 
-        return doResponse(ds, false, listMultipleMetadataValues, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
+        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
 }
 
-    private int doResponse(DataStream ds, boolean isViewGroup, boolean listMultipleMetadataValues, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException {
+    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
@@ -209,7 +207,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, blIndex, document, listMultipleMetadataValues, metadataFieldsToList);
+            dataStreamDocumentInfo(ds, blIndex, document, metadataFieldsToList);
             ds.endEntry();
 
             // Snippets

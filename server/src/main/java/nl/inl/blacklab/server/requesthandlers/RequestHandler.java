@@ -512,34 +512,24 @@ public abstract class RequestHandler {
      * @param ds where to stream information
      * @param index our index
      * @param document Lucene document
-     * @param multipleValues write out multiple metadata values or only the first one?
      * @param metadataFieldsToList fields to include in the document info
      */
-    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, boolean multipleValues, Set<MetadataField> metadataFieldsToList) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
         for (MetadataField f: metadataFieldsToList) {
             if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
                 continue;
             }
-            if (multipleValues) {
-                String[] values = document.getValues(f.name());
-                if (values.length == 0) {
-                    continue;
-                }
+            String[] values = document.getValues(f.name());
+            if (values.length == 0) {
+                continue;
+            }
 
-                ds.startEntry(f.name()).startList();
-                for (String v : values) {
-                    ds.item("value", v);
-                }
-                ds.endList().endEntry();
-             } else {
-                 String value = document.get(f.name());
-                 if (value == null) {
-                     continue;
-                 }
-
-                 ds.entry(f.name(), value);
-             }
+            ds.startEntry(f.name()).startList();
+            for (String v : values) {
+                ds.item("value", v);
+            }
+            ds.endList().endEntry();
         }
         ds.startEntry("displayNames").startMap();
         IndexMetadata indexMetadata = index.metadata();

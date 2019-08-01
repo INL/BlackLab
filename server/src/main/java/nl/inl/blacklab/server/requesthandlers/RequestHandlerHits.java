@@ -66,9 +66,6 @@ public class RequestHandlerHits extends RequestHandler {
         Hits window = null;
         BlsCacheEntry<?> job = null;
 
-        boolean listMultipleMetadataValues = this.request.getParameter("multiplevalues") != null
-                && Boolean.parseBoolean(this.request.getParameter("multiplevalues"));
-
         // Do we want to view a single group after grouping?
         String groupBy = searchParam.getString("group");
         if (groupBy == null)
@@ -299,7 +296,7 @@ public class RequestHandlerHits extends RequestHandler {
                     doc = index.doc(hit.doc()).luceneDoc();
                     lastPid = pid;
                 }
-                dataStreamDocumentInfo(ds, index, doc, listMultipleMetadataValues, metadataFieldsTolist);
+                dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
                 ds.endAttrEntry();
             }
         }
