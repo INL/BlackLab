@@ -73,6 +73,7 @@ public class SpansReader {
         }
 
         boolean alive = false;
+        spansFullyRead = false;
         do {
             int doc;
             try {
@@ -161,6 +162,7 @@ public class SpansReader {
                     // Advance to next hit
                     int start = spans.nextStartPosition();
                     if (start == Spans.NO_MORE_POSITIONS) {
+                        
                         boolean alive = false;
                         do {
                             int doc = spans.nextDoc();
