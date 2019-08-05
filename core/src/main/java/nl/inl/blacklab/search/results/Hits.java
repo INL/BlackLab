@@ -33,8 +33,13 @@ public abstract class Hits extends Results<Hit> {
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
     public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        //return new HitsFromQuery(queryInfo, query, searchSettings);
-        return new HitsFromQueryParallel(queryInfo, query, searchSettings);
+        
+        if (queryInfo.index().blackLab().maxThreadsPerSearch() <= 1) {
+            // We don't want to use multi-threaded search. Stick with the single-threaded version.
+            return new HitsFromQuery(queryInfo, query, searchSettings);
+        } else {
+            return new HitsFromQueryParallel(queryInfo, query, searchSettings);
+        }
     }
 
     /**
