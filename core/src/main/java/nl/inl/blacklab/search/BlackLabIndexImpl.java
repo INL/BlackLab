@@ -932,7 +932,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                         int docId = it.nextDoc();
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
-                        if (!liveDocs.get(docId)) {
+                        if (liveDocs != null && !liveDocs.get(docId)) {
                             // already deleted.
                             continue;
                         }

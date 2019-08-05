@@ -156,7 +156,7 @@ public class HitsFromQueryParallel extends Hits {
                     loggedSpans = true;
                 }
                 if (spans != null)
-                    spansReaders.add(new SpansReader(spans, context.docBase, hitQueryContext));
+                    spansReaders.add(new SpansReader(spans, context, hitQueryContext));
             }
             currentSpansReader = null;
             itSpansReader = spansReaders.iterator();

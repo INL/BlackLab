@@ -17,6 +17,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -215,6 +216,7 @@ public class HitsFromQuery extends Hits {
                             }
                             // Get the atomic reader context and get the next Spans from it.
                             LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+                            Bits liveDocs = context.reader().getLiveDocs();
                             currentDocBase = context.docBase;
                             currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
                             if (!loggedSpans) {
@@ -234,10 +236,15 @@ public class HitsFromQuery extends Hits {
                                 if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
                                     capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
-    
-                                int doc = currentSourceSpans.nextDoc();
-                                if (doc == DocIdSetIterator.NO_MORE_DOCS)
-                                    currentSourceSpans = null; // no matching docs in this segment, try next
+                                
+                                int doc;
+                                boolean alive = false;
+                                do {
+                                    doc = currentSourceSpans.nextDoc();
+                                    if (doc == DocIdSetIterator.NO_MORE_DOCS)
+                                        currentSourceSpans = null; // no matching docs in this segment, try next
+                                    alive = liveDocs == null ? true : liveDocs.get(doc);
+                                } while(currentSourceSpans != null && !alive);
                             }
                         }
     
