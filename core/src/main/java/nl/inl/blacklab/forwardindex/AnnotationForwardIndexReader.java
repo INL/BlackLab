@@ -212,7 +212,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
         if (!initialized)
             initialize();
         
@@ -289,7 +289,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     @Override
-    public void deleteDocumentByFiid(int fiid) {
+    public void deleteDocument(int fiid) {
         throw new UnsupportedOperationException("Not supported in search mode");
     }
     
@@ -334,7 +334,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
      * @return length of the document
      */
     @Override
-    public int docLengthByFiid(int fiid) {
+    public int docLength(int fiid) {
         if (!initialized)
             initialize();
         return length[fiid];

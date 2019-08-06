@@ -83,13 +83,13 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     @Override
-    public FIDoc docByFiid(int fiid) {
+    public FIDoc doc(int fiid) {
         return new FIDoc() {
             @Override
             public void delete() {
                 synchronized (fis) {
                     for (AnnotationForwardIndex afi: fis.values()) {
-                        afi.deleteDocumentByFiid(fiid);
+                        afi.deleteDocument(fiid);
                     }
                 }
             }
@@ -98,7 +98,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             public List<int[]> retrievePartsInt(Annotation annotation, int[] start, int[] end) {
                 synchronized (fis) {
                     AnnotationForwardIndex afi = fis.get(annotation);
-                    return afi.retrievePartsIntByFiid(fiid, start, end);
+                    return afi.retrievePartsInt(fiid, start, end);
                 }
             }
 
@@ -106,7 +106,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             public int docLength() {
                 synchronized (fis) {
                     AnnotationForwardIndex afi = anyAnnotationForwardIndex();
-                    return afi.docLengthByFiid(fiid);
+                    return afi.docLength(fiid);
                 }
             }
         };

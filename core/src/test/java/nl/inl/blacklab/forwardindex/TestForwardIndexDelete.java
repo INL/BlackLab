@@ -59,7 +59,7 @@ public class TestForwardIndexDelete {
         }
         // Delete docs
         for (Integer fiid : toDelete) {
-            fi.deleteDocumentByFiid(fiid);
+            fi.deleteDocument(fiid);
         }
     }
 
@@ -75,7 +75,7 @@ public class TestForwardIndexDelete {
         // Test retrieve
         int[] start = { 0 };
         int[] end = { length };
-        int[] test = fi.retrievePartsIntByFiid(fiid, start, end).get(0);
+        int[] test = fi.retrievePartsInt(fiid, start, end).get(0);
         for (int i = 0; i < length; i++) {
             Assert.assertEquals(i, test[i]);
         }
@@ -118,7 +118,7 @@ public class TestForwardIndexDelete {
     /** Deleting a document causing a merge. */
     @Test
     public void testMerge() {
-        fi.deleteDocumentByFiid(3); // delete doc len 16, merge with len 14 and 18 (total 48)
+        fi.deleteDocument(3); // delete doc len 16, merge with len 14 and 18 (total 48)
         // Check that adding stuff doesn't create new indices but reuses old ones
         Assert.assertTrue(addDocumentOfLength(46) < 5); // re-uses freed entry
         Assert.assertTrue(addDocumentOfLength(1) < 5); // re-uses freed entry
@@ -129,7 +129,7 @@ public class TestForwardIndexDelete {
     /** Deleting a document at the end, causing a merge and a truncate. */
     @Test
     public void testDeleteAtEnd() {
-        fi.deleteDocumentByFiid(5); // delete doc len 20 at end, merge with len 18 (total 38)
+        fi.deleteDocument(5); // delete doc len 20 at end, merge with len 18 (total 38)
         Assert.assertTrue(addDocumentOfLength(37) <= 5); // re-uses freed entry
         Assert.assertTrue(addDocumentOfLength(1) <= 5); // uses gap len 10, re-uses freed entry
         Assert.assertEquals(0, addDocumentOfLength(9)); // exact fit

@@ -171,7 +171,7 @@ public class Contexts implements Iterable<int[]> {
             if (forwardIndex != null) {
                 // We have a forward index for this field. Use it.
                 int fiid = fiidLookup.get(doc);
-                words = forwardIndex.retrievePartsIntByFiid(fiid, startsOfSnippets, endsOfSnippets);
+                words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
             }

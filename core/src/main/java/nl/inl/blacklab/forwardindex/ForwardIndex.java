@@ -38,7 +38,7 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      * @param fiid forward index id
      * @return forward index document
      */
-    FIDoc docByFiid(int fiid);
+    FIDoc doc(int fiid);
     
     /**
      * Close the forward index. Writes the table of contents to disk if modified.

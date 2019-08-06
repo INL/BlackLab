@@ -236,10 +236,10 @@ public abstract class AnnotationForwardIndex {
      *
      * @param fiid id of the document to delete
      */
-    public abstract void deleteDocumentByFiid(int fiid);
+    public abstract void deleteDocument(int fiid);
 
     public void deleteDocumentByLuceneDoc(Document d) {
-        deleteDocumentByFiid(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
+        deleteDocument(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
     }
     
     /**
@@ -266,7 +266,7 @@ public abstract class AnnotationForwardIndex {
      *            (in words) (-1 for end of document)
      * @return the parts
      */
-    public abstract List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end);
+    public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
 
     /**
      * Get the Terms object in order to translate ids to token strings
@@ -310,7 +310,7 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public abstract int docLengthByFiid(int fiid);
+    public abstract int docLength(int fiid);
 
     protected void setLargeTermsFileSupport(boolean b) {
         this.useBlockBasedTermsFile = b;
@@ -325,14 +325,14 @@ public abstract class AnnotationForwardIndex {
         if (!initialized)
             initialize();
         for (Integer fiid: idSet()) {
-            int[] tokenIds = retrievePartsIntByFiid(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
+            int[] tokenIds = retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
             task.perform(fiid, tokenIds);
         }
     }
 
     public int getToken(int fiid, int pos) {
         // Slow/naive implementation, subclasses should override
-        return retrievePartsIntByFiid(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
+        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
     }
 
     /**

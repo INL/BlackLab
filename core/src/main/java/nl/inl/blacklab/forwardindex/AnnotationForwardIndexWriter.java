@@ -414,7 +414,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     @Override
-    public synchronized List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
+    public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
         try {
             TocEntry e = toc.get(fiid);
             if (e == null || e.deleted)
@@ -476,7 +476,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     @Override
-    public void deleteDocumentByFiid(int fiid) {
+    public void deleteDocument(int fiid) {
         TocEntry tocEntry = toc.get(fiid);
         tocEntry.deleted = true;
         deletedTocEntries.add(tocEntry); // NOTE: mergeAdjacentDeletedEntries takes care of re-sorting
@@ -565,7 +565,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
      * @return length of the document
      */
     @Override
-    public int docLengthByFiid(int fiid) {
+    public int docLength(int fiid) {
         if (!initialized)
             initialize();
         return toc.get(fiid).length;
