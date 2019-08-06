@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
@@ -37,11 +37,15 @@ public class DocIntFieldGetter implements Closeable {
 
         // Cache the lengths for this field to speed things up
         try {
-            // NOTE: UninvertingReader is an IndexReader that can get docValues even when they weren't explicitly indexed
-            Map<String, UninvertingReader.Type> fields = new HashMap<>();
-            fields.put(intFieldName, UninvertingReader.Type.INTEGER);
-            uninv = new UninvertingReader(reader, fields);
-            docValues = uninv.getNumericDocValues(intFieldName);
+            docValues = reader.getNumericDocValues(intFieldName);
+            if (docValues == null) {
+                // Use UninvertingReader to simulate DocValues (slower)
+                Map<String, UninvertingReader.Type> fields = new TreeMap<>();
+                fields.put(intFieldName, UninvertingReader.Type.INTEGER);
+                @SuppressWarnings("resource")
+                UninvertingReader uninv = new UninvertingReader(reader, fields);
+                docValues = uninv.getNumericDocValues(intFieldName);
+            }
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

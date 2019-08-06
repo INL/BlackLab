@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
@@ -63,11 +63,16 @@ class DocFieldLengthGetter implements Closeable {
         if (fieldName.equals(Indexer.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up
             try {
-                // NOTE: UninvertingReader is an IndexReader that can get docValues even when they weren't explicitly indexed
-                Map<String, UninvertingReader.Type> fields = new HashMap<>();
-                fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
-                uninv = new UninvertingReader(reader, fields);
-                cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName); //FieldCache.DEFAULT.getInts(reader, lengthTokensFieldName, true);
+                
+                cachedFieldLengths = reader.getNumericDocValues(lengthTokensFieldName);
+                if (cachedFieldLengths == null) {
+                    // Use UninvertingReader to simulate DocValues (slower)
+                    Map<String, UninvertingReader.Type> fields = new TreeMap<>();
+                    fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
+                    @SuppressWarnings("resource")
+                    UninvertingReader uninv = new UninvertingReader(reader, fields);
+                    cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName);
+                }
 
                 // Check if the cache was retrieved OK
                 boolean allZeroes = true;
