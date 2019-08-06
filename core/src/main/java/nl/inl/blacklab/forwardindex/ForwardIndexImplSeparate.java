@@ -19,7 +19,6 @@ import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.NumericDocValuesField;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -84,13 +83,13 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     @Override
-    public FIDoc doc(int docId) {
+    public FIDoc docByFiid(int fiid) {
         return new FIDoc() {
             @Override
             public void delete() {
                 synchronized (fis) {
                     for (AnnotationForwardIndex afi: fis.values()) {
-                        afi.deleteDocument(docId);
+                        afi.deleteDocumentByFiid(fiid);
                     }
                 }
             }
@@ -99,7 +98,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             public List<int[]> retrievePartsInt(Annotation annotation, int[] start, int[] end) {
                 synchronized (fis) {
                     AnnotationForwardIndex afi = fis.get(annotation);
-                    return afi.retrievePartsInt(docId, start, end);
+                    return afi.retrievePartsIntByFiid(fiid, start, end);
                 }
             }
 
@@ -107,20 +106,10 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
             public int docLength() {
                 synchronized (fis) {
                     AnnotationForwardIndex afi = anyAnnotationForwardIndex();
-                    return afi.docLength(docId);
+                    return afi.docLengthByFiid(fiid);
                 }
             }
         };
-    }
-
-    @Override
-    public FIDoc doc(Doc doc) {
-        return doc(doc.id());
-    }
-
-    @Override
-    public FIDoc doc(Document doc) {
-        throw new UnsupportedOperationException(); // doesn't play well with our fiidLookups...
     }
 
     @Override
@@ -213,8 +202,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     private AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
         File dir = determineAfiDir(index.indexDirectory(), annotation);
         boolean create = index.indexMode() && index.isEmpty();
-        FiidLookup fiidLookup = new FiidLookup(index.reader(), annotation);
-        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, fiidLookup, buildTermIndexesOnInit(annotation));
+        AnnotationForwardIndex afi = AnnotationForwardIndex.open(dir, index.indexMode(), index.collator(), create, annotation, buildTermIndexesOnInit(annotation));
         synchronized (fis) {
             fis.put(annotation, afi);
         }

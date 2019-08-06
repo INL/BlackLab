@@ -10,6 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -473,8 +474,9 @@ public abstract class Hits extends Results<Hit> {
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = hitProp.needsContext();
+        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, queryInfo().index().reader());
         hitProp = hitProp.copyWith(this,
-                requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index())));
+                requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index()), fiidLookups));
 
         // Perform the actual sort.
         sorted.sort(hitProp);

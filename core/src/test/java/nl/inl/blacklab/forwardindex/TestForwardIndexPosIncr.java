@@ -42,7 +42,7 @@ public class TestForwardIndexPosIncr {
         // Create new test dir
         File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        fi = AnnotationForwardIndex.open(dir, true, Collator.getInstance(), true, null, null, true);
+        fi = AnnotationForwardIndex.open(dir, true, Collator.getInstance(), true, null, true);
         try {
             // Store strings
             for (int i = 0; i < str.length; i++) {
@@ -51,7 +51,7 @@ public class TestForwardIndexPosIncr {
         } finally {
             fi.close(); // close so everything is guaranteed to be written
         }
-        fi = AnnotationForwardIndex.open(dir, false, Collator.getInstance(), false, null, null, true);
+        fi = AnnotationForwardIndex.open(dir, false, Collator.getInstance(), false, null, true);
     }
 
     @After

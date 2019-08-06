@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -54,7 +55,7 @@ public class Contexts implements Iterable<int[]> {
      */
     static void makeKwicsSingleDocForwardIndex(List<Hit> hits, AnnotationForwardIndex forwardIndex,
             AnnotationForwardIndex punctForwardIndex, Map<Annotation, AnnotationForwardIndex> attrForwardIndices,
-            ContextSize wordsAroundHit, Map<Hit, Kwic> theKwics) {
+            Map<Annotation, FiidLookup> fiidLookups, ContextSize wordsAroundHit, Map<Hit, Kwic> theKwics) {
         if (hits.isEmpty())
             return;
     
@@ -63,7 +64,7 @@ public class Contexts implements Iterable<int[]> {
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
-            punctContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(punctForwardIndex));
+            punctContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(punctForwardIndex), Arrays.asList(fiidLookups.get(punctForwardIndex.annotation())));
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
     
@@ -82,13 +83,13 @@ public class Contexts implements Iterable<int[]> {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
-                attrContext[i] = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(attrFI[i]));
+                attrContext[i] = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(attrFI[i]), Arrays.asList(fiidLookups.get(attrName[i])));
                 i++;
             }
         }
     
         // Get word context
-        int[][] wordContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(forwardIndex));
+        int[][] wordContext = getContextWordsSingleDocument(hits, wordsAroundHit, Arrays.asList(forwardIndex), Arrays.asList(fiidLookups.get(forwardIndex.annotation())));
         Terms terms = forwardIndex.terms();
     
         // Make the concordances from the context
@@ -146,7 +147,7 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      */
     private static int[][] getContextWordsSingleDocument(List<Hit> list, ContextSize contextSize,
-            List<AnnotationForwardIndex> contextSources) {
+            List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
         int n = list.size();
         if (n == 0)
             return new int[0][];
@@ -164,11 +165,13 @@ public class Contexts implements Iterable<int[]> {
         int doc = list.get(0).doc();
         int[][] contexts = new int[list.size()][];
         for (AnnotationForwardIndex forwardIndex: contextSources) {
+            FiidLookup fiidLookup = fiidLookups.get(fiNumber);
             // Get all the words from the forward index
             List<int[]> words;
             if (forwardIndex != null) {
                 // We have a forward index for this field. Use it.
-                words = forwardIndex.retrievePartsInt(doc, startsOfSnippets, endsOfSnippets);
+                int fiid = fiidLookup.get(doc);
+                words = forwardIndex.retrievePartsIntByFiid(fiid, startsOfSnippets, endsOfSnippets);
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
             }
@@ -270,8 +273,9 @@ public class Contexts implements Iterable<int[]> {
      * @param hits hits to find contexts for
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
+     * @param fiidLookups how to look up the fiids for each annotation
      */
-    public Contexts(Results<Hit> hits, List<Annotation> annotations, ContextSize contextSize) {
+    public Contexts(Results<Hit> hits, List<Annotation> annotations, ContextSize contextSize, List<FiidLookup> fiidLookups) {
         hits.size(); // make sure all hits have been read
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
@@ -294,7 +298,7 @@ public class Contexts implements Iterable<int[]> {
                     }
 
                     // Find context for the hits in the current document
-                    int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
+                    int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis, fiidLookups);
 
                     // Copy the contexts from the temporary Hits object to this one
                     int i = 0;
@@ -312,7 +316,7 @@ public class Contexts implements Iterable<int[]> {
         }
         if (!hitsInSameDoc.isEmpty()) {
             // Find context for the hits in the current document
-            int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis);
+            int[][] docContextArray = getContextWordsSingleDocument(hitsInSameDoc, contextSize, fis, fiidLookups);
 
             // Copy the contexts from the temporary Hits object to this one
             int i = 0;

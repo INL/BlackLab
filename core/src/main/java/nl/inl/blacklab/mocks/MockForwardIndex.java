@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Set;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -18,15 +17,9 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation) {
+    public void setIdTranslateInfo(Annotation annotation) {
         //
 
-    }
-
-    @Override
-    public int luceneDocIdToFiid(int docId) {
-        //
-        return 0;
     }
 
     @Override
