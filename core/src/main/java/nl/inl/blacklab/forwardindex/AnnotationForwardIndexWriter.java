@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -76,8 +77,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     /** Deleted TOC entries. Always sorted by size. */
     List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexWriter(File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
-        super(dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
+        super(annotation, dir, collators, largeTermsFileSupport);
         
         if (!dir.exists()) {
             if (!create)

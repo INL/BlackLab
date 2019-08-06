@@ -12,14 +12,8 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     private Terms terms;
 
     public MockForwardIndex(Terms terms) {
-        super(null, null, true);
+        super(null, null, null, true);
         this.terms = terms;
-    }
-
-    @Override
-    public void setIdTranslateInfo(Annotation annotation) {
-        //
-
     }
 
     @Override

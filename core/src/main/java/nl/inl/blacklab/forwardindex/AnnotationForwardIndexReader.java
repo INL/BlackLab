@@ -36,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -71,8 +72,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Build term indexes right away or lazily? */
     private boolean buildTermIndexesOnInit;
 
-    AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
-        super(dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
+        super(annotation, dir, collators, largeTermsFileSupport);
         
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);

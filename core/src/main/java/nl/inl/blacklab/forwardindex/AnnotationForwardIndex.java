@@ -137,14 +137,11 @@ public abstract class AnnotationForwardIndex {
         }
         Collators collators = new Collators(collator, collVersion);
         if (indexMode)
-            fi = new AnnotationForwardIndexWriter(dir, collators, create, largeTermsFileSupport);
+            fi = new AnnotationForwardIndexWriter(annotation, dir, collators, create, largeTermsFileSupport);
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport, buildTermIndexesOnInit);
-        }
-        if (annotation != null) {
-            fi.setIdTranslateInfo(annotation);
+            fi = new AnnotationForwardIndexReader(annotation, dir, collators, largeTermsFileSupport, buildTermIndexesOnInit);
         }
         return fi;
     }
@@ -190,7 +187,8 @@ public abstract class AnnotationForwardIndex {
     /** Has the tokens file been mapped? */
     protected boolean initialized = false;
 
-    public AnnotationForwardIndex(File dir, Collators collators, boolean largeTermsFileSupport) {
+    public AnnotationForwardIndex(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport) {
+        this.annotation = annotation;
         canDoNfaMatching = collators == null ? false : collators.version() != CollatorVersion.V1;
 
         termsFile = new File(dir, "terms.dat");
@@ -344,19 +342,6 @@ public abstract class AnnotationForwardIndex {
      */
     public Annotation annotation() {
         return annotation;
-    }
-
-    /**
-     * Indicate how to translate Lucene document ids to forward index ids (by
-     * looking them up in the index).
-     *
-     * Caches the forward index id field.
-     * 
-     * @param fiidLookup how to look up fiids
-     * @param annotation annotation for which this is the forward index
-     */
-    public void setIdTranslateInfo(Annotation annotation) {
-        this.annotation = annotation;
     }
     
     public abstract Set<Integer> idSet();
