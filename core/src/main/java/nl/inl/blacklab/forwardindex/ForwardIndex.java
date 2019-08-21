@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -36,30 +35,10 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
     /**
      * Get a document from the forward index.
      * 
-     * @param docId Lucene doc id
+     * @param fiid forward index id
      * @return forward index document
      */
-    FIDoc doc(int docId);
-
-    /**
-     * Get a document from the forward index.
-     * 
-     * @param doc BlackLab document
-     * @return forward index document
-     */
-    FIDoc doc(Doc doc);
-    
-    /**
-     * Get a document from the forward index.
-     * 
-     * This version is needed for deleting documents in index mode, because we
-     * locally opened a fresh IndexReader to do so. If we used the IndexReader in our FiidLookup,
-     * it might not find the document if it was just added. Should be improved.
-     * 
-     * @param doc Lucene document
-     * @return forward index document
-     */
-    FIDoc doc(Document doc);
+    FIDoc doc(int fiid);
     
     /**
      * Close the forward index. Writes the table of contents to disk if modified.

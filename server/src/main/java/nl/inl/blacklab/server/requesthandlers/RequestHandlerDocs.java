@@ -183,9 +183,15 @@ public class RequestHandlerDocs extends RequestHandler {
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
+        
         ds.startEntry("docFields");
         RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
         ds.endEntry();
+
+        ds.startEntry("metadataFieldDisplayNames");
+        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
+        ds.endEntry();
+        
         ds.endMap().endEntry();
 
         searchLogger.setResultsFound(docsStats.processedSoFar());

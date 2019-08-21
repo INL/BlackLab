@@ -103,6 +103,15 @@
         </properties>
     </rule>
 
+    <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions">
+        <properties>
+            <property name="methodParameterPattern" value="[a-z][a-zA-Z0-9]*" />
+            <property name="finalMethodParameterPattern" value="[a-z][a-zA-Z0-9]*" />
+            <property name="lambdaParameterPattern" value="__|[a-z][a-zA-Z0-9]*" />
+            <property name="explicitLambdaParameterPattern" value="[a-z][a-zA-Z0-9]*" />
+        </properties>
+    </rule>
+
     <rule ref="category/java/design.xml">
 
         <!-- Re-examine these in particular -->

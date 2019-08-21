@@ -552,7 +552,18 @@ public abstract class RequestHandler {
         dataStreamMetadataGroupInfo(ds,index);
     }
 
-    protected void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
+    protected static void dataStreamMetadataFieldDisplayNames(DataStream ds, IndexMetadata indexMetadata) {
+        ds.startMap();
+        for (MetadataField f: indexMetadata.metadataFields()) {
+            String displayName = f.displayName();
+            if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
+                ds.entry(f.name(),displayName);
+            }
+        }
+        ds.endMap();
+    }
+
+    protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
         MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
         Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
         for (MetadataFieldGroup metaGroup : metaGroups) {
@@ -646,7 +657,7 @@ public abstract class RequestHandler {
      * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
      */
-    protected boolean mayView(IndexMetadata indexMetadata, Document document) {
+    protected static boolean mayView(IndexMetadata indexMetadata, Document document) {
         if (indexMetadata.metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
         return indexMetadata.contentViewable();

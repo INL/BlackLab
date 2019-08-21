@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -26,6 +28,9 @@ public class SpansReader {
 
     /** docBase of the segment we're currently in */
     private int docBase;
+
+    /** liveDocs of the segment we're currently in */
+    private Bits liveDocs;
 
     private List<Hit> results = new ArrayList<>();
 
@@ -54,8 +59,9 @@ public class SpansReader {
      * @param searchSettings search settings
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected SpansReader(BLSpans spans, int docBase, HitQueryContext hitQueryContext) {
-        this.docBase = docBase;
+    protected SpansReader(BLSpans spans, LeafReaderContext leafReaderContext, HitQueryContext hitQueryContext) {
+        this.liveDocs = leafReaderContext.reader().getLiveDocs();
+        this.docBase = leafReaderContext.docBase;
         this.spans = spans;
         
         // Update the hit query context with our new spans,
@@ -65,14 +71,21 @@ public class SpansReader {
         if (hitQueryContext.numberOfCapturedGroups() > 0) {
             capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
         }
-        
-        int doc;
-        try {
-            doc = spans.nextDoc();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-        spansFullyRead = doc == DocIdSetIterator.NO_MORE_DOCS;
+
+        boolean alive = false;
+        spansFullyRead = false;
+        do {
+            int doc;
+            try {
+                doc = spans.nextDoc();
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
+            if (doc == DocIdSetIterator.NO_MORE_DOCS)
+                spansFullyRead = true;
+            else
+                alive = liveDocs == null ? true : liveDocs.get(doc);
+        } while (!spansFullyRead && !alive);
     }
 
     public boolean isInterrupted() {
@@ -149,14 +162,21 @@ public class SpansReader {
                     // Advance to next hit
                     int start = spans.nextStartPosition();
                     if (start == Spans.NO_MORE_POSITIONS) {
-                        int doc = spans.nextDoc();
-                        if (doc != DocIdSetIterator.NO_MORE_DOCS) {
-                            // Go to first hit in doc
-                            start = spans.nextStartPosition();
-                        } else {
-                            // Spans exhausted
-                            spansFullyRead = true;
-                        }
+                        
+                        boolean alive = false;
+                        do {
+                            int doc = spans.nextDoc();
+                            if (doc != DocIdSetIterator.NO_MORE_DOCS) {
+                                alive = liveDocs == null ? true : liveDocs.get(doc);
+                                if (alive) {
+                                    // Go to first hit in doc
+                                    start = spans.nextStartPosition();
+                                }
+                            } else {
+                                // Spans exhausted
+                                spansFullyRead = true;
+                            }
+                        } while (!spansFullyRead && !alive);
                     }
 
                     if (!spansFullyRead) {

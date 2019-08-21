@@ -37,7 +37,8 @@
 			<item name="Learn" href="learn.html">
 				<item name="Getting Started" href="getting-started.html" />
 				<item name="Corpus Query Language" href="corpus-query-language.html" />
-				<item name="BlackLab Server overview" href="blacklab-server-overview.html" />
+                <item name="BlackLab Server overview" href="blacklab-server-overview.html" />
+                <item name="Configuration files" href="configuration-files.html" />
 				<item name="Using BlackLab Server from different languages" href="blacklab-server-different-languages.html" />
 				<item name="Indexing with BlackLab" href="indexing-with-blacklab.html" />
 				<item name="Add An Input Format" href="add-input-format.html" />

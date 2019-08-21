@@ -85,7 +85,7 @@ public abstract class AnnotationForwardIndex {
      * @param buildTermIndexesOnInit whether to build term indexes right away or lazily
      * @return the forward index object
      */
-    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, FiidLookup fiidLookup, boolean buildTermIndexesOnInit) {
+    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create, Annotation annotation, boolean buildTermIndexesOnInit) {
     
         if (annotation != null && !annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
@@ -137,14 +137,11 @@ public abstract class AnnotationForwardIndex {
         }
         Collators collators = new Collators(collator, collVersion);
         if (indexMode)
-            fi = new AnnotationForwardIndexWriter(dir, collators, create, largeTermsFileSupport);
+            fi = new AnnotationForwardIndexWriter(annotation, dir, collators, create, largeTermsFileSupport);
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(dir, collators, largeTermsFileSupport, buildTermIndexesOnInit);
-        }
-        if (annotation != null && fiidLookup != null) {
-            fi.setIdTranslateInfo(fiidLookup, annotation);
+            fi = new AnnotationForwardIndexReader(annotation, dir, collators, largeTermsFileSupport, buildTermIndexesOnInit);
         }
         return fi;
     }
@@ -172,9 +169,6 @@ public abstract class AnnotationForwardIndex {
      */
     long tokenFileEndPosition = 0;
 
-    /** How we look up forward index id in the index. */
-    FiidLookup fiidLookup;
-
     /**
      * If true, we use the new, block-based terms file, that can grow larger than 2
      * GB.
@@ -193,7 +187,8 @@ public abstract class AnnotationForwardIndex {
     /** Has the tokens file been mapped? */
     protected boolean initialized = false;
 
-    public AnnotationForwardIndex(File dir, Collators collators, boolean largeTermsFileSupport) {
+    public AnnotationForwardIndex(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport) {
+        this.annotation = annotation;
         canDoNfaMatching = collators == null ? false : collators.version() != CollatorVersion.V1;
 
         termsFile = new File(dir, "terms.dat");
@@ -206,16 +201,6 @@ public abstract class AnnotationForwardIndex {
     public void initialize() {
         // NOP, subclasses may override
         initialized = true;
-    }
-
-    /**
-     * Convert a Lucene document id to the corresponding forward index id.
-     * 
-     * @param docId the Lucene doc id
-     * @return the forward index id
-     */
-    protected int luceneDocIdToFiid(int docId) {
-        return (int) fiidLookup.get(docId);
     }
     
     /**
@@ -251,14 +236,10 @@ public abstract class AnnotationForwardIndex {
      *
      * @param fiid id of the document to delete
      */
-    public abstract void deleteDocumentByFiid(int fiid);
-
-    public void deleteDocument(int docId) {
-        deleteDocumentByFiid(luceneDocIdToFiid(docId));
-    }
+    public abstract void deleteDocument(int fiid);
 
     public void deleteDocumentByLuceneDoc(Document d) {
-        deleteDocumentByFiid(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
+        deleteDocument(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
     }
     
     /**
@@ -285,11 +266,7 @@ public abstract class AnnotationForwardIndex {
      *            (in words) (-1 for end of document)
      * @return the parts
      */
-    public abstract List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end);
-
-    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
-        return retrievePartsIntByFiid(luceneDocIdToFiid(docId), start, end);
-    }
+    public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
 
     /**
      * Get the Terms object in order to translate ids to token strings
@@ -333,11 +310,7 @@ public abstract class AnnotationForwardIndex {
      * @param fiid forward index id of a document
      * @return length of the document
      */
-    public abstract int docLengthByFiid(int fiid);
-
-    public int docLength(int docId) {
-        return docLengthByFiid(luceneDocIdToFiid(docId));
-    }
+    public abstract int docLength(int fiid);
 
     protected void setLargeTermsFileSupport(boolean b) {
         this.useBlockBasedTermsFile = b;
@@ -352,14 +325,14 @@ public abstract class AnnotationForwardIndex {
         if (!initialized)
             initialize();
         for (Integer fiid: idSet()) {
-            int[] tokenIds = retrievePartsIntByFiid(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
+            int[] tokenIds = retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
             task.perform(fiid, tokenIds);
         }
     }
 
     public int getToken(int fiid, int pos) {
         // Slow/naive implementation, subclasses should override
-        return retrievePartsIntByFiid(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
+        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
     }
 
     /**
@@ -369,20 +342,6 @@ public abstract class AnnotationForwardIndex {
      */
     public Annotation annotation() {
         return annotation;
-    }
-
-    /**
-     * Indicate how to translate Lucene document ids to forward index ids (by
-     * looking them up in the index).
-     *
-     * Caches the forward index id field.
-     * 
-     * @param fiidLookup how to look up fiids
-     * @param annotation annotation for which this is the forward index
-     */
-    public void setIdTranslateInfo(FiidLookup fiidLookup, Annotation annotation) {
-        this.annotation = annotation;
-        this.fiidLookup = fiidLookup;
     }
     
     public abstract Set<Integer> idSet();

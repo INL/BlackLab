@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.index.IndexReader;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -82,11 +84,23 @@ public class Kwics {
                 attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
             }
         }
-        AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(field.annotation(Kwic.DEFAULT_CONC_WORD_PROP));
-        AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP));
+        Annotation wordAnnot = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
+        AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(wordAnnot);
+        Annotation punctAnnot = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
+        AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(punctAnnot);
+        
+        // Get FiidLookups for all required forward indexes
+        IndexReader reader = hits.queryInfo().index().reader();
+        Map<Annotation, FiidLookup> fiidLookups = new HashMap<>();
+        fiidLookups.put(wordAnnot, new FiidLookup(reader, wordAnnot));
+        fiidLookups.put(punctAnnot, new FiidLookup(reader, punctAnnot));
+        for (Map.Entry<Annotation, AnnotationForwardIndex> e: attrForwardIndices.entrySet()) {
+            fiidLookups.put(e.getKey(), new FiidLookup(reader, e.getKey()));
+        }
+        
         Map<Hit, Kwic> conc1 = new HashMap<>();
         for (List<Hit> l : hitsPerDocument.values()) {
-            Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
+            Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
         }
         return conc1;
     }

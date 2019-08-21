@@ -857,7 +857,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         else {
             if (!BlackLabIndex.isIndex(indexDir)) {
                 throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
-                        + VersionFile.report(indexDir));
+                        + VersionFile.report(indexDir) + ": " + indexDir);
             }
         }
 
@@ -917,6 +917,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 Weight w = s.createNormalizedWeight(q, false);
                 logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
                 for (LeafReaderContext leafContext : freshReader.leaves()) {
+                    Bits liveDocs = leafContext.reader().getLiveDocs();
+                    
                     Scorer scorer = w.scorer(leafContext);
                     if (scorer == null) {
                         logger.debug("  No hits in leafcontext");
@@ -927,9 +929,14 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                     DocIdSetIterator it = scorer.iterator();
                     logger.debug("  Iterate over matching docs in leaf");
                     while (true) {
-                        int docId = it.nextDoc() + leafContext.docBase;
+                        int docId = it.nextDoc();
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
+                        if (liveDocs != null && !liveDocs.get(docId)) {
+                            // already deleted.
+                            continue;
+                        }
+                        docId += leafContext.docBase;
                         Document d = freshReader.document(docId);
                         logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile") + " from FI and CS");
 

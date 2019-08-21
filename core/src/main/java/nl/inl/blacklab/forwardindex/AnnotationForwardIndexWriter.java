@@ -37,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -76,8 +77,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     /** Deleted TOC entries. Always sorted by size. */
     List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexWriter(File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
-        super(dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
+        super(annotation, dir, collators, largeTermsFileSupport);
         
         if (!dir.exists()) {
             if (!create)
@@ -413,7 +414,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     @Override
-    public synchronized List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
+    public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
         try {
             TocEntry e = toc.get(fiid);
             if (e == null || e.deleted)
@@ -475,7 +476,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     @Override
-    public void deleteDocumentByFiid(int fiid) {
+    public void deleteDocument(int fiid) {
         TocEntry tocEntry = toc.get(fiid);
         tocEntry.deleted = true;
         deletedTocEntries.add(tocEntry); // NOTE: mergeAdjacentDeletedEntries takes care of re-sorting
@@ -564,7 +565,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
      * @return length of the document
      */
     @Override
-    public int docLengthByFiid(int fiid) {
+    public int docLength(int fiid) {
         if (!initialized)
             initialize();
         return toc.get(fiid).length;

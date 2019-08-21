@@ -1,6 +1,8 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -69,7 +71,7 @@ public class FiidLookup {
         }
     }
 
-    public long get(int docId) {
+    public int get(int docId) {
         if (cachedFiids != null) {
             // Find the fiid in the correct segment
             Entry<Integer, NumericDocValues> prev = null;
@@ -79,19 +81,19 @@ public class FiidLookup {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase);
+                    return (int)prevDocValues.get(docId - prevDocBase);
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase);
+            return (int)prevDocValues.get(docId - prevDocBase);
         }
 
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return Long.parseLong(reader.document(docId).get(fiidFieldName));
+            return (int)Long.parseLong(reader.document(docId).get(fiidFieldName));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -109,5 +111,15 @@ public class FiidLookup {
             }
         }
         return !allZeroes;
+    }
+
+    public static List<FiidLookup> getList(List<Annotation> annotations, IndexReader reader) {
+        if (annotations == null)
+            return null; // HitPoperty.needsContext() can return null
+        List<FiidLookup> fiidLookups = new ArrayList<>();
+        for (Annotation annotation: annotations) {
+            fiidLookups.add(annotation == null ? null : new FiidLookup(reader, annotation));
+        }
+        return fiidLookups;
     }
 }

@@ -249,7 +249,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         if (value.length() > MAX_VALUE_STORE_LENGTH) {
             // Value too long to store.
             valueListComplete = ValueListComplete.NO;
-            logger.warn("Metadata field " + name() + " includes a value too long to store (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false.");
+            logger.warn("Metadata field " + name() + " includes a value too long to store in indexmetadata.yaml (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false. The value will still be indexed/stored in Lucene as normal.");
             return this;
         }
         if (values.containsKey(value)) {
