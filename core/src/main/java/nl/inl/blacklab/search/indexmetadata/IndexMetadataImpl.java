@@ -1013,21 +1013,20 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
         metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
         metadataFields.clearSpecialFields();
-        if (fieldInfo.has("titleField"))
-            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
-        if (metadataFields.titleField() == null) {
-            MetadataField titleField = metadataFields.findTextField("title");
-            metadataFields.setSpecialField(MetadataFields.TITLE, titleField == null ? null : titleField.name());
-            if (metadataFields.titleField() == null) {
-                metadataFields.setSpecialField(MetadataFields.TITLE, "fromInputFile");
-            }
-        }
         if (fieldInfo.has("authorField"))
             metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
         if (fieldInfo.has("dateField"))
             metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
             metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
+        if (fieldInfo.has("titleField"))
+            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
+        if (metadataFields.titleField() == null) {
+            if (metadataFields.pidField() != null)
+                metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
+            else
+                metadataFields.setSpecialField(MetadataFields.TITLE, "fromInputFile");
+        }
 
         if (usedTemplate) {
             // Update / clear possible old values that were in the template file

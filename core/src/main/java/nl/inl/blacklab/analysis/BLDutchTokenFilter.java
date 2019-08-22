@@ -30,9 +30,9 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * token are removed (e.g. multiple words in single quotes)
  */
 public class BLDutchTokenFilter extends TokenFilter {
-    final static Pattern removePattern = Pattern.compile("[\\.\\(\\)\\[\\]]|^'|'$");
+    final static Pattern REMOVE_PATTERN = Pattern.compile("[\\.\\(\\)\\[\\]]|^'|'$");
 
-    final static Pattern anyLetterPattern = Pattern.compile("[\\p{L}\\d]");
+    final static Pattern ANY_LETTER_PATTERN = Pattern.compile("[\\p{L}\\d]");
 
     /**
      * Perform filtering on the input string
@@ -42,7 +42,7 @@ public class BLDutchTokenFilter extends TokenFilter {
      *         beginning/end removed
      */
     public static String process(String input) {
-        return removePattern.matcher(input).replaceAll("");
+        return REMOVE_PATTERN.matcher(input).replaceAll("");
     }
 
     private CharTermAttribute termAtt;
@@ -64,7 +64,7 @@ public class BLDutchTokenFilter extends TokenFilter {
             t = process(t);
 
             // Output if there's any letters in it
-            if (anyLetterPattern.matcher(t).find()) {
+            if (ANY_LETTER_PATTERN.matcher(t).find()) {
                 termAtt.copyBuffer(t.toCharArray(), 0, t.length());
                 return true;
             }

@@ -6,7 +6,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
@@ -23,6 +25,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
@@ -105,6 +108,10 @@ public class TestIndex {
     private Annotation word;
 
     public TestIndex() {
+        this(false);
+    }
+    
+    public TestIndex(boolean testDelete) {
 
         // Get a temporary directory for our test index
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
@@ -124,6 +131,14 @@ public class TestIndex {
                 // Index each of our test "documents".
                 for (int i = 0; i < testData.length; i++) {
                     indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes()));
+                }
+                if (testDelete) {
+                    // Delete the first doc, to test deletion.
+                    // (close and re-open to be sure the document was written to disk first) 
+                    indexer.close();
+                    indexer = Indexer.openIndex(indexDir);
+                    String luceneField = indexer.indexWriter().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
+                    indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
                 }
             } finally {
                 // Finalize and close the index.

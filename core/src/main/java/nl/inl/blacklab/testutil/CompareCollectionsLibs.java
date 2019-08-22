@@ -58,14 +58,14 @@ public class CompareCollectionsLibs {
         
         // Conclusion: ...
         
-        final int numberOfItems = 10000000;
+        final int numberOfItems = 10_000_000;
         
         int[] baseKeys = new int[numberOfItems];
         Hit[] base = new Hit[numberOfItems];
         
         Map<Integer, Hit> javaMap = new HashMap<>();
         
-        MutableIntObjectMap<Hit> ecMap = new IntObjectHashMap<Hit>();
+        MutableIntObjectMap<Hit> ecMap = new IntObjectHashMap<>();
         
         Int2ObjectMap<Hit> fuMap = new Int2ObjectOpenHashMap<>();
 
@@ -79,7 +79,7 @@ public class CompareCollectionsLibs {
         time("Fill Eclipse map", () -> { for (int i = 0; i < numberOfItems; i++) ecMap.put(baseKeys[i], base[i]); });
         time("Fill fastutil map", () -> { for (int i = 0; i < numberOfItems; i++) fuMap.put(baseKeys[i], base[i]); });
         
-        final int numberOfFetches = 2000000;
+        final int numberOfFetches = 2_000_000;
         int[] fetchIndex = new int[numberOfFetches];
         for (int i = 0; i < numberOfFetches; i++) {
             fetchIndex[i] = random.nextInt(numberOfItems);
@@ -113,7 +113,7 @@ public class CompareCollectionsLibs {
         
         // Conclusion: Java ArrayList is about as fast as the other two, sometimes even a little faster.
         
-        final int numberOfItems = 10000000;
+        final int numberOfItems = 10_000_000;
         
         Hit[] base = new Hit[numberOfItems];
         
@@ -157,7 +157,7 @@ public class CompareCollectionsLibs {
         // Conclusion: Java list is slow because of (un)boxing. Eclipse is fast but doesn't allow for custom Comparators.
         // Fastutil is about as fast as Eclipse and allows for custom primitive Comparators.
         
-        final int numberOfItems = 10000000;
+        final int numberOfItems = 10_000_000;
         
         int[] base = new int[numberOfItems];
         

@@ -34,7 +34,8 @@ public class RequestHandlerDocContents extends RequestHandler {
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
             "(?:\\s+standalone\\s*=\\s*([\"'])(?:yes|no)\\3)?\\s*\\?>\\s*");
-    public static final Pattern NAMESPACE = Pattern.compile(" xmlns:[^=]+=\"[^\"]+\"");
+    public static final Pattern NAMESPACE = Pattern.compile(" xmlns:[^=]+=\"[^\"]+\""); // xmlns:namespace="...." on root
+    public static final Pattern ANONNAMESPACE = Pattern.compile("xmlns=\"([^ ]+)\""); // xmls="" on root
     public static final Pattern PREFIX = Pattern.compile("<([a-z]+):[^ ]+ |<([a-z]+):[^>]+>| ([a-z]+):[^=]+=\"");
 
     public RequestHandlerDocContents(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
@@ -143,7 +144,14 @@ public class RequestHandlerDocContents extends RequestHandler {
                     logger.warn(msg);
                     //throw new InternalServerError(msg);
                 }
+
+                // Handle any anonymous namespace on the root
+                m = ANONNAMESPACE.matcher(root);
+                if (m.find()) {
+                    ds.plain(" ").plain(m.group());
+                }
             }
+
             ds.endOpenEl();
 
         }

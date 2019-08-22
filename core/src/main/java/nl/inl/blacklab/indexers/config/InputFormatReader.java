@@ -432,6 +432,9 @@ public class InputFormatReader extends YamlJsonReader {
             case "multipleValues":
                 annot.setMultipleValues(bool(e));
                 break;
+            case "allowDuplicateValues":
+                annot.setAllowDuplicateValues(bool(e));
+                break;
             case "isInternal":
                 annot.setInternal(bool(e));
                 break;

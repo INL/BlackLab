@@ -36,6 +36,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -71,8 +72,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Build term indexes right away or lazily? */
     private boolean buildTermIndexesOnInit;
 
-    AnnotationForwardIndexReader(File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
-        super(dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
+        super(annotation, dir, collators, largeTermsFileSupport);
         
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -211,7 +212,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrievePartsIntByFiid(int fiid, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
         if (!initialized)
             initialize();
         
@@ -288,7 +289,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     @Override
-    public void deleteDocumentByFiid(int fiid) {
+    public void deleteDocument(int fiid) {
         throw new UnsupportedOperationException("Not supported in search mode");
     }
     
@@ -333,7 +334,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
      * @return length of the document
      */
     @Override
-    public int docLengthByFiid(int fiid) {
+    public int docLength(int fiid) {
         if (!initialized)
             initialize();
         return length[fiid];

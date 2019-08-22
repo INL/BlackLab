@@ -162,8 +162,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         dates = new HashMap<>();
         authors = new HashMap<>();
         // File metadataFile = new File("c:\\temp\\dpo_metadata.txt");
-        try {
-            BufferedReader r = FileUtil.openForReading(metadataFile);
+        try (BufferedReader r = FileUtil.openForReading(metadataFile)) {
             String l;
             while (true) {
                 try {
@@ -181,6 +180,8 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
                 authors.put(fields[0].trim(), fields[4].trim());
             }
         } catch (FileNotFoundException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
         externalMetadataAvailable = true;

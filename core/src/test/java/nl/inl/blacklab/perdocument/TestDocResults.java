@@ -28,16 +28,16 @@ public class TestDocResults {
 
     @Test
     public void testDocResultsIterate() {
-        int[] aDoc = new int[]   { 1, 1, 2, 3, 3 };
-        int[] aStart = new int[] { 1, 2, 3, 4, 5 };
-        int[] aEnd = new int[]   { 2, 3, 4, 5, 6 };
+        int[] aDoc = { 1, 1, 2, 3, 3 };
+        int[] aStart = { 1, 2, 3, 4, 5 };
+        int[] aEnd = { 2, 3, 4, 5, 6 };
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
             Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
             DocResults drs = hits.perDocResults(Results.NO_LIMIT);
     
-            int[] expDoc = new int[]  { 1, 2, 3 };
-            int[] expHits = new int[] { 2, 1, 2 };
+            int[] expDoc = { 1, 2, 3 };
+            int[] expHits = { 2, 1, 2 };
             int i = 0;
             for (DocResult dr : drs) {
                 Assert.assertEquals(expDoc[i], dr.identity().id());

@@ -12,6 +12,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -54,7 +55,9 @@ public class TermFrequencyList extends Results<TermFrequency> {
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
         
-        Contexts contexts = new Contexts(hits, Arrays.asList(annotation), contextSize);
+        List<Annotation> annotations = Arrays.asList(annotation);
+        List<FiidLookup> fiidLookups = FiidLookup.getList(annotations, hits.queryInfo().index().reader());
+        Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
         MutableIntIntMap coll = IntIntMaps.mutable.empty();
         for (int[] context: contexts) {
             // Count words

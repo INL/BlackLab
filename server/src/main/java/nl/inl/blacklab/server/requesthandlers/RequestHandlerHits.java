@@ -192,9 +192,15 @@ public class RequestHandlerHits extends RequestHandler {
         addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
+        
         ds.startEntry("docFields");
         RequestHandler.dataStreamDocFields(ds, index.metadata());
         ds.endEntry();
+        
+        ds.startEntry("metadataFieldDisplayNames");
+        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
+        ds.endEntry();
+
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
             try {

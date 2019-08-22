@@ -20,7 +20,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
     protected static final Logger logger = LogManager.getLogger(ClauseCombinerNfa.class);
 
-    private static final int FORWARD_PRIORITY = 10000000;
+    private static final int FORWARD_PRIORITY = 10_000_000;
 
     // NOTE: BACKWARD_PRIORITY has slightly different value to prevent FindBugs "same code for two branches" warning
     /**
@@ -29,7 +29,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * result, but that actually causes good optimization opportunities to be
      * skipped altogether.
      */
-    private static final int BACKWARD_PRIORITY = 10000001;
+    private static final int BACKWARD_PRIORITY = 10_000_001;
 
     /**
      * The default value of nfaThreshold.
@@ -148,8 +148,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
-        return factor > 0 ? FORWARD_PRIORITY - (int) (10000 / absFactor)
-                : BACKWARD_PRIORITY - (int) (10000 / absFactor);
+        return factor > 0 ? FORWARD_PRIORITY - (int) (10_000 / absFactor)
+                : BACKWARD_PRIORITY - (int) (10_000 / absFactor);
     }
 
     @Override

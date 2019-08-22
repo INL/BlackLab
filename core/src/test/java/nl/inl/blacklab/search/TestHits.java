@@ -31,9 +31,9 @@ public class TestHits {
 
     @Test
     public void testHitsIterate() {
-        int[] aDoc = new int[] { 1, 2 };
-        int[] aStart = new int[] { 1, 2 };
-        int[] aEnd = new int[] { 2, 3 };
+        int[] aDoc = { 1, 2 };
+        int[] aStart = { 1, 2 };
+        int[] aEnd = { 2, 3 };
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
             Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
     
@@ -49,9 +49,9 @@ public class TestHits {
 
     @Test
     public void testMockSpans() throws IOException {
-        int[] aDoc = new int[] { 1, 2 };
-        int[] aStart = new int[] { 1, 2 };
-        int[] aEnd = new int[] { 2, 3 };
+        int[] aDoc = { 1, 2 };
+        int[] aStart = { 1, 2 };
+        int[] aEnd = { 2, 3 };
         Spans spans = new MockSpans(aDoc, aStart, aEnd);
         Assert.assertNotEquals(DocIdSetIterator.NO_MORE_DOCS, spans.nextDoc());
         Assert.assertEquals(1, spans.docID());

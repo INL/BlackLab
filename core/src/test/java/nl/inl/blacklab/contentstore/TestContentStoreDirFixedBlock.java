@@ -62,7 +62,7 @@ public class TestContentStoreDirFixedBlock {
             try {
 
                 // Create four different documents that span different numbers of 4K blocks.
-                Random random = new Random(12345);
+                Random random = new Random(12_345);
                 for (int i = 0; i < doc.length; i++) {
                     StringBuilder b = new StringBuilder();
                     for (int j = 0; j < i * 2400 + 800; j++) {
@@ -138,7 +138,7 @@ public class TestContentStoreDirFixedBlock {
         }
 
         // Perform some random delete/add operations
-        Random random = new Random(23456);
+        Random random = new Random(23_456);
         boolean testedClear = false;
         for (int i = 0; i < 500; i++) {
 

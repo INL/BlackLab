@@ -232,8 +232,8 @@ public class DocImpl implements Doc {
         // We should probably fix that some time.
         boolean startAtStartOfDoc = startAtWord == -1;
         boolean endAtEndOfDoc = endAtWord == -1;
-        int[] starts = new int[] { startAtStartOfDoc ? 0 : startAtWord };
-        int[] ends = new int[] { endAtEndOfDoc ? starts[0] : endAtWord };
+        int[] starts = { startAtStartOfDoc ? 0 : startAtWord };
+        int[] ends = { endAtEndOfDoc ? starts[0] : endAtWord };
         characterOffsets(field, starts, ends, true);
         if (startAtStartOfDoc)
             starts[0] = -1;

@@ -118,7 +118,7 @@ public class SketchToXmlConverter {
         return new File(basePath, filePath.getPath());
     }
 
-    private static final int LINES_PER_CHUNK_FILE = 30000;
+    private static final int LINES_PER_CHUNK_FILE = 30_000;
 
     boolean inSentence = false;
 

@@ -59,7 +59,7 @@ public class BatchForwardIndex {
         }
 
         System.err.print("Opening forward index... ");
-        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, null, true);
+        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, true);
         System.err.println("done. [#docs: " + fi.numDocs() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");
@@ -116,7 +116,7 @@ public class BatchForwardIndex {
                             + fi.numDocs() + " docs)");
 
                 // Choose random snippets
-                length = fi.docLengthByFiid(docPos);
+                length = fi.docLength(docPos);
                 if (length == 0) // can't get snippet from empty doc
                     docPos++;
             } while (length == 0);
@@ -127,7 +127,7 @@ public class BatchForwardIndex {
             }
 
             // Retrieve snippets
-            fi.retrievePartsIntByFiid(docPos, start, end);
+            fi.retrievePartsInt(docPos, start, end);
 
             // Go to next doc
             docPos += skip + 1;

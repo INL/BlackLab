@@ -59,7 +59,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * How much to reserve at the end of mapped file for writing
      */
-    private int writeMapReserve = 1000000; // 1M
+    private int writeMapReserve = 1_000_000; // 1M
 
     /**
      * Set the size of the write reserve (the amount of space allocated at the end

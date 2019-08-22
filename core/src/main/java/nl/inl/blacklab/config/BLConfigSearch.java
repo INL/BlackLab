@@ -10,9 +10,9 @@ public class BLConfigSearch {
     
     int contextSize = 5;
     
-    int maxHitsToRetrieve = 5000000;
+    int maxHitsToRetrieve = 5_000_000;
     
-    int maxHitsToCount = 10000000;
+    int maxHitsToCount = 10_000_000;
     
     long fiMatchFactor = ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD;
 

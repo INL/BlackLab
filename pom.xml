@@ -17,12 +17,24 @@
         <module>server</module>
     </modules>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <doclint>none</doclint>
+    </properties>
+
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
+
+    <organization>
+        <name>Instituut voor Nederlandse Taal (INT)</name>
+        <url>https://www.ivdnt.org/</url>
+    </organization>
 
     <scm>
         <url>https://github.com/INL/BlackLab</url>
@@ -30,13 +42,18 @@
         <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
     </scm>
 
+    <issueManagement>
+        <url>https://github.com/INL/BlackLab/issues</url>
+        <system>GitHub Issues</system>
+    </issueManagement>
+
     <developers>
         <developer>
             <id>jan-niestadt</id>
             <name>Jan Niestadt</name>
-            <email>jan.niestadt@inl.nl</email>
+            <email>jan.niestadt@ivdnt.org</email>
             <url>https://github.com/jan-niestadt</url>
-            <organization>INL</organization>
+            <organization>INT</organization>
             <organizationUrl>http://www.inl.nl</organizationUrl>
             <roles>
                 <role>developer</role>
@@ -45,18 +62,42 @@
         </developer>
         
         <developer>
-            <id>JesseDeDoes</id>
-            <name>Jesse de Does</name>
-            <email>jesse.dedoes@inl.nl</email>
-            <url>https://github.com/JesseDeDoes</url>
+            <id>KCMertens</id>
+            <name>Koen Mertens</name>
+            <email>koen.mertens@ivdnt.org</email>
+            <url>https://github.com/KCMertens</url>
             <organization>INL</organization>
-            <organizationUrl>http://www.inl.nl</organizationUrl>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
             <roles>
                 <role>developer</role>
             </roles>
             <timezone>Europe/Amsterdam</timezone>
         </developer>
     </developers>
+
+    <contributors>
+        <contributor>
+            <name>Jesse de Does</name>
+            <email>jesse.dedoes@ivdnt.org</email>
+            <organization>INT</organization>
+            <organizationUrl>https://www.ivdnt.org/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Amsterdam</timezone>
+        </contributor>
+        
+        <contributor>
+            <name>Eduard Drenth</name>
+            <email>edrenth@fryske-akademy.nl</email>
+            <organization>Fryske Akademy</organization>
+            <organizationUrl>https://www.fryske-akademy.nl/</organizationUrl>
+            <roles>
+                <role>developer</role>
+            </roles>
+            <timezone>Europe/Amsterdam</timezone>
+        </contributor>
+    </contributors>
 
     <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
     <distributionManagement>
@@ -72,6 +113,81 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <!--<version>3.0.0-M1</version>-->
+                <version>2.22.1</version>
+                <configuration>
+                    <!-- deal with Debian openjdk-8 issue (see https://issues.apache.org/jira/browse/SUREFIRE-1588) -->
+                    <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+                </configuration>
+            </plugin>
+
+            <!-- Generates a "build number" (just a timestamp in our case)
+                to put in the manifest -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>1.4</version>
+                <configuration>
+                    <format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
+                    <items>
+                        <item>timestamp</item>
+                    </items>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Generates project site -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.7.1</version>
+                <dependencies>
+
+                    <!-- SSH/SCP (copy to local server) -->
+                    <dependency>
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh</artifactId>
+                        <version>2.9</version>
+                    </dependency>
+                    <dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-ssh-external</artifactId>
+                        <version>2.9</version>
+                    </dependency>
+
+                </dependencies>
+            </plugin>
+
+            <!-- Javadoc -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.0.1</version>
+                <configuration>
+                    <notimestamp>true</notimestamp>
+                </configuration>
+            </plugin>
+
             <!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven Central) -->
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
@@ -96,7 +212,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

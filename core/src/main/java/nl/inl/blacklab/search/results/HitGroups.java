@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -97,7 +98,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         this.criteria = criteria;
         
         List<Annotation> requiredContext = criteria.needsContext();
-        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index())));
+        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index().reader());
+        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
@@ -247,7 +249,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
-        List<HitGroup> truncatedGroups = new ArrayList<HitGroup>();
+        List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);

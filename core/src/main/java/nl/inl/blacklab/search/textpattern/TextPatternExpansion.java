@@ -35,9 +35,7 @@ public class TextPatternExpansion extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        SpanQueryExpansion spanQueryExpansion = new SpanQueryExpansion(clause.translate(context), direction, min,
-                max);
-        return spanQueryExpansion;
+        return new SpanQueryExpansion(clause.translate(context), direction, min, max);
     }
 
     @Override
