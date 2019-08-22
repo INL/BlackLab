@@ -33,7 +33,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
     public static final int UNKNOWN_VALUE = 10_000_000;
 
     static HitPropertyDocumentDecade deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentDecade(index, index.metadataField(info));
+        return new HitPropertyDocumentDecade(index, index.metadataField(PropertySerializeUtil.unescapePart(info)));
     }
 
     private BlackLabIndex index;
