@@ -188,7 +188,7 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     public static DocPropertyStoredField deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyStoredField(index, info);
+        return new DocPropertyStoredField(index, PropertySerializeUtil.unescapePart(info));
     }
 
     @Override

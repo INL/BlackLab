@@ -33,7 +33,7 @@ public class PropertyValueString extends PropertyValue {
     }
 
     public static PropertyValue deserialize(String info) {
-        return new PropertyValueString(info);
+        return new PropertyValueString(PropertySerializeUtil.unescapePart(info));
     }
 
     @Override

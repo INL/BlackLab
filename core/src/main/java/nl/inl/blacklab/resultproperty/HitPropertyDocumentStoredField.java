@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.results.Results;
 public class HitPropertyDocumentStoredField extends HitProperty {
     
     static HitPropertyDocumentStoredField deserializeProp(BlackLabIndex index, String info) {
-        return new HitPropertyDocumentStoredField(index, info);
+        return new HitPropertyDocumentStoredField(index, PropertySerializeUtil.unescapePart(info));
     }
 
     BlackLabIndex index;
