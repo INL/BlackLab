@@ -44,19 +44,19 @@ import nl.inl.util.StringUtil;
  * be "author", "year", and such.
  */
 public class DocPropertyStoredField extends DocProperty {
-    
+
     /** Lucene field name */
     private String fieldName;
-    
+
     /** Display name for the field */
     private String friendlyName;
-    
+
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
     private Map<Integer, SortedDocValues> docValues = null;
 
     /** Our index */
     private BlackLabIndex index;
-    
+
     public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
         super(prop, invert);
         this.index = prop.index;
@@ -116,7 +116,8 @@ public class DocPropertyStoredField extends DocProperty {
         }
         // We don't have DocValues; just get the property from the document.
         try {
-            return index.reader().document(docId).get(fieldName);
+            String value = index.reader().document(docId).get(fieldName);
+            return value != null ? value : "";
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Could not fetch document " + docId, e);
         }
@@ -137,7 +138,7 @@ public class DocPropertyStoredField extends DocProperty {
 
     /**
      * Compares two docs on this property
-     * 
+     *
      * @param docId1 first doc
      * @param docId2 second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
@@ -158,7 +159,7 @@ public class DocPropertyStoredField extends DocProperty {
 
     /**
      * Compares two docs on this property
-     * 
+     *
      * @param a first doc
      * @param b second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
@@ -244,7 +245,7 @@ public class DocPropertyStoredField extends DocProperty {
         }
         //return new TermQuery(new Term(fieldName, strValue));
     }
-    
+
     @Override
     public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
         return !value.toString().isEmpty();
