@@ -124,17 +124,17 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return false; // a single position can e.g. match a regex multiple times (if multiple values were indexed at one position)
     }
 
     @Override
     public boolean hitsHaveUniqueEnd() {
-        return true;
+        return false; // a single position can e.g. match a regex multiple times (if multiple values were indexed at one position)
     }
 
     @Override
     public boolean hitsAreUnique() {
-        return true;
+        return false; // a single position can e.g. match a regex multiple times (if multiple values were indexed at one position)
     }
 
     @Override
