@@ -29,6 +29,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -110,7 +111,8 @@ public class DocPropertyStoredField extends DocProperty {
                     long ord = prevDocValues.nextOrd();
                     if (ord != SortedSetDocValues.NO_MORE_ORDS) {
                         // Return first value
-                        return new String(prevDocValues.lookupOrd(ord).bytes, StandardCharsets.UTF_8);
+                        BytesRef val = prevDocValues.lookupOrd(ord);
+                        return new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8);
                     }
                     return ""; // no values for this field in this doc
                 }
@@ -123,7 +125,8 @@ public class DocPropertyStoredField extends DocProperty {
             long ord = prevDocValues.nextOrd();
             if (ord != SortedSetDocValues.NO_MORE_ORDS) {
                 // Return first value
-                return new String(prevDocValues.lookupOrd(ord).bytes, StandardCharsets.UTF_8);
+                BytesRef val = prevDocValues.lookupOrd(ord);
+                return new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8);
             }
             return ""; // no values for this field in this doc
         }
