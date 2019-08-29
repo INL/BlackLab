@@ -16,6 +16,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -23,7 +24,7 @@ import java.util.TreeMap;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
@@ -52,7 +53,7 @@ public class DocPropertyStoredField extends DocProperty {
     private String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
-    private Map<Integer, SortedDocValues> docValues = null;
+    private Map<Integer, SortedSetDocValues> docValues = null;
 
     /** Our index */
     private BlackLabIndex index;
@@ -79,7 +80,7 @@ public class DocPropertyStoredField extends DocProperty {
                 if (index.reader() != null) { // skip for MockIndex (testing)
                     for (LeafReaderContext rc : index.reader().leaves()) {
                         LeafReader r = rc.reader();
-                        SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
+                        SortedSetDocValues sortedDocValues = r.getSortedSetDocValues(fieldName);
                         if (sortedDocValues != null) {
                             docValues.put(rc.docBase, sortedDocValues);
                         }
@@ -98,21 +99,33 @@ public class DocPropertyStoredField extends DocProperty {
     public String get(int docId) {
         if  (docValues != null) {
             // Find the fiid in the correct segment
-            Entry<Integer, SortedDocValues> prev = null;
-            for (Entry<Integer, SortedDocValues> e : docValues.entrySet()) {
+            Entry<Integer, SortedSetDocValues> prev = null;
+            for (Entry<Integer, SortedSetDocValues> e : docValues.entrySet()) {
                 Integer docBase = e.getKey();
                 if (docBase > docId) {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
-                    SortedDocValues prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase).utf8ToString();
+                    SortedSetDocValues prevDocValues = prev.getValue();
+                    prevDocValues.setDocument(docId - prevDocBase);
+                    long ord = prevDocValues.nextOrd();
+                    if (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                        // Return first value
+                        return new String(prevDocValues.lookupOrd(ord).bytes, StandardCharsets.UTF_8);
+                    }
+                    return ""; // no values for this field in this doc
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
-            SortedDocValues prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase).utf8ToString();
+            SortedSetDocValues prevDocValues = prev.getValue();
+            prevDocValues.setDocument(docId - prevDocBase);
+            long ord = prevDocValues.nextOrd();
+            if (ord != SortedSetDocValues.NO_MORE_ORDS) {
+                // Return first value
+                return new String(prevDocValues.lookupOrd(ord).bytes, StandardCharsets.UTF_8);
+            }
+            return ""; // no values for this field in this doc
         }
         // We don't have DocValues; just get the property from the document.
         try {
