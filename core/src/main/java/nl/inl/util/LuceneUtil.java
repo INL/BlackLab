@@ -18,6 +18,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergePolicy;
@@ -350,33 +351,98 @@ public final class LuceneUtil {
         }
     }
 
+    /**
+     *
+     * @param indexSearcher
+     * @param documentFilterQuery document filter, or null for all documents
+     * @param annotSensitivity field to get frequencies for
+     * @param searchTerms list of terms to get frequencies for, or null for all terms
+     * @return
+     */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            AnnotationSensitivity annotSensitivity) {
+            AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
         try {
-            //String luceneField = AnnotatedFieldNameUtil.annotationField(fieldName, propName, altName);
-            Weight weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();
-            for (LeafReaderContext arc : indexReader.leaves()) {
+            String field = annotSensitivity.luceneField();
+
+            Weight weight = null;
+            if (documentFilterQuery != null) {
+                weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
                 if (weight == null)
                     throw new BlackLabRuntimeException("weight == null");
+            }
+
+            for (LeafReaderContext arc : indexReader.leaves()) {
                 if (arc == null)
                     throw new BlackLabRuntimeException("arc == null");
                 if (arc.reader() == null)
                     throw new BlackLabRuntimeException("arc.reader() == null");
-                Scorer scorer = weight.scorer(arc);
-                if (scorer != null) {
-                    DocIdSetIterator it = scorer.iterator();
-                    while (it.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-                        String luceneField = annotSensitivity.luceneField();
-                        getFrequenciesFromTermVector(indexReader, it.docID() + arc.docBase, luceneField, freq);
+
+                LeafReader reader = arc.reader();
+                if (weight != null) { // retrieve term frequency per matched document
+                    Scorer scorer = weight.scorer(arc);
+                    if (scorer == null) { // no matched documents
+                        continue;
                     }
+                    DocIdSetIterator documentIterator = scorer.iterator();
+                    int doc;
+                    while ((doc = documentIterator.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+                        Terms terms = reader.getTermVector(doc, field);
+                        if (terms == null) {
+                            throw new IllegalArgumentException("Field " + field + " has no Terms");
+                        }
+
+                        getTermFrequencies(terms.iterator(), searchTerms, freq);
+                    }
+                } else {
+                    // all documents - use the fast path
+                    getTermFrequencies(reader.terms(field).iterator(), searchTerms, freq);
                 }
             }
+
             return freq;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    /**
+     * Get the frequency of all terms in the TermsEnum or the frequency list and add them to the freq map.
+     *
+     * @param it the terms in the (set of) documents or a leaf
+     * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
+     * @param freq map containing existing frequencies to add on to or merge in to
+     * @return the freq map, for ease of use
+     * @throws IOException
+     */
+    private static Map<String, Integer> getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
+        if (searchTerms != null && !searchTerms.isEmpty()) {
+            for (String term : searchTerms) {
+                if (it.seekExact(new BytesRef(term))) {
+                    if (freq.containsKey(term)) {
+                        freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
+                    } else {
+                        freq.put(term, (int) it.totalTermFreq());
+                    }
+                } else {
+                    if (!freq.containsKey(term)) {
+                        freq.put(term, 0);
+                    }
+                }
+            }
+        } else {
+            BytesRef cur = null;
+            while ((cur = it.next()) != null) {
+                String term = cur.utf8ToString();
+                if (freq.containsKey(term)) {
+                    freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
+                } else {
+                    freq.put(term, (int) it.totalTermFreq());
+                }
+            }
+        }
+        return freq;
     }
 
     public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {

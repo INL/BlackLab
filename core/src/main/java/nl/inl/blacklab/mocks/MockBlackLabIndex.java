@@ -4,6 +4,7 @@ import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -231,7 +232,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms) {
         throw new UnsupportedOperationException();
     }
 

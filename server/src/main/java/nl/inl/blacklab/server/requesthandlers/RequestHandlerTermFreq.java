@@ -1,5 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.search.Query;
@@ -40,31 +44,34 @@ public class RequestHandlerTermFreq extends RequestHandler {
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
+        // May be null!
         Query q = searchParam.getFilterQuery();
-        if (q == null)
-            return Response.badRequest(ds, "NO_FILTER_GIVEN",
-                    "Document filter required. Please specify 'filter' parameter.");
-        
-        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q);
-
+        // May also null/empty to retrieve all terms!
+        Set<String> terms = searchParam.getString("terms") != null ? new HashSet<>(Arrays.asList(searchParam.getString("terms").trim().split("\\s*,\\s*"))) : null;
+         
+        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
         searchLogger.setResultsFound(tfl.size());
-        
-        int first = searchParam.getInteger("first");
-        if (first < 0 || first >= tfl.size())
-            first = 0;
-        int number = searchParam.getInteger("number");
-        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
-        if (number < 0 || number > pageSize.getMax())
-            number = pageSize.getDefaultValue();
-        int last = first + number;
-        if (last > tfl.size())
-            last = tfl.size();
+
+        if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
+            int first = searchParam.getInteger("first");
+            if (first < 0 || first >= tfl.size())
+                first = 0;
+            int number = searchParam.getInteger("number");
+            DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
+            if (number < 0 || number > pageSize.getMax())
+                number = pageSize.getDefaultValue();
+            int last = first + number;
+            if (last > tfl.size())
+                last = tfl.size();
+
+            tfl = tfl.subList(first, last);
+        }
 
         // Assemble all the parts
         ds.startMap();
         ds.startEntry("termFreq").startMap();
         //DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
-        for (TermFrequency tf : tfl.subList(first, last)) {
+        for (TermFrequency tf : tfl) {
             ds.attrEntry("term", "text", tf.term, tf.frequency);
         }
         ds.endMap().endEntry();

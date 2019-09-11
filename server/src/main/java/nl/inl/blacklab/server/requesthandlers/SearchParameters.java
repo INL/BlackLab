@@ -168,7 +168,7 @@ public class SearchParameters {
             // Alternative views
             "calc", // collocations, or other context-based calculations
             "group", "viewgroup", // grouping hits/docs
-            "annotation", "sensitive", // for term frequency
+            "annotation", "sensitive", "terms", // for term frequency
 
             // How to execute request
             "waitfortotal", // wait until total number of results known?

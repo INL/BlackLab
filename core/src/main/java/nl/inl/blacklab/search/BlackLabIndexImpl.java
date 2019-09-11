@@ -11,6 +11,7 @@ import java.text.Collator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -1000,8 +1001,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery) {
-        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity);
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms) {
+        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms);
         return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
     }
 
