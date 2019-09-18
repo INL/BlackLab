@@ -215,6 +215,10 @@ public class HitsFromQueryParallel extends Hits {
                     return;
             }
             try {
+                // One more check in case another thread finished the read.
+                if (allSourceSpansFullyRead || (number >= 0 && results.size() >= number))
+                    return;
+
                 boolean readAllHits = number < 0;
                 int maxHitsToCount = searchSettings.maxHitsToCount();
                 int maxHitsToProcess = searchSettings.maxHitsToProcess();
