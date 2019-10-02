@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileItem;
@@ -108,9 +107,6 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         try {
             for (FileItem file : dataFiles) {
                 indexer.index(file.getName(), file.get());
-//                try (InputStream is = file.getInputStream()) {
-//                    indexer.index(file.getName(), is/*, "*.xml"*/);
-//                }
             }
         } finally {
             if (indexError == null) {

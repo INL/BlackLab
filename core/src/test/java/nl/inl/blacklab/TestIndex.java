@@ -1,6 +1,5 @@
 package nl.inl.blacklab;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -130,7 +129,7 @@ public class TestIndex {
             try {
                 // Index each of our test "documents".
                 for (int i = 0; i < testData.length; i++) {
-                    indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes()));
+                    indexer.index("test" + (i + 1), testData[i].getBytes());
                 }
                 if (testDelete) {
                     // Delete the first doc, to test deletion.

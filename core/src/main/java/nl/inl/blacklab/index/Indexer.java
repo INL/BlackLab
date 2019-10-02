@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.lucene.document.Document;
@@ -141,14 +142,17 @@ public interface Indexer {
     void update(Term term, Document document) throws IOException;
 
     /**
+     * @deprecated (since 2.0)
      * Index a document or archive from an InputStream.
      *
      * @param documentName name for the InputStream (e.g. name of the file)
      * @param input the stream
      */
+    @Deprecated
     void index(String documentName, InputStream input);
 
     /**
+     * @deprecated (sinced 2.0)
      * Index a document from a Reader.
      *
      * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array
@@ -165,9 +169,11 @@ public interface Indexer {
      * @throws MalformedInputFile if the input file was invalid
      * @throws PluginException if an error in a plugin occurred
      */
+    @Deprecated
     void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
 
     /**
+     * @deprecated (since 2.0)
      * Index a document (or archive if enabled by
      * {@link #setProcessArchivesAsDirectories(boolean)}
      *
@@ -175,33 +181,40 @@ public interface Indexer {
      * @param input
      * @param fileNameGlob
      */
+    @Deprecated
     void index(String fileName, InputStream input, String fileNameGlob);
 
-    /**
-     * Index the file or directory specified.
-     *
-     * Indexes all files in a directory or archive (previously only indexed *.xml;
-     * specify a glob if you want this behaviour back, see
-     * {@link #index(File, String)}.
-     *
-     * Recurses into subdirs only if that setting is enabled.
-     *
-     * @param file the input file or directory
-     */
-    void index(File file);
     
-    void index(String fileName, byte[] contents);
-
-    /**
-     * Index a document, archive (if enabled by
-     * {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally
-     * recursively if set by {@link #setRecurseSubdirs(boolean)}
-     *
-     * @param file
-     * @param fileNameGlob only files
+    /** 
+     * Index a file or archive of files from memory.
+     * 
+     * @param fileName name of the file including extension. Used to detect archives/file types.
+     * @param contents file contents
+     * @param fileNameGlob 
+     *  Only used if this file is determined to be an archive. Only process files matching the glob.
      */
-    // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
-    void index(File file, String fileNameGlob);
+    void index(String fileName, byte[] contents, Optional<String> fileNameGlob);
+    /** 
+     * Index a file or archive of files from memory.
+     * 
+     * @param fileName name of the file including extension. Used to detect archives/file types.
+     * @param contents file contents 
+     */
+    default void index(String fileName, byte[] contents) { index(fileName, contents, Optional.empty()); }
+    /** 
+     * Index a file, archive of files, or directory.
+     * 
+     * @param file the file    
+     * @param fileNameGlob 
+     *  Only used if this file is a directory or is determined to be an archive or directory. Only processes files matching the glob.
+     */
+    void index(File file, Optional<String> fileNameGlob);
+    /** 
+     * Index a file, archive of files, or directory.
+     * 
+     * @param file the file    
+     */
+    default void index(File file) { index(file, Optional.empty()); }
 
     /**
      * Get our index directory

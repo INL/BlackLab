@@ -155,11 +155,13 @@ public class DocumentFormats {
         return factory != null ? factory.getFormat(formatIdentifier) : null;
     }
 
-    /** 
+    /**
+     * @deprecated (since 2.0) use byte[] version 
      * Convenience function. 
      * Note that it is usually faster to offer the document as byte[] and charset, 
      * because that allows the buffer to be passed on without copying. 
      */
+    @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
@@ -167,10 +169,12 @@ public class DocumentFormats {
     }
 
     /** 
+     * @deprecated (since 2.0) use byte[] version 
      * Convenience function. 
      * Note that it is usually faster to offer the document as byte[] and charset, 
      * because that allows the buffer to be passed on without copying. 
      */
+    @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
             throws UnsupportedOperationException {
@@ -178,7 +182,11 @@ public class DocumentFormats {
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, is, cs) : null;
     }
 
-    /** Convenience function. */
+    /**
+     * @deprecated (since 2.0) use byte[] version 
+     * Convenience function. 
+     */
+    @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
         DocIndexerFactory fac = getFactory(formatIdentifier);

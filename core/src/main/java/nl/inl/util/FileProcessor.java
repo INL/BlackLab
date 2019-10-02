@@ -2,7 +2,6 @@ package nl.inl.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +15,7 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -27,7 +27,6 @@ import nl.inl.blacklab.index.ZipHandleManager;
  * configuration is changed during processing.
  */
 public class FileProcessor implements AutoCloseable {
-
     public interface FileHandler {
         /**
          * Handle a directory.
@@ -41,14 +40,14 @@ public class FileProcessor implements AutoCloseable {
          * <p>
          * This function may be called in multiple threads when FileProcessor was
          * created with thread support (see
-         * {@link FileProcessor#FileProcessor(boolean, boolean, boolean)})
+         * {@link FileProcessor#FileProcessor(int, boolean, boolean)})
          *
          * @param dir the directory
          * @throws Exception these will be passed to
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void directory(File dir) throws Exception;
-
+        
         /**
          * Handle a file stream.
          * <p>
@@ -64,23 +63,15 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param path filename, including path inside archives (if the file is within
          *            an archive)
-         * @param is
+         * @param contents
          * @param file (optional, if known) the file from which the InputStream was
          *            built, or - if the InputStream is a file within an archive - the
          *            archive.
          * @throws Exception these will be passed to
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
-        void file(String path, InputStream is, File file) throws Exception;
-
-        // Regular file(File f) function is omitted on purpose.
-        // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
-        // This means in some cases there is no actual file backing up the data
-    }
-    
-    public interface FileHandlerRaw {
-        void directory(File dir) throws Exception;
         void file(String path, byte[] contents, File file) throws Exception;
+
         // Regular file(File f) function is omitted on purpose.
         // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
         // This means in some cases there is no actual file backing up the data
@@ -139,9 +130,9 @@ public class FileProcessor implements AutoCloseable {
                 }
 
                 @Override
-                public void file(String path, InputStream is, File archive) throws Exception {
+                public void file(String path, byte[] content, File archive) {
                     if (path.endsWith(pathInsideArchive))
-                        this.file = IOUtils.toByteArray(is);
+                        this.file = content;
                 }
 
                 @Override
@@ -151,10 +142,8 @@ public class FileProcessor implements AutoCloseable {
             };
             try (FileProcessor proc = new FileProcessor(1, false, true)) {
                 proc.setFileHandler(fileCapturer);
-                proc.processFile(f, "");
-            } catch (FileNotFoundException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+                proc.processFile(f);
+            } 
 
             // FileProcessor must have completed/be closed before result is available
             return fileCapturer.getFile();
@@ -363,18 +352,17 @@ public class FileProcessor implements AutoCloseable {
      * {@link #processInputStream(String, InputStream, File)}.
      *
      * @param file file, directory or archive to process
-     * @param pathSoFar path so far, so we can report the path to the file
-     * @throws FileNotFoundException
      */
-    public void processFile(File file, String pathSoFar) throws FileNotFoundException {
-        if (!file.exists())
-            throw new FileNotFoundException("Input file or dir not found: " + file);
+    public void processFile(File file) {
+        if (!file.exists()) {
+            reportAndAbort(new FileNotFoundException("Input file or dir not found: " + file), file.getAbsolutePath(), file);
+            return;
+        }
 
         if (closed)
             return;
 
         if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
-            pathSoFar += "/" + file.getName();
             for (File childFile : FileUtil.listFilesSorted(file)) {
                 if (closed)
                     return;
@@ -386,19 +374,39 @@ public class FileProcessor implements AutoCloseable {
                 }
 
                 if (recurseSubdirs || !childFile.isDirectory())
-                    processFile(childFile, pathSoFar);
+                    processFile(childFile);
             }
         } else {
-            processInputStream(pathSoFar + "/" + file.getName(), new FileInputStream(file), file);
+            try {
+                processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);                
+            } catch (IOException e) {
+                reportAndAbort(e, file.getAbsolutePath(), file);
+                return;
+            }
         }
     }
-
-    public void processFile(byte[] contents, String path, File file, FileHandlerRaw cb) {
+    
+    /**
+     * Process from a raw file content array, which may be an archive or a regular file.
+     *
+     * Archives (.zip and .tar.gz) will only be processed if
+     * {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked
+     * regardless. Note that all files within archives will be processed, regardless
+     * of whether they match {@link FileProcessor#pattGlob}
+     *
+     * @param path filename, optionally including path to the file or path within an
+     *            archive
+     * @param contents 
+     * @param file (optional) the file backing the contents, or - if
+     *            the contents array represents a file within an archive - the archive. This is
+     *            only used for reporting to FileHandler and ErrorHandler
+     */
+    public void processFile(String path, byte[] contents, File file) {
         if (closed)
             return;
 
-        TarGzipReader.FileHandlerRaw handler = (pathInArchive, decodedBytes) -> {
-            processFile(decodedBytes, pathInArchive, file, cb);
+        TarGzipReader.FileHandler handler = (pathInArchive, decodedBytes) -> {
+            processFile(pathInArchive, decodedBytes, file);
             return !closed; // quit processing the archive if we've received an error in the meantime
         };
 
@@ -409,43 +417,7 @@ public class FileProcessor implements AutoCloseable {
         } else if (path.endsWith(".gz")) {
             TarGzipReader.processGzip(path, new ByteArrayInputStream(contents), handler);
         } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
-            CompletableFuture.runAsync(makeRunnable(() -> cb.file(path, contents, file)), executor)
-                    .exceptionally(e -> reportAndAbort(e, path, file));
-        }
-    }
-    
-    /**
-     * Process from an InputStream, which may be an archive or a regular file.
-     *
-     * Archives (.zip and .tar.gz) will only be processed if
-     * {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked
-     * regardless. Note that all files within archives will be processed, regardless
-     * of whether they match {@link FileProcessor#pattGlob}
-     *
-     * @param path filename, optionally including path to the file or path within an
-     *            archive
-     * @param is the stream
-     * @param file (optional) the file from which the InputStream was built, or - if
-     *            the InputStream is a file within an archive - the archive. This is
-     *            only used for reporting to FileHandler and ErrorHandler
-     */
-    public void processInputStream(String path, InputStream is, File file) {
-        if (closed)
-            return;
-
-        TarGzipReader.FileHandler handler = (pathInArchive, streamInArchive) -> {
-            processInputStream(pathInArchive, streamInArchive, file);
-            return !closed; // quit processing the archive if we've received an error in the meantime
-        };
-
-        if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
-            TarGzipReader.processTarGzip(path, is, handler);
-        } else if (isProcessArchives() && path.endsWith(".zip")) {
-            TarGzipReader.processZip(path, is, handler);
-        } else if (path.endsWith(".gz")) {
-            TarGzipReader.processGzip(path, is, handler);
-        } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
-            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
+            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, contents, file)), executor)
                     .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }

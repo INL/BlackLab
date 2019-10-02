@@ -1,6 +1,5 @@
 package nl.inl.util;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -18,27 +17,17 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * for each "normal" file in the .tar.gz file.
  */
 public class TarGzipReader {
-
     /**
      * Handles a file inside the .tar.gz archive.
      */
     @FunctionalInterface
     public interface FileHandler {
-        /**
-         * Handle a file inside the .zip or .tar.gz archive.
-         *
-         * @param filePath path to the archive, concatenated with any path to this file
-         *            inside the archive
-         * @param contents file contents, this stream is separate from the stream being
-         *            processed, and will always remain open until it is closed by the
-         *            handler.
-         * @return true if we should continue with the next file, false if not
-         */
-        boolean handle(String filePath, InputStream contents);
-    }
-    
-    @FunctionalInterface
-    public interface FileHandlerRaw {
+      /**
+        * @param filePath path to the archive, concatenated with any path to this file
+        *            inside the archive
+        * @param contents file contents
+        * @return true if we should continue with the next file, false if not
+        */
         boolean handle(String filePath, byte[] contents);
     }
 
@@ -58,14 +47,6 @@ public class TarGzipReader {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
-    
-    public static void processTarGzip(String fileName, InputStream tarGzipStream, FileHandlerRaw fileHandler) {
-        try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
-            processTar(fileName, unzipped, fileHandler);
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
 
     /**
      * Process a .gz file and call the file handler for its contents.
@@ -76,17 +57,6 @@ public class TarGzipReader {
      * @param fileHandler the handler to call
      */
     public static void processGzip(String fileName, InputStream gzipStream, FileHandler fileHandler) {
-        try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
-            // Make a copy of the data, since the stream we pass into fileHandler.handle may be used within another thread
-            // so it (or any of its underlying streams) should not be closed by us inadvertantly
-            InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
-            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-    
-    public static void processGzip(String fileName, InputStream gzipStream, FileHandlerRaw fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
             fileHandler.handle(fileName.replaceAll("\\.gz$", ""), IOUtils.toByteArray(unzipped)); // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
@@ -103,26 +73,6 @@ public class TarGzipReader {
      * @param fileHandler the handler to call for each regular file
      */
     public static void processTar(String fileName, InputStream tarStream, FileHandler fileHandler) {
-        try (TarArchiveInputStream s = new TarArchiveInputStream(tarStream)) {
-            for (TarArchiveEntry e = s.getNextTarEntry(); e != null; e = s.getNextTarEntry()) {
-                if (e.isDirectory())
-                    continue;
-
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
-                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
-                if (!keepProcessing)
-                    return;
-            }
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-    
-    public static void processTar(String fileName, InputStream tarStream, FileHandlerRaw fileHandler) {
         try (TarArchiveInputStream s = new TarArchiveInputStream(tarStream)) {
             for (TarArchiveEntry e = s.getNextTarEntry(); e != null; e = s.getNextTarEntry()) {
                 if (e.isDirectory())
@@ -149,26 +99,6 @@ public class TarGzipReader {
      * @param fileHandler the handler to call for each regular file
      */
     public static void processZip(String fileName, InputStream zipStream, FileHandler fileHandler) {
-        try (ZipInputStream s = new ZipInputStream(zipStream)) {
-            for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
-                if (e.isDirectory())
-                    continue;
-
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
-                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
-                if (!keepProcessing)
-                    return;
-            }
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-    
-    public static void processZip(String fileName, InputStream zipStream, FileHandlerRaw fileHandler) {
         try (ZipInputStream s = new ZipInputStream(zipStream)) {
             for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
                 if (e.isDirectory())

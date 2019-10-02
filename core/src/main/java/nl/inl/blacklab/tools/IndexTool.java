@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
@@ -292,10 +293,10 @@ public class IndexTool {
         try {
             if (glob.contains("*") || glob.contains("?")) {
                 // Real wildcard glob
-                indexer.index(inputDir, glob);
+                indexer.index(inputDir, Optional.of(glob));
             } else {
                 // Single file.
-                indexer.index(new File(inputDir, glob), "*");
+                indexer.index(new File(inputDir, glob));
             }
         } catch (Exception e) {
             System.err.println(

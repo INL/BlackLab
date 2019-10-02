@@ -235,8 +235,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         } catch (InvalidInputFormatConfig | IOException e) {
             formatErrors.put(formatIdentifier, e.getMessage());
             throw e;
-//            //e.printStackTrace(); // TODO: don't sweep this error under the rug please!
-//            return Optional.empty();
         }
     }
 
@@ -257,6 +255,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
+    @Deprecated
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
@@ -270,6 +269,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
+    @Deprecated
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs) {
         if (!isSupported(formatIdentifier))
@@ -284,6 +284,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
+    @Deprecated
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws FileNotFoundException {
         if (!isSupported(formatIdentifier))

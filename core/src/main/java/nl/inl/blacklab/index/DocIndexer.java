@@ -144,6 +144,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * @deprecated use {@link #setDocument(byte[], Charset)}
      * Set the document to index.
      *
      * NOTE: you should generally prefer calling the File or byte[] versions of this
@@ -152,14 +153,17 @@ public abstract class DocIndexer implements AutoCloseable {
      *
      * @param reader document
      */
+    @Deprecated
     public abstract void setDocument(Reader reader);
 
     /**
+     * @deprecated use {@link #setDocument(byte[], Charset)}
      * Set the document to index.
      *
      * @param is document contents
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
+    @Deprecated
     public void setDocument(InputStream is, Charset cs) {
         try {
             UnicodeStream unicodeStream = new UnicodeStream(is, cs);
@@ -171,6 +175,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * 
      * Set the document to index.
      *
      * @param contents document contents
@@ -181,6 +186,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * @deprecated use {@link #setDocument(byte[], Charset)}
      * Set the document to index.
      *
      * @param file file to index
@@ -188,6 +194,7 @@ public abstract class DocIndexer implements AutoCloseable {
      *            (utf-8)
      * @throws FileNotFoundException if not found
      */
+    @Deprecated
     public void setDocument(File file, Charset charset) throws FileNotFoundException {
         setDocument(new FileInputStream(file), charset);
     }

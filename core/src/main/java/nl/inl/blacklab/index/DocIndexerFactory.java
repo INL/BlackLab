@@ -136,6 +136,7 @@ public interface DocIndexerFactory {
     Format getFormat(String formatIdentifier);
 
     /**
+     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from a reader.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -147,10 +148,12 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
+    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException;
 
     /**
+     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from an input stream.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -163,10 +166,12 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
+    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs)
             throws UnsupportedOperationException;
 
     /**
+     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from a file.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -180,6 +185,7 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
+    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException;
 
@@ -199,8 +205,6 @@ public interface DocIndexerFactory {
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException;
 
-
-    
     /**
      * If this format exists but has an error, return the error.
      * 
