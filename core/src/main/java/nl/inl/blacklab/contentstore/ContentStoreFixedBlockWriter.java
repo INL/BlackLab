@@ -105,6 +105,11 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /** Contents still waiting to be written to the contents file in blocks */
     StringBuilder unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES * 10);
+    /** Byte index in unwrittenContents */
+    protected int unwrittenIndex = 0;
+
+    /**  unwritten content buffer is not flushed immediately after writing, as that is very slow in some situations (large documents in particular) */
+    protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096; 
 
     /** Used to pad blocks that are less than BLOCK_SIZE long */
     private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
@@ -249,18 +254,32 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         ensureContentsFileOpen();
 
         // Do we have a block to write?
-        while (writeLastBlock && unwrittenContents.length() > 0
-                || unwrittenContents.length() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
-            int lenBefore = unwrittenContents.length();
+        while (writeLastBlock && getUnwrittenByteCount() > 0 || getUnwrittenByteCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
+            int offsetBefore = unwrittenIndex;
             byte[] encoded = encodeBlock(); // encode a number of characters to produce a 4K block
-            int lenAfter = unwrittenContents.length();
-            int charLen = lenBefore - lenAfter;
+            int offsetAfter = unwrittenIndex;
+            int charLen = offsetAfter - offsetBefore;
             int blockIndex = writeToFreeBlock(encoded);
             blockIndicesWhileStoring.add(blockIndex);
             blockCharOffsetsWhileStoring.add(charsFromEntryWritten);
             charsFromEntryWritten += charLen;
             bytesWritten += encoded.length;
+            
+            if (unwrittenIndex > MAX_UNWRITTEN_INDEX) {
+                this.unwrittenContents.delete(0, unwrittenIndex);
+                unwrittenIndex = 0;
+            }
         }
+
+        // Free memory
+        if (unwrittenIndex > 0 && getUnwrittenByteCount() == 0) {
+            this.unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES*10);
+            unwrittenIndex = 0;
+        }
+    }
+
+    private int getUnwrittenByteCount() {
+        return this.unwrittenContents.length() - this.unwrittenIndex;
     }
 
     /**
@@ -320,7 +339,12 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     @Override
     public synchronized int store(String content) {
         storePart(content);
-        if (unwrittenContents.length() > 0) {
+        return store();
+    }
+
+    /** The store routine (after appending to unwrittenContents) */
+    private int store() {
+        if (getUnwrittenByteCount() > 0) {
             // Write the last (not completely full) block
             writeBlocks(true);
         }
@@ -407,7 +431,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     protected byte[] encodeBlock() {
 
         int length = TYPICAL_BLOCK_SIZE_CHARACTERS;
-        int available = unwrittenContents.length();
+        int available = getUnwrittenByteCount();
         if (length > available)
             length = available;
 
@@ -420,7 +444,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 // Serialize to bytes
                 byte[] encoded;
                 while (true) {
-                    encoded = unwrittenContents.substring(0, length).getBytes(DEFAULT_CHARSET);
+                    encoded = unwrittenContents.substring(this.unwrittenIndex, this.unwrittenIndex + length).getBytes(DEFAULT_CHARSET);
 
                     // Make sure the block fits in our zip buffer
                     if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
@@ -474,7 +498,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 } else {
                     //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + 
                     //", waste%: " + waste + ", ratio: " + ratio);
-                    unwrittenContents.delete(0, length);
+
+                    // NOTE: do not delete from unwrittenContents here, 
+                    // call site needs to know how much we advanced in the buffer to calculate how much uncompressed data was used
+                    this.unwrittenIndex += length;
                     return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
                 }
             }
