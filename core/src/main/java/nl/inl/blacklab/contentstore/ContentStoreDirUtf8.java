@@ -587,8 +587,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             out.limit(charsLeftInCurrentBlock);
         
             cd.decode(in, out, true);
-            addToBlock(out.array(), 0, out.length());
-            charsFromEntryWritten += out.length();
+            addToBlock(out.array(), 0, out.position());
+            charsFromEntryWritten += out.position();
             out.position(0);
 
             if ((charsFromEntryWritten % newEntryBlockSizeCharacters) == 0) {

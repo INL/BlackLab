@@ -356,7 +356,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         CharBuffer out = CharBuffer.allocate(1024);
         while (in.hasRemaining()) {
             cd.decode(in, out, true);
-            unwrittenContents.append(out.array(), 0, out.length());
+            unwrittenContents.append(out.array(), 0, out.position());
             out.position(0);
         } 
         writeBlocks(false);
