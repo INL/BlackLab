@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +35,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
-
+import org.mozilla.universalchardet.UniversalDetector;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -128,8 +129,56 @@ class IndexerImpl implements DocWriter, Indexer {
             // ignore
         }
     }
+    
+    private class DocIndexerWrapperRaw implements FileProcessor.FileHandlerRaw {
+
+        @Override
+        public void file(String path, byte[] contents, File file) throws IOException, MalformedInputFile, PluginException {
+            UniversalDetector det = new UniversalDetector(null);
+            det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
+            det.dataEnd();
+            Charset cs = DEFAULT_INPUT_ENCODING; 
+            try {
+                cs = Charset.forName(det.getDetectedCharset());
+            } catch (Exception e) { 
+                logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
+            }
+            impl(DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs), path);
+        }
+
+        private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
+
+            if (!indexer.continueIndexing())
+                return;
+
+            // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
+            // meantime
+            listener().fileStarted(documentName);
+            int docsDoneBefore = indexWriter.writer().numDocs();
+            long tokensDoneBefore = listener().getTokensProcessed();
+
+            indexer.index();
+            listener().fileDone(documentName);
+            int docsDoneAfter = indexWriter.writer().numDocs();
+            if (docsDoneAfter == docsDoneBefore) {
+                logger.warn("No docs found in " + documentName + "; wrong format?");
+            }
+            long tokensDoneAfter = listener().getTokensProcessed();
+            if (tokensDoneAfter == tokensDoneBefore) {
+                logger.warn("No words indexed in " + documentName + "; wrong format?");
+            }
+        }
+
+        @Override
+        public void directory(File dir) {
+            // ignore
+        }
+    }
+    
 
     private DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
+    private DocIndexerWrapperRaw docIndexerWrapperRaw = new DocIndexerWrapperRaw();
 
     /** Our index */
     private BlackLabIndexWriter indexWriter;
@@ -578,6 +627,18 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void index(File file) {
         index(file, "*");
+    }
+    
+    @Override
+    public void index(String fileName, byte[] contents) {
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
+            // and now we want byte arrays back here
+            // so our handler should be able to do that too.
+            proc.setErrorHandler(listener());
+//            proc.setFileNameGlob(fileNameGlob);
+            proc.processFile(contents, fileName, null, this.docIndexerWrapperRaw);
+        }
+        
     }
 
     // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)

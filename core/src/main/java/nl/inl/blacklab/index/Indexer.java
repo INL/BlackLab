@@ -189,6 +189,8 @@ public interface Indexer {
      * @param file the input file or directory
      */
     void index(File file);
+    
+    void index(String fileName, byte[] contents);
 
     /**
      * Index a document, archive (if enabled by

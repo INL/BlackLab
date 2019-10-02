@@ -1,5 +1,6 @@
 package nl.inl.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -72,6 +73,14 @@ public class FileProcessor implements AutoCloseable {
          */
         void file(String path, InputStream is, File file) throws Exception;
 
+        // Regular file(File f) function is omitted on purpose.
+        // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
+        // This means in some cases there is no actual file backing up the data
+    }
+    
+    public interface FileHandlerRaw {
+        void directory(File dir) throws Exception;
+        void file(String path, byte[] contents, File file) throws Exception;
         // Regular file(File f) function is omitted on purpose.
         // As we process regular files as well as "virtual" files (entries in archives and the like) in the same manner.
         // This means in some cases there is no actual file backing up the data
@@ -247,7 +256,9 @@ public class FileProcessor implements AutoCloseable {
             int cpuCores = Runtime.getRuntime().availableProcessors();
             int actualThreadsToUse = Math.max(1, Math.min(cpuCores - 1, numberOfThreadsToUse)); // no more than (cores-1), but at least 1
             executor = new ThreadPoolExecutor(actualThreadsToUse, actualThreadsToUse, Integer.MAX_VALUE, TimeUnit.DAYS,
-                new LinkedBlockingDeque<Runnable>(50) {
+                // We don't need a long queue at all
+                // Every queued job holds a full document in memory, and documents can be *very* large (100Meg+)
+                new LinkedBlockingDeque<Runnable>(Math.max(1, actualThreadsToUse / 2)) { 
                     @Override
                     public boolean offer(Runnable r) {
                         try {
@@ -382,6 +393,27 @@ public class FileProcessor implements AutoCloseable {
         }
     }
 
+    public void processFile(byte[] contents, String path, File file, FileHandlerRaw cb) {
+        if (closed)
+            return;
+
+        TarGzipReader.FileHandlerRaw handler = (pathInArchive, decodedBytes) -> {
+            processFile(decodedBytes, pathInArchive, file, cb);
+            return !closed; // quit processing the archive if we've received an error in the meantime
+        };
+
+        if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
+            TarGzipReader.processTarGzip(path, new ByteArrayInputStream(contents), handler);
+        } else if (isProcessArchives() && path.endsWith(".zip")) {
+            TarGzipReader.processZip(path, new ByteArrayInputStream(contents), handler);
+        } else if (path.endsWith(".gz")) {
+            TarGzipReader.processGzip(path, new ByteArrayInputStream(contents), handler);
+        } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
+            CompletableFuture.runAsync(makeRunnable(() -> cb.file(path, contents, file)), executor)
+                    .exceptionally(e -> reportAndAbort(e, path, file));
+        }
+    }
+    
     /**
      * Process from an InputStream, which may be an archive or a regular file.
      *

@@ -155,14 +155,22 @@ public class DocumentFormats {
         return factory != null ? factory.getFormat(formatIdentifier) : null;
     }
 
-    // Convenience
+    /** 
+     * Convenience function. 
+     * Note that it is usually faster to offer the document as byte[] and charset, 
+     * because that allows the buffer to be passed on without copying. 
+     */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, reader) : null;
     }
 
-    // Convenience
+    /** 
+     * Convenience function. 
+     * Note that it is usually faster to offer the document as byte[] and charset, 
+     * because that allows the buffer to be passed on without copying. 
+     */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
             throws UnsupportedOperationException {
@@ -170,14 +178,14 @@ public class DocumentFormats {
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, is, cs) : null;
     }
 
-    // Convenience
+    /** Convenience function. */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, f, cs) : null;
     }
 
-    // Convenience
+    /** Convenience function. */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);

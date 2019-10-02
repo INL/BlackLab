@@ -429,6 +429,13 @@
             <artifactId>vtd-xml</artifactId>
             <version>2.13.4</version>
         </dependency>
+        
+        <!-- https://mvnrepository.com/artifact/com.googlecode.juniversalchardet/juniversalchardet -->
+        <dependency>
+            <groupId>com.googlecode.juniversalchardet</groupId>
+            <artifactId>juniversalchardet</artifactId>
+            <version>1.0.3</version>
+        </dependency>
 
     </dependencies>
 

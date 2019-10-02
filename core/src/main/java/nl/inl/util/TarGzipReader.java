@@ -36,6 +36,11 @@ public class TarGzipReader {
          */
         boolean handle(String filePath, InputStream contents);
     }
+    
+    @FunctionalInterface
+    public interface FileHandlerRaw {
+        boolean handle(String filePath, byte[] contents);
+    }
 
     /**
      * Process a .tar.gz file and call the handler for each normal file in the
@@ -47,6 +52,14 @@ public class TarGzipReader {
      * @param fileHandler the handler to call for each regular file
      */
     public static void processTarGzip(String fileName, InputStream tarGzipStream, FileHandler fileHandler) {
+        try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
+            processTar(fileName, unzipped, fileHandler);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+    
+    public static void processTarGzip(String fileName, InputStream tarGzipStream, FileHandlerRaw fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
             processTar(fileName, unzipped, fileHandler);
         } catch (Exception e) {
@@ -68,6 +81,14 @@ public class TarGzipReader {
             // so it (or any of its underlying streams) should not be closed by us inadvertantly
             InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
             fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+    
+    public static void processGzip(String fileName, InputStream gzipStream, FileHandlerRaw fileHandler) {
+        try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
+            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), IOUtils.toByteArray(unzipped)); // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -100,6 +121,21 @@ public class TarGzipReader {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
+    
+    public static void processTar(String fileName, InputStream tarStream, FileHandlerRaw fileHandler) {
+        try (TarArchiveInputStream s = new TarArchiveInputStream(tarStream)) {
+            for (TarArchiveEntry e = s.getNextTarEntry(); e != null; e = s.getNextTarEntry()) {
+                if (e.isDirectory())
+                    continue;
+
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
+                if (!keepProcessing)
+                    return;
+            }
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
 
     /**
      * Process a .zip file and call the handler for each normal file in the archive.
@@ -124,6 +160,21 @@ public class TarGzipReader {
                 // NOTE: InputStream is not closed, handler is responsible for closing its stream
                 ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
                 boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
+                if (!keepProcessing)
+                    return;
+            }
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+    
+    public static void processZip(String fileName, InputStream zipStream, FileHandlerRaw fileHandler) {
+        try (ZipInputStream s = new ZipInputStream(zipStream)) {
+            for (ZipEntry e = s.getNextEntry(); e != null; e = s.getNextEntry()) {
+                if (e.isDirectory())
+                    continue;
+
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
                 if (!keepProcessing)
                     return;
             }
