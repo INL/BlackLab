@@ -23,7 +23,6 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.tuple.Pair;
-
 import com.ximpleware.AutoPilot;
 import com.ximpleware.BookMark;
 import com.ximpleware.NavException;
@@ -876,7 +875,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new String(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
+        storeWholeDocument(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8);
     }
 
     @Override

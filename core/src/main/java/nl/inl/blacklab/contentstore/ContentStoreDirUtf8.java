@@ -24,9 +24,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -474,6 +477,10 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         currentBlockContents.append(contentPart);
     }
 
+    public void addToBlock(char[] contentPart, int start, int length) {
+        currentBlockContents.append(contentPart);
+    }
+
     /**
      * Encode and write the block we've compiled so far and reset for next block
      * 
@@ -563,6 +570,34 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         }
     }
 
+    @Override
+    public void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+        if (documentLengthBytes <= 0)
+            return;
+        if (blockOffsetWhileStoring.isEmpty())
+            blockOffsetWhileStoring.add(0); // first offset is always 0
+
+        OutputStream os = openCurrentStoreFile();
+
+        CharsetDecoder cd = cs.newDecoder();
+        ByteBuffer in = ByteBuffer.wrap(inputDocument, documentByteOffset, documentLengthBytes);
+        CharBuffer out = CharBuffer.allocate(newEntryBlockSizeCharacters);
+        while (in.remaining() > 0) {
+            int charsLeftInCurrentBlock = (blockOffsetWhileStoring.size()*newEntryBlockSizeCharacters) - charsFromEntryWritten;
+            out.limit(charsLeftInCurrentBlock);
+        
+            cd.decode(in, out, true);
+            addToBlock(out.array(), 0, out.length());
+            charsFromEntryWritten += out.length();
+            out.position(0);
+
+            if ((charsFromEntryWritten % newEntryBlockSizeCharacters) == 0) {
+                writeCurrentBlock(os);
+                blockOffsetWhileStoring.add(bytesWritten);
+            }
+        }
+    }
+
     /**
      * Convert the String representation of a block to a byte buffer
      *
@@ -594,6 +629,16 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     @Override
     public synchronized int store(String content) {
         storePart(content);
+        return store();
+    }
+
+    @Override
+    public int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+        storePart(inputDocument, documentByteOffset, documentLengthBytes, cs);
+        return store();
+    }
+
+    private int store() {
         if (currentBlockContents.length() > 0) {
             // Write the last (not completely full) block
             OutputStream os = openCurrentStoreFile();

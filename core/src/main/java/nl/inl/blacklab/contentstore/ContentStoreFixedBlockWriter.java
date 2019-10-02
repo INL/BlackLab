@@ -21,8 +21,11 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -318,6 +321,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * Store part of a piece of large content. This may be called several times to
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
+     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
      *
      * @param content the content to store
      */
@@ -331,7 +336,38 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     }
 
     /**
+     * Store part of a piece of large content. This may be called several times to
+     * store chunks of content, but MUST be *finished* by calling the "normal"
+     * store() method. You may call store() with the empty string if you wish.
+     *  
+     * @param inputDocument the content of the document
+     * @param documentByteOffset byte offset to begin storing
+     * @param documentLengthBytes length of the data to store 
+     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
+     */
+    @Override
+    public synchronized void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+        if (documentLengthBytes == 0) {
+            return;
+        }
+        
+        CharsetDecoder cd = cs.newDecoder();
+        ByteBuffer in = ByteBuffer.wrap(inputDocument, documentByteOffset, documentLengthBytes);
+        CharBuffer out = CharBuffer.allocate(1024);
+        while (in.hasRemaining()) {
+            cd.decode(in, out, true);
+            unwrittenContents.append(out.array(), 0, out.length());
+            out.position(0);
+        } 
+        writeBlocks(false);
+    }
+
+    
+    
+    /**
      * Store the given content and assign an id to it.
+     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
      *
      * @param content the content to store
      * @return the id assigned to the content
@@ -341,7 +377,22 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         storePart(content);
         return store();
     }
-
+    
+    /**
+     * Store the given content and assign an id to it.
+     *
+     * @param inputDocument the content of the document
+     * @param documentByteOffset byte offset to begin storing
+     * @param documentLengthBytes length of the data to store 
+     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
+     * @return the id assigned to the content
+     */
+    @Override
+    public synchronized int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+        storePart(inputDocument, documentByteOffset, documentLengthBytes, cs);
+        return store();
+    }
+    
     /** The store routine (after appending to unwrittenContents) */
     private int store() {
         if (getUnwrittenByteCount() > 0) {

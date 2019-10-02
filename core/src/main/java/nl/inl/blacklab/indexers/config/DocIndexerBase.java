@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -455,7 +456,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         uniqueStrings.clear();
     }
 
-    /**
+       /**
      * Store the entire document at once.
      *
      * Subclasses that simply capture the entire document can use this in their
@@ -486,6 +487,33 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (docWriter != null) {
             ContentStore contentStore = docWriter.contentStore(contentStoreName);
             contentId = contentStore.store(document);
+        }
+        currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
+    }
+    
+    protected void storeWholeDocument(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+        // Finish storing the document in the document store,
+        // retrieve the content id, and store that in Lucene.
+        // (Note that we do this after adding the dummy token, so the character
+        // positions for the dummy token still make (some) sense)
+        String contentIdFieldName;
+        String contentStoreName = getContentStoreName();
+        if (contentStoreName == null) {
+            AnnotatedFieldWriter main = getMainAnnotatedField();
+            if (main == null) {
+                contentStoreName = "metadata";
+                contentIdFieldName = "metadataCid";
+            } else {
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+            }
+        } else {
+            contentIdFieldName = contentStoreName + "Cid";
+        }
+        int contentId = -1;
+        if (docWriter != null) {
+            ContentStore contentStore = docWriter.contentStore(contentStoreName);
+            contentId = contentStore.store(inputDocument, documentByteOffset, documentLengthBytes, cs);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }
