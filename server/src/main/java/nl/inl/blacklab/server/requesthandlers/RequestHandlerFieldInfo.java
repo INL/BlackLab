@@ -215,19 +215,38 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             AnnotationSensitivity as = annotation.sensitivity(annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE);
             String luceneField = as.luceneField();
             if (annotationMatches(annotation.name(), showValuesFor)) {
-                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField,
-                        MAX_FIELD_VALUES + 1);
+                boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+                int maxValues = isInlineTagAnnotation ? -1 : MAX_FIELD_VALUES + 1;
+                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, maxValues);
                 ds.startEntry("values").startList();
+
+                boolean valueListComplete = true;
                 int n = 0;
-                for (String value : values) {
-                    if (!value.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR))
-                        ds.item("value", value);
-                    n++;
-                    if (n == MAX_FIELD_VALUES)
-                        break;
+                if (isInlineTagAnnotation) {
+                    for (String value : values) {
+                        if (!value.startsWith("@")) {
+                            ds.item("value", value);
+                            n++;
+                        }
+                        if (n == MAX_FIELD_VALUES) {
+                            valueListComplete = false;
+                            break;
+                        }
+                    }
+                } else {
+                    for (String value : values) {
+                        if (!value.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR)) {
+                            ds.item("value", value);
+                            n++;
+                        }
+                        if (n == MAX_FIELD_VALUES) {
+                            valueListComplete = false;
+                            break;
+                        }
+                    }
                 }
                 ds.endList().endEntry();
-                ds.entry("valueListComplete", values.size() <= MAX_FIELD_VALUES);
+                ds.entry("valueListComplete", valueListComplete);
             }
             boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
             if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
