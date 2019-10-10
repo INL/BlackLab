@@ -303,10 +303,11 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
             String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
             xslt.append(XslGenerator.beginTemplate(wordBase))
-                    .append("<span class=\"word\" data-toggle=\"tooltip\">");
-
+                    .append("<span class=\"word\">");
+            
             // Extract lemma
             if (lemmaAnnot != null && lemmaAnnot != wordAnnot && lemmaAnnot.getValuePath() != null) {
+                xslt.append("<xsl:attribute name=\"data-toggle\" select=\"'tooltip'\"/>");
                 xslt.append("<xsl:attribute name=\"data-lemma\">")
                         .append("<xsl:value-of select='"
                                 + XslGenerator.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()).replace("'", "&apos;") + "'/>")
