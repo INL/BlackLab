@@ -697,13 +697,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     apEvalToString.resetXPath();
                     String unprocessedValue = apEvalToString.evalXPathToString();
                     for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
-                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value)) {
+                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value.toLowerCase())) {
                             int increment = firstValue ? 1 : 0;
                             annotation(annotation.getName(), value, increment, indexAtPositions);
                             firstValue = false;
                             if (valuesAlreadyIndexed != null) {
                                 // Keep track of values seen so we can discard duplicates
-                                valuesAlreadyIndexed.add(value);
+                                valuesAlreadyIndexed.add(value.toLowerCase());
                             }
                         }
                     }
