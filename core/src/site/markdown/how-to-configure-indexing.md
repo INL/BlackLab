@@ -333,7 +333,8 @@ annotatedFields:
           
 If you don't specify multipleValues, only the first value will be used. The reason you explicitly have to specify it is that this is relatively rare and could slow down the indexing process if automatically applied to all annotations.
 
-When indexing multiple values at a single position, it is possible to match the same value multiple times, for example when creating an annotation that combines word and lemma (useful for simple search). This would lead to duplicate matches. If this is not what you want, you can set `allowDuplicateValues` to false:
+When indexing multiple values at a single position, it is possible to match the same value multiple times, for example when creating an annotation that combines word and lemma (useful for simple search). This would lead to duplicate matches. If this is not what you want, you can set `allowDuplicateValues` to false.  
+Note that duplicates are checked case-insensitive. The value in the index will keep its capitalization however.
 
 ```yaml
     - name: word_and_lemma
