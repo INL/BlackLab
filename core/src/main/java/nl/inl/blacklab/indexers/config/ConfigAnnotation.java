@@ -76,6 +76,9 @@ public class ConfigAnnotation {
     
     /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
     private boolean allowDuplicateValues = true;
+    
+    /** Should we capture the innerXml of the node instead of the text */
+    private boolean captureXml = false;
 
     /**
      * Is this an internal annotation?
@@ -124,6 +127,7 @@ public class ConfigAnnotation {
         result.setForwardIndex(forwardIndex);
         result.setMultipleValues(multipleValues);
         result.setAllowDuplicateValues(allowDuplicateValues);
+        result.setCaptureXml(captureXml);
         return result;
     }
 
@@ -260,6 +264,14 @@ public class ConfigAnnotation {
         this.allowDuplicateValues = allowDuplicateValues;
     }
 
+    public void setCaptureXml(boolean captureXml) {
+        this.captureXml = captureXml;
+    }
+    
+    public boolean isCaptureXml() {
+        return this.captureXml;
+    }
+    
     public void setInternal(boolean internal) {
         this.internal = internal;
     }

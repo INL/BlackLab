@@ -18,6 +18,7 @@ customize them to fit your data.
 * <a href="#generated-xslt">Making sure an XSLT can be generated from your format config</a>
 * <a href="#disable-fi">Reducing index size by disabling the forward index for some annotations</a>
 * <a href="#multiple-values">Multiple values at one position</a>
+* <a href="#indexing-xml">Indexing raw XML</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
@@ -344,13 +345,22 @@ Note that duplicates are checked case-insensitive. The value in the index will k
 ```
 
 Multiple value annotations also work for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is a semicolon (;). You can change it as follows:
-
+```yaml
     fileType: tabular
     fileTypeOptions:
       type: tsv
       multipleValuesSeparator: "/"
-
+```
 <a id="standoff-annotations"></a>
+
+## Indexing XML
+
+An annotation can optionally capture the raw xml content: 
+```yaml
+    - name: word_xml
+      valuePath: .
+      captureXml: true
+```
 
 ## Standoff annotations
 
