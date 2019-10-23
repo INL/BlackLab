@@ -45,11 +45,10 @@ public class TextPatternRegex extends TextPatternTerm {
         TextPattern result = rewrite();
         if (result != this)
             return result.translate(context);
-        String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("^\\^|\\$$", "");
         try {
             return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
                     new Term(context.luceneField(),
-                            context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+                            context.subannotPrefix() + context.optDesensitize(value))));
         } catch (IllegalArgumentException e) {
             throw new InvalidQuery(e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {
@@ -76,7 +75,7 @@ public class TextPatternRegex extends TextPatternTerm {
      */
     public TextPattern rewrite() {
         // Is it "any token"?
-        if (value.equals("^.*$")) {
+        if (value.equals(".*")) {
             return new TextPatternAnyToken(1, 1);
         }
 
@@ -100,15 +99,12 @@ public class TextPatternRegex extends TextPatternTerm {
         }
 
         // If this contains no funny characters, only (Unicode) letters and digits,
-        // surrounded by ^ and $, turn it into a TermQuery, which might be a little
-        // faster than doing it via RegexpQuery (which has to build an Automaton).
+        // turn it into a TermQuery, which might be a little faster than doing it
+        // via RegexpQuery (which has to build an Automaton).
         TextPattern result = null;
-        String term = newValue;
-        if (term.length() >= 2 && term.charAt(0) == '^' && term.charAt(term.length() - 1) == '$') {
-            term = term.substring(1, term.length() - 1);
-            if (onlyLettersAndDigits.matcher(term).matches())
-                result = new TextPatternTerm(term);
-        }
+        if (onlyLettersAndDigits.matcher(newValue).matches())
+            result = new TextPatternTerm(newValue);
+
         if (result == null) {
             // Not a term query. Did we strip off a sensitivity flag above?
             if (!forceSensitive && !forceInsensitive) {
