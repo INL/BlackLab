@@ -32,6 +32,8 @@ public class OldBlsConfigCacheAndPerformance {
 
     private int maxPausedSearches = 10;
 
+    private int maxThreadsPerSearch = 2;
+
     /** Max time searches are allowed to run (5 minutes) */
     private int maxSearchTimeSec = 5 * 60;
 
@@ -134,6 +136,7 @@ public class OldBlsConfigCacheAndPerformance {
             }
 
             maxPausedSearches = JsonUtil.getIntProp(serverLoadSettings, "maxPausedSearches", 10);
+            maxThreadsPerSearch = JsonUtil.getIntProp(serverLoadSettings, "maxThreadsPerSearch", 2);
 
             abandonedCountPauseTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountPauseTimeSec", 10);
             abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 60);
@@ -237,7 +240,7 @@ public class OldBlsConfigCacheAndPerformance {
         result.setMaxConcurrentSearches(getMaxConcurrentSearches());
         result.setMaxPausedSearches(getMaxPausedSearches());
         result.setMaxRunningJobsPerUser(getMaxRunningJobsPerUser());
-        result.setMaxThreadsPerSearch(2);
+        result.setMaxThreadsPerSearch(maxThreadsPerSearch);
         result.setPausingEnabled(enableThreadPausing());
         result.setAutodetectMaxConcurrent(shouldAutoDetectMaxConcurrent());
         result.setAbandonedCountPauseTimeSec(abandonedCountPauseTimeSec);
