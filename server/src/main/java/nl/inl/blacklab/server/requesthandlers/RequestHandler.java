@@ -174,12 +174,16 @@ public abstract class RequestHandler {
                 requestHandler = new RequestHandlerDeleteFormat(servlet, request, user, indexName, urlResource,
                         urlPathInfo);
             } else {
-                if (indexName.length() == 0 || resourceOrPathGiven) {
+                if (indexName.length() == 0 || (resourceOrPathGiven && !"docs".equals(urlResource))) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
-                if (!isYourPrivateIndex)
-                    return errorObj.forbidden("You can only delete your own private indices.");
-                requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
+                if ("docs".equals(urlResource)) {
+                    requestHandler = new RequestHandlerDeleteDocs(servlet, request, user, indexName, urlResource, urlPathInfo);
+                } else {
+                    if (!isYourPrivateIndex)
+                        return errorObj.forbidden("You can only delete your own private indices.");
+                    requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
+                }
             }
         } else if (method.equals("PUT")) {
             return errorObj.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");

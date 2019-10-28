@@ -906,10 +906,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public void delete(Query q) {
+    public int delete(Query q) {
         logger.debug("Delete query: " + q);
         if (!indexMode)
             throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+
+        int deletedCount = 0;
         try {
             // Open a fresh reader to execute the query
             try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
@@ -945,6 +947,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
                         // Delete this document in all content stores
                         contentStores.deleteDocument(d);
+
+                        deletedCount += 1;
                     }
                 }
             } finally {
@@ -958,6 +962,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+
+        return deletedCount;
     }
 
     @Override

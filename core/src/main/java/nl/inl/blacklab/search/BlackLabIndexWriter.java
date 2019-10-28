@@ -42,7 +42,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * 
      * @param q the query
      */
-    void delete(Query q);
+    int delete(Query q);
 
     /**
      * Get existing annotation or create new one.
