@@ -26,6 +26,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -167,12 +168,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort(new Comparator<TocEntry>() {
-            @Override
-            public int compare(TocEntry o1, TocEntry o2) {
-                return o1.length - o2.length;
-            }
-        });
+        deletedTocEntries.sort(TocEntry.LENGTH_COMPARATOR);
     }
 
     
@@ -271,26 +267,13 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
      * @return the best-fitting entry
      */
     TocEntry findBestFittingGap(int length) {
-        int n = deletedTocEntries.size();
+        int index = Collections.binarySearch(deletedTocEntries, new TocEntry(0, length, true), TocEntry.LENGTH_COMPARATOR);
 
-        // Are there any fitting gaps?
-        if (n == 0 || deletedTocEntries.get(n - 1).length < length)
-            return null;
-
-        // Does the smallest gap fit?
-        if (deletedTocEntries.get(0).length >= length)
-            return deletedTocEntries.get(0);
-
-        // Do a binary search to find the best fit
-        int doesntFit = 0, bestFitSoFar = n - 1;
-        while (bestFitSoFar - doesntFit > 1) {
-            int newTry = doesntFit + bestFitSoFar / 2;
-            if (deletedTocEntries.get(newTry).length < length)
-                doesntFit = newTry;
-            else
-                bestFitSoFar = newTry;
+        if (index < 0) {
+            // No exact match, recover the index of the smallest one that fits.
+            index = -index - 1;
         }
-        return deletedTocEntries.get(bestFitSoFar);
+        return index < deletedTocEntries.size() ? deletedTocEntries.get(index) : null;
     }
 
     @Override

@@ -15,8 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
+import java.util.Comparator;
+
 /** Table of contents entry; stored in docs.dat */
 class TocEntry implements Comparable<TocEntry> {
+    public static final Comparator<TocEntry> LENGTH_COMPARATOR = Comparator.comparingInt(o -> o.length);
+
     /** token offset in tokens.dat */
     public long offset;
 
