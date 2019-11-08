@@ -261,4 +261,22 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         return clauses.get(0).canMakeNfa();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!super.equals(o))
+            return false;
+
+        final SpanQueryFiSeq that = (SpanQueryFiSeq) o;
+        return nfaQuery.equals(that.nfaQuery);
+    }
+
+    @Override
+    public int hashCode() {
+        int h = super.hashCode();
+        h ^= nfaQuery.hashCode();
+        return h;
+    }
+
 }
