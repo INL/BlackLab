@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.text.Collator;
+import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
@@ -250,9 +251,10 @@ public interface BlackLabIndex extends Closeable {
      * 
      * @param annotSensitivity the annation + sensitivity indexing we want the term frequency for
      * @param filterQuery document filter, or null for all documents
+     * @param terms a list of terms to retrieve frequencies for, or null/empty to retrieve frequencies for all terms
      * @return term frequencies
      */
-    TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery);
+    TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms);
 
     /**
      * Explain how a TextPattern is converted to a SpanQuery and rewritten to an

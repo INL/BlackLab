@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
 import java.util.List;
+import java.util.Set;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -83,7 +84,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream contextList(List<Annotation> annotations, List<String> values) {
+    public DataStream contextList(List<Annotation> annotations, Set<Annotation> annotationsToList, List<String> values) {
         return this;
     }
 

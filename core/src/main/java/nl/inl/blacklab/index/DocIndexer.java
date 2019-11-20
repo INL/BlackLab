@@ -25,6 +25,8 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +42,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -63,7 +65,7 @@ import nl.inl.util.UnicodeStream;
 public abstract class DocIndexer implements AutoCloseable {
 
     protected static final Logger logger = LogManager.getLogger(DocIndexer.class);
-    
+
     public static final int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
     protected DocWriter docWriter;
@@ -82,12 +84,12 @@ public abstract class DocIndexer implements AutoCloseable {
      * we're indexing)
      */
     protected Document currentLuceneDoc;
-    
+
     /**
      * Document metadata. Added at the end to deal with unknown values, multiple occurrences
      * (only the first is actually indexed, because of DocValues, among others), etc.
      */
-    protected Map<String, String> metadataFieldValues = new HashMap<>();
+    protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
     /**
      * Parameters passed to this indexer
@@ -95,7 +97,7 @@ public abstract class DocIndexer implements AutoCloseable {
     protected Map<String, String> parameters = new HashMap<>();
 
     Set<String> numericFields = new HashSet<>();
-    
+
     @Override
     public abstract void close();
 
@@ -105,7 +107,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Returns our DocWriter object
-     * 
+     *
      * @return the DocWriter object
      */
     public DocWriter getDocWriter() {
@@ -114,9 +116,9 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Set the DocWriter object.
-     * 
+     *
      * We use this to add documents to the index.
-     * 
+     *
      * Called by Indexer when the DocIndexer is instantiated.
      *
      * @param docWriter our DocWriter object
@@ -192,8 +194,8 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Index documents contained in a file.
-     * 
-     * @throws MalformedInputFile if the input file wasn't valid 
+     *
+     * @throws MalformedInputFile if the input file wasn't valid
      * @throws IOException if an I/O error occurred
      * @throws PluginException if an error occurred in a plugin
      */
@@ -201,7 +203,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Check if the specified parameter has a value
-     * 
+     *
      * @param name parameter name
      * @return true iff the parameter has a value
      * @deprecated use a DocIndexerConfig-based indexer
@@ -214,7 +216,7 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Set a parameter for this indexer (such as which type of metadata block to
      * process)
-     * 
+     *
      * @param name parameter name
      * @param value parameter value
      * @deprecated use a DocIndexerConfig-based indexer
@@ -226,7 +228,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Set a number of parameters for this indexer
-     * 
+     *
      * @param param the parameter names and values
      * @deprecated use a DocIndexerConfig-based indexer
      */
@@ -239,7 +241,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
-     * 
+     *
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -255,7 +257,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
-     * 
+     *
      * @param name parameter name
      * @return the parameter value (or null if it was not specified)
      * @deprecated use a DocIndexerConfig-based indexer
@@ -267,7 +269,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
-     * 
+     *
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -284,7 +286,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Get a parameter that was set for this indexer
-     * 
+     *
      * @param name parameter name
      * @param defaultValue parameter default value
      * @return the parameter value (or the default value if it was not specified)
@@ -310,7 +312,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Return the fieldtype to use for the specified field.
-     * 
+     *
      * @param fieldName the field name
      * @return the fieldtype
      * @deprecated use a DocIndexerConfig-based indexer
@@ -360,8 +362,8 @@ public abstract class DocIndexer implements AutoCloseable {
     protected void warn(String msg) {
         docWriter.listener().warning(msg);
     }
-    
-    public String getMetadataField(String name) {
+
+    public List<String> getMetadataField(String name) {
         return metadataFieldValues.get(name);
     }
 
@@ -376,9 +378,8 @@ public abstract class DocIndexer implements AutoCloseable {
         }
 
         value = value.trim();
-        if (!value.isEmpty() && !metadataFieldValues.containsKey(name)) { // only store the first value found (DocValues, and this is the value .get() returns anyway)
-            metadataFieldValues.put(name, value);
-            
+        if (!value.isEmpty()) {
+            metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
             IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
             indexMetadata.registerMetadataField(name);
         }
@@ -396,11 +397,11 @@ public abstract class DocIndexer implements AutoCloseable {
     protected String optTranslateFieldName(String from) {
         return from;
     }
-    
+
     /**
      * When all metadata values have been set, call this to add the to the Lucene document.
-     * 
-     * We do it this way because we don't want to add multiple values for a field (DocValues and 
+     *
+     * We do it this way because we don't want to add multiple values for a field (DocValues and
      * Document.get() only deal with the first value added), and we want to set an "unknown value"
      * in certain conditions, depending on the configuration.
      */
@@ -414,10 +415,10 @@ public abstract class DocIndexer implements AutoCloseable {
             if (fd.type() == FieldType.NUMERIC)
                 continue;
             boolean missing = false, empty = false;
-            String currentValue = getMetadataField(fd.name());
+            List<String> currentValue = getMetadataField(fd.name());
             if (currentValue == null)
                 missing = true;
-            else if (currentValue.length() == 0)
+            else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
                 empty = true;
             UnknownCondition cond = fd.unknownCondition();
             boolean useUnknownValue = false;
@@ -438,27 +439,32 @@ public abstract class DocIndexer implements AutoCloseable {
             if (useUnknownValue) {
                 if (empty) {
                     // Don't count this as a value, count the unknown value
-                    ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(currentValue);
+                    for (String value : currentValue) {
+                        ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(value);
+                    }
                 }
                 unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.put(e.getKey(), e.getValue());
+            metadataFieldValues.put(e.getKey(), Arrays.asList(e.getValue()));
         }
-        for (Entry<String, String> e: metadataFieldValues.entrySet()) {
+        for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());
         }
         metadataFieldValues.clear();
     }
-    
-    private void addMetadataFieldToDocument(String name, String value) {
+
+    private void addMetadataFieldToDocument(String name, List<String> values) {
         IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
         //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);
         FieldType type = desc.type();
-        desc.addValue(value);
+        for (String value : values) {
+            desc.addValue(value);
+        }
+
 
         // There used to be another way of specifying metadata field type,
         // via indexer.properties. This is still supported, but deprecated.
@@ -470,42 +476,47 @@ public abstract class DocIndexer implements AutoCloseable {
         }
 
         if (type != FieldType.NUMERIC) {
-            currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
-            // If a value is too long (more than 32K), just truncate it a bit.
-            // This should be very rare and would generally only affect sorting/grouping, if anything. 
-            if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
-                // While it's really too large
-                byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
-                while (utf8.length > MAX_DOCVALUES_LENGTH) {
-                    // assume all characters take two bytes, truncate and try again
-                    int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
-                    int truncateAt = value.length() - 2 * overshoot;
-                    if (truncateAt < 1)
-                        truncateAt = 1;
-                    value = value.substring(0, truncateAt);
-                    utf8 = value.getBytes(StandardCharsets.UTF_8);
+            for (String value : values) {
+                currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
+                // If a value is too long (more than 32K), just truncate it a bit.
+                // This should be very rare and would generally only affect sorting/grouping, if anything.
+                if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
+                    // While it's really too large
+                    byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    while (utf8.length > MAX_DOCVALUES_LENGTH) {
+                        // assume all characters take two bytes, truncate and try again
+                        int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
+                        int truncateAt = value.length() - 2 * overshoot;
+                        if (truncateAt < 1)
+                            truncateAt = 1;
+                        value = value.substring(0, truncateAt);
+                        utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    }
                 }
+                currentLuceneDoc.add(new SortedSetDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
             }
-            currentLuceneDoc.add(new SortedDocValuesField(name, new BytesRef(value))); // docvalues for efficient sorting/grouping
         }
         if (type == FieldType.NUMERIC || numericFields.contains(name)) {
             String numFieldName = name;
             if (type != FieldType.NUMERIC) {
                 numFieldName += "Numeric";
             }
-            // Index these fields as numeric too, for faster range queries
-            // (we do both because fields sometimes aren't exclusively numeric)
-            int n;
-            try {
-                n = Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                // This just happens sometimes, e.g. given multiple years, or
-                // descriptive text like "around 1900". OK to ignore.
-                n = 0;
+
+            for (String value : values) {
+                // Index these fields as numeric too, for faster range queries
+                // (we do both because fields sometimes aren't exclusively numeric)
+                int n;
+                try {
+                    n = Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    // This just happens sometimes, e.g. given multiple years, or
+                    // descriptive text like "around 1900". OK to ignore.
+                    n = 0;
+                }
+                IntField nf = new IntField(numFieldName, n, Store.YES);
+                currentLuceneDoc.add(nf);
+                currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
             }
-            IntField nf = new IntField(numFieldName, n, Store.YES);
-            currentLuceneDoc.add(nf);
-            currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
         }
     }
 
@@ -518,7 +529,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * desensitized, you can't use uppercase or accented letters in these values or
      * they will never be found. This should be addressed.
      *
-     * NOTE2: This way of adding metadata values is deprecated. Use an input format config 
+     * NOTE2: This way of adding metadata values is deprecated. Use an input format config
      * file instead, and configure a field with a fixed value.
      */
     protected void addMetadataFieldsFromParameters() {
@@ -568,7 +579,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     /**
      * Add the field, with all its properties, to the forward index.
-     * 
+     *
      * @param field field to add to the forward index
      */
     protected void addToForwardIndex(AnnotatedFieldWriter field) {

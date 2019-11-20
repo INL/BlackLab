@@ -323,7 +323,7 @@ public class IndexTool {
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
-            indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), null));
+            indexWriter.delete(LuceneUtil.parseLuceneQuery(deleteQuery, indexWriter.analyzer(), "nonExistentDefaultField"));
         }
     }
 

@@ -24,7 +24,7 @@ public class ConfigMetadataField {
      * matching node.
      */
     private String forEachPath;
-
+    
     /** How to process annotation values (if at all) */
     private List<ConfigProcessStep> process = new ArrayList<>();
     
@@ -108,7 +108,7 @@ public class ConfigMetadataField {
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
     }
-
+    
     public String getName() {
         return name;
     }
@@ -116,7 +116,7 @@ public class ConfigMetadataField {
     public String getValuePath() {
         return valuePath;
     }
-
+    
     public String getForEachPath() {
         return forEachPath;
     }

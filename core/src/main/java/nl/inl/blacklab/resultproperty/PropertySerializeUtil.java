@@ -35,10 +35,18 @@ public final class PropertySerializeUtil {
         return b.toString();
     }
 
+    /**
+     * Split string on first part and the rest.
+     * 
+     * NOTE: only the first part is unescaped; the rest should be split later and unescaped at that time!
+     * 
+     * @param partsCombined serialized parts
+     * @return an array of length 1 or 2, depending on whether there's more than one part
+     */
     public static String[] splitPartFirstRest(String partsCombined) {
         String[] parts = partsCombined.split(PART_SEPARATOR_ESC_REGEX, 2);
         for (int i = 0; i < parts.length; i++) {
-            parts[i] = unescapePart(parts[i]);
+            parts[i] = i == 0 ? unescapePart(parts[i]) : parts[i]; // only unescape first part, not the rest!
         }
         return parts;
     }

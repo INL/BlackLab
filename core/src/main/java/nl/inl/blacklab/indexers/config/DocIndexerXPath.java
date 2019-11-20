@@ -143,7 +143,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     /**
      * Create AutoPilot and declare namespaces on it.
-     * 
+     *
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
      * @throws XPathParseException
@@ -190,9 +190,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
             vg.enableIgnoredWhiteSpace(true);
             try {
                 vg.parse(config.isNamespaceAware());
-    
+
                 nav = vg.getNav();
-    
+
                 // Find all documents
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
                 while (documents.evalXPath() != -1) {
@@ -469,22 +469,39 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         if (!origFieldName.equals(fieldName)) {
                             warnSanitized(origFieldName, fieldName);
                         }
-                        apMetadata.resetXPath();
-                        String metadataValue = apMetadata.evalXPathToString();
-                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                        // Also execute process defined for named metadata field, if any
                         ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
-                        metadataValue = processString(metadataValue, metadataField.getProcess(), metadataField.getMapValues());
-                        addMetadataField(fieldName, metadataValue);
+
+                        apMetadata.resetXPath();
+
+                        // Multiple matches will be indexed at the same position.
+                        AutoPilot apEvalToString = acquireAutoPilot(".");
+                        while (apMetadata.evalXPath() != -1) {
+                            apEvalToString.resetXPath();
+                            String unprocessedValue = apEvalToString.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                                // Also execute process defined for named metadata field, if any
+                                for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
+                                    addMetadataField(fieldName, processedValue);
+                                }
+                            }
+                        }
+                        releaseAutoPilot(apEvalToString);
                     }
                     releaseAutoPilot(apMetaForEach);
                     releaseAutoPilot(apFieldName);
                     navpop();
                 } else {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
-                    String metadataValue = apMetadata.evalXPathToString();
-                    metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                    addMetadataField(f.getName(), metadataValue);
+                    // Multiple matches will be indexed at the same position.
+                    AutoPilot apEvalToString = acquireAutoPilot(".");
+                    while (apMetadata.evalXPath() != -1) {
+                        apEvalToString.resetXPath();
+                        String unprocessedValue = apEvalToString.evalXPathToString();
+                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                            addMetadataField(f.getName(), value);
+                        }
+                    }
+                    releaseAutoPilot(apEvalToString);
                 }
                 releaseAutoPilot(apMetadata);
             }
@@ -493,7 +510,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         releaseAutoPilot(apMetadataBlock);
         navpop();
     }
-    
+
     private static Set<String> reportedSanitizedNames = new HashSet<>();
 
     private synchronized static void warnSanitized(String origFieldName, String fieldName) {
@@ -529,7 +546,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 releaseAutoPilot(apLinkPath);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
-                result = getMetadataField(valueField);
+                result = getMetadataField(valueField).get(0);
             }
             result = processString(result, linkValue.getProcess(), null);
             results.add(result);
@@ -586,7 +603,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // No valuePath given. Assume this will be captures using forEach.
                 return;
             }
-    
+
             // See if we want to capture any values and substitute them into the XPath
             int i = 1;
             for (String captureValuePath : annotation.getCaptureValuePaths()) {
@@ -596,10 +613,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 valuePath = valuePath.replace("$" + i, value);
                 i++;
             }
-    
+
             // Find matches for this annotation.
             String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
-    
+
             // For each configured subannotation...
             Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment 
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
@@ -608,7 +625,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // such as extra processing steps
                 if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
                     continue;
-    
+
                 // Capture this subannotation value
                 AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
                 if (subAnnot.isForEach()) {
@@ -621,17 +638,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     while (apForEach.evalXPath() != -1) {
                         // Find the name and value for this forEach match
                         apName.resetXPath();
-                        String name = apName.evalXPathToString();
                         apValue.resetXPath();
-                        String value = apValue.evalXPathToString();
-                        value = processString(value, subAnnot.getProcess(), null);
+
+                        String name = apName.evalXPathToString();
                         String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
                         ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
+
+                        String value = null;
                         if (actualSubAnnot != null) {
+                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString(); 
+                            value = processString(value, subAnnot.getProcess(), null);
                             // Also apply process defined in named subannotation, if any
                             value = processString(value, actualSubAnnot.getProcess(), null);
+                        } else {
+                            value = subAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
+                            value = processString(value, subAnnot.getProcess(), null);
                         }
-                        // Index the value with the actual annotation it's for
                         if (!alreadySeen.contains(subannotationName)) {
                             // First occurrence of this annotation
                             annotation(subannotationName, value, 1, indexAtPositions);
@@ -647,12 +669,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 } else {
                     // Regular subannotation; just the fieldName and an XPath expression for the value
                     String subValuePath = subAnnot.getValuePath();
-                    String reuseValue = subValuePath.equals(valuePath) ? annotValue : null;
+                    String reuseValue = subValuePath.equals(valuePath) && subAnnot.isCaptureXml() == annotation.isCaptureXml() ? annotValue : null;
                     findAnnotationMatches(subAnnot, subValuePath, indexAtPositions, reuseValue);
                 }
                 releaseAutoPilot(apValue);
             }
-            
+
         } finally {
             if (basePath != null) {
                 // We pushed when we navigated to the base element; pop now.
@@ -665,6 +687,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             List<Integer> indexAtPositions, String reuseValueFromParentAnnot)
             throws XPathParseException, XPathEvalException, NavException {
         String annotValueForReuse = null;
+        boolean evalXml = annotation.isCaptureXml();
+
         if (reuseValueFromParentAnnot == null) {
             navpush();
             AutoPilot apValuePath = acquireAutoPilot(valuePath);
@@ -675,35 +699,36 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     valuesAlreadyIndexed = new HashSet<>();
                 
                 // Multiple matches will be indexed at the same position.
-                AutoPilot apEvalToString = acquireAutoPilot(".");
+                AutoPilot apValue = acquireAutoPilot(".");
                 boolean firstValue = true;
                 while (apValuePath.evalXPath() != -1) {
-                    apEvalToString.resetXPath();
-                    String annotValue = apEvalToString.evalXPathToString();
-                    annotValue = processString(annotValue, annotation.getProcess(), null);
-                    if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(annotValue)) {
-                        // We don't care about duplicates or we do and this is not a duplicate.
-                        // Index the value.
-                        int increment = firstValue ? 1 : 0;
-                        annotation(annotation.getName(), annotValue, increment, indexAtPositions);
-                        firstValue = false;
-                        if (valuesAlreadyIndexed != null) {
-                            // Keep track of values seen so we can discard duplicates
-                            valuesAlreadyIndexed.add(annotValue);
+                    apValue.resetXPath();
+                    String unprocessedValue = evalXml ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
+                    for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
+                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value.toLowerCase())) {
+                            int increment = firstValue ? 1 : 0;
+                            annotation(annotation.getName(), value, increment, indexAtPositions);
+                            firstValue = false;
+                            if (valuesAlreadyIndexed != null) {
+                                // Keep track of values seen so we can discard duplicates
+                                valuesAlreadyIndexed.add(value.toLowerCase());
+                            }
                         }
                     }
                 }
-                releaseAutoPilot(apEvalToString);
-    
+                releaseAutoPilot(apValue);
+
                 // No annotations have been added, the result of the xPath query must have been empty.
                 if (firstValue) {
-                    // Add default value
-                    String annotValue = processString("", annotation.getProcess(), null);
-                    annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+                    // Add default value(s)
+                    for (String value : processStringMultipleValues("", annotation.getProcess(), null)) {
+                        int increment = firstValue ? 1 : 0;
+                        annotation(annotation.getName(), value, increment, indexAtPositions);
+                    }
                 }
             } else {
                 // Single value expected
-                annotValueForReuse = apValuePath.evalXPathToString();
+                annotValueForReuse = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
                 String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
                 annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
@@ -908,4 +933,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
         setCurrentAnnotatedFieldName(currentAnnotatedFieldConfig.getName());
     }
 
+    /** Get the raw xml from the document at the current position 
+     * @throws NavException */
+    private static String getXml(AutoPilot ap) throws NavException {
+        long frag = ap.getNav().getContentFragment();
+        if (frag == -1) {
+            return "";
+        }
+
+        int offset = (int) frag;
+        int length = (int) (frag >> 32);
+
+        return ap.getNav().toRawString(offset, length);
+    }
 }

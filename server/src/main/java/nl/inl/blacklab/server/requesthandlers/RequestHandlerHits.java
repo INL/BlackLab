@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,7 +25,9 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -74,14 +78,14 @@ public class RequestHandlerHits extends RequestHandler {
         ResultsStats hitsCount;
         ResultsStats docsCount;
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
-            
+
             // Viewing a single group in a grouped hits results
-            
+
             // Group, then show hits from the specified group
             job = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
             HitGroups hitsGrouped;
             try {
-                hitsGrouped = (HitGroups)job.get();
+                hitsGrouped = (HitGroups) job.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
@@ -114,21 +118,21 @@ public class RequestHandlerHits extends RequestHandler {
             if (!hitsInGroup.hitsStats().processedAtLeast(windowSettings.first()))
                 return Response.badRequest(ds, "HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
             window = hitsInGroup.window(windowSettings.first(), windowSettings.size());
-            
+
             hitsCount = hitsInGroup.hitsStats();
             docsCount = hitsInGroup.docsStats();
-            
+
         } else {
-            
+
             // Regular hits search
-            
+
             // Since we're going to always launch a totals count anyway, just do it right away
             // then construct a window on top of the total
             hits = searchMan.search(user, searchParam.hitsSample());
             job = searchMan.searchNonBlocking(user, searchParam.hitsCount()); // always launch totals nonblocking!
             docsCount = searchMan.search(user, searchParam.docsCount());
             try {
-                hitsCount = (ResultCount)job.get();
+                hitsCount = (ResultCount) job.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
@@ -136,7 +140,7 @@ public class RequestHandlerHits extends RequestHandler {
                 // Wait until all hits have been counted.
                 hitsCount.countedTotal();
             }
-            
+
 //            int sleepTime = 10;
 //            int totalSleepTime = 0;
 
@@ -148,7 +152,6 @@ public class RequestHandlerHits extends RequestHandler {
 
             window = searchMan.search(user, searchParam.hitsWindow());
 
-            
 //            hits.hitsStats().processedAtLeast(first + size);
 //
 //            // We blocked, so if we don't have the page available, the request is out of bounds.
@@ -174,7 +177,7 @@ public class RequestHandlerHits extends RequestHandler {
             // Determine total number of tokens in result set
             totalTokens = perDocResults.subcorpusSize().getTokens();
         }
-        
+
         searchLogger.setResultsFound(hitsCount.processedSoFar());
 
         // Search is done; construct the results object
@@ -224,10 +227,13 @@ public class RequestHandlerHits extends RequestHandler {
         ContextSettings contextSettings = searchParam.getContextSettings();
         Concordances concordances = null;
         Kwics kwics = null;
+        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
         if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
             concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
         else
             kwics = window.kwics(contextSettings.size());
+
+        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
         for (Hit hit : window) {
             ds.startItem("hit").startMap();
 
@@ -272,9 +278,9 @@ public class RequestHandlerHits extends RequestHandler {
             } else {
                 // Add KWIC info
                 Kwic c = kwics.get(hit);
-                ds.startEntry("left").contextList(c.annotations(), c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), c.right()).endEntry();
+                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             }
             ds.endMap().endItem();
         }
@@ -296,7 +302,7 @@ public class RequestHandlerHits extends RequestHandler {
                     doc = index.doc(hit.doc()).luceneDoc();
                     lastPid = pid;
                 }
-                dataStreamDocumentInfo(ds, index, doc);
+                dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
                 ds.endAttrEntry();
             }
         }
@@ -320,7 +326,8 @@ public class RequestHandlerHits extends RequestHandler {
         ContextSize contextSize = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
         ds.startMap().startEntry("tokenFrequencies").startMap();
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
-        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize, sensitivity);
+        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
+                sensitivity);
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
         }

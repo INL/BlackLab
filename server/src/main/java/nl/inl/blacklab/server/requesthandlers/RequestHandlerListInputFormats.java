@@ -303,10 +303,11 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
             String wordBase = XslGenerator.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
             xslt.append(XslGenerator.beginTemplate(wordBase))
-                    .append("<span class=\"word\" data-toggle=\"tooltip\">");
-
+                    .append("<span class=\"word\">");
+            
             // Extract lemma
             if (lemmaAnnot != null && lemmaAnnot != wordAnnot && lemmaAnnot.getValuePath() != null) {
+                xslt.append("<xsl:attribute name=\"data-toggle\" select=\"'tooltip'\"/>");
                 xslt.append("<xsl:attribute name=\"data-lemma\">")
                         .append("<xsl:value-of select='"
                                 + XslGenerator.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()).replace("'", "&apos;") + "'/>")
@@ -373,7 +374,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     +
                     "so the words can't be found. " +
                     "To fix this, you will need to add the namespaces in your format and use them in the xpaths. " +
-                    "If your document contains a default namespace, you can declare it as an empty name (\"\": \"http://my-default-namespace.site/namespace\")";
+                    "If your document contains a default namespace, you can declare it as an empty name (\"\": \"http://my-default-namespace.site/namespace\"). "
+                    +
+                    "This may also happen if the generated xslt is applied to a partial document, such as when using the wordstart and wordend parameters when requesting its contents from blacklab-server.";
 
             // Entry point (after optional namespace removal)
             xslt.append(

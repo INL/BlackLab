@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +29,9 @@ import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
@@ -41,6 +43,8 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Facets;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -112,7 +116,7 @@ public abstract class RequestHandler {
      */
     public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode,
             DataFormat outputType) {
-        
+
         // See if a user is logged in
         SearchManager searchManager = servlet.getSearchManager();
         User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
@@ -133,12 +137,12 @@ public abstract class RequestHandler {
         String urlPathInfo = parts.length >= 3 ? parts[2] : "";
         boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
         boolean pathGiven = urlPathInfo.length() > 0;
-        
+
         // Debug feature: sleep for x ms before carrying out the request
         if (debugMode && !doDebugSleep(request)) {
             return errorObj.error("ROUGH_AWAKENING", "I was taking a nice nap, but something disturbed me", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
         }
-        
+
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
         boolean isYourPrivateIndex = false;
@@ -267,7 +271,7 @@ public abstract class RequestHandler {
                                         "status", "autocomplete", "sharing").contains(handlerName)) {
                             handlerName = "debug";
                         }
-                        
+
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
@@ -302,7 +306,7 @@ public abstract class RequestHandler {
 
                         if (!availableHandlers.containsKey(handlerName))
                             return errorObj.unknownOperation(handlerName);
-                        
+
                         @SuppressWarnings("resource")
                         SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
                         boolean succesfullyCreatedRequestHandler = false;
@@ -346,7 +350,7 @@ public abstract class RequestHandler {
         }
         if (debugMode)
             requestHandler.setDebug(debugMode);
-        
+
         return requestHandler;
     }
 
@@ -433,7 +437,7 @@ public abstract class RequestHandler {
         this.user = user;
 
     }
-    
+
     public void cleanup() {
         try {
             if (searchLogger != null)
@@ -493,7 +497,7 @@ public abstract class RequestHandler {
 
     /**
      * Child classes should override this to handle the request.
-     * 
+     *
      * @param ds output stream
      * @return the response object
      *
@@ -508,15 +512,24 @@ public abstract class RequestHandler {
      * @param ds where to stream information
      * @param index our index
      * @param document Lucene document
+     * @param metadataFieldsToList fields to include in the document info
      */
-    public static void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document) {
+    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
-        IndexMetadata indexMetadata = index.metadata();
-        for (MetadataField f: indexMetadata.metadataFields()) {
-            String value = document.get(f.name());
-            if (value != null && !f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
-                ds.entry(f.name(), value);
+        for (MetadataField f: metadataFieldsToList) {
+            if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
+                continue;
             }
+            String[] values = document.getValues(f.name());
+            if (values.length == 0) {
+                continue;
+            }
+
+            ds.startEntry(f.name()).startList();
+            for (String v : values) {
+                ds.item("value", v);
+            }
+            ds.endList().endEntry();
         }
 
         int subtractClosingToken = 1;
@@ -524,7 +537,7 @@ public abstract class RequestHandler {
 
         if (tokenLengthField != null)
             ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractClosingToken);
-        ds.entry("mayView", mayView(indexMetadata, document))
+        ds.entry("mayView", mayView(index.metadata(), document))
                 .endMap();
 
         dataStreamMetadataGroupInfo(ds,index);
@@ -575,9 +588,62 @@ public abstract class RequestHandler {
     }
 
     /**
+     * Returns the annotations to write out.
+     * 
+     * By default, all annotations are returned.
+     * Annotations are returned in requested order, or in their definition/display order.
+     * 
+     * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
+     * @throws BlsException
+     */
+    public List<Annotation> getAnnotationsToWrite() throws BlsException {
+        AnnotatedFields fields = this.blIndex().annotatedFields();
+        Set<String> requestedAnnotations = searchParam.listValuesFor();
+
+        List<Annotation> ret = new ArrayList<>();
+        for (AnnotatedField f : fields) {
+            for (Annotation a : f.annotations()) {
+                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
+                    ret.add(a);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    /**
+     * Returns a list of metadata fields to write out.
+     * 
+     * By default, all metadata fields are returned.
+     * Special fields (pidField, titleField, etc...) are always returned.
+     * 
+     * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
+     * @throws BlsException
+     */
+    public Set<MetadataField> getMetadataToWrite() throws BlsException {
+        MetadataFields fields = this.blIndex().metadataFields();
+        Set<String> requestedFields = searchParam.listMetadataValuesFor();
+
+        Set<MetadataField> ret = new HashSet<>();
+        ret.add(fields.special(MetadataFields.AUTHOR));
+        ret.add(fields.special(MetadataFields.DATE));
+        ret.add(fields.special(MetadataFields.PID));
+        ret.add(fields.special(MetadataFields.TITLE));
+        for (MetadataField field  : fields) {
+            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
+                ret.add(field);
+            }
+        }
+        ret.remove(null); // for missing special fields.
+
+        return ret;
+    }
+
+    /**
      * a document may be viewed when a contentViewable metadata field with a value
      * true is registered with either the document or with the index metadata.
-     * 
+     *
      * @param indexMetadata our index metadata
      * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
@@ -693,7 +759,7 @@ public abstract class RequestHandler {
         if (status != IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", status.toString());
         }
-        
+
         // Information about hit sampling
         SampleParameters sample = searchParam.getSampleSettings();
         if (sample != null) {
@@ -708,7 +774,7 @@ public abstract class RequestHandler {
         ds.entry("searchTime", searchTime);
         if (countTime != 0)
             ds.entry("countTime", countTime);
-        
+
         // Information about grouping operation
         if (groups != null) {
             ds.entry("numberOfGroups", groups.size())
@@ -761,7 +827,7 @@ public abstract class RequestHandler {
             }
             ds.entry("numberOfHits", numberOfHits)
                     .entry("numberOfHitsRetrieved", numberOfHits);
-   
+
             int numberOfDocsCounted = docResults.size();
             if (countFailed)
                 numberOfDocsCounted = -1;
@@ -799,29 +865,76 @@ public abstract class RequestHandler {
     /**
      * Output most of the fields of the search summary.
      *
-     * @param format csv fomat/printer to write output to, note that the format must
-     *            contain at least 2 columns.
-     * @param printer
+     * @param numColumns number of columns to output per row, minimum 2
+     * @param printer the output printer
      * @param searchParam original search parameters
+     * @param groups (optional) if results are grouped, the groups
+     * @param subcorpusSize global sub corpus information (i.e. inter-group)
      */
     // TODO tidy up csv handling
-    protected void addSummaryCommonFieldsCSV(CSVFormat format, CSVPrinter printer, SearchParameters searchParam) {
-        final int numColumns = format.getHeader().length;
-        if (numColumns < 2)
-            throw new IllegalArgumentException("Csv must contain at least 2 columns");
-
-        // Our search parameters
-        writeRow(printer, numColumns, "searchParam");
-        for (Entry<String, String> e : searchParam.getParameters().entrySet()) {
-            // ugly -- mimic normal summaryCommonFields
-            if ("samplenum".equals(e.getKey()))
-                writeRow(printer, numColumns, "sampleSize", e.getValue());
-            else if ("sample".equals(e.getKey()))
-                writeRow(printer, numColumns, "samplePercentage", e.getValue());
-            else
-                writeRow(printer, numColumns, e.getKey(), e.getValue());
+    private static <T> void addSummaryCsvCommon(
+        CSVPrinter printer,
+        int numColumns,
+        SearchParameters searchParam,
+        ResultGroups<T> groups,
+        CorpusSize subcorpusSize
+    ) {
+        for (Entry<String, String> param : searchParam.getParameters().entrySet()) {
+            if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
+                continue;
+            writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
         }
-        writeRow(printer, numColumns, "");
+
+        writeRow(printer, numColumns, "summary.subcorpusSize.documents", subcorpusSize.getDocuments());
+        writeRow(printer, numColumns, "summary.subcorpusSize.tokens", subcorpusSize.getTokens());
+
+        if (groups != null) {
+            writeRow(printer, numColumns, "summary.numberOfGroups", groups.size());
+            writeRow(printer, numColumns, "summary.largestGroupSize", groups.largestGroupSize());
+        }
+
+        SampleParameters sample = searchParam.getSampleSettings();
+        if (sample != null) {
+            writeRow(printer, numColumns, "summary.sampleSeed", sample.seed());
+            if (sample.isPercentage())
+                writeRow(printer, numColumns, "summary.samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
+            else
+                writeRow(printer, numColumns, "summary.sampleSize", sample.numberOfHitsSet());
+        }
+    }
+
+    /**
+     *
+     * @param printer
+     * @param numColumns
+     * @param hitStats
+     * @param docStats
+     * @param groups (optional) if grouped
+     * @param subcorpusSize (optional) if available
+     */
+    protected void addSummaryCsvHits(CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
+        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+        writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
+        writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
+    }
+
+    /**
+     * @param printer
+     * @param numColumns
+     * @param docResults all docs as the input for groups, or contents of a specific group (viewgroup)
+     * @param groups (optional) if grouped
+     */
+    protected void addSummaryCsvDocs(
+            CSVPrinter printer,
+            int numColumns,
+            DocResults docResults,
+            DocGroups groups,
+            CorpusSize subcorpusSize
+            ) {
+        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+
+        writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
+        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().collect(Collectors.summingInt(r -> r.size())));
     }
 
     protected static BlsException translateSearchException(Exception e) {

@@ -38,7 +38,7 @@ import nl.inl.blacklab.search.results.DocResult;
 public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     public static DocPropertyAnnotatedFieldLength deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyAnnotatedFieldLength(index, info);
+        return new DocPropertyAnnotatedFieldLength(index, PropertySerializeUtil.unescapePart(info));
     }
 
     private String fieldName;

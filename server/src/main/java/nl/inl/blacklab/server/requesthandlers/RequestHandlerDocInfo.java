@@ -47,7 +47,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
                 .entry("docPid", docId);
 
         ds.startEntry("docInfo");
-        dataStreamDocumentInfo(ds, blIndex, document);
+        dataStreamDocumentInfo(ds, blIndex, document, getMetadataToWrite());
         ds.endEntry();
 
         ds.startEntry("docFields");

@@ -119,7 +119,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     public static DocPropertyDecade deserialize(BlackLabIndex index, String info) {
-        return new DocPropertyDecade(index, info);
+        return new DocPropertyDecade(index, PropertySerializeUtil.unescapePart(info));
     }
 
     @Override

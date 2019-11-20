@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -157,11 +158,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "default":
                 result = opDefault(result, param);
                 break;
-            case "append": 
+            case "append":
                 result = opAppend(result, param);
                 break;
             case "split":
-                result = opSplit(result, param);
+                result = opSplit(result, param).get(0);
                 break;
             case "chatFormatAgeToMonths":
                 result = opChatFormatAgeToMonths(result);
@@ -190,11 +191,74 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
+        List<String> result = Arrays.asList(input);
+
+        for (ConfigProcessStep step : process) {
+            String method = step.getMethod();
+            Map<String, String> param = step.getParam();
+
+            switch (method) {
+            case "replace":
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opReplace(result.get(i), param));
+                }
+                break;
+            case "default":
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opDefault(result.get(i), param));
+                }
+                break;
+            case "append":
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opAppend(result.get(i), param));
+                }
+                break;
+            case "split":
+                result = result.stream()
+                    .flatMap(r -> opSplit(r, param).stream())
+                    .collect(Collectors.toCollection(ArrayList<String>::new));
+                break;
+            case "chatFormatAgeToMonths":
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opChatFormatAgeToMonths(result.get(i)));
+                }
+                break;
+            case "strip":
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opStrip(result.get(i), param));
+                }
+                break;
+            case "parsePos":
+            {
+                // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
+                String field = param.containsKey("field") ? param.get("field") : "_";
+                for (int i = 0; i < result.size(); ++i) {
+                    result.set(i, opParsePartOfSpeech(result.get(i), field));
+                }
+                break;
+            }
+            default:
+                // In the future, we'll support user plugins here
+                throw new UnsupportedOperationException("Unknown processing step method " + method);
+            }
+        }
+        if (mapValues != null && !mapValues.isEmpty()) {
+            // Finally, apply any value mappings specified.
+            for (int i = 0; i < result.size(); ++i) {
+                String mappedResult = mapValues.get(result.get(i));
+                if (mappedResult != null)
+                    result.set(i, mappedResult);
+            }
+        }
+        return result;
+    }
+
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
         result = result.trim();
         if (field.equals("_")) {
-            //  Get main pos: A(b=c,d=e) -> A 
+            //  Get main pos: A(b=c,d=e) -> A
             return result.replaceAll("^([^\\(]+)(\\s*\\(.*\\))?$", "$1");
         } else {
             //  Get feature: A(b=c,d=e) -> e  (if field == d)
@@ -208,7 +272,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
     }
 
-    private String opStrip(String result, Map<String, String> param) {
+    static String opStrip(String result, Map<String, String> param) {
         // Trim character/string from beginning and end
         String stripChars = param.containsKey("chars") ? param.get("chars") : " ";
         result = StringUtils.strip(result, stripChars);
@@ -231,28 +295,58 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return Integer.toString(years * 12 + months + (days > 14 ? 1 : 0) );
     }
 
-    private String opSplit(String result, Map<String, String> param) {
-        // Split on a separator regex and keep one part (first part by default)
-        String separator = param.containsKey("separator") ? param.get("separator") : ";";
-        int keep = param.containsKey("keep") ? Integer.parseInt(param.get("keep")) - 1 : 0;
-        if (keep < 0) {
-            warn("action 'split', parameter 'keep': must be at least 1");
-            keep = 0;
-        }
+    /**
+     * Split the result string on a separator and return one or all parts.
+     *
+     * @param result the string to split
+     * @param param
+     * <pre>
+     * - "separator" for the separator (defaults to ;),
+     * - "keep" for the keep index, accepts numbers or the special string "all" (defaults to -1)
+     *      if "keep" <= 0 returns the first part.
+     *      if "keep" > number of splits return empty string.
+     *      if "keep" == "all" return all parts
+     * </pre>
+     * @return
+     */
+    private List<String> opSplit(String result, Map<String, String> param) {
+        // Split on a separator regex and keep one or all parts (first part by default)
+        String separator = param.getOrDefault("separator", ";");
+        String keep = param.getOrDefault("keep", "-1").toLowerCase();
         String[] parts = result.split(separator, -1);
-        if (keep >= parts.length)
-            result = "";
-        else
-            result = parts[keep];
-        return result;
+
+        if (keep.equals("all")) {
+            return Arrays.asList(parts);
+        }
+
+        int i = -1;
+        try { i = Integer.parseInt(keep); } catch (NumberFormatException e) {}
+        if (i < 0) {
+            warn("action 'split', parameter 'keep': must be at least 1");
+            i = 0;
+        }
+
+        return Arrays.asList(i < parts.length ? parts[i] : "");
     }
 
+    /**
+     * Appends a constant value, or the value of a metadata field to the result string.
+     *
+     * @param result the input string
+     * @param param
+     * <pre>
+     * - "separator" for the separator (defaults to " ")
+     * - "field" for the metadata field whose value will be appended
+     * - "value" for a constant value ("field" takes precedence if it exists)
+     * </pre>
+     * @return
+     */
     private String opAppend(String result, Map<String, String> param) {
         String separator = param.containsKey("separator") ? param.get("separator") : " ";
         String field = param.get("field");
         String value;
         if (field != null)
-            value = getMetadataField(field);
+            value = StringUtils.join(getMetadataField(field), separator);
         else
             value = param.get("value");
         if (value != null && value.length() > 0) {
@@ -263,12 +357,25 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    /**
+     * Optionally replace an empty result with a constant value, or the value of a metadata field.
+     *
+     * @param result the input string
+     * @param param
+     * <pre>
+     * - "field" for the metadata field whose value will be used
+     * - "separator" to join the metadata field if it contains multiple values (defaults to ;)
+     * - "value" for a constant value ("field" takes precedence if it exists)
+     * </pre>
+     * @return
+     */
     private String opDefault(String result, Map<String, String> param) {
         if (result.length() == 0) {
             String field = param.get("field");
             String value;
+            String sep = param.getOrDefault("separator", ";");
             if (field != null)
-                value = getMetadataField(field);
+                value = StringUtils.join(getMetadataField(field), sep);
             else
                 value = param.get("value");
             if (value != null)
@@ -277,6 +384,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    /**
+     * Perform a regex replace on result. Allows group references.
+     *
+     * @param result
+     * @param param
+     * <pre>
+     * - "find" for the regex
+     * - "replace" the replacement string
+     * </pre>
+     * @return
+     */
     private static String opReplace(String result, Map<String, String> param) {
         String find = param.get("find");
         String replace = param.get("replace");
