@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.requestlogging.LogLevel;
 import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
@@ -255,6 +256,11 @@ public class RequestHandlerHits extends RequestHandler {
             if (window.hasCapturedGroups()) {
                 Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
                 ds.startEntry("captureGroups").startList();
+
+                if (capturedGroups == null) {
+                    searchLogger.log(LogLevel.BASIC, "MISSING CAPTURE GROUP: " + pid);
+                    continue;
+                }
 
                 for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
                     if (capturedGroup.getValue() != null) {
