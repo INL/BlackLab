@@ -494,14 +494,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
                     // Multiple matches will be indexed at the same position.
                     AutoPilot apEvalToString = acquireAutoPilot(".");
-                    while (apMetadata.evalXPath() != -1) {
-                        apEvalToString.resetXPath();
-                        String unprocessedValue = apEvalToString.evalXPathToString();
-                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                            addMetadataField(f.getName(), value);
+                    try {
+                        while (apMetadata.evalXPath() != -1) {
+                            apEvalToString.resetXPath();
+                            String unprocessedValue = apEvalToString.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                                addMetadataField(f.getName(), value);
+                            }
                         }
-                    }
-                    releaseAutoPilot(apEvalToString);
+                    } catch(XPathEvalException e) {
+                        // Regular metadata field; just the fieldName and an XPath expression for the value
+                        String metadataValue = apMetadata.evalXPathToString();
+                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
+                        addMetadataField(f.getName(), metadataValue);
+                    }                    releaseAutoPilot(apEvalToString);
                 }
                 releaseAutoPilot(apMetadata);
             }
