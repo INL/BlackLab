@@ -129,6 +129,7 @@ metadata:
     namePath: "@name"   # name attribute contains field name
     valuePath: .        # element text is the field value
 ```
+
 To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
 
 This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
