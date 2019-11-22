@@ -44,6 +44,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
+import javax.xml.xpath.XPathExpression;
+
 /**
  * An indexer configured using full XPath 1.0 expressions.
  */
@@ -503,7 +505,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             }
                         }
                     } catch(XPathEvalException e) {
-                        // Regular metadata field; just the fieldName and an XPath expression for the value
+                        /*
+                        An xpath like string(@value) will make evalXPath() fail.
+                        There is no good way to check wether this exception will occur
+                        When the exception occurs we try to evaluate the xpath as string
+                        NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
+                         */
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(String.format("An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
+                                    "string(.//tei:availability[1]/@status='free')",
+                                    "string(//tei:availability[1]/@status='free')"));
+                        }
                         String metadataValue = apMetadata.evalXPathToString();
                         metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
                         addMetadataField(f.getName(), metadataValue);
