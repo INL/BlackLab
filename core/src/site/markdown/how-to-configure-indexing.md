@@ -127,6 +127,8 @@ metadata:
     namePath: "@name"   # name attribute contains field name
     valuePath: .        # element text is the field value
 ```
+**NOTE**  
+Some correct xpath's like ```string(.//tei:availability[1]/@status='free')``` may not yield the expected, changing it to ```string(//tei:availability[1]/@status='free')``` fixes this one.  
 
 To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
 
