@@ -44,8 +44,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
 
-import javax.xml.xpath.XPathExpression;
-
 /**
  * An indexer configured using full XPath 1.0 expressions.
  */
