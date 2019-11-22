@@ -494,14 +494,30 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     // Regular metadata field; just the fieldName and an XPath expression for the value
                     // Multiple matches will be indexed at the same position.
                     AutoPilot apEvalToString = acquireAutoPilot(".");
-                    while (apMetadata.evalXPath() != -1) {
-                        apEvalToString.resetXPath();
-                        String unprocessedValue = apEvalToString.evalXPathToString();
-                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                            addMetadataField(f.getName(), value);
+                    try {
+                        while (apMetadata.evalXPath() != -1) {
+                            apEvalToString.resetXPath();
+                            String unprocessedValue = apEvalToString.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                                addMetadataField(f.getName(), value);
+                            }
                         }
-                    }
-                    releaseAutoPilot(apEvalToString);
+                    } catch(XPathEvalException e) {
+                        /*
+                        An xpath like string(@value) will make evalXPath() fail.
+                        There is no good way to check wether this exception will occur
+                        When the exception occurs we try to evaluate the xpath as string
+                        NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
+                         */
+                        if (logger.isDebugEnabled()) {
+                            logger.debug(String.format("An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
+                                    "string(.//tei:availability[1]/@status='free')",
+                                    "string(//tei:availability[1]/@status='free')"));
+                        }
+                        String metadataValue = apMetadata.evalXPathToString();
+                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
+                        addMetadataField(f.getName(), metadataValue);
+                    }                    releaseAutoPilot(apEvalToString);
                 }
                 releaseAutoPilot(apMetadata);
             }
