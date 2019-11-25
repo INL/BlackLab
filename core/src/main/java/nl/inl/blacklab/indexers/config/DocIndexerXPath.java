@@ -124,7 +124,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     @Override
     public void setDocument(Reader reader) {
         try {
-            setDocument(IOUtils.toString(reader).getBytes(Indexer.DEFAULT_INPUT_ENCODING),
+            setDocument(IOUtils.toByteArray(reader, Indexer.DEFAULT_INPUT_ENCODING),
                     Indexer.DEFAULT_INPUT_ENCODING);
             reader.close();
         } catch (IOException e) {
