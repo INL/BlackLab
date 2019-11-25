@@ -238,7 +238,7 @@ public class HitsFromQueryParallel extends Hits {
                         if (currentSpansReader == null) {
                             // Exhausted (or not started yet); get next segment spans.
 
-                            if (!itSpansReader.hasNext()) {
+                            if (itSpansReader == null || !itSpansReader.hasNext()) {
                                 setFinished();
                                 break;
                             }

@@ -66,7 +66,9 @@ Suppose our XML files look like this:
 
 Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) ([good introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
 
-Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
+Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).  
+**NOTE** Some correct xpath's like ```string(.//tei:availability[1]/@status='free')``` may not yield the expected, changing this one to ```string(//tei:availability[1]/@status='free')``` fixes it.  
+
 
 ```yaml
 # What element starts a new document?
