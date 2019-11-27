@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config;
 
 import net.sf.saxon.Configuration;
+import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
@@ -132,7 +133,7 @@ public class JaxpIndexer extends DocIndexerConfig {
             XPathExpression documents = acquireXPathExpression(config.getDocumentPath());
             List docs = (List) documents.evaluate(contents, XPathConstants.NODESET);
             for (Object doc : docs) {
-                indexDocument((Node)doc);
+                indexDocument((NodeInfo)doc);
             }
         } catch (XPathExpressionException e) {
             throw new MalformedInputFile("Error indexing file: " + documentName, e);
@@ -142,7 +143,7 @@ public class JaxpIndexer extends DocIndexerConfig {
     /**
      * Index document from the current node.
      */
-    protected void indexDocument(Node doc) throws XPathExpressionException {
+    protected void indexDocument(NodeInfo doc) throws XPathExpressionException {
 
         startDocument();
 
@@ -165,7 +166,7 @@ public class JaxpIndexer extends DocIndexerConfig {
         endDocument();
     }
 
-    protected void processAnnotatedField(Node doc, ConfigAnnotatedField annotatedField)
+    protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
 //        Map<String, Integer> tokenPositionsMap = new HashMap<>();
 //
