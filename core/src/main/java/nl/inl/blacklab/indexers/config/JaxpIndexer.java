@@ -1,5 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
+import com.ximpleware.NavException;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
@@ -10,6 +11,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.util.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -178,12 +180,12 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         // For each configured metadata block..
         for (ConfigMetadataBlock b : config.getMetadataBlocks()) {
-//            processMetadataBlock(doc, b);
+            processMetadataBlock(doc, b);
         }
 
         // For each linked document...
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
-//            processLinkedDocument(doc, ld);
+            processLinkedDocument(doc, ld);
         }
 
         endDocument();
@@ -191,213 +193,252 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
-        XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
-        List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
-        for (NodeInfo word : words) {
-            Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
-            setCharPos(word);
-            System.out.println(word.toShortString() + ": " + getCharacterPosition());
-            for (Map.Entry<String, ConfigAnnotation> an : entries) {
-                ConfigAnnotation annotation = an.getValue();
-                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                NodeInfo ni = (NodeInfo) annXPathExpression.evaluate(word, XPathConstants.NODE);
-                if (ni==null) {
-                    continue;
-                }
-                // NOTE posities van text() zijn niet betrouwbaar, van elementen wel
-                setCharPos(ni);
-                System.out.println(ni.toShortString() + ": " + getCharacterPosition());
-            }
+//        XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
+//        List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
+//        for (NodeInfo word : words) {
+//            Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
+//            setCharPos(word);
+//            System.out.println(word.toShortString() + ": " + getCharacterPosition());
+//            for (Map.Entry<String, ConfigAnnotation> an : entries) {
+//                ConfigAnnotation annotation = an.getValue();
+//                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
+//                List<NodeInfo> texts = (List<NodeInfo>) annXPathExpression.evaluate(word, XPathConstants.NODESET);
+//                for (NodeInfo text : texts) {
+//                    /*
+//                     NOTE posities van text() zijn niet betrouwbaar, van elementen wel
+//                     het character na de positie van een element is altijd het > teken
+//                     */
+//                    setCharPos(text);
+//                    System.out.println(text.toShortString() + ": " + getCharacterPosition());
+//                }
+//            }
+//        }
+
+        Map<String, Integer> tokenPositionsMap = new HashMap<>();
+
+        // Determine some useful stuff about the field we're processing
+        // and store in instance variables so our methods can access them
+//        setCurrentAnnotatedField(annotatedField);
+
+        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
+        XPathExpression words = acquireXPathExpression(annotatedField.getWordsPath());
+        XPathExpression apEvalToString = acquireXPathExpression(".");
+        List<XPathExpression> apsInlineTag = new ArrayList<>();
+        for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
+            XPathExpression apInlineTag = acquireXPathExpression(inlineTag.getPath());
+            apsInlineTag.add(apInlineTag);
+        }
+        XPathExpression apPunct = null;
+        if (annotatedField.getPunctPath() != null)
+            apPunct = acquireXPathExpression(annotatedField.getPunctPath());
+        String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
+        XPathExpression apTokenPositionId = null;
+        if (tokenPositionIdPath != null) {
+            apTokenPositionId = acquireXPathExpression(tokenPositionIdPath);
         }
 
-//        Map<String, Integer> tokenPositionsMap = new HashMap<>();
-//
-//        // Determine some useful stuff about the field we're processing
-//        // and store in instance variables so our methods can access them
-////        setCurrentAnnotatedField(annotatedField);
-//
-//        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
-//        XPathExpression words = acquireXPathExpression(annotatedField.getWordsPath());
-//        XPathExpression apEvalToString = acquireXPathExpression(".");
-//        List<XPathExpression> apsInlineTag = new ArrayList<>();
-//        for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
-//            XPathExpression apInlineTag = acquireXPathExpression(inlineTag.getPath());
-//            apsInlineTag.add(apInlineTag);
-//        }
-//        XPathExpression apPunct = null;
-//        if (annotatedField.getPunctPath() != null)
-//            apPunct = acquireXPathExpression(annotatedField.getPunctPath());
-//        String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
-//        XPathExpression apTokenPositionId = null;
-//        if (tokenPositionIdPath != null) {
-//            apTokenPositionId = acquireXPathExpression(tokenPositionIdPath);
-//        }
-//
-//        // For each body element...
-//        // (there's usually only one, but there's no reason to limit it)
-//        XPathExpression bodies = acquireXPathExpression(annotatedField.getContainerPath());
-//        AnnotatedFieldWriter annotatedFieldWriter = getAnnotatedField(annotatedField.getName());
-//        NodeList bodyList = (NodeList) bodies.evaluate(doc,XPathConstants.NODESET);
-//        for (int i = 0; i < bodyList.getLength(); i++) {
-//            Node body = bodyList.item(i);
-//
-//            // First we find all inline elements (stuff like s, p, b, etc.) and store
-//            // the locations of their start and end tags in a sorted list.
-//            // This way, we can keep track of between which words these tags occur.
-//            // For end tags, we will update the payload of the start tag when we encounter it,
-//            // just like we do in our SAX parsers.
-//            List<InlineObject> tagsAndPunct = new ArrayList<>();
-//            for (XPathExpression apInlineTag : apsInlineTag) {
-//                NodeList inlineTags = (NodeList) apInlineTag.evaluate(body,XPathConstants.NODESET);
-//                for (i = 0; i < inlineTags.getLength(); i++) {
-//                    Node inlineTag = inlineTags.item(i);
-//                    collectInlineTag(inlineTag, tagsAndPunct);
-//                }
-//            }
-//            setAddDefaultPunctuation(true);
-//            if (apPunct != null) {
-//                // We have punctuation occurring between word tags (as opposed to
-//                // punctuation that is tagged as a word itself). Collect this punctuation.
-//                setAddDefaultPunctuation(false);
-//                navpush();
-//                NodeList punctTags = (NodeList) apPunct.evaluate(body,XPathConstants.NODESET);
-//                for (i = 0; i < punctTags.getLength(); i++) {
-//                    Node p = punctTags.item(i);
-//                    String punct = String.valueOf(apEvalToString.evaluate(p,XPathConstants.STRING));
-//                    // If punctPath matches an empty tag, replace it with a space.
-//                    // Deals with e.g. <lb/> (line break) tags in TEI.
-//                    if (punct.isEmpty())
-//                        punct = " ";
-//                    collectPunct(tagsAndPunct, punct);
-//                }
-//                navpop();
-//            }
-//            tagsAndPunct.sort(Comparator.naturalOrder());
-//            Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
-//            InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
-//
-//            // Now, find all words, keeping track of what inline objects occur in between.
-//            navpush();
-//
-//            // first find all words and sort the list -- words are returned out of order when they are at different nesting levels
-//            // since the xpath spec doesn't enforce any order, there's nothing we can do
-//            // so record their positions, sort the list, then restore the position and carry on
-//            List<Pair<Integer, BookMark>> wordPositions = new ArrayList<>();
-//            NodeList ws = (NodeList)words.evaluate(body,XPathConstants.NODESET);
-//            for (i =0; i< ws.getLength();i++) {
-//                Node w = ws.item(i);
-//                BookMark b = new BookMark(nav);
-//                b.setCursorPosition();
-//                wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
-//            }
-//            wordPositions.sort((a, b) -> a.getKey().compareTo(b.getKey()));
-//
-//            for (Pair<Integer, BookMark> wordPosition : wordPositions) {
-//                wordPosition.getValue().setCursorPosition();
-//
-//                // Capture tokenPositionId for this token position?
-//                if (apTokenPositionId != null) {
-//                    apTokenPositionId.resetXPath();
-//                    String tokenPositionId = apTokenPositionId.evalXPathToString();
-//                    tokenPositionsMap.put(tokenPositionId, getCurrentTokenPosition());
-//                }
-//
-//                // Does an inline object occur before this word?
-//                long wordFragment = nav.getContentFragment();
-//                int wordOffset = (int) wordFragment;
-//                while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
-//                    // Yes. Handle it.
-//                    if (nextInlineObject.type() == InlineObject.InlineObjectType.PUNCTUATION)
-//                        punctuation(nextInlineObject.getText());
-//                    else
-//                        inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObject.InlineObjectType.OPEN_TAG,
-//                                nextInlineObject.getAttributes());
-//                    nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
-//                }
-//
-//                fragPos = DocIndexerXPath.FragmentPosition.BEFORE_OPEN_TAG;
-//                beginWord();
-//
-//                // For each configured annotation...
-//                int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
-//                for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
-//                    processAnnotation(annotation, null);
-//                    AnnotationWriter annotWriter = getAnnotation(annotation.getName());
-//                    int lvp = annotWriter.lastValuePosition();
-//                    if (lastValuePosition < lvp) {
-//                        lastValuePosition = lvp;
-//                    }
-//                }
-//
-//                fragPos = DocIndexerXPath.FragmentPosition.AFTER_CLOSE_TAG;
-//                endWord();
-//
-//                // Add empty values to all lagging annotations
-//                for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
-//                    while (prop.lastValuePosition() < lastValuePosition) {
-//                        prop.addValue("");
-//                        if (prop.hasPayload())
-//                            prop.addPayload(null);
-//                    }
-//                }
-//            }
-//            navpop();
-//
-//            // Handle any inline objects after the last word
-//            while (nextInlineObject != null) {
-//                if (nextInlineObject.type() == InlineObject.InlineObjectType.PUNCTUATION)
-//                    punctuation(nextInlineObject.getText());
-//                else
-//                    inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObject.InlineObjectType.OPEN_TAG,
-//                            nextInlineObject.getAttributes());
-//                nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
-//            }
-//
-//        }
-//        navpop();
-//
-//        // For each configured standoff annotation...
-//        for (ConfigStandoffAnnotations standoff : annotatedField.getStandoffAnnotations()) {
-//            // For each instance of this standoff annotation..
-//            navpush();
-//            XPathExpression apStandoff = acquireXPathExpression(standoff.getPath());
-//            XPathExpression apTokenPos = acquireXPathExpression(standoff.getRefTokenPositionIdPath());
-//            while (apStandoff.evalXPath() != -1) {
-//
-//                // Determine what token positions to index these values at
-//                navpush();
-//                List<Integer> tokenPositions = new ArrayList<>();
-//                apTokenPos.resetXPath();
-//                while (apTokenPos.evalXPath() != -1) {
-//                    apEvalToString.resetXPath();
-//                    String tokenPositionId = apEvalToString.evalXPathToString();
-//                    Integer integer = tokenPositionsMap.get(tokenPositionId);
-//                    if (integer == null)
-//                        warn("Unresolved reference to token position: '" + tokenPositionId + "'");
-//                    else
-//                        tokenPositions.add(integer);
-//                }
-//                navpop();
-//
-//                for (ConfigAnnotation annotation : standoff.getAnnotations().values()) {
-//                    processAnnotation(annotation, tokenPositions);
-//                }
-//            }
-//            releaseXPathExpression(apStandoff);
-//            releaseXPathExpression(apTokenPos);
-//            navpop();
+        // For each body element...
+        // (there's usually only one, but there's no reason to limit it)
+        XPathExpression bodies = acquireXPathExpression(annotatedField.getContainerPath());
+        AnnotatedFieldWriter annotatedFieldWriter = getAnnotatedField(annotatedField.getName());
+        List<NodeInfo> bodyList = (List<NodeInfo>) bodies.evaluate(doc,XPathConstants.NODESET);
+        for (NodeInfo body : bodyList) {
+
+            // First we find all inline elements (stuff like s, p, b, etc.) and store
+            // the locations of their start and end tags in a sorted list.
+            // This way, we can keep track of between which words these tags occur.
+            // For end tags, we will update the payload of the start tag when we encounter it,
+            // just like we do in our SAX parsers.
+            List<InlineObject> tagsAndPunct = new ArrayList<>();
+            for (XPathExpression apInlineTag : apsInlineTag) {
+                List<NodeInfo> inlineTags = (List<NodeInfo>) apInlineTag.evaluate(body,XPathConstants.NODESET);
+                for (NodeInfo inlineTag : inlineTags) {
+                    collectInlineTag(inlineTag, tagsAndPunct);
+                }
+            }
+            setAddDefaultPunctuation(true);
+            if (apPunct != null) {
+                // We have punctuation occurring between word tags (as opposed to
+                // punctuation that is tagged as a word itself). Collect this punctuation.
+                setAddDefaultPunctuation(false);
+                navpush();
+                List<NodeInfo> punctTags = (List<NodeInfo>) apPunct.evaluate(body,XPathConstants.NODESET);
+                for (NodeInfo p : punctTags) {
+                    String punct = String.valueOf(apEvalToString.evaluate(p,XPathConstants.STRING));
+                    // If punctPath matches an empty tag, replace it with a space.
+                    // Deals with e.g. <lb/> (line break) tags in TEI.
+                    if (punct.isEmpty())
+                        punct = " ";
+                    collectPunct(tagsAndPunct, punct);
+                }
+                navpop();
+            }
+            tagsAndPunct.sort(Comparator.naturalOrder());
+            Iterator<InlineObject> inlineObjectsIt = tagsAndPunct.iterator();
+            InlineObject nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+
+            List<NodeInfo> ws = (List<NodeInfo>)words.evaluate(body,XPathConstants.NODESET);
+
+            for (NodeInfo w : ws) {
+                setCharPos(w);
+
+                // Capture tokenPositionId for this token position?
+                if (apTokenPositionId != null) {
+                    String tokenPositionId = apTokenPositionId.evaluate(w);
+                    tokenPositionsMap.put(tokenPositionId, getCurrentTokenPosition());
+                }
+
+                // Does an inline object occur before this word?
+                long wordFragment = nav.getContentFragment();
+                int wordOffset = (int) wordFragment;
+                while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
+                    // Yes. Handle it.
+                    if (nextInlineObject.type() == InlineObject.InlineObjectType.PUNCTUATION)
+                        punctuation(nextInlineObject.getText());
+                    else
+                        inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObject.InlineObjectType.OPEN_TAG,
+                                nextInlineObject.getAttributes());
+                    nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+                }
+
+                fragPos = DocIndexerXPath.FragmentPosition.BEFORE_OPEN_TAG;
+                beginWord();
+
+                // For each configured annotation...
+                int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
+                for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
+                    processAnnotation(annotation, null);
+                    AnnotationWriter annotWriter = getAnnotation(annotation.getName());
+                    int lvp = annotWriter.lastValuePosition();
+                    if (lastValuePosition < lvp) {
+                        lastValuePosition = lvp;
+                    }
+                }
+
+                fragPos = DocIndexerXPath.FragmentPosition.AFTER_CLOSE_TAG;
+                endWord();
+
+                // Add empty values to all lagging annotations
+                for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
+                    while (prop.lastValuePosition() < lastValuePosition) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                    }
+                }
+            }
+            navpop();
+
+            // Handle any inline objects after the last word
+            while (nextInlineObject != null) {
+                if (nextInlineObject.type() == InlineObject.InlineObjectType.PUNCTUATION)
+                    punctuation(nextInlineObject.getText());
+                else
+                    inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObject.InlineObjectType.OPEN_TAG,
+                            nextInlineObject.getAttributes());
+                nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
+            }
+
+        }
+        navpop();
+
+        // For each configured standoff annotation...
+        for (ConfigStandoffAnnotations standoff : annotatedField.getStandoffAnnotations()) {
+            // For each instance of this standoff annotation..
+            navpush();
+            XPathExpression apStandoff = acquireXPathExpression(standoff.getPath());
+            XPathExpression apTokenPos = acquireXPathExpression(standoff.getRefTokenPositionIdPath());
+            while (apStandoff.evalXPath() != -1) {
+
+                // Determine what token positions to index these values at
+                navpush();
+                List<Integer> tokenPositions = new ArrayList<>();
+                apTokenPos.resetXPath();
+                while (apTokenPos.evalXPath() != -1) {
+                    apEvalToString.resetXPath();
+                    String tokenPositionId = apEvalToString.evalXPathToString();
+                    Integer integer = tokenPositionsMap.get(tokenPositionId);
+                    if (integer == null)
+                        warn("Unresolved reference to token position: '" + tokenPositionId + "'");
+                    else
+                        tokenPositions.add(integer);
+                }
+                navpop();
+
+                for (ConfigAnnotation annotation : standoff.getAnnotations().values()) {
+                    processAnnotation(annotation, tokenPositions);
+                }
+            }
+            releaseXPathExpression(apStandoff);
+            releaseXPathExpression(apTokenPos);
+            navpop();
+        }
+
+        releaseXPathExpression(words);
+        releaseXPathExpression(apEvalToString);
+        for (XPathExpression ap : apsInlineTag) {
+            releaseXPathExpression(ap);
+        }
+        if (apPunct != null)
+            releaseXPathExpression(apPunct);
+        if (apTokenPositionId != null)
+            releaseXPathExpression(apTokenPositionId);
+        releaseXPathExpression(bodies);
+    }
+    /**
+     * Add open and close InlineObject objects for the current element to the list.
+     *
+     * @param inlineObject list to add the new open/close tag objects to
+     */
+    private void collectInlineTag(NodeInfo inlineTags, List<InlineObject> inlineObject) {
+//        // Get the element and content fragments
+//        // (element fragment = from start of start tag to end of end tag;
+//        //  content fragment = from end of start tag to start of end tag)
+//        long elementFragment = nav.getElementFragment();
+//        int startTagOffset = (int) elementFragment;
+//        int endTagOffset;
+//        long contentFragment = nav.getContentFragment();
+//        if (contentFragment == -1) {
+//            // Empty (self-closing) element.
+//            endTagOffset = startTagOffset;
+//        } else {
+//            // Regular element with separate open and close tags.
+//            int contentOffset = (int) contentFragment;
+//            int contentLength = (int) (contentFragment >> 32);
+//            int contentEnd = contentOffset + contentLength;
+//            endTagOffset = contentEnd;
 //        }
 //
-//        releaseXPathExpression(words);
-//        releaseXPathExpression(apEvalToString);
-//        for (XPathExpression ap : apsInlineTag) {
-//            releaseXPathExpression(ap);
-//        }
-//        if (apPunct != null)
-//            releaseXPathExpression(apPunct);
-//        if (apTokenPositionId != null)
-//            releaseXPathExpression(apTokenPositionId);
-//        releaseXPathExpression(bodies);
+//        // Find element name
+//        int currentIndex = nav.getCurrentIndex();
+//        String elementName = dedupe(nav.toString(currentIndex));
+//
+//        // Add the inline tags to the list
+//        InlineObject openTag = new InlineObject(elementName, startTagOffset, InlineObject.InlineObjectType.OPEN_TAG,
+//                getAttributes());
+//        InlineObject closeTag = new InlineObject(elementName, endTagOffset, InlineObject.InlineObjectType.CLOSE_TAG, null);
+//        openTag.setMatchingTag(closeTag);
+//        closeTag.setMatchingTag(openTag);
+//        inlineObject.add(openTag);
+//        inlineObject.add(closeTag);
+    }
+
+    /**
+     * Add InlineObject for a punctuation text node.
+     *
+     * @param inlineObjects list to add the punct object to
+     * @param text
+     */
+    private void collectPunct(List<InlineObject> inlineObjects, String text) {
+//        int i = nav.getCurrentIndex();
+//        int offset = nav.getTokenOffset(i);
+////		int length = nav.getTokenLength(i);
+//
+//        // Make sure we only keep 1 copy of identical punct texts in memory
+//        text = dedupe(StringUtil.normalizeWhitespace(text));
+//
+//        // Add the punct to the list
+//        inlineObjects.add(new InlineObject(text, offset, InlineObject.InlineObjectType.PUNCTUATION, null));
     }
 
     protected void navpush() {
@@ -409,7 +450,7 @@ public class JaxpIndexer extends DocIndexerConfig {
 //        fragPos = fragPosStack.remove(fragPosStack.size() - 1);
     }
 
-    protected void processMetadataBlock(ConfigMetadataBlock b) {
+    protected void processMetadataBlock(NodeInfo meta, ConfigMetadataBlock b) {
 //        // For each instance of this metadata block...
 //        navpush();
 //        XPathExpression apMetadataBlock = acquireXPathExpression(b.getContainerPath());
