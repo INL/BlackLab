@@ -38,6 +38,18 @@ public class JaxpIndexer extends DocIndexerConfig {
     private TreeInfo contents = null;
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
+    private int charPos = 0;
+
+    private void setCharPos(NodeInfo nodeInfo) {
+        int charsOnline = cumulativeColsPerLine.get(nodeInfo.getLineNumber()) -
+                (nodeInfo.getLineNumber()==1?0:cumulativeColsPerLine.get(nodeInfo.getLineNumber() - 1));
+        charPos = cumulativeColsPerLine.get(nodeInfo.getLineNumber())
+                - (charsOnline - nodeInfo.getColumnNumber())
+                + (nodeInfo.getLineNumber() -1) * lineEnd;
+    }
+
+    short lineEnd = 1;
+
     @Override
     public void setDocument(Reader reader) {
         try {
@@ -46,11 +58,22 @@ public class JaxpIndexer extends DocIndexerConfig {
             AtomicInteger line = new AtomicInteger();
             AtomicInteger cols = new AtomicInteger();
             IOUtils.lineIterator(stream, Indexer.DEFAULT_INPUT_ENCODING).forEachRemaining(l ->
-                    cumulativeColsPerLine.put(line.getAndIncrement(), cols.addAndGet(l.length())));
+                    cumulativeColsPerLine.put(line.incrementAndGet(), cols.addAndGet(l.length())));
             stream.reset();
+            if (cumulativeColsPerLine.size()>1) {
+                int i = -1;
+                while ((i = stream.read())!=-1) {
+                    if (i=='\r') {
+                        lineEnd = 2;
+                        break;
+                    }
+                }
+                stream.reset();
+            }
             InputSource inputSrc = new InputSource(stream);
             SAXSource saxSrc = new SAXSource(inputSrc);
             Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
+            config.setLineNumbering(true);
             contents = config.buildDocumentTree(saxSrc);
         } catch (IOException | XPathException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -131,9 +154,9 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         try {
             XPathExpression documents = acquireXPathExpression(config.getDocumentPath());
-            List docs = (List) documents.evaluate(contents, XPathConstants.NODESET);
-            for (Object doc : docs) {
-                indexDocument((NodeInfo)doc);
+            List<NodeInfo> docs = (List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET);
+            for (NodeInfo doc : docs) {
+                indexDocument(doc);
             }
         } catch (XPathExpressionException e) {
             throw new MalformedInputFile("Error indexing file: " + documentName, e);
@@ -168,6 +191,25 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
+        XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
+        List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
+        for (NodeInfo word : words) {
+            Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
+            setCharPos(word);
+            System.out.println(word.toShortString() + ": " + getCharacterPosition());
+            for (Map.Entry<String, ConfigAnnotation> an : entries) {
+                ConfigAnnotation annotation = an.getValue();
+                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
+                NodeInfo ni = (NodeInfo) annXPathExpression.evaluate(word, XPathConstants.NODE);
+                if (ni==null) {
+                    continue;
+                }
+                // NOTE posities van text() zijn niet betrouwbaar, van elementen wel
+                setCharPos(ni);
+                System.out.println(ni.toShortString() + ": " + getCharacterPosition());
+            }
+        }
+
 //        Map<String, Integer> tokenPositionsMap = new HashMap<>();
 //
 //        // Determine some useful stuff about the field we're processing
@@ -486,6 +528,6 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     @Override
     protected int getCharacterPosition() {
-        return 0;
+        return charPos;
     }
 }
