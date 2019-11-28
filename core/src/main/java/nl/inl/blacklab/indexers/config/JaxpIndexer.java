@@ -108,57 +108,62 @@ public class JaxpIndexer extends DocIndexerConfig {
     }
 
     private class MyXMLReader implements XMLReader {
-        private final XMLReader wrappedHandler;
+        private final XMLReader wrappedReader;
         private final MyContentHandler handler;
 
-        public MyXMLReader(XMLReader wrappedHandler) {
-            this.wrappedHandler = wrappedHandler;
-            handler= (MyContentHandler) wrappedHandler.getContentHandler();
+        public MyXMLReader(XMLReader wrappedReader) {
+            this.wrappedReader = wrappedReader;
+            handler= (MyContentHandler) wrappedReader.getContentHandler();
         }
 
         @Override
         public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            return wrappedHandler.getFeature(name);
+            return wrappedReader.getFeature(name);
         }
 
         @Override
         public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
-            wrappedHandler.setFeature(name,value);
+            wrappedReader.setFeature(name,value);
         }
 
         @Override
         public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            return wrappedHandler.getProperty(name);
+            return wrappedReader.getProperty(name);
         }
 
         @Override
         public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-            wrappedHandler.setProperty(name,value);
+            wrappedReader.setProperty(name,value);
         }
 
         @Override
         public void setEntityResolver(EntityResolver resolver) {
-            wrappedHandler.setEntityResolver(resolver);
+            wrappedReader.setEntityResolver(resolver);
         }
 
         @Override
         public EntityResolver getEntityResolver() {
-            return wrappedHandler.getEntityResolver();
+            return wrappedReader.getEntityResolver();
         }
 
         @Override
         public void setDTDHandler(DTDHandler handler) {
-            wrappedHandler.setDTDHandler(handler);
+            wrappedReader.setDTDHandler(handler);
         }
 
         @Override
         public DTDHandler getDTDHandler() {
-            return wrappedHandler.getDTDHandler();
+            return wrappedReader.getDTDHandler();
         }
 
+        /**
+         * instead of silently replacing the handler we set it in our wrapping handler,
+         * {@link MyContentHandler#setSaxonHandler(ContentHandler)}.
+         * @param handler
+         */
         @Override
         public void setContentHandler(ContentHandler handler) {
-            this.handler.setFromSaxon(handler);
+            this.handler.setSaxonHandler(handler);
         }
 
         @Override
@@ -168,89 +173,95 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         @Override
         public void setErrorHandler(ErrorHandler handler) {
-            wrappedHandler.setErrorHandler(handler);
+            wrappedReader.setErrorHandler(handler);
         }
 
         @Override
         public ErrorHandler getErrorHandler() {
-            return wrappedHandler.getErrorHandler();
+            return wrappedReader.getErrorHandler();
         }
 
         @Override
         public void parse(InputSource input) throws IOException, SAXException {
-            wrappedHandler.parse(input);
+            wrappedReader.parse(input);
         }
 
         @Override
         public void parse(String systemId) throws IOException, SAXException {
-            wrappedHandler.parse(systemId);
+            wrappedReader.parse(systemId);
         }
     }
 
+    /**
+     * handler that can access the Locator to determine positions in the source.
+     */
     private class MyContentHandler implements ContentHandler {
 
-        private ContentHandler fromSaxon = this;
+        private ContentHandler saxonHandler = this;
         private Locator locator;
 
-        private void setFromSaxon(ContentHandler fromSaxon) {
-            this.fromSaxon = fromSaxon;
+        private void setSaxonHandler(ContentHandler saxonHandler) {
+            this.saxonHandler = saxonHandler;
         }
 
         @Override
         public void setDocumentLocator(Locator locator) {
-            fromSaxon.setDocumentLocator(locator);
+            saxonHandler.setDocumentLocator(locator);
             this.locator=locator;
         }
 
         @Override
         public void startDocument() throws SAXException {
-            fromSaxon.startDocument();
+            saxonHandler.startDocument();
         }
 
         @Override
         public void endDocument() throws SAXException {
-            fromSaxon.endDocument();
+            saxonHandler.endDocument();
         }
 
         @Override
         public void startPrefixMapping(String prefix, String uri) throws SAXException {
-            fromSaxon.startPrefixMapping(prefix,uri);
+            saxonHandler.startPrefixMapping(prefix,uri);
         }
 
         @Override
         public void endPrefixMapping(String prefix) throws SAXException {
-            fromSaxon.endPrefixMapping(prefix);
+            saxonHandler.endPrefixMapping(prefix);
         }
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
-            fromSaxon.startElement(uri,localName,qName,atts);
+            /*
+            Here we may need to calculate the position of the "<", which in fact we cannot garantee because of whitespace between attributes.
+             */
+            saxonHandler.startElement(uri,localName,qName,atts);
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
             endPosList.add(new EndPos(qName,locator.getLineNumber(),locator.getColumnNumber()));
-            fromSaxon.endElement(uri,localName,qName);
+            saxonHandler.endElement(uri,localName,qName);
         }
 
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
-            fromSaxon.characters(ch,start,length);
+            saxonHandler.characters(ch,start,length);
         }
 
         @Override
         public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-            fromSaxon.ignorableWhitespace(ch,start,length);
+            saxonHandler.ignorableWhitespace(ch,start,length);
         }
 
         @Override
         public void processingInstruction(String target, String data) throws SAXException {
-            fromSaxon.processingInstruction(target,data);
+            saxonHandler.processingInstruction(target,data);
         }
 
         @Override
         public void skippedEntity(String name) throws SAXException {
-            fromSaxon.skippedEntity(name);
+            saxonHandler.skippedEntity(name);
         }
 
 
@@ -375,8 +386,8 @@ public class JaxpIndexer extends DocIndexerConfig {
             setCharPos(word);
             EndPos endPos = endPosList.stream().filter(ep -> ep.qName.equals(word.getDisplayName())).skip(wNum++)
                     .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + word));
-            System.out.println(new String(Arrays.copyOfRange(chars,getCharacterPosition(),getCharPos(endPos.line,endPos.col))) +
-                    ": " + getCharacterPosition() + " - " + getCharPos(endPos.line,endPos.col));
+            System.out.println(new String(Arrays.copyOfRange(chars,getCharacterPosition() - 2,getCharPos(endPos.line,endPos.col) - 1)) +
+                    ": " + (getCharacterPosition() -2) + " - " + (getCharPos(endPos.line,endPos.col)-1));
             for (Map.Entry<String, ConfigAnnotation> an : entries) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
