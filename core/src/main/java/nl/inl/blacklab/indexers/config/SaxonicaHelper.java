@@ -357,13 +357,8 @@ public class SaxonicaHelper {
                 for (Object o : texts) {
                     if (o instanceof NodeInfo) {
                         NodeInfo text = (NodeInfo) o;
-                    /*
-                     NOTE posities van text() zijn niet betrouwbaar, van elementen wel
-                     het character na de positie van een element is altijd het > teken
-                     */
-                        setCharPos(text);
                     } else {
-//                        System.out.println(o.getClass() + ": " + o);
+                        System.out.println(o.getClass() + ": " + o);
                     }
                 }
             }
