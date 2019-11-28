@@ -9,11 +9,12 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import org.apache.commons.io.IOUtils;
-import org.xml.sax.InputSource;
+import org.xml.sax.*;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.xml.namespace.NamespaceContext;
+import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.xpath.*;
 import java.io.ByteArrayInputStream;
@@ -41,19 +42,19 @@ public class JaxpIndexer extends DocIndexerConfig {
     private int charPos = 0;
 
     private void setCharPos(NodeInfo nodeInfo) {
-        int charsOnline = cumulativeColsPerLine.get(nodeInfo.getLineNumber()) -
-                (nodeInfo.getLineNumber()==1?0:cumulativeColsPerLine.get(nodeInfo.getLineNumber() - 1));
-        charPos = cumulativeColsPerLine.get(nodeInfo.getLineNumber())
-                - (charsOnline - nodeInfo.getColumnNumber())
-                + (nodeInfo.getLineNumber() -1) * lineEnd;
+        charPos = getCharPos(nodeInfo);
     }
 
     private int getCharPos(NodeInfo nodeInfo) {
-        int charsOnline = cumulativeColsPerLine.get(nodeInfo.getLineNumber()) -
-                (nodeInfo.getLineNumber()==1?0:cumulativeColsPerLine.get(nodeInfo.getLineNumber() - 1));
-        return cumulativeColsPerLine.get(nodeInfo.getLineNumber())
-                - (charsOnline - nodeInfo.getColumnNumber())
-                + (nodeInfo.getLineNumber() -1) * lineEnd;
+        return getCharPos(nodeInfo.getLineNumber(),nodeInfo.getColumnNumber());
+    }
+
+    private int getCharPos(int lineNumber, int columnNumber) {
+        int charsOnline = cumulativeColsPerLine.get(lineNumber) -
+                (lineNumber==1?0:cumulativeColsPerLine.get(lineNumber - 1));
+        return cumulativeColsPerLine.get(lineNumber)
+                - (charsOnline - columnNumber)
+                + (lineNumber -1) * lineEnd;
     }
 
     short lineEnd = 1;
@@ -78,14 +79,167 @@ public class JaxpIndexer extends DocIndexerConfig {
                 }
                 stream.reset();
             }
+            MyContentHandler myContentHandler = new MyContentHandler();
+            XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+            xmlReader.setContentHandler(myContentHandler);
+            XMLReader wrapper = new MyXMLReader(xmlReader);
             InputSource inputSrc = new InputSource(stream);
-            SAXSource saxSrc = new SAXSource(inputSrc);
+            Source source = new SAXSource(wrapper,inputSrc);
             Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
             config.setLineNumbering(true);
-            contents = config.buildDocumentTree(saxSrc);
-        } catch (IOException | XPathException e) {
+            contents = config.buildDocumentTree(source);
+        } catch (IOException | XPathException | SAXException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    private class MyXMLReader implements XMLReader {
+        private final XMLReader wrappedHandler;
+        private final MyContentHandler handler;
+
+        public MyXMLReader(XMLReader wrappedHandler) {
+            this.wrappedHandler = wrappedHandler;
+            handler= (MyContentHandler) wrappedHandler.getContentHandler();
+        }
+
+        @Override
+        public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+            return wrappedHandler.getFeature(name);
+        }
+
+        @Override
+        public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
+            wrappedHandler.setFeature(name,value);
+        }
+
+        @Override
+        public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+            return wrappedHandler.getProperty(name);
+        }
+
+        @Override
+        public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
+            wrappedHandler.setProperty(name,value);
+        }
+
+        @Override
+        public void setEntityResolver(EntityResolver resolver) {
+            wrappedHandler.setEntityResolver(resolver);
+        }
+
+        @Override
+        public EntityResolver getEntityResolver() {
+            return wrappedHandler.getEntityResolver();
+        }
+
+        @Override
+        public void setDTDHandler(DTDHandler handler) {
+            wrappedHandler.setDTDHandler(handler);
+        }
+
+        @Override
+        public DTDHandler getDTDHandler() {
+            return wrappedHandler.getDTDHandler();
+        }
+
+        @Override
+        public void setContentHandler(ContentHandler handler) {
+            this.handler.setFromSaxon(handler);
+        }
+
+        @Override
+        public ContentHandler getContentHandler() {
+            return this.handler;
+        }
+
+        @Override
+        public void setErrorHandler(ErrorHandler handler) {
+            wrappedHandler.setErrorHandler(handler);
+        }
+
+        @Override
+        public ErrorHandler getErrorHandler() {
+            return wrappedHandler.getErrorHandler();
+        }
+
+        @Override
+        public void parse(InputSource input) throws IOException, SAXException {
+            wrappedHandler.parse(input);
+        }
+
+        @Override
+        public void parse(String systemId) throws IOException, SAXException {
+            wrappedHandler.parse(systemId);
+        }
+    }
+
+    private class MyContentHandler implements ContentHandler {
+
+        private ContentHandler fromSaxon = this;
+        private Locator locator;
+
+        private void setFromSaxon(ContentHandler fromSaxon) {
+            this.fromSaxon = fromSaxon;
+        }
+
+        @Override
+        public void setDocumentLocator(Locator locator) {
+            fromSaxon.setDocumentLocator(locator);
+            this.locator=locator;
+        }
+
+        @Override
+        public void startDocument() throws SAXException {
+            fromSaxon.startDocument();
+        }
+
+        @Override
+        public void endDocument() throws SAXException {
+            fromSaxon.endDocument();
+        }
+
+        @Override
+        public void startPrefixMapping(String prefix, String uri) throws SAXException {
+            fromSaxon.startPrefixMapping(prefix,uri);
+        }
+
+        @Override
+        public void endPrefixMapping(String prefix) throws SAXException {
+            fromSaxon.endPrefixMapping(prefix);
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+            fromSaxon.startElement(uri,localName,qName,atts);
+        }
+
+        @Override
+        public void endElement(String uri, String localName, String qName) throws SAXException {
+            System.out.println(qName + ", endpos: " + getCharPos(locator.getLineNumber(),locator.getColumnNumber()));
+            fromSaxon.endElement(uri,localName,qName);
+        }
+
+        @Override
+        public void characters(char[] ch, int start, int length) throws SAXException {
+            fromSaxon.characters(ch,start,length);
+        }
+
+        @Override
+        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+            fromSaxon.ignorableWhitespace(ch,start,length);
+        }
+
+        @Override
+        public void processingInstruction(String target, String data) throws SAXException {
+            fromSaxon.processingInstruction(target,data);
+        }
+
+        @Override
+        public void skippedEntity(String name) throws SAXException {
+            fromSaxon.skippedEntity(name);
+        }
+
+
     }
 
     /** Map from XPath expression to compiled XPath. */
