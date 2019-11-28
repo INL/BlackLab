@@ -1,339 +1,40 @@
 package nl.inl.blacklab.indexers.config;
 
-import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.xpath.XPathFactoryImpl;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import org.apache.commons.io.IOUtils;
-import org.xml.sax.*;
-import org.xml.sax.helpers.XMLReaderFactory;
+import org.xml.sax.SAXException;
 
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.transform.Source;
-import javax.xml.transform.sax.SAXSource;
-import javax.xml.xpath.*;
-import java.io.CharArrayReader;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An indexer configured using full XPath expressions.
  */
 public class JaxpIndexer extends DocIndexerConfig {
 
-    private ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<XPathFactory>() {
-        @Override
-        protected XPathFactory initialValue() {
-            return new XPathFactoryImpl();
-        }
-    };
-
-
-    private TreeInfo contents = null;
-    private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
-
-    private class EndPos {
-        private final String qName;
-        private final int line, col;
-
-        public EndPos(String qName, int line, int col) {
-            this.qName = qName;
-            this.line = line;
-            this.col = col;
-        }
-    }
-
-    private final List<EndPos> endPosList = new ArrayList<>(50*300);
-
-    private int charPos = 0;
-
-    private void setCharPos(NodeInfo nodeInfo) {
-        charPos = getCharPos(nodeInfo);
-    }
-
-    private int getCharPos(NodeInfo nodeInfo) {
-        return getCharPos(nodeInfo.getLineNumber(),nodeInfo.getColumnNumber());
-    }
-
-    private int getCharPos(int lineNumber, int columnNumber) {
-        int charsOnline = cumulativeColsPerLine.get(lineNumber) -
-                (lineNumber==1?0:cumulativeColsPerLine.get(lineNumber - 1));
-        return cumulativeColsPerLine.get(lineNumber)
-                - (charsOnline - columnNumber)
-                + (lineNumber -1) * lineEnd;
-    }
-
-    short lineEnd = 1;
-
-    private char[] chars;
+    private SaxonicaHelper saxonicaHelper;
+    private TreeInfo contents;
 
     @Override
     public void setDocument(Reader reader) {
         try {
-            chars = IOUtils.toCharArray(reader);
-            CharArrayReader stream = new CharArrayReader(chars);
-            AtomicInteger line = new AtomicInteger();
-            AtomicInteger cols = new AtomicInteger();
-            IOUtils.lineIterator(stream).forEachRemaining(l ->
-                    cumulativeColsPerLine.put(line.incrementAndGet(), cols.addAndGet(l.length())));
-            stream.reset();
-            if (cumulativeColsPerLine.size()>1) {
-                int i = -1;
-                while ((i = stream.read())!=-1) {
-                    if (i=='\r') {
-                        lineEnd = 2;
-                        break;
-                    }
-                }
-                stream.reset();
-            }
-            MyContentHandler myContentHandler = new MyContentHandler();
-            XMLReader xmlReader = XMLReaderFactory.createXMLReader();
-            xmlReader.setContentHandler(myContentHandler);
-            XMLReader wrapper = new MyXMLReader(xmlReader);
-            InputSource inputSrc = new InputSource(stream);
-            Source source = new SAXSource(wrapper,inputSrc);
-            Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
-            config.setLineNumbering(true);
-            contents = config.buildDocumentTree(source);
+            saxonicaHelper = new SaxonicaHelper(reader, config);
+            contents = saxonicaHelper.getContents();
         } catch (IOException | XPathException | SAXException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
-
-    private class MyXMLReader implements XMLReader {
-        private final XMLReader wrappedReader;
-        private final MyContentHandler handler;
-
-        public MyXMLReader(XMLReader wrappedReader) {
-            this.wrappedReader = wrappedReader;
-            handler= (MyContentHandler) wrappedReader.getContentHandler();
-        }
-
-        @Override
-        public boolean getFeature(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            return wrappedReader.getFeature(name);
-        }
-
-        @Override
-        public void setFeature(String name, boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
-            wrappedReader.setFeature(name,value);
-        }
-
-        @Override
-        public Object getProperty(String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            return wrappedReader.getProperty(name);
-        }
-
-        @Override
-        public void setProperty(String name, Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-            wrappedReader.setProperty(name,value);
-        }
-
-        @Override
-        public void setEntityResolver(EntityResolver resolver) {
-            wrappedReader.setEntityResolver(resolver);
-        }
-
-        @Override
-        public EntityResolver getEntityResolver() {
-            return wrappedReader.getEntityResolver();
-        }
-
-        @Override
-        public void setDTDHandler(DTDHandler handler) {
-            wrappedReader.setDTDHandler(handler);
-        }
-
-        @Override
-        public DTDHandler getDTDHandler() {
-            return wrappedReader.getDTDHandler();
-        }
-
-        /**
-         * instead of silently replacing the handler we set it in our wrapping handler,
-         * {@link MyContentHandler#setSaxonHandler(ContentHandler)}.
-         * @param handler
-         */
-        @Override
-        public void setContentHandler(ContentHandler handler) {
-            this.handler.setSaxonHandler(handler);
-        }
-
-        @Override
-        public ContentHandler getContentHandler() {
-            return this.handler;
-        }
-
-        @Override
-        public void setErrorHandler(ErrorHandler handler) {
-            wrappedReader.setErrorHandler(handler);
-        }
-
-        @Override
-        public ErrorHandler getErrorHandler() {
-            return wrappedReader.getErrorHandler();
-        }
-
-        @Override
-        public void parse(InputSource input) throws IOException, SAXException {
-            wrappedReader.parse(input);
-        }
-
-        @Override
-        public void parse(String systemId) throws IOException, SAXException {
-            wrappedReader.parse(systemId);
-        }
-    }
-
-    /**
-     * handler that can access the Locator to determine positions in the source.
-     */
-    private class MyContentHandler implements ContentHandler {
-
-        private ContentHandler saxonHandler = this;
-        private Locator locator;
-
-        private void setSaxonHandler(ContentHandler saxonHandler) {
-            this.saxonHandler = saxonHandler;
-        }
-
-        @Override
-        public void setDocumentLocator(Locator locator) {
-            saxonHandler.setDocumentLocator(locator);
-            this.locator=locator;
-        }
-
-        @Override
-        public void startDocument() throws SAXException {
-            saxonHandler.startDocument();
-        }
-
-        @Override
-        public void endDocument() throws SAXException {
-            saxonHandler.endDocument();
-        }
-
-        @Override
-        public void startPrefixMapping(String prefix, String uri) throws SAXException {
-            saxonHandler.startPrefixMapping(prefix,uri);
-        }
-
-        @Override
-        public void endPrefixMapping(String prefix) throws SAXException {
-            saxonHandler.endPrefixMapping(prefix);
-        }
-
-        @Override
-        public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
-            /*
-            Here we may need to calculate the position of the "<", which in fact we cannot garantee because of whitespace between attributes.
-             */
-            saxonHandler.startElement(uri,localName,qName,atts);
-        }
-
-        @Override
-        public void endElement(String uri, String localName, String qName) throws SAXException {
-            endPosList.add(new EndPos(qName,locator.getLineNumber(),locator.getColumnNumber()));
-            saxonHandler.endElement(uri,localName,qName);
-        }
-
-        @Override
-        public void characters(char[] ch, int start, int length) throws SAXException {
-            saxonHandler.characters(ch,start,length);
-        }
-
-        @Override
-        public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-            saxonHandler.ignorableWhitespace(ch,start,length);
-        }
-
-        @Override
-        public void processingInstruction(String target, String data) throws SAXException {
-            saxonHandler.processingInstruction(target,data);
-        }
-
-        @Override
-        public void skippedEntity(String name) throws SAXException {
-            saxonHandler.skippedEntity(name);
-        }
-
-
-    }
-
-    /** Map from XPath expression to compiled XPath. */
-    private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
-
-    /**
-     * XPathExpressions that are currently being used. We need to keep track of this to be
-     * able to re-add them to compiledXpath with the correct XPath expression later.
-     */
-    private Map<XPathExpression, String> XPathExpressionsInUse = new HashMap<>();
-
-    private final NSCTX namespaces = new NSCTX();
-
-    private static class NSCTX implements NamespaceContext {
-        private final Map<String,String> ns = new HashMap<>(3);;
-
-        void add(String prefix, String uri) {
-            if (uri.equals(ns.get(prefix))) return;
-            ns.put(prefix, uri);
-        }
-
-        @Override
-        public String getNamespaceURI(String prefix) {
-            return ns.get(prefix);
-        }
-
-        @Override
-        public String getPrefix(String namespaceURI) {
-            return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(e->e.getKey()).findFirst().orElse(null);
-        }
-
-        @Override
-        public Iterator getPrefixes(String namespaceURI) {
-            return ns.keySet().iterator();
-        }
-    }
-
-    /**
-     * Create XPathExpression and declare namespaces on it.
-     *
-     * @param xpathExpr xpath expression for the XPathExpression
-     * @return the XPathExpression
-     */
-    private XPathExpression acquireXPathExpression(String xpathExpr) {
-        XPathExpression xPathExpression = compiledXPaths.remove(xpathExpr);
-        if (xPathExpression == null) {
-            XPath xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
-            if (config.isNamespaceAware()) {
-                namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
-                for (Map.Entry<String, String> e : config.getNamespaces().entrySet()) {
-                    namespaces.add(e.getKey(), e.getValue());
-                }
-                xPath.setNamespaceContext(namespaces);
-            }
-            try {
-                xPathExpression = xPath.compile(xpathExpr);
-            } catch (XPathExpressionException e) {
-                throw new BlackLabRuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
-            }
-        }
-        XPathExpressionsInUse.put(xPathExpression, xpathExpr);
-        return xPathExpression;
-    }
-
-    private void releaseXPathExpression(XPathExpression ap) {
-        String xpathExpr = XPathExpressionsInUse.remove(ap);
-        compiledXPaths.put(xpathExpr, ap);
-    }
-
 
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
@@ -350,6 +51,10 @@ public class JaxpIndexer extends DocIndexerConfig {
         }
     }
 
+    private XPathExpression acquireXPathExpression(String path) {
+        return saxonicaHelper.acquireXPathExpression(path);
+    }
+
     /**
      * Index document from the current node.
      */
@@ -360,7 +65,7 @@ public class JaxpIndexer extends DocIndexerConfig {
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             if (!annotatedField.isDummyForStoringLinkedDocuments())
-                test(doc, annotatedField);
+                saxonicaHelper.test(doc, annotatedField);
         }
 
         // For each configured metadata block..
@@ -376,37 +81,6 @@ public class JaxpIndexer extends DocIndexerConfig {
         endDocument();
     }
 
-    protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
-            throws XPathExpressionException {
-        XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
-        List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
-        int wNum = 0;
-        for (NodeInfo word : words) {
-            Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
-            setCharPos(word);
-            EndPos endPos = endPosList.stream().filter(ep -> ep.qName.equals(word.getDisplayName())).skip(wNum++)
-                    .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + word));
-            System.out.println(new String(Arrays.copyOfRange(chars,getCharacterPosition() - 2,getCharPos(endPos.line,endPos.col) - 1)) +
-                    ": " + (getCharacterPosition() -2) + " - " + (getCharPos(endPos.line,endPos.col)-1));
-            for (Map.Entry<String, ConfigAnnotation> an : entries) {
-                ConfigAnnotation annotation = an.getValue();
-                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                List texts = (List) annXPathExpression.evaluate(word, XPathConstants.NODESET);
-                for (Object o : texts) {
-                    if (o instanceof NodeInfo) {
-                        NodeInfo text = (NodeInfo) o;
-                    /*
-                     NOTE posities van text() zijn niet betrouwbaar, van elementen wel
-                     het character na de positie van een element is altijd het > teken
-                     */
-                        setCharPos(text);
-                    } else {
-//                        System.out.println(o.getClass() + ": " + o);
-                    }
-                }
-            }
-        }
-    }
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
 
@@ -826,6 +500,6 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     @Override
     protected int getCharacterPosition() {
-        return charPos;
+        return saxonicaHelper.getCharPos();
     }
 }
