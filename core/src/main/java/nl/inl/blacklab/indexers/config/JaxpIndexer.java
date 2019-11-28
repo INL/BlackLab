@@ -8,7 +8,6 @@ import net.sf.saxon.xpath.XPathFactoryImpl;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.Indexer;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.*;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -17,7 +16,7 @@ import javax.xml.namespace.NamespaceContext;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.xpath.*;
-import java.io.ByteArrayInputStream;
+import java.io.CharArrayReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
@@ -39,6 +38,19 @@ public class JaxpIndexer extends DocIndexerConfig {
     private TreeInfo contents = null;
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
+    private class EndPos {
+        private final String qName;
+        private final int line, col;
+
+        public EndPos(String qName, int line, int col) {
+            this.qName = qName;
+            this.line = line;
+            this.col = col;
+        }
+    }
+
+    private final List<EndPos> endPosList = new ArrayList<>(50*300);
+
     private int charPos = 0;
 
     private void setCharPos(NodeInfo nodeInfo) {
@@ -59,14 +71,16 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     short lineEnd = 1;
 
+    private char[] chars;
+
     @Override
     public void setDocument(Reader reader) {
         try {
-            byte[] bytes = IOUtils.toByteArray(reader, Indexer.DEFAULT_INPUT_ENCODING);
-            ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+            chars = IOUtils.toCharArray(reader);
+            CharArrayReader stream = new CharArrayReader(chars);
             AtomicInteger line = new AtomicInteger();
             AtomicInteger cols = new AtomicInteger();
-            IOUtils.lineIterator(stream, Indexer.DEFAULT_INPUT_ENCODING).forEachRemaining(l ->
+            IOUtils.lineIterator(stream).forEachRemaining(l ->
                     cumulativeColsPerLine.put(line.incrementAndGet(), cols.addAndGet(l.length())));
             stream.reset();
             if (cumulativeColsPerLine.size()>1) {
@@ -215,7 +229,7 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            System.out.println(qName + ", endpos: " + getCharPos(locator.getLineNumber(),locator.getColumnNumber()));
+            endPosList.add(new EndPos(qName,locator.getLineNumber(),locator.getColumnNumber()));
             fromSaxon.endElement(uri,localName,qName);
         }
 
@@ -355,13 +369,17 @@ public class JaxpIndexer extends DocIndexerConfig {
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
         List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
+        int wNum = 0;
         for (NodeInfo word : words) {
             Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
             setCharPos(word);
-            System.out.println(word.toShortString() + ": " + getCharacterPosition());
+            EndPos endPos = endPosList.stream().filter(ep -> ep.qName.equals(word.getDisplayName())).skip(wNum++)
+                    .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + word));
+            System.out.println(new String(Arrays.copyOfRange(chars,getCharacterPosition(),getCharPos(endPos.line,endPos.col))) +
+                    ": " + getCharacterPosition() + " - " + getCharPos(endPos.line,endPos.col));
             for (Map.Entry<String, ConfigAnnotation> an : entries) {
                 ConfigAnnotation annotation = an.getValue();
-                XPathExpression annXPathExpression = acquireXPathExpression("string-join(.//node(),'')");
+                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
                 List texts = (List) annXPathExpression.evaluate(word, XPathConstants.NODESET);
                 for (Object o : texts) {
                     if (o instanceof NodeInfo) {
@@ -371,9 +389,8 @@ public class JaxpIndexer extends DocIndexerConfig {
                      het character na de positie van een element is altijd het > teken
                      */
                         setCharPos(text);
-                        System.out.println(text.getNodeKind() + ", " + text.toShortString() + ": " + getCharacterPosition());
                     } else {
-                        System.out.println(o.getClass() + ": " + o);
+//                        System.out.println(o.getClass() + ": " + o);
                     }
                 }
             }
