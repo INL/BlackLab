@@ -336,18 +336,28 @@ public class SaxonicaHelper {
         return xPathExpression;
     }
 
+    /**
+     * find where in the character[] of the source the closing tag ends
+     * @param nodeInfo the node to find the endtag for
+     * @param num the occurrence of the node in the source
+     * @return
+     */
+    public int findClosingTagPosition(NodeInfo nodeInfo, int num) {
+        return endPosList.stream().filter(ep -> ep.qName.equals(nodeInfo.getDisplayName())).skip(num)
+                .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + nodeInfo)).charPos;
+    }
+
     protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
         List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
         int wNum = 0;
         for (NodeInfo word : words) {
+            int endPos = findClosingTagPosition(word,wNum++);
             Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
             setCharPos(word);
-            EndPos endPos = endPosList.stream().filter(ep -> ep.qName.equals(word.getDisplayName())).skip(wNum++)
-                    .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + word));
-            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos.charPos)) +
-                    ": " + startPosMap.get(charPos) + " - " + (endPos.charPos - 1));
+            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
+                    ": " + startPosMap.get(charPos) + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : entries) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
