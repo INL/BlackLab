@@ -145,17 +145,16 @@ public abstract class RequestHandler {
 
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
-        boolean isYourPrivateIndex = false;
+        Index privateIndex = null;
         //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
         if (indexName.contains(":")) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access a private index.");
             try {
-                Index index = searchManager.getIndexManager().getIndex(indexName);
-                if (!index.userMayRead(user.getUserId()))
+                privateIndex = searchManager.getIndexManager().getIndex(indexName);
+                if (!privateIndex.userMayRead(user))
                     return errorObj.unauthorized("You are not authorized to access this index.");
-                isYourPrivateIndex = user.getUserId().equals(index.getUserId());
             } catch (IndexNotFound e) {
                 // Ignore this here; this is either not an index name but some other request (e.g. cache-info)
                 // or it is an index name but will trigger an error later.
@@ -177,7 +176,7 @@ public abstract class RequestHandler {
                 if (indexName.length() == 0 || resourceOrPathGiven) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
-                if (!isYourPrivateIndex)
+                if (privateIndex != null && privateIndex.userMayDelete(user))
                     return errorObj.forbidden("You can only delete your own private indices.");
                 requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
             }
@@ -208,7 +207,7 @@ public abstract class RequestHandler {
                             urlPathInfo);
                 } else if (ServletFileUpload.isMultipartContent(request)) {
                     // Add document to index
-                    if (!isYourPrivateIndex)
+                    if (privateIndex != null && privateIndex.userMayAddData(user))
                         return errorObj.forbidden("Can only POST to your own private indices.");
                     if (urlResource.equals("docs") && urlPathInfo.isEmpty()) {
                         if (!Index.isValidIndexName(indexName))
