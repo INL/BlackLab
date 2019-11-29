@@ -37,14 +37,13 @@ public class SaxonicaHelper {
 
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
-    private static class EndPos {
+    private class EndPos {
         private final String qName;
-        private final int line, col;
+        private final int charPos;
 
         public EndPos(String qName, int line, int col) {
             this.qName = qName;
-            this.line = line;
-            this.col = col;
+            charPos = getCharPos(line, col);
         }
     }
 
@@ -348,8 +347,8 @@ public class SaxonicaHelper {
             setCharPos(word);
             EndPos endPos = endPosList.stream().filter(ep -> ep.qName.equals(word.getDisplayName())).skip(wNum++)
                     .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + word));
-            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), getCharPos(endPos.line, endPos.col) - 1)) +
-                    ": " + startPosMap.get(charPos) + " - " + (getCharPos(endPos.line, endPos.col) - 1));
+            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos.charPos)) +
+                    ": " + startPosMap.get(charPos) + " - " + (endPos.charPos - 1));
             for (Map.Entry<String, ConfigAnnotation> an : entries) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
