@@ -68,7 +68,8 @@ public class SaxonicaHelper {
                 (lineNumber == 1 ? 0 : cumulativeColsPerLine.get(lineNumber - 1));
         return cumulativeColsPerLine.get(lineNumber)
                 - (charsOnline - columnNumber)
-                + (lineNumber - 1) * lineEnd;
+                + (lineNumber - 1) * lineEnd
+                - 1; // saxonica notifies columnNumber just after tag
     }
 
     short lineEnd = 1;
@@ -243,15 +244,17 @@ public class SaxonicaHelper {
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
             int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
             int begin = end;
-            for (int i = end; i > 0; i--) {
+            boolean selfClosing=false;
+            for (int i = end - 1; i > 0; i--) {
                 if ('<' == chars[i]) {
                     begin = i;
+                    selfClosing=begin==end;
                     break;
                 }
             }
-            if (begin==end) {
-                throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d and col %d",
-                        qName,locator.getLineNumber(),locator.getColumnNumber()));
+            if (begin==end && !selfClosing) {
+                throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
+                        qName,locator.getLineNumber(),locator.getColumnNumber(),end));
             }
             startPosMap.put(end,begin);
             saxonHandler.startElement(uri, localName, qName, atts);
@@ -343,7 +346,7 @@ public class SaxonicaHelper {
      * @return
      */
     public int findClosingTagPosition(NodeInfo nodeInfo, int num) {
-        return endPosList.stream().filter(ep -> ep.qName.equals(nodeInfo.getDisplayName())).skip(num)
+        return endPosList.stream().filter(ep -> ep.qName.equals(nodeInfo.getDisplayName())).skip(num - 1)
                 .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + nodeInfo)).charPos;
     }
 
@@ -353,11 +356,19 @@ public class SaxonicaHelper {
         List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
         int wNum = 0;
         for (NodeInfo word : words) {
-            int endPos = findClosingTagPosition(word,wNum++);
+            int endPos = findClosingTagPosition(word,++wNum);
             Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
             setCharPos(word);
             System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
                     ": " + startPosMap.get(charPos) + " - " + endPos);
+            XPathExpression joinExpr = acquireXPathExpression("//tei:join[count(preceding::tei:join)=3]");
+            NodeInfo join = (NodeInfo) joinExpr.evaluate(word,XPathConstants.NODE);
+            if (join!=null) {
+                int joinEnd = findClosingTagPosition(join,4);
+                int joinPos = getCharPos(join);
+                System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(joinPos), joinEnd)) +
+                        ": " + startPosMap.get(joinPos) + " - " + joinEnd);
+            }
             for (Map.Entry<String, ConfigAnnotation> an : entries) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
