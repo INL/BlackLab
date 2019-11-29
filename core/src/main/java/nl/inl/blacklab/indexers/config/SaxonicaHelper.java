@@ -241,19 +241,18 @@ public class SaxonicaHelper {
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
-            /*
-            Here we may need to calculate the position of the "<", which in fact we cannot garantee because of whitespace between attributes.
-
-             */
-            StringBuilder elementStartTag = new StringBuilder("<" + qName);
-            if (atts.getLength()>0) {
-                for (short s = 0; s < atts.getLength(); s++) {
-                    elementStartTag.append(' ').append(atts.getQName(s)).append("=\"").append(atts.getValue(s)).append('"');
+            int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
+            int begin = end;
+            for (int i = end; i > 0; i--) {
+                if ('<' == chars[i]) {
+                    begin = i;
+                    break;
                 }
             }
-            elementStartTag.append('>');
-            int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
-            int begin = end - elementStartTag.length() - 1;
+            if (begin==end) {
+                throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d and col %d",
+                        qName,locator.getLineNumber(),locator.getColumnNumber()));
+            }
             startPosMap.put(end,begin);
             saxonHandler.startElement(uri, localName, qName, atts);
         }
