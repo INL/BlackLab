@@ -8,8 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.jobs.User;
-
 /**
  * Used for CLARIN login (Shibboleth), which passes userid in an attribute
  * called "eppn". Special class because for unknown reasons, we (sometimes?) get
@@ -38,18 +36,6 @@ public class AuthClarinEppn extends AuthRequestAttribute {
             }
         }
         return userId;
-    }
-    
-    @Override
-    public User determineCurrentUser(HttpServlet servlet, HttpServletRequest request) {
-        /*
-        // TODO: add configurable superuser password?
-        if (request.getHeader("X-AutoSearchAccess").equals("secret")) {
-            // We're the superuser, who can do anything!
-            return User.superuser(request.getSession().getId());
-        }
-        */
-        return super.determineCurrentUser(servlet, request);
     }
 
 }

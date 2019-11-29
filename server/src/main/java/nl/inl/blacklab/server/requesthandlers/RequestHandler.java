@@ -120,6 +120,12 @@ public abstract class RequestHandler {
         // See if a user is logged in
         SearchManager searchManager = servlet.getSearchManager();
         User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
+        String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
+        if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
+            if (request.getHeader("X-BlackLabAccessToken").equals(debugHttpHeaderToken)) {
+                user = User.loggedIn(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
+            }
+        }
 
         // Parse the URL
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getServletPath()), "/");
