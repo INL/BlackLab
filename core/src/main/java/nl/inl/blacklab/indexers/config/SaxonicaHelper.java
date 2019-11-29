@@ -47,9 +47,12 @@ public class SaxonicaHelper {
         }
     }
 
+    /**
+     * collects recorded (during parse) sax end position (the > of the end tag)
+     */
     private final List<EndPos> endPosList = new ArrayList<>(50 * 300);
     /**
-     * connects recorded sax start pos (the >) to the calculated start pos (the &lt;)
+     * connects recorded (during parse) sax start position (the > of the start tag) to the calculated start pos (the &lt; at the beginning of the start tag)
      */
     private final Map<Integer, Integer> startPosMap = new HashMap<>(50 * 300);
 
@@ -103,6 +106,7 @@ public class SaxonicaHelper {
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
+//        chars = null;
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
             namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
@@ -332,6 +336,7 @@ public class SaxonicaHelper {
         if (xPathExpression == null) {
             try {
                 xPathExpression = xPath.compile(xpathExpr);
+                compiledXPaths.put(xpathExpr,xPathExpression);
             } catch (XPathExpressionException e) {
                 throw new BlackLabRuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
             }
@@ -353,27 +358,16 @@ public class SaxonicaHelper {
     protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
-        List<NodeInfo> words = (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET);
         int wNum = 0;
-        for (NodeInfo word : words) {
-            int endPos = findClosingTagPosition(word,++wNum);
-            Set<Map.Entry<String, ConfigAnnotation>> entries = annotatedField.getAnnotations().entrySet();
+        for (NodeInfo word : (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET)) {
             setCharPos(word);
-            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
-                    ": " + startPosMap.get(charPos) + " - " + endPos);
-            XPathExpression joinExpr = acquireXPathExpression("//tei:join[count(preceding::tei:join)=3]");
-            NodeInfo join = (NodeInfo) joinExpr.evaluate(word,XPathConstants.NODE);
-            if (join!=null) {
-                int joinEnd = findClosingTagPosition(join,4);
-                int joinPos = getCharPos(join);
-                System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(joinPos), joinEnd)) +
-                        ": " + startPosMap.get(joinPos) + " - " + joinEnd);
-            }
-            for (Map.Entry<String, ConfigAnnotation> an : entries) {
+            int endPos = findClosingTagPosition(word,++wNum);
+//            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
+//                    ": " + startPosMap.get(charPos) + " - " + endPos);
+            for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                List texts = (List) annXPathExpression.evaluate(word, XPathConstants.NODESET);
-                for (Object o : texts) {
+                for (Object o : (List) annXPathExpression.evaluate(word, XPathConstants.NODESET)) {
                     if (o instanceof NodeInfo) {
                         NodeInfo text = (NodeInfo) o;
                     } else {
