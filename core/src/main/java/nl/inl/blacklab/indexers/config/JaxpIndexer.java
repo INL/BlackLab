@@ -43,16 +43,11 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         try {
             XPathExpression documents = acquireXPathExpression(config.getDocumentPath());
-            ((List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET))
-                    .forEach(doc -> {
-                        try {
-                            indexDocument(doc);
-                        } catch (XPathExpressionException e) {
-                            throw new InvalidConfiguration(e.getMessage(), e);
-                        }
-                    });
+            for (NodeInfo doc : (List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET)) {
+                indexDocument(doc);
+            }
         } catch (XPathExpressionException e) {
-            throw new InvalidConfiguration(String.format("Error in xpath %s when indexing file: %s",config.getDocumentPath(), documentName), e);
+            throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
         }
     }
 

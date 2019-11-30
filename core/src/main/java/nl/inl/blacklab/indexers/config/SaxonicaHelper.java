@@ -250,19 +250,19 @@ public class SaxonicaHelper {
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
             int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
             int begin = end;
-            boolean selfClosing=false;
+            boolean selfClosing = false;
             for (int i = end - 1; i > 0; i--) {
                 if ('<' == chars[i]) {
                     begin = i;
-                    selfClosing=begin==end;
+                    selfClosing = begin == end;
                     break;
                 }
             }
-            if (begin==end && !selfClosing) {
+            if (begin == end && !selfClosing) {
                 throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
-                        qName,locator.getLineNumber(),locator.getColumnNumber(),end));
+                        qName, locator.getLineNumber(), locator.getColumnNumber(), end));
             }
-            startPosMap.put(end,begin);
+            startPosMap.put(end, begin);
             saxonHandler.startElement(uri, localName, qName, atts);
         }
 
@@ -338,7 +338,7 @@ public class SaxonicaHelper {
         if (xPathExpression == null) {
             try {
                 xPathExpression = xPath.compile(xpathExpr);
-                compiledXPaths.put(xpathExpr,xPathExpression);
+                compiledXPaths.put(xpathExpr, xPathExpression);
             } catch (XPathExpressionException e) {
                 throw new BlackLabRuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(), e);
             }
@@ -348,8 +348,9 @@ public class SaxonicaHelper {
 
     /**
      * find where in the character[] of the source the closing tag ends
+     *
      * @param nodeInfo the node to find the endtag for
-     * @param num the occurrence of the node in the source
+     * @param num      the occurrence of the node in the source
      * @return
      */
     public int findClosingTagPosition(NodeInfo nodeInfo, int num) {
@@ -361,29 +362,23 @@ public class SaxonicaHelper {
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
         AtomicInteger wNum = new AtomicInteger();
-        ((List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET))
-                .forEach(word -> {
-                        setCharPos(word);
-                        int endPos = findClosingTagPosition(word,wNum.incrementAndGet());
+        for (NodeInfo word : (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET)) {
+            setCharPos(word);
+            int endPos = findClosingTagPosition(word, wNum.incrementAndGet());
 //            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
 //                    ": " + startPosMap.get(charPos) + " - " + endPos);
-                        annotatedField.getAnnotations().entrySet().forEach(an -> {
-                            ConfigAnnotation annotation = an.getValue();
-                            XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                            try {
-                            ((List) annXPathExpression.evaluate(word, XPathConstants.NODESET))
-                                    .forEach(o -> {
-                                        if (o instanceof NodeInfo) {
-                                            NodeInfo text = (NodeInfo) o;
-                                        } else {
-                                            System.out.println(o.getClass() + ": " + o);
-                                        }
-                                    });
-                            } catch (XPathExpressionException e) {
-                                throw new InvalidConfiguration(e.getMessage(), e);
-                            }
-                        });
-                });
+            for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
+                ConfigAnnotation annotation = an.getValue();
+                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
+                for (Object o : (List) annXPathExpression.evaluate(word, XPathConstants.NODESET)) {
+                    if (o instanceof NodeInfo) {
+                        NodeInfo text = (NodeInfo) o;
+                    } else {
+                        System.out.println(o.getClass() + ": " + o);
+                    }
+                }
+            }
+        }
     }
 
     int getCharPos() {
