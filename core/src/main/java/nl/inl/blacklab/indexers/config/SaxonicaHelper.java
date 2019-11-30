@@ -6,8 +6,6 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.*;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -35,8 +33,14 @@ public class SaxonicaHelper {
     };
 
 
+    /**
+     * The document tree needed for processing xpath's
+     */
     private final TreeInfo contents;
 
+    /**
+     * cumulative number of columns per line, used to translate line/column into character position
+     */
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
     private class EndPos {
@@ -57,12 +61,6 @@ public class SaxonicaHelper {
      * connects recorded (during parse) sax start position (the > of the start tag) to the calculated start pos (the &lt; at the beginning of the start tag)
      */
     private final Map<Integer, Integer> startPosMap = new HashMap<>(50 * 300);
-
-    private int charPos = 0;
-
-    private void setCharPos(NodeInfo nodeInfo) {
-        charPos = getCharPos(nodeInfo);
-    }
 
     private int getCharPos(NodeInfo nodeInfo) {
         return getCharPos(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
@@ -361,12 +359,12 @@ public class SaxonicaHelper {
     protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
-        AtomicInteger wNum = new AtomicInteger();
+        int wNum = 0;
         for (NodeInfo word : (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET)) {
-            setCharPos(word);
-            int endPos = findClosingTagPosition(word, wNum.incrementAndGet());
-//            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
-//                    ": " + startPosMap.get(charPos) + " - " + endPos);
+            int start = getStartPos(word);
+            int endPos = getEndPos(word,++wNum);
+            System.out.println(new String(Arrays.copyOfRange(chars, start, endPos)) +
+                    ": " + start + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                 ConfigAnnotation annotation = an.getValue();
                 XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
@@ -381,8 +379,12 @@ public class SaxonicaHelper {
         }
     }
 
-    int getCharPos() {
-        return charPos;
+    int getStartPos(NodeInfo node) {
+        return startPosMap.get(getCharPos(node));
+    }
+
+    int getEndPos(NodeInfo node, int num) {
+        return findClosingTagPosition(node,num);
     }
 
     TreeInfo getContents() {
