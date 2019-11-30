@@ -499,8 +499,10 @@ public class JaxpIndexer extends DocIndexerConfig {
 
     }
 
+    private int startPos = 0;
+
     @Override
     protected int getCharacterPosition() {
-        return saxonicaHelper.getStartPos();
+        return startPos;
     }
 }
