@@ -4,6 +4,7 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import org.xml.sax.SAXException;
@@ -42,12 +43,16 @@ public class JaxpIndexer extends DocIndexerConfig {
 
         try {
             XPathExpression documents = acquireXPathExpression(config.getDocumentPath());
-            List<NodeInfo> docs = (List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET);
-            for (NodeInfo doc : docs) {
-                indexDocument(doc);
-            }
+            ((List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET))
+                    .forEach(doc -> {
+                        try {
+                            indexDocument(doc);
+                        } catch (XPathExpressionException e) {
+                            throw new InvalidConfiguration(e.getMessage(), e);
+                        }
+                    });
         } catch (XPathExpressionException e) {
-            throw new MalformedInputFile("Error indexing file: " + documentName, e);
+            throw new InvalidConfiguration(String.format("Error in xpath %s when indexing file: %s",config.getDocumentPath(), documentName), e);
         }
     }
 
@@ -255,6 +260,7 @@ public class JaxpIndexer extends DocIndexerConfig {
 //            releaseXPathExpression(apTokenPositionId);
 //        releaseXPathExpression(bodies);
     }
+
     /**
      * Add open and close InlineObject objects for the current element to the list.
      *
@@ -410,7 +416,7 @@ public class JaxpIndexer extends DocIndexerConfig {
     }
 
 
-    protected void processLinkedDocument(NodeInfo doc,ConfigLinkedDocument ld) {
+    protected void processLinkedDocument(NodeInfo doc, ConfigLinkedDocument ld) {
 //        // Resolve linkPaths to get the information needed to fetch the document
 //        List<String> results = new ArrayList<>();
 //        for (ConfigLinkValue linkValue : ld.getLinkValues()) {

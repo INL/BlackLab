@@ -6,6 +6,8 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.*;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -358,24 +360,30 @@ public class SaxonicaHelper {
     protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
         XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
-        int wNum = 0;
-        for (NodeInfo word : (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET)) {
-            setCharPos(word);
-            int endPos = findClosingTagPosition(word,++wNum);
+        AtomicInteger wNum = new AtomicInteger();
+        ((List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET))
+                .forEach(word -> {
+                        setCharPos(word);
+                        int endPos = findClosingTagPosition(word,wNum.incrementAndGet());
 //            System.out.println(new String(Arrays.copyOfRange(chars, startPosMap.get(charPos), endPos)) +
 //                    ": " + startPosMap.get(charPos) + " - " + endPos);
-            for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
-                ConfigAnnotation annotation = an.getValue();
-                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                for (Object o : (List) annXPathExpression.evaluate(word, XPathConstants.NODESET)) {
-                    if (o instanceof NodeInfo) {
-                        NodeInfo text = (NodeInfo) o;
-                    } else {
-                        System.out.println(o.getClass() + ": " + o);
-                    }
-                }
-            }
-        }
+                        annotatedField.getAnnotations().entrySet().forEach(an -> {
+                            ConfigAnnotation annotation = an.getValue();
+                            XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
+                            try {
+                            ((List) annXPathExpression.evaluate(word, XPathConstants.NODESET))
+                                    .forEach(o -> {
+                                        if (o instanceof NodeInfo) {
+                                            NodeInfo text = (NodeInfo) o;
+                                        } else {
+                                            System.out.println(o.getClass() + ": " + o);
+                                        }
+                                    });
+                            } catch (XPathExpressionException e) {
+                                throw new InvalidConfiguration(e.getMessage(), e);
+                            }
+                        });
+                });
     }
 
     int getCharPos() {
