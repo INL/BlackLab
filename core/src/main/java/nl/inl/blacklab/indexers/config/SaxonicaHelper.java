@@ -46,12 +46,10 @@ public class SaxonicaHelper {
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
     private class StartEndPos {
-        private final String qName;
         private final int startPos;
         private int endPos;
 
-        public StartEndPos(String qName, int realStart) {
-            this.qName = qName;
+        public StartEndPos(int realStart) {
             startPos = realStart;
         }
 
@@ -62,8 +60,8 @@ public class SaxonicaHelper {
     }
 
     /**
-     * connects recorded (during parse) sax start position (the > of the start tag) to the calculated start pos (the &lt; at the beginning of the start tag)
-     * and the calculated end pos (>) of the end tag.
+     * connects recorded sax positions (just after start and end tags) to the calculated
+     * positions (the first char of start and end tags).
      */
     private final Map<Integer, StartEndPos> startEndPosMap = new HashMap<>(50 * 300);
 
@@ -71,6 +69,12 @@ public class SaxonicaHelper {
         return getCharPos(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
     }
 
+    /**
+     * translation of recorded line and column number to character position in the document
+     * @param lineNumber
+     * @param columnNumber
+     * @return
+     */
     private int getCharPos(int lineNumber, int columnNumber) {
         int charsOnline = cumulativeColsPerLine.get(lineNumber) -
                 (lineNumber == 1 ? 0 : cumulativeColsPerLine.get(lineNumber - 1));
@@ -82,13 +86,18 @@ public class SaxonicaHelper {
 
     short lineEnd = 1;
 
+    /**
+     * The characters of the document, will be set to null after parsing
+     */
     private char[] chars;
 
     public SaxonicaHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
+        // characters needed for calculating positions
         chars = IOUtils.toCharArray(reader);
         CharArrayReader stream = new CharArrayReader(chars);
         AtomicInteger line = new AtomicInteger();
         AtomicInteger cols = new AtomicInteger();
+        // determine cumulative number of chars per line
         IOUtils.lineIterator(stream).forEachRemaining(l ->
                 cumulativeColsPerLine.put(line.incrementAndGet(), cols.addAndGet(l.length())));
         stream.reset();
@@ -96,22 +105,27 @@ public class SaxonicaHelper {
             int i = -1;
             while ((i = stream.read()) != -1) {
                 if (i == '\r') {
+                    // windows file
                     lineEnd = 2;
                     break;
                 }
             }
             stream.reset();
         }
+        // make sure our content handler doesn't get overwritten by saxonica
         MyContentHandler myContentHandler = new MyContentHandler();
         XMLReader xmlReader = XMLReaderFactory.createXMLReader();
         xmlReader.setContentHandler(myContentHandler);
         XMLReader wrapper = new MyXMLReader(xmlReader);
+        // regular parsing with line numbering enabled
         InputSource inputSrc = new InputSource(stream);
         Source source = new SAXSource(wrapper, inputSrc);
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
+        // chars not needed anymore
         chars = null;
+        // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
             namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
@@ -177,8 +191,8 @@ public class SaxonicaHelper {
         }
 
         /**
-         * instead of silently replacing the handler we set it in our wrapping handler,
-         * {@link MyContentHandler#setSaxonHandler(ContentHandler)}.
+         * instead of silently replacing the handler we set it in our wrapping handler
+         * that we need for positions.
          *
          * @param handler
          */
@@ -257,19 +271,19 @@ public class SaxonicaHelper {
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
             int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
             int begin = end;
-            boolean selfClosing = false;
+            // now look back for the < character
             for (int i = end - 1; i > 0; i--) {
                 if ('<' == chars[i]) {
                     begin = i;
-                    selfClosing = begin == end;
                     break;
                 }
             }
-            if (begin == end && !selfClosing) {
+            // NOTE more testing needed for self closing tags
+            if (begin == end) {
                 throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
                         qName, locator.getLineNumber(), locator.getColumnNumber(), end));
             }
-            StartEndPos startEndPos = new StartEndPos(qName, begin);
+            StartEndPos startEndPos = new StartEndPos(begin);
             elStack.push(startEndPos);
             startEndPosMap.put(end, startEndPos);
             saxonHandler.startElement(uri, localName, qName, atts);
