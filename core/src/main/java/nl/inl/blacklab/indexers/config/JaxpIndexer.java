@@ -9,7 +9,6 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import org.xml.sax.SAXException;
 
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
@@ -42,17 +41,12 @@ public class JaxpIndexer extends DocIndexerConfig {
         super.index();
 
         try {
-            XPathExpression documents = acquireXPathExpression(config.getDocumentPath());
-            for (NodeInfo doc : (List<NodeInfo>) documents.evaluate(contents, XPathConstants.NODESET)) {
+            for (NodeInfo doc : saxonicaHelper.findNodes(config.getDocumentPath(),contents)) {
                 indexDocument(doc);
             }
         } catch (XPathExpressionException e) {
             throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
         }
-    }
-
-    private XPathExpression acquireXPathExpression(String path) {
-        return saxonicaHelper.acquireXPathExpression(path);
     }
 
     /**
@@ -90,22 +84,22 @@ public class JaxpIndexer extends DocIndexerConfig {
         // and store in instance variables so our methods can access them
 //        setCurrentAnnotatedField(annotatedField);
 
-        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
-        XPathExpression words = acquireXPathExpression(annotatedField.getWordsPath());
-        XPathExpression apEvalToString = acquireXPathExpression(".");
-        List<XPathExpression> apsInlineTag = new ArrayList<>();
-        for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
-            XPathExpression apInlineTag = acquireXPathExpression(inlineTag.getPath());
-            apsInlineTag.add(apInlineTag);
-        }
-        XPathExpression apPunct = null;
-        if (annotatedField.getPunctPath() != null)
-            apPunct = acquireXPathExpression(annotatedField.getPunctPath());
-        String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
-        XPathExpression apTokenPositionId = null;
-        if (tokenPositionIdPath != null) {
-            apTokenPositionId = acquireXPathExpression(tokenPositionIdPath);
-        }
+//        // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
+//        XPathExpression words = acquireXPathExpression(annotatedField.getWordsPath());
+//        XPathExpression apEvalToString = acquireXPathExpression(".");
+//        List<XPathExpression> apsInlineTag = new ArrayList<>();
+//        for (ConfigInlineTag inlineTag : annotatedField.getInlineTags()) {
+//            XPathExpression apInlineTag = acquireXPathExpression(inlineTag.getPath());
+//            apsInlineTag.add(apInlineTag);
+//        }
+//        XPathExpression apPunct = null;
+//        if (annotatedField.getPunctPath() != null)
+//            apPunct = acquireXPathExpression(annotatedField.getPunctPath());
+//        String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
+//        XPathExpression apTokenPositionId = null;
+//        if (tokenPositionIdPath != null) {
+//            apTokenPositionId = acquireXPathExpression(tokenPositionIdPath);
+//        }
 
 //        // For each body element...
 //        // (there's usually only one, but there's no reason to limit it)

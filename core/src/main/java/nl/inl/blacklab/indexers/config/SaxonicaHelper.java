@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * A helper for indexing using saxonica
@@ -331,7 +332,7 @@ public class SaxonicaHelper {
      * @param xpathExpr xpath expression for the XPathExpression
      * @return the XPathExpression
      */
-    XPathExpression acquireXPathExpression(String xpathExpr) {
+    private XPathExpression acquireXPathExpression(String xpathExpr) {
         XPathExpression xPathExpression = compiledXPaths.get(xpathExpr);
         if (xPathExpression == null) {
             try {
@@ -342,6 +343,61 @@ public class SaxonicaHelper {
             }
         }
         return xPathExpression;
+    }
+
+    /**
+     * Find results in a context, return a list of Objects. This approach is usefull if you don't know
+     * the return type(s) in advance. This works for all return types of an xPath, also the ones that
+     * return for example one boolean. Often a List&lt;NodeInfo> will be returned.
+     *
+     * @param xPath
+     * @param context
+     * @return
+     */
+    List find(String xPath, Object context) throws XPathExpressionException {
+        return (List) acquireXPathExpression(xPath).evaluate(context,XPathConstants.NODESET);
+    }
+
+    /**
+     * Calls {@link #find(String, Object)} and casts the result to List&lt;NodeInfo>, NOTE that the
+     * resulting list may still contain Objects that are no NodeInfo, due to the way collections work,
+     * Collections.checkedList won't help here.
+     * @param xPath
+     * @param context
+     * @return
+     * @throws XPathExpressionException
+     */
+    List<NodeInfo> findNodes(String xPath, Object context) throws XPathExpressionException {
+        return (List<NodeInfo>) find(xPath,context);
+    }
+
+    /**
+     * return a string representation of an xpath result, using {@link NodeInfo#getStringValue()} or
+     * String.valueOf. Handling multiple results should be done in xPath, for example concat.
+     * @param xPath
+     * @param context
+     * @return
+     * @throws XPathExpressionException
+     * @throws BlackLabRuntimeException when the xpath returns multiple results
+     */
+    String getValue(String xPath, Object context) throws XPathExpressionException {
+        List list = find(xPath, context);
+        if (list.size()==1) {
+            Object o = list.get(0);
+            if (o instanceof NodeInfo) {
+                return ((NodeInfo) o).getStringValue();
+            } else {
+                return String.valueOf(o);
+            }
+        } else {
+            if (list.isEmpty())
+                return "";
+            else
+                    throw new BlackLabRuntimeException(
+                            String.format("list %s contains multiple values, refuse to turn it into a String",
+                                    list.stream().map(o -> o instanceof NodeInfo ? ((NodeInfo) o).toShortString() : String.valueOf(o))
+                                            .collect(Collectors.toList())));
+        }
     }
 
     /**
@@ -358,23 +414,15 @@ public class SaxonicaHelper {
 
     protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
-        XPathExpression wordpath = acquireXPathExpression(annotatedField.getWordsPath());
         int wNum = 0;
-        for (NodeInfo word : (List<NodeInfo>) wordpath.evaluate(contents, XPathConstants.NODESET)) {
+        for (NodeInfo word : findNodes(annotatedField.getWordsPath(),contents)) {
             int start = getStartPos(word);
-            int endPos = getEndPos(word,++wNum);
-            System.out.println(new String(Arrays.copyOfRange(chars, start, endPos)) +
-                    ": " + start + " - " + endPos);
+            int endPos = getEndPos(word, ++wNum);
+//            System.out.println(new String(Arrays.copyOfRange(chars, start, endPos)) +
+//                    ": " + start + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                 ConfigAnnotation annotation = an.getValue();
-                XPathExpression annXPathExpression = acquireXPathExpression(annotation.getValuePath());
-                for (Object o : (List) annXPathExpression.evaluate(word, XPathConstants.NODESET)) {
-                    if (o instanceof NodeInfo) {
-                        NodeInfo text = (NodeInfo) o;
-                    } else {
-                        System.out.println(o.getClass() + ": " + o);
-                    }
-                }
+                System.out.println(annotation.getName() + ": " + getValue(annotation.getValuePath(),word));
             }
         }
     }
@@ -384,7 +432,7 @@ public class SaxonicaHelper {
     }
 
     int getEndPos(NodeInfo node, int num) {
-        return findClosingTagPosition(node,num);
+        return findClosingTagPosition(node, num);
     }
 
     TreeInfo getContents() {
