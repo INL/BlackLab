@@ -108,7 +108,7 @@ public class SaxonicaHelper {
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
-//        chars = null;
+        chars = null;
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
             namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
@@ -117,11 +117,13 @@ public class SaxonicaHelper {
             }
             xPath.setNamespaceContext(namespaces);
         }
-
     }
 
     private XPath xPath;
 
+    /**
+     * Needed to not loose our contenthandler, which would otherwise be overridden by saxonica.
+     */
     private static class MyXMLReader implements XMLReader {
         private final XMLReader wrappedReader;
         private final MyContentHandler handler;
@@ -296,7 +298,7 @@ public class SaxonicaHelper {
     }
 
     /**
-     * Map from XPath expression to compiled XPath.
+     * Compiled XPaths for use in one thread.
      */
     private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
@@ -408,12 +410,12 @@ public class SaxonicaHelper {
      * @param num      the occurrence of the node in the source
      * @return
      */
-    public int findClosingTagPosition(NodeInfo nodeInfo, int num) {
+    int findClosingTagPosition(NodeInfo nodeInfo, int num) {
         return endPosList.stream().filter(ep -> ep.qName.equals(nodeInfo.getDisplayName())).skip(num - 1)
                 .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + nodeInfo)).charPos;
     }
 
-    protected void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
+    void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
         int wNum = 0;
         for (NodeInfo word : findNodes(annotatedField.getWordsPath(),contents)) {
@@ -423,19 +425,38 @@ public class SaxonicaHelper {
 //                    ": " + start + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                 ConfigAnnotation annotation = an.getValue();
-//                System.out.println(annotation.getName() + ": " + getValue(annotation.getValuePath(),word));
+                getValue(annotation.getValuePath(),word);
             }
         }
     }
 
+    /**
+     * find the position of the starting character (&lt;) of a node in the characters of a document.
+     * Note that CR and LF are included in the count. It is recomended to cache this number for use in
+     * clients.
+     * @param node
+     * @return
+     */
     int getStartPos(NodeInfo node) {
         return startPosMap.get(getCharPos(node));
     }
 
+    /**
+     * find the position of the end character (>) of a node in the characters of a document.
+     * Note that CR and LF are included in the count. It is recomended to cache this number for use in
+     * clients.
+     * @param node
+     * @param num
+     * @return
+     */
     int getEndPos(NodeInfo node, int num) {
         return findClosingTagPosition(node, num);
     }
 
+    /**
+     * The parsed tree of the document, can be used as context for xpaths.
+     * @return
+     */
     TreeInfo getContents() {
         return contents;
     }

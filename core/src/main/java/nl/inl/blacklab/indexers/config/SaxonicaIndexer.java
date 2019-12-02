@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * An indexer configured using full XPath expressions.
  */
-public class JaxpIndexer extends DocIndexerConfig {
+public class SaxonicaIndexer extends DocIndexerConfig {
 
     private SaxonicaHelper saxonicaHelper;
     private TreeInfo contents;
