@@ -547,12 +547,20 @@ public abstract class DocIndexerBase extends DocIndexer {
         return addDefaultPunctuation;
     }
 
-    protected void beginWord() {
-        int pos = getCharacterPosition();
+
+    protected void beginWord(int pos) {
         addStartChar(pos);
     }
 
+    protected void beginWord() {
+        beginWord(getCharacterPosition());
+    }
+
     protected void endWord() {
+        endWord(getCharacterPosition());
+    }
+
+    protected void endWord(int pos) {
         String punct;
         if (punctuation.length() == 0)
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
@@ -562,7 +570,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         preventNextDefaultPunctuation = false;
         // Normalize once more in case we hit more than one adjacent punctuation
         propPunct().addValue(StringUtil.normalizeWhitespace(punct));
-        addEndChar(getCharacterPosition());
+        addEndChar(pos);
         wordsDone++;
         if (wordsDone > 0 && wordsDone % 5000 == 0) {
             reportCharsProcessed();

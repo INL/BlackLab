@@ -434,6 +434,7 @@
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
             <version>9.9.1-5</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>

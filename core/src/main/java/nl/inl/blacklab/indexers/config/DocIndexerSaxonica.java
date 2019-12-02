@@ -9,19 +9,16 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import org.xml.sax.SAXException;
 
-import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * An indexer configured using full XPath expressions.
+ * An indexer capable of XPath version supported by the provided saxonica library.
  */
-public class SaxonicaIndexer extends DocIndexerConfig {
+public class DocIndexerSaxonica extends DocIndexerConfig {
 
     private SaxonicaHelper saxonicaHelper;
     private TreeInfo contents;
@@ -59,7 +56,7 @@ public class SaxonicaIndexer extends DocIndexerConfig {
         // For each configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
             if (!annotatedField.isDummyForStoringLinkedDocuments())
-                saxonicaHelper.test(doc, annotatedField);
+                processAnnotatedField(doc,annotatedField);
         }
 
         // For each configured metadata block..
@@ -78,7 +75,21 @@ public class SaxonicaIndexer extends DocIndexerConfig {
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
 
-        Map<String, Integer> tokenPositionsMap = new HashMap<>();
+        for (NodeInfo container : saxonicaHelper.findNodes(annotatedField.getContainerPath(),doc)) {
+            int wNum=0;
+            for (NodeInfo word : saxonicaHelper.findNodes(annotatedField.getWordsPath(),container)) {
+                setCurrentAnnotatedFieldName(annotatedField.getName());
+                wNum++;
+                charPos = saxonicaHelper.getStartPos(word);
+                beginWord(charPos);
+                for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
+                    ConfigAnnotation annotation = an.getValue();
+                    String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
+                    annotation(annotation.getName(),value,1,null);
+                }
+                endWord(saxonicaHelper.getEndPos(word,wNum));
+            }
+        }
 
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
@@ -493,10 +504,10 @@ public class SaxonicaIndexer extends DocIndexerConfig {
 
     }
 
-    private int startPos = 0;
+    private int charPos = 0;
 
     @Override
     protected int getCharacterPosition() {
-        return startPos;
+        return charPos;
     }
 }

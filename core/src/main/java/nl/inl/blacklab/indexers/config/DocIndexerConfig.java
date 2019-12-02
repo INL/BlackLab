@@ -40,7 +40,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         DocIndexerConfig docIndexer;
         switch (config.getFileType()) {
         case XML:
-            docIndexer = new SaxonicaIndexer();
+            docIndexer = new DocIndexerSaxonica();
             break;
         case TABULAR:
             docIndexer = new DocIndexerTabular();
