@@ -12,8 +12,9 @@ import org.xml.sax.SAXException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * An indexer capable of XPath version supported by the provided saxonica library.
@@ -72,22 +73,49 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
         endDocument();
     }
 
+
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
+        setCurrentAnnotatedFieldName(annotatedField.getName());
+
+        /*
+        Woorden kunnen in "inline tags zitten"
+
+        Tussen woorden kunnen leestekens zitten
+
+        Verzamelen en plaatsen m.b.v. NodeInfo#compareOrder
+
+         */
+
+        List<NodeInfo> puncts = saxonicaHelper.findNodes(annotatedField.getPunctPath(), doc);
+
+        List<NodeInfo> inlines = new ArrayList<>(500);
+        for (ConfigInlineTag inl : annotatedField.getInlineTags()) {
+            inlines.addAll(saxonicaHelper.findNodes(inl.getPath(),doc));
+        }
 
         for (NodeInfo container : saxonicaHelper.findNodes(annotatedField.getContainerPath(),doc)) {
-            int wNum=0;
             for (NodeInfo word : saxonicaHelper.findNodes(annotatedField.getWordsPath(),container)) {
-                setCurrentAnnotatedFieldName(annotatedField.getName());
-                wNum++;
                 charPos = saxonicaHelper.getStartPos(word);
-                beginWord(charPos);
+                beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
                     String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
                     annotation(annotation.getName(),value,1,null);
                 }
-                endWord(saxonicaHelper.getEndPos(word,wNum));
+                charPos = saxonicaHelper.getEndPos(word);
+                /*
+                hier gaan we kijken of er inline tags of leestekens voor dit woord zitten
+                - indexeren met begin en eindpositie
+                - verwijderen uit lijst met inlines en leestekens
+
+                m.b.v. List#contains / equals in NodeInfo kunnen we zien of we een leesteken of inline hebben
+                 */
+                List<NodeInfo> preceding =
+                        Stream.concat(puncts.stream(), inlines.stream())
+                                .filter(tag -> word.compareOrder(tag) == 1).collect(Collectors.toList());
+                SaxonicaHelper.documentOrder(inlines);
+                endWord();
             }
         }
 

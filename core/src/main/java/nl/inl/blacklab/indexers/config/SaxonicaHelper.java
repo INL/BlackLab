@@ -428,19 +428,17 @@ public class SaxonicaHelper {
      * find where in the character[] of the source the closing tag ends
      *
      * @param nodeInfo the node to find the endtag for
-     * @param num      the occurrence of the node in the source
      * @return
      */
-    int findClosingTagPosition(NodeInfo nodeInfo, int num) {
+    int findClosingTagPosition(NodeInfo nodeInfo) {
         return startEndPosMap.get(getCharPos(nodeInfo)).endPos;
     }
 
     void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
-        int wNum = 0;
         for (NodeInfo word : findNodes(annotatedField.getWordsPath(),contents)) {
             int start = getStartPos(word);
-            int endPos = getEndPos(word, ++wNum);
+            int endPos = getEndPos(word);
 //            System.out.println(new String(Arrays.copyOfRange(chars, start, endPos)) +
 //                    ": " + start + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
@@ -448,6 +446,20 @@ public class SaxonicaHelper {
                 getValue(annotation.getValuePath(),word);
             }
         }
+    }
+
+    public static class NodeInfoComparator implements Comparator<NodeInfo> {
+
+        @Override
+        public int compare(NodeInfo o1, NodeInfo o2) {
+            return o1.compareOrder(o2);
+        }
+    }
+
+    public static final NodeInfoComparator NODINFO_COMPARATOR = new NodeInfoComparator();
+
+    public static void documentOrder(List<NodeInfo> toOrder) {
+        toOrder.sort(NODINFO_COMPARATOR);
     }
 
     /**
@@ -466,11 +478,10 @@ public class SaxonicaHelper {
      * Note that CR and LF are included in the count. It is recomended to cache this number for use in
      * clients.
      * @param node
-     * @param num
      * @return
      */
-    int getEndPos(NodeInfo node, int num) {
-        return findClosingTagPosition(node, num);
+    int getEndPos(NodeInfo node) {
+        return findClosingTagPosition(node);
     }
 
     /**
