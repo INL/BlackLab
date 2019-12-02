@@ -63,6 +63,7 @@ public class SaxonicaHelper {
 
     /**
      * connects recorded (during parse) sax start position (the > of the start tag) to the calculated start pos (the &lt; at the beginning of the start tag)
+     * and the calculated end pos (>) of the end tag.
      */
     private final Map<Integer, StartEndPos> startEndPosMap = new HashMap<>(50 * 300);
 
