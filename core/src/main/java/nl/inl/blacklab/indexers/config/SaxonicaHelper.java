@@ -6,6 +6,7 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.xpath.XPathFactoryImpl;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.xml.sax.*;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -378,7 +379,7 @@ public class SaxonicaHelper {
      * @param context
      * @return
      * @throws XPathExpressionException
-     * @throws BlackLabRuntimeException when the xpath returns multiple results
+     * @throws InvalidConfiguration when the xpath returns multiple results
      */
     String getValue(String xPath, Object context) throws XPathExpressionException {
         List list = find(xPath, context);
@@ -393,10 +394,10 @@ public class SaxonicaHelper {
             if (list.isEmpty())
                 return "";
             else
-                    throw new BlackLabRuntimeException(
-                            String.format("list %s contains multiple values, refuse to turn it into a String",
+                    throw new InvalidConfiguration(
+                            String.format("list %s contains multiple values, change your xpath %s to return one result or concatenate",
                                     list.stream().map(o -> o instanceof NodeInfo ? ((NodeInfo) o).toShortString() : String.valueOf(o))
-                                            .collect(Collectors.toList())));
+                                            .collect(Collectors.toList()),xPath));
         }
     }
 
@@ -422,7 +423,7 @@ public class SaxonicaHelper {
 //                    ": " + start + " - " + endPos);
             for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                 ConfigAnnotation annotation = an.getValue();
-                System.out.println(annotation.getName() + ": " + getValue(annotation.getValuePath(),word));
+//                System.out.println(annotation.getName() + ": " + getValue(annotation.getValuePath(),word));
             }
         }
     }
