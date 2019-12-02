@@ -45,24 +45,26 @@ public class SaxonicaHelper {
      */
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
-    private class EndPos {
+    private class StartEndPos {
         private final String qName;
-        private final int charPos;
+        private final int startPos;
+        private int endPos;
 
-        public EndPos(String qName, int line, int col) {
+        public StartEndPos(String qName, int realStart) {
             this.qName = qName;
-            charPos = getCharPos(line, col);
+            startPos = realStart;
         }
+
+        public void setEndPos(int endPos) {
+            this.endPos = endPos;
+        }
+        
     }
 
     /**
-     * collects recorded (during parse) sax end position (the > of the end tag)
-     */
-    private final List<EndPos> endPosList = new ArrayList<>(50 * 300);
-    /**
      * connects recorded (during parse) sax start position (the > of the start tag) to the calculated start pos (the &lt; at the beginning of the start tag)
      */
-    private final Map<Integer, Integer> startPosMap = new HashMap<>(50 * 300);
+    private final Map<Integer, StartEndPos> startEndPosMap = new HashMap<>(50 * 300);
 
     private int getCharPos(NodeInfo nodeInfo) {
         return getCharPos(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
@@ -247,6 +249,8 @@ public class SaxonicaHelper {
         public void endPrefixMapping(String prefix) throws SAXException {
             saxonHandler.endPrefixMapping(prefix);
         }
+        
+        private Stack<StartEndPos> elStack = new Stack<>();
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
@@ -264,13 +268,15 @@ public class SaxonicaHelper {
                 throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
                         qName, locator.getLineNumber(), locator.getColumnNumber(), end));
             }
-            startPosMap.put(end, begin);
+            StartEndPos startEndPos = new StartEndPos(qName, begin);
+            elStack.push(startEndPos);
+            startEndPosMap.put(end, startEndPos);
             saxonHandler.startElement(uri, localName, qName, atts);
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            endPosList.add(new EndPos(qName, locator.getLineNumber(), locator.getColumnNumber()));
+            elStack.pop().setEndPos(getCharPos(locator.getLineNumber(), locator.getColumnNumber()));
             saxonHandler.endElement(uri, localName, qName);
         }
 
@@ -330,9 +336,9 @@ public class SaxonicaHelper {
     }
 
     /**
-     * Create XPathExpression and declare namespaces on it.
+     * Create XPathExpression and cache.
      *
-     * @param xpathExpr xpath expression for the XPathExpression
+     * @param xpathExpr the xpath expression
      * @return the XPathExpression
      */
     private XPathExpression acquireXPathExpression(String xpathExpr) {
@@ -411,8 +417,7 @@ public class SaxonicaHelper {
      * @return
      */
     int findClosingTagPosition(NodeInfo nodeInfo, int num) {
-        return endPosList.stream().filter(ep -> ep.qName.equals(nodeInfo.getDisplayName())).skip(num - 1)
-                .findFirst().orElseThrow(() -> new BlackLabRuntimeException("No end position for " + nodeInfo)).charPos;
+        return startEndPosMap.get(getCharPos(nodeInfo)).endPos;
     }
 
     void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
@@ -438,7 +443,7 @@ public class SaxonicaHelper {
      * @return
      */
     int getStartPos(NodeInfo node) {
-        return startPosMap.get(getCharPos(node));
+        return startEndPosMap.get(getCharPos(node)).startPos;
     }
 
     /**
