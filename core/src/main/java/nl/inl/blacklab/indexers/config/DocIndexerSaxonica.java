@@ -2,7 +2,10 @@ package nl.inl.blacklab.indexers.config;
 
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
+import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.iter.AxisIterator;
+import net.sf.saxon.type.Type;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -13,6 +16,7 @@ import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,7 +107,6 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                     String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
                     annotation(annotation.getName(),value,1,null);
                 }
-                charPos = saxonicaHelper.getEndPos(word);
                 /*
                 hier gaan we kijken of er inline tags of leestekens voor dit woord zitten
                 - indexeren met begin en eindpositie
@@ -111,10 +114,59 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
                 m.b.v. List#contains / equals in NodeInfo kunnen we zien of we een leesteken of inline hebben
                  */
-                List<NodeInfo> preceding =
-                        Stream.concat(puncts.stream(), inlines.stream())
-                                .filter(tag -> word.compareOrder(tag) == 1).collect(Collectors.toList());
-                SaxonicaHelper.documentOrder(inlines);
+                List<NodeInfo> preceding = new ArrayList<>(3);
+                for (NodeInfo pi : puncts) {
+                    if (word.compareOrder(pi)!=1) {
+                        break;
+                    }
+                    preceding.add(pi);
+                }
+                for (NodeInfo pi : inlines) {
+                    if (word.compareOrder(pi)!=1) {
+                        break;
+                    }
+                    preceding.add(pi);
+                }
+                SaxonicaHelper.documentOrder(preceding);
+                for (NodeInfo punctOrInline : preceding) {
+                    if (puncts.contains(punctOrInline)) {
+                        String punct = punctOrInline.getStringValue();
+                        punctuation(punct==null||punct.isEmpty()?" ":punct);
+                        if (!puncts.remove(punctOrInline)) {
+                            throw new BlackLabRuntimeException(String.format("punct not deleted %s",punctOrInline.toShortString()));
+                        }
+                    } else {
+                        AxisIterator descendants = punctOrInline.iterateAxis(Axis.DESCENDANT.getAxisNumber());
+                        boolean wraps = false;
+                        NodeInfo next;
+                        while ((next = descendants.next()) != null) {
+                            if (next.equals(word)) {
+                                wraps = true;
+                                break;
+                            }
+                        }
+                        if (wraps) {
+                            // Now I have all values but no method to index them
+                            int begin = saxonicaHelper.getStartPos(punctOrInline);
+                            int end = saxonicaHelper.getEndPos(punctOrInline);
+                            int count = saxonicaHelper.findNodes(annotatedField.getWordsPath(),punctOrInline).size();
+                            Map<String,String> atts = new HashMap<>(3);
+                            AxisIterator attributes = punctOrInline.iterateAxis(Axis.ATTRIBUTE.getAxisNumber());
+                            while ((next = attributes.next()) != null) {
+                                atts.put(next.getDisplayName(),next.getStringValue());
+                            }
+                            charPos = saxonicaHelper.getStartPos(punctOrInline);
+                            inlineTag(punctOrInline.getDisplayName(),true,atts);
+                            charPos = saxonicaHelper.getEndPos(punctOrInline);
+                            inlineTag(punctOrInline.getDisplayName(),false,null);
+                        }
+                        if (!inlines.remove(punctOrInline)) {
+                            throw new BlackLabRuntimeException(String.format("not deleted %s",punctOrInline.toShortString()));
+                        }
+                    }
+
+                }
+                charPos = saxonicaHelper.getEndPos(word);
                 endWord();
             }
         }
