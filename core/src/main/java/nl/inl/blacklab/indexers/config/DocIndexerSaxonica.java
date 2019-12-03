@@ -5,22 +5,21 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.iter.AxisIterator;
-import net.sf.saxon.type.Type;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import org.apache.commons.lang3.NotImplementedException;
 import org.xml.sax.SAXException;
 
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An indexer capable of XPath version supported by the provided saxonica library.
@@ -73,7 +72,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
         // For each linked document...
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
-//            processLinkedDocument(doc, ld);
+            processLinkedDocument(doc, ld);
         }
 
         endDocument();
@@ -108,6 +107,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                 beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
+                    // TODO we may need to support multiple values here
                     String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
                     annotation(annotation.getName(),value,1,null);
                 }
@@ -118,20 +118,8 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
                 m.b.v. List#contains / equals in NodeInfo kunnen we zien of we een leesteken of inline hebben
                  */
-                List<NodeInfo> preceding = new ArrayList<>(3);
-                for (NodeInfo pi : puncts) {
-                    if (word.compareOrder(pi)!=1) {
-                        break;
-                    }
-                    preceding.add(pi);
-                }
-                for (NodeInfo pi : inlines) {
-                    if (word.compareOrder(pi)!=1) {
-                        break;
-                    }
-                    preceding.add(pi);
-                }
-                SaxonicaHelper.documentOrder(preceding);
+                List<NodeInfo> preceding = getPreceding(puncts, inlines, word);
+
                 for (NodeInfo punctOrInline : preceding) {
                     if (puncts.contains(punctOrInline)) {
                         String punct = punctOrInline.getStringValue();
@@ -140,17 +128,18 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                             throw new BlackLabRuntimeException(String.format("punct not deleted %s",punctOrInline.toShortString()));
                         }
                     } else {
+                        // check if this word is within the inline, if so this word will always be the first word in the inline
+                        // because we remove the inline after it has been processed
                         AxisIterator descendants = punctOrInline.iterateAxis(Axis.DESCENDANT.getAxisNumber());
-                        boolean wraps = false;
+                        boolean isDescendant = false;
                         NodeInfo next;
                         while ((next = descendants.next()) != null) {
                             if (next.equals(word)) {
-                                wraps = true;
+                                isDescendant = true;
                                 break;
                             }
                         }
-                        if (wraps) {
-                            // Now I have all values but no method to index them
+                        if (isDescendant) {
                             int count = saxonicaHelper.findNodes(annotatedField.getWordsPath(),punctOrInline).size();
                             Map<String,String> atts = new HashMap<>(3);
                             AxisIterator attributes = punctOrInline.iterateAxis(Axis.ATTRIBUTE.getAxisNumber());
@@ -158,7 +147,6 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                                 atts.put(next.getDisplayName(),next.getStringValue());
                             }
                             addInlineTag(punctOrInline.getDisplayName(),atts,wNum,wNum+count);
-                            System.out.println(punctOrInline.toShortString());
                         }
                         if (!inlines.remove(punctOrInline)) {
                             throw new BlackLabRuntimeException(String.format("not deleted %s",punctOrInline.toShortString()));
@@ -169,7 +157,33 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                 charPos = saxonicaHelper.getEndPos(word);
                 endWord();
             }
+
         }
+    }
+
+    /**
+     * return punctuations and inlines occurring before a word
+     * @param puncts
+     * @param inlines
+     * @param word
+     * @return
+     */
+    private List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word) {
+        List<NodeInfo> preceding = new ArrayList<>(3);
+        for (NodeInfo pi : puncts) {
+            if (word!=null&&word.compareOrder(pi)!=1) {
+                break;
+            }
+            preceding.add(pi);
+        }
+        for (NodeInfo pi : inlines) {
+            if (word!=null&&word.compareOrder(pi)!=1) {
+                break;
+            }
+            preceding.add(pi);
+        }
+        SaxonicaHelper.documentOrder(preceding);
+        return preceding;
     }
 
 
@@ -229,63 +243,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
 
     protected void processLinkedDocument(NodeInfo doc, ConfigLinkedDocument ld) {
-//        // Resolve linkPaths to get the information needed to fetch the document
-//        List<String> results = new ArrayList<>();
-//        for (ConfigLinkValue linkValue : ld.getLinkValues()) {
-//            String result = "";
-//            String valuePath = linkValue.getValuePath();
-//            String valueField = linkValue.getValueField();
-//            if (valuePath != null) {
-//                // Resolve value using XPath
-//                AutoPilot apLinkPath = acquireAutoPilot(valuePath);
-//                result = apLinkPath.evalXPathToString();
-//                if (result == null || result.isEmpty()) {
-//                    switch (ld.getIfLinkPathMissing()) {
-//                        case IGNORE:
-//                            break;
-//                        case WARN:
-//                            docWriter.listener()
-//                                    .warning("Link path " + valuePath + " not found in document " + documentName);
-//                            break;
-//                        case FAIL:
-//                            throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
-//                    }
-//                }
-//                releaseAutoPilot(apLinkPath);
-//            } else if (valueField != null) {
-//                // Fetch value from Lucene doc
-//                result = getMetadataField(valueField).get(0);
-//            }
-//            result = processString(result, linkValue.getProcess(), null);
-//            results.add(result);
-//        }
-//
-//        // Substitute link path results in inputFile, pathInsideArchive and documentPath
-//        String inputFile = replaceDollarRefs(ld.getInputFile(), results);
-//        String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
-//        String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
-//
-//        try {
-//            // Fetch and index the linked document
-//            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
-//                    ld.shouldStore() ? ld.getName() : null);
-//        } catch (Exception e) {
-//            String moreInfo = "(inputFile = " + inputFile;
-//            if (pathInsideArchive != null)
-//                moreInfo += ", pathInsideArchive = " + pathInsideArchive;
-//            if (documentPath != null)
-//                moreInfo += ", documentPath = " + documentPath;
-//            moreInfo += ")";
-//            switch (ld.getIfLinkPathMissing()) {
-//                case IGNORE:
-//                case WARN:
-//                    docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
-//                            + ": " + e.getMessage());
-//                    break;
-//                case FAIL:
-//                    throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
-//            }
-//        }
+        throw new NotImplementedException("not implemented yet");
     }
 
     @Override
@@ -295,7 +253,6 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
     @Override
     public void close() {
-
     }
 
     private int charPos = 0;
