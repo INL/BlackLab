@@ -118,10 +118,11 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
                 m.b.v. List#contains / equals in NodeInfo kunnen we zien of we een leesteken of inline hebben
                  */
-                List<NodeInfo> preceding = getPreceding(puncts, inlines, word);
+                List<NodeInfo> precedingPuncts = new ArrayList<>(3); // hierin verzamelen we puncts zodat we SNEL weten of een NodeInfo een punct is
+                List<NodeInfo> preceding = getPreceding(puncts, inlines, word, precedingPuncts);
 
                 for (NodeInfo punctOrInline : preceding) {
-                    if (puncts.contains(punctOrInline)) {
+                    if (precedingPuncts.contains(punctOrInline)) {
                         String punct = punctOrInline.getStringValue();
                         punctuation(punct==null||punct.isEmpty()?" ":punct);
                         if (!puncts.remove(punctOrInline)) {
@@ -140,7 +141,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                             }
                         }
                         if (isDescendant) {
-                            int count = saxonicaHelper.findNodes(annotatedField.getWordsPath(),punctOrInline).size();
+                            int count = Integer.parseInt(saxonicaHelper.getValue("count("+annotatedField.getWordsPath()+")",punctOrInline));
                             Map<String,String> atts = new HashMap<>(3);
                             AxisIterator attributes = punctOrInline.iterateAxis(Axis.ATTRIBUTE.getAxisNumber());
                             while ((next = attributes.next()) != null) {
@@ -160,6 +161,17 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
         }
     }
+    
+    private static class PunctOrInline {
+        private final NodeInfo punctOrInline;
+        private final boolean isPunct;
+
+        public PunctOrInline(NodeInfo punctOrInline, boolean isPunct) {
+            this.punctOrInline = punctOrInline;
+            this.isPunct = isPunct;
+        }
+        
+    }
 
     /**
      * return punctuations and inlines occurring before a word
@@ -168,13 +180,14 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
      * @param word
      * @return
      */
-    private List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word) {
-        List<NodeInfo> preceding = new ArrayList<>(3);
+    private List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word, List<NodeInfo> precedingPuncts) {
+        List<NodeInfo> preceding = new ArrayList<>();
         for (NodeInfo pi : puncts) {
             if (word!=null&&word.compareOrder(pi)!=1) {
                 break;
             }
             preceding.add(pi);
+            precedingPuncts.add(pi);
         }
         for (NodeInfo pi : inlines) {
             if (word!=null&&word.compareOrder(pi)!=1) {
