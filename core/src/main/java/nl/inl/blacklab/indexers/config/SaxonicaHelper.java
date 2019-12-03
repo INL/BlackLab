@@ -87,7 +87,7 @@ public class SaxonicaHelper {
     short lineEnd = 1;
 
     /**
-     * The characters of the document, will be set to null after parsing
+     * The characters of the document, will be used for storing document
      */
     private char[] chars;
 
@@ -123,8 +123,6 @@ public class SaxonicaHelper {
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
-        // chars not needed anymore
-        chars = null;
         // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
@@ -490,5 +488,9 @@ public class SaxonicaHelper {
      */
     TreeInfo getContents() {
         return contents;
+    }
+
+    public char[] getChars() {
+        return chars;
     }
 }

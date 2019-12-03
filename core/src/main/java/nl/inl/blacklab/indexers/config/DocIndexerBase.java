@@ -481,6 +481,26 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     protected abstract void storeDocument();
 
+    /**
+     *
+     * @param tagName
+     * @param attributes
+     * @param firstToken the number (count) of the first token in the inline tag
+     * @param firstTokenAfter  the number (count) of the first token after the inline tag
+     */
+    protected void addInlineTag(String tagName, Map<String, String> attributes, int firstToken, int firstTokenAfter) {
+        propTags().addValueAtPosition(tagName, firstToken);
+        byte[] payload = ByteBuffer.allocate(4).putInt(firstTokenAfter).array();
+        propTags().setPayloadAtIndex(firstToken, new BytesRef(payload));
+        for (Entry<String, String> e : attributes.entrySet()) {
+            // Index element attribute values
+            String name = e.getKey();
+            String value = e.getValue();
+            propTags().addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
+            propTags().addPayload(null);
+        }
+    }
+
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
         if (isOpenTag) {
             trace("<" + tagName + ">");

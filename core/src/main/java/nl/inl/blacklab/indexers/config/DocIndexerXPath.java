@@ -529,7 +529,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     private static Set<String> reportedSanitizedNames = new HashSet<>();
 
-    private synchronized static void warnSanitized(String origFieldName, String fieldName) {
+    synchronized static void warnSanitized(String origFieldName, String fieldName) {
         if (!reportedSanitizedNames.contains(origFieldName)) {
             logger.warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
             reportedSanitizedNames.add(origFieldName);
