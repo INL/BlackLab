@@ -173,9 +173,9 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
     }
 
 
-    protected void processMetadataBlock(NodeInfo meta, ConfigMetadataBlock b) throws XPathExpressionException {
+    protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock b) throws XPathExpressionException {
 
-        for (NodeInfo header : saxonicaHelper.findNodes(b.getContainerPath(),contents)) {
+        for (NodeInfo header : saxonicaHelper.findNodes(b.getContainerPath(),doc)) {
             List<ConfigMetadataField> fields = b.getFields();
             for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
                 ConfigMetadataField f = fields.get(i);
