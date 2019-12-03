@@ -21,6 +21,7 @@ customize them to fit your data.
 * <a href="#indexing-xml">Indexing raw XML</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
+* <a href="#processing">Xml processing (vtd/saxonica)</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
 * <a href="#plaintext">Indexing plain text files</a>
 * <a href="#other">Indexing other files</a>
@@ -518,6 +519,21 @@ annotatedFields:
 Note that these subproperties will not have their own forward index; only the main annotation has one, and it includes only the first value indexed at any location, so the subannotation values aren't stored there either.
 
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
+
+<a id="processing"></a>
+
+## Xml processing
+
+Using fileTypeOptions you can choose to use either vtd or saxonica for processing. Vtd supports xpath 1, saxonica at this time xpath 3.1.
+Saxonica gives you far more possibilities to build solutions in xpath, obsoleting some configuration options. Depending on your data saxonica processing may be 2 to 30 times
+faster.
+
+```yaml
+fileType: xml
+fileTypeOptions:
+  processing: vtd
+#  processing: saxonica
+```
 
 <a id="tabular"></a>
 
@@ -1034,6 +1050,9 @@ type: content
 
 # The type of input file we're dealing with (xml, tabular or text)
 fileType: xml
+fileTypeOptions:
+  processing: vtd
+#  processing: saxonica # when saxonica is chosen for processing, xpath 3.1 (at this time) will be supported.
 
 # Each file type may have options associated with it (for now, only "tabular" does)
 # We've shown the options for tabular he're but commented them out as we're describing
