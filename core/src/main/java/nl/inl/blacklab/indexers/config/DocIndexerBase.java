@@ -491,7 +491,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void addInlineTag(String tagName, Map<String, String> attributes, int firstToken, int firstTokenAfter) {
         propTags().addValueAtPosition(tagName, firstToken);
         byte[] payload = ByteBuffer.allocate(4).putInt(firstTokenAfter).array();
-        propTags().setPayloadAtIndex(firstToken, new BytesRef(payload));
+        propTags().addPayload(new BytesRef(payload));
         for (Entry<String, String> e : attributes.entrySet()) {
             // Index element attribute values
             String name = e.getKey();

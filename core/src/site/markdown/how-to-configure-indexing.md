@@ -526,7 +526,8 @@ Adding a few subproperties per token position like this will make the index slig
 
 Using fileTypeOptions you can choose to use either vtd or saxonica for processing. Vtd supports xpath 1, saxonica at this time xpath 3.1.
 Saxonica gives you far more possibilities to build solutions in xpath, obsoleting some configuration options. Depending on your data saxonica processing may be 2 to 30 times
-faster.
+faster.  
+Some features may not be implemented for saxonica processing, when there is a good xpath alternative this is the preferred solution.
 
 ```yaml
 fileType: xml
