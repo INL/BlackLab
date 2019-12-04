@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * A helper for indexing using saxonica
  */
-public class SaxonicaHelper {
+class SaxonicaHelper {
 
     public static final int MAXDOCSIZEINMEMORY = 4096000;
     private static final ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<XPathFactory>() {
@@ -92,7 +92,7 @@ public class SaxonicaHelper {
      */
     private char[] document;
 
-    public SaxonicaHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
+    SaxonicaHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
         // characters needed for calculating positions
         document = IOUtils.toCharArray(reader);
         CharArrayReader stream = new CharArrayReader(document);
@@ -502,7 +502,7 @@ public class SaxonicaHelper {
      * returns the document as a string, sets all state in the helper to null
      * @return
      */
-    public String getDocument() {
+    String getDocument(boolean clean) {
         char[] rv = document;
         try {
             if (document ==null) {
@@ -511,12 +511,17 @@ public class SaxonicaHelper {
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
+        if (clean) clean();
+        return new String(rv);
+    }
+
+    void clean() {
         startEndPosMap=null;
         cumulativeColsPerLine=null;
         contents=null;
         document = null;
         compiledXPaths=null;
         if (documentDiskCache!=null) documentDiskCache.delete();
-        return new String(rv);
     }
+
 }
