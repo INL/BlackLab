@@ -37,7 +37,7 @@ public class SaxonicaHelper {
     /**
      * The document tree needed for processing xpath's
      */
-    private final TreeInfo contents;
+    private TreeInfo contents;
 
     /**
      * cumulative number of columns per line, used to translate line/column into character position
@@ -498,6 +498,10 @@ public class SaxonicaHelper {
         return contents;
     }
 
+    /**
+     * returns the document as a string, sets all state in the helper to null
+     * @return
+     */
     public String getDocument() {
         String rv = document;
         try {
@@ -507,6 +511,7 @@ public class SaxonicaHelper {
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
+        contents=null;
         document = null;
         if (documentDiskCache!=null) documentDiskCache.delete();
         return rv;
