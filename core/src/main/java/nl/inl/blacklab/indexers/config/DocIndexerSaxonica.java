@@ -107,7 +107,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                 - onthouden na welk word gesloten moet worden
                 - verwijderen uit lijst met inlines en leestekens
                 - indexeren word(s)
-                - inderen sluittag na het juiste woord
+                - indexeren sluittag(s) na het juiste woord
 
                  */
                 List<NodeInfo> precedingPuncts = new ArrayList<>(3); // hierin verzamelen we puncts zodat we SNEL weten of een NodeInfo een punct is
