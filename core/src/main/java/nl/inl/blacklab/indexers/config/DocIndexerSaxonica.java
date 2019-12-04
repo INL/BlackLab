@@ -186,17 +186,6 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
         }
     }
-    
-    private static class PunctOrInline {
-        private final NodeInfo punctOrInline;
-        private final boolean isPunct;
-
-        public PunctOrInline(NodeInfo punctOrInline, boolean isPunct) {
-            this.punctOrInline = punctOrInline;
-            this.isPunct = isPunct;
-        }
-        
-    }
 
     /**
      * return punctuations and inlines occurring before a word
