@@ -32,7 +32,7 @@ public class RequestHandlerSharing extends RequestHandler {
 
         // If POST request with 'users' parameter: update the list of users to share with
         if (request.getMethod().equals("POST")) {
-            if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
+            if (!index.isUserIndex() || (!index.userMayRead(user)))
                 throw new NotAuthorized("You can only share your own private indices with others.");
             // Update the list of users to share with
             String[] users = request.getParameterValues("users[]");
@@ -44,7 +44,7 @@ public class RequestHandlerSharing extends RequestHandler {
         }
 
         // Regular request: return the list of users this corpus is shared with
-        if (!index.userMayRead(user.getUserId()))
+        if (!index.userMayRead(user))
             throw new NotAuthorized("You are not authorized to access this index.");
         List<String> shareWithUsers = index.getShareWithUsers();
         ds.startMap().startEntry("users[]").startList();

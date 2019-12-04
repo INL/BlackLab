@@ -155,15 +155,22 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
      * @param fileName name of the format, including the .json/.yaml extension Note
      *            that this is different from the formatIdentifier under which this
      *            format will be made available, which is formed from a combination
-     *            of the userId and formatName.
+     *            of the userId and formatName. You can also specify a formatIdentifier 
+     *            (including a userId); this is useful if a superuser wants to create a 
+     *            format for another user. 
      * @param is content of the file, assumed to be a text file with UTF_8 encoding.
      *            This stream is not closed by this function
-     * @throws BadRequest
+     * @throws NotAuthorized if you try to create formats for another user (and are not the superuser)
+     * @throws BadRequest if the name or format config is invalid
      * @throws InternalServerError if the file couldn't be written for some reason
      */
-    public void createUserFormat(User user, String fileName, InputStream is) throws BadRequest, InternalServerError {
+    public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
-            String formatIdentifier = getFormatIdentifier(user.getUserId(), fileName);
+            String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getUserId(), fileName);
+            
+            String userIdFromFormatIdentifier = getUserIdOrFormatName(formatIdentifier, false);
+            if (user.canManageFormatsFor(userIdFromFormatIdentifier))
+                throw new NotAuthorized("You can only create formats for yourself.");
 
             // This is a little stupid, but we need to read the stream twice:
             // once to validate the file's contents, then again to store the file once the validation passes
@@ -174,7 +181,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
                     fileName.endsWith(".json"), config, this.finder);
             config.validate();
 
-            File userFormatDir = getUserFormatDir(this.formatDir, user.getUserId());
+            File userFormatDir = getUserFormatDir(this.formatDir, userIdFromFormatIdentifier);
             File formatFile = new File(userFormatDir, fileName);
 
             FileUtils.writeByteArrayToFile(formatFile, content, false);
@@ -207,7 +214,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             throws NotAuthorized, NotFound, InternalServerError, BadRequest {
         try {
             if (isBuiltinFormat(formatIdentifier)
-                    || !getUserIdOrFormatName(formatIdentifier, false).equals(user.getUserId()))
+                    || (user.canManageFormatsFor(getUserIdOrFormatName(formatIdentifier, false))))
                 throw new NotAuthorized("Can only delete your own formats");
         } catch (IllegalUserFormatIdentifier e) {
             throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());
