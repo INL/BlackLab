@@ -275,7 +275,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new String(saxonicaHelper.getChars()));
+        storeWholeDocument(saxonicaHelper.getDocument());
     }
 
     @Override

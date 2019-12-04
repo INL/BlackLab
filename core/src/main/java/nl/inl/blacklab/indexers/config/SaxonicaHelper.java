@@ -88,14 +88,14 @@ public class SaxonicaHelper {
     private File documentDiskCache;
 
     /**
-     * The characters of the document, will be used for storing document
+     * The document as a string, will be used for storing document and position calculation
      */
-    private char[] chars;
+    private String document;
 
     public SaxonicaHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
         // characters needed for calculating positions
-        chars = IOUtils.toCharArray(reader);
-        CharArrayReader stream = new CharArrayReader(chars);
+        document = IOUtils.toString(reader);
+        StringReader stream = new StringReader(document);
         AtomicInteger line = new AtomicInteger();
         AtomicInteger cols = new AtomicInteger();
         // determine cumulative number of chars per line
@@ -124,12 +124,12 @@ public class SaxonicaHelper {
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
-        if (chars.length / 2 > MAXDOCSIZEINMEMORY) {
+        if (document.length() / 2 > MAXDOCSIZEINMEMORY) {
 //            System.out.println("Disk cache for document, length " + (chars.length / 2));
             documentDiskCache = File.createTempFile("blDocToIndex",null);
             documentDiskCache.deleteOnExit();
-            IOUtils.write(chars, new FileWriter(documentDiskCache));
-            chars = null;
+            IOUtils.write(document, new FileWriter(documentDiskCache));
+            document = null;
         }
         // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
@@ -279,7 +279,7 @@ public class SaxonicaHelper {
             int begin = end;
             // now look back for the < character
             for (int i = end - 1; i > 0; i--) {
-                if ('<' == chars[i]) {
+                if ('<' == document.charAt(i)) {
                     begin = i;
                     break;
                 }
@@ -498,18 +498,16 @@ public class SaxonicaHelper {
         return contents;
     }
 
-    public char[] getChars() {
-        char[] rv = chars;
+    public String getDocument() {
+        String rv = document;
         try {
-            if (chars==null) {
-                CharArrayWriter caw = new CharArrayWriter((int)(documentDiskCache.length()*2));
-                IOUtils.copyLarge(new FileReader(documentDiskCache),caw);
-                rv = caw.toCharArray();
+            if (document ==null) {
+                rv = IOUtils.toString(new FileReader(documentDiskCache));
             }
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
-        chars = null;
+        document = null;
         if (documentDiskCache!=null) documentDiskCache.delete();
         return rv;
     }
