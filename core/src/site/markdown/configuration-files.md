@@ -247,6 +247,20 @@ authentication:
     overrideUserIdIps:
     - 127.0.0.1       #  IPv4 localhost
     - 0:0:0:0:0:0:0:1 #  IPv6 localhost
+    
+    # This is an insecure way of authenticating to BlackLab Server by sending
+    # two HTTP headers. It is only intended for testing purposes.
+    # 
+    # Choose a 'secret' password here. Then send your requests to BlackLab Server 
+    # with the extra HTTP headers X-BlackLabAccessToken (the 'secret' password) and
+    # X-BlackLabUserId (the user you wish to authenticate as).
+    # 
+    # Needless to say this method is insecure because it allows full access to
+    # all users' corpora, and the access token could potentially leak to an
+    # attacker.
+    #
+    # DO NOT USE EXCEPT FOR TESTING
+    #debugHttpHeaderAuthToken: secret
 
 
 # ---------------------------------------------------------------------------
