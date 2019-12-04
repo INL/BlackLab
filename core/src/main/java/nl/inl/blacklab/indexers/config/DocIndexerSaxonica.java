@@ -16,10 +16,7 @@ import org.xml.sax.SAXException;
 import javax.xml.xpath.XPathExpressionException;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * An indexer capable of XPath version supported by the provided saxonica library.
@@ -101,22 +98,17 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
         for (NodeInfo container : saxonicaHelper.findNodes(annotatedField.getContainerPath(),doc)) {
             int wNum=0;
+            Map<Integer,List<NodeInfo>> inlinesToEnd = new HashMap<>();
             for (NodeInfo word : saxonicaHelper.findNodes(annotatedField.getWordsPath(),container)) {
                 wNum++;
-                charPos = saxonicaHelper.getStartPos(word);
-                beginWord();
-                for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
-                    ConfigAnnotation annotation = an.getValue();
-                    // TODO we may need to support multiple values here
-                    String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
-                    annotation(annotation.getName(),value,1,null);
-                }
                 /*
                 hier gaan we kijken of er inline tags of leestekens voor dit woord zitten
-                - indexeren met begin en eindpositie
+                - indexeren opentag
+                - onthouden na welk word gesloten moet worden
                 - verwijderen uit lijst met inlines en leestekens
+                - indexeren word(s)
+                - inderen sluittag na het juiste woord
 
-                m.b.v. List#contains / equals in NodeInfo kunnen we zien of we een leesteken of inline hebben
                  */
                 List<NodeInfo> precedingPuncts = new ArrayList<>(3); // hierin verzamelen we puncts zodat we SNEL weten of een NodeInfo een punct is
                 List<NodeInfo> preceding = getPreceding(puncts, inlines, word, precedingPuncts);
@@ -147,7 +139,14 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                             while ((next = attributes.next()) != null) {
                                 atts.put(next.getDisplayName(),next.getStringValue());
                             }
-                            addInlineTag(punctOrInline.getDisplayName(),atts,wNum,wNum+count);
+                            inlineTag(punctOrInline.getDisplayName(), true, atts);
+                            if (inlinesToEnd.containsKey(wNum+count)) {
+                                inlinesToEnd.get(wNum+count).add(punctOrInline);
+                            } else {
+                                List<NodeInfo> toEnd =  new ArrayList<>(3);
+                                toEnd.add(punctOrInline);
+                                inlinesToEnd.put(wNum+count, toEnd);
+                            }
                         }
                         if (!inlines.remove(punctOrInline)) {
                             throw new BlackLabRuntimeException(String.format("not deleted %s",punctOrInline.toShortString()));
@@ -155,8 +154,21 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                     }
 
                 }
+                charPos = saxonicaHelper.getStartPos(word);
+                beginWord();
+                for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
+                    ConfigAnnotation annotation = an.getValue();
+                    // TODO we may need to support multiple values here
+                    String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
+                    annotation(annotation.getName(),value,1,null);
+                }
                 charPos = saxonicaHelper.getEndPos(word);
                 endWord();
+                if (inlinesToEnd.containsKey(wNum)) {
+                    for (NodeInfo toEnd : inlinesToEnd.get(wNum)) {
+                        inlineTag(toEnd.getDisplayName(),false,null);
+                    }
+                }
             }
 
         }
