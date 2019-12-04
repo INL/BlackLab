@@ -62,7 +62,7 @@ public class SaxonicaHelper {
      * connects recorded sax positions (just after start and end tags) to the calculated
      * positions (the first char of start and end tags).
      */
-    private final Map<Integer, StartEndPos> startEndPosMap = new HashMap<>(50 * 300);
+    private Map<Integer, StartEndPos> startEndPosMap = new HashMap<>(50 * 300);
 
     private int getCharPos(NodeInfo nodeInfo) {
         return getCharPos(nodeInfo.getLineNumber(), nodeInfo.getColumnNumber());
@@ -511,8 +511,11 @@ public class SaxonicaHelper {
         } catch (IOException e) {
             throw new BlackLabRuntimeException("unable to read document cache from disk");
         }
+        startEndPosMap=null;
+        cumulativeColsPerLine=null;
         contents=null;
         document = null;
+        compiledXPaths=null;
         if (documentDiskCache!=null) documentDiskCache.delete();
         return rv;
     }
