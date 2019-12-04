@@ -92,9 +92,12 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
         List<NodeInfo> puncts = saxonicaHelper.findNodes(annotatedField.getPunctPath(), doc);
 
         List<NodeInfo> inlines = new ArrayList<>(500);
+
         for (ConfigInlineTag inl : annotatedField.getInlineTags()) {
             inlines.addAll(saxonicaHelper.findNodes(inl.getPath(),doc));
         }
+        SaxonicaHelper.documentOrder(puncts);
+        SaxonicaHelper.documentOrder(inlines);
 
         for (NodeInfo container : saxonicaHelper.findNodes(annotatedField.getContainerPath(),doc)) {
             int wNum=0;
@@ -133,20 +136,24 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                             }
                         }
                         if (isDescendant) {
-                            int count = Integer.parseInt(saxonicaHelper.getValue("count("+annotatedField.getWordsPath()+")",punctOrInline));
                             Map<String,String> atts = new HashMap<>(3);
                             AxisIterator attributes = punctOrInline.iterateAxis(Axis.ATTRIBUTE.getAxisNumber());
                             while ((next = attributes.next()) != null) {
                                 atts.put(next.getDisplayName(),next.getStringValue());
                             }
                             inlineTag(punctOrInline.getDisplayName(), true, atts);
-                            if (inlinesToEnd.containsKey(wNum+count)) {
-                                inlinesToEnd.get(wNum+count).add(punctOrInline);
+                            int increment =
+                                    Integer.parseInt(saxonicaHelper
+                                            .getValue("count("+annotatedField.getWordsPath()+")",punctOrInline))
+                                            -1;
+                            if (inlinesToEnd.containsKey(wNum+increment)) {
+                                inlinesToEnd.get(wNum+increment).add(0,punctOrInline);
                             } else {
                                 List<NodeInfo> toEnd =  new ArrayList<>(3);
                                 toEnd.add(punctOrInline);
-                                inlinesToEnd.put(wNum+count, toEnd);
+                                inlinesToEnd.put(wNum+increment, toEnd);
                             }
+//                            System.out.println("inline "+punctOrInline.toShortString()+" for " +wNum + " should close after " + (wNum+increment));
                         }
                         if (!inlines.remove(punctOrInline)) {
                             throw new BlackLabRuntimeException(String.format("not deleted %s",punctOrInline.toShortString()));
@@ -164,11 +171,17 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                 }
                 charPos = saxonicaHelper.getEndPos(word);
                 endWord();
+//                System.out.println("looking for inlines to close after " +wNum);
                 if (inlinesToEnd.containsKey(wNum)) {
                     for (NodeInfo toEnd : inlinesToEnd.get(wNum)) {
+//                        System.out.println("closing inline "+toEnd.toShortString()+" after " +wNum);
                         inlineTag(toEnd.getDisplayName(),false,null);
                     }
+                    inlinesToEnd.remove(wNum);
                 }
+            }
+            if (!inlinesToEnd.isEmpty()) {
+                throw new BlackLabRuntimeException(String.format("unclosed inlines left: %s ", inlinesToEnd.values()));
             }
 
         }
