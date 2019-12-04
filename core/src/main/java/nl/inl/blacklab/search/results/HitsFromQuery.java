@@ -247,7 +247,8 @@ public class HitsFromQuery extends Hits {
                                     doc = currentSourceSpans.nextDoc();
                                     if (doc == DocIdSetIterator.NO_MORE_DOCS)
                                         currentSourceSpans = null; // no matching docs in this segment, try next
-                                    alive = liveDocs == null ? true : liveDocs.get(doc);
+                                    else
+                                        alive = liveDocs == null ? true : liveDocs.get(doc);
                                 } while(currentSourceSpans != null && !alive);
                             }
                         }
