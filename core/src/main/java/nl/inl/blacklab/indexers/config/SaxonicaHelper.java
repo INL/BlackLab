@@ -15,9 +15,7 @@ import javax.xml.namespace.NamespaceContext;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.xpath.*;
-import java.io.CharArrayReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,6 +25,7 @@ import java.util.stream.Collectors;
  */
 public class SaxonicaHelper {
 
+    public static final int MAXDOCSIZEINMEMORY = 4096000;
     private static final ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<XPathFactory>() {
         @Override
         protected XPathFactory initialValue() {
@@ -86,6 +85,8 @@ public class SaxonicaHelper {
 
     short lineEnd = 1;
 
+    private File documentDiskCache;
+
     /**
      * The characters of the document, will be used for storing document
      */
@@ -123,6 +124,13 @@ public class SaxonicaHelper {
         Configuration config = ((XPathFactoryImpl) X_PATH_FACTORY_THREAD_LOCAL.get()).getConfiguration();
         config.setLineNumbering(true);
         contents = config.buildDocumentTree(source);
+        if (chars.length / 2 > MAXDOCSIZEINMEMORY) {
+//            System.out.println("Disk cache for document, length " + (chars.length / 2));
+            documentDiskCache = File.createTempFile("blDocToIndex",null);
+            documentDiskCache.deleteOnExit();
+            IOUtils.write(chars, new FileWriter(documentDiskCache));
+            chars = null;
+        }
         // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
@@ -491,6 +499,18 @@ public class SaxonicaHelper {
     }
 
     public char[] getChars() {
-        return chars;
+        char[] rv = chars;
+        try {
+            if (chars==null) {
+                CharArrayWriter caw = new CharArrayWriter((int)(documentDiskCache.length()*2));
+                IOUtils.copyLarge(new FileReader(documentDiskCache),caw);
+                rv = caw.toCharArray();
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException("unable to read document cache from disk");
+        }
+        chars = null;
+        if (documentDiskCache!=null) documentDiskCache.delete();
+        return rv;
     }
 }
