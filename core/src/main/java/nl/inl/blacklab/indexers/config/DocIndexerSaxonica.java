@@ -269,8 +269,62 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
     }
 
 
-    protected void processLinkedDocument(NodeInfo doc, ConfigLinkedDocument ld) {
-        throw new NotImplementedException("not implemented yet");
+    protected void processLinkedDocument(NodeInfo doc, ConfigLinkedDocument ld) throws XPathExpressionException {
+        // Resolve linkPaths to get the information needed to fetch the document
+        List<String> results = new ArrayList<>();
+        for (ConfigLinkValue linkValue : ld.getLinkValues()) {
+            String result = "";
+            String valuePath = linkValue.getValuePath();
+            String valueField = linkValue.getValueField();
+            if (valuePath != null) {
+                // Resolve value using XPath
+                result = saxonicaHelper.getValue(valuePath,doc);
+                if (result == null || result.isEmpty()) {
+                    switch (ld.getIfLinkPathMissing()) {
+                        case IGNORE:
+                            break;
+                        case WARN:
+                            docWriter.listener()
+                                    .warning("Link path " + valuePath + " not found in document " + documentName);
+                            break;
+                        case FAIL:
+                            throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
+                    }
+                }
+            } else if (valueField != null) {
+                // Fetch value from Lucene doc
+                result = getMetadataField(valueField).get(0);
+            }
+            result = processString(result, linkValue.getProcess(), null);
+            results.add(result);
+        }
+
+        // Substitute link path results in inputFile, pathInsideArchive and documentPath
+        String inputFile = replaceDollarRefs(ld.getInputFile(), results);
+        String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
+        String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
+
+        try {
+            // Fetch and index the linked document
+            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
+                    ld.shouldStore() ? ld.getName() : null);
+        } catch (Exception e) {
+            String moreInfo = "(inputFile = " + inputFile;
+            if (pathInsideArchive != null)
+                moreInfo += ", pathInsideArchive = " + pathInsideArchive;
+            if (documentPath != null)
+                moreInfo += ", documentPath = " + documentPath;
+            moreInfo += ")";
+            switch (ld.getIfLinkPathMissing()) {
+                case IGNORE:
+                case WARN:
+                    docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
+                            + ": " + e.getMessage());
+                    break;
+                case FAIL:
+                    throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+            }
+        }
     }
 
     @Override
