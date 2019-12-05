@@ -5,7 +5,11 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
-import nl.inl.blacklab.index.*;
+import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -17,11 +21,22 @@ import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntField;
 import org.apache.lucene.util.BytesRef;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
