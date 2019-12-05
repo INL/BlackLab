@@ -271,7 +271,7 @@ class SaxonicaHelper {
             saxonHandler.endPrefixMapping(prefix);
         }
         
-        private Stack<StartEndPos> elStack = new Stack<>();
+        private Deque<StartEndPos> elStack = new ArrayDeque<>();
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {

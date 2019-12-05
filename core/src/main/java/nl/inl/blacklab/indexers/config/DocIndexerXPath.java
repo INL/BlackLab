@@ -1,39 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.ximpleware.AutoPilot;
-import com.ximpleware.BookMark;
-import com.ximpleware.NavException;
-import com.ximpleware.VTDException;
-import com.ximpleware.VTDGen;
-import com.ximpleware.VTDNav;
-import com.ximpleware.XPathEvalException;
-import com.ximpleware.XPathParseException;
-
+import com.ximpleware.*;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
@@ -43,6 +12,16 @@ import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
@@ -227,7 +206,32 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // For each linked document...
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
-            processLinkedDocument(ld);
+            Function<String, String> xpathProcessor = xpath -> {
+                // Resolve value using XPath
+                AutoPilot apLinkPath = null;
+                String result = null;
+                try {
+                    apLinkPath = acquireAutoPilot(xpath);
+                    result = apLinkPath.evalXPathToString();
+                    if (result == null || result.isEmpty()) {
+                        switch (ld.getIfLinkPathMissing()) {
+                            case IGNORE:
+                                break;
+                            case WARN:
+                                docWriter.listener()
+                                        .warning("Link path " + xpath + " not found in document " + documentName);
+                                break;
+                            case FAIL:
+                                throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
+                        }
+                    }
+                    releaseAutoPilot(apLinkPath);
+                } catch (XPathParseException e) {
+                    throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
+                }
+                return result;
+            };
+            processLinkedDocument(ld, xpathProcessor);
         }
 
         endDocument();
@@ -533,66 +537,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
         if (!reportedSanitizedNames.contains(origFieldName)) {
             logger.warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
             reportedSanitizedNames.add(origFieldName);
-        }
-    }
-
-    protected void processLinkedDocument(ConfigLinkedDocument ld) throws XPathParseException {
-        // Resolve linkPaths to get the information needed to fetch the document
-        List<String> results = new ArrayList<>();
-        for (ConfigLinkValue linkValue : ld.getLinkValues()) {
-            String result = "";
-            String valuePath = linkValue.getValuePath();
-            String valueField = linkValue.getValueField();
-            if (valuePath != null) {
-                // Resolve value using XPath
-                AutoPilot apLinkPath = acquireAutoPilot(valuePath);
-                result = apLinkPath.evalXPathToString();
-                if (result == null || result.isEmpty()) {
-                    switch (ld.getIfLinkPathMissing()) {
-                    case IGNORE:
-                        break;
-                    case WARN:
-                        docWriter.listener()
-                                .warning("Link path " + valuePath + " not found in document " + documentName);
-                        break;
-                    case FAIL:
-                        throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
-                    }
-                }
-                releaseAutoPilot(apLinkPath);
-            } else if (valueField != null) {
-                // Fetch value from Lucene doc
-                result = getMetadataField(valueField).get(0);
-            }
-            result = processString(result, linkValue.getProcess(), null);
-            results.add(result);
-        }
-
-        // Substitute link path results in inputFile, pathInsideArchive and documentPath
-        String inputFile = replaceDollarRefs(ld.getInputFile(), results);
-        String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
-        String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
-
-        try {
-            // Fetch and index the linked document
-            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
-                    ld.shouldStore() ? ld.getName() : null);
-        } catch (Exception e) {
-            String moreInfo = "(inputFile = " + inputFile;
-            if (pathInsideArchive != null)
-                moreInfo += ", pathInsideArchive = " + pathInsideArchive;
-            if (documentPath != null)
-                moreInfo += ", documentPath = " + documentPath;
-            moreInfo += ")";
-            switch (ld.getIfLinkPathMissing()) {
-            case IGNORE:
-            case WARN:
-                docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
-                        + ": " + e.getMessage());
-                break;
-            case FAIL:
-                throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
-            }
         }
     }
 
