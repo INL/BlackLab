@@ -2,7 +2,7 @@
 
 Especially when using saxonica you have extensive possibilities using xpath in blacklab configuration. Some note wordy examples you find here.
 
-- punctPath: ".//text()[.!='' and preceding-sibling::tei:w]|//tei:pc | //tei:lb"
+- punctPath: ".//text()[.!='' and preceding-sibling::tei:w]|.//tei:pc |.//tei:lb"
 -   valuePath: "```let $xid := @xml:id return if (@lemma) then @lemma else if ($xid) then following-sibling::tei:join[@lemma][matches(@target,'#'||$xid||'( |$)')]/@lemma else ()```"
     - use of if then else can significantly speed up processing
     - variables in xpath obsolete the need for captureValuePaths
