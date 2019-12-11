@@ -9,6 +9,8 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.requestlogging.LogLevel;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
@@ -55,6 +57,8 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
  * Request handler for hit results.
  */
 public class RequestHandlerHits extends RequestHandler {
+
+    private static final Logger logger = LogManager.getLogger(RequestHandlerHits.class);
 
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -255,12 +259,13 @@ public class RequestHandlerHits extends RequestHandler {
 
             if (window.hasCapturedGroups()) {
                 Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
-                ds.startEntry("captureGroups").startList();
 
                 if (capturedGroups == null) {
-                    searchLogger.log(LogLevel.BASIC, "MISSING CAPTURE GROUP: " + pid);
+                    logger.warn("MISSING CAPTURE GROUP: " + pid, ", query: " + searchParam.getString("patt"));
                     continue;
                 }
+
+                ds.startEntry("captureGroups").startList();
 
                 for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
                     if (capturedGroup.getValue() != null) {
