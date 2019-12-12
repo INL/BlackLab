@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.util.Bits;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -64,9 +65,11 @@ public abstract class ForwardIndexAccessor {
     public abstract class ForwardIndexAccessorLeafReader {
 
         protected LeafReader reader;
+        private Bits liveDocs;
 
         ForwardIndexAccessorLeafReader(LeafReader reader) {
             this.reader = reader;
+            this.liveDocs = reader.getLiveDocs();
         }
 
         /**
@@ -124,6 +127,10 @@ public abstract class ForwardIndexAccessor {
 
         public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             return ForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
+        }
+
+        public boolean isAlive(int docId) {
+            return this.liveDocs == null || this.liveDocs.get(docId);
         }
 
     }

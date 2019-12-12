@@ -113,7 +113,10 @@ class SpansFiSeq extends BLSpans {
             return NO_MORE_DOCS;
 
         // Advance container
-        anchorDoc = anchor.nextDoc();
+        do {
+            anchorDoc = anchor.nextDoc();
+        } while (anchorDoc != NO_MORE_DOCS && !fiAccessor.isAlive(anchorDoc));
+
         anchorStart = -1;
         if (anchorDoc == NO_MORE_DOCS) {
             currentFiDoc = null;
@@ -246,7 +249,9 @@ class SpansFiSeq extends BLSpans {
         alreadyAtFirstMatch = false;
 
         // Skip both to doc
-        anchorDoc = anchor.advance(doc);
+        do {
+            anchorDoc = anchor.advance(doc);
+        } while (anchorDoc != NO_MORE_DOCS && !fiAccessor.isAlive(anchorDoc));
         anchorStart = -1;
         if (anchorDoc == NO_MORE_DOCS) {
             currentFiDoc = null;
