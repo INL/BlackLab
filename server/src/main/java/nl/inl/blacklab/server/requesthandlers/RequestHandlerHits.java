@@ -262,22 +262,22 @@ public class RequestHandlerHits extends RequestHandler {
 
                 if (capturedGroups == null) {
                     logger.warn("MISSING CAPTURE GROUP: " + pid, ", query: " + searchParam.getString("patt"));
-                    continue;
-                }
+                } else {
+                    ds.startEntry("captureGroups").startList();
 
-                ds.startEntry("captureGroups").startList();
-
-                for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                    if (capturedGroup.getValue() != null) {
-                        ds.startItem("group").startMap();
-                        ds.entry("name", capturedGroup.getKey());
-                        ds.entry("start", capturedGroup.getValue().start());
-                        ds.entry("end", capturedGroup.getValue().end());
-                        ds.endMap().endItem();
+                    for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+                        if (capturedGroup.getValue() != null) {
+                            ds.startItem("group").startMap();
+                            ds.entry("name", capturedGroup.getKey());
+                            ds.entry("start", capturedGroup.getValue().start());
+                            ds.entry("end", capturedGroup.getValue().end());
+                            ds.endMap().endItem();
+                        }
                     }
+
+                    ds.endList().endEntry();
                 }
 
-                ds.endList().endEntry();
             }
 
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
