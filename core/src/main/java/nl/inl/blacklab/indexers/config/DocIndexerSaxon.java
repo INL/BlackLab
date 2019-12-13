@@ -22,18 +22,18 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * An indexer capable of XPath version supported by the provided saxonica library.
+ * An indexer capable of XPath version supported by the provided saxon library.
  */
-public class DocIndexerSaxonica extends DocIndexerConfig {
+public class DocIndexerSaxon extends DocIndexerConfig {
 
-    private SaxonicaHelper saxonicaHelper;
+    private SaxonHelper saxonHelper;
     private TreeInfo contents;
 
     @Override
     public void setDocument(Reader reader) {
         try {
-            saxonicaHelper = new SaxonicaHelper(reader, config);
-            contents = saxonicaHelper.getContents();
+            saxonHelper = new SaxonHelper(reader, config);
+            contents = saxonHelper.getContents();
         } catch (IOException | XPathException | SAXException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -44,7 +44,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
         super.index();
 
         try {
-            for (NodeInfo doc : saxonicaHelper.findNodes(config.getDocumentPath(),contents)) {
+            for (NodeInfo doc : saxonHelper.findNodes(config.getDocumentPath(),contents)) {
                 indexDocument(doc);
             }
         } catch (XPathExpressionException e) {
@@ -74,7 +74,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
             Function<String, String> xpathProcessor = xpath -> {
                 try {
-                    return saxonicaHelper.getValue(xpath,doc);
+                    return saxonHelper.getValue(xpath,doc);
                 } catch (XPathExpressionException e) {
                     throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
                 }
@@ -99,20 +99,20 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
          */
 
-        List<NodeInfo> puncts = saxonicaHelper.findNodes(annotatedField.getPunctPath(), doc);
+        List<NodeInfo> puncts = saxonHelper.findNodes(annotatedField.getPunctPath(), doc);
 
         List<NodeInfo> inlines = new ArrayList<>(500);
 
         for (ConfigInlineTag inl : annotatedField.getInlineTags()) {
-            inlines.addAll(saxonicaHelper.findNodes(inl.getPath(),doc));
+            inlines.addAll(saxonHelper.findNodes(inl.getPath(),doc));
         }
-        SaxonicaHelper.documentOrder(puncts);
-        SaxonicaHelper.documentOrder(inlines);
+        SaxonHelper.documentOrder(puncts);
+        SaxonHelper.documentOrder(inlines);
 
-        for (NodeInfo container : saxonicaHelper.findNodes(annotatedField.getContainerPath(),doc)) {
+        for (NodeInfo container : saxonHelper.findNodes(annotatedField.getContainerPath(),doc)) {
             int wNum=0;
             Map<Integer,List<NodeInfo>> inlinesToEnd = new HashMap<>();
-            for (NodeInfo word : saxonicaHelper.findNodes(annotatedField.getWordsPath(),container)) {
+            for (NodeInfo word : saxonHelper.findNodes(annotatedField.getWordsPath(),container)) {
                 wNum++;
                 /*
                 hier gaan we kijken of er inline tags of leestekens voor dit woord zitten
@@ -153,7 +153,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                             }
                             inlineTag(punctOrInline.getDisplayName(), true, atts);
                             int increment =
-                                    Integer.parseInt(saxonicaHelper
+                                    Integer.parseInt(saxonHelper
                                             .getValue("count("+annotatedField.getWordsPath()+")",punctOrInline))
                                             -1;
                             if (inlinesToEnd.containsKey(wNum+increment)) {
@@ -171,15 +171,15 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                     }
 
                 }
-                charPos = saxonicaHelper.getStartPos(word);
+                charPos = saxonHelper.getStartPos(word);
                 beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
                     // TODO we may need to support multiple values here
-                    String value = saxonicaHelper.getValue(annotation.getValuePath(),word);
+                    String value = saxonHelper.getValue(annotation.getValuePath(),word);
                     annotation(annotation.getName(),value,1,null);
                 }
-                charPos = saxonicaHelper.getEndPos(word);
+                charPos = saxonHelper.getEndPos(word);
                 endWord();
 //                System.out.println("looking for inlines to close after " +wNum);
                 if (inlinesToEnd.containsKey(wNum)) {
@@ -219,14 +219,14 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
             }
             preceding.add(pi);
         }
-        SaxonicaHelper.documentOrder(preceding);
+        SaxonHelper.documentOrder(preceding);
         return preceding;
     }
 
 
     protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock b) throws XPathExpressionException {
 
-        for (NodeInfo header : saxonicaHelper.findNodes(b.getContainerPath(),doc)) {
+        for (NodeInfo header : saxonHelper.findNodes(b.getContainerPath(),doc)) {
             List<ConfigMetadataField> fields = b.getFields();
             for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
                 ConfigMetadataField f = fields.get(i);
@@ -241,9 +241,9 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
                 if (f.isForEach()) {
                     // "forEach" metadata specification
                     // (allows us to capture many metadata fields with 3 XPath expressions)
-                    for (NodeInfo forEach : saxonicaHelper.findNodes(f.getForEachPath(),header)) {
+                    for (NodeInfo forEach : saxonHelper.findNodes(f.getForEachPath(),header)) {
                         // Find the fieldName and value for this forEach match
-                        String origFieldName = saxonicaHelper.getValue(f.getName(),forEach);
+                        String origFieldName = saxonHelper.getValue(f.getName(),forEach);
                         String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
                         if (!origFieldName.equals(fieldName)) {
                             DocIndexerXPath.warnSanitized(origFieldName, fieldName);
@@ -264,9 +264,9 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
     }
 
     private void processValue(NodeInfo header, ConfigMetadataField f) throws XPathExpressionException {
-        for (Object val : saxonicaHelper.find(f.getValuePath(),header)) {
+        for (Object val : saxonHelper.find(f.getValuePath(),header)) {
             if (val instanceof NodeInfo) {
-                String unprocessedValue = saxonicaHelper.getValue(".", val);
+                String unprocessedValue = saxonHelper.getValue(".", val);
                 for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
                     addMetadataField(f.getName(), value);
                 }
@@ -280,7 +280,7 @@ public class DocIndexerSaxonica extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(saxonicaHelper.getDocument(true));
+        storeWholeDocument(saxonHelper.getDocument(true));
     }
 
     @Override

@@ -21,9 +21,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
- * A helper for indexing using saxonica
+ * A helper for indexing using saxon
  */
-class SaxonicaHelper {
+class SaxonHelper {
 
     public static final int MAXDOCSIZEINMEMORY = 4096000;
     private static final ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<XPathFactory>() {
@@ -80,7 +80,7 @@ class SaxonicaHelper {
         return cumulativeColsPerLine.get(lineNumber)
                 - (charsOnline - columnNumber)
                 + (lineNumber - 1) * lineEnd
-                - 1; // saxonica notifies columnNumber just after tag
+                - 1; // saxon notifies columnNumber just after tag
     }
 
     short lineEnd = 1;
@@ -92,7 +92,7 @@ class SaxonicaHelper {
      */
     private char[] document;
 
-    SaxonicaHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
+    SaxonHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
         // characters needed for calculating positions
         document = IOUtils.toCharArray(reader);
         CharArrayReader stream = new CharArrayReader(document);
@@ -113,7 +113,7 @@ class SaxonicaHelper {
             }
             stream.reset();
         }
-        // make sure our content handler doesn't get overwritten by saxonica
+        // make sure our content handler doesn't get overwritten by saxon
         MyContentHandler myContentHandler = new MyContentHandler();
         XMLReader xmlReader = XMLReaderFactory.createXMLReader();
         xmlReader.setContentHandler(myContentHandler);
@@ -145,7 +145,7 @@ class SaxonicaHelper {
     private XPath xPath;
 
     /**
-     * Needed to not loose our contenthandler, which would otherwise be overridden by saxonica.
+     * Needed to not loose our contenthandler, which would otherwise be overridden by saxon.
      */
     private static class MyXMLReader implements XMLReader {
         private final XMLReader wrappedReader;

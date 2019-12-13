@@ -43,7 +43,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         case XML:
             for (ConfigInputFormat.FileTypeOption fto : ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
                 if (fto== ConfigInputFormat.FileTypeOption.SAXONICA) {
-                    docIndexer=new DocIndexerSaxonica();
+                    docIndexer=new DocIndexerSaxon();
                     break;
                 }
             }
