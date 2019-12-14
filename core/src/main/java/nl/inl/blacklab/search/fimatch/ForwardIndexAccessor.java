@@ -69,7 +69,9 @@ public abstract class ForwardIndexAccessor {
 
         ForwardIndexAccessorLeafReader(LeafReader reader) {
             this.reader = reader;
-            this.liveDocs = reader.getLiveDocs();
+            if (reader != null) {
+                this.liveDocs = reader.getLiveDocs();
+            }
         }
 
         /**
