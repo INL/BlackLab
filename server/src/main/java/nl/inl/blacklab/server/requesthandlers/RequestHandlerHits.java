@@ -261,7 +261,7 @@ public class RequestHandlerHits extends RequestHandler {
                 Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
 
                 if (capturedGroups == null) {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid, ", query: " + searchParam.getString("patt"));
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
                 } else {
                     ds.startEntry("captureGroups").startList();
 
