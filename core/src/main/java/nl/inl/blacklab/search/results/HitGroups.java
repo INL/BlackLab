@@ -133,7 +133,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
-            results.add(group);
+            getResults().add(group);
         }
     }
 
@@ -147,7 +147,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             totalHits += group.size();
-            results.add(group);
+            getResults().add(group);
             this.groups.put(group.identity(), group);
             resultObjects += group.numberOfStoredResults() + 1;
         }
@@ -250,7 +250,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
-        for (HitGroup group: results) {
+        for (HitGroup group: getResults()) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }

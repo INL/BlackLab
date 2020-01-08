@@ -21,6 +21,11 @@ public class CapturedGroupsImpl implements CapturedGroups {
         capturedGroups = new HashMap<>();
     }
 
+    public CapturedGroupsImpl(CapturedGroupsImpl toCopy) {
+        this.capturedGroupNames = toCopy.capturedGroupNames;
+        this.capturedGroups = new HashMap<>(toCopy.capturedGroups);
+    }
+
     /**
      * Add groups for a hit
      * 

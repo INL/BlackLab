@@ -204,7 +204,7 @@ public class TermFrequencyList extends Results<TermFrequency> {
 
     @Override
     public int numberOfResultObjects() {
-        return results.size();
+        return getResults().size();
     }
 
 }

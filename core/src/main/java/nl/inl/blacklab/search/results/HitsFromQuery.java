@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,10 +38,7 @@ public class HitsFromQuery extends Hits {
 
     /** Settings such as max. hits to process/count. */
     SearchSettings searchSettings;
-    
-    /** Did we exceed the maximums? */
-    MaxStats maxStats;
-    
+
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
      * the current one's done.
@@ -72,11 +70,6 @@ public class HitsFromQuery extends Hits {
      */
     private BLSpans currentSourceSpans;
 
-    /**
-     * Did we completely read our Spans object?
-     */
-    private boolean sourceSpansFullyRead = true;
-
     private Lock ensureHitsReadLock = new ReentrantLock();
     
     /** Context of our query; mostly used to keep track of captured groups. */
@@ -90,6 +83,45 @@ public class HitsFromQuery extends Hits {
     private boolean loggedSpans;
 
     /**
+     * This class holds all of the data that is modified inside the lock in ensureResultsRead.
+     * All data is copied before being modified, so that it's not visible to other threads until
+     * it can be published in a consistent state.
+     *
+     * Possible future work: use persistent data structures (such as pcollections) to cut down on
+     * unnecessary copying.
+     */
+    private static class HitsResultsContext {
+        boolean sourceSpansFullyRead;
+        List<Hit> results;
+        CapturedGroupsImpl capturedGroups;
+        int hitsCounted;
+        int docsRetrieved;
+        int docsCounted;
+        MaxStats maxStats;
+
+        HitsResultsContext() {
+            this.results = new ArrayList<>();
+            this.maxStats = new MaxStats();
+        }
+
+        HitsResultsContext(HitsResultsContext context) {
+            this.sourceSpansFullyRead = context.sourceSpansFullyRead;
+            this.results = new ArrayList<>(context.results);
+            this.capturedGroups = context.capturedGroups != null ? new CapturedGroupsImpl(context.capturedGroups) : null;
+            this.hitsCounted = context.hitsCounted;
+            this.docsRetrieved = context.docsRetrieved;
+            this.docsCounted = context.docsCounted;
+            this.maxStats = new MaxStats(context.maxStats.hitsProcessedExceededMaximum(), context.maxStats.hitsCountedExceededMaximum());
+        }
+    }
+
+    /**
+     * A volatile variable that holds the state. Writing to this variable publishes
+     * the context so it can be seen by other threads.
+     */
+    private volatile HitsResultsContext hitsResultsContext;
+
+    /**
      * Construct a Hits object from a SpanQuery.
      *
      * @param queryInfo query info
@@ -100,9 +132,9 @@ public class HitsFromQuery extends Hits {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
         super(queryInfo);
         this.searchSettings = searchSettings;
-        this.maxStats = new MaxStats();
-        hitsCounted = 0;
         hitQueryContext = new HitQueryContext();
+
+        this.hitsResultsContext = new HitsResultsContext();
         try {
             BlackLabIndex index = queryInfo.index();
             IndexReader reader = index.reader();
@@ -150,13 +182,12 @@ public class HitsFromQuery extends Hits {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-
-        sourceSpansFullyRead = false;
     }
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hitsSoFar=" + results.size() + ")";
+        HitsResultsContext hitsResultsContext = this.hitsResultsContext;
+        return "Hits#" + hitsObjId + " (fullyRead=" + hitsResultsContext.sourceSpansFullyRead + ", hitsSoFar=" + hitsResultsContext.results.size() + ")";
     }
 
     /**
@@ -169,15 +200,17 @@ public class HitsFromQuery extends Hits {
     @Override
     protected void ensureResultsRead(int number) {
         try {
+            HitsResultsContext hitsResultsContext = this.hitsResultsContext; // Volatile read memory-barrier
+
             // Prevent locking when not required
-            if (sourceSpansFullyRead || (number >= 0 && results.size() > number))
+            if (hitsResultsContext.sourceSpansFullyRead || (number >= 0 && hitsResultsContext.results.size() > number))
                 return;
-    
+
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
-                number = results.size() + FETCH_HITS_MIN;
-    
+            if (number >= 0 && number - hitsResultsContext.results.size() < FETCH_HITS_MIN)
+                number = hitsResultsContext.results.size() + FETCH_HITS_MIN;
+
             while (!ensureHitsReadLock.tryLock()) {
                 /*
                  * Another thread is already counting, we don't want to straight up block until it's done
@@ -185,25 +218,31 @@ public class HitsFromQuery extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (sourceSpansFullyRead || (number >= 0 && results.size() >= number))
+
+                hitsResultsContext = this.hitsResultsContext; // Volatile read memory-barrier
+                if (hitsResultsContext.sourceSpansFullyRead || (number >= 0 && hitsResultsContext.results.size() > number))
                     return;
             }
             try {
                 // One more check in case another thread finished the read.
-                if (sourceSpansFullyRead || (number >= 0 && results.size() >= number))
+                hitsResultsContext = this.hitsResultsContext; // Volatile read memory-barrier
+                if (hitsResultsContext.sourceSpansFullyRead || (number >= 0 && hitsResultsContext.results.size() > number))
                     return;
+
+                // Make a copy of the context so we can mutate it.
+                hitsResultsContext = new HitsResultsContext(hitsResultsContext);
 
                 boolean readAllHits = number < 0;
                 int maxHitsToCount = searchSettings.maxHitsToCount();
                 int maxHitsToProcess = searchSettings.maxHitsToProcess();
-                while (readAllHits || results.size() < number) {
+                while (readAllHits || hitsResultsContext.results.size() < number) {
     
                     // Pause if asked
                     threadPauser.waitIfPaused();
     
                     // Stop if we're at the maximum number of hits we want to count
-                    if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
-                        maxStats.setHitsCountedExceededMaximum();
+                    if (maxHitsToCount >= 0 && hitsResultsContext.hitsCounted >= maxHitsToCount) {
+                        hitsResultsContext.maxStats.setHitsCountedExceededMaximum();
                         break;
                     }
     
@@ -215,6 +254,7 @@ public class HitsFromQuery extends Hits {
     
                             atomicReaderContextIndex++;
                             if (atomicReaderContextIndex >= atomicReaderContexts.size()) {
+                                hitsResultsContext.sourceSpansFullyRead = true;
                                 setFinished();
                                 return;
                             }
@@ -237,8 +277,8 @@ public class HitsFromQuery extends Hits {
                                 //    and there won't be that many segments, so it's probably ok)
                                 hitQueryContext.setSpans(currentSourceSpans);
                                 currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-                                if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                                    capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+                                if (hitsResultsContext.capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+                                    hitsResultsContext.capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
                                 
                                 int doc;
@@ -273,36 +313,37 @@ public class HitsFromQuery extends Hits {
     
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)
-                    hitsCounted++;
+                    hitsResultsContext.hitsCounted++;
                     int hitDoc = currentSourceSpans.docID() + currentDocBase;
-                    boolean maxHitsProcessed = maxStats.hitsProcessedExceededMaximum();
+                    boolean maxHitsProcessed = hitsResultsContext.maxStats.hitsProcessedExceededMaximum();
                     if (hitDoc != previousHitDoc) {
-                        docsCounted++;
+                        hitsResultsContext.docsCounted++;
                         if (!maxHitsProcessed)
-                            docsRetrieved++;
+                            hitsResultsContext.docsRetrieved++;
                         previousHitDoc = hitDoc;
                     }
                     if (!maxHitsProcessed) {
                         Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
-                        if (capturedGroups != null) {
+                        if (hitsResultsContext.capturedGroups != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                            hitsResultsContext.capturedGroups.put(hit, groups);
                         }
-                        results.add(hit);
-                        if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
-                            maxStats.setHitsProcessedExceededMaximum();
+                        hitsResultsContext.results.add(hit);
+                        if (maxHitsToProcess >= 0 && hitsResultsContext.results.size() >= maxHitsToProcess) {
+                            hitsResultsContext.maxStats.setHitsProcessedExceededMaximum();
                         }
                     }
                 }
             } catch (InterruptedException e) {
                 // We've stopped retrieving/counting
-                maxStats.setHitsProcessedExceededMaximum();
-                maxStats.setHitsCountedExceededMaximum();
+                hitsResultsContext.maxStats.setHitsProcessedExceededMaximum();
+                hitsResultsContext.maxStats.setHitsCountedExceededMaximum();
                 throw e;
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             } finally {
+                this.hitsResultsContext = hitsResultsContext; // Volatile write memory-barrier
                 ensureHitsReadLock.unlock();
             }
         } catch (InterruptedException e) {
@@ -311,8 +352,6 @@ public class HitsFromQuery extends Hits {
     }
 
     private void setFinished() {
-        sourceSpansFullyRead = true;
-        
         // We no longer need these; allow them to be GC'ed
         weight = null;
         atomicReaderContexts = null;
@@ -323,12 +362,38 @@ public class HitsFromQuery extends Hits {
 
     @Override
     public boolean doneProcessingAndCounting() {
-        return sourceSpansFullyRead || maxStats.hitsCountedExceededMaximum();
+        HitsResultsContext hitsResultsContext = this.hitsResultsContext;
+        return hitsResultsContext.sourceSpansFullyRead || hitsResultsContext.maxStats.hitsCountedExceededMaximum();
     }
     
     @Override
     public MaxStats maxStats() {
-        return maxStats;
+        return this.hitsResultsContext.maxStats;
+    }
+
+    @Override
+    protected List<Hit> getResults() {
+        return this.hitsResultsContext.results;
+    }
+
+    @Override
+    public CapturedGroupsImpl capturedGroups() {
+        return this.hitsResultsContext.capturedGroups;
+    }
+
+    @Override
+    protected int getHitsCounted() {
+        return this.hitsResultsContext.hitsCounted;
+    }
+
+    @Override
+    protected int getDocsRetrieved() {
+        return this.hitsResultsContext.docsRetrieved;
+    }
+
+    @Override
+    protected int getDocsCounted() {
+        return this.hitsResultsContext.docsCounted;
     }
 
 }

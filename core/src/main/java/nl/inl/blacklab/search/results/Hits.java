@@ -145,7 +145,7 @@ public abstract class Hits extends Results<Hit> {
             }
             results.add(hit);
             if (capturedGroups != null)
-                capturedGroups.put(hit, this.capturedGroups.get(hit));
+                capturedGroups.put(hit, capturedGroups().get(hit));
             hitsCounted++;
         }
         
@@ -170,25 +170,25 @@ public abstract class Hits extends Results<Hit> {
      * The number of hits we've seen and counted so far. May be more than the number
      * of hits we've retrieved if that exceeds maxHitsToRetrieve.
      */
-    protected int hitsCounted = 0;
+    private int hitsCounted = 0;
 
     /**
      * The number of separate documents we've seen in the hits retrieved.
      */
-    protected int docsRetrieved = 0;
+    private int docsRetrieved = 0;
 
     /**
      * The number of separate documents we've counted so far (includes non-retrieved
      * hits).
      */
-    protected int docsCounted = 0;
+    private int docsCounted = 0;
 
     private ResultsStats docsStats = new ResultsStats() {
 
         @Override
         public boolean processedAtLeast(int lowerBound) {
             while (!doneProcessingAndCounting() && docsProcessedSoFar() < lowerBound) {
-                ensureResultsRead(results.size() + FETCH_HITS_MIN);
+                ensureResultsRead(getResults().size() + FETCH_HITS_MIN);
             }
             return docsProcessedSoFar() >= lowerBound;
         }
@@ -378,7 +378,7 @@ public abstract class Hits extends Results<Hit> {
     public Hits getHitsInDoc(int docid) {
         ensureAllResultsRead();
         List<Hit> hitsInDoc = new ArrayList<>();
-        for (Hit hit : results) {
+        for (Hit hit : getResults()) {
             if (hit.doc() == docid)
                 hitsInDoc.add(hit);
         }
@@ -406,7 +406,7 @@ public abstract class Hits extends Results<Hit> {
     
     protected int hitsCountedTotal() {
         ensureAllResultsRead();
-        return hitsCounted;
+        return getHitsCounted();
     }
 
     public ResultsStats docsStats() {
@@ -415,24 +415,24 @@ public abstract class Hits extends Results<Hit> {
 
     protected int docsProcessedTotal() {
         ensureAllResultsRead();
-        return docsRetrieved;
+        return getDocsRetrieved();
     }
 
     protected int docsCountedTotal() {
         ensureAllResultsRead();
-        return docsCounted;
+        return getDocsCounted();
     }
 
     protected int hitsCountedSoFar() {
-        return hitsCounted;
+        return getHitsCounted();
     }
 
     protected int docsCountedSoFar() {
-        return docsCounted;
+        return getDocsCounted();
     }
 
     protected int docsProcessedSoFar() {
-        return docsRetrieved;
+        return getDocsRetrieved();
     }
 
     @Override
@@ -450,7 +450,7 @@ public abstract class Hits extends Results<Hit> {
     
     public Hits window(Hit hit) {
         ensureAllResultsRead();
-        return window(results.indexOf(hit), 1);
+        return window(getResults().indexOf(hit), 1);
     }
     
     /**
@@ -496,7 +496,7 @@ public abstract class Hits extends Results<Hit> {
     }
 
     public boolean hasCapturedGroups() {
-        return capturedGroups != null;
+        return capturedGroups() != null;
     }
 
     // Hits display
@@ -535,4 +535,27 @@ public abstract class Hits extends Results<Hit> {
         return hitsProcessedSoFar();
     }
 
+    protected int getHitsCounted() {
+        return hitsCounted;
+    }
+
+    protected void setHitsCounted(int hitsCounted) {
+        this.hitsCounted = hitsCounted;
+    }
+
+    protected int getDocsRetrieved() {
+        return docsRetrieved;
+    }
+
+    protected void setDocsRetrieved(int docsRetrieved) {
+        this.docsRetrieved = docsRetrieved;
+    }
+
+    protected int getDocsCounted() {
+        return docsCounted;
+    }
+
+    protected void setDocsCounted(int docsCounted) {
+        this.docsCounted = docsCounted;
+    }
 }

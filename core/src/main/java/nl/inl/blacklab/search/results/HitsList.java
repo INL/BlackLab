@@ -31,13 +31,13 @@ public class HitsList extends Hits {
      */
     protected HitsList(QueryInfo queryInfo, List<Hit> hits) {
         super(queryInfo);
-        this.results = hits == null ? new ArrayList<>() : hits;
-        hitsCounted = this.results.size();
+        this.setResults(hits == null ? new ArrayList<>() : hits);
+        setHitsCounted(this.getResults().size());
         int prevDoc = -1;
-        for (Hit h : this.results) {
+        for (Hit h : this.getResults()) {
             if (h.doc() != prevDoc) {
-                docsRetrieved++;
-                docsCounted++;
+                setDocsRetrieved(getDocsRetrieved() + 1);
+                setDocsCounted(getDocsCounted() + 1);
                 prevDoc = h.doc();
             }
         }
@@ -88,19 +88,19 @@ public class HitsList extends Hits {
     protected HitsList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
             int hitsCounted, int docsRetrieved, int docsCounted, CapturedGroupsImpl capturedGroups) {
         super(queryInfo);
-        this.results = results;
+        this.setResults(results);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         
-        this.hitsCounted = hitsCounted;
-        this.docsRetrieved = docsRetrieved;
-        this.docsCounted = docsCounted;
+        this.setHitsCounted(hitsCounted);
+        this.setDocsRetrieved(docsRetrieved);
+        this.setDocsCounted(docsCounted);
         this.capturedGroups = capturedGroups;
     }
 
     @Override
     public String toString() {
-        return "HitsList#" + hitsObjId + " (hits.size()=" + results.size() + "; isWindow=" + isWindow() + ")";
+        return "HitsList#" + hitsObjId + " (hits.size()=" + getResults().size() + "; isWindow=" + isWindow() + ")";
     }
     
     /**

@@ -103,10 +103,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     protected ThreadPauser threadPauser;
     
-    /**
-     * The results.
-     */
-    protected List<T> results;
+    private List<T> results;
 
     private ResultsStats resultsStats = new ResultsStats() {
         @Override
@@ -149,7 +146,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         this.queryInfo = queryInfo;
 //        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
         threadPauser = ThreadPauser.create();
-        results = new ArrayList<>();
+        setResults(new ArrayList<>());
     }
 
     /**
@@ -265,7 +262,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
                 ensureResultsRead(index + 2);
-                return results.size() >= index + 2;
+                return getResults().size() >= index + 2;
             }
         
             @Override
@@ -273,7 +270,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
                 // Check if there is a next, taking unread hits from Spans into account
                 if (hasNext()) {
                     index++;
-                    return results.get(index);
+                    return getResults().get(index);
                 }
                 throw new NoSuchElementException();
             }
@@ -294,9 +291,9 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     public synchronized T get(int i) {
         ensureResultsRead(i + 1);
-        if (i >= results.size())
+        if (i >= getResults().size())
             return null;
-        return results.get(i);
+        return getResults().get(i);
     }
     
     
@@ -381,7 +378,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     
     protected boolean resultsProcessedAtLeast(int lowerBound) {
         ensureResultsRead(lowerBound);
-        return results.size() >= lowerBound;
+        return getResults().size() >= lowerBound;
     }
 
     /**
@@ -395,11 +392,11 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
 
     protected int resultsProcessedTotal() {
         ensureAllResultsRead();
-        return results.size();
+        return getResults().size();
     }
 
     protected int resultsProcessedSoFar() {
-        return results.size();
+        return getResults().size();
     }
 
     protected int resultsCountedSoFar() {
@@ -424,9 +421,9 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     protected List<T> resultsSubList(int fromIndex, int toIndex) {
         ensureResultsRead(toIndex);
-        if (toIndex > results.size())
-            toIndex = results.size();
-        return results.subList(fromIndex, toIndex);
+        if (toIndex > getResults().size())
+            toIndex = getResults().size();
+        return getResults().subList(fromIndex, toIndex);
     }
 
     /**
@@ -439,7 +436,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     protected List<T> resultsList() {
         ensureAllResultsRead();
-        return Collections.unmodifiableList(results);
+        return Collections.unmodifiableList(getResults());
     }
 
     /**
@@ -452,5 +449,15 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     public abstract boolean doneProcessingAndCounting();
 
-    
+
+    /**
+     * The results.
+     */
+    protected List<T> getResults() {
+        return results;
+    }
+
+    protected void setResults(List<T> results) {
+        this.results = results;
+    }
 }

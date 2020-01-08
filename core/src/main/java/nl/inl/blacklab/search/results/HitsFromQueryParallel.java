@@ -104,7 +104,7 @@ public class HitsFromQueryParallel extends Hits {
         super(queryInfo);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
-        hitsCounted = 0;
+        setHitsCounted(0);
         hitQueryContext = new HitQueryContext();
         try {
             BlackLabIndex index = queryInfo.index();
@@ -174,7 +174,7 @@ public class HitsFromQueryParallel extends Hits {
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (fullyRead=" + allSourceSpansFullyRead + ", hitsSoFar=" + results.size() + ")";
+        return "Hits#" + hitsObjId + " (fullyRead=" + allSourceSpansFullyRead + ", hitsSoFar=" + getResults().size() + ")";
     }
 
     /**
@@ -196,13 +196,13 @@ public class HitsFromQueryParallel extends Hits {
         
         try {
             // Prevent locking when not required
-            if (allSourceSpansFullyRead || (number >= 0 && results.size() > number))
+            if (allSourceSpansFullyRead || (number >= 0 && getResults().size() > number))
                 return;
     
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
-                number = results.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - getResults().size() < FETCH_HITS_MIN)
+                number = getResults().size() + FETCH_HITS_MIN;
     
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -211,24 +211,24 @@ public class HitsFromQueryParallel extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (allSourceSpansFullyRead || (number >= 0 && results.size() >= number))
+                if (allSourceSpansFullyRead || (number >= 0 && getResults().size() >= number))
                     return;
             }
             try {
                 // One more check in case another thread finished the read.
-                if (allSourceSpansFullyRead || (number >= 0 && results.size() >= number))
+                if (allSourceSpansFullyRead || (number >= 0 && getResults().size() >= number))
                     return;
 
                 boolean readAllHits = number < 0;
                 int maxHitsToCount = searchSettings.maxHitsToCount();
                 int maxHitsToProcess = searchSettings.maxHitsToProcess();
-                while (readAllHits || results.size() < number) {
+                while (readAllHits || getResults().size() < number) {
     
                     // Pause if asked
                     threadPauser.waitIfPaused();
     
                     // Stop if we're at the maximum number of hits we want to count
-                    if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
+                    if (maxHitsToCount >= 0 && getHitsCounted() >= maxHitsToCount) {
                         maxStats.setHitsCountedExceededMaximum();
                         break;
                     }
@@ -275,20 +275,20 @@ public class HitsFromQueryParallel extends Hits {
     
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)
-                    hitsCounted++;
+                    setHitsCounted(getHitsCounted() + 1);
                     boolean maxHitsProcessed = maxStats.hitsProcessedExceededMaximum();
                     if (hit.doc() != previousHitDoc) {
-                        docsCounted++;
+                        setDocsCounted(getDocsCounted() + 1);
                         if (!maxHitsProcessed)
-                            docsRetrieved++;
+                            setDocsRetrieved(getDocsRetrieved() + 1);
                         previousHitDoc = hit.doc();
                     }
                     if (!maxHitsProcessed) {
                         if (capturedGroups != null && capturedGroupsForHit != null) {
                             capturedGroups.put(hit, capturedGroupsForHit);
                         }
-                        results.add(hit);
-                        if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
+                        getResults().add(hit);
+                        if (maxHitsToProcess >= 0 && getResults().size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }
                     }

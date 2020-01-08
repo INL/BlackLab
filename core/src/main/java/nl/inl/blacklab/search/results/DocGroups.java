@@ -67,7 +67,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
                 largestGroupSize = group.size();
             totalResults += group.size();
             resultObjects += group.numberOfStoredHits() + 1;
-            results.add(group);
+            getResults().add(group);
             this.groups.put(group.identity(), group);
         }
     }
@@ -137,7 +137,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
         if (maximumNumberOfResultsPerGroup < 0)
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<DocGroup> truncatedGroups = new ArrayList<>();
-        for (DocGroup group: results) {
+        for (DocGroup group: getResults()) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).resultsList();
             DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());
             truncatedGroups.add(newGroup);

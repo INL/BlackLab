@@ -68,13 +68,13 @@ public class HitsFiltered extends Hits {
     protected void ensureResultsRead(int number) {
         try {
             // Prevent locking when not required
-            if (doneFiltering || number >= 0 && results.size() > number)
+            if (doneFiltering || number >= 0 && getResults().size() > number)
                 return;
             
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
-                number = results.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - getResults().size() < FETCH_HITS_MIN)
+                number = getResults().size() + FETCH_HITS_MIN;
     
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -83,12 +83,12 @@ public class HitsFiltered extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (doneFiltering || number >= 0 && results.size() >= number)
+                if (doneFiltering || number >= 0 && getResults().size() >= number)
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
-                while (!doneFiltering && (readAllHits || results.size() < number)) {
+                while (!doneFiltering && (readAllHits || getResults().size() < number)) {
                     // Pause if asked
                     threadPauser.waitIfPaused();
     
@@ -98,11 +98,11 @@ public class HitsFiltered extends Hits {
                         Hit hit = source.get(indexInSource);
                         if (filterProperty.get(hit).equals(filterValue)) {
                             // Yes, keep this hit
-                            results.add(hit);
-                            hitsCounted++;
+                            getResults().add(hit);
+                            setHitsCounted(getHitsCounted() + 1);
                             if (hit.doc() != previousHitDoc) {
-                                docsCounted++;
-                                docsRetrieved++;
+                                setDocsCounted(getDocsCounted() + 1);
+                                setDocsRetrieved(getDocsRetrieved() + 1);
                                 previousHitDoc = hit.doc();
                             }
                         }
