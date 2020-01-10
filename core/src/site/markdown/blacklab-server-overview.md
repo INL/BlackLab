@@ -10,7 +10,6 @@ This page explains how to set up and use BlackLab Server. See the [BlackLab home
 * [Sorting, grouping, filtering & faceting](#sorting-grouping-filtering-faceting)
 * [Examples](#examples): searches, retrieving documents, information about indices
 * [Installation](#installation)
-* [Configuration file](#configuration-file)
 * [Error and status responses](#error-and-status-responses) 
 
 <a id="features"></a>
@@ -68,7 +67,7 @@ Here’s what the various parts of this URL mean:
 	</tr>
 	<tr>
 		<td>pid         </td>
-		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata JSON file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured (using "pidField" in the index template file - see [Indexing with BlackLab](indexing-with-blacklab.html)), but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
+		<td>persistent identifier for the document. This refers to a metadata field that must be configured per corpus (in the index metadata file; see documentation about indexing with BlackLab). Any field that uniquely identifies the document and won’t change in the future will do. You can retrieve documents with this pid, and result sets will use it to refer to the corresponding documents.><br/><br/><b>NOTE:</b> BlackLab Server will use the Lucene document id instead of a true persistent identifier if your corpus has no persistent identifier configured (using "pidField" in the index template file - see [Indexing with BlackLab](indexing-with-blacklab.html)), but this is not recommended: Lucene document ids can change if you re-index or compact the index, so bookmarked URLs may not always return to the same information.</td>
 	</tr>
 	<tr>
 		<td>parameters  </td>
@@ -105,7 +104,7 @@ Explanation of the various resources:
 	</tr>
 	<tr>
 		<td>fields/FIELDNAME </td>
-		<td>Shows the settings and (some) field values for a metadata field. For complex ("contents") fields, it will show the different properties (e.g. features/annotations) the field has for each token.</td>
+		<td>Shows the settings and (some) field values for a metadata field. For annotated fields (e.g. "contents"), it will show the different annotations (e.g. word, lemma, pos) the field has for each token.</td>
 	</tr>
 	<tr>
 		<td>autocomplete/FIELDNAME </td>
@@ -207,11 +206,11 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>wordstart </td>
-		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. NOTE: partial contents XML output will be wrapped in &#60;blacklabResponse/&#62; element to ensure a single root element.</td>
+		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. NOTE: partial contents XML output will be wrapped in &#60;blacklabResponse/&#62; element to ensure a single root element. NOTE: when greater than -1 content before the first word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>wordend </td>
-		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end.</td>
+		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end. NOTE when greater than -1 content after the last word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>block (deprecated)</td>
@@ -224,15 +223,15 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>maxretrieve </td>
-		<td>Maximum number of hits to retrieve. -1 means "no limit". Also affects documents-containing-pattern queries and grouped-hits queries. Default configurable in blacklab-server.json. Very large values (millions, or unlimited) may cause server problems.</td>
+		<td>Maximum number of hits to retrieve. -1 means "no limit". Also affects documents-containing-pattern queries and grouped-hits queries. Default configurable in blacklab-server.yaml. Very large values (millions, or unlimited) may cause server problems.</td>
 	</tr>
 	<tr>
 		<td>maxcount </td>
-		<td>Maximum number of hits to count. -1 means "no limit". Default configurable in blacklab-server.json. Even when BlackLab stops retrieving hits, it still keeps counting. For large results sets this may take a long time.</td>
+		<td>Maximum number of hits to count. -1 means "no limit". Default configurable in blacklab-server.yaml. Even when BlackLab stops retrieving hits, it still keeps counting. For large results sets this may take a long time.</td>
 	</tr>
 	<tr>
 		<td>outputformat </td>
-		<td>“json” or “xml”. (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.</td>
+		<td>“json”, “xml” or "csv". (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.<br/><br/>For "csv", two additional parameters are supported: "csvsummary=yes" will add a summary of the query to the CSV output; "csvsepline=yes" will add "sep=," as the first line, specifically for using the resulting CSV with Excel. Both default to "no".</td>
 	</tr>
 	<tr>
 		<td>jsonp </td>
@@ -286,7 +285,7 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 	</tr>
 	<tr>
 		<td>hit[:prop[:c]] </td>
-		<td>Sort/group/facet on matched text. If prop is omitted, the default property (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, wordleft and wordright. Examples: hit, hit:lemma, hit:lemma:s.</td>
+		<td>Sort/group/facet on matched text. If prop is omitted, the default annotation (usually word) is used. c can specify case-sensitivity: either s (sensitive) or i (insensitive). prop and c can also be added to left, right, wordleft and wordright. Examples: hit, hit:lemma, hit:lemma:s.</td>
 	</tr>
 	<tr>
 		<td>left / right </td>
@@ -327,7 +326,7 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 
 Criteria like "context:word:s:H1-2" (first two matched words) allow fine control over what to group or sort on.
 
-Like with criteria such as left, right or hit, you can vary the property to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
+Like with criteria such as left, right or hit, you can vary the annotation to group or sort on (e.g. word/lemma/pos, or other options depending on your data set). You may specify whether to sort/group case- and accent-sensitively (s) or insensitively (i).
 
 The final parameter to a "context:" criterium is the specification. This consists of one or more parts separated by a semicolon. Each part consists of an "anchor" and number(s) to indicate a stretch of words. The anchor can be H (hit text), E (hit text, but counted from the end of the hit), L (words to the left of the hit) or R (words to the right of the hit). The number or numbers after the anchor specify what words you want from this part. A single number indicates a single word; 1 is the first word, 2 the second word, etc. So "E2" means "the second-to-last word of the hit". Two numbers separated by a dash indicate a stretch of words. So "H1-2" means "the first two words of the hit", and "E2-1" means "the second-to-last word followed by the last word". A single number followed by a dash means "as much as possible from this part, starting from this word". So "H2-" means "the entire hit text except the first word".
 
@@ -391,17 +390,17 @@ Information about the webservice; list of available indices
 
         http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
 
-Information about the “opensonar” corpus (structure, fields, human-readable names)
+Information about the “opensonar” corpus (structure, fields, (sub)annotations, human-readable names)
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/ (trailing slash optional)
 
-Information about the “opensonar” corpus, include all values for "pos" property (listvalues is a comma-separated list of property names):
+Information about the “opensonar” corpus, include all values for "pos" annotation (listvalues is a comma-separated list of annotation names):
 
         http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos
 
-Information about the “opensonar” corpus, include subproperties and their values for "pos" property:
+Information about the “opensonar” corpus, include all values for "pos" annotation and any subannotations (listvalues may contain regexes):
 
-        http://blacklab.ivdnt.org/blacklab-server/opensonar/?subprops=pos
+        http://blacklab.ivdnt.org/blacklab-server/opensonar/?listvalues=pos.*
 
 Autogenerated XSLT stylesheet for transforming whole documents (only available for configfile-based XML formats):
 
@@ -413,7 +412,7 @@ Autogenerated XSLT stylesheet for transforming whole documents (only available f
 
 BlackLab Server includes experimental support for creating indices and adding documents to them. We are using these features to build an interface where users can quickly index data and search it, without having to set up a BlackLab installation themselves. These features are still pretty volatile, so don't rely too heavily on them yet, but here's a very quick overview.
 
-Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml (or .json) will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Note that this debug authentication method only works if you are a debug client (i.e. your IP address is listed in the debug.addresses setting, see the [config file](#configuration-file)). Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
+Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml (or .json) will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Note that this debug authentication method only works if you are a debug client (i.e. your IP address is listed in the debug.addresses setting, see [Configuration files](configuration-files.html)). Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
 
 Another required setting is `userCollectionsDir` (in addition to `indexCollections` which points to the "globally available" indices). In this directory, user-private indices will be created. Obviously, the application needs write permissions on this directory.
 
@@ -453,272 +452,25 @@ BlackLab Server needs to run in a Java application server that support servlets.
 
 For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
 
-Place the configuration file blacklab-server.json (see Appendix A) in /etc/blacklab/ or, if you prefer, on the application server’s classpath. Make sure at least the “indexCollections” setting is correctly specified (should point to a directory containing one or more BlackLab indices as subdirectories). Apart from that, the file could actually be empty: default values are used for missing settings. So if you have an index in directory /home/jan/blacklab/test, the minimal blacklab-server.json looks like this:
+Create a configuration file `blacklab-server.yaml` in `/etc/blacklab/` or, if you prefer, on the application server’s classpath. Make sure the `indexLocations` setting is correctly specified (it should point to a directory containing one or more BlackLab indices as subdirectories, or to a single index directory). The minimal configuration file looks like this:
 
-	{ "indexCollections": [ "/home/jan/blacklab" ] }
+```yaml
+---
+configVersion: 2
+
+# Where indexes can be found
+# (list directories whose subdirectories are indexes, or directories containing a single index)
+indexLocations:
+- /data/blacklab/indexes
+```
+
+(for more information about configuration BlackLab and BlackLab Server, see [Configuration files](configuration-files.html))
 
 Place blacklab-server.war in Tomcat’s webapps directory ($TOMCAT/webapps/). Tomcat should automatically discover and deploy it, and you should be able to go to [http://servername:8080/blacklab-server/](http://servername:8080/blacklab-server/ "http://servername:8080/blacklab-server/") and see the BlackLab Server information page, which includes a list of available corpora.
 
 To ensure the correct handling of accented characters in (search) URLs, you should make sure that your URLs are URL-encoded UTF-8 (so e.g. searching for "señor" corresponds to a request like http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22 . You should also [tell Tomcat](https://tomcat.apache.org/tomcat-7.0-doc/config/http.html#Common_Attributes) to interpret URLs as UTF-8 (by default, it does ISO-8859-1) by adding an attribute URIEncoding="UTF-8" to the Connector element with the attribute port="8080" in Tomcat's server.xml file.
 
 To (significantly!) improve performance of certain operations, including sorting and grouping large result sets, you might want to consider using the [vmtouch](https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache "https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache") tool to lock the forward index files in the OS's disk cache. You could also serve these files (or the entire index) from an SSD.
-
-<a id="configuration-file"></a>
-
-## Configuration file
-
-Below is a complete example of the configuration file (blacklab-server.json) including comments (contrary to the JSON standard, this file may contain double slash end-of-line comments).
-
-You should at least have an “indexCollections” or “indices” setting, so you have at least one index to search. All other parameters are optional and may, for example, be used to improve performance.
-
-The blacklab-server.json file should be placed in /etc/blacklab/, or you should make sure an environment variable named BLACKLAB_CONFIG_DIR is defined that points to the directory containing the configuration file(s). 
-
-	{
-	    // BlackLab Server config file
-	    // ===============================================================
-	    // NOTE: this file is in JSON format, with end-of-line comments (//)
-	    // allowed.
-	
-	    // The available indices
-	    // ---------------------------------------------------------------
-	    
-	    // Index collections are multiple indices as subdirectories of a 
-	    // single directory. BLS will detect when an index is added and 
-	    // make it available to query. It will also detect if it has been 
-	    // removed.
-	    // NOTE: if multiple collections contain indices with the
-	    // same name, one of them is picked at random; therefore it&#39;s best
-	    // to avoid this.
-	    "indexCollections": [
-	        "/data/blacklab-indices/"
-	    ],
-	
-	    // A list of single indices and where they can be found. 
-	    "indices": {
-	        "brown": {
-	            "dir": "/data/brown-corpus/index"
-	        }
-	    },
-	
-	    // Configuration that affects how requests are handled
-	    // ---------------------------------------------------------------
-	    "requests": {
-	        // Default number of hits/results per page.
-	        // The "number" GET parameter overrides this value.
-	        "defaultPageSize": 20,
-	
-	        // Maximum number of hits/results per page allowed.
-	        // (if the "number" GET variable is set to a higher value,
-	        //  the above default page size will be used instead)
-	        "maxPageSize": 3000,
-	
-	        // Default number of words around hit.
-	        // The "wordsaroundhit" GET parameter overrides this value.
-	        "defaultContextSize": 5,
-	
-	        // Maximum context size allowed. Only applies to sets of hits,
-	        // not to individual snippets.
-	        "maxContextSize": 20,
-	
-	        // Maximum snippet size allowed. If this is too big, users can
-	        // view the whole document even if they may not be allowed to.
-	        // (this applies to the "wordsaroundhit" GET parameter of the 
-	        // /docs/ID/snippet resource)
-	        "maxSnippetSize": 120,
-	
-	        // Default maximum number of hits to retrieve. This affects 
-	        // not only regular hits searches, but also 
-	        // documents-containing-pattern searches (will stop yielding 
-	        // documents when the max. hit number is reached) and 
-	        // grouped-hits searches (will only group this number of hits
-	        // at most).
-	        // The search summary will show you whether the retrieval 
-	        // limit was reached or not. -1 means "no limit". For large 
-	        // corpora, this can crash the server if uses perform big 
-	        // searches.
-	        "defaultMaxHitsToRetrieve": 1000000,
-	
-	        // Default maximum number of hits to count.
-	        // BlackLab will keep counting hits even if it hits the 
-	        // retrieval maximum. The default value for this is -1,
-	        // meaning "no limit". Counts for large hit sets will take a 
-	        // long time but will generally not crash the server.
-	        "defaultMaxHitsToCount": 10000000,
-	
-	        // Users can change the above retrieval maximum with the
-	        // "maxretrieve" URL parameter. This specifies the maximum 
-	        // allowed value for that parameter. -1 means "no limit".
-	        "maxHitsToRetrieveAllowed": 1000000,
-	
-	        // Users can change the above count maximum with the 
-	        // "maxcount" URL parameter. This specifies the maximum 
-	        // allowed value for that parameter. -1 means "no limit".
-	        "maxHitsToCountAllowed": 10000000,
-	
-	        // Clients from these IPs may choose their own user id and 
-	        // send  it along in a GET parameter "userid". This setting 
-	        // exists for web applications that contact the webservice
-	        // (partly) through the server component. They would get the 
-	        // same session id for each user, making them likely to hit 
-	        // the maxRunningJobsPerUser setting. Instead, they should 
-	        // assign session IDs for each of their clients and send them
-	        // along with any request to the webservice.
-	        "overrideUserIdIps": [
-	            "127.0.0.1",      // IPv4 localhost
-	            "0:0:0:0:0:0:0:1" // IPv6 localhost
-	        ],
-	        
-            // When true exclude empty word properties (lemma, pos,...) in 
-            // result (default is to include empty properties)
-            "omitEmptyProperties": false,
-            
-            // By default, BLS will send the Access-Control-Allow-Origin
-            // header to allow all origins to connect, but you can override
-            // this behaviour here.
-            "accessControlAllowOrigin": "*"
-	    },
-	
-	    // Settings related to tuning server load and client 
-	    // responsiveness
-	    // ---------------------------------------------------------------
-	    "performance": {
-	
-	        // Settings for controlling server load
-	        "serverLoad": {
-	
-	            // Maximum number of concurrent searches.
-	            // Should be set no higher than the number of cores in the machine. 
-	            "maxConcurrentSearches": 4,
-	
-	            // Maximum number of paused searched.
-	            // Pausing too many searches will just fill up memory, so don't
-	            // set this too high. 
-	            "maxPausedSearches": 10,
-	
-	            // Long-running counts take up a lot of CPU and memory. If a client hasn't
-	            // checked the status of a count, we'd like to pause it and eventually abort
-	            // it so we don't waste resources on something nobody's interested in anymore.
-	            // This setting controls after how many seconds such an "abandoned" count is
-	            // paused. The client might come back to it, so we don't abort it right away.
-	            "abandonedCountPauseTimeSec": 10,
-	
-	            // Similar to the previous setting, this setting controls after how many seconds
-	            // an "abandoned" count is aborted.
-	            "abandonedCountAbortTimeSec": 60
-	
-	        },
-    
-	        // Settings for job caching.
-	        "cache": {
-	            // How many search jobs will we cache at most? (or -1 for 
-	            // no limit) A note about jobs: a request to BlackLab 
-	            // Server routinely results in 3+ simultaneous search jobs
-	            // being launched: a job to get a window into the sorted 
-	            // hits, which launches a job to get sorted hits, which 
-	            // launches a job to get the unsorted hits. There&#39;s also 
-	            // usually a separate job for keeping track of the running
-	            // total number of hits found (which re-uses the unsorted
-	            // hits job). The reason for this architecture is that 
-	            // jobs can be more easily re-used in subsequent searches
-	            // that way: if the sort changes, we can still use the 
-	            // unsorted hits job, etc. Practical upshot of this: 
-	            // number of jobs does not equal number of searches. Don’t
-	            // set this too low.
-	            "maxNumberOfJobs": 100,
-	
-	            // After how much time will a search job be removed from 
-	            // the cache? (in seconds)
-	            "maxJobAgeSec": 3600,
-	
-	            // Maximum size the cache may grow to (in megabytes), or 
-	            // -1 for no limit.
-	            // [NOT PROPERLY IMPLEMENTED YET! LEAVE AT -1 FOR NOW]
-	            "maxSizeMegs": -1,
-	
-	            // How much free memory the cache should shoot for (in 
-	            // megabytes) while cleaning up. Because we don&#39;t have 
-	            // direct control over the garbage collector, we can&#39;t 
-	            // reliably clean up until this exact number is available.
-	            // Instead we just get rid of a few cached jobs whenever a
-	            // new job is added and we&#39;re under this target number.
-	            // See numberOfJobsToPurgeWhenBelowTargetMem.
-	            "targetFreeMemMegs": 100,
-	
-	            // When there&#39;s less free memory available than 
-	            // targetFreeMemMegs, each time a job is created and added
-	            // to the cache, we will get rid of this number of older 
-	            // jobs in order to (hopefully) free up memory (if the 
-	            // Java GC agrees with us). 2 seems like an okay value, 
-	            // but you can change it if you want to experiment.
-	            "numberOfJobsToPurgeWhenBelowTargetMem": 2
-	        },
-	
-	        // The minimum amount of free memory required to start a new 
-	        // search job. If this memory is not available, an error 
-	        // message is returned.
-	        "minFreeMemForSearchMegs": 50,
-	
-	        // The maximum number of jobs a user is allowed to have 
-	        // running at the same time. This does not include finished 
-	        // jobs in the cache, only jobs that have not finished yet.
-	        // The above remark about jobs applies here too: one search 
-	        // request will start multiple jobs. Therefore, this value 
-	        // shouldn&#39;t be set too low. This setting is meant to prevent
-	        // over-eager scripts and other abuse from bringing down the
-	        // server. Regular users should never hit this limit.
-	        "maxRunningJobsPerUser": 20,
-	
-	        // How long the client may keep results we give them in their
-	        // local (browser) cache. This is used to write HTTP cache 
-	        // headers. Low values mean clients might re-request the same 
-	        // information, making clients less responsive and consuming 
-	        // more network resources. Higher values make clients more 
-	        // responsive but could cause problems if the data (or worse,
-	        // the protocol) changes after an update. A value of an hour 
-	        // or so seems reasonable.
-	        "clientCacheTimeSec": 3600
-	
-	    },
-	    
-	    // Settings related to debugging and troubleshooting
-	    "debug": {
-	    
-		    // A list of IPs that will run in debug mode.
-		    // In debug mode, ...
-		    // - the /cache-info resource show the contents of the job cache
-		    //   (other debug information resources may be added in the 
-		    //   future)
-		    // - output is prettyprinted by default (can be overriden with the
-		    //   "prettyprint"
-		    //   GET parameter)
-		    "addresses": [
-		        "127.0.0.1",      // IPv4 localhost
-		        "0:0:0:0:0:0:0:1" // IPv6 localhost
-		    ],
-		    
-	        // Trace settings. Controls per-subject detail logging.
-	        "trace": {
-	        
-	            // Opening an index
-	            "indexOpening": false,
-	            
-	            // Optimizer choices
-	            "optimization": false,
-	            
-	            // Query execution phases
-	            "queryExecution": false,
-	            
-	            // Search cache management
-	            "cache": false,
-	            
-	            // Request handling phases
-	            "requestHandling": false
-	        }
-		    
-	    }
-	
-	
-	}
 
 <a id="error-and-status-responses"></a>
 

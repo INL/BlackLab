@@ -20,26 +20,26 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
 public class StubTokenStream extends TokenStream {
-	private CharTermAttribute ta;
+    private CharTermAttribute ta;
 
-	private int i = -1;
+    private int i = -1;
 
-	private String[] terms;
+    private String[] terms;
 
-	public StubTokenStream(String[] terms) {
-		this.terms = terms;
-		ta = addAttribute(CharTermAttribute.class);
-		PositionIncrementAttribute pa = addAttribute(PositionIncrementAttribute.class);
-		pa.setPositionIncrement(1);
-	}
+    public StubTokenStream(String[] terms) {
+        this.terms = terms;
+        ta = addAttribute(CharTermAttribute.class);
+        PositionIncrementAttribute pa = addAttribute(PositionIncrementAttribute.class);
+        pa.setPositionIncrement(1);
+    }
 
-	@Override
-	final public boolean incrementToken() {
-		i++;
-		if (i >= terms.length)
-			return false;
-		ta.copyBuffer(terms[i].toCharArray(), 0, terms[i].length());
-		return true;
-	}
+    @Override
+    final public boolean incrementToken() {
+        i++;
+        if (i >= terms.length)
+            return false;
+        ta.copyBuffer(terms[i].toCharArray(), 0, terms[i].length());
+        return true;
+    }
 
 }

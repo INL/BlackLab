@@ -6,7 +6,6 @@ package nl.inl.blacklab.queryParser.contextql;
  * An implementation of interface CharStream, where the stream is assumed to
  * contain only ASCII characters (with java-like unicode escape processing).
  */
-
 @SuppressWarnings("all")
 public
 class JavaCharStream

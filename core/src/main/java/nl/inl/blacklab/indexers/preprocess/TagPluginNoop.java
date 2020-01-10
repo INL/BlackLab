@@ -3,13 +3,18 @@ package nl.inl.blacklab.indexers.preprocess;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.Optional;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import nl.inl.blacklab.exceptions.PluginException;
 
 public class TagPluginNoop implements TagPlugin {
+    
+    @Override
+    public boolean needsConfig() {
+        return false;
+    }
 
     @Override
     public String getId() {
@@ -27,8 +32,8 @@ public class TagPluginNoop implements TagPlugin {
     }
 
     @Override
-    public void init(Optional<ObjectNode> config) throws PluginException {
-        return;
+    public void init(Map<String, String> config) throws PluginException {
+        // NO OP
     }
 
     @Override

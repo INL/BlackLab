@@ -2,33 +2,29 @@ package nl.inl.blacklab.server.jobs;
 
 import java.util.Map;
 
+import nl.inl.blacklab.resultproperty.HitProperty;
+
 public class HitSortSettings {
 
-	private String sortBy;
+    private HitProperty sortBy;
 
-	private boolean reverse;
+    public HitSortSettings(HitProperty sortBy) {
+        super();
+        this.sortBy = sortBy;
+    }
 
-	public HitSortSettings(String sortBy, boolean reverse) {
-		super();
-		this.sortBy = sortBy;
-		this.reverse = reverse;
-	}
+    public HitProperty sortBy() {
+        return sortBy;
+    }
 
-	public String sortBy() {
-		return sortBy;
-	}
+    @Override
+    public String toString() {
+        return "hitsort=" + (sortBy == null ? "" : sortBy.serialize());
+    }
 
-	public boolean reverse() {
-		return reverse;
-	}
-
-	@Override
-	public String toString() {
-		return "hitsort=" + sortBy + ", sortreverse=" + reverse;
-	}
-
-	public void getUrlParam(Map<String, String> param) {
-		param.put("sort", (reverse ? "-" : "") + sortBy);
-	}
+    public void getUrlParam(Map<String, String> param) {
+        if (sortBy != null)
+            param.put("sort", sortBy.serialize());
+    }
 
 }

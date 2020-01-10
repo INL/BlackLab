@@ -8,153 +8,160 @@ import java.util.Map;
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.index.complex.ComplexFieldUtil;
-import nl.inl.blacklab.search.Searcher;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
- * including an easy and fast way to read any property at any position from a document.
+ * including an easy and fast way to read any annotation at any position from a
+ * document.
  */
 class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
-	/** Our Searcher object */
-	private Searcher searcher;
+    /** Our index */
+    private BlackLabIndex index;
 
-	/** Field name, e.g. "contents" */
-	String complexFieldBaseName;
+    /** Field name, e.g. "contents" */
+    AnnotatedField annotatedField;
 
-	/** The property index for each property name */
-	private Map<String, Integer> propertyNumbers = new HashMap<>();
+    /** The annotation index for each annotation name */
+    private Map<Annotation, Integer> annotationNumbers = new HashMap<>();
 
-	/** The property names for each property */
-	List<String> propertyNames = new ArrayList<>();
+    /** The annotation names for each annotation */
+    List<Annotation> annotationNames = new ArrayList<>();
 
-	/** The forward index for each property */
-	List<ForwardIndex> fis = new ArrayList<>();
+    /** The forward index for each annotation */
+    List<AnnotationForwardIndex> fis = new ArrayList<>();
 
-	/** The terms object for each property */
-	private List<Terms> terms = new ArrayList<>();
+    /** The terms object for each annotation */
+    private List<Terms> terms = new ArrayList<>();
 
-	ForwardIndexAccessorImpl(Searcher searcher, String searchField) {
-		this.searcher = searcher;
-		this.complexFieldBaseName = searchField;
-	}
+    ForwardIndexAccessorImpl(BlackLabIndex index, AnnotatedField searchField) {
+        this.index = index;
+        this.annotatedField = searchField;
+    }
 
-	/**
-	 * Get the index number corresponding to the given property name.
-	 *
-	 * @param propertyName property to get the index for
-	 * @return index for this property
-	 */
-	@Override
-	public int getPropertyNumber(String propertyName) {
-		Integer n = propertyNumbers.get(propertyName);
-		if (n == null) {
-			// Assign number and store reference to forward index
-			n = propertyNumbers.size();
-			propertyNumbers.put(propertyName, n);
-			propertyNames.add(propertyName);
-			ForwardIndex fi = searcher.getForwardIndex(ComplexFieldUtil.propertyField(complexFieldBaseName, propertyName));
-			fis.add(fi);
-			terms.add(fi.getTerms());
-		}
-		return n;
-	}
+    /**
+     * Get the index number corresponding to the given annotation name.
+     *
+     * @param annotation annotation to get the index for
+     * @return index for this annotation
+     */
+    @Override
+    public int getAnnotationNumber(Annotation annotation) {
+        Integer n = annotationNumbers.get(annotation);
+        if (n == null) {
+            // Assign number and store reference to forward index
+            n = annotationNumbers.size();
+            annotationNumbers.put(annotation, n);
+            annotationNames.add(annotation);
+            AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
+            fis.add(fi);
+            terms.add(fi.terms());
+        }
+        return n;
+    }
 
-	@Override
-	public void getTermNumbers(MutableIntSet results, int propertyNumber, String propertyValue, boolean caseSensitive, boolean diacSensitive) {
-		terms.get(propertyNumber).indexOf(results, propertyValue, caseSensitive, diacSensitive);
-	}
+    @Override
+    public int getAnnotationNumber(String annotationName) {
+        return getAnnotationNumber(annotatedField.annotation(annotationName));
+    }
 
-	public int getTermAtPosition(int fiid, int propertyNumber, int pos) {
-		return fis.get(propertyNumber).getToken(fiid, pos);
-	}
+    @Override
+    public void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue, MatchSensitivity sensitivity) {
+        terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
+    }
 
-	@Override
-	public String getTermString(int propIndex, int termId) {
-		return fis.get(propIndex).getTerms().get(termId);
-	}
+    public int getTermAtPosition(int fiid, int annotationNumber, int pos) {
+        return fis.get(annotationNumber).getToken(fiid, pos);
+    }
 
-	@Override
-	public boolean termsEqual(int propIndex, int[] termId, boolean caseSensitive, boolean diacSensitive) {
-		return fis.get(propIndex).getTerms().termsEqual(termId, caseSensitive, diacSensitive);
-	}
+    @Override
+    public String getTermString(int annotIndex, int termId) {
+        return fis.get(annotIndex).terms().get(termId);
+    }
 
-	@Override
-	public int numberOfProperties() {
-		return fis.size();
-	}
+    @Override
+    public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+        return fis.get(annotIndex).terms().termsEqual(termId, sensitivity);
+    }
 
-	@Override
-	public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
-		return new ForwardIndexAccessorLeafReaderImpl(reader);
-	}
+    @Override
+    public int numberOfAnnotations() {
+        return fis.size();
+    }
 
-	class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
+    @Override
+    public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
+        return new ForwardIndexAccessorLeafReaderImpl(reader);
+    }
 
-		private List<DocIntFieldGetter> fiidGetters;
+    class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
-		ForwardIndexAccessorLeafReaderImpl(LeafReader reader) {
-			super(reader);
-			fiidGetters = new ArrayList<>();
-			for (int i = 0; i < getNumberOfProperties(); i++)
-				fiidGetters.add(null);
-		}
+        private List<DocIntFieldGetter> fiidGetters;
 
-		DocIntFieldGetter fiidGetter(int propIndex) {
-			DocIntFieldGetter g = fiidGetters.get(propIndex);
-			if (g == null) {
-				String propertyName = propertyNames.get(propIndex);
-				String propFieldName = ComplexFieldUtil.propertyField(complexFieldBaseName, propertyName);
-				String fiidFieldName = ComplexFieldUtil.forwardIndexIdField(propFieldName);
-				g = new DocIntFieldGetter(reader, fiidFieldName);
-				fiidGetters.set(propIndex, g);
-			}
-			return g;
-		}
+        ForwardIndexAccessorLeafReaderImpl(LeafReader reader) {
+            super(reader);
+            fiidGetters = new ArrayList<>();
+            for (int i = 0; i < getNumberOfAnnotations(); i++)
+                fiidGetters.add(null);
+        }
 
-		/**
-		 * Get a token source, which we can use to get tokens from a document
-		 * for different properties.
-		 *
-		 * @param id Lucene document id
-		 * @return the token source
-		 */
-		@Override
-		public ForwardIndexDocument getForwardIndexDoc(int id) {
-			return new ForwardIndexDocumentImpl(this, id, reader);
-		}
+        DocIntFieldGetter fiidGetter(int annotIndex) {
+            DocIntFieldGetter g = fiidGetters.get(annotIndex);
+            if (g == null) {
+                Annotation annotation = annotationNames.get(annotIndex);
+                g = new DocIntFieldGetter(reader, annotation.forwardIndexIdField());
+                fiidGetters.set(annotIndex, g);
+            }
+            return g;
+        }
 
-		@Override
-		public int getDocLength(int docId) {
-			// NOTE: we subtract one because we always have a closing token at the end that doesn't
-			//       represent a word, just any closing punctuation after the last word.
-			return fis.get(0).getDocLength(getFiid(0, docId)) - 1;
-		}
+        /**
+         * Get a token source, which we can use to get tokens from a document for
+         * different annotations.
+         *
+         * @param id Lucene document id
+         * @return the token source
+         */
+        @Override
+        public ForwardIndexDocument getForwardIndexDoc(int id) {
+            return new ForwardIndexDocumentImpl(this, id);
+        }
 
-		int[] starts = {0}, ends = {0};
+        @Override
+        public int getDocLength(int docId) {
+            // NOTE: we subtract one because we always have a closing token at the end that doesn't
+            //       represent a word, just any closing punctuation after the last word.
+            return fis.get(0).docLength(getFiid(0, docId)) - 1;
+        }
 
-		@Override
-		public int[] getChunk(int propIndex, int docId, int start, int end) {
-			starts[0] = start;
-			ends[0] = end;
-			int fiid = fiidGetter(propIndex).getFieldValue(docId);
-			return fis.get(propIndex).retrievePartsInt(fiid, starts, ends).get(0);
-		}
+        int[] starts = { 0 };
+        int[] ends = { 0 };
 
-		@Override
-		public int getFiid(int propIndex, int docId) {
-			return fiidGetter(propIndex).getFieldValue(docId);
-		}
+        @Override
+        public int[] getChunk(int annotIndex, int docId, int start, int end) {
+            starts[0] = start;
+            ends[0] = end;
+            int fiid = fiidGetter(annotIndex).getFieldValue(docId);
+            return fis.get(annotIndex).retrievePartsInt(fiid, starts, ends).get(0);
+        }
 
-		@Override
-		public int getNumberOfProperties() {
-			return ForwardIndexAccessorImpl.this.numberOfProperties();
-		}
+        @Override
+        public int getFiid(int annotIndex, int docId) {
+            return fiidGetter(annotIndex).getFieldValue(docId);
+        }
 
-	}
+        @Override
+        public int getNumberOfAnnotations() {
+            return ForwardIndexAccessorImpl.this.numberOfAnnotations();
+        }
+
+    }
 
 }

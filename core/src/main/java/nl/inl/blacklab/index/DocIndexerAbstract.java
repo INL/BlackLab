@@ -19,140 +19,132 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Method;
 
-import nl.inl.blacklab.externalstorage.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CountingReader;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
  */
 public abstract class DocIndexerAbstract extends DocIndexer {
-	/**
-	 * Write content chunks per 10M (i.e. don't keep all content in memory at all times)
-	 */
-	private static final long WRITE_CONTENT_CHUNK_SIZE = 10000000;
+    /**
+     * Write content chunks per 10M (i.e. don't keep all content in memory at all
+     * times)
+     */
+    private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
 
-	protected boolean skippingCurrentDocument = false;
+    protected boolean skippingCurrentDocument = false;
 
-	protected CountingReader reader;
+    protected CountingReader reader;
 
-	/** Total words processed by this indexer. Used for reporting progress, do not reset except when finished with file. */
-	protected int wordsDone = 0;
-	private int wordsDoneAtLastReport = 0;
+    /**
+     * Total words processed by this indexer. Used for reporting progress, do not
+     * reset except when finished with file.
+     */
+    protected int wordsDone = 0;
+    private int wordsDoneAtLastReport = 0;
 
-	//protected ContentStore contentStore;
+    //protected ContentStore contentStore;
 
-	private StringBuilder content = new StringBuilder();
+    private StringBuilder content = new StringBuilder();
 
-	/** Are we capturing the content of the document for indexing? */
-	private boolean captureContent = false;
+    /** Are we capturing the content of the document for indexing? */
+    private boolean captureContent = false;
 
-	/** What field we're capturing content for */
-	private String captureContentFieldName;
+    /** What field we're capturing content for */
+    private String captureContentFieldName;
 
-	private int charsContentAlreadyStored = 0;
+    private int charsContentAlreadyStored = 0;
 
-	protected int nDocumentsSkipped = 0;
+    protected int nDocumentsSkipped = 0;
 
-	public void startCaptureContent(String fieldName) {
-		captureContent = true;
-		captureContentFieldName = fieldName;
+    public void startCaptureContent(String fieldName) {
+        captureContent = true;
+        captureContentFieldName = fieldName;
 
-		// Empty the StringBuilder object
-		content.setLength(0);
-	}
+        // Empty the StringBuilder object
+        content.setLength(0);
+    }
 
-	public int storeCapturedContent() {
-		captureContent = false;
-		int id = -1;
-		if (!skippingCurrentDocument) {
-			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
-			id = contentStore.store(content.toString());
-		}
-		content.setLength(0);
-		charsContentAlreadyStored = 0;
-		return id;
-	}
+    public int storeCapturedContent() {
+        captureContent = false;
+        int id = -1;
+        if (!skippingCurrentDocument) {
+            ContentStore contentStore = docWriter.contentStore(captureContentFieldName);
+            id = contentStore.store(content.toString());
+        }
+        content.setLength(0);
+        charsContentAlreadyStored = 0;
+        return id;
+    }
 
-	public void storePartCapturedContent() {
-		charsContentAlreadyStored += content.length();
-		if (!skippingCurrentDocument) {
-			ContentStore contentStore = indexer.getContentStore(captureContentFieldName);
-			contentStore.storePart(content.toString());
-		}
-		content.setLength(0);
-	}
+    public void storePartCapturedContent() {
+        charsContentAlreadyStored += content.length();
+        if (!skippingCurrentDocument) {
+            ContentStore contentStore = docWriter.contentStore(captureContentFieldName);
+            contentStore.storePart(content.toString());
+        }
+        content.setLength(0);
+    }
 
-	private void appendContentInternal(String str) {
-		content.append(str);
-	}
+    private void appendContentInternal(String str) {
+        content.append(str);
+    }
 
-	public void appendContent(String str) {
-		appendContentInternal(str);
-		if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-			storePartCapturedContent();
-		}
-	}
+    public void appendContent(String str) {
+        appendContentInternal(str);
+        if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
+            storePartCapturedContent();
+        }
+    }
 
-	public void appendContent(char[] buffer, int start, int length) {
-		appendContentInternal(new String(buffer, start, length));
-		if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-			storePartCapturedContent();
-		}
-	}
+    public void appendContent(char[] buffer, int start, int length) {
+        appendContentInternal(new String(buffer, start, length));
+        if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
+            storePartCapturedContent();
+        }
+    }
 
-	public void processContent(char[] buffer, int start, int length) {
-		if (captureContent)
-			appendContent(buffer, start, length);
-	}
+    public void processContent(char[] buffer, int start, int length) {
+        if (captureContent)
+            appendContent(buffer, start, length);
+    }
 
-	public void processContent(String contentToProcess) {
-		if (captureContent)
-			appendContent(contentToProcess);
-	}
+    public void processContent(String contentToProcess) {
+        if (captureContent)
+            appendContent(contentToProcess);
+    }
 
-	/**
-	 * Returns the current position in the original XML content in chars.
-	 * @return the current char position
-	 */
-	@Override
-	protected int getCharacterPosition() {
-		return charsContentAlreadyStored + content.length();
-	}
+    /**
+     * Returns the current position in the original XML content in chars.
+     * 
+     * @return the current char position
+     */
+    @Override
+    protected int getCharacterPosition() {
+        return charsContentAlreadyStored + content.length();
+    }
 
-	/**
-	 * Provided for compatibility with Meertens' fork of BlackLab;
-	 * will eventually be removed in favor of an "official" way
-	 * to index content without storing in a ContentStore.
-	 *
-	 * Not sure if this will always give the correct position because
-	 * the original input is used for highlighting, not the reconstructed
-	 * XML in the content variable.
-	 *
-	 * @return the content length
-	 * @deprecated will be handled differently in the future.
-	 */
-	@Deprecated
-	public int getContentPositionNoStore(){
-		return content.length();
-	}
-
-    /** NOTE: newer DocIndexers should only have a default constructor, and provide methods to set
-     * the Indexer object and the document being indexed (which are called by the Indexer). This
-     * allows us more flexibility in how we supply the document to this object (e.g. as a file, a
-     * byte array, an inputstream, a reader, ...), which helps if we want to use e.g. VTD-XML and
-     * could allow us to re-use DocIndexers in the future.
+    /**
+     * NOTE: newer DocIndexers should only have a default constructor, and provide
+     * methods to set the Indexer object and the document being indexed (which are
+     * called by the Indexer). This allows us more flexibility in how we supply the
+     * document to this object (e.g. as a file, a byte array, an inputstream, a
+     * reader, ...), which helps if we want to use e.g. VTD-XML and could allow us
+     * to re-use DocIndexers in the future.
      */
     public DocIndexerAbstract() {
     }
 
-	public DocIndexerAbstract(Indexer indexer, String fileName, Reader reader) {
-		setIndexer(indexer);
-		setDocumentName(fileName);
-		setDocument(reader);
-	}
+    public DocIndexerAbstract(DocWriter indexer, String fileName, Reader reader) {
+        setDocWriter(indexer);
+        setDocumentName(fileName);
+        setDocument(reader);
+    }
 
     /**
      * Set the document to index.
+     * 
      * @param reader document
      */
     @Override
@@ -161,30 +153,34 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     }
 
     @Override
-    public void close() throws IOException {
-        reader.close();
+    public void close() throws BlackLabRuntimeException {
+        try {
+            reader.close();
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     @Override
     public final void reportCharsProcessed() {
-		long charsProcessed = reader.getCharsReadSinceLastCall();
-		indexer.getListener().charsDone(charsProcessed);
-	}
+        long charsProcessed = reader.getCharsReadSinceLastCall();
+        docWriter.listener().charsDone(charsProcessed);
+    }
 
     /**
      * Report the change in wordsDone since the last report
      */
     @Override
     public final void reportTokensProcessed() {
-    	int wordsDoneSinceLastReport = 0;
+        int wordsDoneSinceLastReport = 0;
 
-    	if (wordsDoneAtLastReport > wordsDone) // reset by child class?
-    		wordsDoneSinceLastReport = wordsDone;
-    	else
-    		wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
+        if (wordsDoneAtLastReport > wordsDone) // reset by child class?
+            wordsDoneSinceLastReport = wordsDone;
+        else
+            wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
 
-    	indexer.getListener().tokensDone(wordsDoneSinceLastReport);
-    	wordsDoneAtLastReport = wordsDone;
+        docWriter.listener().tokensDone(wordsDoneSinceLastReport);
+        wordsDoneAtLastReport = wordsDone;
     }
 
     /**
@@ -196,7 +192,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     public static String getDisplayName(Class<? extends DocIndexer> docIndexerClass) {
         try {
             Method m = docIndexerClass.getMethod("getDisplayName");
-            return (String)m.invoke(null);
+            return (String) m.invoke(null);
         } catch (ReflectiveOperationException e) {
             return "";
         }
@@ -211,7 +207,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     public static String getDescription(Class<? extends DocIndexer> docIndexerClass) {
         try {
             Method m = docIndexerClass.getMethod("getDescription");
-            return (String)m.invoke(null);
+            return (String) m.invoke(null);
         } catch (ReflectiveOperationException e) {
             return "";
         }
@@ -220,15 +216,17 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     /**
      * Should this docIndexer implementation be listed?
      *
-     * A DocIndexer can be hidden by implementing a a static function named isVisible, returning false.
+     * A DocIndexer can be hidden by implementing a a static function named
+     * isVisible, returning false.
      *
      * @param docIndexerClass
-     * @return true if the format should be listed, false if it should be omitted. Defaults to true when the DocIndexer does not implement the method.
+     * @return true if the format should be listed, false if it should be omitted.
+     *         Defaults to true when the DocIndexer does not implement the method.
      */
     public static boolean isVisible(Class<? extends DocIndexer> docIndexerClass) {
         try {
             Method m = docIndexerClass.getMethod("isVisible");
-            return (boolean)m.invoke(null);
+            return (boolean) m.invoke(null);
         } catch (ReflectiveOperationException e) {
             return true;
         }

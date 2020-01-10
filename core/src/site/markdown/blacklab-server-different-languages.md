@@ -85,7 +85,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 				String match = words((JsonNode)hit.get("match"));
 				String right = words((JsonNode)hit.get("right"));
               
-				html.append("<tr><td>" + (String)doc.get("title") + "</td><td>" + left +
+				html.append("<tr><td>" + (String)doc.get("title").get(0) + "</td><td>" + left +
 					" <b>" + match + "</b> " + right + "</td></tr>\n");
 			}
 			html.append("</table>\n");
@@ -144,7 +144,7 @@ Javascript with jQuery:
            
 			// Add the document title and the hit information
 			var doc = docs[hit['docPid']];
-			html.push("<tr><td>" + doc['title'] + "</td><td>" + words(hit['left']) +
+			html.push("<tr><td>" + doc['title'][0] + "</td><td>" + words(hit['left']) +
 				" <b>" + words(hit['match']) + "</b> " + words(hit['right']) + 
 				"</td></tr>");
 		});
@@ -207,7 +207,7 @@ Javascript with jQuery:
             # Show the document title and hit information
             doc = docs[hit['docPid']]
             print(words(hit['left']) + " [" + words(hit['match']) + "] " + \
-                words(hit['right']) + " (" + doc['title'] + ")")
+                words(hit['right']) + " (" + doc['title'][0] + ")")
     
     # "Main program"
     search('[pos="a.*"] "fox"')
@@ -235,7 +235,7 @@ Javascript with jQuery:
 			# Show the document title and hit information
 			doc = docs[hit['docPid']]
 			print(words(hit['left']) + " [" + words(hit['match']) + "] " + \
-					words(hit['right']) + " (" + doc['title'] + ")")
+					words(hit['right']) + " (" + doc['title'][0] + ")")
     
 	# "Main program"
 	search('[pos="a.*"] "fox"')
@@ -265,7 +265,7 @@ Javascript with jQuery:
            doc <- docs[[ hit[['docPid']] ]];
            cat(paste(words(hit[['left']]),
               " [", words(hit[['match']]), "] ", words(hit[['right']]),
-              " (", doc[['title']], ")\n", sep="", collapse="\n"))
+              " (", doc[['title']][[0]], ")\n", sep="", collapse="\n"))
         }
         return()
     }
@@ -308,7 +308,7 @@ Javascript with jQuery:
 		hits.each do |hit|
 			# Show the document title and hit information
 			doc = docs[hit['docPid']]
-			print "<tr><td>#{doc['title']}</td>" +
+			print "<tr><td>#{doc['title'][0]}</td>" +
 				"<td>#{words(hit['left'])} <b>#{words(hit['match'])}</b> " +
 				"#{words(hit['right'])}</td></tr>\n"
 		end
@@ -361,7 +361,7 @@ Javascript with jQuery:
            
             // Show the hit information
             $tableRow = "<tr><td>%s</td><td>%s <b>%s</b> %s</td></tr>\n";
-            print sprintf($tableRow, $doc['title'], words($hit['left']), 
+            print sprintf($tableRow, $doc['title'][0], words($hit['left']), 
                 words($hit['match']), words($hit['right']));
         }
         print "</table>";
@@ -427,7 +427,7 @@ Javascript with jQuery:
             my $right = join(" ", @{$hit->{'right'}{'word'}});
           
             # Show the hit information
-            print "<tr><td>".$doc->{'title'}."</td>".
+            print "<tr><td>".$doc->{'title'}[0]."</td>".
                 "<td>$left<b>$match</b>$right</td></tr>\n";
         }
         print "</table>\n";

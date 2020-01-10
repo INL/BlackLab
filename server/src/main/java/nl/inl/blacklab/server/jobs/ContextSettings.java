@@ -1,30 +1,31 @@
 package nl.inl.blacklab.server.jobs;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.results.ContextSize;
 
 public class ContextSettings {
 
-	private int size;
+    private ContextSize size;
 
-	private ConcordanceType concType;
+    private ConcordanceType concType;
 
-	public ContextSettings(int size, ConcordanceType concType) {
-		super();
-		this.size = size;
-		this.concType = concType;
-	}
+    public ContextSettings(ContextSize size, ConcordanceType concType) {
+        super();
+        this.size = size;
+        this.concType = concType;
+    }
 
-	public int size() {
-		return size;
-	}
+    public ContextSize size() {
+        return size;
+    }
 
-	public ConcordanceType concType() {
-		return concType;
-	}
+    public ConcordanceType concType() {
+        return concType;
+    }
 
-	@Override
-	public String toString() {
-		return "ctxsize=" + size + ", conctype=" + concType;
-	}
+    @Override
+    public String toString() {
+        return "ctxsize=" + size + ", conctype=" + concType;
+    }
 
 }

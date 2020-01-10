@@ -25,152 +25,161 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
+import nl.inl.blacklab.search.results.QueryInfo;
+
 /**
- * Makes sure the resulting hits do not contain consecutive duplicate hits. These may arise when
- * e.g. combining multiple SpanFuzzyQueries with OR.
+ * Makes sure the resulting hits do not contain consecutive duplicate hits.
+ * These may arise when e.g. combining multiple SpanFuzzyQueries with OR.
  */
 class SpanQueryUnique extends BLSpanQuery {
-	BLSpanQuery src;
+    BLSpanQuery src;
 
-	public SpanQueryUnique(BLSpanQuery src) {
-		this.src = BLSpanQuery.ensureSorted(src);
-	}
+    public SpanQueryUnique(BLSpanQuery src) {
+        this.src = BLSpanQuery.ensureSorted(src);
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		BLSpanQuery rewritten = src.rewrite(reader);
-		if (rewritten != src) {
-			if (rewritten.hitsAreUnique())
-				return rewritten;
-			return new SpanQueryUnique(rewritten);
-		}
-		return this;
-	}
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        BLSpanQuery rewritten = src.rewrite(reader);
+        if (rewritten != src) {
+            if (rewritten.hitsAreUnique())
+                return rewritten;
+            return new SpanQueryUnique(rewritten);
+        }
+        return this;
+    }
 
-	@Override
-	public boolean matchesEmptySequence() {
-		return src.matchesEmptySequence();
-	}
+    @Override
+    public boolean matchesEmptySequence() {
+        return src.matchesEmptySequence();
+    }
 
-	@Override
-	public BLSpanQuery noEmpty() {
-		return new SpanQueryUnique(src.noEmpty());
-	}
+    @Override
+    public BLSpanQuery noEmpty() {
+        return new SpanQueryUnique(src.noEmpty());
+    }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		BLSpanWeight weight = src.createWeight(searcher, needsScores);
-		return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
-	}
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        BLSpanWeight weight = src.createWeight(searcher, needsScores);
+        return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    }
 
-	class SpanWeightUnique extends BLSpanWeight {
+    class SpanWeightUnique extends BLSpanWeight {
 
-		final BLSpanWeight weight;
+        final BLSpanWeight weight;
 
-		public SpanWeightUnique(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms) throws IOException {
-			super(SpanQueryUnique.this, searcher, terms);
-			this.weight = weight;
-		}
+        public SpanWeightUnique(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+                throws IOException {
+            super(SpanQueryUnique.this, searcher, terms);
+            this.weight = weight;
+        }
 
-		@Override
-		public void extractTerms(Set<Term> terms) {
-			weight.extractTerms(terms);
-		}
+        @Override
+        public void extractTerms(Set<Term> terms) {
+            weight.extractTerms(terms);
+        }
 
-		@Override
-		public void extractTermContexts(Map<Term, TermContext> contexts) {
-			weight.extractTermContexts(contexts);
-		}
+        @Override
+        public void extractTermContexts(Map<Term, TermContext> contexts) {
+            weight.extractTermContexts(contexts);
+        }
 
-		@Override
-		public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-			BLSpans srcSpans = weight.getSpans(context, requiredPostings);
-			if (srcSpans == null)
-				return null;
-			if (!src.hitsStartPointSorted())
-				return new PerDocumentSortedSpans(srcSpans, PerDocumentSortedSpans.cmpStartPoint, true);
-			return new SpansUnique(srcSpans);
-		}
-	}
+        @Override
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            BLSpans srcSpans = weight.getSpans(context, requiredPostings);
+            if (srcSpans == null)
+                return null;
+            if (!src.hitsStartPointSorted())
+                return PerDocumentSortedSpans.startPointEliminateDuplicates(srcSpans);
+            return new SpansUnique(srcSpans);
+        }
+    }
 
-	@Override
-	public String toString(String field) {
-		return "UNIQ(" + src + ")";
-	}
+    @Override
+    public String toString(String field) {
+        return "UNIQ(" + src + ")";
+    }
 
-	@Override
-	public String getField() {
-		return src.getField();
-	}
+    @Override
+    public String getField() {
+        return src.getField();
+    }
 
-	@Override
-	public String getRealField() {
-		return src.getRealField();
-	}
+    @Override
+    public String getRealField() {
+        return src.getRealField();
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o instanceof SpanQueryUnique) {
-			final SpanQueryUnique that = (SpanQueryUnique) o;
-			return src.equals(that.src);
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o instanceof SpanQueryUnique) {
+            final SpanQueryUnique that = (SpanQueryUnique) o;
+            return src.equals(that.src);
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		return src.hashCode() ^ 0x98764038;
-	}
+    @Override
+    public int hashCode() {
+        return src.hashCode() ^ 0x98764038;
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return src.hitsAllSameLength();
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return src.hitsAllSameLength();
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return src.hitsLengthMin();
-	}
+    @Override
+    public int hitsLengthMin() {
+        return src.hitsLengthMin();
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return src.hitsLengthMax();
-	}
+    @Override
+    public int hitsLengthMax() {
+        return src.hitsLengthMax();
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return src.hitsEndPointSorted();
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return src.hitsEndPointSorted();
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return src.hitsHaveUniqueStart();
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return src.hitsHaveUniqueStart();
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return src.hitsHaveUniqueEnd();
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return src.hitsHaveUniqueEnd();
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return true;
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		return src.reverseMatchingCost(reader);
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        return src.reverseMatchingCost(reader);
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		return src.forwardMatchingCost();
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return src.forwardMatchingCost();
+    }
+    
+    @Override
+    public void setQueryInfo(QueryInfo queryInfo) {
+        super.setQueryInfo(queryInfo);
+        src.setQueryInfo(queryInfo);
+    }
 }

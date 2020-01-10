@@ -43,164 +43,164 @@ import org.apache.lucene.search.TermQuery;
 /**
  * A fuzzy (approximate) query with spans.
  *
- * @author Karl Wettin <kalle@snigel.net>
+ * @author Karl Wettin &lt;kalle@snigel.net&gt;
  */
 public class SpanFuzzyQuery extends BLSpanQuery {
-	public final static int defaultMaxEdits = 2;
+    public final static int defaultMaxEdits = 2;
 
-	public final static int defaultPrefixLength = 0;
+    public final static int defaultPrefixLength = 0;
 
-	private final Term term;
+    private final Term term;
 
-	private final int maxEdits;
+    private final int maxEdits;
 
-	private final int prefixLength;
+    private final int prefixLength;
 
-	public SpanFuzzyQuery(Term term) {
-		this(term, defaultMaxEdits, defaultPrefixLength);
-	}
+    public SpanFuzzyQuery(Term term) {
+        this(term, defaultMaxEdits, defaultPrefixLength);
+    }
 
-	public SpanFuzzyQuery(Term term, int maxEdits, int prefixLength) {
-		this.term = term;
-		this.maxEdits = maxEdits;
-		this.prefixLength = prefixLength;
+    public SpanFuzzyQuery(Term term, int maxEdits, int prefixLength) {
+        this.term = term;
+        this.maxEdits = maxEdits;
+        this.prefixLength = prefixLength;
 
-		if (maxEdits <= 0) {
-			throw new IllegalArgumentException("maxEdits <= 0");
-		}
-		if (prefixLength < 0) {
-			throw new IllegalArgumentException("prefixLength < 0");
-		}
+        if (maxEdits <= 0) {
+            throw new IllegalArgumentException("maxEdits <= 0");
+        }
+        if (prefixLength < 0) {
+            throw new IllegalArgumentException("prefixLength < 0");
+        }
 
-	}
+    }
 
-	@Override
-	public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-		FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
+    @Override
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        FuzzyQuery fuzzyQuery = new FuzzyQuery(term, maxEdits, prefixLength);
 
-		Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
-		if (rewrittenFuzzyQuery instanceof BooleanQuery) {
-			// BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
-			List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
-			BLSpanQuery[] spanQueries = new BLSpanQuery[clauses.size()];
-			for (int i = 0; i < clauses.size(); i++) {
-				BooleanClause clause = clauses.get(i);
+        Query rewrittenFuzzyQuery = fuzzyQuery.rewrite(reader);
+        if (rewrittenFuzzyQuery instanceof BooleanQuery) {
+            // BooleanQuery; make SpanQueries from each of the TermQueries and combine with OR
+            List<BooleanClause> clauses = ((BooleanQuery) rewrittenFuzzyQuery).clauses();
+            BLSpanQuery[] spanQueries = new BLSpanQuery[clauses.size()];
+            for (int i = 0; i < clauses.size(); i++) {
+                BooleanClause clause = clauses.get(i);
 
-				TermQuery termQuery = (TermQuery) clause.getQuery();
+                TermQuery termQuery = (TermQuery) clause.getQuery();
 
-				// ONLY DIFFERENCE WITH SpanFuzzyQuery:
-				// Use a BLSpanTermQuery instead of default Lucene one.
-				spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
-			}
-			BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
-			query.setHitsAreFixedLength(1);
-			query.setClausesAreSimpleTermsInSameProperty(true);
-			return query;
-		}
+                // ONLY DIFFERENCE WITH SpanFuzzyQuery:
+                // Use a BLSpanTermQuery instead of default Lucene one.
+                spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
+            }
+            BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
+            query.setHitsAreFixedLength(1);
+            query.setClausesAreSimpleTermsInSameProperty(true);
+            return query;
+        }
 
-		// Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-		BLSpanQuery query = new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
-		return query;
+        // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
+        return new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
 
-	}
+    }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-		throw new UnsupportedOperationException("Query should have been rewritten");
-	}
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+        throw new UnsupportedOperationException("Query should have been rewritten");
+    }
 
-	@Override
-	public String getRealField() {
-		return term.field();
-	}
+    @Override
+    public String getRealField() {
+        return term.field();
+    }
 
-	/**
-	 * Prints a query to a string, with <code>field</code> as the default field for terms.
-	 * <p>
-	 * The representation used is one that is supposed to be readable by
-	 * org.apache.lucene.queryParser.QueryParser.QueryParser. However, there are the following
-	 * limitations:
-	 * <ul>
-	 * <li>If the query was created by the parser, the printed representation may not be exactly
-	 * what was parsed. For example, characters that need to be escaped will be represented without
-	 * the required backslash.</li>
-	 * <li>Some of the more complicated queries (e.g. span queries) don't have a representation that
-	 * can be parsed by QueryParser.</li>
-	 * </ul>
-	 *
-	 * @param field
-	 * @return the string representation
-	 */
-	@Override
-	public String toString(String field) {
-		return "FUZZY(" + term.text() + ")";
-	}
+    /**
+     * Prints a query to a string, with <code>field</code> as the default field for
+     * terms.
+     * <p>
+     * The representation used is one that is supposed to be readable by
+     * org.apache.lucene.queryParser.QueryParser.QueryParser. However, there are the
+     * following limitations:
+     * <ul>
+     * <li>If the query was created by the parser, the printed representation may
+     * not be exactly what was parsed. For example, characters that need to be
+     * escaped will be represented without the required backslash.</li>
+     * <li>Some of the more complicated queries (e.g. span queries) don't have a
+     * representation that can be parsed by QueryParser.</li>
+     * </ul>
+     *
+     * @param field
+     * @return the string representation
+     */
+    @Override
+    public String toString(String field) {
+        return "FUZZY(" + term.text() + ")";
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o)
-			return true;
-		if (o instanceof SpanFuzzyQuery) {
-			final SpanFuzzyQuery that = (SpanFuzzyQuery) o;
-			return term.equals(that.term) && maxEdits == that.maxEdits && prefixLength == that.prefixLength;
-		}
-		return false;
-	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o instanceof SpanFuzzyQuery) {
+            final SpanFuzzyQuery that = (SpanFuzzyQuery) o;
+            return term.equals(that.term) && maxEdits == that.maxEdits && prefixLength == that.prefixLength;
+        }
+        return false;
+    }
 
-	@Override
-	public int hashCode() {
-		int h = term.hashCode();
-		h ^= maxEdits * 13 + prefixLength * 37;
-		return h;
-	}
+    @Override
+    public int hashCode() {
+        int h = term.hashCode();
+        h ^= maxEdits * 13 + prefixLength * 37;
+        return h;
+    }
 
-	@Override
-	public boolean hitsAllSameLength() {
-		return true;
-	}
+    @Override
+    public boolean hitsAllSameLength() {
+        return true;
+    }
 
-	@Override
-	public int hitsLengthMin() {
-		return 1;
-	}
+    @Override
+    public int hitsLengthMin() {
+        return 1;
+    }
 
-	@Override
-	public int hitsLengthMax() {
-		return 1;
-	}
+    @Override
+    public int hitsLengthMax() {
+        return 1;
+    }
 
-	@Override
-	public boolean hitsEndPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsEndPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsStartPointSorted() {
-		return true;
-	}
+    @Override
+    public boolean hitsStartPointSorted() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueStart() {
-		return true;
-	}
+    @Override
+    public boolean hitsHaveUniqueStart() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsHaveUniqueEnd() {
-		return true;
-	}
+    @Override
+    public boolean hitsHaveUniqueEnd() {
+        return true;
+    }
 
-	@Override
-	public boolean hitsAreUnique() {
-		return true;
-	}
+    @Override
+    public boolean hitsAreUnique() {
+        return true;
+    }
 
-	@Override
-	public long reverseMatchingCost(IndexReader reader) {
-		return 0; // should be rewritten
-	}
+    @Override
+    public long reverseMatchingCost(IndexReader reader) {
+        return 0; // should be rewritten
+    }
 
-	@Override
-	public int forwardMatchingCost() {
-		return 0; // should be rewritten
-	}
+    @Override
+    public int forwardMatchingCost() {
+        return 0; // should be rewritten
+    }
 }

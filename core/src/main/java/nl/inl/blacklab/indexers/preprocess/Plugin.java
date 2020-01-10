@@ -1,59 +1,66 @@
 package nl.inl.blacklab.indexers.preprocess;
 
-import java.util.Optional;
+import java.util.Map;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import nl.inl.blacklab.exceptions.PluginException;
 
 /**
- * Interface of converting a plugin (including using external services)
- * Only a single instance of a plugin is constructed, so plugins must be threadsafe.
+ * Interface of converting a plugin (including using external services) Only a
+ * single instance of a plugin is constructed, so plugins must be threadsafe.
  *
  * A plugin must define a no-argument constructor.
  */
 public interface Plugin {
 
-	public static class PluginException extends Exception {
-		public PluginException() {
-			super();
-		}
+    /**
+     * Read a value from our config if present.
+     *
+     * @param config root node of our config object
+     * @param nodeName node to read
+     * @return the value as a string
+     * @throws PluginException on missing key or null value
+     */
+    static String configStr(Map<String, String> config, String nodeName) throws PluginException {
+        String value = config.get(nodeName);
+        if (value == null)
+            throw new PluginException("Missing configuration value " + nodeName);
 
-		public PluginException(String message, Throwable cause) {
-			super(message, cause);
-		}
+        return value;
+    }
 
-		public PluginException(String message) {
-			super(message);
-		}
+    /**
+     * Return a globally unique id for this plugin class. This ID must be constant
+     * across runs and versions.
+     *
+     * @return the global identifier for this plugin
+     */
+    String getId();
 
-		public PluginException(Throwable cause) {
-			super(cause);
-		}
-	}
+    /**
+     * Return a user-friendly name for this plugin that can be used in messages,
+     * etc.
+     *
+     * @return a user-friendly name for this plugin
+     */
+    String getDisplayName();
 
-	/**
-	 * Return a globally unique id for this plugin class.
-	 * This ID must be constant across runs and versions.
-	 *
-	 * @return the global identifier for this plugin
-	 */
-	public String getId();
+    String getDescription();
 
-	/**
-	 * Return a user-friendly name for this plugin that can be used in messages, etc.
-	 *
-	 * @return a user-friendly name for this plugin
-	 */
-	public String getDisplayName();
-
-
-	public String getDescription();
-
-	/**
-	 * Initializes the plugin, called once after the initial loading of the class.
-	 *
-	 * @param config the config settings for this plugin
-	 * @throws PluginException
-	 */
-	public void init(Optional<ObjectNode> config) throws PluginException;
+    /**
+     * Initializes the plugin, called once after the initial loading of the class.
+     *
+     * @param config the config settings for this plugin
+     * @throws PluginException
+     */
+    void init(Map<String, String> config) throws PluginException;
+    
+    /**
+     * Does this plugin require configuration parameters?
+     * 
+     * If not, the plugin will always be initialized. If so, it will only
+     * be initialized if configuration parameters were specified. 
+     * 
+     * @return true if parameters are required, false if not
+     */
+    boolean needsConfig();
 }
-

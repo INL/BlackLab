@@ -4,32 +4,32 @@ import java.util.Map;
 
 public class WindowSettings {
 
-	private int first;
+    private int first;
 
-	private int size;
+    private int size;
 
-	public WindowSettings(int first, int size) {
-		super();
-		this.first = first;
-		this.size = size;
-	}
+    public WindowSettings(int first, int size) {
+        super();
+        this.first = first;
+        this.size = size;
+    }
 
-	public int first() {
-		return first;
-	}
+    public int first() {
+        return first;
+    }
 
-	public int size() {
-		return size;
-	}
+    public int size() {
+        return size;
+    }
 
-	@Override
-	public String toString() {
-		return "firstresult=" + first + ", numofresults=" + size;
-	}
+    @Override
+    public String toString() {
+        return "firstresult=" + first + ", numofresults=" + size;
+    }
 
-	public void getUrlParam(Map<String, String> param) {
-		param.put("first", "" + first);
-		param.put("number", "" + size);
-	}
+    public void getUrlParam(Map<String, String> param) {
+        param.put("first", "" + first);
+        param.put("number", "" + size);
+    }
 
 }

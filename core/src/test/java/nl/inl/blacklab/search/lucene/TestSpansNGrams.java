@@ -17,30 +17,28 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import nl.inl.blacklab.MockSpans;
-import nl.inl.blacklab.TestUtil;
-
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Test;
 
+import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.mocks.MockSpans;
+
 public class TestSpansNGrams {
 
-	private static SpansNGrams getSpans() {
-		// NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
-		SpansNGrams spans = new SpansNGrams(false, null, "test", 2, 3);
-		spans.setTest(true, 1); // no IndexReader available
-		return spans;
-	}
+    private static SpansNGrams getSpans() {
+        // NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
+        SpansNGrams spans = new SpansNGrams(null, "test", 2, 3);
+        spans.setTest(true, 1); // no IndexReader available
+        return spans;
+    }
 
-	@Test
-	public void testSpansNGrams() throws IOException {
-		Spans exp = MockSpans.fromLists(
-			new int[] {0, 0, 0, 0, 0, 0, 0},
-			new int[] {0, 0, 1, 1, 2, 2, 3},
-			new int[] {2, 3, 3, 4, 4, 5, 5}
-		);
-		TestUtil.assertEquals(exp, getSpans());
-	}
-
+    @Test
+    public void testSpansNGrams() throws IOException {
+        Spans exp = MockSpans.fromLists(
+                new int[] { 0, 0, 0, 0, 0, 0, 0 },
+                new int[] { 0, 0, 1, 1, 2, 2, 3 },
+                new int[] { 2, 3, 3, 4, 4, 5, 5 });
+        TestUtil.assertEquals(exp, getSpans());
+    }
 
 }

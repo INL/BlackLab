@@ -7,7 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.AccessDeniedException;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -15,28 +15,31 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+
 /**
  * Manages downloaded files.
  *
- * Downloading files takes time, so it's more efficient to keep them around
- * for a while in case we'll access the same file again. Of course, we should
+ * Downloading files takes time, so it's more efficient to keep them around for
+ * a while in case we'll access the same file again. Of course, we should
  * eventually delete them to free up resources as well.
  */
 public class DownloadCache {
 
-    /** Is DocIndexerBase allowed to download files?
-     *  (defaults to false for security; explicitly set it to true if you want this)
+    /**
+     * Is DocIndexerBase allowed to download files? (defaults to false for security;
+     * explicitly set it to true if you want this)
      */
     private static boolean fileDownloadAllowed = false;
 
     /** Maximum size of (linked, e.g. metadata) files downloaded */
-    private static long maxDownloadedFileSize = 10000000;
+    private static long maxDownloadedFileSize = 10_000_000;
 
     /** Maximum age of downloaded file in sec */
     private static int maxDownloadAgeSec = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static int maxDownloadFolderSize = 100000000;
+    private static int maxDownloadFolderSize = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;
@@ -98,9 +101,7 @@ public class DownloadCache {
                     return false;
             } else if (!key.equals(other.key))
                 return false;
-            if (lastUsed != other.lastUsed)
-                return false;
-            return true;
+            return lastUsed == other.lastUsed;
         }
 
         public long timeSinceLastUsed() {
@@ -108,8 +109,8 @@ public class DownloadCache {
         }
 
         public void delete() {
-            if (!file.delete())
-                throw new RuntimeException("Unable to delete downloaded file: " + file);
+            if (file.exists() && !file.delete())
+                throw new BlackLabRuntimeException("Unable to delete downloaded file: " + file);
         }
 
         public long size() {
@@ -134,7 +135,8 @@ public class DownloadCache {
         } catch (IOException e) {
             return -1;
         } finally {
-            c.disconnect();
+            if (c != null)
+                c.disconnect();
         }
     }
 
@@ -155,7 +157,7 @@ public class DownloadCache {
 
         // If the cache is too big, remove entries that haven't been used the longest
         if (downloadFolderSize > maxDownloadFolderSize) {
-            Collections.sort(dl);
+            dl.sort(Comparator.naturalOrder());
             it = downloadedFiles.values().iterator();
             while (downloadFolderSize > maxDownloadFolderSize && it.hasNext()) {
                 Download download = it.next();
@@ -182,7 +184,8 @@ public class DownloadCache {
             URL url = new URL(inputFile);
             int urlSize = getUrlSize(url);
             if (urlSize > maxDownloadedFileSize)
-                throw new UnsupportedOperationException("File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
+                throw new UnsupportedOperationException(
+                        "File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
             String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
@@ -207,17 +210,18 @@ public class DownloadCache {
     }
 
     public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
-        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1000000;
+        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1_000_000L;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }
 
-    public static File getDownloadTempDir() {
+    public synchronized static File getDownloadTempDir() {
         if (downloadTempDir == null) {
             downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
         }
         if (!downloadTempDir.exists()) {
-            downloadTempDir.mkdir();
+            if (!downloadTempDir.mkdir())
+                throw new BlackLabRuntimeException("Could not create dir: " + downloadTempDir);
             downloadTempDir.deleteOnExit();
         }
         return downloadTempDir;
@@ -228,7 +232,7 @@ public class DownloadCache {
     }
 
     public static void setSizeMegs(int maxDownloadFolderSizeMegs) {
-        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1000000;
+        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1_000_000;
         if (maxDownloadFolderSize < maxDownloadedFileSize)
             maxDownloadedFileSize = maxDownloadFolderSize;
     }

@@ -19,8 +19,8 @@ import java.io.Reader;
 import java.util.Arrays;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.util.StringUtil;
 
 /**
@@ -28,46 +28,52 @@ import nl.inl.util.StringUtil;
  */
 public class DocIndexerPageXml extends DocIndexerXmlHandlers {
 
-    public static String getDisplayName() { return "PageXML, an OCR file format"; }
-    public static String getDescription() { return ""; }
+    public static String getDisplayName() {
+        return "PageXML, an OCR file format";
+    }
 
-	public DocIndexerPageXml(Indexer indexer, String fileName, Reader reader) {
-		super(indexer, fileName, reader);
+    public static String getDescription() {
+        return "";
+    }
 
-		addNumericFields(Arrays.asList("yearFrom", "yearTo"));
+    public DocIndexerPageXml(DocWriter indexer, String fileName, Reader reader) {
+        super(indexer, fileName, reader);
+        
+        registerContentsField();
 
-		// Document element
-		addHandler("/PcGts", new DocumentElementHandler());
+        addNumericFields(Arrays.asList("yearFrom", "yearTo"));
 
-		// Page element: store attributes as metadata fields
-		addHandler("/PcGts/Page", new MetadataAttributesHandler());
+        // Document element
+        addHandler("/PcGts", new DocumentElementHandler());
 
-		// Metadata elements in the header
-		addHandler("/PcGts/Page/header/*", new MetadataElementHandler());
+        // Page element: store attributes as metadata fields
+        addHandler("/PcGts/Page", new MetadataAttributesHandler());
 
-		// Clear character content after header, so it doesn't mess with punctuation
-		addHandler("/PcGts/Page/header", new ElementHandler() {
-			@Override
-			public void endElement(String uri, String localName, String qName) {
-				consumeCharacterContent();
-			}
-		});
+        // Metadata elements in the header
+        addHandler("/PcGts/Page/header/*", new MetadataElementHandler());
 
-		// Word elements: index as main contents
-		addHandler("//Word", new DefaultWordHandler() {
-			@Override
-			protected String getWord() {
-				// In PageXML, punctuation and/or whitespace may be part of the word token.
-				// Strip it off before indexing the word.
-				// (TODO: instead of stripping it off, better to add it to punctuation index..?)
-				return StringUtil.trimWhitespaceAndPunctuation(super.getWord());
-			}
-		});
+        // Clear character content after header, so it doesn't mess with punctuation
+        addHandler("/PcGts/Page/header", new ElementHandler() {
+            @Override
+            public void endElement(String uri, String localName, String qName) {
+                consumeCharacterContent();
+            }
+        });
 
-		// Named entity tags: index as tags in the content
-		addHandler("//NE", new InlineTagHandler());
+        // Word elements: index as main contents
+        addHandler("//Word", new DefaultWordHandler() {
+            @Override
+            protected String getWord() {
+                // In PageXML, punctuation and/or whitespace may be part of the word token.
+                // Strip it off before indexing the word.
+                // (TODO: instead of stripping it off, better to add it to punctuation index..?)
+                return StringUtil.trimWhitespaceAndPunctuation(super.getWord());
+            }
+        });
 
-	}
+        // Named entity tags: index as tags in the content
+        addHandler("//NE", new InlineTagHandler());
 
+    }
 
 }
