@@ -360,7 +360,6 @@ class SaxonHelper {
 
     private static class NSCTX implements NamespaceContext {
         private final Map<String, String> ns = new HashMap<>(3);
-        ;
 
         void add(String prefix, String uri) {
             if (uri.equals(ns.get(prefix))) return;
@@ -371,14 +370,15 @@ class SaxonHelper {
         public String getNamespaceURI(String prefix) {
             return ns.get(prefix);
         }
-
+        
         @Override
         public String getPrefix(String namespaceURI) {
             return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(e -> e.getKey()).findFirst().orElse(null);
         }
 
+        @SuppressWarnings("rawtypes")
         @Override
-        public Iterator<?> getPrefixes(String namespaceURI) {
+        public Iterator getPrefixes(String namespaceURI) {
             return ns.keySet().iterator();
         }
     }
