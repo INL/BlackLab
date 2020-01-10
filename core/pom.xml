@@ -279,7 +279,7 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>5.5.5</version>
+            <version>7.1.0</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
