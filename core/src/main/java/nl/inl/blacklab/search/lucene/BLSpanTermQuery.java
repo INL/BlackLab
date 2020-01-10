@@ -97,7 +97,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
     public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
         final TermContext context;
         final IndexReaderContext topContext = searcher.getTopReaderContext();
-        if (termContext == null || termContext.topReaderContext != topContext) {
+        if (termContext == null || !termContext.wasBuiltFor(topContext)) {
             context = TermContext.build(topContext, query.getTerm());
         } else {
             context = termContext;
