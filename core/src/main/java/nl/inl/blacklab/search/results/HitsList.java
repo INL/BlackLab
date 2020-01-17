@@ -11,7 +11,7 @@ public class HitsList extends Hits {
     private static List<Hit> createHitList(int[] doc, int[] start, int[] end) {
         List<Hit> hits = new ArrayList<>();
         for (int i = 0; i < doc.length; i++) {
-            hits.add(Hit.create(doc[i], start[i], end[i]));
+            hits.add(Hit.create(doc[i], start[i], end[i], i));
         }
         return hits;
     }

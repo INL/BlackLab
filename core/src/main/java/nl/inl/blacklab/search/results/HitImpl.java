@@ -39,17 +39,21 @@ public final class HitImpl implements Hit {
     /** Start of this hit's span (in word positions) */
     private int start;
 
+    private int index;
+
     /**
      * Construct a hit object
      *
      * @param doc the document
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
+     * @param index of the hit in query results
      */
-    protected HitImpl(int doc, int start, int end) {
+    protected HitImpl(int doc, int start, int end, int index) {
         this.doc = doc;
         this.start = start;
         this.end = end;
+        this.index = index;
     }
 
     @Override
@@ -68,12 +72,17 @@ public final class HitImpl implements Hit {
     }
 
     @Override
+    public int index() {
+        return index;
+    }
+
+    @Override
     public boolean equals(Object with) {
         if (this == with)
             return true;
         if (with instanceof Hit) {
             Hit o = (Hit) with;
-            return doc() == o.doc() && start() == o.start() && end() == o.end();
+            return doc() == o.doc() && start() == o.start() && end() == o.end() && index() == o.index();
         }
         return false;
     }
@@ -85,7 +94,13 @@ public final class HitImpl implements Hit {
     
     @Override
     public int hashCode() {
-        return (doc() * 17 + start()) * 31 + end();
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + doc();
+        result = prime * result + start();
+        result = prime * result + end();
+        result = prime * result + index();
+        return result;
     }
     
     // POSSIBLE FUTURE OPTIMIZATION

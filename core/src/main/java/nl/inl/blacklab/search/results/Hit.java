@@ -13,10 +13,11 @@ public interface Hit extends Result<Hit> {
      * @param doc Lucene document id
      * @param start position of first word of the hit
      * @param end first word position after the hit
+     * @param index of the hit in query results
      * @return the hit
      */
-    static Hit create(int doc, int start, int end) {
-        return new HitImpl(doc, start, end);
+    static Hit create(int doc, int start, int end, int index) {
+        return new HitImpl(doc, start, end, index);
     }
     
     @Override
@@ -25,6 +26,9 @@ public interface Hit extends Result<Hit> {
             return 0;
         if (doc() == o.doc()) {
             if (start() == o.start()) {
+                if (end() == o.end()) {
+                    return index() - o.index();
+                }
                 return end() - o.end();
             }
             return start() - o.start();
@@ -49,5 +53,11 @@ public interface Hit extends Result<Hit> {
      * @return position of first word after the hit
      */
     int end();
+
+    /**
+     * Get the index of this hit.
+     * @return index of the hit in query results
+     */
+    int index();
 
 }

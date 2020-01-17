@@ -181,7 +181,7 @@ public class SpansReader {
 
                     if (!spansFullyRead) {
                         // Count the hit and add it (unless we've reached the maximum number of hits we want)
-                        Hit hit = Hit.create(spans.docID() + docBase, spans.startPosition(), spans.endPosition());
+                        Hit hit = Hit.create(spans.docID() + docBase, spans.startPosition(), spans.endPosition(), 0); // TODO(lexion): fill in index if we ever use HitsInQueryParallel
                         if (capturedGroups != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);

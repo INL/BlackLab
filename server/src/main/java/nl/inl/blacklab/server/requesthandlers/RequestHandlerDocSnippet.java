@@ -81,7 +81,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
-        hit = Hit.create(luceneDocId, start, end);
+        hit = Hit.create(luceneDocId, start, end, 0);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
         Hits hits = Hits.fromList(QueryInfo.create(blIndex), Arrays.asList(hit));
         getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
