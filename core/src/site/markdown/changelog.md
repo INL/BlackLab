@@ -21,6 +21,9 @@
   e.g. decide how many threads you want your BlackLabEngine to have.
 
 ### New
+* In addition to VTD-XML, Saxon may be used to parse input files for indexing. Saxon supports XPath 3, which
+  contains many features useful for configuring input formats. It is also faster, at the cost of increased memory 
+  usage for large files.
 * Multiple values may be indexed for a metadata field (this is automatic when your XPath matches multiple values).
   (this is is the reason why BLS will now report all metadata as lists of values, even if there's only one)
 * Added mapValues option to map metadata field values while indexing

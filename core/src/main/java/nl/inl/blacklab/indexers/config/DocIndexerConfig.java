@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -37,10 +39,18 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
-        DocIndexerConfig docIndexer;
+        DocIndexerConfig docIndexer=null;
         switch (config.getFileType()) {
         case XML:
-            docIndexer = new DocIndexerXPath();
+            for (ConfigInputFormat.FileTypeOption fto : ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
+                if (fto== ConfigInputFormat.FileTypeOption.SAXONICA) {
+                    docIndexer=new DocIndexerSaxon();
+                    break;
+                }
+            }
+            if (docIndexer==null) {
+                docIndexer=new DocIndexerXPath();
+            }
             break;
         case TABULAR:
             docIndexer = new DocIndexerTabular();
@@ -189,6 +199,70 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 result = mappedResult;
         }
         return result;
+    }
+
+    /**
+     * process linked documents when configured. An xPath processor can be provided,
+     * it will retrieve information from the document to construct a path to a linked document.
+     * @param ld
+     * @param xpathProcessor
+     */
+    protected void processLinkedDocument( ConfigLinkedDocument ld, Function<String, String> xpathProcessor) {
+        // Resolve linkPaths to get the information needed to fetch the document
+        List<String> results = new ArrayList<>();
+        for (ConfigLinkValue linkValue : ld.getLinkValues()) {
+            String result = "";
+            String valuePath = linkValue.getValuePath();
+            String valueField = linkValue.getValueField();
+            if (valuePath != null) {
+                // Resolve value using XPath
+                result = xpathProcessor.apply(valuePath);
+                if (result == null || result.isEmpty()) {
+                    switch (ld.getIfLinkPathMissing()) {
+                        case IGNORE:
+                            break;
+                        case WARN:
+                            docWriter.listener()
+                                    .warning("Link path " + valuePath + " not found in document " + documentName);
+                            break;
+                        case FAIL:
+                            throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
+                    }
+                }
+            } else if (valueField != null) {
+                // Fetch value from Lucene doc
+                result = getMetadataField(valueField).get(0);
+            }
+            result = processString(result, linkValue.getProcess(), null);
+            results.add(result);
+        }
+
+        // Substitute link path results in inputFile, pathInsideArchive and documentPath
+        String inputFile = replaceDollarRefs(ld.getInputFile(), results);
+        String pathInsideArchive = replaceDollarRefs(ld.getPathInsideArchive(), results);
+        String documentPath = replaceDollarRefs(ld.getDocumentPath(), results);
+
+        try {
+            // Fetch and index the linked document
+            indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
+                    ld.shouldStore() ? ld.getName() : null);
+        } catch (Exception e) {
+            String moreInfo = "(inputFile = " + inputFile;
+            if (pathInsideArchive != null)
+                moreInfo += ", pathInsideArchive = " + pathInsideArchive;
+            if (documentPath != null)
+                moreInfo += ", documentPath = " + documentPath;
+            moreInfo += ")";
+            switch (ld.getIfLinkPathMissing()) {
+                case IGNORE:
+                case WARN:
+                    docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
+                            + ": " + e.getMessage());
+                    break;
+                case FAIL:
+                    throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+            }
+        }
     }
 
     protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
