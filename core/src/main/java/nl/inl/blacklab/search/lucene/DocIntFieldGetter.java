@@ -17,7 +17,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * This is used by SpanQueryFiSeq to get the forward index id (fiid).
  */
-public class DocIntFieldGetter implements Closeable {
+public class DocIntFieldGetter {
 
     /** The Lucene index reader, for querying field length */
     private LeafReader reader;
@@ -25,41 +25,9 @@ public class DocIntFieldGetter implements Closeable {
     /** Field name to check for the length of the field in tokens */
     private String intFieldName;
 
-    /** Lengths may have been cached using FieldCache */
-    private NumericDocValues docValues;
-
-    /** Reader for getting docValues even when they weren't explicitly indexed */
-    private UninvertingReader uninv;
-
     public DocIntFieldGetter(LeafReader reader, String fieldName) {
         this.reader = reader;
         intFieldName = fieldName;
-
-        // Cache the lengths for this field to speed things up
-        try {
-            docValues = reader.getNumericDocValues(intFieldName);
-            if (docValues == null) {
-                // Use UninvertingReader to simulate DocValues (slower)
-                Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                fields.put(intFieldName, UninvertingReader.Type.INTEGER);
-                @SuppressWarnings("resource")
-                UninvertingReader uninv = new UninvertingReader(reader, fields);
-                docValues = uninv.getNumericDocValues(intFieldName);
-            }
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public void close() {
-        if (uninv != null) {
-            try {
-                uninv.close();
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
     }
 
     /**
@@ -69,26 +37,15 @@ public class DocIntFieldGetter implements Closeable {
      * @return value of the int field
      */
     public synchronized int getFieldValue(int doc) {
-
-        // Cached doc values?
-        if (docValues != null) {
-            return (int) docValues.get(doc);
-        }
-
-        // No; get the field value from the Document object.
-        // (Note that this code should never be executed, but just to be safe)
-        Document document;
         try {
-            document = reader.document(doc);
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            NumericDocValues docValues = reader.getNumericDocValues(intFieldName);
+            if (docValues != null) {
+                return (int)docValues.get(doc);
+            }
+        } catch (IOException ex) {
+            throw new BlackLabRuntimeException("Error getting NumericDocValues for " + intFieldName, ex);
         }
-        String strVal = document.get(intFieldName);
-        if (strVal != null) {
-            // Yes, found the field length stored in the index.
-            // Parse and return it.
-            return Integer.parseInt(strVal);
-        }
+
         throw new BlackLabRuntimeException("Can't find " + intFieldName + " for doc " + doc);
     }
 }
