@@ -140,7 +140,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
             if (docWriter != null) {
-                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
+                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadata();
                 indexMetadata.registerAnnotatedField(fieldWriter);
             }
 

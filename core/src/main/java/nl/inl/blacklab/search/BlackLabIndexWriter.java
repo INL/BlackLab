@@ -26,9 +26,19 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * Get information about the structure of the BlackLab index.
      *
      * @return the structure object
+     * @deprecated use metadata() instead
      */
+    @Deprecated
     IndexMetadataWriter metadataWriter();
 
+    /**
+     * Get information about the structure of the BlackLab index.
+     *
+     * @return the structure object
+     */
+    @Override
+    IndexMetadataWriter metadata();
+    
     IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
             throws IOException, CorruptIndexException, LockObtainFailedException;
 

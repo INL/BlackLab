@@ -68,7 +68,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         propMain = contentsField.mainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
         propPunct = contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), false);
-        IndexMetadataWriter indexMetadata = indexer.indexWriter().metadataWriter();
+        IndexMetadataWriter indexMetadata = indexer.indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 
