@@ -77,7 +77,7 @@ public interface IndexMetadataWriter {
      * 
      * @return the metadata fields
      */
-    MetadataFields metadataFields();
+    MetadataFieldsWriter metadataFields();
 
     /**
      * Register an annotated field.
