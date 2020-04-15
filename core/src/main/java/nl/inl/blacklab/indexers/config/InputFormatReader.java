@@ -550,7 +550,7 @@ public class InputFormatReader extends YamlJsonReader {
     private static String warnSanitizeXmlElementName(String name) {
         String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
         if (!sanitized.equals(name))
-            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + name + "'");
+            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'");
         return sanitized;
     }
 

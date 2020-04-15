@@ -213,8 +213,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
     public void deleteUserFormat(User user, String formatIdentifier)
             throws NotAuthorized, NotFound, InternalServerError, BadRequest {
         try {
-            if (isBuiltinFormat(formatIdentifier)
-                    || (user.canManageFormatsFor(getUserIdOrFormatName(formatIdentifier, false))))
+            if (isBuiltinFormat(formatIdentifier) || !user.canManageFormatsFor(getUserIdOrFormatName(formatIdentifier, false)))
                 throw new NotAuthorized("Can only delete your own formats");
         } catch (IllegalUserFormatIdentifier e) {
             throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());
