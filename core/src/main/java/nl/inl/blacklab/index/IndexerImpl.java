@@ -259,7 +259,7 @@ class IndexerImpl implements DocWriter, Indexer {
         this.indexWriter = writer;
 
         if (!DocumentFormats.isSupported(formatIdentifier)) {
-            formatIdentifier = writer.metadataWriter().documentFormat();
+            formatIdentifier = writer.metadata().documentFormat();
             if (!DocumentFormats.isSupported(formatIdentifier)) {
                 String message = formatIdentifier == null ? "No formatIdentifier"
                         : "Unknown formatIdentifier '" + formatIdentifier + "'";
@@ -299,15 +299,15 @@ class IndexerImpl implements DocWriter, Indexer {
 
                 // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index
                 // has written it (might be null)
-                final String defaultFormatIdentifier = indexWriter.metadataWriter().documentFormat();
+                final String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
 
                 if (DocumentFormats.isSupported(formatIdentifier)) {
                     this.formatIdentifier = formatIdentifier;
                     if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                         // indexTemplateFile didn't provide a default formatIdentifier,
                         // overwrite it with our provided formatIdentifier
-                        indexWriter.metadataWriter().setDocumentFormat(formatIdentifier);
-                        indexWriter.metadataWriter().save();
+                        indexWriter.metadata().setDocumentFormat(formatIdentifier);
+                        indexWriter.metadata().save();
                     }
                 } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
                     this.formatIdentifier = defaultFormatIdentifier;
@@ -344,8 +344,8 @@ class IndexerImpl implements DocWriter, Indexer {
                 if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
                     // ConfigInputFormat didn't provide a default formatIdentifier,
                     // overwrite it with our provided formatIdentifier
-                    indexWriter.metadataWriter().setDocumentFormat(formatIdentifier);
-                    indexWriter.metadataWriter().save();
+                    indexWriter.metadata().setDocumentFormat(formatIdentifier);
+                    indexWriter.metadata().save();
                 }
             } else {
                 String formatError = DocumentFormats.formatError(formatIdentifier);
@@ -470,8 +470,8 @@ class IndexerImpl implements DocWriter, Indexer {
         listener().closeStart();
 
         if (!hasRollback) {
-            indexWriter.metadataWriter().addToTokenCount(listener().getTokensProcessed());
-            indexWriter.metadataWriter().save();
+            indexWriter.metadata().addToTokenCount(listener().getTokensProcessed());
+            indexWriter.metadata().save();
         }
         indexWriter.close();
 

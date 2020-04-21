@@ -182,7 +182,7 @@ public abstract class RequestHandler {
                 if (indexName.length() == 0 || resourceOrPathGiven) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
-                if (privateIndex != null && privateIndex.userMayDelete(user))
+                if (privateIndex == null || !privateIndex.userMayDelete(user))
                     return errorObj.forbidden("You can only delete your own private indices.");
                 requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
             }
@@ -213,7 +213,7 @@ public abstract class RequestHandler {
                             urlPathInfo);
                 } else if (ServletFileUpload.isMultipartContent(request)) {
                     // Add document to index
-                    if (privateIndex != null && privateIndex.userMayAddData(user))
+                    if (privateIndex == null || !privateIndex.userMayAddData(user))
                         return errorObj.forbidden("Can only POST to your own private indices.");
                     if (urlResource.equals("docs") && urlPathInfo.isEmpty()) {
                         if (!Index.isValidIndexName(indexName))

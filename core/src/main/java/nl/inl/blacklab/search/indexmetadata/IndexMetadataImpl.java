@@ -535,7 +535,7 @@ public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
     }
 
     @Override
-    public MetadataFields metadataFields() {
+    public MetadataFieldsWriter metadataFields() {
         return metadataFields;
     }
 

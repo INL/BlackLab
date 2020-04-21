@@ -4,7 +4,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Used to write information about a BlackLab index, including its fields structure. */
-public interface IndexMetadataWriter {
+public interface IndexMetadataWriter extends IndexMetadata {
     
 	/**
 	 * Save the index structure file.
@@ -77,7 +77,8 @@ public interface IndexMetadataWriter {
      * 
      * @return the metadata fields
      */
-    MetadataFields metadataFields();
+    @Override
+    MetadataFieldsWriter metadataFields();
 
     /**
      * Register an annotated field.
@@ -91,5 +92,6 @@ public interface IndexMetadataWriter {
      * Get the document format.
      * @return document format
      */
+    @Override
     String documentFormat();
 }
