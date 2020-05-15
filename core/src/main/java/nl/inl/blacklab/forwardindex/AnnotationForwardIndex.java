@@ -81,7 +81,6 @@ public abstract class AnnotationForwardIndex {
      * @param collator collator to use for sorting
      * @param create if true, create a new forward index
      * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
-     * @param fiidLookup how to look up fiid given docId 
      * @param buildTermIndexesOnInit whether to build term indexes right away or lazily
      * @return the forward index object
      */

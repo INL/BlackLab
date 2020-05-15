@@ -170,7 +170,7 @@ public class DocPropertyStoredField extends DocProperty {
         }
         if (sb.isEmpty()) // sort empty string at the end
             return reverse ? 1 : -1;
-        return reverse ? PropertyValueString.collator.compare(sb, sa) : PropertyValueString.collator.compare(sa, sb);
+        return reverse ? PropertyValue.collator.compare(sb, sa) : PropertyValue.collator.compare(sa, sb);
     }
 
     /**

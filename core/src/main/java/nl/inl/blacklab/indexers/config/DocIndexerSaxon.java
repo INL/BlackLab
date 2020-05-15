@@ -206,7 +206,7 @@ public class DocIndexerSaxon extends DocIndexerConfig {
      * @param word
      * @return
      */
-    private List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word, List<NodeInfo> precedingPuncts) {
+    private static List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word, List<NodeInfo> precedingPuncts) {
         List<NodeInfo> preceding = new ArrayList<>();
         for (NodeInfo pi : puncts) {
             if (word!=null&&word.compareOrder(pi)!=1) {
