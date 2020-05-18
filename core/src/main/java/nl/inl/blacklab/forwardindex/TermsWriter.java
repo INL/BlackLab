@@ -208,7 +208,7 @@ class TermsWriter extends Terms {
                                 termStringOffsets[currentTerm] = currentOffset;
                                 byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
                                 long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
-                                if (newBlockSizeBytes > blockSize) {
+                                if (newBlockSizeBytes > maxBlockSize) {
                                     // Block is full. Write it and continue with next block.
                                     break;
                                 }
