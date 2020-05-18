@@ -206,7 +206,7 @@ class TermsWriter extends Terms {
                             while (currentTerm < n) {
                                 termStringOffsets[currentTerm] = currentOffset;
                                 byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
-                                if (currentOffset + termBytes.length > blockSize) {
+                                if ((long)currentOffset + termBytes.length > blockSize) {
                                     // Block is full. Write it and continue with next block.
                                     break;
                                 }
@@ -220,6 +220,15 @@ class TermsWriter extends Terms {
                             int numTermsThisBlock = currentTerm - firstTermInBlock;
 
                             long blockSizeBytes = 2 * BYTES_PER_INT + numTermsThisBlock * BYTES_PER_INT + currentOffset;
+                            if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                                logger.error("***** blockSizeBytes < 0 !!!");
+                                logger.error("blockSizeBytes = " + blockSizeBytes);
+                                logger.error("n = " + n);
+                                logger.error("numTermsThisBlock = " + numTermsThisBlock);
+                                logger.error("  currentTerm = " + currentTerm);
+                                logger.error("  firstTermInBlock = " + firstTermInBlock);
+                                logger.error("currentOffset = " + currentOffset);
+                            }
 
                             ib.put(numTermsThisBlock); //@4
                             ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
@@ -250,6 +259,13 @@ class TermsWriter extends Terms {
                         // (we can do this now, even though we still have to write the sort buffers,
                         // because we know how large the file will eventually be)
                         fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+                        
+                        if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                            logger.error("***** fileLength < 0 !!!");
+                            logger.error("fileLength = " + fileLength);
+                            logger.error("n = " + n);
+                        }
+                        
                         if (File.separatorChar != '\\') // causes problems on Windows
                             fc.truncate(fileLength);
                     }
