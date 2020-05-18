@@ -203,10 +203,12 @@ class TermsWriter extends Terms {
                             // Calculate byte offsets for all the terms and fill data array
                             int currentOffset = 0;
                             byte[] termStrings = new byte[blockSize];
+                            long blockSizeBytes = 2 * BYTES_PER_INT;
                             while (currentTerm < n) {
                                 termStringOffsets[currentTerm] = currentOffset;
                                 byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
-                                if ((long)currentOffset + termBytes.length > blockSize) {
+                                long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
+                                if (newBlockSizeBytes > blockSize) {
                                     // Block is full. Write it and continue with next block.
                                     break;
                                 }
@@ -214,12 +216,12 @@ class TermsWriter extends Terms {
                                 currentOffset += termBytes.length;
                                 currentTerm++;
                                 bytesLeftToWrite -= termBytes.length;
+                                blockSizeBytes = newBlockSizeBytes;
                             }
 
-                            // Write offset and data arrays to file
                             int numTermsThisBlock = currentTerm - firstTermInBlock;
-
-                            long blockSizeBytes = 2 * BYTES_PER_INT + numTermsThisBlock * BYTES_PER_INT + currentOffset;
+                            
+                            // Write offset and data arrays to file
                             if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
                                 logger.error("***** blockSizeBytes < 0 !!!");
                                 logger.error("blockSizeBytes = " + blockSizeBytes);
