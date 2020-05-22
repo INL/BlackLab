@@ -67,7 +67,7 @@ class TermsWriter extends Terms {
     Map<CollationKey, Integer> termIndex;
 
     /**
-     * The maximum block size to use while writing the terms file. Ususally around
+     * The maximum block size to use while writing the terms file. Usually around
      * the limit of 2GB, but for testing, we can set this to a lower value.
      */
     private int maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
@@ -203,10 +203,12 @@ class TermsWriter extends Terms {
                             // Calculate byte offsets for all the terms and fill data array
                             int currentOffset = 0;
                             byte[] termStrings = new byte[blockSize];
+                            long blockSizeBytes = 2 * BYTES_PER_INT;
                             while (currentTerm < n) {
                                 termStringOffsets[currentTerm] = currentOffset;
                                 byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
-                                if (currentOffset + termBytes.length > blockSize) {
+                                long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
+                                if (newBlockSizeBytes > maxBlockSize) {
                                     // Block is full. Write it and continue with next block.
                                     break;
                                 }
@@ -214,12 +216,21 @@ class TermsWriter extends Terms {
                                 currentOffset += termBytes.length;
                                 currentTerm++;
                                 bytesLeftToWrite -= termBytes.length;
+                                blockSizeBytes = newBlockSizeBytes;
                             }
 
-                            // Write offset and data arrays to file
                             int numTermsThisBlock = currentTerm - firstTermInBlock;
-
-                            long blockSizeBytes = 2 * BYTES_PER_INT + numTermsThisBlock * BYTES_PER_INT + currentOffset;
+                            
+                            // Write offset and data arrays to file
+                            if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                                logger.error("***** blockSizeBytes < 0 !!!");
+                                logger.error("blockSizeBytes = " + blockSizeBytes);
+                                logger.error("n = " + n);
+                                logger.error("numTermsThisBlock = " + numTermsThisBlock);
+                                logger.error("  currentTerm = " + currentTerm);
+                                logger.error("  firstTermInBlock = " + firstTermInBlock);
+                                logger.error("currentOffset = " + currentOffset);
+                            }
 
                             ib.put(numTermsThisBlock); //@4
                             ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
@@ -227,6 +238,13 @@ class TermsWriter extends Terms {
                                                    // (doubles as the size of the data block to follow) //@4
                             int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
                             buf.position(newPosition); // advance past offsets array
+                            if (fileMapLength - buf.position() < blockSize) {
+                                //throw new RuntimeException("Not enough space in file mapping to write term strings!");
+                                
+                                // Re-map a new part of the file before we write the term strings
+                                fileMapStart += buf.position();
+                                buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+                            }
                             buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
                             ib = buf.asIntBuffer();
                             fileLength += blockSizeBytes;
@@ -243,6 +261,13 @@ class TermsWriter extends Terms {
                         // (we can do this now, even though we still have to write the sort buffers,
                         // because we know how large the file will eventually be)
                         fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+                        
+                        if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                            logger.error("***** fileLength < 0 !!!");
+                            logger.error("fileLength = " + fileLength);
+                            logger.error("n = " + n);
+                        }
+                        
                         if (File.separatorChar != '\\') // causes problems on Windows
                             fc.truncate(fileLength);
                     }

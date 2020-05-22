@@ -84,7 +84,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
             throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING1");
         }
 
-        if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
+        if (!index.userMayAddData(user))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
         if (indexMetadata.tokenCount() > MAX_TOKEN_COUNT) {

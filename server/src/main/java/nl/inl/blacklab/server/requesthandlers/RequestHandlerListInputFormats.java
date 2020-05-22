@@ -200,7 +200,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         ds.entry("loggedIn", user.isLoggedIn());
         if (user.isLoggedIn())
             ds.entry("id", user.getUserId());
-        boolean canCreateIndex = user.isLoggedIn() ? indexMan.canCreateIndex(user.getUserId()) : false;
+        boolean canCreateIndex = user.isLoggedIn() ? indexMan.canCreateIndex(user) : false;
         ds.entry("canCreateIndex", canCreateIndex);
         ds.endMap().endEntry();
 

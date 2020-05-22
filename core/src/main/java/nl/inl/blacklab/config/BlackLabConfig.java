@@ -41,14 +41,13 @@ public class BlackLabConfig {
      *
      * If no explicit config file has been set by the time when the first BlackLabIndex
      * is opened, BlackLab automatically attempts to find and load a configuration
-     * file in a number of preset locations (see
-     * {@link OldConfigReader#defaultConfigDirs()}).
+     * file in a number of preset locations.
      *
      * Attempting to set another configuration when one is already loaded will throw
      * an UnsupportedOperationException.
      *
      * @param file
-     * @return 
+     * @return configuration
      * @throws FileNotFoundException
      * @throws IOException
      */

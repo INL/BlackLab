@@ -420,7 +420,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
     
     public void registerContentsField() {
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadataWriter();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 

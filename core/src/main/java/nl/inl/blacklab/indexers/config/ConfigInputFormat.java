@@ -1,22 +1,5 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerAbstract;
@@ -27,6 +10,24 @@ import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Configuration for an input format (either contents, or metadata, or a mix of
@@ -47,6 +48,49 @@ public class ConfigInputFormat {
 
         public String stringValue() {
             return toString().toLowerCase();
+        }
+    }
+
+    /** file type options for a FileType */
+    public enum FileTypeOption {
+        VTD(FileType.XML, Constants.PROCESSING), SAXONICA(FileType.XML, Constants.PROCESSING);
+        private final FileType fileType;
+        private final String key;
+
+        FileTypeOption(FileType fileType, String key) {
+            this.fileType = fileType;
+            this.key = key;
+        }
+
+        public FileType getFileType() {
+            return fileType;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public static FileTypeOption byKeyValue(String key, String value) {
+            for (FileTypeOption fto : values()) {
+                if (fto.getKey().equals(key) && fto.name().equalsIgnoreCase(value)) {
+                    return fto;
+                }
+            }
+            return null;
+        }
+
+        public static List<FileTypeOption> forFileType(FileType fileType) {
+            return Arrays.stream(values()).filter(fto -> fto.fileType == fileType).collect(Collectors.toList());
+        }
+
+        public static List<FileTypeOption> fromConfig (ConfigInputFormat config, FileType ft) {
+            return config.getFileTypeOptions().entrySet().stream()
+                    .filter(opt -> byKeyValue(opt.getKey(),opt.getValue()) !=null && byKeyValue(opt.getKey(),opt.getValue()).fileType==ft)
+                    .map(opt -> byKeyValue(opt.getKey(),opt.getValue())).collect(Collectors.toList());
+        }
+
+        public static class Constants {
+            public static final String PROCESSING = "processing";
         }
     }
 

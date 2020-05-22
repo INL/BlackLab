@@ -6,11 +6,6 @@ import java.io.Reader;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang3.builder.ToStringStyle;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
@@ -40,11 +35,6 @@ public class BLSConfig {
         } catch (IOException e) {
             throw new InvalidConfiguration("Invalid configuration (" + e.getMessage() + ")", e);
         }
-    }
-
-    public static void main(String[] args) throws JsonParseException, JsonMappingException, IOException {
-        BLSConfig blsConfigNew = read(new File("/home/jan/projects/blacklab/bls-new.yaml"));
-        System.out.println(ReflectionToStringBuilder.toString(blsConfigNew, ToStringStyle.MULTI_LINE_STYLE));
     }
 
     private int configVersion = 2;

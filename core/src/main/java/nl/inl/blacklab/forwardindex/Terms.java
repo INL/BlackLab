@@ -53,7 +53,7 @@ public abstract class Terms {
     boolean useBlockBasedTermsFile = true;
 
     /**
-     * The maximum block size to use while writing the terms file. Ususally around
+     * The maximum block size to use while writing the terms file. Usually around
      * the limit of 2GB, but for testing, we can set this to a lower value. Note
      * that this should be significantly larger than maxBlockSize, because we also
      * need to store offsets.

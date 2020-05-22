@@ -58,7 +58,7 @@ public class FileProcessor implements AutoCloseable {
          * <p>
          * This function may be called in multiple threads when FileProcessor was
          * created with thread support (see
-         * {@link FileProcessor#FileProcessor(boolean, boolean, boolean)}) <br>
+         * {@link FileProcessor#FileProcessor(int, boolean, boolean)}) <br>
          * NOTE: the InputStream should be closed by the implementation.
          *
          * @param path filename, including path inside archives (if the file is within

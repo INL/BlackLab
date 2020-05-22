@@ -136,7 +136,7 @@ public interface Annotation {
      * with the values prefixed. We don't do this anymore, but for old indexes,
      * this is still relevant.
      * 
-     * @return
+     * @return the prefix
      */
     default String subpropValuePrefix() {
         if (isSubannotation() && indexMetadata().subannotationsStoredWithParent())

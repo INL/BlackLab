@@ -11,7 +11,7 @@ import java.util.stream.Stream;
 /**
  * The metadata fields in an index.
  */
-class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl> {
+class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
     
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
@@ -189,6 +189,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
     // Methods that mutate data
     // ------------------------------------
 
+    @Override
     public synchronized MetadataField register(String fieldName) {
         ensureNotFrozen();
         if (fieldName == null)
@@ -215,11 +216,13 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         }
     }
 
+    @Override
     public void clearMetadataGroups() {
         ensureNotFrozen();
         metadataGroups.clear();
     }
 
+    @Override
     public void putMetadataGroup(String name, MetadataFieldGroupImpl metadataGroup) {
         ensureNotFrozen();
         metadataGroups.put(name, metadataGroup);
@@ -230,6 +233,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
      * 
      * @param name
      */
+    @Override
     public void ensureFieldExists(String name) {
         if (!exists(name)) {
             ensureNotFrozen();
@@ -240,11 +244,13 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         }
     }
 
+    @Override
     public synchronized void put(String fieldName, MetadataFieldImpl fieldDesc) {
         ensureNotFrozen();
         metadataFieldInfos.put(fieldName, fieldDesc);
     }
 
+    @Override
     public void resetForIndexing() {
         ensureNotFrozen();
         for (MetadataFieldImpl f: metadataFieldInfos.values()) {
@@ -252,21 +258,25 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         }
     }
 
+    @Override
     public void setDefaultUnknownCondition(String unknownCondition) {
         ensureNotFrozen();
         this.defaultUnknownCondition = unknownCondition;
     }
 
+    @Override
     public void setDefaultUnknownValue(String value) {
         ensureNotFrozen();
         this.defaultUnknownValue = value;
     }
 
+    @Override
     public void clearSpecialFields() {
         ensureNotFrozen();
         titleField = authorField = dateField = pidField = null;
     }
 
+    @Override
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
         switch(specialFieldType) {
@@ -287,6 +297,7 @@ class MetadataFieldsImpl implements MetadataFields, Freezable<MetadataFieldsImpl
         }
     }
 
+    @Override
     public void setDefaultAnalyzerName(String name) {
         ensureNotFrozen();
         this.defaultAnalyzerName = name;

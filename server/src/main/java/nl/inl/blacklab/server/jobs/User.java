@@ -14,6 +14,9 @@ public class User {
 
     /** The session id */
     private String sessionId;
+    
+    /** Is this the superuser? */
+    private boolean superuser = false;
 
     /**
      * Create a new logged-in user.
@@ -23,7 +26,7 @@ public class User {
      * @return the new user
      */
     public static User loggedIn(String userId, String sessionId) {
-        return new User(userId, sessionId);
+        return new User(userId, sessionId, false);
     }
 
     /**
@@ -33,10 +36,14 @@ public class User {
      * @return the new user
      */
     public static User anonymous(String sessionId) {
-        return new User(null, sessionId);
+        return new User(null, sessionId, false);
+    }
+    
+    public static User superuser(String sessionId) {
+        return new User("_superuser_", sessionId, true);
     }
 
-    private User(String userId, String sessionId) {
+    private User(String userId, String sessionId, boolean superuser) {
         this.userId = null;
         if (userId != null) {
             // Replace any non-URL-safe characters from userid with _.
@@ -45,6 +52,7 @@ public class User {
             this.userId = sanitize(userId);
         }
         this.sessionId = sessionId;
+        this.superuser = superuser;
     }
 
     @Override
@@ -110,5 +118,13 @@ public class User {
             return null;
 
         return originalUserId.replaceAll("[^a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]", "_");
+    }
+
+    public boolean isSuperuser() {
+        return superuser;
+    }
+
+    public boolean canManageFormatsFor(String userIdFromFormatIdentifier) {
+        return userIdFromFormatIdentifier.equals(getUserId()) || isSuperuser();
     }
 }

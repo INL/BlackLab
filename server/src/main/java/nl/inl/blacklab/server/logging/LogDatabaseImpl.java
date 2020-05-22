@@ -22,6 +22,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.LogException;
 import nl.inl.blacklab.requestlogging.LogLevel;
@@ -32,6 +34,8 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 public class LogDatabaseImpl implements Closeable, LogDatabase {
 
+    private static final Logger logger = LogManager.getLogger(LogDatabaseImpl.class);
+    
     private static final long FIVE_MIN_MS = 1000 * 60 * 5;
     
     private static final long THREE_MONTHS_MS = 3L * 31 * 24 * 3600 * 1000;
@@ -85,6 +89,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
         if (!tmp.isDirectory() || !tmp.canRead() || !tmp.canWrite()) {
             throw new IOException("SQLite lib would be extracted to " + tmp + ", but I cannot read from or write to it. Please fix this or disable SQLite logging.");
         }
+        logger.debug("Opening connection to SQLite log database. java.io.tmpdir = " + System.getProperty("java.io.tmpdir"));
         
         try {
             pool = new SQLiteConnPool(url);

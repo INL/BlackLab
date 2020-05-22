@@ -6,7 +6,7 @@
     <parent>
         <groupId>nl.inl.blacklab</groupId>
         <artifactId>blacklab-all</artifactId>
-        <version>2.0.0-RC1</version>
+        <version>2.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>blacklab</artifactId>
     <packaging>jar</packaging>
@@ -15,7 +15,7 @@
     <description>
         BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene.
         It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated,
-        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast 
+        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast
         and feature-rich search interface on our historical and contemporary text corpora.
     </description>
 
@@ -35,7 +35,7 @@
 
         <pluginManagement>
             <plugins>
-                <!--This plugin's configuration is used to store Eclipse 
+                <!--This plugin's configuration is used to store Eclipse
                     m2e settings only. It has no influence on the Maven build itself.
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
@@ -68,7 +68,7 @@
 
         <plugins>
 
-            <!-- Copies dependencies to target/lib, so we can run programs 
+            <!-- Copies dependencies to target/lib, so we can run programs
                 from blacklab.jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -111,7 +111,7 @@
                 </configuration>
             </plugin>
 
-            <!-- JavaCC plugin for generating query parsers from .jj definition 
+            <!-- JavaCC plugin for generating query parsers from .jj definition
                 files
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -151,7 +151,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Deploy a release to the OSSRH Nexus Repository Manager (for 
+            <!-- Deploy a release to the OSSRH Nexus Repository Manager (for
                 deploying to Maven Central) -->
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
@@ -198,11 +198,11 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <!-- Sets the path to the file which contains 
+                            <!-- Sets the path to the file which contains
                                 the execution data. -->
 
                             <dataFile>target/jacoco.exec</dataFile>
-                            <!-- Sets the output directory for the code coverage 
+                            <!-- Sets the output directory for the code coverage
                                 report. -->
                             <outputDirectory>target/jacoco-ut</outputDirectory>
                         </configuration>
@@ -279,42 +279,42 @@
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queries</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-misc</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-backward-codecs</artifactId>
-            <version>5.5.2</version>
+            <version>5.5.5</version>
         </dependency>
 
         <dependency>
@@ -349,7 +349,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13</version>
             <scope>test</scope>
         </dependency>
 
@@ -375,7 +375,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.18</version>
+            <version>1.19</version>
         </dependency>
 
         <dependency>
@@ -403,24 +403,24 @@
             <version>1.4</version>
         </dependency>
 
-        <!-- <dependency> <groupId>org.json</groupId> <artifactId>json</artifactId> 
+        <!-- <dependency> <groupId>org.json</groupId> <artifactId>json</artifactId>
             <version>20160810</version> </dependency> -->
 
         <!-- Jackson JSON/YAML reading -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>2.10.0.pr1</version>
+            <version>2.10.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.10.0.pr1</version>
+            <version>2.10.2</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.10.0.pr1</version>
+            <version>2.10.2</version>
         </dependency>
 
         <!-- VTD-XML XML parsing -->
@@ -429,8 +429,13 @@
             <artifactId>vtd-xml</artifactId>
             <version>2.13.4</version>
         </dependency>
-        
-        <!-- https://mvnrepository.com/artifact/com.googlecode.juniversalchardet/juniversalchardet -->
+        <!-- https://mvnrepository.com/artifact/net.sf.saxon/Saxon-HE -->
+        <dependency>
+            <groupId>net.sf.saxon</groupId>
+            <artifactId>Saxon-HE</artifactId>
+            <version>9.9.1-5</version>
+        </dependency>
+          <!-- https://mvnrepository.com/artifact/com.googlecode.juniversalchardet/juniversalchardet -->
         <dependency>
             <groupId>com.googlecode.juniversalchardet</groupId>
             <artifactId>juniversalchardet</artifactId>

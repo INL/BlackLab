@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.csv.CSVFormat;
@@ -203,10 +204,12 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         return printer;
     }
 
+    @SuppressWarnings("static-method")
     private boolean includeSearchParameters() {
         return true; //return searchParam.getBoolean("csvsummary");
     }
 
+    @SuppressWarnings("static-method")
     private boolean declareSeparator() {
         return true; //return searchParam.getBoolean("csvsepline");
     }

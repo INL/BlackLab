@@ -21,6 +21,7 @@ customize them to fit your data.
 * <a href="#indexing-xml">Indexing raw XML</a>
 * <a href="#standoff-annotations">Standoff annotations</a>
 * <a href="#subproperties">Subannotations, for e.g. part of speech features</a>
+* <a href="#processing">XML processing, XPath support (VTD vs. Saxon)</a>
 * <a href="#tabular">Indexing tabular (CSV/TSV/SketchEngine) files</a>
 * <a href="#plaintext">Indexing plain text files</a>
 * <a href="#other">Indexing other files</a>
@@ -66,7 +67,9 @@ Suppose our XML files look like this:
 
 Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) ([good introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
 
-Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
+Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).  
+**NOTE** Some correct xpath's like ```string(.//tei:availability[1]/@status='free')``` may not yield the expected, changing this one to ```string(//tei:availability[1]/@status='free')``` fixes it.  
+
 
 ```yaml
 # What element starts a new document?
@@ -516,6 +519,24 @@ annotatedFields:
 Note that these subproperties will not have their own forward index; only the main annotation has one, and it includes only the first value indexed at any location, so the subannotation values aren't stored there either.
 
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
+
+<a id="processing"></a>
+
+## XML processing / XPath support (VTD vs. Saxon)
+
+BlackLab uses the XML library VTD-XML by default for processing documents while indexing. A more feature-rich and potentially (much) faster alternative is Saxon.
+
+VTD supports XPath 1, Saxon at this time XPath 3.1. Saxon gives you far more possibilities to build solutions in XPath, obsoleting some configuration options. 
+Depending on your data Saxon processing may be 2 to 30 times faster. It does however require significantly more memory, depending on the size of your input documents.
+
+Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath_examples.md)
+
+To use Saxon, place this in your input format config (.blf.yaml) file:
+```yaml
+fileType: xml
+fileTypeOptions:
+  processing: saxon   # (instead of vtd, which is the default)
+```
 
 <a id="tabular"></a>
 
@@ -1032,6 +1053,9 @@ type: content
 
 # The type of input file we're dealing with (xml, tabular or text)
 fileType: xml
+fileTypeOptions:
+  processing: vtd
+#  processing: saxonica # when saxonica is chosen for processing, xpath 3.1 (at this time) will be supported.
 
 # Each file type may have options associated with it (for now, only "tabular" does)
 # We've shown the options for tabular he're but commented them out as we're describing
