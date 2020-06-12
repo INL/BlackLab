@@ -41,7 +41,7 @@ customize them to fit your data.
 
 Let's see how to write a configuration file for a simple custom corpus format.
 
-Suppose our XML files look like this:
+Suppose our tokenized XML files look like this:
 
 ```xml
 <?xml version="1.0" ?>
@@ -67,8 +67,9 @@ Suppose our XML files look like this:
 
 Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) ([good introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
 
-Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).  
-**NOTE** Some correct xpath's like ```string(.//tei:availability[1]/@status='free')``` may not yield the expected, changing this one to ```string(//tei:availability[1]/@status='free')``` fixes it.  
+Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
+
+(**NOTE** in rare cases, a correct XPath may produce unexpected results. This one for example: `string(.//tei:availability[1]/@status='free')`. There's often a workaround for this, in this case changing it to `string(//tei:availability[1]/@status='free')` fixes it)
 
 
 ```yaml
@@ -131,7 +132,7 @@ metadata:
     valuePath: .        # element text is the field value
 ```
 
-To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
+To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of `$BLACKLAB_CONFIG_DIR/formats/` (if this environment variable is set), `$HOME/.blacklab/formats/` or `/etc/blacklab/formats/`.
 
 This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
 

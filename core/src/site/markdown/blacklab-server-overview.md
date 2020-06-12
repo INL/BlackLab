@@ -126,7 +126,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>patt </td>
-		<td>Pattern to search for.</td>
+		<td>Pattern to search for. This normally uses <a href='corpus-query-language.html'>Corpus Query Language</a>. (different query languages are possible, see `pattlang`)</td>
 	</tr>
 	<tr>
 		<td>pattlang </td>
@@ -450,7 +450,7 @@ First, you need the BlackLab Server WAR file. You can either download the [lates
 
 BlackLab Server needs to run in a Java application server that support servlets. We’ll assume Apache Tomcat here, but others should work almost the same.
 
-For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.)
+For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.) If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward](how-to-configure-indexing.html#disable-fi) index for that 'unique id' annotation.
 
 Create a configuration file `blacklab-server.yaml` in `/etc/blacklab/` or, if you prefer, on the application server’s classpath. Make sure the `indexLocations` setting is correctly specified (it should point to a directory containing one or more BlackLab indices as subdirectories, or to a single index directory). The minimal configuration file looks like this:
 
