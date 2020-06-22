@@ -37,10 +37,17 @@ Also see the [Change log](changelog.html).
 		<tr>
 			<td>SNAPSHOT</td>
 			<td></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/master.tar.gz'>Source (tgz)</a></td>
-			<td><a href='https://github.com/INL/BlackLab/archive/master.zip'>Source (zip)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/dev.tar.gz'>Source (tgz)</a></td>
+			<td><a href='https://github.com/INL/BlackLab/archive/dev.zip'>Source (zip)</a></td>
 			<td>In-development version</td>
 		</tr>
+        <tr>
+            <td>v2.1.0</td>
+            <td><a href='https://github.com/INL/BlackLab/releases/download/v2.1.0/blacklab-server-2.1.0.war'>Binary (war)</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.0.tar.gz'>Source (tgz)</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.0.zip'>Source (zip)</a></td>
+            <td>Bugfixes. MetadataFieldsWriter allows programmatically setting specials fields such as pidField.</td>
+        </tr>
         <tr>
             <td>v2.0.0</td>
             <td><a href='https://github.com/INL/BlackLab/releases/download/v2.0.0/blacklab-server-2.0.0.war'>Binary (war)</a></td>

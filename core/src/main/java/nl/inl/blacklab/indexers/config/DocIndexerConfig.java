@@ -140,7 +140,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
             if (docWriter != null) {
-                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
+                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadata();
                 indexMetadata.registerAnnotatedField(fieldWriter);
             }
 
@@ -394,7 +394,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
 
         int i = -1;
-        try { i = Integer.parseInt(keep); } catch (NumberFormatException e) {}
+        try { i = Integer.parseInt(keep); } catch (NumberFormatException e) { /* handled below */ }
         if (i < 0) {
             warn("action 'split', parameter 'keep': must be at least 1");
             i = 0;

@@ -106,7 +106,7 @@ public class Index {
 
     /**
      * NOTE: Index does not support creating a new index from scratch for now,
-     * instead use {@link IndexManager#createIndex(String, String, String)}
+     * instead use {@link IndexManager#createIndex(User, String, String, String)}
      *
      * @param indexId name of this index, including any username if this is a user
      *            index

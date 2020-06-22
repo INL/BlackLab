@@ -352,12 +352,13 @@ public final class LuceneUtil {
     }
 
     /**
-     *
+     * Get term frequencies for an annotation in a subset of documents.
+     * 
      * @param indexSearcher
      * @param documentFilterQuery document filter, or null for all documents
      * @param annotSensitivity field to get frequencies for
      * @param searchTerms list of terms to get frequencies for, or null for all terms
-     * @return
+     * @return term frequencies
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
             AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {

@@ -1,5 +1,22 @@
 # Change Log
 
+## Improvements in 2.1.0
+
+### Changed
+
+* BLS: /termfreq operation no longer requires a filter query.
+
+
+### New 
+
+* Add MetadataFieldsWriter for programmatically setting the special fields
+  (in addition to doing so in .blf.yaml files)
+
+### Fixed
+
+* Fix crash during indexing if terms file got very large.
+* BLS: Fix incorrect check who user-owned formats.
+
 ## Improvements in 2.0.0
 
 ### API changes

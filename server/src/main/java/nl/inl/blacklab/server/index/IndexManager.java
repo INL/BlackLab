@@ -241,7 +241,7 @@ public class IndexManager {
         Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
         try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance().create(indexDir, config)) {
-            IndexMetadataWriter indexMetadata = indexWriter.metadataWriter();
+            IndexMetadataWriter indexMetadata = indexWriter.metadata();
             if (!StringUtils.isEmpty(displayName))
                 indexMetadata.setDisplayName(displayName);
             if (config != null && config.getName() != null)

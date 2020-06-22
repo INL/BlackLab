@@ -378,7 +378,6 @@ public final class AnnotatedFieldNameUtil {
      * Sanitize name if necessary, replacing characters forbidden in XML element names with an underscore.
      *
      * @param name name to sanitize
-     * @param replaceChar what to replace illegal characters with
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name) {

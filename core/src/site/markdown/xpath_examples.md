@@ -1,6 +1,6 @@
 # example xpath's for use in configuration
 
-Especially when using saxonica you have extensive possibilities using xpath in blacklab configuration. Some note wordy examples you find here.
+Especially when using saxonica you have extensive possibilities using xpath in blacklab configuration. Some noteworthy examples you find here.
 
 - punctPath: ".//text()[.!='' and preceding-sibling::tei:w]|.//tei:pc |.//tei:lb"
 -   valuePath: "```let $xid := @xml:id return if (@lemma) then @lemma else if ($xid) then following-sibling::tei:join[@lemma][matches(@target,'#'||$xid||'( |$)')]/@lemma else ()```"
