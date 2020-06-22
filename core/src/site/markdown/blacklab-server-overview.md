@@ -110,6 +110,10 @@ Explanation of the various resources:
 		<td>autocomplete/FIELDNAME </td>
 		<td>Shows field values for a metadata field. Requires a parameter "term".</td>
 	</tr>
+    <tr>
+        <td>termfreq </td>
+        <td>EXPERIMENTAL. Returns most frequent terms from the an annotation in main annotated field. Parameters: `annotation` selects the annotation to get term frequencies for; `number` indicates the maximum number to return; `sensitive` (true/false) indicates whether or not to list terms case/diacritics sensitively; `terms` is an optional comma-separated list of terms for which to get the frequencies; `filter` filters documents.</td>
+    </tr>
 </table>
 
 NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory.

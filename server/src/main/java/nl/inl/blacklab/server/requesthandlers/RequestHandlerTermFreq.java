@@ -45,7 +45,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!
-        Query q = searchParam.hasFacets() ? searchParam.getFilterQuery() : null;
+        Query q = searchParam.hasFilter() ? searchParam.getFilterQuery() : null;
         // May also null/empty to retrieve all terms!
         Set<String> terms = searchParam.getString("terms") != null ? new HashSet<>(Arrays.asList(searchParam.getString("terms").trim().split("\\s*,\\s*"))) : null;
          
