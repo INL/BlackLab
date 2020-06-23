@@ -25,8 +25,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 /**
  * The token filter to accompany BLDutchTokenizer. Will get rid of some unwanted
  * tokens or characters in tokens: * tokens containing no letters are eliminated
- * (e.g. "-") * periods, parens and brackets are removed (e.g. "a.u.b." ->
- * "aub", "bel(len)" -> "bellen") * apostrophes at the beginning or end of a
+ * (e.g. "-") * periods, parens and brackets are removed (e.g. "a.u.b." -&gt;
+ * "aub", "bel(len)" -&gt; "bellen") * apostrophes at the beginning or end of a
  * token are removed (e.g. multiple words in single quotes)
  */
 public class BLDutchTokenFilter extends TokenFilter {
