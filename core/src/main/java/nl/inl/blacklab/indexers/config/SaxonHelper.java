@@ -50,7 +50,6 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 /**
  * A helper for indexing using saxon
  */
-@SuppressWarnings("deprecation")
 class SaxonHelper {
 
     public static final int MAXDOCSIZEINMEMORY = 4_096_000;
@@ -377,7 +376,7 @@ class SaxonHelper {
             return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(e -> e.getKey()).findFirst().orElse(null);
         }
 
-        @SuppressWarnings({ "rawtypes", "unchecked" })
+        @SuppressWarnings({ "rawtypes" })
         @Override
         public Iterator getPrefixes(String namespaceURI) {
             return ns.keySet().iterator();
