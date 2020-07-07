@@ -528,7 +528,7 @@ BlackLab uses the XML library VTD-XML by default for processing documents while 
 VTD supports XPath 1, Saxon at this time XPath 3.1. Saxon gives you far more possibilities to build solutions in XPath, obsoleting some configuration options. 
 Depending on your data Saxon processing may be 2 to 30 times faster. It does however require significantly more memory, depending on the size of your input documents.
 
-Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath_examples.md)
+Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath_examples.html)
 
 To use Saxon, place this in your input format config (.blf.yaml) file:
 ```yaml
