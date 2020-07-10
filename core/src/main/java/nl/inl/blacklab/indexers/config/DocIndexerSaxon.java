@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
 import org.xml.sax.SAXException;
@@ -36,7 +37,7 @@ public class DocIndexerSaxon extends DocIndexerConfig {
         try {
             saxonHelper = new SaxonHelper(reader, config);
             contents = saxonHelper.getContents();
-        } catch (IOException | XPathException | SAXException e) {
+        } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
