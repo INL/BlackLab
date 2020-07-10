@@ -13,6 +13,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.tmputil.BLIndexMethods;
 
 /**
  * Get information about the structure of an index.
@@ -34,7 +35,7 @@ public class RequestHandlerExplain extends RequestHandler {
         BlackLabIndex blIndex = blIndex();
         String patt = searchParam.getString("patt");
         try {
-            QueryExplanation explanation = blIndex.explain(QueryInfo.create(blIndex), CorpusQueryLanguageParser.parse(patt), null);
+            QueryExplanation explanation = BLIndexMethods.explain(blIndex, QueryInfo.create(blIndex), CorpusQueryLanguageParser.parse(patt), null);
 
             // Assemble response
             ds.startMap()

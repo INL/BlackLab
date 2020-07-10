@@ -48,7 +48,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -65,13 +64,11 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -458,16 +455,6 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 task.perform(doc(docId));
             }
         }
-    }
-
-    @Override
-    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery {
-        // Convert to SpanQuery
-        //pattern = pattern.rewrite();
-        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
-        if (filter != null)
-            spanQuery = new SpanQueryFiltered(spanQuery, filter);
-        return spanQuery;
     }
     
     protected AnnotatedField fieldFromQuery(BLSpanQuery q) {

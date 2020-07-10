@@ -63,6 +63,7 @@ import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.tmputil.SearchMethods;
 
 /**
  * The parameters passed in the request.
@@ -580,7 +581,7 @@ public class SearchParameters {
 
     public SearchHits hits() throws BlsException {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(getPattern(), getFilterQuery(), getSearchSettings());
+        return SearchMethods.find(search, getPattern(), getFilterQuery(), getSearchSettings());
     }
 
     public SearchDocs docsWindow() throws BlsException {

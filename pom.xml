@@ -14,6 +14,8 @@
 
     <modules>
         <module>engine</module>
+        <module>text-pattern</module>
+        <module>query-parser</module>
         <module>core</module>
         <module>server</module>
     </modules>

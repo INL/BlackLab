@@ -11,7 +11,7 @@
     <artifactId>blacklab</artifactId>
     <packaging>jar</packaging>
 
-    <name>BlackLab</name>
+    <name>BlackLab Core</name>
     <description>
         BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene.
         It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated,
@@ -24,6 +24,18 @@
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-text-pattern</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-query-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
 

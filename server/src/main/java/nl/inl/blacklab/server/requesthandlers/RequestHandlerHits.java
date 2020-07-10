@@ -49,6 +49,7 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.blacklab.tmputil.BLIndexMethods;
 
 /**
  * Request handler for hit results.
@@ -207,7 +208,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
             try {
-                QueryExplanation explanation = index.explain(QueryInfo.create(index), tp, null);
+                QueryExplanation explanation = BLIndexMethods.explain(index, QueryInfo.create(index), tp, null);
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.originalQuery())
                         .entry("rewrittenQuery", explanation.rewrittenQuery())

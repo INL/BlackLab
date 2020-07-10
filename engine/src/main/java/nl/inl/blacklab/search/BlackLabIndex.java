@@ -13,7 +13,6 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -28,13 +27,10 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
@@ -142,8 +138,6 @@ public interface BlackLabIndex extends Closeable {
     // Search the index
     //---------------------------------------------------------------------------
     
-    BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery;
-
     /**
      * Find hits for a pattern in a field.
      *
@@ -168,64 +162,6 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      */
     Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger searchLogger) throws WildcardTermTooBroad;
-
-    /**
-     * Find hits for a pattern in a field.
-     * 
-     * @param queryInfo information about the query: field, logger
-     * @param pattern the pattern to find
-     * @param filter determines which documents to search
-     * @param settings search settings, or null for default
-     *
-     * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
-     * @throws InvalidQuery 
-     */
-    default Hits find(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings settings) throws InvalidQuery {
-        BLSpanQuery spanQuery = pattern.translate(defaultExecutionContext(queryInfo.field()));
-        if (filter != null)
-            spanQuery = new SpanQueryFiltered(spanQuery, filter);
-        return find(spanQuery, settings, queryInfo.searchLogger());
-    }
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param pattern the pattern to find
-     * @param field field to find pattern in
-     * @param filter determines which documents to search
-     * @param settings search settings, or null for default
-     *
-     * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
-     * @throws InvalidQuery 
-     * @deprecated use version that takes a QueryInfo
-     */
-    @Deprecated
-    default Hits find(TextPattern pattern, AnnotatedField field, Query filter) throws InvalidQuery {
-        return find(QueryInfo.create(this, field), pattern, filter, searchSettings());
-    }
-
-    /**
-     * Find hits for a pattern in a field.
-     *
-     * @param pattern the pattern to find
-     * @param field field to find pattern in
-     * @param filter determines which documents to search
-     * @param settings search settings, or null for default
-     *
-     * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
-     * @throws InvalidQuery
-     * @deprecated use version that takes a QueryInfo
-     */
-    @Deprecated
-    default Hits find(TextPattern pattern, Query filter) throws InvalidQuery {
-        return find(QueryInfo.create(this), pattern, filter, searchSettings());
-    }
 
     /**
      * Perform a document query only (no hits)
@@ -255,23 +191,6 @@ public interface BlackLabIndex extends Closeable {
      * @return term frequencies
      */
     TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms);
-
-    /**
-     * Explain how a TextPattern is converted to a SpanQuery and rewritten to an
-     * optimized version to be executed by Lucene.
-     * 
-     * @param queryInfo query info, such as the field to search 
-     * @param pattern the pattern to explain
-     * @param filter filter query, or null for none
-     * @param field which field to find the pattern in
-     * @return the explanation
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
-     * @throws InvalidQuery 
-     */
-    default QueryExplanation explain(QueryInfo queryInfo, TextPattern pattern, Query filter) throws InvalidQuery {
-        return explain(createSpanQuery(queryInfo.withIndex(this), pattern, filter));
-    }
 
     /**
      * Explain how a SpanQuery is rewritten to an optimized version to be executed
