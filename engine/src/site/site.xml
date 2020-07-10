@@ -1,0 +1,79 @@
+<project>
+
+	<publishDate position="right" />
+	<version position="right" />
+	
+	<bannerLeft>
+            <name>Dutch Language Institute (INT)</name>
+            <src>images/logo_2_ivd-nt_transparant.png</src>
+            <href>http://www.ivdnt.org/</href>
+	</bannerLeft>
+
+	<bannerRight>
+            <name>BlackLab</name>
+            <src>images/logo-blacklab.png</src>
+            <href>/BlackLab/</href>
+	</bannerRight>
+
+	<skin>
+		<groupId>org.apache.maven.skins</groupId>
+		<artifactId>maven-fluido-skin</artifactId>
+		<version>1.7</version>
+	</skin>
+
+	<body>
+	
+		<head><![CDATA[
+			<link href='http://fonts.googleapis.com/css?family=Nunito:300' rel='stylesheet' type='text/css' />
+		]]></head>
+	
+		<breadcrumbs>
+			<item name="INT" href="http://www.ivdnt.org/"/>
+			<item name="BlackLab" href="index.html"/>
+	    </breadcrumbs>
+	
+		<menu name="BlackLab">
+			<item name="Introduction" href="index.html"/>
+			<item name="Learn" href="learn.html">
+				<item name="Getting Started" href="getting-started.html" />
+				<item name="Corpus Query Language" href="corpus-query-language.html" />
+                <item name="BlackLab Server overview" href="blacklab-server-overview.html" />
+                <item name="Configuration files" href="configuration-files.html" />
+				<item name="Using BlackLab Server from different languages" href="blacklab-server-different-languages.html" />
+				<item name="Indexing with BlackLab" href="indexing-with-blacklab.html" />
+				<item name="Add An Input Format" href="add-input-format.html" />
+				<item name="Improve Search Speed" href="improve-search-speed.html" />
+				<item name="API reference" href="apidocs/index.html" />
+				<item name="File formats" href="file-formats.html" />
+			</item>
+			<item name="Downloads" href="downloads.html"/>
+			<item name="FAQ" href="faq.html"/>
+			<item name="Change Log" href="changelog.html" />
+			<item name="Road Map" href="roadmap.html" />
+			<item name="Newsletter" href="newsletter.html" />
+		</menu>
+		
+		<menu ref="reports" />
+
+	</body>
+	
+	<custom>
+		<fluidoSkin>
+			<sourceLineNumbersEnabled>false</sourceLineNumbersEnabled>
+			<!-- <googleSearch>
+				<sitesearch/>
+			</googleSearch> -->
+		</fluidoSkin>
+		<gitHub>
+			<projectId>INL/BlackLab</projectId>
+			<ribbonOrientation>right</ribbonOrientation>
+			<ribbonColor>black</ribbonColor>
+		</gitHub>
+		<twitter>
+			<user>BlackLabINL</user>
+			<showUser>true</showUser>
+			<showFollowers>true</showFollowers>
+		</twitter>
+	</custom>
+
+</project>
