@@ -1,4 +1,4 @@
-package nl.inl.blacklab.indexers.preprocess;
+package nl.inl.blacklab.indexers;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,6 +23,8 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
+import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
+import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 
 /**
  * Wrapper class for a regular DocIndexer. It's activated when a format has the
