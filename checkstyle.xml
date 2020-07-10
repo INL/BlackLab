@@ -35,18 +35,14 @@
 
     <module name="TreeWalker">
 
-        <property name="fileExtensions"
-            value="java, properties, xml" />
+        <property name="fileExtensions" value="java, properties, xml" />
         <property name="tabWidth" value="4" />
 
         <module name="OuterTypeFilename" />
         <module name="IllegalTokenText">
-            <property name="tokens"
-                value="STRING_LITERAL, CHAR_LITERAL" />
-            <property name="format"
-                value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)" />
-            <property name="message"
-                value="Avoid using corresponding octal or Unicode escape." />
+            <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL" />
+            <property name="format" value="\\u00(08|09|0(a|A)|0(c|C)|0(d|D)|22|27|5(C|c))|\\(0(10|11|12|14|15|42|47)|134)" />
+            <property name="message" value="Avoid using corresponding octal or Unicode escape." />
         </module>
     <!-- 
     <module name="AvoidEscapedUnicodeCharacters">
@@ -57,16 +53,14 @@
      -->
         <module name="LineLength">
             <property name="max" value="140" /> <!-- WAS: 100 -->
-            <property name="ignorePattern"
-                value="^package.*|^import.*|a href|href|http://|https://|ftp://" />
+            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://" />
         </module>
         <module name="AvoidStarImport" />
         <module name="OneTopLevelClass" />
         <module name="NoLineWrap" />
         <module name="EmptyBlock">
             <property name="option" value="TEXT" />
-            <property name="tokens"
-                value="LITERAL_TRY, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH" />
+            <property name="tokens" value="LITERAL_TRY, LITERAL_FINALLY, LITERAL_IF, LITERAL_ELSE, LITERAL_SWITCH" />
         </module>
         <!-- <module name="NeedBraces">
             <property name="allowSingleLineStatement" value="true" />
@@ -77,12 +71,10 @@
         <module name="RightCurly" />
         <module name="RightCurly">
             <property name="option" value="alone" />
-            <property name="tokens"
-                value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT" />
+            <property name="tokens" value="CLASS_DEF, METHOD_DEF, CTOR_DEF, LITERAL_FOR, LITERAL_WHILE, LITERAL_DO, STATIC_INIT, INSTANCE_INIT" />
         </module>
         <module name="WhitespaceAround">
-            <property name="allowEmptyConstructors"
-                value="true" />
+            <property name="allowEmptyConstructors" value="true" />
             <property name="allowEmptyMethods" value="true" />
             <property name="allowEmptyTypes" value="true" />
             <property name="allowEmptyLoops" value="true" />
@@ -110,8 +102,7 @@
             <property name="option" value="EOL" />
         </module>
         <module name="PackageName">
-            <property name="format"
-                value="^[a-z]+(\.[a-z][a-z0-9]*)*$" />
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$" />
             <message key="name.invalidPattern"
                 value="Package name ''{0}'' must match pattern ''{1}''." />
         </module>
@@ -137,14 +128,12 @@
                  value="Local variable name ''{0}'' must match pattern ''{1}''."/>
              </module> -->
         <module name="ClassTypeParameterName">
-            <property name="format"
-                value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)" />
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)" />
             <message key="name.invalidPattern"
                 value="Class type name ''{0}'' must match pattern ''{1}''." />
         </module>
         <module name="MethodTypeParameterName">
-            <property name="format"
-                value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)" />
+            <property name="format" value="(^[A-Z][0-9]?)$|([A-Z][a-zA-Z0-9]*[T]$)" />
             <message key="name.invalidPattern"
                 value="Method type name ''{0}'' must match pattern ''{1}''." />
         </module>
@@ -171,8 +160,10 @@
                             <property name="ignoreFinal" value="false"/>
                             <property name="allowedAbbreviationLength" value="1"/>
                         </module> -->
-        <!-- USEFUL, BUT WARNS WITH STATIC/NONSTATIC METHODS AS WELL... <module name="OverloadMethodsDeclarationOrder" /> -->
-                        <!-- <module name="VariableDeclarationUsageDistance"/> -->
+                        <!-- USEFUL, BUT WARNS WITH STATIC/NONSTATIC METHODS AS WELL...
+                        <module name="OverloadMethodsDeclarationOrder" />
+                        <module name="VariableDeclarationUsageDistance"/>
+                        -->
         <!-- <module name="CustomImportOrder">
             <property name="specialImportsRegExp" value="com.google"/>
             <property name="sortImportsInGroupAlphabetically" value="true"/>
@@ -184,13 +175,11 @@
             <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL, GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD, NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR "/>
         </module> -->
         <module name="AnnotationLocation">
-            <property name="tokens"
-                value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF" />
+            <property name="tokens" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF" />
         </module>
         <module name="AnnotationLocation">
             <property name="tokens" value="VARIABLE_DEF" />
-            <property name="allowSamelineMultipleAnnotations"
-                value="true" />
+            <property name="allowSamelineMultipleAnnotations" value="true" />
         </module>
         <!-- <module name="NonEmptyAtclauseDescription"/> -->
         <!-- <module name="JavadocTagContinuationIndentation"/>
@@ -199,10 +188,8 @@
         </module>
         <module name="JavadocParagraph"/> -->
         <module name="AtclauseOrder">
-            <property name="tagOrder"
-                value="@param, @return, @throws, @deprecated" />
-            <property name="target"
-                value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF" />
+            <property name="tagOrder" value="@param, @return, @throws, @deprecated" />
+            <property name="target" value="CLASS_DEF, INTERFACE_DEF, ENUM_DEF, METHOD_DEF, CTOR_DEF, VARIABLE_DEF" />
         </module>
         <!-- <module name="JavadocMethod">
             <property name="scope" value="public"/>
