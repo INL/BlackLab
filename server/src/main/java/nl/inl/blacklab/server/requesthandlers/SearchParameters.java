@@ -63,7 +63,6 @@ import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
-import nl.inl.blacklab.tmputil.SearchMethods;
 
 /**
  * The parameters passed in the request.
@@ -581,7 +580,14 @@ public class SearchParameters {
 
     public SearchHits hits() throws BlsException {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return SearchMethods.find(search, getPattern(), getFilterQuery(), getSearchSettings());
+        try {
+            Query filter = hasFilter() ? getFilterQuery() : null;
+            return search.find(pattern.toQuery(search.queryInfo(), filter), getSearchSettings());
+        } catch (InvalidQuery e) {
+            throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
+        } catch (BlsException e) {
+            throw e;
+        }
     }
 
     public SearchDocs docsWindow() throws BlsException {

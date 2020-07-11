@@ -8,8 +8,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
 
@@ -84,8 +82,7 @@ public class BatchQuery {
                 try {
                     Timer t = new Timer();
                     System.out.print(query + "\t");
-                    TextPattern tp = CorpusQueryLanguageParser.parse(query);
-                    Hits hits = BLIndexMethods.find(index, QueryInfo.create(index), tp, null, null);
+                    Hits hits = index.find(CorpusQueryLanguageParser.parse(query).toQuery(QueryInfo.create(index)), null);
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());

@@ -140,6 +140,20 @@ public interface BlackLabIndex extends Closeable {
     
     /**
      * Find hits for a pattern in a field.
+     * 
+     * Uses the default search settings.
+     *
+     * @param query the pattern to find
+     * @return the hits found
+     * @throws WildcardTermTooBroad if a wildcard or regular expression term
+     *             is overly broad
+     */
+    default Hits find(BLSpanQuery query) throws WildcardTermTooBroad {
+        return find(query, (SearchSettings)null, (SearchLogger)null);
+    }
+
+    /**
+     * Find hits for a pattern in a field.
      *
      * @param query the pattern to find
      * @param settings search settings, or null for default

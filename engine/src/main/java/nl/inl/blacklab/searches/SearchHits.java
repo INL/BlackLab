@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchResults<Hits> {
 
-    SearchHits(QueryInfo queryInfo) {
+    public SearchHits(QueryInfo queryInfo) {
         super(queryInfo);
     }
     

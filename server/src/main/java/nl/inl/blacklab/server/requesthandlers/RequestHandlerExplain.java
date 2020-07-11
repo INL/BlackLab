@@ -8,12 +8,13 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 
 /**
  * Get information about the structure of an index.
@@ -35,7 +36,9 @@ public class RequestHandlerExplain extends RequestHandler {
         BlackLabIndex blIndex = blIndex();
         String patt = searchParam.getString("patt");
         try {
-            QueryExplanation explanation = BLIndexMethods.explain(blIndex, QueryInfo.create(blIndex), CorpusQueryLanguageParser.parse(patt), null);
+            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
+            BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
+            QueryExplanation explanation = blIndex.explain(q);
 
             // Assemble response
             ds.startMap()

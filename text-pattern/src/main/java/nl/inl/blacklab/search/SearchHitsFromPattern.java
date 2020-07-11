@@ -1,23 +1,28 @@
-package nl.inl.blacklab.searches;
+package nl.inl.blacklab.search;
 
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
+import nl.inl.blacklab.searches.SearchHits;
 
-/** A search that yields hits. */
-public class SearchHitsFromPattern extends SearchHits {
+/** A search that yields hits.
+ * @deprecated use SearchHitsFromBLSpanQuery instead
+ */
+@Deprecated
+class SearchHitsFromPattern extends SearchHits {
 
     private TextPattern pattern;
     
     private Query filter;
-    
+
     private SearchSettings searchSettings;
 
     public SearchHitsFromPattern(QueryInfo queryInfo, TextPattern pattern, Query filter, SearchSettings searchSettings) {
@@ -38,7 +43,10 @@ public class SearchHitsFromPattern extends SearchHits {
      */
     @Override
     protected Hits executeInternal() throws InvalidQuery {
-        return BLIndexMethods.find(queryInfo().index(), queryInfo(), pattern, filter, searchSettings);
+        BLSpanQuery spanQuery = pattern.translate(queryInfo().index().defaultExecutionContext(queryInfo().field()));
+        if (filter != null)
+            spanQuery = new SpanQueryFiltered(spanQuery, filter);
+        return queryInfo().index().find(spanQuery, searchSettings, queryInfo().searchLogger());
     }
     
     @Override

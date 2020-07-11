@@ -33,7 +33,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.testutil.DocIndexerExample;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
@@ -222,7 +221,7 @@ public class TestIndex {
      */
     public Hits find(String pattern, Query filter) {
         try {
-            return BLIndexMethods.find(index, QueryInfo.create(index), CorpusQueryLanguageParser.parse(pattern), filter, null);
+            return index.find(CorpusQueryLanguageParser.parse(pattern).toQuery(QueryInfo.create(index), filter), null);
         } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }

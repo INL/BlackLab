@@ -84,7 +84,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -1087,7 +1086,7 @@ public class QueryTool {
             Query filter = filterForThisQuery == null ? null : filterForThisQuery;
 
             // Execute search
-            BLSpanQuery spanQuery = BLIndexMethods.createSpanQuery(index, QueryInfo.create(index, contentsField), pattern, filter);
+            BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter);
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
             hits = index.find(spanQuery, null);

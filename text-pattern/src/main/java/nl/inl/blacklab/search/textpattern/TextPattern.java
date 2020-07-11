@@ -17,10 +17,14 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.List;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Describes some pattern of words in a content field. The point of this
@@ -67,6 +71,18 @@ public abstract class TextPattern {
 
     String optInsensitive(QueryExecutionContext context, String value) {
         return context.optDesensitize(value);
+    }
+
+    public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
+        return toQuery(queryInfo, null);
+    }
+
+    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
+        QueryExecutionContext context = queryInfo.index().defaultExecutionContext(queryInfo.field());
+        BLSpanQuery spanQuery = translate(context);
+        if (filter != null)
+            spanQuery = new SpanQueryFiltered(spanQuery, filter);
+        return spanQuery;
     }
 
 }

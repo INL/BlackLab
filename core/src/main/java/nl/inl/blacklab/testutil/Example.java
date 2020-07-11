@@ -31,12 +31,12 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 import nl.inl.util.FileUtil;
 import nl.inl.util.FileUtil.FileTask;
 
@@ -185,7 +185,8 @@ public class Example {
      */
     static void findPattern(TextPattern tp) throws InvalidQuery {
         // Execute the search
-        Hits hits = BLIndexMethods.find(index, QueryInfo.create(index), tp, null, null);
+        BLSpanQuery query = tp.toQuery(QueryInfo.create(index));
+        Hits hits = index.find(query);
         Hits sortedHits = hits.sort(new HitPropertyHitText(index));
 
         // Display the concordances

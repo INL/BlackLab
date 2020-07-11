@@ -9,6 +9,7 @@ import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -17,11 +18,12 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.FutureSearchResultCache;
-import nl.inl.blacklab.tmputil.SearchMethods;
 
 public class TestNewSearchSystem {
     
@@ -43,7 +45,7 @@ public class TestNewSearchSystem {
             MetadataField titleField = index.metadata().metadataFields().special("title");
             
             System.out.println("\nFirst 20 hits for 'schip':");
-            Hits hits = SearchMethods.find(index.search(), cqlLemmaSchip, null, index.searchSettings())
+            Hits hits = index.search().find(CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index)), index.searchSettings())
                     .window(0, 20)
                     .execute();
             Kwics kwics = hits.kwics(null);
@@ -57,7 +59,7 @@ public class TestNewSearchSystem {
             });
 
             System.out.println("\nFirst 10 document results for 'schip':");
-            SearchMethods.find(index.search(), cqlLemmaSchip, null, index.searchSettings())
+            index.search().find(CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index)), index.searchSettings())
                     .docs(3)
                     .window(0, 10)
                     .execute()
@@ -92,14 +94,16 @@ public class TestNewSearchSystem {
                     });
             System.out.flush();
 
-            System.out.println("\nCount number of hits for 'schip': " + SearchMethods.find(
-                    index.search(), cqlLemmaSchip, null, index.searchSettings())
+            BLSpanQuery q = CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index));
+            System.out.println("\nCount number of hits for 'schip': " + 
+                    index.search().find(q, index.searchSettings())
                     .count()
                     .execute()
                     .processedTotal());
 
             System.out.println("\nCount different spellings for 'schip': ");
-            SearchMethods.find(index.search(), cqlLemmaSchip, null, index.searchSettings())
+            q = CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index));
+            index.search().find(q, index.searchSettings())
                     .group(new HitPropertyHitText(index), 3)
                     .execute()
                     .forEach(group -> {
@@ -107,7 +111,8 @@ public class TestNewSearchSystem {
                     });
 
             System.out.println("\nCollocations for 'waterval': ");
-            TermFrequencyList colls = SearchMethods.find(index.search(), "[lemma=\"waterval\"]", null, index.searchSettings())
+            q = CorpusQueryLanguageParser.parse("[lemma=\"waterval\"]").toQuery(QueryInfo.create(index));
+            TermFrequencyList colls = index.search().find(q, index.searchSettings())
                     .collocations(annotLemma, ContextSize.get(10), MatchSensitivity.INSENSITIVE)
                     //.window(0, 10)
                     .execute();

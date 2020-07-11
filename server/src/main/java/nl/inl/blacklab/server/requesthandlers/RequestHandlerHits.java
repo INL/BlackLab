@@ -28,6 +28,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -49,7 +50,6 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
-import nl.inl.blacklab.tmputil.BLIndexMethods;
 
 /**
  * Request handler for hit results.
@@ -208,7 +208,8 @@ public class RequestHandlerHits extends RequestHandler {
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
             try {
-                QueryExplanation explanation = BLIndexMethods.explain(index, QueryInfo.create(index), tp, null);
+                BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
+                QueryExplanation explanation = index.explain(q);
                 ds.startEntry("explanation").startMap()
                         .entry("originalQuery", explanation.originalQuery())
                         .entry("rewrittenQuery", explanation.rewrittenQuery())
