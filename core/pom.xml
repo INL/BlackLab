@@ -29,12 +29,6 @@
     
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab-text-pattern</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    
-        <dependency>
-            <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-query-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
