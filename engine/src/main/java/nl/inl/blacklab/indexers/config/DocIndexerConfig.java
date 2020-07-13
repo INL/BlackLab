@@ -1,7 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,10 +15,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 
@@ -71,11 +70,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
         if (config.getConvertPluginId() != null || config.getTagPluginId() != null) {
             try {
-                // TODO: make actual class name configurable, or better yet, use SPI like with ConvertPlugin and TagPlugin
-                Class<?> cls = Class.forName("nl.inl.blacklab.indexers.DocIndexerConvertAndTag");
-                Class<? extends DocIndexerConfig> clsDocIndexerConvertAndTag = cls.asSubclass(DocIndexerConfig.class);
-                Constructor<? extends DocIndexerConfig> ctor = clsDocIndexerConvertAndTag.getConstructor(DocIndexer.class, ConfigInputFormat.class);
-                return ctor.newInstance(docIndexer, config);
+                return new DocIndexerConvertAndTag(docIndexer, config);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }

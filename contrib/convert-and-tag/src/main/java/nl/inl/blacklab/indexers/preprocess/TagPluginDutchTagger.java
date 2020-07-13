@@ -1,4 +1,4 @@
-package nl.inl.blacklab.indexers;
+package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,8 +24,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.preprocess.Plugin;
-import nl.inl.blacklab.indexers.preprocess.TagPlugin;
+import nl.inl.blacklab.index.Plugin;
 
 public class TagPluginDutchTagger implements TagPlugin {
     private static final String PROP_JAR = "jarPath";

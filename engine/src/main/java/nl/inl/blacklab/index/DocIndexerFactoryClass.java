@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,14 +20,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.indexers.DocIndexerAlto;
-import nl.inl.blacklab.indexers.DocIndexerFolia;
-import nl.inl.blacklab.indexers.DocIndexerPageXml;
-import nl.inl.blacklab.indexers.DocIndexerTei;
-import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
-import nl.inl.blacklab.indexers.DocIndexerTeiText;
-import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
-import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 import nl.inl.util.UnicodeStream;
 
 /**
@@ -41,24 +34,16 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
 
     @Override
     public void init() {
-        // Note that these names should not collide with the builtin config-based formats, or those will be used instead.
-
-        // Some abbreviations for commonly used builtin DocIndexers.
-        // You can also specify the classname for builtin DocIndexers,
-        // or a fully-qualified name for your custom DocIndexer (must
-        // be on the classpath)
-        supported.put("alto", DocIndexerAlto.class);
-        supported.put("di-folia", DocIndexerFolia.class);
-        supported.put("whitelab2", DocIndexerWhiteLab2.class);
-        supported.put("pagexml", DocIndexerPageXml.class);
-        supported.put("sketchxml", DocIndexerXmlSketch.class);
-
-        // TEI has a number of variants
-        // By default, the contents of the "body" element are indexed, but alternatively you can index the contents of "text".
-        // By default, the "type" attribute is assumed to contain PoS, but alternatively you can use the "function" attribute.
-        supported.put("di-tei", DocIndexerTei.class);
-        supported.put("di-tei-element-text", DocIndexerTeiText.class);
-        supported.put("di-tei-pos-function", DocIndexerTeiPosInFunctionAttr.class);
+        try {
+            // If the legacy docindexers JAR is included on the classpath, register them
+            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegacyDocIndexerRegisterer");
+            Method m = cls.getMethod("register", DocIndexerFactoryClass.class);
+            m.invoke(this);
+        } catch (ClassNotFoundException e) {
+            // OK, JAR not on classpath
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        } 
     }
 
     @Override

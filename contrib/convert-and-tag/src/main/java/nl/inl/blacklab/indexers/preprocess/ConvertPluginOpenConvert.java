@@ -1,4 +1,4 @@
-package nl.inl.blacklab.indexers;
+package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +19,7 @@ import java.util.Set;
 import java.util.jar.Manifest;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
-import nl.inl.blacklab.indexers.preprocess.Plugin;
+import nl.inl.blacklab.index.Plugin;
 
 public class ConvertPluginOpenConvert implements ConvertPlugin {
     private static final String PROP_JAR = "jarPath";

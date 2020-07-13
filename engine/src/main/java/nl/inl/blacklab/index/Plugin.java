@@ -1,4 +1,4 @@
-package nl.inl.blacklab.indexers.preprocess;
+package nl.inl.blacklab.index;
 
 import java.util.Map;
 

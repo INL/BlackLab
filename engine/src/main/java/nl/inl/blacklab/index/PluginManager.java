@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
-import nl.inl.blacklab.indexers.preprocess.Plugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 
 /**

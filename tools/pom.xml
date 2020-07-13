@@ -8,40 +8,25 @@
         <artifactId>blacklab-all</artifactId>
         <version>2.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>blacklab</artifactId>
+    <artifactId>blacklab-tools</artifactId>
     <packaging>jar</packaging>
 
-    <name>BlackLab Core</name>
+    <name>BlackLab Tools</name>
     <description>
-        BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene.
-        It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated,
-        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast 
-        and feature-rich search interface on our historical and contemporary text corpora.
+        Some useful tools for BlackLab, such as IndexTool and QueryTool, as well as some test utilities.
     </description>
 
     <dependencies>
-    
+
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
-    
-        <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab-text-pattern</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    
+
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-query-parser</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    
-        <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab-tools</artifactId>
             <version>${project.version}</version>
         </dependency>
 

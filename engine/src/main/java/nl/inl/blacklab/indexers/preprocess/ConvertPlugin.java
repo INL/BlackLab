@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.util.Set;
 
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.Plugin;
 
 public interface ConvertPlugin extends Plugin {
 
