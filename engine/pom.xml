@@ -24,6 +24,16 @@
             <artifactId>blacklab-util</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-content-store</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Lucene libs -->
         <dependency>

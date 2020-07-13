@@ -17,6 +17,12 @@
     </description>
 
     <dependencies>
+    
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Specific more efficient collection types -->
         <dependency>
