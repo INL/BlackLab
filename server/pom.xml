@@ -35,6 +35,12 @@
             <artifactId>blacklab</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-mocks</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>commons-fileupload</groupId>

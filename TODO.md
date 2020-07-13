@@ -1,7 +1,9 @@
 # Module refactoring TODO
 
-- blacklab-tools: tools and test utils to separate module, doesn't need to be included in core?
-  (+update docs; provide convenient way to run tools, e.g. shell scripts)
+- share e.g. Lucene versions between modules
+  share project version between modules as well?
+
+- tests to their modules
 
 - blacklab-indexing: code related to indexing?
 
@@ -15,8 +17,8 @@
 
 - document modules and their function. core remains the same, other modules could be used separately to some extent
 
-- move mocks to test code
-
+- blacklab-tools: doesn't need to be included in core?
+  (+update docs; provide convenient way to run tools, e.g. shell scripts)
 
 
 # Plugin aanpak

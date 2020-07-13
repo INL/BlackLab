@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.grouping;
+package nl.inl.blacklab.mocks;
 
 import java.util.List;
 import java.util.Map;
@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 
-final class MockMetadataField implements MetadataField {
+public final class MockMetadataField implements MetadataField {
     
     private String name;
 

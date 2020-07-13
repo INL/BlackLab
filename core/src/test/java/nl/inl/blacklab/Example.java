@@ -1,3 +1,4 @@
+package nl.inl.blacklab;
 /*******************************************************************************
  * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
  *
@@ -13,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *******************************************************************************/
-package nl.inl.blacklab.testutil;
+
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -25,6 +26,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.mocks.DocIndexerExample;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLab;

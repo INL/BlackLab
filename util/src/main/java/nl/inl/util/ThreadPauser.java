@@ -1,7 +1,5 @@
 package nl.inl.util;
 
-import nl.inl.blacklab.search.Pausible;
-
 public interface ThreadPauser extends Pausible {
 
     static ThreadPauser create() {

@@ -20,7 +20,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -28,6 +27,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestQueryRewrite {
 

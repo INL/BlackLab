@@ -8,12 +8,12 @@
         <artifactId>blacklab-all</artifactId>
         <version>2.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>blacklab-text-pattern</artifactId>
+    <artifactId>blacklab-mocks</artifactId>
     <packaging>jar</packaging>
 
-    <name>BlackLab Text Pattern</name>
+    <name>BlackLab Mocks</name>
     <description>
-        Abstract query classes that can be translated into Lucene queries.
+        Mock implementations of several BlackLab classes for testing.
     </description>
 
     <dependencies>
@@ -21,6 +21,12 @@
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-util</artifactId>
             <version>${project.version}</version>
         </dependency>
 

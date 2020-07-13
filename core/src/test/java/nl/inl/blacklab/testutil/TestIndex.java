@@ -1,4 +1,4 @@
-package nl.inl.blacklab;
+package nl.inl.blacklab.testutil;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,6 +18,7 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.mocks.DocIndexerExample;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -32,7 +33,6 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.testutil.DocIndexerExample;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {

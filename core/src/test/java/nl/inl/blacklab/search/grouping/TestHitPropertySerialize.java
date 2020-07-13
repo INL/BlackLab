@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockForwardIndex;
+import nl.inl.blacklab.mocks.MockMetadataField;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;

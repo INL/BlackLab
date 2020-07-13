@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search;
+package nl.inl.util;
 
 public interface Pausible {
 

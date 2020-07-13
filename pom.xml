@@ -13,9 +13,13 @@
     <url>https://github.com/INL/BlackLab</url>
 
     <modules>
+        <module>util</module>
         <module>engine</module>
         <module>text-pattern</module>
         <module>query-parser</module>
+        <module>tools</module>
+        <module>mocks</module>
+
         <module>core</module>
         <module>server</module>
     </modules>

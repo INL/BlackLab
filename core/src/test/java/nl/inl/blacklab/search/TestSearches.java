@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
@@ -23,6 +22,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestSearches {
 
