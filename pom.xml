@@ -27,6 +27,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <doclint>none</doclint>
+        <blacklab.luceneVersion>5.5.5</blacklab.luceneVersion>
+        <blacklab.version>${project.version}</blacklab.version>
     </properties>
 
     <licenses>
