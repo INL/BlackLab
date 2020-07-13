@@ -1,8 +1,11 @@
 # Module refactoring TODO
 
-- BLSpanQuery "niveau" vs Hits "niveau" van elkaar scheiden?
+- blacklab-forward-index ? Verweven met BlackLabIndex.
+  Je wilt interfaces extraheren naar een module (aangemaakt),
+  maar interfaces bevatten default methods die toch naar implementaties refereren. Er moeten dus abstract classes
+  bij gemaakt worden om die default methods heen te verplaatsen.
 
-- blacklab-contentstore, -forward-index ?
+- BLSpanQuery "niveau" vs Hits "niveau" van elkaar scheiden?
 
 - blacklab-indexing: code related to indexing?
 

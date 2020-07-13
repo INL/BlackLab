@@ -31,6 +31,11 @@
         </dependency>
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-interfaces</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-content-store</artifactId>
             <version>${project.version}</version>
         </dependency>
