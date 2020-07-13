@@ -69,7 +69,8 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
         }
     }
     
-    protected abstract R executeInternal() throws InvalidQuery;
+    @Override
+    public abstract R executeInternal() throws InvalidQuery;
     
     protected Future<R> getFromCache(Search<R> search, Supplier<R> searchTask) {
         return queryInfo.index().cache().getAsync(search, searchTask);

@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsFromBLSpanQuery extends SearchHits {
-
+    
     private BLSpanQuery spanQuery;
 
     private SearchSettings searchSettings;
@@ -31,7 +31,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
      */
     @Override
-    protected Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal() throws InvalidQuery {
         return queryInfo().index().find(spanQuery, searchSettings, queryInfo().searchLogger());
     }
     
@@ -69,5 +69,9 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
     @Override
     public String toString() {
         return toString("hits", spanQuery);
+    }
+
+    public BLSpanQuery query() {
+        return spanQuery;
     }
 }

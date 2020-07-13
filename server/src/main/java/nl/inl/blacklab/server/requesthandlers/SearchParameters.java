@@ -619,7 +619,7 @@ public class SearchParameters {
             docFilterQuery = new MatchAllDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(docFilterQuery);
+        return search.findDocuments(docFilterQuery);
     }
 
     /**
@@ -637,7 +637,7 @@ public class SearchParameters {
             docFilterQuery = new MatchAllDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(docFilterQuery);
+        return search.findDocuments(docFilterQuery);
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {

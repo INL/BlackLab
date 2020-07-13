@@ -20,7 +20,7 @@ public class SearchFacets extends AbstractSearch<Facets> {
     }
 
     @Override
-    protected Facets executeInternal() throws InvalidQuery {
+    public Facets executeInternal() throws InvalidQuery {
         return new Facets(source.execute(), properties);
     }
 

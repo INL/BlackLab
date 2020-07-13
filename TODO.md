@@ -1,17 +1,12 @@
 # Module refactoring TODO
 
-- share e.g. Lucene versions between modules
-  share project version between modules as well?
+- BLSpanQuery "niveau" vs Hits "niveau" van elkaar scheiden?
 
-- tests to their modules
+- blacklab-contentstore, -forward-index ?
 
 - blacklab-indexing: code related to indexing?
 
-- blacklab-contentstore
-
-- blacklab-util (util package)?
-
-- code dealing with files (config, input, ..)? try to make sure core is not dependent on file system.
+- code dealing with files (config, input, ..)? try to make sure engine is not dependent on file system.
 
 - better document API changes (see below)
 
@@ -20,11 +15,14 @@
 - blacklab-tools: doesn't need to be included in core?
   (+update docs; provide convenient way to run tools, e.g. shell scripts)
 
+- keep project versions in synch:
+  http://www.mojohaus.org/versions-maven-plugin/
+
 
 # Plugin aanpak
 
 - binnen huidige plugin-aanpak moet BlackLab alle plugintypes kennen. Misschien geen bezwaar.
-
+- we kunnen beginnen met alles binnen blacklab-engine houden en op termijn evt. een dynamisch pluginsysteem gebruiken. misschien beter om niet direct te ingrijpende wijzigingen te gaan maken.
 
 
 # (start of) migration guide

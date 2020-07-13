@@ -34,6 +34,8 @@ public interface Search<R extends SearchResult> {
      */
     Future<R> executeAsync();
     
+    R executeInternal() throws InvalidQuery;
+    
     @Override
     boolean equals(Object obj);
 

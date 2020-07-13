@@ -22,7 +22,7 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     }
 
     @Override
-    protected HitGroups executeInternal() throws InvalidQuery {
+    public HitGroups executeInternal() throws InvalidQuery {
         return source.execute().sort(property);
     }
     

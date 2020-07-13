@@ -84,6 +84,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -1089,7 +1090,8 @@ public class QueryTool {
             BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter);
             if (verbose)
                 outprintln("SpanQuery: " + spanQuery.toString(contentsField.name()));
-            hits = index.find(spanQuery, null);
+            SearchHits search = index.search().find(spanQuery);
+            hits = search.execute();
             docs = null;
             groups = null;
             sortedHits = null;

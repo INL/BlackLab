@@ -20,6 +20,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -270,6 +272,10 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
+    }
+
+    public static HitGroups tokenFrequencies(HitProperty property, int maxHits) {
+        throw new NotImplementedException("Fast path for token frequencies per annotation(s) goes here");
     }
     
 }

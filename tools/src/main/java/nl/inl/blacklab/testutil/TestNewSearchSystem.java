@@ -72,7 +72,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nFirst 10 document results for title:test :");
             index.search()
-                    .find(new TermQuery(new Term("title", "test")))
+                    .findDocuments(new TermQuery(new Term("title", "test")))
                     .window(0, 10)
                     .execute()
                     .forEach(doc -> {
@@ -84,7 +84,7 @@ public class TestNewSearchSystem {
 
             System.out.println("\nFirst 10 document results for title:test :");
             index.search()
-                    .find(new TermQuery(new Term("title", "test")))
+                    .findDocuments(new TermQuery(new Term("title", "test")))
                     .window(0, 10)
                     .execute()
                     .forEach(doc -> {

@@ -19,15 +19,19 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     @Override
-    protected SearchResult executeInternal() throws InvalidQuery {
+    public SearchResult executeInternal() throws InvalidQuery {
         throw new UnsupportedOperationException();
     }
 
     public SearchHits find(BLSpanQuery query, SearchSettings searchSettings) {
         return new SearchHitsFromBLSpanQuery(queryInfo(), query, searchSettings);
     }
+
+    public SearchHits find(BLSpanQuery query) {
+        return find(query, null);
+    }
     
-    public SearchDocs find(Query documentQuery) {
+    public SearchDocs findDocuments(Query documentQuery) {
         return new SearchDocsFromQuery(queryInfo(), documentQuery);
     }
     

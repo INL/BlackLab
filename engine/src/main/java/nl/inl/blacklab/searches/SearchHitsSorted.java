@@ -18,7 +18,7 @@ public class SearchHitsSorted extends SearchHits {
     }
     
     @Override
-    protected Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal() throws InvalidQuery {
         return source.execute().sort(property);
     }
     

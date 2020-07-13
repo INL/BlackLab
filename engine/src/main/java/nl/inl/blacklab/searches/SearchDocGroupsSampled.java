@@ -19,7 +19,7 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
     }
     
     @Override
-    protected DocGroups executeInternal() throws InvalidQuery {
+    public DocGroups executeInternal() throws InvalidQuery {
         return source.execute().sample(sampleParameters);
     }
     

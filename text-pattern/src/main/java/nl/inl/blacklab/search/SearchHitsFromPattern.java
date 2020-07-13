@@ -42,7 +42,7 @@ class SearchHitsFromPattern extends SearchHits {
      * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
      */
     @Override
-    protected Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal() throws InvalidQuery {
         BLSpanQuery spanQuery = pattern.translate(queryInfo().index().defaultExecutionContext(queryInfo().field()));
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);

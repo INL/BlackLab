@@ -2,6 +2,8 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -10,6 +12,8 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsFromHits extends SearchHitGroups {
     
+    private static final boolean TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED = false;
+
     private SearchHits source;
     
     private HitProperty property;
@@ -30,7 +34,24 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @throws InvalidQuery 
      */
     @Override
-    protected HitGroups executeInternal() throws InvalidQuery {
+    public HitGroups executeInternal() throws InvalidQuery {
+        
+        // Choose the fastest way to resolve our search .
+        if (source instanceof SearchHitsFromBLSpanQuery) {
+            SearchHitsFromBLSpanQuery source1 = (SearchHitsFromBLSpanQuery)source;
+            BLSpanQuery sourceQuery = source1.query();
+            if (sourceQuery instanceof SpanQueryAnyToken) {
+                if (sourceQuery.hitsAllSameLength() && sourceQuery.hitsLengthMin() == 1) {
+                    // Any token query! Choose faster path that just "looks up" 
+                    // token frequencies in the forward index(es).
+                    if (TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED) {
+                        return HitGroups.tokenFrequencies(property, maxHits);
+                    }
+                }
+            }
+        }
+
+        // Just find all the hits and group them.
         return HitGroups.fromHits(source.execute(), property, maxHits);
     }
     

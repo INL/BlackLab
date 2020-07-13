@@ -16,7 +16,7 @@ public class SearchDocsFromQuery extends SearchDocs {
     }
 
     @Override
-    protected DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal() throws InvalidQuery {
         return queryInfo().index().queryDocuments(query);
     }
     

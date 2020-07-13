@@ -66,7 +66,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public boolean equals(Object obj) {
         if (obj instanceof SpanQueryAnyToken) {
             SpanQueryAnyToken tp = ((SpanQueryAnyToken) obj);
-            return min == tp.min && max == tp.max;
+            return min == tp.min && max == tp.max && luceneField.equals(tp.luceneField);
         }
         return false;
     }
