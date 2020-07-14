@@ -55,7 +55,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
                     throw new AssertionError(e2);
                 }
             }
-            throw BlackLabRuntimeException.wrap(e == null ? e : e.getCause());
+            throw BlackLabRuntimeException.wrap(e.getCause() == null ? e : e.getCause());
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         } catch (CompletionException e) {
