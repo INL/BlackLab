@@ -582,7 +582,7 @@ public class SearchParameters {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
         try {
             Query filter = hasFilter() ? getFilterQuery() : null;
-            return search.find(pattern.toQuery(search.queryInfo(), filter), getSearchSettings());
+            return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         } catch (BlsException e) {
