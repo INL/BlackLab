@@ -1,0 +1,8 @@
+# Ignore these subdirs when building Docker image
+**/target
+**/.settings
+**/doc
+docker/Dockerfile.*
+docker/*.sh
+.git
+vmtouch
