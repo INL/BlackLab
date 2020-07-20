@@ -5,6 +5,9 @@ target
 .settings
 .project
 .classpath
+.factorypath
+/.apt_generated/
+/.apt_generated_tests/
 
 # IntelliJ IDEA project settings (old and new)
 *.iml
