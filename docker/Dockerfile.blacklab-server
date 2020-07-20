@@ -20,5 +20,5 @@ COPY docker/blacklab-server.yaml /etc/blacklab/
 # Copy the WAR file
 COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/blacklab-server.war
 
-# Create the data directory [TODO: volume?]
-RUN mkdir /data
+# Our data directory (either an anonymous volume or a named volume mounted by user)
+VOLUME /data

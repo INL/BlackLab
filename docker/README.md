@@ -17,7 +17,8 @@ If you have some indexes on the local machine and want to use a bind mount to ac
 
 
 ## TODO
-
 - use volumes
 - offer a separate Docker image for indexing data into a volume
+- user?
+- 
 - (more to come)
