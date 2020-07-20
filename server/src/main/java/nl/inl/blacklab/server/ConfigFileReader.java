@@ -77,13 +77,6 @@ class ConfigFileReader {
             }
         }
         
-        ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-        try {
-            configFileJsonNode = mapper.readTree(new StringReader(configFileContents));
-        } catch (IOException e) {
-            throw new ConfigurationException("Error parsing config file: " + configFileRead, e);
-        }
-            
         if (configFileContents == null) {
             String descDirs = StringUtils.join(searchDirs, ", ");
             throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
@@ -95,6 +88,13 @@ class ConfigFileReader {
                     "  ]\n" +
                     "}\n\n" +
                     "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+        } else {
+            ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+            try {
+                configFileJsonNode = mapper.readTree(new StringReader(configFileContents));
+            } catch (IOException e) {
+                throw new ConfigurationException("Error parsing config file: " + configFileRead, e);
+            }
         }
     }
 
