@@ -259,4 +259,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         }
         return new PropertyValueMultiple(result);
     }
+    
+    @Override
+    public boolean isAnnotationsHitText() {
+        return properties.stream().allMatch(HitProperty::isAnnotationsHitText);
+    }
 }

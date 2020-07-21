@@ -349,4 +349,12 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         return null;
     }
 
+    /**
+     * Does this represent the hit text for one or more annotations?
+     * @return true if it does, false if not
+     */
+    public boolean isAnnotationsHitText() {
+        return false;
+    }
+
 }

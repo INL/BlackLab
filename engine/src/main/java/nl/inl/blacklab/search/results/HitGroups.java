@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -61,6 +61,10 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
      */
     public static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
         return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
+    }
+
+    public static HitGroups tokenFrequencies(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
+        return new HitGroupsTokenFrequencies(queryInfo, filterQuery, property, maxHits);
     }
 
     private HitProperty criteria;
@@ -272,10 +276,6 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
-    }
-
-    public static HitGroups tokenFrequencies(HitProperty property, int maxHits) {
-        throw new NotImplementedException("Fast path for token frequencies per annotation(s) goes here");
     }
     
 }

@@ -115,7 +115,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     @Override
     protected boolean okayToInvertForOptimization() {
         // Yes, inverting is actually an improvement
-        return min == 1 && max == 1;
+        return isSingleAnyToken();
     }
 
     @Override
@@ -156,6 +156,11 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     @Override
     public boolean hitsAreUnique() {
         return true;
+    }
+    
+    @Override
+    public boolean isSingleAnyToken() {
+        return min == 1 && max == 1;
     }
 
     @Override

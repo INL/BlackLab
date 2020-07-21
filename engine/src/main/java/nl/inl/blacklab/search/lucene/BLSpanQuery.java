@@ -293,6 +293,14 @@ public abstract class BLSpanQuery extends SpanQuery {
     public abstract boolean hitsAreUnique();
 
     /**
+     * Is this query a single "any token", e.g. one that matches all individual tokens?
+     * @return true if it is, false if not
+     */
+    public boolean isSingleAnyToken() {
+        return false;
+    }
+
+    /**
      * Can this query "internalize" the given neighbouring clause?
      *
      * Internalizing means adding the clause to its children, which is often more

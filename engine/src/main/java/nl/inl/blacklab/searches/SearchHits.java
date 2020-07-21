@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -96,6 +98,18 @@ public abstract class SearchHits extends SearchResults<Hits> {
      */
     public SearchCollocations collocations(Annotation annotation, ContextSize size, MatchSensitivity sensitivity) {
         return new SearchCollocationsFromHits(queryInfo(), this, annotation, size, sensitivity);
+    }
+
+    /** Does this query represent all tokens in a set of documents (possibly the whole index)?
+     * 
+     * If so, we can often optimize subsequent operations by resolving them more intelligently.
+     */
+    public boolean isAnyTokenQuery() {
+        return false;
+    }
+
+    protected Query getFilterQuery() {
+        return null;
     }
 
 }

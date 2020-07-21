@@ -66,4 +66,9 @@ public class SearchHitsFiltered extends SearchHits {
     public String toString() {
         return toString("filter", source, property, value);
     }
+    
+    @Override
+    public boolean isAnyTokenQuery() {
+        return source.isAnyTokenQuery();
+    }
 }
