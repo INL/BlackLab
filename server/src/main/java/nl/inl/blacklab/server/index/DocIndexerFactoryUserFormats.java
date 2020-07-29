@@ -169,7 +169,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
             String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getUserId(), fileName);
             
             String userIdFromFormatIdentifier = getUserIdOrFormatName(formatIdentifier, false);
-            if (user.canManageFormatsFor(userIdFromFormatIdentifier))
+            if (!user.canManageFormatsFor(userIdFromFormatIdentifier))
                 throw new NotAuthorized("You can only create formats for yourself.");
 
             // This is a little stupid, but we need to read the stream twice:
