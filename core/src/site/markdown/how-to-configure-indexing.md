@@ -41,7 +41,7 @@ customize them to fit your data.
 
 Let's see how to write a configuration file for a simple custom corpus format.
 
-Suppose our XML files look like this:
+Suppose our tokenized XML files look like this:
 
 ```xml
 <?xml version="1.0" ?>
@@ -67,8 +67,9 @@ Suppose our XML files look like this:
 
 Below is the configuration file you would need to index files of this type. This uses [YAML](http://yaml.org/) ([good introduction](http://docs.ansible.com/ansible/latest/YAMLSyntax.html); also see below for some common pitfalls), but you can also use [JSON](http://json.org/) if you prefer.
 
-Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).  
-**NOTE** Some correct xpath's like ```string(.//tei:availability[1]/@status='free')``` may not yield the expected, changing this one to ```string(//tei:availability[1]/@status='free')``` fixes it.  
+Note that the settings with names ending in "Path" are XPath 1.0 expressions (at least if you're parsing XML files - more on other file types later).
+
+(**NOTE** in rare cases, a correct XPath may produce unexpected results. This one for example: `string(.//tei:availability[1]/@status='free')`. There's often a workaround for this, in this case changing it to `string(//tei:availability[1]/@status='free')` fixes it)
 
 
 ```yaml
@@ -131,7 +132,7 @@ metadata:
     valuePath: .        # element text is the field value
 ```
 
-To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of $BLACKLAB\_CONFIG\_DIR/formats/ (if this environment variable is set), $HOME/.blacklab/formats/ or /etc/blacklab/formats/.
+To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of `$BLACKLAB_CONFIG_DIR/formats/` (if this environment variable is set), `$HOME/.blacklab/formats/` or `/etc/blacklab/formats/`.
 
 This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
 
@@ -288,7 +289,7 @@ annotation. You should probably have a forward index for at least the word annot
   forwardIndex: false
 ```
 
-A note about forward indices and indexing multiple values at a single corpus position (such as happens when indexing subannotations): as of right now, the forward index will only store the first value indexed at any position. This is the value used for grouping and sorting on this annotation. In the future we may add the ability to store multiple values for a token position in the forward index, although it is likely that the first value will always be the one used for sorting and grouping.
+A note about forward indices and indexing multiple values at a single corpus position: as of right now, the forward index will only store the first value indexed at any position. This is the value used for grouping and sorting on this annotation. In the future we may add the ability to store multiple values for a token position in the forward index, although it is likely that the first value will always be the one used for sorting and grouping.
 
 Note that if you want KWICs or snippets that include annotations without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass `usecontent=orig` to BlackLab Server, or call `Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE)`
 
@@ -296,7 +297,7 @@ Note that if you want KWICs or snippets that include annotations without a forwa
 
 ## Multiple values at one position
 
-Subannotations and standoff annotations (see below) both provide a way to index additional values at the same token position. But it is also possible to just index several values for any regular annotation, such as multiple lemmatizations or multiple possible part of speech tags.
+Standoff annotations (see below) provide a way to index additional values at the same token position. But it is also possible to just index several values for any regular annotation, such as multiple lemmatizations or multiple possible part of speech tags.
 
 If your data looks like this:
 
@@ -516,8 +517,6 @@ annotatedFields:
         valuePath: "@class" # class attribute contains the subannotation value
 ```
 
-Note that these subproperties will not have their own forward index; only the main annotation has one, and it includes only the first value indexed at any location, so the subannotation values aren't stored there either.
-
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
 
 <a id="processing"></a>
@@ -529,7 +528,7 @@ BlackLab uses the XML library VTD-XML by default for processing documents while 
 VTD supports XPath 1, Saxon at this time XPath 3.1. Saxon gives you far more possibilities to build solutions in XPath, obsoleting some configuration options. 
 Depending on your data Saxon processing may be 2 to 30 times faster. It does however require significantly more memory, depending on the size of your input documents.
 
-Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath_examples.md)
+Some features may not be implemented for Saxon processing, when there is a good XPath alternative this is the preferred solution. See [XPath examples](xpath_examples.html)
 
 To use Saxon, place this in your input format config (.blf.yaml) file:
 ```yaml
@@ -1127,7 +1126,7 @@ annotatedFields:
       basePath: pos          # subsequent XPaths are relative to this
       valuePath: "@class"    # (relative to basePath)
 
-      # Subannotations that will be indexed at the same token position
+      # Subannotations
       subannotations:
 
         # A single subannotation
@@ -1136,8 +1135,10 @@ annotatedFields:
 
         # Multiple subannotations defined at once:
         # visits all elements matched by forEachPath and
-        # adds a subannotation based on namePath and valuePath 
-        # for each)
+        # indexes subannotations based on namePath and valuePath 
+        # for each. Note that all subannotations MUST be declared
+        # here as well, they just don't need a valuePath. If you
+        # don't declare a subannotation, it will generate errors.
       - forEachPath: "feat"  # (relative to basePath)
         namePath: "@subset"  # (relative to forEachPath)
         valuePath: "@class"  # (relative to forEachPath)

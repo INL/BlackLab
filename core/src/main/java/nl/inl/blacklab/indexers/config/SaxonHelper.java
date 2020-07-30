@@ -17,6 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.xml.namespace.NamespaceContext;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
 import javax.xml.xpath.XPath;
@@ -37,7 +40,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
@@ -50,7 +52,6 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 /**
  * A helper for indexing using saxon
  */
-@SuppressWarnings("deprecation")
 class SaxonHelper {
 
     public static final int MAXDOCSIZEINMEMORY = 4_096_000;
@@ -120,7 +121,7 @@ class SaxonHelper {
      */
     private char[] document;
 
-    SaxonHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException {
+    SaxonHelper(Reader reader, ConfigInputFormat blConfig) throws IOException, SAXException, XPathException, ParserConfigurationException {
         // characters needed for calculating positions
         document = IOUtils.toCharArray(reader);
         CharArrayReader stream = new CharArrayReader(document);
@@ -143,7 +144,9 @@ class SaxonHelper {
         }
         // make sure our content handler doesn't get overwritten by saxon
         MyContentHandler myContentHandler = new MyContentHandler();
-        XMLReader xmlReader = XMLReaderFactory.createXMLReader();
+        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
+        SAXParser parser = parserFactory.newSAXParser();
+        XMLReader xmlReader = parser.getXMLReader(); //XMLReaderFactory.createXMLReader();
         xmlReader.setContentHandler(myContentHandler);
         XMLReader wrapper = new MyXMLReader(xmlReader);
         // regular parsing with line numbering enabled
@@ -377,9 +380,8 @@ class SaxonHelper {
             return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(e -> e.getKey()).findFirst().orElse(null);
         }
 
-        @SuppressWarnings({ "rawtypes", "unchecked" })
         @Override
-        public Iterator getPrefixes(String namespaceURI) {
+        public Iterator<String> getPrefixes(String namespaceURI) {
             return ns.keySet().iterator();
         }
     }
