@@ -108,7 +108,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /** Contents still waiting to be written to the contents file in blocks */
     StringBuilder unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES * 10);
-    /** Byte index in unwrittenContents */
+    
+    /** Character index in unwrittenContents */
     protected int unwrittenIndex = 0;
 
     /**  unwritten content buffer is not flushed immediately after writing, as that is very slow in some situations (large documents in particular) */
@@ -257,7 +258,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         ensureContentsFileOpen();
 
         // Do we have a block to write?
-        while (writeLastBlock && getUnwrittenByteCount() > 0 || getUnwrittenByteCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
+        while (writeLastBlock && getUnwrittenCharCount() > 0 || getUnwrittenCharCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
             int offsetBefore = unwrittenIndex;
             byte[] encoded = encodeBlock(); // encode a number of characters to produce a 4K block
             int offsetAfter = unwrittenIndex;
@@ -275,13 +276,13 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         }
 
         // Free memory
-        if (unwrittenIndex > 0 && getUnwrittenByteCount() == 0) {
+        if (unwrittenIndex > 0 && getUnwrittenCharCount() == 0) {
             this.unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES*10);
             unwrittenIndex = 0;
         }
     }
 
-    private int getUnwrittenByteCount() {
+    private int getUnwrittenCharCount() {
         return this.unwrittenContents.length() - this.unwrittenIndex;
     }
 
@@ -395,7 +396,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     
     /** The store routine (after appending to unwrittenContents) */
     private int store() {
-        if (getUnwrittenByteCount() > 0) {
+        if (getUnwrittenCharCount() > 0) {
             // Write the last (not completely full) block
             writeBlocks(true);
         }
@@ -482,7 +483,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     protected byte[] encodeBlock() {
 
         int length = TYPICAL_BLOCK_SIZE_CHARACTERS;
-        int available = getUnwrittenByteCount();
+        int available = getUnwrittenCharCount();
         if (length > available)
             length = available;
 
