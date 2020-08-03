@@ -109,7 +109,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /** Contents still waiting to be written to the contents file in blocks */
     StringBuilder unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES * 10);
     
-    /** Character index in unwrittenContents */
+    /** Index of the first unwritten character in unwrittenContents */
     protected int unwrittenIndex = 0;
 
     /**  unwritten content buffer is not flushed immediately after writing, as that is very slow in some situations (large documents in particular) */
@@ -258,7 +258,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         ensureContentsFileOpen();
 
         // Do we have a block to write?
-        while (writeLastBlock && getUnwrittenCharCount() > 0 || getUnwrittenCharCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
+        while (writeLastBlock && getUnwrittenCharCount() > 0 
+                || getUnwrittenCharCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
             int offsetBefore = unwrittenIndex;
             byte[] encoded = encodeBlock(); // encode a number of characters to produce a 4K block
             int offsetAfter = unwrittenIndex;
