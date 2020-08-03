@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.lucene.document.Document;
@@ -184,6 +183,21 @@ public interface Indexer {
     @Deprecated
     void index(String fileName, InputStream input, String fileNameGlob);
 
+    /** 
+     * Index a file, archive of files, or directory.
+     * 
+     * @param file the file    
+     */
+    default void index(File file) { index(file, null); }
+
+    /** 
+     * Index a file, archive of files, or directory.
+     * 
+     * @param file the file    
+     * @param fileNameGlob 
+     *  Only used if this file is a directory or is determined to be an archive or directory. Only processes files matching the glob.
+     */
+    void index(File file, String fileNameGlob);
     
     /** 
      * Index a file or archive of files from memory.
@@ -193,29 +207,16 @@ public interface Indexer {
      * @param fileNameGlob 
      *  Only used if this file is determined to be an archive. Only process files matching the glob.
      */
-    void index(String fileName, byte[] contents, Optional<String> fileNameGlob);
+    void index(String fileName, byte[] contents, String fileNameGlob);
+    
     /** 
      * Index a file or archive of files from memory.
      * 
      * @param fileName name of the file including extension. Used to detect archives/file types.
      * @param contents file contents 
      */
-    default void index(String fileName, byte[] contents) { index(fileName, contents, Optional.empty()); }
-    /** 
-     * Index a file, archive of files, or directory.
-     * 
-     * @param file the file    
-     * @param fileNameGlob 
-     *  Only used if this file is a directory or is determined to be an archive or directory. Only processes files matching the glob.
-     */
-    void index(File file, Optional<String> fileNameGlob);
-    /** 
-     * Index a file, archive of files, or directory.
-     * 
-     * @param file the file    
-     */
-    default void index(File file) { index(file, Optional.empty()); }
-
+    default void index(String fileName, byte[] contents) { index(fileName, contents, null); }
+    
     /**
      * Get our index directory
      *

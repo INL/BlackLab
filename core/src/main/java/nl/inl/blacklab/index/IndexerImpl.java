@@ -537,26 +537,6 @@ class IndexerImpl implements DocWriter, Indexer {
         indexWriter().forwardIndex(fieldWriter.field()).addDocument(annotations, posIncr, currentLuceneDoc);
     }
 
-    @Override
-    public void index(File file, Optional<String> fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
-            proc.setFileNameGlob(fileNameGlob.orElse("*"));
-            proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener());
-            proc.processFile(file);
-        }
-    }
-    
-    @Override
-    public void index(String fileName, byte[] contents, Optional<String> fileNameGlob) {
-         try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
-            proc.setFileNameGlob(fileNameGlob.orElse("*"));
-            proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener());
-            proc.processFile(fileName, contents, null);
-        }
-    }
-    
     @Deprecated
     @Override
     public void index(String documentName, InputStream input) {
@@ -566,20 +546,59 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Deprecated
     @Override
-    public void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException {
-        index(documentName, IOUtils.toString(reader).getBytes(StandardCharsets.UTF_8));
+    public void index(String documentName, Reader reader) {
+        try {
+            index(documentName, IOUtils.toString(reader).getBytes(StandardCharsets.UTF_8));
+        } catch (MalformedInputFile e) {
+            listener().errorOccurred(e, documentName, null);
+            logger.error("Parsing " + documentName + " failed:");
+            e.printStackTrace();
+            logger.error("(continuing indexing)");
+        } catch (Exception e) {
+            listener().errorOccurred(e, documentName, null);
+            logger.error("Parsing " + documentName + " failed:");
+            e.printStackTrace();
+            logger.error("(continuing indexing)");
+        }
     }
 
     @Deprecated
     @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
         try {
-            index(fileName, IOUtils.toByteArray(input), Optional.ofNullable(fileNameGlob));
+            index(fileName, IOUtils.toByteArray(input), fileNameGlob);
         } catch (IOException e) {
             listener.errorOccurred(e, fileName, null);
         }
     }
 
+    @Override
+    public void index(File file) {
+        index(file, "*");
+    }
+
+    @Override
+    public void index(File file, String fileNameGlob) {
+        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
+            proc.setFileNameGlob(optGlob.orElse("*"));
+            proc.setFileHandler(docIndexerWrapper);
+            proc.setErrorHandler(listener());
+            proc.processFile(file);
+        }
+    }
+    
+    @Override
+    public void index(String fileName, byte[] contents, String fileNameGlob) {
+        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
+            proc.setFileNameGlob(optGlob.orElse("*"));
+            proc.setFileHandler(docIndexerWrapper);
+            proc.setErrorHandler(listener());
+            proc.processFile(fileName, contents, null);
+        }
+    }
+    
     /**
      * Should we continue indexing or stop?
      *
