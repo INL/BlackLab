@@ -478,7 +478,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     }
 
     public void addToBlock(char[] contentPart, int start, int length) {
-        currentBlockContents.append(contentPart);
+        currentBlockContents.append(contentPart, start, length);
     }
 
     /**
