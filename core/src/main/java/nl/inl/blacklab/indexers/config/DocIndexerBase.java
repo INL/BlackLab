@@ -1,26 +1,5 @@
 package nl.inl.blacklab.indexers.config;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.MaxDocsReached;
-import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DownloadCache;
-import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.MetadataFetcher;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.util.FileProcessor;
-import nl.inl.util.StringUtil;
-import org.apache.commons.io.IOUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.util.BytesRef;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,6 +17,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
+import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.index.MetadataFetcher;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.FileProcessor;
+import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
@@ -455,7 +456,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         uniqueStrings.clear();
     }
 
-       /**
+    /**
      * Store the entire document at once.
      *
      * Subclasses that simply capture the entire document can use this in their

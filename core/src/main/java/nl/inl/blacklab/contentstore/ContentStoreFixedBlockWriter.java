@@ -342,19 +342,18 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
      *  
-     * @param inputDocument the content of the document
-     * @param documentByteOffset byte offset to begin storing
-     * @param documentLengthBytes length of the data to store 
+     * @param content content to store
+     * @param offset byte offset to begin storing
+     * @param length number of bytes to store 
      * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
      */
     @Override
-    public synchronized void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
-        if (documentLengthBytes == 0) {
+    public synchronized void storePart(byte[] content, int offset, int length, Charset cs) {
+        if (length == 0) {
             return;
         }
-        
         CharsetDecoder cd = cs.newDecoder();
-        ByteBuffer in = ByteBuffer.wrap(inputDocument, documentByteOffset, documentLengthBytes);
+        ByteBuffer in = ByteBuffer.wrap(content, offset, length);
         CharBuffer out = CharBuffer.allocate(1024);
         while (in.hasRemaining()) {
             cd.decode(in, out, true);
@@ -364,11 +363,13 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         writeBlocks(false);
     }
 
-    
-    
     /**
      * Store the given content and assign an id to it.
-     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
+     * 
+     * Parts of the document may already have been stored before. This is the final part and will
+     * assign and return the document's content id. 
+     *
+     * NOTE: If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
      * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
      *
      * @param content the content to store
@@ -382,16 +383,19 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     
     /**
      * Store the given content and assign an id to it.
+     * 
+     * Parts of the document may already have been stored before. This is the final part and will
+     * assign and return the document's content id. 
      *
-     * @param inputDocument the content of the document
-     * @param documentByteOffset byte offset to begin storing
-     * @param documentLengthBytes length of the data to store 
+     * @param content the content of the document
+     * @param offset byte offset to begin storing
+     * @param length number of bytes to store 
      * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
-     * @return the id assigned to the content
+     * @return the id assigned to the document
      */
     @Override
-    public synchronized int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
-        storePart(inputDocument, documentByteOffset, documentLengthBytes, cs);
+    public synchronized int store(byte[] content, int offset, int length, Charset cs) {
+        storePart(content, offset, length, cs);
         return store();
     }
     
