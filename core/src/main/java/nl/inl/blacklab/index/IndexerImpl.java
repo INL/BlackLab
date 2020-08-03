@@ -99,15 +99,16 @@ class IndexerImpl implements DocWriter, Indexer {
             if (!indexer.continueIndexing())
                 return;
 
-            // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
-            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
-            // meantime
             listener().fileStarted(documentName);
             int docsDoneBefore = indexWriter.writer().numDocs();
             long tokensDoneBefore = listener().getTokensProcessed();
 
             indexer.index();
             listener().fileDone(documentName);
+            
+            // FIXME the following checks are broken in multithreaded indexing, as the listener is shared between threads
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
+            // meantime
             int docsDoneAfter = indexWriter.writer().numDocs();
             if (docsDoneAfter == docsDoneBefore) {
                 logger.warn("No docs found in " + documentName + "; wrong format?");
