@@ -575,8 +575,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     }
 
     @Override
-    public void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
-        if (documentLengthBytes <= 0)
+    public void storePart(byte[] content, int offset, int length, Charset cs) {
+        if (length <= 0)
             return;
         if (blockOffsetWhileStoring.isEmpty())
             blockOffsetWhileStoring.add(0); // first offset is always 0
@@ -584,7 +584,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         OutputStream os = openCurrentStoreFile();
 
         CharsetDecoder cd = cs.newDecoder();
-        ByteBuffer in = ByteBuffer.wrap(inputDocument, documentByteOffset, documentLengthBytes);
+        ByteBuffer in = ByteBuffer.wrap(content, offset, length);
         CharBuffer out = CharBuffer.allocate(newEntryBlockSizeCharacters);
         while (in.remaining() > 0) {
             int charsLeftInCurrentBlock = (blockOffsetWhileStoring.size() * newEntryBlockSizeCharacters) - charsFromEntryWritten;
@@ -637,8 +637,8 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     }
 
     @Override
-    public int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
-        storePart(inputDocument, documentByteOffset, documentLengthBytes, cs);
+    public int store(byte[] content, int offset, int length, Charset cs) {
+        storePart(content, offset, length, cs);
         return store();
     }
 

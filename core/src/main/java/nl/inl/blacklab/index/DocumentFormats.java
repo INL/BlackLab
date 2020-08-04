@@ -156,10 +156,18 @@ public class DocumentFormats {
     }
 
     /**
-     * @deprecated (since 2.0) use byte[] version 
-     * Convenience function. 
+     * Convenience function.
+     *  
      * Note that it is usually faster to offer the document as byte[] and charset, 
      * because that allows the buffer to be passed on without copying. 
+     * 
+     * @param formatIdentifier format to get the DocIndexer for
+     * @param indexer our indexer
+     * @param documentName document name
+     * @param reader file contents
+     * @return the DocIndexer
+     * @throws UnsupportedOperationException 
+     * @deprecated (since 2.2) use byte[] version 
      */
     @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
@@ -169,12 +177,19 @@ public class DocumentFormats {
     }
 
     /** 
-     * @deprecated (since 2.0) use byte[] version 
-     * Convenience function. 
+     * Convenience function.
+     * 
      * Note that it is usually faster to offer the document as byte[] and charset, 
-     * because that allows the buffer to be passed on without copying. 
+     * because that allows the buffer to be passed on without copying.
+     * 
+     * @param formatIdentifier format to get the DocIndexer for
+     * @param indexer our indexer
+     * @param documentName document name
+     * @param is contents
+     * @param cs file encoding
+     * @return the DocIndexer
+     * @throws UnsupportedOperationException 
      */
-    @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
             throws UnsupportedOperationException {
@@ -182,18 +197,33 @@ public class DocumentFormats {
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, is, cs) : null;
     }
 
-    /**
-     * @deprecated (since 2.0) use byte[] version 
-     * Convenience function. 
+    /** Convenience function.
+     * 
+     * @param formatIdentifier format to get the DocIndexer for
+     * @param indexer our indexer
+     * @param documentName document name
+     * @param f file
+     * @param cs file encoding
+     * @return the DocIndexer
+     * @throws UnsupportedOperationException 
+     * @throws FileNotFoundException 
      */
-    @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, f, cs) : null;
     }
 
-    /** Convenience function. */
+    /** Convenience function.
+     * 
+     * @param formatIdentifier format to get the DocIndexer for
+     * @param indexer our indexer
+     * @param documentName document name
+     * @param b file contents
+     * @param cs file encoding
+     * @return the DocIndexer
+     * @throws UnsupportedOperationException 
+     */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {
         DocIndexerFactory fac = getFactory(formatIdentifier);

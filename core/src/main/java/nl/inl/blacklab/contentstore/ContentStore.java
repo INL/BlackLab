@@ -72,7 +72,7 @@ public abstract class ContentStore {
      */
     public abstract int store(String content);
 
-    public abstract int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs);
+    public abstract int store(byte[] content, int offset, int length, Charset cs);
     
     
     /**
@@ -85,7 +85,7 @@ public abstract class ContentStore {
      */
     public abstract void storePart(String content);
     
-    public abstract void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs); 
+    public abstract void storePart(byte[] content, int offset, int length, Charset cs); 
 
     /**
      * Retrieve a document from the content store.

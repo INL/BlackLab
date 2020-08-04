@@ -155,7 +155,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
     public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
@@ -185,7 +184,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
     public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier

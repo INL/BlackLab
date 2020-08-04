@@ -153,7 +153,6 @@ public interface DocIndexerFactory {
             throws UnsupportedOperationException;
 
     /**
-     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from an input stream.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -166,12 +165,10 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs)
             throws UnsupportedOperationException;
 
     /**
-     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from a file.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -185,7 +182,6 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
-    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException;
 

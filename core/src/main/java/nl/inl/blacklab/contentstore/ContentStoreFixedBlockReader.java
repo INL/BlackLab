@@ -239,7 +239,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
-    public int store(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+    public int store(byte[] content, int offset, int length, Charset cs) {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 
@@ -249,7 +249,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
     
     @Override
-    public void storePart(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+    public void storePart(byte[] content, int offset, int length, Charset cs) {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 

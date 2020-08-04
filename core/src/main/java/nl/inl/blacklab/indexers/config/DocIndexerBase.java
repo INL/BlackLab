@@ -491,7 +491,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }
     
-    protected void storeWholeDocument(byte[] inputDocument, int documentByteOffset, int documentLengthBytes, Charset cs) {
+    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
         // (Note that we do this after adding the dummy token, so the character
@@ -513,7 +513,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         int contentId = -1;
         if (docWriter != null) {
             ContentStore contentStore = docWriter.contentStore(contentStoreName);
-            contentId = contentStore.store(inputDocument, documentByteOffset, documentLengthBytes, cs);
+            contentId = contentStore.store(content, offset, length, cs);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }

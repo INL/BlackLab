@@ -141,13 +141,11 @@ public interface Indexer {
     void update(Term term, Document document) throws IOException;
 
     /**
-     * @deprecated (since 2.0)
      * Index a document or archive from an InputStream.
      *
      * @param documentName name for the InputStream (e.g. name of the file)
      * @param input the stream
      */
-    @Deprecated
     void index(String documentName, InputStream input);
 
     /**
@@ -172,7 +170,6 @@ public interface Indexer {
     void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
 
     /**
-     * @deprecated (since 2.0)
      * Index a document (or archive if enabled by
      * {@link #setProcessArchivesAsDirectories(boolean)}
      *
@@ -180,20 +177,27 @@ public interface Indexer {
      * @param input
      * @param fileNameGlob
      */
-    @Deprecated
     void index(String fileName, InputStream input, String fileNameGlob);
 
-    /** 
-     * Index a file, archive of files, or directory.
-     * 
-     * @param file the file    
+    /**
+     * Index the file or directory specified.
+     *
+     * Indexes all files in a directory or archive (previously only indexed *.xml;
+     * specify a glob if you want this behaviour back, see
+     * {@link #index(File, String)}.
+     *
+     * Recurses into subdirs only if that setting is enabled.
+     *
+     * @param file the input file or directory
      */
     default void index(File file) { index(file, null); }
 
-    /** 
-     * Index a file, archive of files, or directory.
-     * 
-     * @param file the file    
+    /**
+     * Index a document, archive (if enabled by
+     * {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally
+     * recursively if set by {@link #setRecurseSubdirs(boolean)}
+     *
+     * @param file
      * @param fileNameGlob 
      *  Only used if this file is a directory or is determined to be an archive or directory. Only processes files matching the glob.
      */

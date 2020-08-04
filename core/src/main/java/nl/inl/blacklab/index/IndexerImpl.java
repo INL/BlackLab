@@ -57,6 +57,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
+import nl.inl.util.UnicodeStream;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -93,6 +94,25 @@ class IndexerImpl implements DocWriter, Indexer {
                 logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
             }
             impl(DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs), path);
+        }
+
+        @Override
+        public void file(String path, InputStream is, File file) throws IOException, MalformedInputFile, PluginException {
+            // Attempt to detect the encoding of our inputStream, falling back to DEFAULT_INPUT_ENCODING if the stream
+            // doesn't contain a a BOM This doesn't do any character parsing/decoding itself, it just detects and skips
+            // the BOM (if present) and exposes the correct character set for this stream (if present)
+            // This way we can later use the charset to decode the input
+            // There is one gotcha however, and that is that if the inputstream contains non-textual data, we pass the
+            // default encoding to our DocIndexer
+            // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
+            // In the case of binary data docIndexers, they should always ignore the encoding anyway
+            // and for text docIndexers, passing a binary file is an error in itself already.
+            try (
+                    UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
+                    DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
+                            inputStream, inputStream.getEncoding());) {
+                impl(docIndexer, path);
+            }
         }
 
         private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
@@ -538,11 +558,9 @@ class IndexerImpl implements DocWriter, Indexer {
         indexWriter().forwardIndex(fieldWriter.field()).addDocument(annotations, posIncr, currentLuceneDoc);
     }
 
-    @Deprecated
     @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
-    
     }
 
     @Deprecated
@@ -563,13 +581,14 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    @Deprecated
     @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
-        try {
-            index(fileName, IOUtils.toByteArray(input), fileNameGlob);
-        } catch (IOException e) {
-            listener.errorOccurred(e, fileName, null);
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs,
+                this.processArchivesAsDirectories)) {
+            proc.setFileNameGlob(fileNameGlob);
+            proc.setFileHandler(docIndexerWrapper);
+            proc.setErrorHandler(listener());
+            proc.processInputStream(fileName, input, null);
         }
     }
 

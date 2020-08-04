@@ -47,7 +47,7 @@ public class FileProcessor implements AutoCloseable {
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void directory(File dir) throws Exception;
-        
+
         /**
          * Handle a file stream.
          * <p>
@@ -63,7 +63,31 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param path filename, including path inside archives (if the file is within
          *            an archive)
-         * @param contents
+         * @param is
+         * @param file (optional, if known) the file from which the InputStream was
+         *            built, or - if the InputStream is a file within an archive - the
+         *            archive.
+         * @throws Exception these will be passed to
+         *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
+         */
+        void file(String path, InputStream is, File file) throws Exception;
+        
+        /**
+         * Handle a byte array.
+         * <p>
+         * Called for all processed files that match the {@link FileProcessor#pattGlob},
+         * including the input file. Not called for archives if
+         * {@link FileProcessor#isProcessArchives()} is true (though it will then be
+         * called for files within those archives).
+         * <p>
+         * This function may be called in multiple threads when FileProcessor was
+         * created with thread support (see
+         * {@link FileProcessor#FileProcessor(int, boolean, boolean)}) <br>
+         * NOTE: the InputStream should be closed by the implementation.
+         *
+         * @param path filename, including path inside archives (if the file is within
+         *            an archive)
+         * @param contents file contents
          * @param file (optional, if known) the file from which the InputStream was
          *            built, or - if the InputStream is a file within an archive - the
          *            archive.
@@ -127,6 +151,12 @@ public class FileProcessor implements AutoCloseable {
                 @Override
                 public void directory(File dir) throws Exception {
                     //
+                }
+
+                @Override
+                public void file(String path, InputStream is, File archive) throws Exception {
+                    if (path.endsWith(pathInsideArchive))
+                        this.file = IOUtils.toByteArray(is);
                 }
 
                 @Override
@@ -383,6 +413,42 @@ public class FileProcessor implements AutoCloseable {
                 reportAndAbort(e, file.getAbsolutePath(), file);
                 return;
             }
+        }
+    }
+
+    /**
+     * Process from an InputStream, which may be an archive or a regular file.
+     *
+     * Archives (.zip and .tar.gz) will only be processed if
+     * {@link #isProcessArchives()} is true. GZipped files (.gz) will be unpacked
+     * regardless. Note that all files within archives will be processed, regardless
+     * of whether they match {@link FileProcessor#pattGlob}
+     *
+     * @param path filename, optionally including path to the file or path within an
+     *            archive
+     * @param is the stream
+     * @param file (optional) the file from which the InputStream was built, or - if
+     *            the InputStream is a file within an archive - the archive. This is
+     *            only used for reporting to FileHandler and ErrorHandler
+     */
+    public void processInputStream(String path, InputStream is, File file) {
+        if (closed)
+            return;
+
+        TarGzipReader.FileHandler handler = (pathInArchive, bytes) -> {
+            processFile(pathInArchive, bytes, file);
+            return !closed; // quit processing the archive if we've received an error in the meantime
+        };
+
+        if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
+            TarGzipReader.processTarGzip(path, is, handler);
+        } else if (isProcessArchives() && path.endsWith(".zip")) {
+            TarGzipReader.processZip(path, is, handler);
+        } else if (path.endsWith(".gz")) {
+            TarGzipReader.processGzip(path, is, handler);
+        } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
+            CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
+                    .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
     

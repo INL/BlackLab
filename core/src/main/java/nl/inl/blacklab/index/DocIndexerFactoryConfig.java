@@ -269,7 +269,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs) {
         if (!isSupported(formatIdentifier))
@@ -284,7 +283,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws FileNotFoundException {
         if (!isSupported(formatIdentifier))
