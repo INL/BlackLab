@@ -276,8 +276,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
             }
         }
 
-        // Free memory
-        if (unwrittenIndex > 0 && getUnwrittenCharCount() == 0) {
+        // Free memory if unwrittenContents gets too large
+        if (getUnwrittenCharCount() == 0 && unwrittenContents.capacity() >= MAX_UNWRITTEN_INDEX) {
             this.unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES*10);
             unwrittenIndex = 0;
         }
