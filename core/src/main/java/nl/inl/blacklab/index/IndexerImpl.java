@@ -566,19 +566,11 @@ class IndexerImpl implements DocWriter, Indexer {
     @Deprecated
     @Override
     public void index(String documentName, Reader reader) {
-        try {
-            index(documentName, IOUtils.toString(reader).getBytes(StandardCharsets.UTF_8));
-        } catch (MalformedInputFile e) {
-            listener().errorOccurred(e, documentName, null);
-            logger.error("Parsing " + documentName + " failed:");
-            e.printStackTrace();
-            logger.error("(continuing indexing)");
-        } catch (Exception e) {
-            listener().errorOccurred(e, documentName, null);
-            logger.error("Parsing " + documentName + " failed:");
-            e.printStackTrace();
-            logger.error("(continuing indexing)");
-        }
+    	try {
+    		index(documentName, IOUtils.toByteArray(reader, DEFAULT_INPUT_ENCODING), null); // convert to our default encoding
+    	} catch (IOException e) {
+    		listener().errorOccurred(e, documentName, null);
+    	}
     }
 
     @Override

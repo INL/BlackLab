@@ -149,33 +149,33 @@ public interface Indexer {
     void index(String documentName, InputStream input);
 
     /**
-     * @deprecated (sinced 2.0)
+     * @deprecated (since 2.2)
      * Index a document from a Reader.
      *
      * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array
      * directly, as this can in some cases be parsed more efficiently (e.g. using
      * VTD-XML).
      *
-     * Catches and reports any errors that occur.
+     * Catches and reports any errors that occur to the IndexListener.
      *
      * @param documentName some (preferably unique) name for this document (for
      *            example, the file name or path)
      * @param reader where to index from
      *
-     * @throws IOException if an I/O error occurred
-     * @throws MalformedInputFile if the input file was invalid
-     * @throws PluginException if an error in a plugin occurred
      */
     @Deprecated
-    void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
+    void index(String documentName, Reader reader);
 
     /**
      * Index a document (or archive if enabled by
      * {@link #setProcessArchivesAsDirectories(boolean)}
+     * 
+     * Catches and reports any errors that occur to the IndexListener.  
      *
      * @param fileName
      * @param input
      * @param fileNameGlob
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
     void index(String fileName, InputStream input, String fileNameGlob);
 
@@ -199,18 +199,18 @@ public interface Indexer {
      *
      * @param file
      * @param fileNameGlob 
-     *  Only used if this file is a directory or is determined to be an archive or directory. Only processes files matching the glob.
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
     void index(File file, String fileNameGlob);
     
     /** 
      * Index a file or archive of files from memory.
+     * Encoding is guessed based on file contents.
      * 
      * @param fileName name of the file including extension. Used to detect archives/file types.
      * @param contents file contents
      * @param fileNameGlob 
-     *  Only used if this file is determined to be an archive. Only process files matching the glob.
-     */
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.     */
     void index(String fileName, byte[] contents, String fileNameGlob);
     
     /** 

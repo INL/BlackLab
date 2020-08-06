@@ -51,10 +51,9 @@ public class FileProcessor implements AutoCloseable {
         /**
          * Handle a file stream.
          * <p>
-         * Called for all processed files that match the {@link FileProcessor#pattGlob},
-         * including the input file. Not called for archives if
-         * {@link FileProcessor#isProcessArchives()} is true (though it will then be
-         * called for files within those archives).
+         * For effiency, the {@link FileHandler#file(String, byte[], File)} version will almost always be used. 
+         * The sole exception is when the {@link FileProcessor#processInputStream(String, InputStream, File)} is called
+         * with a file that is not an archive. Files within archives are always returned as byte[].
          * <p>
          * This function may be called in multiple threads when FileProcessor was
          * created with thread support (see
