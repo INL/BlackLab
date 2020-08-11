@@ -843,7 +843,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new String(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
+        storeWholeDocument(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8);
     }
 
     @Override

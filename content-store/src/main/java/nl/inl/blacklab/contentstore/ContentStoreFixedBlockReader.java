@@ -22,6 +22,7 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -238,7 +239,17 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
+    public int store(byte[] content, int offset, int length, Charset cs) {
+        throw new UnsupportedOperationException("Not supported if not in index mode");
+    }
+
+    @Override
     public void storePart(String content) {
+        throw new UnsupportedOperationException("Not supported if not in index mode");
+    }
+    
+    @Override
+    public void storePart(byte[] content, int offset, int length, Charset cs) {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 

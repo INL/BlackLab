@@ -144,6 +144,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * @deprecated use {@link #setDocument(byte[], Charset)}
      * Set the document to index.
      *
      * NOTE: you should generally prefer calling the File or byte[] versions of this
@@ -152,6 +153,7 @@ public abstract class DocIndexer implements AutoCloseable {
      *
      * @param reader document
      */
+    @Deprecated
     public abstract void setDocument(Reader reader);
 
     /**
@@ -171,6 +173,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * 
      * Set the document to index.
      *
      * @param contents document contents

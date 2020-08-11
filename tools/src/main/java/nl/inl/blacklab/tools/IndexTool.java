@@ -297,7 +297,7 @@ public class IndexTool {
                 indexer.index(inputDir, glob);
             } else {
                 // Single file.
-                indexer.index(new File(inputDir, glob), "*");
+                indexer.index(new File(inputDir, glob));
                 
                 MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
                 mf.setSpecialField(MetadataFields.PID, "filename");

@@ -1,6 +1,5 @@
 package nl.inl.util;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -18,23 +17,18 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * for each "normal" file in the .tar.gz file.
  */
 public class TarGzipReader {
-
     /**
      * Handles a file inside the .tar.gz archive.
      */
     @FunctionalInterface
     public interface FileHandler {
-        /**
-         * Handle a file inside the .zip or .tar.gz archive.
-         *
-         * @param filePath path to the archive, concatenated with any path to this file
-         *            inside the archive
-         * @param contents file contents, this stream is separate from the stream being
-         *            processed, and will always remain open until it is closed by the
-         *            handler.
-         * @return true if we should continue with the next file, false if not
-         */
-        boolean handle(String filePath, InputStream contents);
+      /**
+        * @param filePath path to the archive, concatenated with any path to this file
+        *            inside the archive
+        * @param contents file contents
+        * @return true if we should continue with the next file, false if not
+        */
+        boolean handle(String filePath, byte[] contents);
     }
 
     /**
@@ -64,10 +58,7 @@ public class TarGzipReader {
      */
     public static void processGzip(String fileName, InputStream gzipStream, FileHandler fileHandler) {
         try (InputStream unzipped = new GzipCompressorInputStream(gzipStream)) {
-            // Make a copy of the data, since the stream we pass into fileHandler.handle may be used within another thread
-            // so it (or any of its underlying streams) should not be closed by us inadvertantly
-            InputStream callbackStream = new ByteArrayInputStream(org.apache.commons.io.IOUtils.toByteArray(unzipped));
-            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), callbackStream); // TODO make filename handling uniform across all archives types?
+            fileHandler.handle(fileName.replaceAll("\\.gz$", ""), IOUtils.toByteArray(unzipped)); // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -87,12 +78,7 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
-                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
                 if (!keepProcessing)
                     return;
             }
@@ -118,12 +104,7 @@ public class TarGzipReader {
                 if (e.isDirectory())
                     continue;
 
-                // Make a copy of this file's data, since there is a real chance the returned stream will be processed by another thread.
-                // It makes sense too, the stream has a bunch of internal data about which entry is currently being processed
-                // and if we jump to the next entry in between reads in another thread things would go badly.
-                // NOTE: InputStream is not closed, handler is responsible for closing its stream
-                ByteArrayInputStream decoded = new ByteArrayInputStream(IOUtils.toByteArray(s));
-                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), decoded);
+                boolean keepProcessing = fileHandler.handle(FilenameUtils.concat(fileName, e.getName()), IOUtils.toByteArray(s));
                 if (!keepProcessing)
                     return;
             }

@@ -16,10 +16,10 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -34,6 +35,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
+import org.mozilla.universalchardet.UniversalDetector;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -72,6 +74,26 @@ class IndexerImpl implements DocWriter, Indexer {
      * performs some reporting.
      */
     private class DocIndexerWrapper implements FileProcessor.FileHandler {
+        @Override
+        public void file(String path, byte[] contents, File file) throws IOException, MalformedInputFile, PluginException {
+            // Attempt to detect the encoding of our input, falling back to DEFAULT_INPUT_ENCODING if the stream
+            // doesn't contain a a BOM. 
+            // There is one gotcha, and that is that if the inputstream contains non-textual data, we pass the
+            // default encoding to our DocIndexer
+            // This usually isn't an issue, since docIndexers work exclusively with either binary data or text.
+            // In the case of binary data docIndexers, they should always ignore the encoding anyway
+            // and for text docIndexers, passing a binary file is an error in itself already.
+            UniversalDetector det = new UniversalDetector(null);
+            det.handleData(contents, 0, Math.min(contents.length, 1048576 /* 1 meg */));
+            det.dataEnd();
+            Charset cs = DEFAULT_INPUT_ENCODING; 
+            try {
+                cs = Charset.forName(det.getDetectedCharset());
+            } catch (Exception e) { 
+                logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
+            }
+            impl(DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs), path);
+        }
 
         @Override
         public void file(String path, InputStream is, File file) throws IOException, MalformedInputFile, PluginException {
@@ -92,27 +114,20 @@ class IndexerImpl implements DocWriter, Indexer {
             }
         }
 
-        public void file(String path, Reader reader) throws MalformedInputFile, PluginException, IOException {
-            try (DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
-                    reader)) {
-                impl(docIndexer, path);
-            }
-        }
-
         private void impl(DocIndexer indexer, String documentName) throws MalformedInputFile, PluginException, IOException {
-
             if (!indexer.continueIndexing())
                 return;
 
-            // FIXME progress reporting is broken in multithreaded indexing, as the listener is shared between threads
-            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
-            // meantime
             listener().fileStarted(documentName);
             int docsDoneBefore = indexWriter.writer().numDocs();
             long tokensDoneBefore = listener().getTokensProcessed();
 
             indexer.index();
             listener().fileDone(documentName);
+            
+            // FIXME the following checks are broken in multithreaded indexing, as the listener is shared between threads
+            // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
+            // meantime
             int docsDoneAfter = indexWriter.writer().numDocs();
             if (docsDoneAfter == docsDoneBefore) {
                 logger.warn("No docs found in " + documentName + "; wrong format?");
@@ -192,7 +207,7 @@ class IndexerImpl implements DocWriter, Indexer {
     private int numberOfThreadsToUse = 1;
 
     // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was
-    // rollbacked on an empty index result of this is that the index can never be opened again (the forwardindex
+    // rollbacked on an empty index. Result of this is that the index can never be opened again (the forwardindex
     // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write
     // the updated indexMetadata
     private boolean hasRollback = false;
@@ -544,24 +559,17 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void index(String documentName, InputStream input) {
-        index(documentName, input, "*");
+        index(documentName, input, null);
     }
 
+    @Deprecated
     @Override
     public void index(String documentName, Reader reader) {
-        try {
-            docIndexerWrapper.file(documentName, reader);
-        } catch (MalformedInputFile e) {
-            listener().errorOccurred(e, documentName, null);
-            logger.error("Parsing " + documentName + " failed:");
-            e.printStackTrace();
-            logger.error("(continuing indexing)");
-        } catch (Exception e) {
-            listener().errorOccurred(e, documentName, null);
-            logger.error("Parsing " + documentName + " failed:");
-            e.printStackTrace();
-            logger.error("(continuing indexing)");
-        }
+    	try {
+    		index(documentName, IOUtils.toByteArray(reader, DEFAULT_INPUT_ENCODING), null); // convert to our default encoding
+    	} catch (IOException e) {
+    	    listener().errorOccurred(e, documentName, null);
+    	}
     }
 
     @Override
@@ -580,20 +588,28 @@ class IndexerImpl implements DocWriter, Indexer {
         index(file, "*");
     }
 
-    // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
     @Override
     public void index(File file, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs,
-                processArchivesAsDirectories)) {
-            proc.setFileNameGlob(fileNameGlob);
+        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
+            proc.setFileNameGlob(optGlob.orElse("*"));
             proc.setFileHandler(docIndexerWrapper);
             proc.setErrorHandler(listener());
-            proc.processFile(file, "");
-        } catch (FileNotFoundException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            proc.processFile(file);
         }
     }
-
+    
+    @Override
+    public void index(String fileName, byte[] contents, String fileNameGlob) {
+        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
+        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
+            proc.setFileNameGlob(optGlob.orElse("*"));
+            proc.setFileHandler(docIndexerWrapper);
+            proc.setErrorHandler(listener());
+            proc.processFile(fileName, contents, null);
+        }
+    }
+    
     /**
      * Should we continue indexing or stop?
      *

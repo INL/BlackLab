@@ -16,10 +16,8 @@ package nl.inl.blacklab;
  *******************************************************************************/
 
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -99,7 +97,7 @@ public class Example {
         try {
             indexer = Indexer.createNewIndex(indexDir, "exampleformat");
             for (int i = 0; i < testData.length; i++) {
-                indexer.index("test" + (i + 1), new ByteArrayInputStream(testData[i].getBytes(StandardCharsets.UTF_8)));
+                indexer.index("test" + (i + 1), testData[i].getBytes(StandardCharsets.UTF_8));
             }
 
         } catch (Exception e) {

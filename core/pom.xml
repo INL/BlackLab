@@ -15,7 +15,7 @@
     <description>
         BlackLab is a corpus retrieval engine written in Java, built on top of Apache Lucene.
         It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated,
-        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast 
+        bodies of text. It was developed at the Institute of Dutch Lexicology (INL) to provide a fast
         and feature-rich search interface on our historical and contemporary text corpora.
     </description>
 

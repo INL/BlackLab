@@ -106,6 +106,7 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
+    @Deprecated
     public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier

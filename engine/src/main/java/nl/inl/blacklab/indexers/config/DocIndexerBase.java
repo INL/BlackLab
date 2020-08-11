@@ -1,5 +1,29 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import org.apache.commons.io.IOUtils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+import org.apache.lucene.util.BytesRef;
+
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -15,28 +39,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
-import org.apache.commons.io.IOUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.util.BytesRef;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 public abstract class DocIndexerBase extends DocIndexer {
 
@@ -485,6 +487,33 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (docWriter != null) {
             ContentStore contentStore = docWriter.contentStore(contentStoreName);
             contentId = contentStore.store(document);
+        }
+        currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
+    }
+    
+    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
+        // Finish storing the document in the document store,
+        // retrieve the content id, and store that in Lucene.
+        // (Note that we do this after adding the dummy token, so the character
+        // positions for the dummy token still make (some) sense)
+        String contentIdFieldName;
+        String contentStoreName = getContentStoreName();
+        if (contentStoreName == null) {
+            AnnotatedFieldWriter main = getMainAnnotatedField();
+            if (main == null) {
+                contentStoreName = "metadata";
+                contentIdFieldName = "metadataCid";
+            } else {
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+            }
+        } else {
+            contentIdFieldName = contentStoreName + "Cid";
+        }
+        int contentId = -1;
+        if (docWriter != null) {
+            ContentStore contentStore = docWriter.contentStore(contentStoreName);
+            contentId = contentStore.store(content, offset, length, cs);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }

@@ -72,6 +72,9 @@ public abstract class ContentStore {
      */
     public abstract int store(String content);
 
+    public abstract int store(byte[] content, int offset, int length, Charset cs);
+    
+    
     /**
      * Store part of a large document.
      *
@@ -81,6 +84,8 @@ public abstract class ContentStore {
      * @param content part of the content of the document to store
      */
     public abstract void storePart(String content);
+    
+    public abstract void storePart(byte[] content, int offset, int length, Charset cs); 
 
     /**
      * Retrieve a document from the content store.
