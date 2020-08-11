@@ -15,8 +15,6 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {

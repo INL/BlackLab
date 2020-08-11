@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -569,7 +568,7 @@ class IndexerImpl implements DocWriter, Indexer {
     	try {
     		index(documentName, IOUtils.toByteArray(reader, DEFAULT_INPUT_ENCODING), null); // convert to our default encoding
     	} catch (IOException e) {
-    		listener().errorOccurred(e, documentName, null);
+    	    listener().errorOccurred(e, documentName, null);
     	}
     }
 
