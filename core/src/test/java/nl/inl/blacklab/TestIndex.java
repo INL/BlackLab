@@ -36,7 +36,7 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
     
-    private static final class IndexListenerThrowOnError extends IndexListener {
+    private static final class IndexListenerAbortOnError extends IndexListener {
         @Override
         public boolean errorOccurred(Throwable e, String path, File f) {
             // FileProcessor doesn't like when we re-throw the exception.
@@ -125,7 +125,7 @@ public class TestIndex {
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
             Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
-            indexer.setListener(new IndexListenerThrowOnError()); // throw on error
+            indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
                 // Index each of our test "documents".
                 for (int i = 0; i < testData.length; i++) {
