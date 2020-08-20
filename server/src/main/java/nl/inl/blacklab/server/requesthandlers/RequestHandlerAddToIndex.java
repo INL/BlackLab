@@ -3,14 +3,12 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.fileupload.FileItem;
@@ -86,7 +84,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
             throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING1");
         }
 
-        if (!index.isUserIndex() || !index.getUserId().equals(user.getUserId()))
+        if (!index.userMayAddData(user))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
         if (indexMetadata.tokenCount() > MAX_TOKEN_COUNT) {
@@ -108,12 +106,8 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
         try {
             for (FileItem file : dataFiles) {
-                try (InputStream is = file.getInputStream()) {
-                    indexer.index(file.getName(), is/*, "*.xml"*/);
-                }
+                indexer.index(file.getName(), file.get());
             }
-        } catch (IOException e) {
-            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING2");
         } finally {
             if (indexError == null) {
                 if (indexer.listener().getFilesProcessed() == 0)

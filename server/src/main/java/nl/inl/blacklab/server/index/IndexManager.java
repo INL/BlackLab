@@ -191,6 +191,7 @@ public class IndexManager {
      * Indices may only be created by a logged-in user in his own private area. The
      * index name is strictly validated, disallowing any weird input.
      *
+     * @param user the logged-in user
      * @param indexId the index name, including user prefix
      * @param displayName
      * @param formatIdentifier the document format identifier (e.g. tei, folia, ..).
@@ -199,7 +200,7 @@ public class IndexManager {
      *             reason
      * @throws ErrorOpeningIndex if creation failed unexpectedly
      */
-    public synchronized void createIndex(String indexId, String displayName, String formatIdentifier)
+    public synchronized void createIndex(User user, String indexId, String displayName, String formatIdentifier)
             throws BlsException, ErrorOpeningIndex {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + formatIdentifier);
@@ -212,6 +213,8 @@ public class IndexManager {
                     "Could not create index. Index already exists.");
 
         String userId = Index.getUserId(indexId);
+        if (!userId.equals(user.getUserId()) && !user.isSuperuser())
+            throw new NotAuthorized("Could not create index. Can only create your own private indices.");
         String indexName = Index.getIndexName(indexId);
 
         // Lexion Change: We don't want to limit the maximum number of indices.
@@ -239,7 +242,7 @@ public class IndexManager {
         Format format = DocumentFormats.getFormat(formatIdentifier);
         ConfigInputFormat config = format == null ? null : format.getConfig();
         try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance().create(indexDir, config)) {
-            IndexMetadataWriter indexMetadata = indexWriter.metadataWriter();
+            IndexMetadataWriter indexMetadata = indexWriter.metadata();
             if (!StringUtils.isEmpty(displayName))
                 indexMetadata.setDisplayName(displayName);
             if (config != null && config.getName() != null)
@@ -259,8 +262,8 @@ public class IndexManager {
         }
     }
 
-    public boolean canCreateIndex(String userId) {
-        return userCollectionsDir != null && getAvailablePrivateIndices(userId).size() < IndexManager.MAX_USER_INDICES;
+    public boolean canCreateIndex(User user) {
+        return userCollectionsDir != null && (getAvailablePrivateIndices(user.getUserId()).size() < IndexManager.MAX_USER_INDICES || user.isSuperuser());
     }
 
     /**

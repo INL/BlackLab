@@ -40,6 +40,8 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -284,7 +286,7 @@ public class IndexTool {
             return;
         }
         if (createNewIndex)
-            indexer.indexWriter().metadataWriter().setDocumentFormat(docFormat);
+            indexer.indexWriter().metadata().setDocumentFormat(docFormat);
         indexer.setIndexerParam(indexerParam);
         if (maxDocsToIndex > 0)
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -295,7 +297,11 @@ public class IndexTool {
                 indexer.index(inputDir, glob);
             } else {
                 // Single file.
-                indexer.index(new File(inputDir, glob), "*");
+                indexer.index(new File(inputDir, glob));
+                
+                MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
+                mf.setSpecialField(MetadataFields.PID, "filename");
+
             }
         } catch (Exception e) {
             System.err.println(

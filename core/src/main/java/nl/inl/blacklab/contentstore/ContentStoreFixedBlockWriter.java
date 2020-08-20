@@ -21,8 +21,11 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -105,6 +108,12 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /** Contents still waiting to be written to the contents file in blocks */
     StringBuilder unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES * 10);
+    
+    /** Index of the first unwritten character in unwrittenContents */
+    protected int unwrittenIndex = 0;
+
+    /**  unwritten content buffer is not flushed immediately after writing, as that is very slow in some situations (large documents in particular) */
+    protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096; 
 
     /** Used to pad blocks that are less than BLOCK_SIZE long */
     private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
@@ -249,18 +258,33 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         ensureContentsFileOpen();
 
         // Do we have a block to write?
-        while (writeLastBlock && unwrittenContents.length() > 0
-                || unwrittenContents.length() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
-            int lenBefore = unwrittenContents.length();
+        while (writeLastBlock && getUnwrittenCharCount() > 0 
+                || getUnwrittenCharCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
+            int offsetBefore = unwrittenIndex;
             byte[] encoded = encodeBlock(); // encode a number of characters to produce a 4K block
-            int lenAfter = unwrittenContents.length();
-            int charLen = lenBefore - lenAfter;
+            int offsetAfter = unwrittenIndex;
+            int charLen = offsetAfter - offsetBefore;
             int blockIndex = writeToFreeBlock(encoded);
             blockIndicesWhileStoring.add(blockIndex);
             blockCharOffsetsWhileStoring.add(charsFromEntryWritten);
             charsFromEntryWritten += charLen;
             bytesWritten += encoded.length;
+            
+            if (unwrittenIndex > MAX_UNWRITTEN_INDEX) {
+                this.unwrittenContents.delete(0, unwrittenIndex);
+                unwrittenIndex = 0;
+            }
         }
+
+        // Free memory if unwrittenContents gets too large
+        if (getUnwrittenCharCount() == 0 && unwrittenContents.capacity() >= MAX_UNWRITTEN_INDEX) {
+            this.unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES*10);
+            unwrittenIndex = 0;
+        }
+    }
+
+    private int getUnwrittenCharCount() {
+        return this.unwrittenContents.length() - this.unwrittenIndex;
     }
 
     /**
@@ -299,6 +323,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * Store part of a piece of large content. This may be called several times to
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
+     * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
      *
      * @param content the content to store
      */
@@ -312,7 +338,39 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     }
 
     /**
+     * Store part of a piece of large content. This may be called several times to
+     * store chunks of content, but MUST be *finished* by calling the "normal"
+     * store() method. You may call store() with the empty string if you wish.
+     *  
+     * @param content content to store
+     * @param offset byte offset to begin storing
+     * @param length number of bytes to store 
+     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
+     */
+    @Override
+    public synchronized void storePart(byte[] content, int offset, int length, Charset cs) {
+        if (length == 0) {
+            return;
+        }
+        CharsetDecoder cd = cs.newDecoder();
+        ByteBuffer in = ByteBuffer.wrap(content, offset, length);
+        CharBuffer out = CharBuffer.allocate(1024);
+        while (in.hasRemaining()) {
+            cd.decode(in, out, true);
+            unwrittenContents.append(out.array(), 0, out.position());
+            out.position(0);
+        } 
+        writeBlocks(false);
+    }
+
+    /**
      * Store the given content and assign an id to it.
+     * 
+     * Parts of the document may already have been stored before. This is the final part and will
+     * assign and return the document's content id. 
+     *
+     * NOTE: If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
      *
      * @param content the content to store
      * @return the id assigned to the content
@@ -320,7 +378,30 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     @Override
     public synchronized int store(String content) {
         storePart(content);
-        if (unwrittenContents.length() > 0) {
+        return store();
+    }
+    
+    /**
+     * Store the given content and assign an id to it.
+     * 
+     * Parts of the document may already have been stored before. This is the final part and will
+     * assign and return the document's content id. 
+     *
+     * @param content the content of the document
+     * @param offset byte offset to begin storing
+     * @param length number of bytes to store 
+     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
+     * @return the id assigned to the document
+     */
+    @Override
+    public synchronized int store(byte[] content, int offset, int length, Charset cs) {
+        storePart(content, offset, length, cs);
+        return store();
+    }
+    
+    /** The store routine (after appending to unwrittenContents) */
+    private int store() {
+        if (getUnwrittenCharCount() > 0) {
             // Write the last (not completely full) block
             writeBlocks(true);
         }
@@ -407,7 +488,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     protected byte[] encodeBlock() {
 
         int length = TYPICAL_BLOCK_SIZE_CHARACTERS;
-        int available = unwrittenContents.length();
+        int available = getUnwrittenCharCount();
         if (length > available)
             length = available;
 
@@ -420,7 +501,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 // Serialize to bytes
                 byte[] encoded;
                 while (true) {
-                    encoded = unwrittenContents.substring(0, length).getBytes(DEFAULT_CHARSET);
+                    encoded = unwrittenContents.substring(this.unwrittenIndex, this.unwrittenIndex + length).getBytes(DEFAULT_CHARSET);
 
                     // Make sure the block fits in our zip buffer
                     if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
@@ -474,7 +555,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 } else {
                     //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + 
                     //", waste%: " + waste + ", ratio: " + ratio);
-                    unwrittenContents.delete(0, length);
+
+                    // NOTE: do not delete from unwrittenContents here, 
+                    // call site needs to know how much we advanced in the buffer to calculate how much uncompressed data was used
+                    this.unwrittenIndex += length;
                     return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);
                 }
             }

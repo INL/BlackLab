@@ -15,8 +15,6 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
@@ -149,31 +147,33 @@ public interface Indexer {
     void index(String documentName, InputStream input);
 
     /**
+     * @deprecated (since 2.2)
      * Index a document from a Reader.
      *
      * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array
      * directly, as this can in some cases be parsed more efficiently (e.g. using
      * VTD-XML).
      *
-     * Catches and reports any errors that occur.
+     * Catches and reports any errors that occur to the IndexListener.
      *
      * @param documentName some (preferably unique) name for this document (for
      *            example, the file name or path)
      * @param reader where to index from
      *
-     * @throws IOException if an I/O error occurred
-     * @throws MalformedInputFile if the input file was invalid
-     * @throws PluginException if an error in a plugin occurred
      */
-    void index(String documentName, Reader reader) throws IOException, MalformedInputFile, PluginException;
+    @Deprecated
+    void index(String documentName, Reader reader);
 
     /**
      * Index a document (or archive if enabled by
      * {@link #setProcessArchivesAsDirectories(boolean)}
+     * 
+     * Catches and reports any errors that occur to the IndexListener.  
      *
      * @param fileName
      * @param input
      * @param fileNameGlob
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
     void index(String fileName, InputStream input, String fileNameGlob);
 
@@ -188,7 +188,7 @@ public interface Indexer {
      *
      * @param file the input file or directory
      */
-    void index(File file);
+    default void index(File file) { index(file, null); }
 
     /**
      * Index a document, archive (if enabled by
@@ -196,11 +196,29 @@ public interface Indexer {
      * recursively if set by {@link #setRecurseSubdirs(boolean)}
      *
      * @param file
-     * @param fileNameGlob only files
+     * @param fileNameGlob 
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
-    // TODO this is nearly a literal copy of index for a stream, unify them somehow (take care that file might be a directory)
     void index(File file, String fileNameGlob);
-
+    
+    /** 
+     * Index a file or archive of files from memory.
+     * Encoding is guessed based on file contents.
+     * 
+     * @param fileName name of the file including extension. Used to detect archives/file types.
+     * @param contents file contents
+     * @param fileNameGlob 
+     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.     */
+    void index(String fileName, byte[] contents, String fileNameGlob);
+    
+    /** 
+     * Index a file or archive of files from memory.
+     * 
+     * @param fileName name of the file including extension. Used to detect archives/file types.
+     * @param contents file contents 
+     */
+    default void index(String fileName, byte[] contents) { index(fileName, contents, null); }
+    
     /**
      * Get our index directory
      *

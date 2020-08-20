@@ -24,9 +24,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -253,14 +256,18 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
     /**
      * What block size to use when adding a new document to the content store.
-     * Contributing factors for choosing block size: - larger blocks improve
-     * compression ratio - larger blocks decrease number of blocks you have to read
-     * - smaller blocks decrease the decompression time - smaller blocks increase
-     * the chance that we only have to read one disk block for a single concordance
-     * (disk blocks are generally 2 or 4K) - consider OS I/O caching and memory
-     * mapping. Then it becomes the difference between reading a few bytes from
+     * Contributing factors for choosing block size:
+     * 
+     * <ul>
+     * <li>larger blocks improve compression ratio</li>
+     * <li>larger blocks decrease number of blocks you have to read</li>
+     * <li>smaller blocks decrease the decompression time</li>
+     * <li>smaller blocks increase the chance that we only have to read 
+     * one disk block for a single concordance (disk blocks are generally 2 or 4K)</li>
+     * <li>consider OS I/O caching and memory mapping. Then it becomes the difference between reading a few bytes from
      * memory and reading a few kilobytes and decompressing them. Right now, making
-     * concordances is often CPU-bound (because of decompression?)
+     * concordances is often CPU-bound (because of decompression?)</li>
+     * </ul>
      */
     protected int newEntryBlockSizeCharacters = 4000;
 
@@ -474,6 +481,10 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         currentBlockContents.append(contentPart);
     }
 
+    public void addToBlock(char[] contentPart, int start, int length) {
+        currentBlockContents.append(contentPart, start, length);
+    }
+
     /**
      * Encode and write the block we've compiled so far and reset for next block
      * 
@@ -563,6 +574,34 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         }
     }
 
+    @Override
+    public void storePart(byte[] content, int offset, int length, Charset cs) {
+        if (length <= 0)
+            return;
+        if (blockOffsetWhileStoring.isEmpty())
+            blockOffsetWhileStoring.add(0); // first offset is always 0
+
+        OutputStream os = openCurrentStoreFile();
+
+        CharsetDecoder cd = cs.newDecoder();
+        ByteBuffer in = ByteBuffer.wrap(content, offset, length);
+        CharBuffer out = CharBuffer.allocate(newEntryBlockSizeCharacters);
+        while (in.remaining() > 0) {
+            int charsLeftInCurrentBlock = (blockOffsetWhileStoring.size() * newEntryBlockSizeCharacters) - charsFromEntryWritten;
+            out.limit(charsLeftInCurrentBlock);
+        
+            cd.decode(in, out, true);
+            addToBlock(out.array(), 0, out.position());
+            charsFromEntryWritten += out.position();
+            out.position(0);
+
+            if ((charsFromEntryWritten % newEntryBlockSizeCharacters) == 0) {
+                writeCurrentBlock(os);
+                blockOffsetWhileStoring.add(bytesWritten);
+            }
+        }
+    }
+
     /**
      * Convert the String representation of a block to a byte buffer
      *
@@ -594,6 +633,16 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     @Override
     public synchronized int store(String content) {
         storePart(content);
+        return store();
+    }
+
+    @Override
+    public int store(byte[] content, int offset, int length, Charset cs) {
+        storePart(content, offset, length, cs);
+        return store();
+    }
+
+    private int store() {
         if (currentBlockContents.length() > 0) {
             // Write the last (not completely full) block
             OutputStream os = openCurrentStoreFile();

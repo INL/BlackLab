@@ -144,6 +144,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * @deprecated use {@link #setDocument(byte[], Charset)}
      * Set the document to index.
      *
      * NOTE: you should generally prefer calling the File or byte[] versions of this
@@ -152,6 +153,7 @@ public abstract class DocIndexer implements AutoCloseable {
      *
      * @param reader document
      */
+    @Deprecated
     public abstract void setDocument(Reader reader);
 
     /**
@@ -171,6 +173,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * 
      * Set the document to index.
      *
      * @param contents document contents
@@ -380,7 +383,7 @@ public abstract class DocIndexer implements AutoCloseable {
         value = value.trim();
         if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
-            IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
+            IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
             indexMetadata.registerMetadataField(name);
         }
     }
@@ -407,7 +410,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public void addMetadataToDocument() {
         // See what metadatafields are missing or empty and add unknown value if desired.
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadataWriter();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
         for (int i = 0; i < fields.size(); i++) {
@@ -456,7 +459,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     private void addMetadataFieldToDocument(String name, List<String> values) {
-        IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadataWriter();
+        IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
         //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);

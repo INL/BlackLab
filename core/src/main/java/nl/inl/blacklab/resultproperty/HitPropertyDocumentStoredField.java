@@ -15,8 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.IndexReader;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -32,18 +30,12 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         return new HitPropertyDocumentStoredField(index, PropertySerializeUtil.unescapePart(info));
     }
 
-    BlackLabIndex index;
-    
-    IndexReader reader;
+    final String fieldName;
 
-    String fieldName;
-
-    private DocPropertyStoredField docPropStoredField;
+    final private DocPropertyStoredField docPropStoredField;
 
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Results<Hit> hits, boolean invert) {
         super(prop, hits, null, invert);
-        this.index = hits == null ? null : hits.index();
-        this.reader = index.reader();
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
     }

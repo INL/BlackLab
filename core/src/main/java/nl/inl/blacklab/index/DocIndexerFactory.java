@@ -136,6 +136,7 @@ public interface DocIndexerFactory {
     Format getFormat(String formatIdentifier);
 
     /**
+     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from a reader.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -147,6 +148,7 @@ public interface DocIndexerFactory {
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
      */
+    @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
             throws UnsupportedOperationException;
 
@@ -199,8 +201,6 @@ public interface DocIndexerFactory {
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException;
 
-
-    
     /**
      * If this format exists but has an error, return the error.
      * 

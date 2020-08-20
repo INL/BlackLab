@@ -33,7 +33,7 @@ public class RequestHandlerCreateIndex extends RequestHandler {
                 return Response.forbidden(ds, "You can only create indices in your own private area.");
             }
 
-            indexMan.createIndex(newIndexName, displayName, formatIdentifier);
+            indexMan.createIndex(user, newIndexName, displayName, formatIdentifier);
 
             return Response.status(ds, "SUCCESS", "Index created succesfully.", HttpServletResponse.SC_CREATED);
         } catch (BlsException e) {

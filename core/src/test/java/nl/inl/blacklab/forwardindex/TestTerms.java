@@ -51,7 +51,7 @@ public class TestTerms {
         Collators colls = new Collators(coll, CollatorVersion.V2);
         t = Terms.openForWriting(colls, null, true);
         if (t instanceof TermsWriter)
-            ((TermsWriter) t).setMaxBlockSize(10);
+            ((TermsWriter) t).setMaxBlockSize(18);
         for (int i = 0; i < str.length; i++) {
             t.indexOf(str[i]);
         }

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -489,6 +490,33 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }
+    
+    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
+        // Finish storing the document in the document store,
+        // retrieve the content id, and store that in Lucene.
+        // (Note that we do this after adding the dummy token, so the character
+        // positions for the dummy token still make (some) sense)
+        String contentIdFieldName;
+        String contentStoreName = getContentStoreName();
+        if (contentStoreName == null) {
+            AnnotatedFieldWriter main = getMainAnnotatedField();
+            if (main == null) {
+                contentStoreName = "metadata";
+                contentIdFieldName = "metadataCid";
+            } else {
+                contentStoreName = main.name();
+                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
+            }
+        } else {
+            contentIdFieldName = contentStoreName + "Cid";
+        }
+        int contentId = -1;
+        if (docWriter != null) {
+            ContentStore contentStore = docWriter.contentStore(contentStoreName);
+            contentId = contentStore.store(content, offset, length, cs);
+        }
+        currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
+    }
 
     /**
      * Store (or finish storing) the document in the content store.
@@ -547,11 +575,16 @@ public abstract class DocIndexerBase extends DocIndexer {
         return addDefaultPunctuation;
     }
 
+    /**
+     * calls {@link #getCharacterPosition()}
+     */
     protected void beginWord() {
-        int pos = getCharacterPosition();
-        addStartChar(pos);
+        addStartChar(getCharacterPosition());
     }
 
+    /**
+     * calls {@link #getCharacterPosition()}
+     */
     protected void endWord() {
         String punct;
         if (punctuation.length() == 0)

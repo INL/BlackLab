@@ -1,8 +1,7 @@
 # Frequently Asked Questions
 
 
-Who is BlackLab for?
---------------------
+## Who is BlackLab for?
 
 BlackLab is a good choice if you want to search a large body of text annotated with extra information per word (e.g. lemma, part of speech, or any number of additional layers). It adds a number of search features to Lucene.
 
@@ -10,13 +9,13 @@ With BlackLab, you can search for complex patterns of words (e.g. “find all no
 
 BlackLab supports [a number of input formats](indexing-with-blacklab.html#supported-formats) out of the box. Adding support for a new input format [is easy](how-to-configure-indexing.html).
 
-Who uses it?
-------------
+
+## Who uses BlackLab?
 
 See [Who uses BlackLab?](who-uses-blacklab.html).
 
-Is it easy to use?
-------------------
+
+## Is BlackLab easy to use?
 
 Yes, ease of use is an important design goal of BlackLab. This goes for both the Java library (BlackLab Core) and the webservice (BlackLab Server).
 
@@ -32,10 +31,41 @@ See [Getting started](getting-started.html) to get your feet wet with BlackLab. 
 
 If you have questions, contact us (see below)!
 
-Is it fast?
------------
 
-Yes, we made sure the features we added don’t compromise Lucene’s impressive search speed. Of course, search and index speed varies based on machine and disk speed and available memory, but here are a few examples, from on a reasonably fast machine with 32GB RAM.
+## Why can't BlackLab index my TEI (or other format)?
+
+BlackLab needs tokenized input files. This means the word boundaries have already been determined so BlackLab can just index words as it parses the file.
+
+In addition to this, the default TEI configuration ([tei.blf.yaml](https://github.com/INL/BlackLab/blob/master/core/src/main/resources/formats/tei.blf.yaml)) may not be suitable for your particular TEI documents. You can derive your own custom configuration from the default one to fix this. See [how to configure indexing](how-to-configure-indexing.html).
+ 
+
+## Why is BlackLab slow / running out of memory / using 100% CPU? 
+
+Usually this is related to the Java heap size. Make sure [the JVM has enough heap space](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.
+
+If that doesn't help, you might be trying to index a very large corpus with a unique id for each word, for example. BlackLab was designed to index word, lemma, part of speech and such, which all have a limited number of unique values. If you wish to index a unique id annotation for each word, you could [disable the forward index](how-to-configure-indexing.html#disable-fi) to save memory and disk space. 
+
+Sometimes, certain advanced queries may be slow as well. You can experiment with writing the same query in a slightly different way and see if that helps. If not, let us know.
+
+
+## Why can't I view whole documents?
+
+You may be getting "permission denied" or such when trying to view a whole document in corpus-frontend or via BlackLab Server. This is due to the `contentViewable` setting.
+
+@@@ TODO
+
+
+## Can I use BlackLab with Solr/ElasticSearch?
+
+Solr/ElasticSearch integration is high on our [wishlist](roadmap.html), but BlackLab started as a Java library using Lucene directly, and some changes are required to get it to integrate with Solr and/or ElasticSearch. We know the steps required, it's just a question of finding the time. 
+
+If you’re using Solr/ElasticSearch and are interested in taking advantage of the features that BlackLab provides, drop us a line (see below). We'd love to collaborate on this.
+
+
+## Is BlackLab fast?
+
+We've done our best the features we've added don’t compromise Lucene’s impressive search speed. Of course, search and index speed varies based on machine and disk speed and available memory, but here are a few examples, from on a reasonably fast machine with 32GB RAM.
+
 
 ### Search speed
 
@@ -55,16 +85,9 @@ In addition to the factors mentioned above, indexing speed also depends on the i
 -   The 450M word data set mentioned (consisting of OCR’ed text pages) was indexed in around 6 hours (around 20,000 words/sec)
 -   A 100M word data set in a more compact input format (word-per-line), including headword and part-of-speech tagging, was indexed in under an hour (around 30,000 words/sec; )
 
-Can I use BlackLab with Solr/ElasticSearch?
--------------------------------------------
 
-Solr/ElasticSearch integration is high on our [wishlist](roadmap.html), but BlackLab started as a Java library using Lucene directly, and some changes are required to get it to integrate with Solr and/or ElasticSearch. We know the steps required, it's just a question of finding the time. 
+## Other corpus engines exist; why did you develop BlackLab?
 
-If you’re using Solr/ElasticSearch and are interested in taking advantage of the features that BlackLab provides, drop us a line (see below). We'd love to collaborate on this.
-
-
-Other corpus engines exist; why did you develop BlackLab?
----------------------------------------------------------
 At the Dutch Language Institute, we use all kinds of corpora in all kinds of projects, and we needed a flexible solution for these corpora and projects and their specific requirements.
 
 We designed BlackLab to offer the flexibility that we missed in other corpus engines at the time:
@@ -77,16 +100,11 @@ We designed BlackLab to offer the flexibility that we missed in other corpus eng
 - is trivial to use from other programming languages when desired, but also perfectly integrates with the Java ecosystem many of our products are built on
 
 
-What do I do if BlackLab (Server) is slow and uses 100% CPU?
-------------------------------------------------------------
-Usually this is memory-related. Make sure [the JVM has enough heap space](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl. See .
+## Future plans
 
-Future plans
-------------
 We intend to keep improving BlackLab. For an overview of our future plans, check the [Road map](roadmap.html).
 
-More questions?
----------------
-For technical questions about BlackLab, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org).
 
-I'm always happy to chat with fellow search geeks!
+## More questions?
+
+For technical questions about BlackLab, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org). I'm always happy to hear from you.

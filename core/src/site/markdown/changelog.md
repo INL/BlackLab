@@ -1,49 +1,67 @@
 # Change Log
 
-## Improvements in HEAD
+## Improvements in 2.1.0
 
-### New
-* BLS now reports capture groups (in a captureGroups element for each hit) (by @severian)
+### Changed
 
-### Fixed
-* Capture groups work with parallel hit fetching (by @severian)
-* HitGroups retain capture group information (by @severian)
+* BLS: /termfreq operation no longer requires a filter query.
 
-## Improvements in 2.0.0-RC1
 
-### New
-* New Search system that allows better optimization and integrates result
-  caching, allowing you to define an application-specific cache behaviour.
+### New 
+
+* Add MetadataFieldsWriter for programmatically setting the special fields
+  (in addition to doing so in .blf.yaml files)
 
 ### Fixed
-* Fixed a concurrency bug that could cause a search to get stuck.
-* Fixed some smaller bugs in indexing and searching.
+
+* Fix crash during indexing if terms file got very large.
+* BLS: Fix incorrect check who user-owned formats.
+
+## Improvements in 2.0.0
 
 ### API changes
-* Completely refactored Java API to be more clear and consistent.
-* What we used to call "complex field" (e.g. contents of document, 
-  with word, lemma and pos annotations) is now called "annotated field".
-  What we used to call a "property" of such a field (e.g. word, lemma, 
-  pos) is now called an "annotation".
-  BLS element names that included "complexField" and "property" have been
-  changed to say "annotation" instead. Many references to "property" in the code have
-  been changed to "annotation" as well. For the old behaviour, set
-  protocol.useOldElementNames to true in the blacklab-server configuration file.
-* There is a new version of the blacklab and blacklab-server configuration 
-  files. The old version still works but will be removed in the future.
-  See migration-guide.md for the details of the new format. 
-* Almost all objects in a search are now (effectively) immutable.
+
+#### BLS
+* (breaking change) BLS responses will now report metadata values as arrays,
+  because metadata fields can have multiple values.
+* BLS now reports capture groups (in a captureGroups element for each hit) (by @severian)
+* BLS now allows all headers in CORS requests
+* You can now specify listvalues and/or listmetadatavalues to limit what annotations and metadata fields are returned.
+  If omitted, all annotations/fields are returned.
+* BLS responses now include displayNames and "tab grouping" (if any) for metadata fields (thanks @eduarddrenth)
+ 
+#### Java library
+* (breaking change) Completely refactored Java API to be more clear and consistent.
+  See the migration guide.
 * (only for advanced Java library usage)
   Made the concept of a BlackLab instance ("BlackLabEngine") explicit, so you can 
-  e.g. decide how many threads you want your BlackLabEngine to have (shared by all 
-  indexes you open using this engine). To do this, explicitly call BlackLabEngine.createEngine()
-  and use BlackLabEngine.open() on the resulting object instead of BlackLab.open() (which will 
-  use an "implicit engine").
+  e.g. decide how many threads you want your BlackLabEngine to have.
+
+### New
+* In addition to VTD-XML, Saxon may be used to parse input files for indexing. Saxon supports XPath 3, which
+  contains many features useful for configuring input formats. It is also faster, at the cost of increased memory 
+  usage for large files.
+* Multiple values may be indexed for a metadata field (this is automatic when your XPath matches multiple values).
+  (this is is the reason why BLS will now report all metadata as lists of values, even if there's only one)
+* Added mapValues option to map metadata field values while indexing
+* It is now possible to configure global unknown condition and value (use metadataDefaultUnknownCondition 
+  and metadataDefaultUnknownValue at the top-level of your indexing config)
+* You can now set isInternal to true on annotations to prevent searching and grouping on it in corpus-frontend
+* Added annotation option allowDuplicateValues (defaults to true). If multipleValues is true and allowDuplicateValues 
+  is false, duplicates encountered will not be indexed twice, preventing double hits.
+* Add support for retrieving occurances of a list of terms, /blacklab-server/INDEX_NAME/termfreq
 
 ### Changed
 * Speeded up searches by allowing hits to be fetched in parallel
+* New Search system that allows better optimization and integrates result
+  caching, allowing you to define an application-specific cache behaviour.
+* There is a new version of the blacklab and blacklab-server configuration 
+  files. The old version still works but will be removed in the future.
+  See migration-guide.md for the details of the new format. 
+* IndexTool now defaults to multithreaded indexing and the number of threads can be configured
 * Calculating tokens in a subcorpus (using includetokencount=true on a docs query with 
   just a metadata filter) is much faster (through the use of DocValues). 
+  We use DocValues in more places for performance improvements.
 * In new indexes, subannotations are part of the index structure. As a result of this,
   you can enumerate the subannotations and their values much more efficiently.
   You can also specify any metadata you can specify for a regular annotation,
@@ -56,7 +74,31 @@
 * A number of new metadata settings are supported, such as annotationGroups.
   More extensive documentation will follow.
 * Added optional detailed SQLite logging for diagnosing performance issues.
+* Improved error message when passing invalid regex expression or when query contains unknown annotation
+* If punctPath matches an empty tag, replace it with a space. This deals with e.g. TEi <lb/> tags as punctuation.
+* Don't autodetect titleField. If not set, use pidField. If that's not set, use fromInputFile.
+* Allow leading wildcards in metadata filter queries
+* If performance.maxThreadsPerSearch is set to 1, use HitsFromQuery instead of HitsFromQueryParallel
 * Many smaller improvements.
+
+### Fixed
+* Fixed a concurrency bug that could cause a search to get stuck.
+* Capture groups work with parallel hit fetching (by @severian)
+* HitGroups retain capture group information (by @severian)
+* Fixed and sped up determining subcorpus size (for relative frequencies) when grouping
+* Restore namespace on document element when fetching part of a document (by @eduarddrenth)
+* maxConcurrentSearches is now always at least 4, to avoid deadlocks on single-core machines
+* Warn if value is not stored because it's too long; increase maximum value length.
+  (if value exceeds 32K, it will be truncated when storing in DocValues)
+* Only use NumericDocValues from a single thread at a time (reported by @severian)
+* Sanitize field names containing characters not allowed in XML element names, so BLS responses are valid XML
+* Fixed textDirection from config not working when creating new index
+* When displaying left context, ensure the words are in original order
+* Gap filling works when cql query contains a newline
+* Fixed deleting documents from index, accidentally including deleted docs in results.
+* Fix groups with a colon in the group name not working correctly
+* Many smaller bugs in indexing and searching fixed
+* Library versions updated
 
 ### Removed
 * Really old index formats (pre 1.4 or so) are no longer supported.
@@ -81,7 +123,7 @@
 * Made timeout longer for hits queries to avoid Timeout error.
 * Jackson and commons-compress libraries were updated because of patch 
   security vulnerabilities. 
-  
+
 ## Improvements up to v1.7.1
 
 ### Changed

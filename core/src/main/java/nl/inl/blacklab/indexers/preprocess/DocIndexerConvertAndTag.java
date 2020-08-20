@@ -117,10 +117,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
 
-        try (InputStream is = new ByteArrayInputStream(output.toByteArray())) {
-            this.outputIndexer.setDocument(is, charset);
-            this.outputIndexer.index();
-        }
+        this.outputIndexer.setDocument(output.toByteArray(), charset);
+        this.outputIndexer.index();
     }
 
     @Override

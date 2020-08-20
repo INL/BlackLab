@@ -60,7 +60,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -274,10 +273,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     protected Analyzer analyzer = new BLStandardAnalyzer();
 
     /** Structure of our index */
-    protected IndexMetadata indexMetadata;
+    protected IndexMetadataWriter indexMetadata;
     
-    protected IndexMetadataWriter indexMetadataWriter;
-
     protected ContentStoresManager contentStores = new ContentStoresManager();
 
     /**
@@ -369,9 +366,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 logger.debug("  Determining index structure...");
             IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
             indexMetadata = indexMetadataImpl;
-            if (indexMode)
-                indexMetadataWriter = indexMetadataImpl;
-            else
+            if (!indexMode)
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
@@ -406,9 +401,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 logger.debug("  Determining index structure...");
             IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
             indexMetadata = indexMetadataImpl;
-            if (indexMode)
-                indexMetadataWriter = indexMetadataImpl;
-            else
+            if (!indexMode)
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
@@ -452,7 +445,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     }
 
     @Override
-    public IndexMetadata metadata() {
+    public IndexMetadataWriter metadata() {
         return indexMetadata;
     }
     
@@ -831,8 +824,9 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     //----------------------------------------------------------------
     
     @Override
+    @Deprecated
     public IndexMetadataWriter metadataWriter() {
-        return indexMetadataWriter;
+        return metadata();
     }
     
     @Override

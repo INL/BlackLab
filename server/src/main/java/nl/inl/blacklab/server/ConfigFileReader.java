@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.util.FileUtil;
@@ -120,7 +121,7 @@ class ConfigFileReader {
         return !configFileJsonNode.has("configVersion");
     }
     
-    public BLSConfig getConfig() throws ConfigurationException {
+    public BLSConfig getConfig() throws InvalidConfiguration {
         return BLSConfig.read(new StringReader(configFileContents), isJson());
     }
     
