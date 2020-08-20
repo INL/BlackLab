@@ -23,6 +23,7 @@ public class PropertyValueMultiple extends PropertyValue {
         return value;
     }
 
+    /** Only to be used with another instance of {@link PropertyValueMultiple} */
     @Override
     public int compareTo(Object o) {
         return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
@@ -30,7 +31,7 @@ public class PropertyValueMultiple extends PropertyValue {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(value);
+        return value.length == 1 ? value[0].hashCode() : Arrays.hashCode(value);
     }
 
     @Override
@@ -39,6 +40,9 @@ public class PropertyValueMultiple extends PropertyValue {
             return true;
         if (obj instanceof PropertyValueMultiple)
             return Arrays.equals(value, ((PropertyValueMultiple) obj).value);
+        if (this.value.length == 1 && obj instanceof PropertyValue) {
+            return this.value[0].equals(obj);
+        }
         return false;
     }
 
@@ -86,7 +90,7 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     /**
-     * Compare two arrays of HitPropValue objects, by comparing each one in
+     * Compare two arrays of PropertyValue objects, by comparing each one in
      * succession.
      *
      * The first difference encountered determines the result. If the arrays are of
@@ -98,9 +102,7 @@ public class PropertyValueMultiple extends PropertyValue {
      * @return 0 if equal, negative if a &lt; b, positive if a &gt; b
      */
     private static int compareHitPropValueArrays(PropertyValue[] a, PropertyValue[] b) {
-        int n = a.length;
-        if (b.length < n)
-            n = b.length;
+        int n = a.length < b.length ? a.length : b.length; // min
         for (int i = 0; i < n; i++) {
             // Does this element decide the comparison?
             int cmp = a[i].compareTo(b[i]);
@@ -108,15 +110,17 @@ public class PropertyValueMultiple extends PropertyValue {
                 return cmp; // yep, done
             }
         }
-        if (a.length == b.length) {
-            // Arrays are exactly equal
-            return 0;
-        }
-        if (n == a.length) {
-            // Array b is longer than a; sort it after a
-            return -1;
-        }
-        // a longer than b
-        return 1;
+        return b.length - a.length; // sort short arrays before long arrays
+        
+//        if (a.length == b.length) {
+//            // Arrays are exactly equal
+//            return 0;
+//        }
+//        if (n == a.length) {
+//            // Array b is longer than a; sort it after a
+//            return -1;
+//        }
+//        // a longer than b
+//        return 1;
     }
 }

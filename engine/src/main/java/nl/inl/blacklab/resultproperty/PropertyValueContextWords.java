@@ -43,6 +43,9 @@ public class PropertyValueContextWords extends PropertyValueContext {
             return true;
         if (obj instanceof PropertyValueContextWords)
             return Arrays.equals(valueSortOrder, ((PropertyValueContextWords) obj).valueSortOrder);
+        if (obj instanceof PropertyValueMultiple)
+            return obj.equals(this);
+
         return false;
     }
 

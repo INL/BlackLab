@@ -43,6 +43,9 @@ public class PropertyValueDoc extends PropertyValue {
         if (obj instanceof PropertyValueDoc) {
             return value.id() == ((PropertyValueDoc) obj).value.id();
         }
+        if (obj instanceof PropertyValueMultiple) {
+            return obj.equals(this);
+        }
         return false;
     }
 

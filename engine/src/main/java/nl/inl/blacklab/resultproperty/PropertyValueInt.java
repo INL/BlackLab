@@ -29,6 +29,9 @@ public class PropertyValueInt extends PropertyValue {
             return true;
         if (obj instanceof PropertyValueInt) {
             return value == ((PropertyValueInt) obj).value;
+        } 
+        if (obj instanceof PropertyValueMultiple) {
+            return obj.equals(this);
         }
         return false;
     }

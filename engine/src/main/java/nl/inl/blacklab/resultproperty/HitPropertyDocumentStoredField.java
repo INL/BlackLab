@@ -56,8 +56,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public PropertyValueString get(Hit result) {
-        return new PropertyValueString(docPropStoredField.get(result.doc()));
+    public PropertyValueMultiple get(Hit result) {
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(result.doc()));
     }
 
     @Override

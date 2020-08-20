@@ -29,6 +29,9 @@ public class PropertyValueString extends PropertyValue {
         if (obj instanceof PropertyValueString) {
             return value.equals(((PropertyValueString) obj).value);
         }
+        if (obj instanceof PropertyValueMultiple) {
+            return obj.equals(this);            
+        }
         return false;
     }
 

@@ -26,14 +26,15 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -86,10 +88,12 @@ public abstract class DocIndexer implements AutoCloseable {
     protected Document currentLuceneDoc;
 
     /**
-     * Document metadata. Added at the end to deal with unknown values, multiple occurrences
-     * (only the first is actually indexed, because of DocValues, among others), etc.
+     * Document metadata. Added at the end to deal with unknown values, etc.
      */
-    protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
+    protected Map<String, TreeSet<String>> metadataFieldValues = new HashMap<>();
+    
+    /** Used to sort the metadata/docfield values going into the lucene documents */ 
+    protected Comparator<? super String> metadataValueSorter = BlackLabIndexImpl.defaultCollator()::compare;
 
     /**
      * Parameters passed to this indexer
@@ -173,7 +177,6 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * 
      * Set the document to index.
      *
      * @param contents document contents
@@ -367,7 +370,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     public List<String> getMetadataField(String name) {
-        return metadataFieldValues.get(name);
+        return new ArrayList<>(metadataFieldValues.get(name));
     }
 
     public void addMetadataField(String name, String value) {
@@ -382,7 +385,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
         value = value.trim();
         if (!value.isEmpty()) {
-            metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
+            metadataFieldValues.computeIfAbsent(name, __ -> new TreeSet<String>(metadataValueSorter)).add(value);
             IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
             indexMetadata.registerMetadataField(name);
         }
@@ -404,8 +407,7 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * When all metadata values have been set, call this to add the to the Lucene document.
      *
-     * We do it this way because we don't want to add multiple values for a field (DocValues and
-     * Document.get() only deal with the first value added), and we want to set an "unknown value"
+     * We do it this way because we want to set an "unknown value"
      * in certain conditions, depending on the configuration.
      */
     public void addMetadataToDocument() {
@@ -450,15 +452,15 @@ public abstract class DocIndexer implements AutoCloseable {
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.put(e.getKey(), Arrays.asList(e.getValue()));
+            metadataFieldValues.computeIfAbsent(e.getKey(), __ -> new TreeSet<String>(metadataValueSorter)).add(e.getValue());
         }
-        for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
+        for (Entry<String, TreeSet<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());
         }
         metadataFieldValues.clear();
     }
 
-    private void addMetadataFieldToDocument(String name, List<String> values) {
+    private void addMetadataFieldToDocument(String name, Set<String> values) {
         IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
         //indexMetadata.registerMetadataField(name);
 

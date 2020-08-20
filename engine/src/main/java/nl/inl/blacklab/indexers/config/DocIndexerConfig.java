@@ -215,12 +215,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // Resolve linkPaths to get the information needed to fetch the document
         List<String> results = new ArrayList<>();
         for (ConfigLinkValue linkValue : ld.getLinkValues()) {
-            String result = "";
             String valuePath = linkValue.getValuePath();
             String valueField = linkValue.getValueField();
             if (valuePath != null) {
                 // Resolve value using XPath
-                result = xpathProcessor.apply(valuePath);
+                String result = xpathProcessor.apply(valuePath);
                 if (result == null || result.isEmpty()) {
                     switch (ld.getIfLinkPathMissing()) {
                         case IGNORE:
@@ -233,12 +232,16 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                             throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
                     }
                 }
+                results.add(result);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
-                result = getMetadataField(valueField).get(0);
+                results.addAll(getMetadataField(valueField));
             }
-            result = processString(result, linkValue.getProcess(), null);
-            results.add(result);
+            List<String> resultAfterProcessing = new ArrayList<>();
+            for (String inputValue : results) {
+                resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess(), null));
+            }
+            results = resultAfterProcessing;
         }
 
         // Substitute link path results in inputFile, pathInsideArchive and documentPath
