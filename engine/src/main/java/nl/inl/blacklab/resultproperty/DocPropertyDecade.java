@@ -48,7 +48,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     public int get(int docId) {
-        String strYear = docPropStoredField.get(docId);
+        String strYear = docPropStoredField.getFirstValue(docId);
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -61,7 +61,7 @@ public class DocPropertyDecade extends DocProperty {
 
     @Override
     public PropertyValueDecade get(DocResult result) {
-        String strYear = docPropStoredField.get(result).value;
+        String strYear = docPropStoredField.getFirstValue(result);
         int year;
         try {
             year = Integer.parseInt(strYear);

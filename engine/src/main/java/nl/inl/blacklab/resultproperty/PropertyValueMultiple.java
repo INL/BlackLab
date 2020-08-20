@@ -74,19 +74,19 @@ public class PropertyValueMultiple extends PropertyValue {
         }
         return PropertySerializeUtil.combineMultiple(valuesSerialized);
     }
-    
+
     @Override
     public boolean isCompound() {
         return true;
     }
-    
+
     @Override
     public List<PropertyValue> values() {
         return Collections.unmodifiableList(Arrays.asList(value));
     }
 
     /**
-     * Compare two arrays of HitPropValue objects, by comparing each one in
+     * Compare two arrays of PropertyValue objects, by comparing each one in
      * succession.
      *
      * The first difference encountered determines the result. If the arrays are of
@@ -98,9 +98,7 @@ public class PropertyValueMultiple extends PropertyValue {
      * @return 0 if equal, negative if a &lt; b, positive if a &gt; b
      */
     private static int compareHitPropValueArrays(PropertyValue[] a, PropertyValue[] b) {
-        int n = a.length;
-        if (b.length < n)
-            n = b.length;
+        int n = a.length < b.length ? a.length : b.length; // min
         for (int i = 0; i < n; i++) {
             // Does this element decide the comparison?
             int cmp = a[i].compareTo(b[i]);
@@ -108,15 +106,6 @@ public class PropertyValueMultiple extends PropertyValue {
                 return cmp; // yep, done
             }
         }
-        if (a.length == b.length) {
-            // Arrays are exactly equal
-            return 0;
-        }
-        if (n == a.length) {
-            // Array b is longer than a; sort it after a
-            return -1;
-        }
-        // a longer than b
-        return 1;
+        return a.length - b.length; // sort short arrays before long arrays when all values up to the trailing values in the longer array are the same
     }
 }

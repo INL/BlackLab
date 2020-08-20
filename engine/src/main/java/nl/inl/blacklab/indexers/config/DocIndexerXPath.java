@@ -1,39 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.function.Function;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import com.ximpleware.AutoPilot;
-import com.ximpleware.BookMark;
-import com.ximpleware.NavException;
-import com.ximpleware.VTDException;
-import com.ximpleware.VTDGen;
-import com.ximpleware.VTDNav;
-import com.ximpleware.XPathEvalException;
-import com.ximpleware.XPathParseException;
-
+import com.ximpleware.*;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -45,6 +12,16 @@ import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.Function;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
@@ -382,7 +359,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 fragPos = FragmentPosition.AFTER_CLOSE_TAG;
                 endWord();
-
+                
                 // Add empty values to all lagging annotations
                 for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
                     while (prop.lastValuePosition() < lastValuePosition) {
@@ -615,7 +592,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
 
             // For each configured subannotation...
-            Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment
+            Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment 
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
                 // Subannotation configs without a valuePath are just for
                 // adding information about subannotations captured in forEach's,
@@ -643,7 +620,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                         String value = null;
                         if (actualSubAnnot != null) {
-                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
+                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString(); 
                             value = processString(value, subAnnot.getProcess(), null);
                             // Also apply process defined in named subannotation, if any
                             value = processString(value, actualSubAnnot.getProcess(), null);
@@ -694,7 +671,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 Set<String> valuesAlreadyIndexed = null;
                 if (!annotation.isAllowDuplicateValues())
                     valuesAlreadyIndexed = new HashSet<>();
-
+                
                 // Multiple matches will be indexed at the same position.
                 AutoPilot apValue = acquireAutoPilot(".");
                 boolean firstValue = true;
@@ -930,7 +907,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         setCurrentAnnotatedFieldName(currentAnnotatedFieldConfig.getName());
     }
 
-    /** Get the raw xml from the document at the current position
+    /** Get the raw xml from the document at the current position 
      * @throws NavException */
     private static String getXml(AutoPilot ap) throws NavException {
         long frag = ap.getNav().getContentFragment();

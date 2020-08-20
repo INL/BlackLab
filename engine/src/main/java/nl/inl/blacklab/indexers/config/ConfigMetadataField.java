@@ -24,10 +24,10 @@ public class ConfigMetadataField {
      * matching node.
      */
     private String forEachPath;
-    
+
     /** How to process annotation values (if at all) */
     private List<ConfigProcessStep> process = new ArrayList<>();
-    
+
     private Map<String, String> mapValues = new HashMap<>();
 
     /** How to index the field (tokenized|untokenized|numeric) */
@@ -60,6 +60,12 @@ public class ConfigMetadataField {
     /** Order in which to display the values (optional) */
     private List<String> displayOrder = new ArrayList<>();
 
+    /**
+     * Whether to sort multiple value alphabetically or preserve them in document order
+     * This reflects on order of values for this field returned by lucene (and by extension, BlackLab and BlackLab server)
+     */
+    private boolean sortValues = false;
+
     public ConfigMetadataField() {
     }
 
@@ -86,6 +92,7 @@ public class ConfigMetadataField {
         cp.setAnalyzer(analyzer);
         cp.displayValues.putAll(displayValues);
         cp.displayOrder.addAll(displayOrder);
+        cp.setsortValues(sortValues);
         return cp;
     }
 
@@ -108,7 +115,7 @@ public class ConfigMetadataField {
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
     }
-    
+
     public String getName() {
         return name;
     }
@@ -116,7 +123,7 @@ public class ConfigMetadataField {
     public String getValuePath() {
         return valuePath;
     }
-    
+
     public String getForEachPath() {
         return forEachPath;
     }
@@ -197,6 +204,10 @@ public class ConfigMetadataField {
         return Collections.unmodifiableList(displayOrder);
     }
 
+    public boolean getSortValues() {
+        return sortValues;
+    }
+
     public List<ConfigProcessStep> getProcess() {
         return process;
     }
@@ -205,7 +216,7 @@ public class ConfigMetadataField {
         this.process.clear();
         this.process.addAll(process);
     }
-    
+
     public void setMapValues(Map<String, String> mapValues) {
         this.mapValues.clear();
         this.mapValues.putAll(mapValues);
@@ -213,6 +224,10 @@ public class ConfigMetadataField {
 
     public void addDisplayOrder(List<String> fields) {
         displayOrder.addAll(fields);
+    }
+
+    public void setsortValues(boolean sortValues) {
+        this.sortValues = sortValues;
     }
 
     @Override

@@ -40,7 +40,7 @@ import nl.inl.util.Json;
 public class InputFormatReader extends YamlJsonReader {
 
     protected static final Logger logger = LogManager.getLogger(InputFormatReader.class);
-    
+
     public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
     }
@@ -546,7 +546,7 @@ public class InputFormatReader extends YamlJsonReader {
             }
         }
     }
-    
+
     private static String warnSanitizeXmlElementName(String name) {
         String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
         if (!sanitized.equals(name))
@@ -627,6 +627,9 @@ public class InputFormatReader extends YamlJsonReader {
                     Map<String, String> values = new HashMap<>();
                     readStringMap(e, values);
                     f.addDisplayValues(values);
+                    break;
+                case "sortValues":
+                    f.setsortValues(YamlJsonReader.bool(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig(

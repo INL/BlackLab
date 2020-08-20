@@ -17,10 +17,13 @@ package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -97,59 +100,83 @@ public class DocPropertyStoredField extends DocProperty {
         }
     }
 
-    public String get(int docId) {
+    /**
+     * Get the raw values straight from lucene.
+     * The returned array is in whichever order the values were originally added to the document.
+     *
+     * @param docId
+     * @return
+     */
+    public String[] get(int docId) {
         if  (docValues != null) {
             // Find the fiid in the correct segment
-            Entry<Integer, SortedSetDocValues> prev = null;
-            for (Entry<Integer, SortedSetDocValues> e : docValues.entrySet()) {
-                Integer docBase = e.getKey();
-                if (docBase > docId) {
-                    // Previous segment (the highest docBase lower than docId) is the right one
-                    Integer prevDocBase = prev.getKey();
-                    SortedSetDocValues prevDocValues = prev.getValue();
-                    prevDocValues.setDocument(docId - prevDocBase);
-                    long ord = prevDocValues.nextOrd();
-                    if (ord != SortedSetDocValues.NO_MORE_ORDS) {
-                        // Return first value
-                        BytesRef val = prevDocValues.lookupOrd(ord);
-                        return new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8);
-                    }
-                    return ""; // no values for this field in this doc
+            Entry<Integer, SortedSetDocValues> target = null;
+            for (Entry<Integer, SortedSetDocValues> e : this.docValues.entrySet()) {
+                if (e.getKey() > docId) { break; }
+                target = e;
+            }
+
+            final List<String> ret = new ArrayList<>();
+            if (target != null) {
+                final Integer targetDocBase = target.getKey();
+                final SortedSetDocValues targetDocValues = target.getValue();
+                targetDocValues.setDocument(docId - targetDocBase);
+                for (long ord = targetDocValues.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = targetDocValues.nextOrd()) {
+                    BytesRef val = targetDocValues.lookupOrd(ord);
+                    ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
                 }
-                prev = e;
             }
-            // Last segment is the right one
-            Integer prevDocBase = prev.getKey();
-            SortedSetDocValues prevDocValues = prev.getValue();
-            prevDocValues.setDocument(docId - prevDocBase);
-            long ord = prevDocValues.nextOrd();
-            if (ord != SortedSetDocValues.NO_MORE_ORDS) {
-                // Return first value
-                BytesRef val = prevDocValues.lookupOrd(ord);
-                return new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8);
-            }
-            return ""; // no values for this field in this doc
+            return ret.toArray(new String[ret.size()]);
         }
         // We don't have DocValues; just get the property from the document.
         try {
-            String value = index.reader().document(docId).get(fieldName);
-            return value != null ? value : "";
+            return index.reader().document(docId).getValues(fieldName);
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Could not fetch document " + docId, e);
         }
     }
 
-    public String get(PropertyValueDoc doc) {
+    /**
+     * Get the raw values straight from lucene.
+     * The returned array is in whichever order the values were originally added to the document.
+     *
+     * @param docId
+     * @return
+     */
+    public String[] get(PropertyValueDoc doc) {
+        // We have the Document already, get the property from there
         if (doc.value().isLuceneDocCached()) {
-            // We have the Document already, get the property from there
-            return doc.luceneDoc().get(fieldName);
+            return doc.luceneDoc().getValues(fieldName);
         }
         return get(doc.id());
     }
 
+    /** Get the values as PropertyValue. */
     @Override
     public PropertyValueString get(DocResult result) {
-        return new PropertyValueString(get(result.identity()));
+        String[] values = get(result.identity());
+        return fromArray(values);
+    }
+
+    /** Get the first value. The empty string is returned if there are no values for this document */
+    public String getFirstValue(DocResult result) {
+        return getFirstValue(result.identity());
+    }
+
+    /** Get the first value. The empty string is returned if there are no values for this document */
+    public String getFirstValue(PropertyValueDoc doc) {
+        return getFirstValue(doc.id());
+    }
+
+    /** Get the first value. The empty string is returned if there are no values for this document */
+    public String getFirstValue(int docId) {
+        String[] values = get(docId);
+        return values.length > 0 ? values[0] : "";
+    }
+
+    /** Convert an array of string values to a PropertyValueString. */
+    public static PropertyValueString fromArray(String[] values) {
+        return new PropertyValueString(StringUtils.join(values, " · "));
     }
 
     /**
@@ -160,17 +187,7 @@ public class DocPropertyStoredField extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     public int compare(int docId1, int docId2) {
-        String sa = get(docId1);
-        String sb = get(docId2);
-        if (sa.isEmpty()) { // sort empty string at the end
-            if (sb.isEmpty())
-                return 0;
-            else
-                return reverse ? -1 : 1;
-        }
-        if (sb.isEmpty()) // sort empty string at the end
-            return reverse ? 1 : -1;
-        return reverse ? PropertyValue.collator.compare(sb, sa) : PropertyValue.collator.compare(sa, sb);
+        return fromArray(get(docId1)).compareTo(fromArray(get(docId2))) * (reverse ? -1 : 1);
     }
 
     /**
@@ -182,21 +199,9 @@ public class DocPropertyStoredField extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        String sa = a.identity().luceneDoc().get(fieldName);
-        if (sa == null)
-            sa = "";
-        String sb = b.identity().luceneDoc().get(fieldName);
-        if (sb == null)
-            sb = "";
-        if (sa.length() == 0) { // sort empty string at the end
-            if (sb.length() == 0)
-                return 0;
-            else
-                return reverse ? -1 : 1;
-        }
-        if (sb.length() == 0) // sort empty string at the end
-            return reverse ? 1 : -1;
-        return reverse ? PropertyValue.collator.compare(sb, sa) : PropertyValue.collator.compare(sa, sb);
+        PropertyValue v1 = get(a);
+        PropertyValue v2 = get(b);
+        return v1.compareTo(v2) * (reverse ? -1 : 1);
     }
 
     @Override

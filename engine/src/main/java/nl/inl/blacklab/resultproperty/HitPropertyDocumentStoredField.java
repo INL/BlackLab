@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.results.Results;
  * document.
  */
 public class HitPropertyDocumentStoredField extends HitProperty {
-    
+
     static HitPropertyDocumentStoredField deserializeProp(BlackLabIndex index, String info) {
         return new HitPropertyDocumentStoredField(index, PropertySerializeUtil.unescapePart(info));
     }
@@ -57,7 +57,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public PropertyValueString get(Hit result) {
-        return new PropertyValueString(docPropStoredField.get(result.doc()));
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(result.doc()));
     }
 
     @Override
@@ -110,5 +110,4 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public PropertyValue docPropValues(PropertyValue value) {
         return value;
     }
-    
 }
