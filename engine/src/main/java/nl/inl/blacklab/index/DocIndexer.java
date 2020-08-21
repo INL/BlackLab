@@ -27,14 +27,12 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,7 +49,6 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
@@ -90,10 +87,7 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Document metadata. Added at the end to deal with unknown values, etc.
      */
-    protected Map<String, TreeSet<String>> metadataFieldValues = new HashMap<>();
-    
-    /** Used to sort the metadata/docfield values going into the lucene documents */ 
-    protected Comparator<? super String> metadataValueSorter = BlackLabIndexImpl.defaultCollator()::compare;
+    protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
     /**
      * Parameters passed to this indexer
@@ -370,7 +364,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     public List<String> getMetadataField(String name) {
-        return new ArrayList<>(metadataFieldValues.get(name));
+        return metadataFieldValues.get(name);
     }
 
     public void addMetadataField(String name, String value) {
@@ -385,7 +379,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
         value = value.trim();
         if (!value.isEmpty()) {
-            metadataFieldValues.computeIfAbsent(name, __ -> new TreeSet<String>(metadataValueSorter)).add(value);
+            metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
             IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
             indexMetadata.registerMetadataField(name);
         }
@@ -452,15 +446,15 @@ public abstract class DocIndexer implements AutoCloseable {
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.computeIfAbsent(e.getKey(), __ -> new TreeSet<String>(metadataValueSorter)).add(e.getValue());
+            metadataFieldValues.computeIfAbsent(e.getKey(), __ -> new ArrayList<>()).add(e.getValue());
         }
-        for (Entry<String, TreeSet<String>> e: metadataFieldValues.entrySet()) {
+        for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());
         }
         metadataFieldValues.clear();
     }
 
-    private void addMetadataFieldToDocument(String name, Set<String> values) {
+    private void addMetadataFieldToDocument(String name, List<String> values) {
         IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
         //indexMetadata.registerMetadataField(name);
 

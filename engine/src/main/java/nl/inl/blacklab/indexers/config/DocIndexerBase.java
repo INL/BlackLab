@@ -147,7 +147,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * What annotations where skipped because they were not declared?
      */
     Set<String> skippedAnnotations = new HashSet<>();
-    
+
     protected String getContentStoreName() {
         return contentStoreName;
     }
@@ -319,7 +319,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * If we've already seen this string, return the original copy.
      *
      * This prevents us from storing many copies of the same string.
-     * 
+     *
      * @param possibleDupe string we may already have stored
      * @return unique instance of the string
      */
@@ -461,7 +461,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      *
      * Subclasses that simply capture the entire document can use this in their
      * storeDocument implementation.
-     * 
+     *
      * @param document document to store
      */
     protected void storeWholeDocument(String document) {
@@ -490,7 +490,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
     }
-    
+
     protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
@@ -606,7 +606,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             punctuation.setLength(0);
     }
-    
+
     /**
      * Index an annotation.
      *
@@ -703,5 +703,5 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         return metadataFetcher;
     }
-    
+
 }
