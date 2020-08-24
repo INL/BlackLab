@@ -14,7 +14,11 @@ public class PropertyValueString extends PropertyValue {
 
     @Override
     public int compareTo(Object o) {
-        return PropertyValue.collator.compare(value, ((PropertyValueString) o).value);
+        if (o instanceof PropertyValueString)
+            return PropertyValue.collator.compare(value, ((PropertyValueString) o).value);
+        if (o instanceof PropertyValueMultiple)
+            return -((PropertyValueMultiple) o).compareTo(this);
+        return super.compareTo(o);
     }
 
     @Override
@@ -30,7 +34,7 @@ public class PropertyValueString extends PropertyValue {
             return value.equals(((PropertyValueString) obj).value);
         }
         if (obj instanceof PropertyValueMultiple) {
-            return obj.equals(this);            
+            return obj.equals(this);
         }
         return false;
     }
@@ -52,7 +56,7 @@ public class PropertyValueString extends PropertyValue {
     public int length() {
         return value.length();
     }
-    
+
     public boolean isEmpty() {
         return value.isEmpty();
     }

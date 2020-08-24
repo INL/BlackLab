@@ -27,7 +27,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     /**
      * Convert the String representation of a HitPropValue back into the
      * HitPropValue
-     * 
+     *
      * @param hits our hits object
      * @param serialized the serialized object
      * @return the HitPropValue object, or null if it could not be deserialized
@@ -35,12 +35,12 @@ public abstract class PropertyValue implements Comparable<Object> {
     public static PropertyValue deserialize(Hits hits, String serialized) {
         return deserialize(hits.index(), hits.field(), serialized);
     }
-    
+
     /**
      * Convert the String representation of a HitPropValue back into the
      * HitPropValue
-     * 
-     * @param index our index 
+     *
+     * @param index our index
      * @param field field we're searching
      * @param serialized the serialized object
      * @return the HitPropValue object, or null if it could not be deserialized
@@ -73,9 +73,15 @@ public abstract class PropertyValue implements Comparable<Object> {
         logger.debug("Unknown HitPropValue '" + type + "'");
         return null;
     }
-    
+
     @Override
-    public abstract int compareTo(Object o);
+    public int compareTo(Object o) {
+        if (o == this)
+            return 0;
+        if (o instanceof PropertyValue)
+            return o.getClass().getName().compareTo(this.getClass().getName());
+        throw new ClassCastException();
+    }
 
     @Override
     public abstract int hashCode();
@@ -85,18 +91,18 @@ public abstract class PropertyValue implements Comparable<Object> {
 
     /**
      * Convert the object to a String representation, for use in e.g. URLs.
-     * 
+     *
      * @return the serialized object
      */
     public abstract String serialize();
 
     @Override
     public abstract String toString();
-    
+
     public boolean isCompound() {
         return false;
     }
-    
+
     public List<PropertyValue> values() {
         return null;
     }
@@ -111,6 +117,6 @@ public abstract class PropertyValue implements Comparable<Object> {
         }
         return l;
     }
-    
+
     public abstract Object value();
 }

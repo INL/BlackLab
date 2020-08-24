@@ -22,8 +22,13 @@ public class PropertyValueContextWord extends PropertyValueContext {
 
     @Override
     public int compareTo(Object o) {
-        int a = valueSortOrder, b = ((PropertyValueContextWord) o).valueSortOrder;
-        return a == b ? 0 : (a < b ? -1 : 1);
+        if (o instanceof PropertyValueContextWord) {
+            int a = valueSortOrder, b = ((PropertyValueContextWord) o).valueSortOrder;
+            return a == b ? 0 : (a < b ? -1 : 1);
+        }
+        if (o instanceof PropertyValueMultiple)
+            return -((PropertyValueMultiple) o).compareTo(this);
+        return super.compareTo(o);
     }
 
     @Override
@@ -72,5 +77,5 @@ public class PropertyValueContextWord extends PropertyValueContext {
     public Integer value() {
         return valueTokenId;
     }
-    
+
 }

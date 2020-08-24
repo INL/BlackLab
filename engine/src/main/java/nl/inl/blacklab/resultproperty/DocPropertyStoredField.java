@@ -152,8 +152,13 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** Get the values as PropertyValue. */
     @Override
-    public PropertyValueMultiple get(DocResult result) {
-       return fromArray(get(result.identity()));
+    public PropertyValue get(DocResult result) {
+       String[] values = get(result.identity());
+       switch (values.length) {
+           case 0: return new PropertyValueString(""); // important for grouping: group for -no value- needs an identity too
+           case 1: return new PropertyValueString(values[0]);
+           default: return fromArray(values);
+       }
     }
 
     /** Get the first value. The empty string is returned if there are no values for this document */
@@ -178,6 +183,7 @@ public class DocPropertyStoredField extends DocProperty {
         for (int i = 0; i < values.length; ++i) {
             asPropertyValues[i] = new PropertyValueString(values[i]);
         }
+
         return new PropertyValueMultiple(asPropertyValues);
     }
 
@@ -203,8 +209,8 @@ public class DocPropertyStoredField extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        PropertyValueMultiple v1 = get(a);
-        PropertyValueMultiple v2 = get(b);
+        PropertyValue v1 = get(a);
+        PropertyValue v2 = get(b);
         return v1.compareTo(v2) * (reverse ? -1 : 1);
     }
 

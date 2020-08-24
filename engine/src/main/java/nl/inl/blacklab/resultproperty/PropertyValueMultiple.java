@@ -26,7 +26,11 @@ public class PropertyValueMultiple extends PropertyValue {
     /** Only to be used with another instance of {@link PropertyValueMultiple} */
     @Override
     public int compareTo(Object o) {
-        return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
+        if (o instanceof PropertyValueMultiple)
+            return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
+        if (o instanceof PropertyValue)
+            return compareHitPropValueArrays(value, new PropertyValue[] { (PropertyValue) o });
+        return super.compareTo(o);
     }
 
     @Override
@@ -78,12 +82,12 @@ public class PropertyValueMultiple extends PropertyValue {
         }
         return PropertySerializeUtil.combineMultiple(valuesSerialized);
     }
-    
+
     @Override
     public boolean isCompound() {
         return true;
     }
-    
+
     @Override
     public List<PropertyValue> values() {
         return Collections.unmodifiableList(Arrays.asList(value));
@@ -110,8 +114,8 @@ public class PropertyValueMultiple extends PropertyValue {
                 return cmp; // yep, done
             }
         }
-        return b.length - a.length; // sort short arrays before long arrays
-        
+        return a.length - b.length; // sort short arrays before long arrays
+
 //        if (a.length == b.length) {
 //            // Arrays are exactly equal
 //            return 0;

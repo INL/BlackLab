@@ -14,8 +14,13 @@ public class PropertyValueInt extends PropertyValue {
 
     @Override
     public int compareTo(Object o) {
-        long ovalue = ((PropertyValueInt) o).value;
-        return value == ovalue ? 0 : (value > ovalue ? 1 : -1);
+        if (o instanceof PropertyValueInt) {
+            long ovalue = ((PropertyValueInt) o).value;
+            return value == ovalue ? 0 : (value > ovalue ? 1 : -1);
+        }
+        if (o instanceof PropertyValueMultiple)
+            return -((PropertyValueMultiple) o).compareTo(this);
+        return super.compareTo(o);
     }
 
     @Override
@@ -29,7 +34,7 @@ public class PropertyValueInt extends PropertyValue {
             return true;
         if (obj instanceof PropertyValueInt) {
             return value == ((PropertyValueInt) obj).value;
-        } 
+        }
         if (obj instanceof PropertyValueMultiple) {
             return obj.equals(this);
         }
