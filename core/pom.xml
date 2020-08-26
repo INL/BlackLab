@@ -8,7 +8,7 @@
         <artifactId>blacklab-all</artifactId>
         <version>2.2.0-SNAPSHOT</version>
     </parent>
-    <artifactId>blacklab</artifactId>
+    <artifactId>blacklab-core</artifactId>
     <packaging>jar</packaging>
 
     <name>BlackLab Core</name>
@@ -20,27 +20,27 @@
     </description>
 
     <dependencies>
-    
+
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
-    
+
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-query-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
-    
+
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-tools</artifactId>
             <version>${project.version}</version>
         </dependency>
-    
+
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-mocks</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>

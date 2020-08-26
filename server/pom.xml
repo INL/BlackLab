@@ -31,12 +31,12 @@
         </dependency>
 
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab</artifactId>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-mocks</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -59,7 +59,7 @@
             <artifactId>commons-dbcp</artifactId>
             <version>1.4</version>
         </dependency>
-                
+
     </dependencies>
 
 

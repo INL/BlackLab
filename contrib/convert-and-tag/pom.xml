@@ -3,15 +3,20 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab-convert-and-tag-indexer</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>BlackLab Convert and tag indexer</name>
     <description>
         Example of a DocIndexer that is able to convert several non-XML file types to XML and tag them.
     </description>
+
+    <parent>
+        <groupId>nl.inl.blacklab</groupId>
+        <artifactId>blacklab-all</artifactId>
+        <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../../</relativePath>
+    </parent>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -56,11 +61,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab</artifactId>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-core</artifactId>
             <version>${project.version}</version>
         </dependency>
-
     </dependencies>
 
 </project>

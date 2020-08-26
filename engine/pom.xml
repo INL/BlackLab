@@ -20,22 +20,22 @@
     <dependencies>
     
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-util</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-common</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-interfaces</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-content-store</artifactId>
             <version>${project.version}</version>
         </dependency>

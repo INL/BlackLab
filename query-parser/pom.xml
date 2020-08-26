@@ -19,7 +19,7 @@
     <dependencies>
 
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-text-pattern</artifactId>
             <version>${project.version}</version>
         </dependency>

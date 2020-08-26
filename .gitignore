@@ -1,5 +1,6 @@
 # Maven build output
 target
+bin
 
 # Eclipse project settings
 .settings

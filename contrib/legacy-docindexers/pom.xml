@@ -3,15 +3,20 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab-legacy-docindexers</artifactId>
-    <version>2.2.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
+    <parent>
+	    <groupId>nl.inl.blacklab</groupId>
+	    <artifactId>blacklab-all</artifactId>
+	    <version>2.2.0-SNAPSHOT</version>
+        <relativePath>../../</relativePath>
+    </parent>
 
     <name>BlackLab legacy DocIndexers</name>
     <description>
         Implementations of the DocIndexer class for various document formats.
-        
+
         Custom DocIndexer implementations have been mostly superceded by configuration-file based indexing,
         but you can still use these or implement your own DocIndexer if you wish.
     </description>
@@ -59,8 +64,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>nl.inl.blacklab</groupId>
-            <artifactId>blacklab</artifactId>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-core</artifactId>
             <version>${project.version}</version>
         </dependency>
 
