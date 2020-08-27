@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,7 +86,8 @@ public abstract class DocIndexer implements AutoCloseable {
     protected Document currentLuceneDoc;
 
     /**
-     * Document metadata. Added at the end to deal with unknown values, etc.
+     * Document metadata. Added at the end to deal with unknown values, multiple occurrences
+     * (only the first is actually indexed, because of DocValues, among others), etc.
      */
     protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
@@ -171,6 +173,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
+     * 
      * Set the document to index.
      *
      * @param contents document contents
@@ -401,7 +404,8 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * When all metadata values have been set, call this to add the to the Lucene document.
      *
-     * We do it this way because we want to set an "unknown value"
+     * We do it this way because we don't want to add multiple values for a field (DocValues and
+     * Document.get() only deal with the first value added), and we want to set an "unknown value"
      * in certain conditions, depending on the configuration.
      */
     public void addMetadataToDocument() {
@@ -446,7 +450,7 @@ public abstract class DocIndexer implements AutoCloseable {
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.computeIfAbsent(e.getKey(), __ -> new ArrayList<>()).add(e.getValue());
+            metadataFieldValues.put(e.getKey(), Arrays.asList(e.getValue()));
         }
         for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());

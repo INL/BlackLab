@@ -114,17 +114,6 @@ public class PropertyValueMultiple extends PropertyValue {
                 return cmp; // yep, done
             }
         }
-        return a.length - b.length; // sort short arrays before long arrays
-
-//        if (a.length == b.length) {
-//            // Arrays are exactly equal
-//            return 0;
-//        }
-//        if (n == a.length) {
-//            // Array b is longer than a; sort it after a
-//            return -1;
-//        }
-//        // a longer than b
-//        return 1;
+        return a.length - b.length; // sort short arrays before long arrays when all values up to the trailing values in the longer array are the same
     }
 }
