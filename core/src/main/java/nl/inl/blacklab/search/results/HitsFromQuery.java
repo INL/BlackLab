@@ -245,7 +245,7 @@ public class HitsFromQuery extends Hits {
                         hitsResultsContext.maxStats.setHitsCountedExceededMaximum();
                         break;
                     }
-    
+
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
                     while (true) {
@@ -292,11 +292,17 @@ public class HitsFromQuery extends Hits {
                                 } while(currentSourceSpans != null && !alive);
                             }
                         }
-    
+
+                        LeafReaderContext context = atomicReaderContexts.get(atomicReaderContextIndex);
+                        Bits liveDocs = context.reader().getLiveDocs();
+
                         // Advance to next hit
                         int start = currentSourceSpans.nextStartPosition();
                         if (start == Spans.NO_MORE_POSITIONS) {
-                            int doc = currentSourceSpans.nextDoc();
+                            int doc;
+                            do {
+                                doc = currentSourceSpans.nextDoc();
+                            } while (doc != DocIdSetIterator.NO_MORE_DOCS && liveDocs != null && !liveDocs.get(doc));
                             if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                                 // Go to first hit in doc
                                 start = currentSourceSpans.nextStartPosition();

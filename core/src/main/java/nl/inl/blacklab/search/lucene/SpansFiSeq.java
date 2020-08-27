@@ -198,7 +198,9 @@ class SpansFiSeq extends BLSpans {
 
             // No search results found in the current container.
             // Advance to the next container.
-            anchorDoc = anchor.nextDoc();
+            do {
+                anchorDoc = anchor.nextDoc();
+            } while (anchorDoc != NO_MORE_DOCS && !fiAccessor.isAlive(anchorDoc));
             if (anchorDoc != NO_MORE_DOCS) {
                 currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
             } else {
