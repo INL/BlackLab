@@ -13,11 +13,11 @@ public class PropertyValueDoc extends PropertyValue {
     public Doc value() {
         return value;
     }
-
+    
     public int id() {
         return value.id();
     }
-
+    
     public Document luceneDoc() {
         return value.luceneDoc();
     }
@@ -28,11 +28,7 @@ public class PropertyValueDoc extends PropertyValue {
 
     @Override
     public int compareTo(Object o) {
-        if (o instanceof PropertyValueDoc)
-            return value.id() - ((PropertyValueDoc) o).value.id();
-        if (o instanceof PropertyValueMultiple)
-            return -((PropertyValueMultiple) o).compareTo(this);
-        return super.compareTo(o);
+        return value.id() - ((PropertyValueDoc) o).value.id();
     }
 
     @Override
@@ -46,9 +42,6 @@ public class PropertyValueDoc extends PropertyValue {
             return true;
         if (obj instanceof PropertyValueDoc) {
             return value.id() == ((PropertyValueDoc) obj).value.id();
-        }
-        if (obj instanceof PropertyValueMultiple) {
-            return obj.equals(this);
         }
         return false;
     }

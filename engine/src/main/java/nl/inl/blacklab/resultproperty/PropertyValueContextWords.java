@@ -15,7 +15,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
-
+    
     private boolean reverseOnDisplay = false;
 
     public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
@@ -29,11 +29,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
 
     @Override
     public int compareTo(Object o) {
-        if (o instanceof PropertyValueContextWords)
-            return ArrayUtil.compareArrays(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
-        if (o instanceof PropertyValueMultiple)
-            return -((PropertyValueMultiple) o).compareTo(this);
-        return super.compareTo(o);
+        return ArrayUtil.compareArrays(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
     }
 
     @Override
@@ -47,9 +43,6 @@ public class PropertyValueContextWords extends PropertyValueContext {
             return true;
         if (obj instanceof PropertyValueContextWords)
             return Arrays.equals(valueSortOrder, ((PropertyValueContextWords) obj).valueSortOrder);
-        if (obj instanceof PropertyValueMultiple)
-            return obj.equals(this);
-
         return false;
     }
 

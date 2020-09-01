@@ -23,19 +23,14 @@ public class PropertyValueMultiple extends PropertyValue {
         return value;
     }
 
-    /** Only to be used with another instance of {@link PropertyValueMultiple} */
     @Override
     public int compareTo(Object o) {
-        if (o instanceof PropertyValueMultiple)
-            return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
-        if (o instanceof PropertyValue)
-            return compareHitPropValueArrays(value, new PropertyValue[] { (PropertyValue) o });
-        return super.compareTo(o);
+        return compareHitPropValueArrays(value, ((PropertyValueMultiple) o).value);
     }
 
     @Override
     public int hashCode() {
-        return value.length == 1 ? value[0].hashCode() : Arrays.hashCode(value);
+        return Arrays.hashCode(value);
     }
 
     @Override
@@ -44,9 +39,6 @@ public class PropertyValueMultiple extends PropertyValue {
             return true;
         if (obj instanceof PropertyValueMultiple)
             return Arrays.equals(value, ((PropertyValueMultiple) obj).value);
-        if (this.value.length == 1 && obj instanceof PropertyValue) {
-            return this.value[0].equals(obj);
-        }
         return false;
     }
 

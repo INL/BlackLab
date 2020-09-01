@@ -34,9 +34,8 @@ public abstract class PropertyValueContext extends PropertyValue {
             return true;
         if (obj == null)
             return false;
-        if (getClass() != obj.getClass()) {
-            return obj instanceof PropertyValueMultiple ? obj.equals(this) : false;
-        }
+        if (getClass() != obj.getClass())
+            return false;
         PropertyValueContext other = (PropertyValueContext) obj;
         if (annotation == null) {
             if (other.annotation != null)
