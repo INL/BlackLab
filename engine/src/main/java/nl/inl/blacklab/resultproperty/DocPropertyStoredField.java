@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -152,13 +153,9 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** Get the values as PropertyValue. */
     @Override
-    public PropertyValue get(DocResult result) {
-       String[] values = get(result.identity());
-       switch (values.length) {
-           case 0: return new PropertyValueString(""); // important for grouping: group for -no value- needs an identity too
-           case 1: return new PropertyValueString(values[0]);
-           default: return fromArray(values);
-       }
+    public PropertyValueString get(DocResult result) {
+        String[] values = get(result.identity());
+        return fromArray(values);
     }
 
     /** Get the first value. The empty string is returned if there are no values for this document */
@@ -177,14 +174,9 @@ public class DocPropertyStoredField extends DocProperty {
         return values.length > 0 ? values[0] : "";
     }
 
-    /** Convert an array of string values to a PropertyValueMultiple. */
-    public static PropertyValueMultiple fromArray(String[] values) {
-        PropertyValueString[] asPropertyValues = new PropertyValueString[values.length];
-        for (int i = 0; i < values.length; ++i) {
-            asPropertyValues[i] = new PropertyValueString(values[i]);
-        }
-
-        return new PropertyValueMultiple(asPropertyValues);
+    /** Convert an array of string values to a PropertyValueString. */
+    public static PropertyValueString fromArray(String[] values) {
+        return new PropertyValueString(StringUtils.join(values, " · "));
     }
 
     /**
@@ -195,9 +187,7 @@ public class DocPropertyStoredField extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     public int compare(int docId1, int docId2) {
-        PropertyValueMultiple v1 = fromArray(get(docId1));
-        PropertyValueMultiple v2 = fromArray(get(docId2));
-        return v1.compareTo(v2) * (reverse ? -1 : 1);
+        return fromArray(get(docId1)).compareTo(fromArray(get(docId2))) * (reverse ? -1 : 1);
     }
 
     /**
