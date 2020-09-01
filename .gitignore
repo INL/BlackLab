@@ -15,3 +15,7 @@ target
 
 # log files, such as JVM crash files
 *.log
+
+
+# vscode project settings
+.factorypath

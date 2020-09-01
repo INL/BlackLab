@@ -58,7 +58,7 @@ import nl.inl.util.Json;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements IndexMetadata, IndexMetadataWriter {
+public class IndexMetadataImpl implements IndexMetadataWriter {
 
     private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
 

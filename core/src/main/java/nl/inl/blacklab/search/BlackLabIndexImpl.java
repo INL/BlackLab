@@ -79,8 +79,8 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
-public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
-    
+public class BlackLabIndexImpl implements BlackLabIndexWriter {
+
     // Class variables
     //---------------------------------------------------------------
 
@@ -115,10 +115,10 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     /** The collator to use for sorting. Defaults to English collator. */
     private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
 
-    
+
     // Static methods
     //---------------------------------------------------------------
-    
+
     /**
      * Cut a few words from a string.
      *
@@ -250,7 +250,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public static boolean traceOptimization() {
         return traceOptimization;
     }
-    
+
     public static boolean traceIndexOpening() {
         return traceIndexOpening;
     }
@@ -261,7 +261,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     // Instance variables
     //---------------------------------------------------------------
-    
+
 
     /** BlackLab instance used to create us */
     private BlackLabEngine blackLab;
@@ -274,7 +274,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** Structure of our index */
     protected IndexMetadataWriter indexMetadata;
-    
+
     protected ContentStoresManager contentStores = new ContentStoresManager();
 
     /**
@@ -324,16 +324,16 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
-    
+
     private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
     /** Search cache to use */
     private SearchCache cache = new SearchCacheDummy();
 
-    
+
     // Constructors
     //---------------------------------------------------------------
-    
+
 
     /**
      * Open an index.
@@ -377,8 +377,8 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     /**
      * Open an index.
-     * 
-     * @param blackLab our BlackLab instance 
+     *
+     * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -412,13 +412,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     // Methods for querying the index
     //---------------------------------------------------------------
-    
+
 
     @Override
     public SearchSettings searchSettings() {
         return searchSettings;
     }
-    
+
     @Override
     public void setSearchSettings(SearchSettings searchSettings) {
         this.searchSettings = searchSettings;
@@ -438,7 +438,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public void setCollator(Collator collator) {
         this.collator = collator;
     }
-    
+
     @Override
     public Collator collator() {
         return collator;
@@ -448,7 +448,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public IndexMetadataWriter metadata() {
         return indexMetadata;
     }
-    
+
     @Override
     public void forEachDocument(DocTask task) {
         final int maxDoc = reader().maxDoc();
@@ -469,7 +469,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;
     }
-    
+
     protected AnnotatedField fieldFromQuery(BLSpanQuery q) {
         return annotatedField(q.getField());
     }
@@ -524,7 +524,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
      */
     protected void registerContentStore(Field field, ContentStore contentStore) {
         contentStores.put(field, contentStore);
-        
+
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
         blackLab.initializationExecutorService().execute(new Runnable() {
@@ -536,7 +536,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
             }
         });
     }
-    
+
     @Override
     public ForwardIndex forwardIndex(AnnotatedField field) {
         synchronized (forwardIndices) {
@@ -577,7 +577,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
         return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true, searchLogger), documentFilterQuery);
     }
-    
+
     public boolean canDoNfaMatching() {
         if (forwardIndices.isEmpty())
             return false;
@@ -779,7 +779,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public Doc doc(int docId) {
         return Doc.get(this, docId);
     }
-    
+
     @Override
     public boolean docExists(int docId) {
         if (docId < 0 || docId >= reader.maxDoc())
@@ -822,13 +822,13 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
 
     // Methods for mutating the index
     //----------------------------------------------------------------
-    
+
     @Override
     @Deprecated
     public IndexMetadataWriter metadataWriter() {
         return metadata();
     }
-    
+
     @Override
     public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
             CorruptIndexException, LockObtainFailedException {
@@ -913,7 +913,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
                 logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
                 for (LeafReaderContext leafContext : freshReader.leaves()) {
                     Bits liveDocs = leafContext.reader().getLiveDocs();
-                    
+
                     Scorer scorer = w.scorer(leafContext);
                     if (scorer == null) {
                         logger.debug("  No hits in leafcontext");
@@ -983,12 +983,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public void setDefaultContextSize(ContextSize defaultContextSize) {
         this.defaultContextSize = defaultContextSize;
     }
-    
+
     @Override
     public ContextSize defaultContextSize() {
         return defaultContextSize;
     }
-    
+
     @Override
     public boolean indexMode() {
         return indexMode;
@@ -1004,7 +1004,7 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
         return new SearchEmpty(QueryInfo.create(this, field, useCache, searchLogger));
     }
-    
+
     @Override
     public SearchCache cache() {
         return cache;
@@ -1014,12 +1014,12 @@ public class BlackLabIndexImpl implements BlackLabIndex, BlackLabIndexWriter {
     public void setCache(SearchCache cache) {
         this.cache = cache;
     }
-    
+
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "(" + indexLocation + ")";
     }
-    
+
     @Override
     public BlackLabEngine blackLab() {
         return blackLab;

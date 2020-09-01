@@ -11,8 +11,8 @@ import java.util.stream.Stream;
 /**
  * The metadata fields in an index.
  */
-class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
-    
+class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
+
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
      */
@@ -47,16 +47,16 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
 
     /** Is the object frozen, not allowing any modifications? */
     private boolean frozen = false;
-    
+
     MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
     }
-    
+
     @Override
     public String defaultAnalyzerName() {
         return defaultAnalyzerName;
     }
-    
+
     @Override
     public Iterator<MetadataField> iterator() {
         final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
@@ -140,7 +140,7 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
         }
         return null;
     }
-    
+
     public MetadataField titleField() {
         return special(TITLE);
     }
@@ -172,7 +172,7 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
         }
         if (fieldsFound.isEmpty())
             return null;
-        
+
         // Sort (so we always return the same field if more than one matches
         fieldsFound.sort( (a, b) -> a.name().compareTo(b.name()) );
         return fieldsFound.get(0);
@@ -185,7 +185,7 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
     public String defaultUnknownValue() {
         return defaultUnknownValue;
     }
-    
+
     // Methods that mutate data
     // ------------------------------------
 
@@ -230,7 +230,7 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
 
     /**
      * Check if field exists, or create a default (tokenized) field for it if not.
-     * 
+     *
      * @param name
      */
     @Override
@@ -311,15 +311,15 @@ class MetadataFieldsImpl implements MetadataFields, MetadataFieldsWriter, Freeza
         }
         return this;
     }
-    
+
     @Override
     public synchronized boolean isFrozen() {
         return this.frozen;
     }
-    
+
     @Override
     public String toString() {
-        return metadataFieldInfos.keySet().toString(); 
+        return metadataFieldInfos.keySet().toString();
     }
 
     @Override
