@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,7 +12,10 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -81,36 +86,53 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         searchLogger.setResultsFound(groups.size());
 
-        int i = 0;
+        // Gather group values per property
+        // TODO: this is nasty and assumes some internals
+        boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
+        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+
+
+
         ds.startEntry("hitGroups").startList();
-        for (HitGroup group : groups) {
-            if (i >= first && i < first + requestedWindowSize) {
-                logger.debug("## Group number " + i);
+        int last = Math.min(first + requestedWindowSize, groups.size());
+        for (int i = first; i < last; ++i) {
+            logger.debug("## Group number " + i);
 
-                if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
-                    // Find size of corresponding subcorpus group
-                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                    //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
-                    //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
-                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
-                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
-                }
+            HitGroup group = groups.get(i);
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groups.getGroupMap().inverse().get(group)).values() : Arrays.asList(groups.getGroupMap().inverse().get(group));
 
-                int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
-
-                ds.startItem("hitgroup").startMap();
-                ds.entry("identity", group.identity().serialize())
-                        .entry("identityDisplay", group.identity().toString())
-                        .entry("size", group.size());
-                if (INCLUDE_RELATIVE_FREQ) {
-                    ds.entry("numberOfDocs", numberOfDocsInGroup);
-                    if (metadataGroupProperties != null) {
-                        addSubcorpusSize(ds, subcorpusSize);
-                    }
-                }
-                ds.endMap().endItem();
+            if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
+                // Find size of corresponding subcorpus group
+                PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
+                //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
+                //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
+                subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
+                logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
             }
-            i++;
+
+            int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+
+            ds.startItem("hitgroup").startMap();
+            ds
+                .entry("identity", group.identity().serialize())
+                .entry("identityDisplay", group.identity().toString())
+                .entry("size", group.size())
+                .startEntry("values").startMap();
+
+            for (int j = 0; j < prop.size(); ++j) {
+                final HitProperty hp = prop.get(j);
+                final PropertyValue pv = valuesForGroup.get(j);
+                ds.entry(hp.name(), pv.toString());
+            }
+            ds.endMap().endEntry();
+
+            if (INCLUDE_RELATIVE_FREQ) {
+                ds.entry("numberOfDocs", numberOfDocsInGroup);
+                if (metadataGroupProperties != null) {
+                    addSubcorpusSize(ds, subcorpusSize);
+                }
+            }
+            ds.endMap().endItem();
         }
         ds.endList().endEntry();
         ds.endMap();

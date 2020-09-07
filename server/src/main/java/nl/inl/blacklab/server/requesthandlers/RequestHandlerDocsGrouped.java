@@ -1,11 +1,16 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -70,7 +75,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
-        
+
         // The list of groups found
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
@@ -81,43 +86,54 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpus = searchMan.search(user, searchParam.subcorpus());
             subcorpusSize = subcorpus.subcorpusSize();
         }
-        
+
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
-        
+
         ds.endMap().endEntry();
 
         searchLogger.setResultsFound(groups.size());
-        
-        int i = 0;
+
+
+        // Gather group values per property
+        // TODO: this is nasty and assumes some internals
+        boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
+        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+        Map<DocGroup, PropertyValue> groupsByValue = groups.getGroupMap().inverse();
+
         ds.startEntry("docGroups").startList();
-        for (DocGroup group : groups) {
-            if (i >= first && i < first + number) {
-                
-                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && hasPattern) {
+        int last = first + number;
+        for (int i = first; i < last; ++i) {
+            DocGroup group = groups.get(i);
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groupsByValue.get(group)).values() : Arrays.asList(groupsByValue.get(group));
+
+            ds.startItem("docgroup").startMap()
+                    .entry("identity", group.identity().serialize())
+                    .entry("identityDisplay", group.identity().toString())
+                    .entry("size", group.size())
+                    .startEntry("values").startMap();
+
+            for (int j = 0; j < prop.size(); ++j) {
+                final DocProperty hp = prop.get(j);
+                final PropertyValue pv = valuesForGroup.get(j);
+                ds.entry(hp.name(), pv.toString());
+            }
+            ds.endMap().endEntry();
+
+
+            if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                ds.entry("numberOfTokens", group.totalTokens());
+                if (hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
                     subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
+                    addSubcorpusSize(ds, subcorpusSize);
                 }
-                
-                long numberOfTokens = group.totalTokens();
-                
-                ds.startItem("docgroup").startMap()
-                        .entry("identity", group.identity().serialize())
-                        .entry("identityDisplay", group.identity().toString())
-                        .entry("size", group.size());
-                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-                    ds.entry("numberOfTokens", numberOfTokens);
-                    if (hasPattern) {
-                        addSubcorpusSize(ds, subcorpusSize);
-                    }
-                }
-                ds.endMap().endItem();
             }
-            i++;
+            ds.endMap().endItem();
         }
         ds.endList().endEntry();
 

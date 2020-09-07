@@ -16,9 +16,10 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import org.eclipse.collections.api.bimap.MutableBiMap;
+import org.eclipse.collections.impl.bimap.mutable.HashBiMap;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -28,10 +29,10 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * Applies grouping to the results in a DocResults object.
  */
 public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
-    
+
     /**
      * Construct a DocGroups from a list of groups.
-     * 
+     *
      * @param queryInfo query info
      * @param groups list of groups to wrap
      * @param groupBy what the documents were grouped by
@@ -42,21 +43,21 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public static DocGroups fromList(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats);
     }
-    
-    private Map<PropertyValue, DocGroup> groups = new HashMap<>();
+
+    private MutableBiMap<PropertyValue, DocGroup> groups = new HashBiMap<>();
 
     private int largestGroupSize = 0;
 
     private int totalResults = 0;
-    
+
     private int resultObjects = 0;
 
     private DocProperty groupBy;
-    
+
     private WindowStats windowStats;
-    
+
     private SampleParameters sampleParameters;
-    
+
     protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
         this.groupBy = groupBy;
@@ -107,7 +108,7 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public DocProperty groupCriteria() {
         return groupBy;
     }
-    
+
     @Override
     public DocGroups window(int first, int number) {
         List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
@@ -148,21 +149,21 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     @Override
     public DocGroups sample(SampleParameters sampleParameters) {
         return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
-    
+
     @Override
     public boolean doneProcessingAndCounting() {
         return true;
     }
-    
+
     @Override
-    public Map<PropertyValue, DocGroup> getGroupMap() {
+    public MutableBiMap<PropertyValue, DocGroup> getGroupMap() {
         return groups;
     }
 

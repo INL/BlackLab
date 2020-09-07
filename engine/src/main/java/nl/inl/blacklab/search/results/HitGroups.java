@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.search.Query;
+import org.eclipse.collections.api.bimap.BiMap;
+import org.eclipse.collections.api.bimap.MutableBiMap;
+import org.eclipse.collections.impl.bimap.mutable.HashBiMap;
+import org.eclipse.collections.impl.factory.BiMaps;
 
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -36,10 +40,10 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * retrieved, which may be unfeasible for large results sets.
  */
 public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
-    
+
     /**
      * Construct HitGroups from a list of HitGroup instances.
-     * 
+     *
      * @param queryInfo query info
      * @param results list of groups
      * @param groupCriteria what hits would be grouped by
@@ -53,7 +57,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
 
     /**
      * Construct HitGroups from a list of hits.
-     * 
+     *
      * @param hits hits to group
      * @param criteria criteria to group by
      * @param maxResultsToStorePerGroup max results to store
@@ -72,7 +76,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     /**
      * The groups.
      */
-    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
+    // private Map<PropertyValue, HitGroup> groups = new HashMap<>();
+    private MutableBiMap<PropertyValue, HitGroup> groups = new HashBiMap<>();
 
     /**
      * Total number of hits.
@@ -102,11 +107,11 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
-        
+
         List<Annotation> requiredContext = criteria.needsContext();
         List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index().reader());
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
-        
+
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
@@ -159,7 +164,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         }
     }
 
-    
+
     @Override
     public HitProperty groupCriteria() {
         return criteria;
@@ -170,7 +175,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         List<HitGroup> sorted = Results.doSort(this, sortProp);
         return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null);
     }
-    
+
     @Override
     protected void ensureResultsRead(int number) {
         // NOP
@@ -179,14 +184,14 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
         return HitGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, (WindowStats)null);
     }
-    
+
     /**
      * Get the total number of hits
      *
@@ -226,12 +231,12 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     public WindowStats windowStats() {
         return windowStats;
     }
-    
+
     @Override
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
-    
+
     @Override
     public HitGroups window(int first, int number) {
         List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
@@ -262,20 +267,20 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         }
         return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats);
     }
-    
+
     @Override
     public boolean doneProcessingAndCounting() {
         return true;
     }
 
     @Override
-    public Map<PropertyValue, HitGroup> getGroupMap() {
+    public MutableBiMap<PropertyValue, HitGroup> getGroupMap() {
         return groups;
     }
-    
+
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
     }
-    
+
 }
