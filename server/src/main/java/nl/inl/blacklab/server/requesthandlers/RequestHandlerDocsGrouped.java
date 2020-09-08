@@ -105,7 +105,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         Map<DocGroup, PropertyValue> groupsByValue = groups.getGroupMap().inverse();
 
         ds.startEntry("docGroups").startList();
-        int last = first + number;
+        int last = Math.min(first + number, groups.size());
         for (int i = first; i < last; ++i) {
             DocGroup group = groups.get(i);
             List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groupsByValue.get(group)).values() : Arrays.asList(groupsByValue.get(group));
@@ -119,7 +119,15 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             for (int j = 0; j < prop.size(); ++j) {
                 final DocProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                ds.entry(hp.name(), pv.toString());
+                if (pv instanceof PropertyValueMultiple) {
+                    ds.startList();
+                    for (PropertyValue v : ((PropertyValueMultiple) pv).value()) {
+                        ds.item("value", v.toString());
+                    }
+                    ds.endList();
+                } else {
+                    ds.entry(hp.name(), pv.toString());
+                }
             }
             ds.endMap().endEntry();
 

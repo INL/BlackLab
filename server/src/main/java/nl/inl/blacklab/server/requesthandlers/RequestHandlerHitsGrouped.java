@@ -122,7 +122,15 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             for (int j = 0; j < prop.size(); ++j) {
                 final HitProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                ds.entry(hp.name(), pv.toString());
+                if (pv instanceof PropertyValueMultiple) {
+                    ds.startList();
+                    for (PropertyValue v : ((PropertyValueMultiple) pv).value()) {
+                        ds.item("value", v.toString());
+                    }
+                    ds.endList();
+                } else {
+                    ds.entry(hp.name(), pv.toString());
+                }
             }
             ds.endMap().endEntry();
 
