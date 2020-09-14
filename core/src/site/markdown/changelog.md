@@ -1,6 +1,11 @@
 # Change Log
 
-## Improvements in HEAD
+## Improvements in 1.7.4
+
+### Fixed
+* (backport) Only use NFA matching if annotation actually has a forward index
+
+## Improvements in 2.0.0-RC2
 
 ### New
 * BLS now reports capture groups (in a captureGroups element for each hit) (by @severian)
