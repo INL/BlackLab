@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -221,7 +222,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true);
-                        tocFileBuffer.position(p);
+                        ((Buffer)tocFileBuffer).position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
