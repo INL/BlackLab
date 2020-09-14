@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -180,10 +181,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            buf.position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            buf.position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
             buf.get(deleted);
             deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {
@@ -271,7 +272,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             if (whichChunk == null) {
                 throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
             }
-            whichChunk.position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
+            ((Buffer)whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
             ib = whichChunk.asIntBuffer();
 
             int snippetLength = end[i] - start[i];
@@ -279,7 +280,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             
             // The file is mem-mapped (search mode).
             // Position us at the correct place in the file.
-            ib.position(start[i]);
+            ((Buffer)ib).position(start[i]);
             ib.get(snippet);
             result.add(snippet);
         }

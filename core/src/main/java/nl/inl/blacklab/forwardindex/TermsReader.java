@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.CollationKey;
@@ -272,9 +273,9 @@ class TermsReader extends Terms {
                     // Read the sort order arrays
                     sortPositionPerId = new int[numberOfTerms];
                     sortPositionPerIdInsensitive = new int[numberOfTerms];
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ((Buffer)ib).position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
                     ib.get(sortPositionPerId);
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ((Buffer)ib).position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
                     ib.get(sortPositionPerIdInsensitive);
                 }
             }

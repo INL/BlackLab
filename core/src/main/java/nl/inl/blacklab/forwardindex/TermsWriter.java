@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -181,7 +182,7 @@ class TermsWriter extends Terms {
                         // Write offset and data arrays to file
                         ib.put(termStringOffsets);
                         ib.put((int) termStringsByteSize); // size of the data block to follow
-                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+                        ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
                         buf.put(termStrings);
                         ib = buf.asIntBuffer();
                     } else {
@@ -227,6 +228,14 @@ class TermsWriter extends Terms {
                                                    // (doubles as the size of the data block to follow) //@4
                             int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
                             buf.position(newPosition); // advance past offsets array
+                            ((Buffer)buf).position(newPosition); // advance past offsets array
+                            if (fileMapLength - buf.position() < blockSize) {
+                                //throw new RuntimeException("Not enough space in file mapping to write term strings!");
+                                
+                                // Re-map a new part of the file before we write the term strings
+                                fileMapStart += buf.position();
+                                buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+                            }
                             buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
                             ib = buf.asIntBuffer();
                             fileLength += blockSizeBytes;
