@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -123,7 +124,7 @@ public abstract class Terms {
 
                 // Read term strings data
                 int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-                buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+                ((Buffer)buf).position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
                 byte[] termStringsThisBlock = new byte[dataBlockSize];
                 buf.get(termStringsThisBlock);
 
@@ -158,7 +159,7 @@ public abstract class Terms {
 
             // termStringByteSize fits in an int, and terms
             // fits in a single byte array. Use the old code.
-            buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
+            ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
             byte[] termStrings = new byte[termStringsByteSize];
             buf.get(termStrings);
             ib = buf.asIntBuffer();

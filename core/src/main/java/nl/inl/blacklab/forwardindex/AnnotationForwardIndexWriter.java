@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -143,10 +144,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             byte[] deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            buf.position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            buf.position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
             buf.get(deleted);
             toc = new ArrayList<>(n);
             deletedTocEntries = new ArrayList<>();
@@ -229,10 +230,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                 buf.putInt(n);
                 LongBuffer lb = buf.asLongBuffer();
                 lb.put(offset);
-                buf.position(buf.position() + SIZEOF_LONG * n);
+                ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
                 IntBuffer ib = buf.asIntBuffer();
                 ib.put(length);
-                buf.position(buf.position() + SIZEOF_INT * n);
+                ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
                 buf.put(deleted);
             }
         } catch (IOException e) {
@@ -372,7 +373,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             }
 
             // Set the correct start position
-            writeBuffer.position((int) (newDocumentOffset - writeBufOffset));
+            ((Buffer)writeBuffer).position((int) (newDocumentOffset - writeBufOffset));
 
             // Did we increase the length of the tokens file?
             long end = newDocumentOffset + numberOfTokens;
@@ -463,7 +464,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                     throw new BlackLabRuntimeException("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
                 }
-                buffer.position(0);
+                ((Buffer)buffer).position(0);
                 ib = buffer.asIntBuffer();
                 ib.get(snippet);
                 result.add(snippet);

@@ -3,6 +3,7 @@ package nl.inl.blacklab.contentstore;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -125,7 +126,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.put(blockIndices);
             ib.put(blockCharOffsets);
-            buf.position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
+            ((Buffer)buf).position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
         }
 
         /**
@@ -146,7 +147,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.get(blockIndices);
             ib.get(blockCharOffsets);
-            buf.position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
+            ((Buffer)buf).position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
             return new TocEntry(id, length, charLength, deleted, blockIndices, blockCharOffsets);
         }
 
@@ -268,7 +269,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
         try {
             mapToc(false);
             try {
-                tocFileBuffer.position(0);
+                ((Buffer)tocFileBuffer).position(0);
                 int n = tocFileBuffer.getInt();
                 totalBlocks = 0;
                 for (int i = 0; i < n; i++) {

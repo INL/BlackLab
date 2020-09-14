@@ -23,6 +23,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -107,7 +108,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             buf.putInt(blockOffsetBytes.length);
             IntBuffer ib = buf.asIntBuffer();
             ib.put(blockOffsetBytes);
-            buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
+            ((Buffer)buf).position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
         }
 
         /**
@@ -129,7 +130,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             int[] blockOffsetBytes = new int[nBlocks];
             IntBuffer ib = buf.asIntBuffer();
             ib.get(blockOffsetBytes);
-            buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
+            ((Buffer)buf).position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
             return new TocEntry(id, fileId, offset, length, charLength, blockSize, deleted,
                     blockOffsetBytes);
         }
@@ -389,7 +390,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         try {
             mapToc(false);
             try {
-                tocFileBuffer.position(0);
+                ((Buffer)tocFileBuffer).position(0);
                 int n = tocFileBuffer.getInt();
                 for (int i = 0; i < n; i++) {
                     TocEntry e = TocEntry.deserialize(tocFileBuffer);
@@ -431,7 +432,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true);
-                        tocFileBuffer.position(p);
+                        ((Buffer)tocFileBuffer).position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
