@@ -96,7 +96,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
         for (int i = first; i < last; ++i) {
-            logger.debug("## Group number " + i);
+//            logger.debug("## Group number " + i);
 
             HitGroup group = groups.get(i);
             List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groups.getGroupMap().inverse().get(group)).values() : Arrays.asList(groups.getGroupMap().inverse().get(group));
@@ -122,14 +122,16 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             for (int j = 0; j < prop.size(); ++j) {
                 final HitProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                if (pv instanceof PropertyValueMultiple) {
+                if (pv instanceof PropertyValueMultiple) { // can never occur
+                    ds.startEntry(hp.serialize());
                     ds.startList();
                     for (PropertyValue v : ((PropertyValueMultiple) pv).value()) {
                         ds.item("value", v.toString());
                     }
                     ds.endList();
+                    ds.endEntry();
                 } else {
-                    ds.entry(hp.name(), pv.toString());
+                    ds.entry(hp.serialize(), pv.toString());
                 }
             }
             ds.endMap().endEntry();

@@ -119,14 +119,16 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             for (int j = 0; j < prop.size(); ++j) {
                 final DocProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                if (pv instanceof PropertyValueMultiple) {
+                if (pv instanceof PropertyValueMultiple) { // cannot occur at the moment
+                    ds.startEntry(hp.serialize());
                     ds.startList();
                     for (PropertyValue v : ((PropertyValueMultiple) pv).value()) {
                         ds.item("value", v.toString());
                     }
                     ds.endList();
+                    ds.endEntry();
                 } else {
-                    ds.entry(hp.name(), pv.toString());
+                    ds.entry(hp.serialize(), pv.toString());
                 }
             }
             ds.endMap().endEntry();
