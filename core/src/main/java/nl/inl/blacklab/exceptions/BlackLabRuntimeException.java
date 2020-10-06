@@ -9,6 +9,8 @@ package nl.inl.blacklab.exceptions;
 public class BlackLabRuntimeException extends RuntimeException {
     
     public static BlackLabRuntimeException wrap(Throwable e) {
+        if (e == null)
+            return new BlackLabRuntimeException("Tried to wrap a null exception");
         if (e instanceof BlackLabRuntimeException)
             return (BlackLabRuntimeException) e;
         return new BlackLabRuntimeException(e);
