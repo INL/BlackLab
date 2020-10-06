@@ -34,10 +34,14 @@ import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.requestlogging.LogLevel;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -57,9 +61,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
     SpanTermQuery query;
 
     private TermContext termContext;
-    
+
     private boolean hasForwardIndex = false;
-    
+
     private boolean hasForwardIndexDetermined = false;
 
     /**
@@ -203,12 +207,33 @@ public class BLSpanTermQuery extends BLSpanQuery {
             String[] comp = AnnotatedFieldNameUtil.getNameComponents(query.getTerm().field());
             String fieldName = comp[0];
             String propertyName = comp[1];
-            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(propertyName).hasForwardIndex();
-            hasForwardIndexDetermined = true;
+
+            if (queryInfo == null) {
+                log(LogLevel.BASIC, "queryInfo == null");
+            } else {
+                BlackLabIndex index = queryInfo.index();
+                if (index == null) {
+                    log(LogLevel.BASIC, "queryInfo.index() == null");
+                } else {
+                    AnnotatedField field = index.annotatedField(fieldName);
+                    if (field == null) {
+                        log(LogLevel.BASIC, "annotated field '" + fieldName + "' not found (null)");
+                    } else {
+                        Annotation annotation = field.annotation(propertyName);
+                        if (annotation == null) {
+                            log(LogLevel.BASIC, "annotation '" + fieldName + "." + propertyName + "' not found (null)");
+                        } else {
+                            hasForwardIndex = annotation.hasForwardIndex();
+                            hasForwardIndexDetermined = true;
+                        }
+                    }
+                }
+            }
+
         }
         if (!hasForwardIndex)
             return false;
-        
+
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
         return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
     }
