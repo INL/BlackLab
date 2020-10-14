@@ -86,26 +86,33 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         searchLogger.setResultsFound(groups.size());
 
-        // Gather group values per property
-        // TODO: this is nasty and assumes some internals
+        /* Gather group values per property:
+         * Documents are grouped by one or more "properties", every group represents hits with the same "values" for these properties.
+         * This means there are two structures:
+         * a Map<values, group> that was used to gather the hits.
+         * an Array<group> governing the ordering of those groups.
+         *
+         * A result of this is that we iterate the array (in order to retrieve groups in the requested/correct order),
+         * but the group itself doesn't know the values that it represents.
+         * We need to invert the map so we can find the values from the group.
+         *
+         * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
+         * contain the sub properties and values in the same order.
+         */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
         List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
 
-
-
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
-        for (int i = first; i < last; ++i) {
-//            logger.debug("## Group number " + i);
 
+        for (int i = first; i < last; ++i) {
             HitGroup group = groups.get(i);
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groups.getGroupMap().inverse().get(group)).values() : Arrays.asList(groups.getGroupMap().inverse().get(group));
+            PropertyValue id = group.identity();
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) id).values() : Arrays.asList(id);
 
             if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                 // Find size of corresponding subcorpus group
                 PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                //DocGroup groupSubcorpus = subcorpusGrouped.get(docPropValues);
-                //tokensInSubcorpus = groupSubcorpus.storedResults().tokensInMatchingDocs();
                 subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                 logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
             }
@@ -116,23 +123,13 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             ds
                 .entry("identity", group.identity().serialize())
                 .entry("identityDisplay", group.identity().toString())
-                .entry("size", group.size())
-                .startEntry("values").startMap();
+                .entry("size", group.size());
 
+            ds.startEntry("values").startMap();
             for (int j = 0; j < prop.size(); ++j) {
                 final HitProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                if (pv instanceof PropertyValueMultiple) { // can never occur
-                    ds.startEntry(hp.serialize());
-                    ds.startList();
-                    for (PropertyValue v : ((PropertyValueMultiple) pv).value()) {
-                        ds.item("value", v.toString());
-                    }
-                    ds.endList();
-                    ds.endEntry();
-                } else {
-                    ds.entry(hp.serialize(), pv.toString());
-                }
+                ds.entry(hp.serialize(), pv.toString());
             }
             ds.endMap().endEntry();
 
