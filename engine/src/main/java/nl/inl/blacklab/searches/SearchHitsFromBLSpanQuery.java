@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -10,7 +12,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsFromBLSpanQuery extends SearchHits {
-    
+
     private BLSpanQuery spanQuery;
 
     private SearchSettings searchSettings;
@@ -25,7 +27,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
 
     /**
      * Execute the search operation, returning the final response.
-     * 
+     *
      * @return result of the operation
      * @throws RegexpTooLarge if a regular expression was too large
      * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
@@ -34,7 +36,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
     public Hits executeInternal() throws InvalidQuery {
         return queryInfo().index().find(spanQuery, searchSettings, queryInfo().searchLogger());
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -74,9 +76,14 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
     public BLSpanQuery query() {
         return spanQuery;
     }
-    
+
     @Override
     public boolean isAnyTokenQuery() {
         return spanQuery.isSingleAnyToken();
+    }
+
+    @Override
+    protected Query getFilterQuery() {
+        return spanQuery;
     }
 }

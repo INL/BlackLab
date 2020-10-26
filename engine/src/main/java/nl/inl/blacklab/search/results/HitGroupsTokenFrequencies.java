@@ -9,9 +9,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.document.DocumentStoredFieldVisitor;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
@@ -48,121 +48,96 @@ public class HitGroupsTokenFrequencies extends HitGroups {
         public boolean equals(Object obj) {
             return obj instanceof IdHash && ((IdHash) obj).hash == this.hash && Arrays.equals(((IdHash) obj).id, this.id);
         }
-
     }
-    
+
     public HitGroupsTokenFrequencies(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
         super(queryInfo, getResults(queryInfo, filterQuery, property, maxHits), property, null, null);
     }
 
     private static List<HitGroup> getResults(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
-        // Determine the annotation forward indexes we need
-        BlackLabIndex index = queryInfo.index();
-        List<AnnotationForwardIndex> fis = property.needsContext().stream().map(a -> index.annotationForwardIndex(a))
-                .collect(Collectors.toList());
-        final int numAnnotations = fis.size();
-
-        // TODO: We need the sensitivities, in the same order as the forward indexes. (see below)
-        //List<MatchSensitivity> sensitivities = property.getSensitivities();
-
-        // speed up doc collection by not constructing DocResults object, IDS are good enough for us.
-        final IntArrayList docIds = new IntArrayList();
         try {
-            queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery,
-                    new SimpleCollector() {
-                        private int docBase;
+            final BlackLabIndex index = queryInfo.index();
+            final Map<IdHash, Integer> occurances = new HashMap<>();
+            // Determine the annotation forward indexes we need
+            final List<AnnotationForwardIndex> fis = property.needsContext().stream().map(a -> index.annotationForwardIndex(a)).collect(Collectors.toList());
+            final int numAnnotations = fis.size();
+            // TODO: We need the sensitivities, in the same order as the forward indexes. (see below)
+            //List<MatchSensitivity> sensitivities = property.getSensitivities();
+            final IntArrayList docIds = new IntArrayList();
 
-                        @Override
-                        protected void doSetNextReader(LeafReaderContext context) throws IOException {
-                            docBase = context.docBase;
-                            super.doSetNextReader(context);
-                        }
+            queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery, new SimpleCollector() {
+                private int docBase;
 
-                        @Override
-                        public void collect(int docId) throws IOException {
-                            int globalDocId = docId + docBase;
-                            docIds.add(globalDocId);
-                        }
-
-                        @Override
-                        public boolean needsScores() {
-                            return false;
-                        }
-                    });
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-
-        // retrieve fiids for the documents we need.
-        final String fiidField = queryInfo.field().contentIdField();
-        final int[] fiids;
-
-        final IndexReader reader = queryInfo.index().reader();
-        final DocumentStoredFieldVisitor visitor = new DocumentStoredFieldVisitor(fiidField);
-
-        try {
-            // Not sure why this works this way but whatever.
-            final MutableIntIterator it = docIds.intIterator();
-            while (it.hasNext()) { reader.document(it.next(), visitor); }
-            final List<IndexableField> values = visitor.getDocument().getFields(); // only retrieved one field - no need to filter on fiid fieldname again.
-            fiids = new int[values.size()];
-            for (int i = 0; i < fiids.length; ++i) {
-                fiids[i] = values.get(i).numericValue().intValue() - 1; // wtf
-            }
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-
-        // sort the fiids, maybe improving access times (they should now be more linear). Not sure if this has any effect, needs to be measured.
-        Arrays.sort(fiids);
-
-        
-        final Map<IdHash, Integer> occurances = new HashMap<>();
-        for (int fiid : fiids) { // in document here
-            // okay nu hebben we id van het document in de forward index
-            final List<int[]> valuesPerAnnotationForThisDoc = new ArrayList<>();
-
-            int docLength = -1;
-            for (AnnotationForwardIndex fi : fis) {
-                List<int[]> parts = fi.retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }); // returned list will only be length 1 - we're requesting 1 part: the entire document
-                int[] thisAnnotationsValuesForThisDoc = parts.get(0);
-                valuesPerAnnotationForThisDoc.add(thisAnnotationsValuesForThisDoc);
-                docLength = thisAnnotationsValuesForThisDoc.length;
-            }
-
-            // iterate through tokens and count frequency of each token
-            // (NOTE: this is the slow part!)
-
-
-            for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) { // enter per token
-                final int[] groupId = new int[numAnnotations];
-                for (int i = 0; i < numAnnotations; ++i) { // enter per annotation
-                    groupId[i] = valuesPerAnnotationForThisDoc.get(i)[tokenIndex]; // yuck, boxing, but whatever. we'll have to see whether it's slow in practice.
+                @Override
+                protected void doSetNextReader(LeafReaderContext context) throws IOException {
+                    docBase = context.docBase;
+                    super.doSetNextReader(context);
                 }
-                IdHash id = new IdHash(groupId);
-                final Integer curOccurances = occurances.get(id);
-                occurances.put(id, curOccurances == null ? 1 : curOccurances + 1);
+
+                @Override
+                public void collect(int docId) throws IOException {
+                    int globalDocId = docId + docBase;
+                    docIds.add(globalDocId);
+                }
+
+                @Override
+                public boolean needsScores() {
+                    return false;
+                }
+            });
+
+            final IndexReader reader = queryInfo.index().reader();
+            final List<Pair<AnnotationForwardIndex, String>> fiidFieldNames = fis.stream().map(fi -> Pair.of(fi, fi.annotation().forwardIndexIdField())).collect(Collectors.toList());
+            final MutableIntIterator docIdIt = docIds.intIterator();
+
+            while (docIdIt.hasNext()) {
+                final int docId = docIdIt.next();
+                final Document doc = reader.document(docId);
+                final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
+
+                int docLength = -1;
+                for (Pair<AnnotationForwardIndex, String> annot : fiidFieldNames) {
+                    final int fiid = doc.getField(annot.getRight()).numericValue().intValue();
+                    final List<int[]> tokenValues = annot.getLeft().retrievePartsInt(fiid, new int[] {-1}, new int[] {-1});
+                    tokenValuesPerAnnotation.addAll(tokenValues);
+                    docLength = tokenValues.get(0).length;
+                }
+
+                // now we have all values for all relevant annotations for this document
+                // iterate again and pair up the nth entries for all annotations, then mark that occurance.
+                for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
+                    int[] tokenValues = new int[fiidFieldNames.size()];
+                    for (int fieldIndex = 0; fieldIndex < fiidFieldNames.size(); ++fieldIndex) {
+                        tokenValues[fieldIndex] = tokenValuesPerAnnotation.get(fieldIndex)[tokenIndex];
+                    }
+                    final IdHash id = new IdHash(tokenValues);
+                    final Integer groupSize = occurances.get(id);
+                    occurances.put(id, groupSize == null ? 1 : groupSize + 1);
+                }
             }
-        }
 
-        List<HitGroup> groups = new ArrayList<>();
+            // Now (unfortunately)
+            // map back the group entries to their actual values.
+            List<HitGroup> groups = new ArrayList<>();
+            for (Entry<IdHash, Integer> e : occurances.entrySet()) {
+                // allocate new - is not copied when moving into propertyvaluemultiple
+                final PropertyValueContextWord[] groupIdAsList = new PropertyValueContextWord[numAnnotations];
+                final int[] annotationValues = e.getKey().id;
+                final int groupSize = e.getValue();
+                for (int i = 0; i < numAnnotations; ++i) {
+                    groupIdAsList[i] = new PropertyValueContextWord(index, fis.get(i).annotation(),
+                            MatchSensitivity.CASE_INSENSITIVE, annotationValues[i]);
+                }
 
-        // Now (unfortunately)
-        // map back the group entries to their actual values.
-        for (Entry<IdHash, Integer> e : occurances.entrySet()) {
-            // allocate new - is not copied when moving into propertyvaluemultiple
-            final PropertyValueContextWord[] groupIdAsList = new PropertyValueContextWord[numAnnotations];
-            final int[] annotationValues = e.getKey().id;
-            final int groupSize = e.getValue();
-            for (int i = 0; i < numAnnotations; ++i) {
-                groupIdAsList[i] = new PropertyValueContextWord(index, fis.get(i).annotation(), MatchSensitivity.CASE_INSENSITIVE, annotationValues[i]);
+                PropertyValueMultiple groupId = new PropertyValueMultiple(groupIdAsList);
+                groups.add(new HitGroup(queryInfo, groupId, groupSize));
             }
 
-            PropertyValueMultiple groupId = new PropertyValueMultiple(groupIdAsList);
-            groups.add(new HitGroup(queryInfo, groupId, groupSize));
 
+            return groups;
+
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
-
-        return groups;
     }
 }

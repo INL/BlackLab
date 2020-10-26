@@ -174,6 +174,11 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         return clauses.get(0).forwardMatchingCost();
     }
 
+   @Override
+    public boolean isSingleAnyToken() {
+        return clauses.stream().allMatch(c -> c.isSingleAnyToken());
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -198,5 +203,4 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
             return false;
         return true;
     }
-
 }
