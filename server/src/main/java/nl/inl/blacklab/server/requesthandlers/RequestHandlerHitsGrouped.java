@@ -11,11 +11,14 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
+import io.dropwizard.metrics5.MetricRegistry;
+import io.dropwizard.metrics5.Timer;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -35,6 +38,9 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
 
+    private final Timer searchTimer = BlackLab.metrics.timer(MetricRegistry.name(RequestHandlerHitsGrouped.class, "search"));
+    private final Timer jsonTimer = BlackLab.metrics.timer(MetricRegistry.name(RequestHandlerHitsGrouped.class, "json"));
+
     public static final boolean INCLUDE_RELATIVE_FREQ = true;
 
     public RequestHandlerHitsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
@@ -44,12 +50,12 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        // Get the window we're interested in
-        BlsCacheEntry<HitGroups> search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
-
-        // Search is done; construct the results object
         HitGroups groups;
-        try {
+        BlsCacheEntry<HitGroups> search;
+        try(Timer.Context context = searchTimer.time()) {
+            // Get the window we're interested in
+            search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
+            // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
@@ -105,41 +111,44 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
 
-        for (int i = first; i < last; ++i) {
-            HitGroup group = groups.get(i);
-            PropertyValue id = group.identity();
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) id).values() : Arrays.asList(id);
+        try (Timer.Context c = jsonTimer.time()) {
+            for (int i = first; i < last; ++i) {
+                HitGroup group = groups.get(i);
+                PropertyValue id = group.identity();
+                List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) id).values() : Arrays.asList(id);
 
-            if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
-                // Find size of corresponding subcorpus group
-                PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
-                logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
-            }
+                if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
+                    // Find size of corresponding subcorpus group
+                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
+                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
+                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
+                }
 
-            int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
-            ds.startItem("hitgroup").startMap();
-            ds
+                ds.startItem("hitgroup").startMap();
+                ds
                 .entry("identity", group.identity().serialize())
                 .entry("identityDisplay", group.identity().toString())
                 .entry("size", group.size());
 
-            ds.startEntry("values").startMap();
-            for (int j = 0; j < prop.size(); ++j) {
-                final HitProperty hp = prop.get(j);
-                final PropertyValue pv = valuesForGroup.get(j);
-                ds.entry(hp.serialize(), pv.toString());
-            }
-            ds.endMap().endEntry();
-
-            if (INCLUDE_RELATIVE_FREQ) {
-                ds.entry("numberOfDocs", numberOfDocsInGroup);
-                if (metadataGroupProperties != null) {
-                    addSubcorpusSize(ds, subcorpusSize);
+                ds.startEntry("values").startMap();
+                for (int j = 0; j < prop.size(); ++j) {
+                    final HitProperty hp = prop.get(j);
+                    final PropertyValue pv = valuesForGroup.get(j);
+                    ds.entry(hp.serialize(), pv.toString());
                 }
+                ds.endMap().endEntry();
+
+                if (INCLUDE_RELATIVE_FREQ) {
+                    ds.entry("numberOfDocs", numberOfDocsInGroup);
+                    if (metadataGroupProperties != null) {
+                        addSubcorpusSize(ds, subcorpusSize);
+                    }
+                }
+                ds.endMap().endItem();
+
             }
-            ds.endMap().endItem();
         }
         ds.endList().endEntry();
         ds.endMap();
@@ -164,5 +173,4 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         // Determine number of tokens in this subcorpus
         return searchParam.blIndex().queryDocuments(query).subcorpusSize(countTokens);
     }
-
 }

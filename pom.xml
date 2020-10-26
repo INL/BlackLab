@@ -78,7 +78,7 @@
             </roles>
             <timezone>Europe/Amsterdam</timezone>
         </developer>
-        
+
         <developer>
             <id>KCMertens</id>
             <name>Koen Mertens</name>
@@ -104,7 +104,7 @@
             </roles>
             <timezone>Europe/Amsterdam</timezone>
         </contributor>
-        
+
         <contributor>
             <name>Eduard Drenth</name>
             <email>edrenth@fryske-akademy.nl</email>
@@ -133,7 +133,7 @@
 
         <plugins>
 
-            <!-- Copies dependencies to target/lib, so we can run programs 
+            <!-- Copies dependencies to target/lib, so we can run programs
                 from blacklab.jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -314,11 +314,11 @@
                             <goal>report</goal>
                         </goals>
                         <configuration>
-                            <!-- Sets the path to the file which contains 
+                            <!-- Sets the path to the file which contains
                                 the execution data. -->
 
                             <dataFile>target/jacoco.exec</dataFile>
-                            <!-- Sets the output directory for the code coverage 
+                            <!-- Sets the output directory for the code coverage
                                 report. -->
                             <outputDirectory>target/jacoco-ut</outputDirectory>
                         </configuration>
@@ -345,7 +345,8 @@
                 </configuration>
             </plugin>
 
-            <!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven Central) -->
+            <!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven
+Central) -->
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
@@ -379,7 +380,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>     
+                    </plugin>
 
                     <!-- Create a javadoc jar -->
                     <plugin>
@@ -414,7 +415,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>      
+                    </plugin>
 
                 </plugins>
             </build>
@@ -493,6 +494,15 @@
             <artifactId>commons-csv</artifactId>
             <version>1.4</version>
         </dependency>
+
+        <!-- benchmarking -->
+        <!-- https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core -->
+        <dependency>
+            <groupId>io.dropwizard.metrics5</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>5.0.0-rc4-SNAPSHOT</version>
+        </dependency>
+
 
 
     </dependencies>

@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.search.Query;
-import org.eclipse.collections.api.bimap.MutableBiMap;
-import org.eclipse.collections.impl.bimap.mutable.HashBiMap;
 
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -35,7 +33,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  *
  * This class allows random access to the groups, and each group provides random
  * access to the hits. Note that this means that all hits found must be
- * retrieved, which may be unfeasible for large results sets.
+ * retrieved, which may be infeasible for large results sets.
  */
 public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
 
@@ -75,7 +73,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
      * The groups.
      */
     // private Map<PropertyValue, HitGroup> groups = new HashMap<>();
-    private MutableBiMap<PropertyValue, HitGroup> groups = new HashBiMap<>();
+    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /**
      * Total number of hits.
@@ -272,7 +270,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     @Override
-    public MutableBiMap<PropertyValue, HitGroup> getGroupMap() {
+    public Map<PropertyValue, HitGroup> getGroupMap() {
         return groups;
     }
 
