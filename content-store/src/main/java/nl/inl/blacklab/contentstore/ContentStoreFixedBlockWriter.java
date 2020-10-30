@@ -20,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
@@ -45,7 +46,7 @@ import nl.inl.util.SimpleResourcePool;
  * file allocation table keeps track of each file's blocks as well as the
  * character offset associated with each block so we can quickly access the
  * data. Free blocks will be re-used to save space.
- * 
+ *
  * Thread-safety: not thread-safe in index mode, but thread-safe while searching
  */
 @NotThreadSafe // in index mode
@@ -108,12 +109,12 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /** Contents still waiting to be written to the contents file in blocks */
     StringBuilder unwrittenContents = new StringBuilder(BLOCK_SIZE_BYTES * 10);
-    
+
     /** Index of the first unwritten character in unwrittenContents */
     protected int unwrittenIndex = 0;
 
     /**  unwritten content buffer is not flushed immediately after writing, as that is very slow in some situations (large documents in particular) */
-    protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096; 
+    protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096;
 
     /** Used to pad blocks that are less than BLOCK_SIZE long */
     private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
@@ -123,7 +124,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * @param dir content store dir
      * @param create if true, create a new content store
-     * @throws ErrorOpeningIndex 
+     * @throws ErrorOpeningIndex
      */
     public ContentStoreFixedBlockWriter(File dir, boolean create) throws ErrorOpeningIndex {
         super(dir);
@@ -184,7 +185,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /**
      * Delete all content in the document store
-     * @throws IOException 
+     * @throws IOException
      */
     @Override
     public void clear() throws IOException {
@@ -221,7 +222,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true);
-                        tocFileBuffer.position(p);
+                        ((Buffer)tocFileBuffer).position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
@@ -250,7 +251,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /**
      * Encode and write the block we've compiled so far and reset for next block
-     * 
+     *
      * @param writeLastBlock if true, we'll write the last block too even if it's
      *            not full
      */
@@ -258,7 +259,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         ensureContentsFileOpen();
 
         // Do we have a block to write?
-        while (writeLastBlock && getUnwrittenCharCount() > 0 
+        while (writeLastBlock && getUnwrittenCharCount() > 0
                 || getUnwrittenCharCount() >= WRITE_BLOCK_WHEN_CHARACTERS_AVAILABLE) {
             int offsetBefore = unwrittenIndex;
             byte[] encoded = encodeBlock(); // encode a number of characters to produce a 4K block
@@ -269,7 +270,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
             blockCharOffsetsWhileStoring.add(charsFromEntryWritten);
             charsFromEntryWritten += charLen;
             bytesWritten += encoded.length;
-            
+
             if (unwrittenIndex > MAX_UNWRITTEN_INDEX) {
                 this.unwrittenContents.delete(0, unwrittenIndex);
                 unwrittenIndex = 0;
@@ -324,7 +325,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
      * If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      */
@@ -341,10 +342,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * Store part of a piece of large content. This may be called several times to
      * store chunks of content, but MUST be *finished* by calling the "normal"
      * store() method. You may call store() with the empty string if you wish.
-     *  
+     *
      * @param content content to store
      * @param offset byte offset to begin storing
-     * @param length number of bytes to store 
+     * @param length number of bytes to store
      * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
      */
     @Override
@@ -358,19 +359,19 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         while (in.hasRemaining()) {
             cd.decode(in, out, true);
             unwrittenContents.append(out.array(), 0, out.position());
-            out.position(0);
-        } 
+            ((Buffer)out).position(0);
+        }
         writeBlocks(false);
     }
 
     /**
      * Store the given content and assign an id to it.
-     * 
+     *
      * Parts of the document may already have been stored before. This is the final part and will
-     * assign and return the document's content id. 
+     * assign and return the document's content id.
      *
      * NOTE: If you are not already working with a string, consider using {@link #storePart(byte[], int, int, Charset)} instead,
-     * as it will prevent having to make a temporary string copy of your data just for the store procedure. 
+     * as it will prevent having to make a temporary string copy of your data just for the store procedure.
      *
      * @param content the content to store
      * @return the id assigned to the content
@@ -380,16 +381,16 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         storePart(content);
         return store();
     }
-    
+
     /**
      * Store the given content and assign an id to it.
-     * 
+     *
      * Parts of the document may already have been stored before. This is the final part and will
-     * assign and return the document's content id. 
+     * assign and return the document's content id.
      *
      * @param content the content of the document
      * @param offset byte offset to begin storing
-     * @param length number of bytes to store 
+     * @param length number of bytes to store
      * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
      * @return the id assigned to the document
      */
@@ -398,7 +399,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         storePart(content, offset, length, cs);
         return store();
     }
-    
+
     /** The store routine (after appending to unwrittenContents) */
     private int store() {
         if (getUnwrittenCharCount() > 0) {
@@ -536,7 +537,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     // Compressed block too large.
                     // Shrink the uncompressed data length by 5% more than what we expect to be required.
                     float shrinkFactor = 1.0f + (1.05f * (compressedDataLength - BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
-                    //logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " + 
+                    //logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " +
                     // compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
                     length = (int) (length / shrinkFactor);
                     if (length <= 0)
@@ -547,16 +548,16 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     // Grow the uncompressed data length by 5% less than what we expect is possible.
                     float growFactor = 1.0f
                             + (0.95f * (BLOCK_SIZE_BYTES - compressedDataLength)) / compressedDataLength;
-                    //logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " + 
+                    //logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " +
                     // compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
                     length = (int) (length * growFactor);
                     if (length > available)
                         length = available;
                 } else {
-                    //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength + 
+                    //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength +
                     //", waste%: " + waste + ", ratio: " + ratio);
 
-                    // NOTE: do not delete from unwrittenContents here, 
+                    // NOTE: do not delete from unwrittenContents here,
                     // call site needs to know how much we advanced in the buffer to calculate how much uncompressed data was used
                     this.unwrittenIndex += length;
                     return Arrays.copyOfRange(zipbuf, 0, compressedDataLength);

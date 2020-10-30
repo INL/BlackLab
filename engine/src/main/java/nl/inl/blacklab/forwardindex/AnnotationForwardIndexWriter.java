@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -42,7 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
  * occurs in doc X at position Y"?
- * 
+ *
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
@@ -79,7 +80,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
     AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
         super(annotation, dir, collators, largeTermsFileSupport);
-        
+
         if (!dir.exists()) {
             if (!create)
                 throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -121,14 +122,14 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
     /**
      * Open the tokens file for writing.
-     * 
+     *
      * @throws IOException on error
      */
     protected void openTokensFileForWriting() throws IOException {
         writeTokensFp = new RandomAccessFile(tokensFile, "rw");
         writeTokensFileChannel = writeTokensFp.getChannel();
     }
-    
+
     /**
      * Read the table of contents from the file
      */
@@ -143,10 +144,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             byte[] deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            buf.position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            buf.position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
             buf.get(deleted);
             toc = new ArrayList<>(n);
             deletedTocEntries = new ArrayList<>();
@@ -175,7 +176,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
         });
     }
 
-    
+
 
     /**
      * Delete all content in the forward index
@@ -229,10 +230,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                 buf.putInt(n);
                 LongBuffer lb = buf.asLongBuffer();
                 lb.put(offset);
-                buf.position(buf.position() + SIZEOF_LONG * n);
+                ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
                 IntBuffer ib = buf.asIntBuffer();
                 ib.put(length);
-                buf.position(buf.position() + SIZEOF_INT * n);
+                ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
                 buf.put(deleted);
             }
         } catch (IOException e) {
@@ -266,7 +267,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
     /**
      * Find the best-fitting deleted entry for the specified length
-     * 
+     *
      * @param length length the entry should at least be
      * @return the best-fitting entry
      */
@@ -372,7 +373,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             }
 
             // Set the correct start position
-            writeBuffer.position((int) (newDocumentOffset - writeBufOffset));
+            ((Buffer)writeBuffer).position((int) (newDocumentOffset - writeBufOffset));
 
             // Did we increase the length of the tokens file?
             long end = newDocumentOffset + numberOfTokens;
@@ -463,7 +464,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                     throw new BlackLabRuntimeException("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
                 }
-                buffer.position(0);
+                ((Buffer)buffer).position(0);
                 ib = buffer.asIntBuffer();
                 ib.get(snippet);
                 result.add(snippet);
@@ -560,7 +561,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
     /**
      * Gets the length (in tokens) of a document
-     * 
+     *
      * @param fiid forward index id of a document
      * @return length of the document
      */

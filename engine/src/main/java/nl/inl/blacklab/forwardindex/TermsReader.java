@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.CollationKey;
@@ -42,7 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  *
  * This version of the class stores the terms in a more efficient way so it
  * saves and loads faster, and includes the case-insensitive sorting order.
- * 
+ *
  * This implementation is thread-safe.
  */
 class TermsReader extends Terms {
@@ -58,7 +59,7 @@ class TermsReader extends Terms {
      * The first index in the sortPositionPerIdInsensitive[] array that matches each
      * term, and the number of matching terms that follow. Used while building NFAs
      * to quickly fetch all indices matching a term case-insensitively.
-     * 
+     *
      * The most significant 4 bytes of the long are the first term; the least significant
      * 4 bytes are the number of terms.
      */
@@ -105,7 +106,7 @@ class TermsReader extends Terms {
 
         initialized = false;
         setBlockBasedFile(useBlockBasedTermsFile);
-        
+
         if (termsFile == null || !termsFile.exists())
             throw new IllegalArgumentException("Terms file not found: " + termsFile);
         this.termsFile = termsFile;
@@ -118,7 +119,7 @@ class TermsReader extends Terms {
         // If we havent' filled termIndex based on terms[] yet, do so now.
         // (for commonly used AFIs, this is done automatically on open in background thread, so this shouldn't normally block)
         buildTermIndexes();
-        
+
         int index = termIndex.getInt(term);
         if (index == -1)
             return NO_TERM; // term not found
@@ -130,7 +131,7 @@ class TermsReader extends Terms {
         // Make sure termIndex[Insensitive] and idPerSortPosition[Insensitive] are initialized
         // (we do this lazily for some AFIs because we rarely or never need this for those, and it takes up a significant amount of memory)
         buildTermIndexes();
-        
+
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
         boolean caseSensitive = sensitivity.isCaseSensitive();
@@ -145,7 +146,7 @@ class TermsReader extends Terms {
             int[] idLookup = caseSensitive ? idPerSortPosition : idPerSortPositionInsensitive;
             Collator coll = caseSensitive ? collator : collatorInsensitive;
             CollationKey key = coll.getCollationKey(term);
-            long firstAndNumber = termIndexInsensitive.getLong(key);            
+            long firstAndNumber = termIndexInsensitive.getLong(key);
             if (firstAndNumber != -1) {
                 int start = (int)(firstAndNumber >>> 32);
                 int end = start + (int)firstAndNumber;
@@ -159,7 +160,7 @@ class TermsReader extends Terms {
     @Override
     public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
         buildTermIndexes();
-        
+
         // NOTE: we don't do diacritics and case-sensitivity separately, but could in the future.
         //  right now, diacSensitive is ignored and caseSensitive is used for both.
         int[] idLookup = sensitivity.isCaseSensitive() ? sortPositionPerId : sortPositionPerIdInsensitive;
@@ -175,7 +176,7 @@ class TermsReader extends Terms {
     public synchronized void initialize() {
         if (initialized)
             return;
-        
+
         // Read the terms file
         //logger.debug("    START read terms file: " + termsFile);
         read(termsFile);
@@ -200,12 +201,12 @@ class TermsReader extends Terms {
             termIndex.defaultReturnValue(-1);
             termIndexInsensitive = new Object2LongOpenHashMap<>(terms.length);
             termIndexInsensitive.defaultReturnValue(-1);
-            
+
             // Build the case-sensitive term index.
             for (int i = 0; i < numberOfTerms; i++) {
                 termIndex.put(terms[i], i);
             }
-    
+
             if (termIndexInsensitive != null) {
                 // Now, store the first index in the sortPositionPerIdInsensitive[] array
                 // that matches each term, and the number of matching terms that follow.
@@ -268,13 +269,13 @@ class TermsReader extends Terms {
                 try (FileChannel fc = raf.getChannel()) {
                     long fileLength = termsFile.length();
                     IntBuffer ib = readFromFileChannel(fc, fileLength);
-                    
+
                     // Read the sort order arrays
                     sortPositionPerId = new int[numberOfTerms];
                     sortPositionPerIdInsensitive = new int[numberOfTerms];
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ((Buffer)ib).position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
                     ib.get(sortPositionPerId);
-                    ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
+                    ((Buffer)ib).position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
                     ib.get(sortPositionPerIdInsensitive);
                 }
             }

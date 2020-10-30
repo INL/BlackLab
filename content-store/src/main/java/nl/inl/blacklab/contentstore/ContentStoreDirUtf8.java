@@ -23,6 +23,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.IntBuffer;
@@ -50,7 +51,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * Block size in bytes can be slightly larger than char size because some UTF-8
  * characters take up more than 1 byte. If the block size is 1000 chars, block
  * offsets might be [0, 1011, 2015, 3020].
- * 
+ *
  * Thread-safety: not thread-safe in index mode, but thread-safe while searching
  */
 @NotThreadSafe // in index mode
@@ -110,7 +111,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             buf.putInt(blockOffsetBytes.length);
             IntBuffer ib = buf.asIntBuffer();
             ib.put(blockOffsetBytes);
-            buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
+            ((Buffer)buf).position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
         }
 
         /**
@@ -132,7 +133,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
             int[] blockOffsetBytes = new int[nBlocks];
             IntBuffer ib = buf.asIntBuffer();
             ib.get(blockOffsetBytes);
-            buf.position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
+            ((Buffer)buf).position(buf.position() + blockOffsetBytes.length * Integer.SIZE / Byte.SIZE);
             return new TocEntry(id, fileId, offset, length, charLength, blockSize, deleted,
                     blockOffsetBytes);
         }
@@ -257,12 +258,12 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
     /**
      * What block size to use when adding a new document to the content store.
      * Contributing factors for choosing block size:
-     * 
+     *
      * <ul>
      * <li>larger blocks improve compression ratio</li>
      * <li>larger blocks decrease number of blocks you have to read</li>
      * <li>smaller blocks decrease the decompression time</li>
-     * <li>smaller blocks increase the chance that we only have to read 
+     * <li>smaller blocks increase the chance that we only have to read
      * one disk block for a single concordance (disk blocks are generally 2 or 4K)</li>
      * <li>consider OS I/O caching and memory mapping. Then it becomes the difference between reading a few bytes from
      * memory and reading a few kilobytes and decompressing them. Right now, making
@@ -396,7 +397,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         try {
             mapToc(false);
             try {
-                tocFileBuffer.position(0);
+                ((Buffer)tocFileBuffer).position(0);
                 int n = tocFileBuffer.getInt();
                 for (int i = 0; i < n; i++) {
                     TocEntry e = TocEntry.deserialize(tocFileBuffer);
@@ -438,7 +439,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true);
-                        tocFileBuffer.position(p);
+                        ((Buffer)tocFileBuffer).position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
@@ -487,7 +488,7 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
 
     /**
      * Encode and write the block we've compiled so far and reset for next block
-     * 
+     *
      * @param os where to write to block to
      */
     public void writeCurrentBlock(OutputStream os) {
@@ -589,11 +590,11 @@ public class ContentStoreDirUtf8 extends ContentStoreDirAbstract {
         while (in.remaining() > 0) {
             int charsLeftInCurrentBlock = (blockOffsetWhileStoring.size() * newEntryBlockSizeCharacters) - charsFromEntryWritten;
             out.limit(charsLeftInCurrentBlock);
-        
+
             cd.decode(in, out, true);
             addToBlock(out.array(), 0, out.position());
             charsFromEntryWritten += out.position();
-            out.position(0);
+            ((Buffer)out).position(0);
 
             if ((charsFromEntryWritten % newEntryBlockSizeCharacters) == 0) {
                 writeCurrentBlock(os);

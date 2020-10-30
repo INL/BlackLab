@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -59,7 +60,7 @@ public abstract class Terms {
      * need to store offsets.
      */
     int maxMapSize = DEFAULT_MAX_MAP_SIZE;
-    
+
     public void initialize() {
         // NOP
     }
@@ -123,7 +124,7 @@ public abstract class Terms {
 
                 // Read term strings data
                 int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-                buf.position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+                ((Buffer)buf).position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
                 byte[] termStringsThisBlock = new byte[dataBlockSize];
                 buf.get(termStringsThisBlock);
 
@@ -158,7 +159,7 @@ public abstract class Terms {
 
             // termStringByteSize fits in an int, and terms
             // fits in a single byte array. Use the old code.
-            buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
+            ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
             byte[] termStrings = new byte[termStringsByteSize];
             buf.get(termStrings);
             ib = buf.asIntBuffer();
@@ -179,14 +180,14 @@ public abstract class Terms {
 
     /**
      * Write the terms file
-     * 
+     *
      * @param termsFile where to write the terms file
      */
     public abstract void write(File termsFile);
 
     /**
      * Get a term by id. Only works in search mode.
-     * 
+     *
      * @param id the term id
      * @return the corresponding term
      */
@@ -199,7 +200,7 @@ public abstract class Terms {
 
     /**
      * Get the sort position for a term based on its term id
-     * 
+     *
      * @param id the term id
      * @param sensitivity whether we want the sensitive or insensitive sort position
      * @return the sort position
@@ -208,7 +209,7 @@ public abstract class Terms {
 
     /**
      * Convert an array of term ids to sort positions
-     * 
+     *
      * @param termId the term ids
      * @param sortOrder the sort positions
      * @param sensitivity whether we want the sensitive or insensitive sort positions
@@ -221,7 +222,7 @@ public abstract class Terms {
 
     /**
      * Compare two terms (from their term ids) based on their sort positions
-     * 
+     *
      * @param termId1 id of the first term
      * @param termId2 id of the second term
      * @param sensitivity whether we want to compare sensitively or insensitively

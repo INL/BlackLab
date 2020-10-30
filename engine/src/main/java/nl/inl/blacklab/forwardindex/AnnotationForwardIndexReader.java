@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
@@ -41,7 +42,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
  * occurs in doc X at position Y"?
- * 
+ *
  * This implementation is thread-safe.
  */
 class AnnotationForwardIndexReader extends AnnotationForwardIndex {
@@ -53,16 +54,16 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
     /** Offsets of the mappings into the token file */
     private List<Long> tokensFileChunkOffsetBytes = null;
-    
+
     /** Collators to use for terms file */
     private Collators collators;
 
     /** Offset of each document */
     long[] offset;
-    
+
     /** Length of each document */
     int[] length;
-    
+
     /** Deleted status of each document */
     byte[] deleted;
 
@@ -74,7 +75,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
     AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
         super(annotation, dir, collators, largeTermsFileSupport);
-        
+
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
         }
@@ -92,18 +93,18 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public synchronized void initialize() {
         if (initialized)
             return;
-        
+
         //logger.debug("  START read TOC " + tocFile);
         readToc();
         //logger.debug("  END   read TOC " + tocFile);
-        
+
         //logger.debug("  START read Terms " + tocFile);
         terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
         //logger.debug("  END   read Terms " + tocFile);
         //logger.debug("  START Terms.initialize() " + tocFile);
         terms.initialize();
         //logger.debug("  END   Terms.initialize() " + tocFile);
-        
+
         //logger.debug("  START map tokens file " + tocFile);
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
                 FileChannel tokensFileChannel = tokensFp.getChannel()) {
@@ -157,16 +158,16 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             throw BlackLabRuntimeException.wrap(e1);
         }
         //logger.debug("  END map tokens file " + tocFile);
-        
+
         //logger.debug("END initialize AFI " + tocFile.getParent());
         initialized = true;
     }
-    
+
     @Override
     public void close() {
         // NOP
     }
-    
+
     /**
      * Read the table of contents from the file
      */
@@ -181,10 +182,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            buf.position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            buf.position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
             buf.get(deleted);
             deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {
@@ -205,7 +206,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         deletedTocEntries.sort( (o1, o2) -> length[o1] - length[o2] );
     }
 
-    
+
     @Override
     public int addDocument(List<String> content, List<Integer> posIncr) {
         throw new UnsupportedOperationException("Not supported in search mode");
@@ -215,7 +216,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
         if (!initialized)
             initialize();
-        
+
         if (deleted[fiid] != 0)
             return null;
 
@@ -248,7 +249,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
             // Get an IntBuffer to read the desired content
             IntBuffer ib = null;
-            
+
             // The tokens file has has been mapped to memory.
             // Get an int buffer into the file.
 
@@ -272,15 +273,15 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             if (whichChunk == null) {
                 throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
             }
-            whichChunk.position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
+            ((Buffer)whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
             ib = whichChunk.asIntBuffer();
 
             int snippetLength = end[i] - start[i];
             int[] snippet = new int[snippetLength];
-            
+
             // The file is mem-mapped (search mode).
             // Position us at the correct place in the file.
-            ib.position(start[i]);
+            ((Buffer)ib).position(start[i]);
             ib.get(snippet);
             result.add(snippet);
         }
@@ -292,7 +293,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public void deleteDocument(int fiid) {
         throw new UnsupportedOperationException("Not supported in search mode");
     }
-    
+
     /**
      * @return the number of documents in the forward index
      */
@@ -329,7 +330,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
     /**
      * Gets the length (in tokens) of a document
-     * 
+     *
      * @param fiid forward index id of a document
      * @return length of the document
      */
@@ -402,6 +403,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         };
     }
 
-    
+
 
 }

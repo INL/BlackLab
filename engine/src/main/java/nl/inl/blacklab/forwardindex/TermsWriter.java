@@ -18,6 +18,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -43,7 +44,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  *
  * This version of the class stores the terms in a more efficient way so it
  * saves and loads faster, and includes the case-insensitive sorting order.
- * 
+ *
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
@@ -83,7 +84,7 @@ class TermsWriter extends Terms {
         setBlockBasedFile(useBlockBasedTermsFile);
         if (termsFile != null && termsFile.exists())
             read(termsFile);
-        
+
         // We need to find id for term quickly while indexing
         // Build the case-sensitive term index.
         for (int i = 0; i < numberOfTerms; i++) {
@@ -181,7 +182,7 @@ class TermsWriter extends Terms {
                         // Write offset and data arrays to file
                         ib.put(termStringOffsets);
                         ib.put((int) termStringsByteSize); // size of the data block to follow
-                        buf.position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+                        ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
                         buf.put(termStrings);
                         ib = buf.asIntBuffer();
                     } else {
@@ -220,7 +221,7 @@ class TermsWriter extends Terms {
                             }
 
                             int numTermsThisBlock = currentTerm - firstTermInBlock;
-                            
+
                             // Write offset and data arrays to file
                             if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
                                 logger.error("***** blockSizeBytes < 0 !!!");
@@ -237,10 +238,10 @@ class TermsWriter extends Terms {
                             ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
                                                    // (doubles as the size of the data block to follow) //@4
                             int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
-                            buf.position(newPosition); // advance past offsets array
+                            ((Buffer)buf).position(newPosition); // advance past offsets array
                             if (fileMapLength - buf.position() < blockSize) {
                                 //throw new RuntimeException("Not enough space in file mapping to write term strings!");
-                                
+
                                 // Re-map a new part of the file before we write the term strings
                                 fileMapStart += buf.position();
                                 buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
@@ -261,13 +262,13 @@ class TermsWriter extends Terms {
                         // (we can do this now, even though we still have to write the sort buffers,
                         // because we know how large the file will eventually be)
                         fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * n;
-                        
+
                         if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
                             logger.error("***** fileLength < 0 !!!");
                             logger.error("fileLength = " + fileLength);
                             logger.error("n = " + n);
                         }
-                        
+
                         if (File.separatorChar != '\\') // causes problems on Windows
                             fc.truncate(fileLength);
                     }
