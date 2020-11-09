@@ -14,6 +14,8 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import gnu.trove.map.hash.THashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -46,7 +48,8 @@ public class TermsReaderTrie extends Terms {
     
 //    public byte[][] termsarrayutf8;
     private TrieValue[] nodes;
-    private HashMap<CollationKey, Object> insensitiveTermToIds = new HashMap<>();
+    private TObjectIntHashMap<CollationKey> insensitiveTermToSingleId = new TObjectIntHashMap<>(); // split these so we avoid the boxing memory price for single entry ints (which are the vast majority) 
+    private THashMap<CollationKey, IntArrayList> insensitiveTermToMultipleIds = new THashMap<>(); 
 //    private int zeroLengthTermId = -1;
     
     public TermsReaderTrie(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
@@ -78,9 +81,8 @@ public class TermsReaderTrie extends Terms {
         }
 
         CollationKey insensitiveId = collatorInsensitive.getCollationKey(term);
-        Object sensitiveIdsForTerm = insensitiveTermToIds.get(insensitiveId);
-        if (sensitiveIdsForTerm instanceof IntArrayList) results.addAll((IntArrayList) sensitiveIdsForTerm);
-        else if (sensitiveIdsForTerm != null) results.add((Integer) sensitiveIdsForTerm);
+        if (insensitiveTermToSingleId.containsKey(insensitiveId)) results.addAll(insensitiveTermToSingleId.get(insensitiveId));
+        else if (insensitiveTermToMultipleIds.containsKey(insensitiveId)) results.addAll(insensitiveTermToMultipleIds.get(insensitiveId));
     }
 
     @Override
@@ -168,11 +170,13 @@ public class TermsReaderTrie extends Terms {
         // (there is no such thing as an insensitive term id)
         for (int sensitiveTermId = 0; sensitiveTermId < terms.length; ++sensitiveTermId) {
             final CollationKey ck = collatorInsensitive.getCollationKey(terms[sensitiveTermId]);
-            Object existingEntry = insensitiveTermToIds.get(ck);
-            
-            if (existingEntry == null) insensitiveTermToIds.put(ck, sensitiveTermId); // store first occurance as Integer instead of single-element arraylist to save space
-            else if (existingEntry instanceof IntArrayList) ((IntArrayList) existingEntry).add(sensitiveTermId);
-            else insensitiveTermToIds.put(ck, new IntArrayList((int) existingEntry, sensitiveTermId)); // convert Integer to arraylist containing the int + the new int
+            // check if present in multiple
+            if (insensitiveTermToMultipleIds.containsKey(ck)) insensitiveTermToMultipleIds.get(ck).add(sensitiveTermId);
+            else if (!insensitiveTermToSingleId.containsKey(ck)) insensitiveTermToSingleId.put(ck, sensitiveTermId);
+            else { // migrate from single to multi value store
+                int alreadyPresentSensitiveTermId = insensitiveTermToSingleId.remove(ck);
+                insensitiveTermToMultipleIds.put(ck, new IntArrayList(alreadyPresentSensitiveTermId, sensitiveTermId));
+            }
         }
         
         // 2. create mapping of sensitive terms to their metadata (id etc) 
