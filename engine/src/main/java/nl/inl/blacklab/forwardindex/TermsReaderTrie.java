@@ -46,7 +46,7 @@ public class TermsReaderTrie extends Terms {
     
 //    public byte[][] termsarrayutf8;
     private TrieValue[] nodes;
-    private HashMap<CollationKey, IntArrayList> insensitiveTermToIds = new HashMap<>();
+    private HashMap<CollationKey, Object> insensitiveTermToIds = new HashMap<>();
 //    private int zeroLengthTermId = -1;
     
     public TermsReaderTrie(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
@@ -78,8 +78,9 @@ public class TermsReaderTrie extends Terms {
         }
 
         CollationKey insensitiveId = collatorInsensitive.getCollationKey(term);
-        IntArrayList sensitiveIdsForTerm = insensitiveTermToIds.get(insensitiveId);
-        results.addAll(sensitiveIdsForTerm);
+        Object sensitiveIdsForTerm = insensitiveTermToIds.get(insensitiveId);
+        if (sensitiveIdsForTerm instanceof IntArrayList) results.addAll((IntArrayList) sensitiveIdsForTerm);
+        else if (sensitiveIdsForTerm != null) results.add((Integer) sensitiveIdsForTerm);
     }
 
     @Override
@@ -166,9 +167,12 @@ public class TermsReaderTrie extends Terms {
         // 1. create mapping of insensitive terms to their sensitive ids.
         // (there is no such thing as an insensitive term id)
         for (int sensitiveTermId = 0; sensitiveTermId < terms.length; ++sensitiveTermId) {
-            final int curSensitiveTermId = sensitiveTermId;
             final CollationKey ck = collatorInsensitive.getCollationKey(terms[sensitiveTermId]);
-            insensitiveTermToIds.computeIfAbsent(ck, __ -> new IntArrayList()).add(curSensitiveTermId);
+            Object existingEntry = insensitiveTermToIds.get(ck);
+            
+            if (existingEntry == null) insensitiveTermToIds.put(ck, sensitiveTermId); // store first occurance as Integer instead of single-element arraylist to save space
+            else if (existingEntry instanceof IntArrayList) ((IntArrayList) existingEntry).add(sensitiveTermId);
+            else insensitiveTermToIds.put(ck, new IntArrayList((int) existingEntry, sensitiveTermId)); // convert Integer to arraylist containing the int + the new int
         }
         
         // 2. create mapping of sensitive terms to their metadata (id etc) 
