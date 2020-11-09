@@ -190,6 +190,7 @@ public class BlsCache implements SearchCache {
 
         /** Construct the load manager thread object. */
         public LoadManagerThread() {
+            super("BlsLoadManagerThread");
             setUncaughtExceptionHandler(this);
         }
 

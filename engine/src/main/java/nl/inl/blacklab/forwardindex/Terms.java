@@ -236,7 +236,7 @@ public abstract class Terms {
     protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
 
     public static Terms openForReading(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
-        return new TermsReader(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
+        return new TermsReaderTrie(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
     }
 
     public static Terms openForWriting(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {

@@ -203,6 +203,7 @@ class TermsReader extends Terms {
             termIndexInsensitive.defaultReturnValue(-1);
 
             // Build the case-sensitive term index.
+            // terms are already sorted in the terms file, so just map index to index
             for (int i = 0; i < numberOfTerms; i++) {
                 termIndex.put(terms[i], i);
             }

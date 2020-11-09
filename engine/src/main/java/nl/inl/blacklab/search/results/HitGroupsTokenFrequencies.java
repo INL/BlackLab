@@ -108,8 +108,7 @@ new SimpleCollector() {
 
 
                 final IndexReader reader = queryInfo.index().reader();
-                final List<Pair<AnnotationForwardIndex, String>> fiidFieldNames = fis.stream().map(fi -> Pair.of(fi,
-fi.annotation().forwardIndexIdField())).collect(Collectors.toList());
+                final List<Pair<AnnotationForwardIndex, String>> fiidFieldNames = fis.stream().map(fi -> Pair.of(fi, fi.annotation().forwardIndexIdField())).collect(Collectors.toList());
 
                 final MutableIntIterator docIdIt = docIds.intIterator();
                 while (docIdIt.hasNext()) {

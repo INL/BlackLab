@@ -333,15 +333,14 @@ public final class LuceneUtil {
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
                     if (maxResults < 0 || results.size() < maxResults) {
                         String termText = term.utf8ToString();
-                        boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
+                        boolean startsWithPrefix = allTerms ? true : sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
                                 : termText.startsWith(prefix);
-                        if (!allTerms && !startsWithPrefix) {
+                        if (!startsWithPrefix) {
                             // Doesn't match prefix or different field; no more matches
                             break;
                         }
                         // Match, add term
-                        if (!results.contains(termText))
-                            results.add(termText);
+                        results.add(termText);
                     }
                 }
             }
