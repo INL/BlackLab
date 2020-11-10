@@ -50,7 +50,7 @@ public class TermsReaderTrie extends Terms {
     private THashMap<CollationKey, IntArrayList> insensitiveTermToMultipleIds = new THashMap<>(); 
 //    private int zeroLengthTermId = -1;
     
-    protected int[] indexSensitive;
+//    protected int[] indexSensitive;
     protected int[] sortPositionSensitive;
     protected int[] sortPositionInsensitive;
     
@@ -153,7 +153,7 @@ public class TermsReaderTrie extends Terms {
         long fileLength = termsFile.length();
         IntBuffer ib = readFromFileChannel(fc, fileLength);
         
-        this.indexSensitive = new int[numberOfTerms];
+//        this.indexSensitive = new int[numberOfTerms];
         this.sortPositionSensitive = new int[numberOfTerms];
         this.sortPositionInsensitive = new int[numberOfTerms];
         
@@ -183,7 +183,7 @@ public class TermsReaderTrie extends Terms {
                 insensitiveTermToMultipleIds.put(ck, new IntArrayList(alreadyPresentSensitiveTermId, sensitiveTermId));
             }
             
-            this.indexSensitive[sensitiveTermId] = sensitiveTermId;
+//            this.indexSensitive[sensitiveTermId] = sensitiveTermId;
         }
         
         System.out.println("finishing initializing termsreader");
