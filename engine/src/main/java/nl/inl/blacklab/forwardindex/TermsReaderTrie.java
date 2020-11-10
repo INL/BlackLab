@@ -5,7 +5,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
-import java.text.CollationKey;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,39 +19,20 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TermsReaderTrie extends Terms {
-//    private static class TrieValue {
-//        public final String term; 
-//        public final int indexSensitive;
-//        public final int sortPositionInsensitive; // this is stored in the terms file
-//        public final int sortPositionSensitive; // this is stored in the terms file
-//        
-//        public TrieValue(String term, int indexSensitive, int sortPositionSensitive, int sortPositionInsensitive) {
-//            this.term = term;
-//            
-//            this.indexSensitive = indexSensitive;
-//            this.sortPositionSensitive = sortPositionSensitive;
-//            this.sortPositionInsensitive = sortPositionInsensitive;
-//        }
-//        
-//        public String getTerm() {
-//            return term;
-//        }
-//    }
     
     protected static final Logger logger = LogManager.getLogger(TermsReaderTrie.class);
 
-//    protected boolean initialized = false;
     protected final File termsFile;
     protected final TObjectIntHashMap<String> sensitiveTermToId = new TObjectIntHashMap<>();
-//    protected final RadixTree<TrieValue> termsTrie = new ConcurrentRadixTree<TermsReaderTrie.TrieValue>(new DefaultCharSequenceNodeFactory());
     
-//    public byte[][] termsarrayutf8;
-//    private TrieValue[] nodes;
-    private TObjectIntHashMap<CollationKey> insensitiveTermToSingleId = new TObjectIntHashMap<>(); // split these so we avoid the boxing memory price for single entry ints (which are the vast majority) 
-    private THashMap<CollationKey, IntArrayList> insensitiveTermToMultipleIds = new THashMap<>(); 
-//    private int zeroLengthTermId = -1;
+  // split these so we avoid the boxing memory price for single entry ints (which are the vast majority) 
+    private TObjectIntHashMap<byte[]> insensitiveTermToSingleId = new TObjectIntHashMap<byte[]>() {
+        protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); }; 
+    }; 
+    private THashMap<byte[], IntArrayList> insensitiveTermToMultipleIds = new THashMap<byte[], IntArrayList>() { 
+        protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); };
+    };
     
-//    protected int[] indexSensitive;
     protected int[] sortPositionSensitive;
     protected int[] sortPositionInsensitive;
     
@@ -81,7 +63,7 @@ public class TermsReaderTrie extends Terms {
             results.add(sensitiveTermToId.get(term));
         }
 
-        CollationKey insensitiveId = collatorInsensitive.getCollationKey(term);
+        byte[] insensitiveId = collatorInsensitive.getCollationKey(term).toByteArray();
         if (insensitiveTermToSingleId.containsKey(insensitiveId)) results.addAll(insensitiveTermToSingleId.get(insensitiveId));
         else if (insensitiveTermToMultipleIds.containsKey(insensitiveId)) results.addAll(insensitiveTermToMultipleIds.get(insensitiveId));
     }
@@ -147,24 +129,19 @@ public class TermsReaderTrie extends Terms {
         return true;
     }
     
-    
-    
     private void read(FileChannel fc) throws IOException {
+        System.out.println("Initializing termsreader " + termsFile);
+        final long start = System.nanoTime();
+    
         long fileLength = termsFile.length();
         IntBuffer ib = readFromFileChannel(fc, fileLength);
-        
-//        this.indexSensitive = new int[numberOfTerms];
-        this.sortPositionSensitive = new int[numberOfTerms];
-        this.sortPositionInsensitive = new int[numberOfTerms];
-        
-        
         
         // now build the insensitive sorting positions..
         // the original code is weirdly slow, see if we can do better.
         
         // Read the sort order arrays
-//        int[] sortPositionSensitive = new int[numberOfTerms];
-//        int[] sortPositionInsensitive = new int[numberOfTerms]; // to use this - retrieve the sensitive id from the <collationkey, integer> map, then use that id as index in this array
+        this.sortPositionSensitive = new int[numberOfTerms];
+        this.sortPositionInsensitive = new int[numberOfTerms];
         ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
         ib.get(sortPositionSensitive);
         ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
@@ -174,7 +151,8 @@ public class TermsReaderTrie extends Terms {
         // 1. create mapping of insensitive terms to their sensitive ids.
         // (there is no such thing as an insensitive term id)
         for (int sensitiveTermId = 0; sensitiveTermId < terms.length; ++sensitiveTermId) {
-            final CollationKey ck = collatorInsensitive.getCollationKey(terms[sensitiveTermId]);
+            final byte[] ck = collatorInsensitive.getCollationKey(terms[sensitiveTermId]).toByteArray();
+            
             // check if present in multiple
             if (insensitiveTermToMultipleIds.containsKey(ck)) insensitiveTermToMultipleIds.get(ck).add(sensitiveTermId);
             else if (!insensitiveTermToSingleId.containsKey(ck)) insensitiveTermToSingleId.put(ck, sensitiveTermId);
@@ -182,24 +160,8 @@ public class TermsReaderTrie extends Terms {
                 int alreadyPresentSensitiveTermId = insensitiveTermToSingleId.remove(ck);
                 insensitiveTermToMultipleIds.put(ck, new IntArrayList(alreadyPresentSensitiveTermId, sensitiveTermId));
             }
-            
-//            this.indexSensitive[sensitiveTermId] = sensitiveTermId;
         }
         
-        System.out.println("finishing initializing termsreader");
-        
-//        // 2. create mapping of sensitive terms to their metadata (id etc) 
-//        for (int i = 0; i < terms.length; ++i) {
-//            final String term = terms[i];
-//            
-//            this.indexSensitive[i] = [i];
-////            this.sortPositionSensitive = new int[numberOfTerms];
-////            this.sortPositionInsensitive = new int[numberOfTerms];
-//            
-//            TrieValue tv = new TrieValue(term, i, sortPositionSensitive[i], sortPositionInsensitive[i]);
-//            this.nodes[i] = tv;
-//        }
-        
-//        this.terms = null; // no need anymore?
+        System.out.println("finishing initializing termsreader" + termsFile + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms to process " + numberOfTerms + " terms");
     }
 }
