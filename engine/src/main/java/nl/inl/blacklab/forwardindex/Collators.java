@@ -1,8 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
@@ -23,9 +22,13 @@ public class Collators {
     public Collators(Collator base, CollatorVersion version) {
         super();
         this.version = version;
-        sensitive = (Collator) base.clone();
-        sensitive.setStrength(Collator.TERTIARY);
-        insensitive = desensitize((RuleBasedCollator) base.clone(), version);
+        try {
+            sensitive = (Collator) base.clone();            
+            sensitive.setStrength(Collator.TERTIARY);
+            insensitive = desensitize((RuleBasedCollator) base.clone(), version);
+        } catch (CloneNotSupportedException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -46,8 +49,9 @@ public class Collators {
      * @param coll collator to make insensitive
      * @param collatorVersion version of the insensitive collator we want
      * @return insensitive collator
+     * @throws CloneNotSupportedException 
      */
-    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) {
+    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) throws CloneNotSupportedException {
         switch (collatorVersion) {
         case V1:
             // Basic case- and accent-insensitive collator
@@ -67,7 +71,7 @@ public class Collators {
                 coll = new RuleBasedCollator(rules);
                 coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
                 return coll;
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
         }

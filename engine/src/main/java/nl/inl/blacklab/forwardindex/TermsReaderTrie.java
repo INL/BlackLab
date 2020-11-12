@@ -29,15 +29,9 @@ public class TermsReaderTrie extends Terms {
     protected static final Logger logger = LogManager.getLogger(TermsReaderTrie.class);
 
     protected final File termsFile;
-//    protected final TObjectIntHashMap<String> sensitiveTermToId = new TObjectIntHashMap<>();
+
     
-    // split these so we avoid the boxing memory price for single entry ints (which are the vast majority) 
-//    private TObjectIntHashMap<byte[]> insensitiveTermToSingleId = new TObjectIntHashMap<byte[]>() {
-//        protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); }; 
-//    }; 
-//    private THashMap<byte[], IntArrayList> insensitiveTermToMultipleIds = new THashMap<byte[], IntArrayList>() { 
-//        protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); };
-//    };
+    
 
     /** Encodes 4 values across 2 longs for every term: [sortpossensitive 32, sortposinsensitive 32, offset 48 , length 16]. Access using termId*2 */
     protected long[] termData; 
@@ -59,7 +53,7 @@ public class TermsReaderTrie extends Terms {
         this.termsFile = termsFile;
         this.useBlockBasedTermsFile = useBlockBasedTermsFile;
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
-        this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
+        this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);        
         
         try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
             try (FileChannel fc = raf.getChannel()) {

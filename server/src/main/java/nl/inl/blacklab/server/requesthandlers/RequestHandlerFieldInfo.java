@@ -1,8 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -12,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
@@ -54,7 +54,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 rules = rules.replace("<'('<')'", ""); // Remove old rules for parentheses
                 rules = ", '(',')' " + rules; // Make parentheses ignorable characters
                 valueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 // Oh well, we'll use the collator as-is
                 //throw new RuntimeException();//DEBUG
             }

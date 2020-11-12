@@ -21,13 +21,14 @@ import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
-import java.text.CollationKey;
-import java.text.Collator;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import com.ibm.icu.text.CollationKey;
+import com.ibm.icu.text.Collator;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;

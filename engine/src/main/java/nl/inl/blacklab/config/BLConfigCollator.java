@@ -1,9 +1,10 @@
 package nl.inl.blacklab.config;
 
-import java.text.Collator;
 import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 
