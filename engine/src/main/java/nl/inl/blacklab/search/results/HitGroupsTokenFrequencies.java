@@ -128,7 +128,7 @@ new SimpleCollector() {
                     }
 
                     // now we have all values for all relevant annotations for this document
-                    // iterate again and pair up the nth entries for all annotations, then mark that occurance.
+                    // iterate again and pair up the nth entries for all annotations, then mark that occurrence.
                     try (Timer.Context f = countTokensTimer.time()) {
                         for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
                             int[] tokenValues = new int[fiidFieldNames.size()];

@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -99,15 +98,15 @@ public class TermsReaderTrie extends Terms {
 
     @Override
     public String get(int id) {
-        if (id >= numberOfTerms) { return ""; }
+        if (id >= numberOfTerms || id < 0) { return ""; }
         
-        final long offsetAndLength = termData[id * 2 + 1];
-        final long rawOffset = offsetAndLength >> 16;
-        final int arrayIndex = (int) (rawOffset >> 32); // int cast does the floor() for us, that's good.
-        final int offset = (int) (rawOffset & 0xffffffffL);
-        final int length = (int) (offsetAndLength & 0xffffL);
+        final long offset = termData[id * 2 + 1];
+        final int arrayIndex = (int) (offset >> 32); // int cast does the floor() for us, that's good.
+        final int indexInArray = (int) (offset & 0xffffffffL); // only keep upper 32 bits
         
-        return new String(termCharData[arrayIndex], offset, length, DEFAULT_CHARSET);
+        final boolean isLastTerm = id == (numberOfTerms - 1);
+        final int length = (int) (isLastTerm ? termCharData[arrayIndex].length - offset : termData[(id + 1) * 2 + 1] - offset); 
+        return new String(termCharData[arrayIndex], indexInArray, length, DEFAULT_CHARSET);
     }
 
     @Override
@@ -179,8 +178,8 @@ public class TermsReaderTrie extends Terms {
         prepareMapping2TermIds(stringHash2TermIds, collationKeyBytes2TermIds);
 
         fillTermDataGroups(stringHash2TermIds, collationKeyBytes2TermIds, terms);
-        final Pair<long[], short[]> chardataOffsets = fillTermCharData(terms);
-        fillTermData(sortPositionSensitive, sortPositionInsensitive, chardataOffsets.getKey(), chardataOffsets.getValue());
+        final long[] chardataOffsets = fillTermCharData(terms);
+        fillTermData(sortPositionSensitive, sortPositionInsensitive, chardataOffsets);
         terms = null;
         
         System.out.println("finishing initializing termsreader " + termsFile + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms to process " + numberOfTerms + " terms");
@@ -216,14 +215,11 @@ public class TermsReaderTrie extends Terms {
      * 
      * returns the offset + length of all terms.
      */
-    private Pair<long[], short[]> fillTermCharData(String[] terms) {
+    private long[] fillTermCharData(String[] terms) {
         long[] termOffsets = new long[terms.length];
-        short[] termLengths = new short[terms.length];
-        
-        
+
         long bytesRemainingToBeWritten = 0;
         for (final String t : terms) { bytesRemainingToBeWritten += t.getBytes(DEFAULT_CHARSET).length; }
-        
         
         byte[][] termCharData = new byte[0][];
         byte[] curArray;
@@ -239,7 +235,6 @@ public class TermsReaderTrie extends Terms {
                 if ((termIndex + termBytes.length) > curArrayLength) { break; }
                 
                 termOffsets[termIndex] = offset;
-                termLengths[termIndex] = (short) termBytes.length;
                 
                 System.arraycopy(termBytes, 0, curArray, offset, termBytes.length);
                 
@@ -258,18 +253,18 @@ public class TermsReaderTrie extends Terms {
         }
         
         this.termCharData = termCharData;
-        return Pair.of(termOffsets, termLengths);
+        return termOffsets;
     }
     
     /*
      * creates/fills the following 
      * - termData
      */
-    private void fillTermData(int[] sortPositionSensitive, int[] sortPositionInsensitive, long[] charDataOffsets, short[] charDataLengths) {
+    private void fillTermData(int[] sortPositionSensitive, int[] sortPositionInsensitive, long[] charDataOffsets) {
         termData = new long[numberOfTerms * 2];
         for (int i = 0; i < numberOfTerms; ++i) {
-            termData[i] = (((long)sortPositionSensitive[i]) << 32) | (sortPositionInsensitive[i] & 0xffffffffL); // don't just cast, or sign bit might become set and it lies outside the upper 32 bits.
-            termData[i+1] = (charDataOffsets[i] << 16) | (charDataLengths[i] & 0xffL);
+            termData[i*2] = (((long)sortPositionSensitive[i]) << 32) | (sortPositionInsensitive[i] & 0xffffffffL); // don't just cast, or sign bit might become set and it lies outside the upper 32 bits.
+            termData[i*2+1] = charDataOffsets[i];
         }
     }
     
@@ -355,13 +350,13 @@ public class TermsReaderTrie extends Terms {
     }
     
     private int getSortPositionSensitive(int termId) {
-        if (termId >= 0 && termId < numberOfTerms) { return -1; }
+        if (termId < 0 || termId >= numberOfTerms) { return -1; }
         final long sortPositionData = termData[termId * 2];
         return (int) (sortPositionData >> 32);
     }
     
     private int getSortPositionInsensitive(int termId) {
-        if (termId >= 0 && termId < numberOfTerms) { return -1; }
+        if (termId < 0 || termId >= numberOfTerms) { return -1; }
         final long sortPositionData = termData[termId * 2];
         return (int) (sortPositionData & 0xffffffffL);
     }
