@@ -216,8 +216,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             String luceneField = as.luceneField();
             if (annotationMatches(annotation.name(), showValuesFor)) {
                 boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                int maxValues = isInlineTagAnnotation ? -1 : MAX_FIELD_VALUES + 1;
-                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, maxValues);
+                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, MAX_FIELD_VALUES + 1); // 1 more to detect when we have all values or not
                 ds.startEntry("values").startList();
 
                 boolean valueListComplete = true;
