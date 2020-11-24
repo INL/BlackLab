@@ -269,12 +269,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                         }
                         sb.append('"');
                         while (offset < strlen) {
-                            int codepoint = value.codePointAt(offset);
-                            offset += Character.charCount(codepoint);
-                            sb.appendCodePoint(codepoint);
-                            if (codepoint == '"') {
-                                sb.appendCodePoint(codepoint);
-                            }
+                            // Strip newlines, modify quotes to be double quotes.
+                            value.replace("\n", "").replace("\r", "").replace("\"", "\"\"");
                         }
 
                         sb.append('"');
