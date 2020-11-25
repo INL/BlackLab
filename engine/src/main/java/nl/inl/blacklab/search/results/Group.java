@@ -62,4 +62,5 @@ public abstract class Group<T> implements Result<Group<T>> {
         return identity().compareTo(o.identity());
     }
 
+    public abstract ResultsStats hitsStats();
 }

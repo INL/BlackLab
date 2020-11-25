@@ -24,6 +24,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.DefaultMax;
@@ -74,7 +75,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), 0, groups, ourWindow);
-        ResultCount hitsStats = searchMan.search(user, searchParam.hitsCount());
+        ResultsStats hitsStats = groups.hitsStats();
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
 
         // The list of groups found

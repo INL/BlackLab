@@ -64,7 +64,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     public static HitGroups tokenFrequencies(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
-        return new HitGroupsTokenFrequencies(queryInfo, filterQuery, property, maxHits);
+        return HitGroupsTokenFrequencies.get(queryInfo, filterQuery, property, maxHits);
     }
 
     private HitProperty criteria;
@@ -279,4 +279,44 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         return resultObjects;
     }
 
+    
+    public ResultsStats hitsStats() {
+        return new ResultsStats() {
+            
+            @Override
+            public int processedTotal() {
+                return HitGroups.this.totalHits;
+            }
+            
+            @Override
+            public int processedSoFar() {
+                return processedTotal();
+            }
+            
+            @Override
+            public boolean processedAtLeast(int lowerBound) {
+                return processedTotal() >= lowerBound;
+            }
+            
+            @Override
+            public MaxStats maxStats() {
+                return new MaxStats(false, false); // TODO 
+            }
+            
+            @Override
+            public boolean done() {
+                return true;
+            }
+            
+            @Override
+            public int countedTotal() {
+                return processedTotal();
+            }
+            
+            @Override
+            public int countedSoFar() {
+                return processedTotal();
+            }
+        };
+    }
 }

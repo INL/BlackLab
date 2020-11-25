@@ -71,4 +71,12 @@ public class HitGroup extends Group<Hit> {
     public Hits storedResults() {
         return (Hits)super.storedResults();
     }
+    
+    @Override
+    public ResultsStats hitsStats() {
+        if (numberOfStoredResults() == 0) // we're a group without backing hits, synthesize the statistics. 
+            return new ResultsStatsStatic(size(), size(), MaxStats.NOT_EXCEEDED); // we cannot know this. But likely that if we have no Hits, that the limits were not exceeded.
+        
+        return storedResults().hitsStats();
+    }
 }
