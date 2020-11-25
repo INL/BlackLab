@@ -27,6 +27,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -231,6 +232,16 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @return null if no context is required, the fieldnames otherwise
      */
     public List<Annotation> needsContext() {
+        return null;
+    }
+    
+    /**
+     * Return the required sensitivies for all Annotations that require context.
+     * Sensitivies are returned in the same order as the annotations are returned from {@link #needsContext()}
+     * 
+     * @return null if no context is required.
+     */
+    public List<MatchSensitivity> getSensitivities() {
         return null;
     }
 

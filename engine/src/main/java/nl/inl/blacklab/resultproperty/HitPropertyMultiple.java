@@ -27,6 +27,7 @@ import java.util.stream.Collectors;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -54,6 +55,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** All the contexts needed by the criteria */
     List<Annotation> contextNeeded;
     
+    /** Sensitivities needed for the criteria in contextNeeded (same order) */
+    List<MatchSensitivity> sensitivities; 
+    
     /** Which of the contexts do the individual properties need? */
     Map<HitProperty, List<Integer>> contextIndicesPerProperty;
     
@@ -61,6 +65,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         super(mprop, null, null, invert);
         int n = mprop.properties.size();
         this.contextNeeded = mprop.contextNeeded;
+        this.sensitivities = mprop.sensitivities;
         this.properties = new ArrayList<>();
         this.contextIndicesPerProperty = new HashMap<>();
         for (int i = 0; i < n; i++) {
@@ -101,16 +106,26 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         // at what context index/indices they can find the context(s) they need.
         // Figure out what context(s) we need
         List<Annotation> result = new ArrayList<>();
+        List<MatchSensitivity> sensitivities = new ArrayList<>();
         for (HitProperty prop: properties) {
             List<Annotation> requiredContext = prop.needsContext();
-            if (requiredContext != null) {
-                for (Annotation c: requiredContext) {
-                    if (!result.contains(c))
-                        result.add(c);
+            List<MatchSensitivity> propSensitivities = prop.getSensitivities();
+            
+            if (requiredContext == null)
+                continue;
+            
+            for (int i = 0; i < requiredContext.size(); ++i) {
+                final Annotation c = requiredContext.get(i);
+                final MatchSensitivity ms = propSensitivities.get(i);
+                
+                if (!result.contains(c)) {
+                    result.add(c);
+                    sensitivities.add(ms);
                 }
             }
         }
-        contextNeeded = result.isEmpty() ? null : result;
+        this.contextNeeded = result.isEmpty() ? null : result;
+        this.sensitivities = sensitivities.isEmpty() ? null : sensitivities; 
         
         // Let criteria know what context number(s) they need
         contextIndicesPerProperty = new HashMap<>();
@@ -125,7 +140,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
                 prop.setContextIndices(contextNumbers);
             }
         }
-        contextNeeded = result.isEmpty() ? null : result;
     }
 
     @Override
@@ -181,6 +195,11 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         return contextNeeded;
     }
     
+    @Override
+    public List<MatchSensitivity> getSensitivities() {
+        return sensitivities;
+    }
+
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
         // Get ContextSize that's large enough for all our properties
