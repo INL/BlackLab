@@ -23,23 +23,27 @@ import gnu.trove.map.hash.TObjectIntHashMap;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-public class TermsReaderTrie extends Terms {
+public class TermsReader2 extends Terms {
 
-    protected static final Logger logger = LogManager.getLogger(TermsReaderTrie.class);
+    protected static final Logger logger = LogManager.getLogger(TermsReader2.class);
 
     protected final File termsFile;
-
     
-    
+    protected final ThreadLocal<int[]> arrayAndOffsetAndLength = ThreadLocal.withInitial(() -> new int[3]);
 
-    /** Encodes 4 values across 2 longs for every term: [sortpossensitive 32, sortposinsensitive 32, offset 48 , length 16]. Access using termId*2 */
+    /** 
+     * Encodes 4 values across 2 longs for every term: [sortpossensitive 32, sortposinsensitive 32, offset 64]. Access using termId*2 
+     * To get the term's length, subtract the offset from the next term's offset. For the last term, subtract the offset from the array length.
+     */
     protected long[] termData; 
     /** Concatenated strings of all terms known to us. Get offset and length for a specific term from the {@link #termData} array */
     protected byte[][] termCharData; 
     
     /** For a term's hash, contains an index into the {@link #termDataGroups array}, in which the term ids for that string hash can be found. */
     protected TIntIntHashMap stringHash2TermDataGroupsIndex;
-    protected TObjectIntHashMap<byte[]> collationKey2TermDataGroupsIndex;
+    protected TObjectIntHashMap<byte[]> collationKey2TermDataGroupsIndex = new TObjectIntHashMap<byte[]>() {
+        protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); }
+    };
     /** 
      * Go from a string to an index into this array through the {@link #stringHash2TermDataGroupsIndex} or {@link #collationKey2TermDataGroupsIndex} 
      * This array then contains a number of ints: the first is the count of term IDs that follow. Then are that number of term ids.
@@ -48,7 +52,7 @@ public class TermsReaderTrie extends Terms {
      */
     protected int[] termDataGroups; // [count, index...] 
     
-    public TermsReaderTrie(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
+    public TermsReader2(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
         this.termsFile = termsFile;
         this.useBlockBasedTermsFile = useBlockBasedTermsFile;
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
@@ -99,15 +103,33 @@ public class TermsReaderTrie extends Terms {
     @Override
     public String get(int id) {
         if (id >= numberOfTerms || id < 0) { return ""; }
-        
-        final long offset = termData[id * 2 + 1];
+        final int[] arrayAndOffsetAndLength = getOffsetAndLength(id);
+        return new String(termCharData[arrayAndOffsetAndLength[0]], arrayAndOffsetAndLength[1], arrayAndOffsetAndLength[2], DEFAULT_CHARSET);
+    }
+    
+    /**
+     * Returns the threadlocal arrayAndOffsetAndLength, the array is reused between calls.
+     * index 0 contains the char array
+     * index 1 contains the offset within the char array
+     * index 2 contains the length
+     * @param termId
+     * @return the 
+     */
+    private int[] getOffsetAndLength(int termId) {
+        final int[] arrayAndOffsetAndLength = this.arrayAndOffsetAndLength.get();
+        final long offset = termData[termId * 2 + 1];
         final int arrayIndex = (int) (offset >> 32); // int cast does the floor() for us, that's good.
         final int indexInArray = (int) (offset & 0xffffffffL); // only keep upper 32 bits
         
-        final boolean isLastTerm = id == (numberOfTerms - 1);
-        final int length = (int) (isLastTerm ? termCharData[arrayIndex].length - offset : termData[(id + 1) * 2 + 1] - offset); 
-        return new String(termCharData[arrayIndex], indexInArray, length, DEFAULT_CHARSET);
+        final boolean isLastTerm = termId == (numberOfTerms - 1);
+        final int length = (int) (isLastTerm ? termCharData[arrayIndex].length - offset : termData[(termId + 1) * 2 + 1] - offset);
+        
+        arrayAndOffsetAndLength[0] = arrayIndex;
+        arrayAndOffsetAndLength[1] = indexInArray;
+        arrayAndOffsetAndLength[1] = length;
+        return arrayAndOffsetAndLength;
     }
+    
 
     @Override
     public int numberOfTerms() {
@@ -373,16 +395,11 @@ public class TermsReaderTrie extends Terms {
             
             for (int i = 1; i <= numTermsWithThisStringHash; ++i) {
                 final int termId = termDataGroups[groupIndex + i];
-                final long offsetAndLength = termData[termId * 2 + 1];
-                final long rawOffset = offsetAndLength >> 16;
-                final int arrayIndex = (int) (rawOffset >> 32); // int cast does the floor() for us, that's good.
-                final int offset = (int) (rawOffset & 0xffffffffL);
-                final int length = (int) (offsetAndLength & 0xffffL);
-                
-                if (memcmp(termCharData[arrayIndex], offset, termBytes, 0, length))
+                final int[] arrayAndOffsetAndLength = getOffsetAndLength(termId);
+                if (memcmp(termCharData[arrayAndOffsetAndLength[0]], arrayAndOffsetAndLength[1], termBytes, 0, arrayAndOffsetAndLength[2]))
                     return termDataGroups[groupIndex + i];
             }
-            // There was a matching hash, but the requested term is not one we have stored...
+            // There was a matching hash, but it was a hash collision, and the requested term is not one we have stored...
             return -1;
         }
         
