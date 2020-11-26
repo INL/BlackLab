@@ -16,11 +16,15 @@ Let's go over these one by one.
 
 ## Server or Core?
 
-The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Groovy, etc.). Note that you will need a Java SE 8 compatible JVM to use the latest BlackLab versions.
+The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Kotlin, etc.). Note that you will need a Java SE 8 compatible JVM to use the latest BlackLab versions.
 
 For now, this guide will focus on BlackLab Core and Java. For more information on BlackLab Server, see this [overview](blacklab-server-overview.html).
 
 First you need to get the BlackLab library. The simplest way is to let Maven download it automatically from the Central Repository, but you can also download a prebuilt binary, and it's trivial to build it yourself.
+
+<blockquote>
+<b>Note to MacOS users</b>: Dirk Roorda at DANS wrote a detailed guide for installing and indexing data on MacOS. It's available <a href='https://github.com/Dans-labs/clariah-gm/blob/master/blacklab/install.md'>here</a>.
+</blockquote>
 
 <a id="getting-blacklab"></a>
 
