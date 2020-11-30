@@ -52,28 +52,27 @@ public class Collators {
      * @throws CloneNotSupportedException 
      */
     private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) throws CloneNotSupportedException {
-        switch (collatorVersion) {
-        case V1:
-            // Basic case- and accent-insensitive collator
-            // Note that this ignores dashes and spaces, which is different
-            // from how the rest of blacklab deals with term equality.
-            // Hence V2.
-            Collator cl = (Collator) coll.clone();
-            cl.setStrength(Collator.PRIMARY);
-            return cl;
-        case V2:
-        default:
-            // Case- and accent-insensitive collator that doesn't
-            // ignore dash and space like the regular insensitive collator (V1) does.
-            String rules = coll.getRules().replaceAll(",'-'", ""); // don't ignore dash
-            rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
-            try {
-                coll = new RuleBasedCollator(rules);
+        try {
+            switch (collatorVersion) {
+            case V1:
+                // Basic case- and accent-insensitive collator
+                // Note that this ignores dashes and spaces, which is different
+                // from how the rest of blacklab deals with term equality.
+                // Hence V2.
+                RuleBasedCollator cl = new RuleBasedCollator(coll.getRules() + "&\u0000=' '='-'");
+                cl.setStrength(Collator.PRIMARY);
+                return cl;
+            case V2:
+            default:
+                // Case- and accent-insensitive collator that doesn't
+                // ignore dash and space like the regular insensitive collator (V1) does.
+                // sort dash and space before underscore
+                coll = new RuleBasedCollator(coll.getRules() + "&' '<'-'<'_'");
                 coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
                 return coll;
-            } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
             }
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

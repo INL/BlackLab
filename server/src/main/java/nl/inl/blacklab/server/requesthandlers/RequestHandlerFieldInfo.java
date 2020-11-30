@@ -51,8 +51,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();
-                rules = rules.replace("<'('<')'", ""); // Remove old rules for parentheses
-                rules = ", '(',')' " + rules; // Make parentheses ignorable characters
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
                 valueSortCollator = new RuleBasedCollator(rules);
             } catch (Exception e) {
                 // Oh well, we'll use the collator as-is

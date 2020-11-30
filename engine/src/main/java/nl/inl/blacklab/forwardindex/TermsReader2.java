@@ -40,9 +40,11 @@ public class TermsReader2 extends Terms {
     protected byte[][] termCharData; 
     
     /** For a term's hash, contains an index into the {@link #termDataGroups array}, in which the term ids for that string hash can be found. */
-    protected TIntIntHashMap stringHash2TermDataGroupsIndex;
-    protected TObjectIntHashMap<byte[]> collationKey2TermDataGroupsIndex = new TObjectIntHashMap<byte[]>() {
+    final protected TIntIntHashMap stringHash2TermDataGroupsIndex = new TIntIntHashMap(10, 0.75f, -1, -1);
+    final protected TObjectIntHashMap<byte[]> collationKey2TermDataGroupsIndex = new TObjectIntHashMap<byte[]>(10, 0.75f, -1) {
+        // Important: override this!
         protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); }
+        protected boolean equals(Object notnull, Object two) { return two != null && Arrays.equals((byte[]) notnull, (byte[]) two); }
     };
     /** 
      * Go from a string to an index into this array through the {@link #stringHash2TermDataGroupsIndex} or {@link #collationKey2TermDataGroupsIndex} 
@@ -126,7 +128,7 @@ public class TermsReader2 extends Terms {
         
         arrayAndOffsetAndLength[0] = arrayIndex;
         arrayAndOffsetAndLength[1] = indexInArray;
-        arrayAndOffsetAndLength[1] = length;
+        arrayAndOffsetAndLength[2] = length;
         return arrayAndOffsetAndLength;
     }
     
@@ -301,9 +303,6 @@ public class TermsReader2 extends Terms {
     private void fillTermDataGroups(TIntObjectHashMap<IntArrayList> stringHash2TermIds, THashMap<byte[], IntArrayList> collationKeyBytes2TermIds, String[] terms) {
         // hmm, the size should logically be 2 entries for all terms (once in the sensitive side, once in the insensitive side) + 1 per group
         termDataGroups = new int[stringHash2TermIds.size() + collationKeyBytes2TermIds.size() + numberOfTerms * 2];
-        
-        stringHash2TermDataGroupsIndex = new TIntIntHashMap((int) (stringHash2TermIds.size() / 0.7f), 0.75f, -1, -1);
-        collationKey2TermDataGroupsIndex = new TObjectIntHashMap<>((int) (collationKeyBytes2TermIds.size() / 0.7f), 0.75f, -1);
         
         int offset = 0;
         TIntObjectIterator<IntArrayList> it = stringHash2TermIds.iterator();
