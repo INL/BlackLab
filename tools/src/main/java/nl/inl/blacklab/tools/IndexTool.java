@@ -18,6 +18,7 @@ package nl.inl.blacklab.tools;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -275,15 +277,31 @@ public class IndexTool {
         if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
             indexTemplateFile = null;
         }
-        Indexer indexer;
+        Indexer indexer = null;
         try {
             indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
             indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         } catch (DocumentFormatNotFound e1) {
-            System.err.println(e1.getMessage());
-            System.err.println("Please specify a correct format on the command line.");
-            usage();
-            return;
+        	File docFormatFile = new File(docFormat);
+            try {
+                if (docFormatFile.isFile() && docFormatFile.canRead()) {
+                	ConfigInputFormat format = new ConfigInputFormat(docFormatFile, null);
+                    DocumentFormats.registerFormat(format);
+                    docFormat = format.getName();
+                    indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
+                    indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
+                }
+            } catch(DocumentFormatNotFound|IOException e) {
+                // legit swallow this.
+            	System.err.println("Not a format, not a file: " + docFormatFile + " . " + e.getMessage());
+            }
+
+            if (indexer == null) {
+            	System.err.println(e1.getMessage());
+            	System.err.println("Please specify a correct format on the command line.");
+            	usage();
+            	return;            	
+            }
         }
         if (createNewIndex)
             indexer.indexWriter().metadata().setDocumentFormat(docFormat);

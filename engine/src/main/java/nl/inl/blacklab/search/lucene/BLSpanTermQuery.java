@@ -57,6 +57,10 @@ public class BLSpanTermQuery extends BLSpanQuery {
     SpanTermQuery query;
 
     private TermContext termContext;
+    
+    private boolean hasForwardIndex = false;
+    
+    private boolean hasForwardIndexDetermined = false;
 
     /**
      * Construct a SpanTermQuery matching the named term's spans.
@@ -194,6 +198,17 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     @Override
     public boolean canMakeNfa() {
+        if (!hasForwardIndexDetermined) {
+            // Does our annotation have a forward index?
+            String[] comp = AnnotatedFieldNameUtil.getNameComponents(query.getTerm().field());
+            String fieldName = comp[0];
+            String propertyName = comp[1];
+            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(propertyName).hasForwardIndex();
+            hasForwardIndexDetermined = true;
+        }
+        if (!hasForwardIndex)
+            return false;
+        
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
         return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
     }

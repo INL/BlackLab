@@ -133,7 +133,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     }
 
     /** Information such as our index, our search logger, etc. */
-    private QueryInfo queryInfo;
+    protected QueryInfo queryInfo;
 
     @Override
     public abstract String toString(String field);
