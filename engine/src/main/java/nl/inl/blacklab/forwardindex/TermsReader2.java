@@ -256,7 +256,7 @@ public class TermsReader2 extends Terms {
             int offset = 0;
             while (termIndex < terms.length) {
                 final byte[] termBytes = terms[termIndex].getBytes(DEFAULT_CHARSET);
-                if ((termIndex + termBytes.length) > curArrayLength) { break; }
+                if ((offset + termBytes.length) > curArrayLength) { --termIndex; /* note we didn't write this term yet, so re-process it next iteration */ break; } 
                 
                 termOffsets[termIndex] = offset;
                 
