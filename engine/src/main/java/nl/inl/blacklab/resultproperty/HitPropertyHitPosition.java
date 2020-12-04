@@ -64,4 +64,8 @@ public class HitPropertyHitPosition extends HitProperty {
         return serializeReverse() + "hitposition";
     }
     
+    @Override
+    public boolean isDocPropOrHitText() {
+        return false;
+    }
 }

@@ -34,7 +34,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     public HitGroups executeInternal() throws InvalidQuery {
         
         // Choose the fastest way to resolve our search .
-        if (source.isAnyTokenQuery() && property.isAnnotationsHitText()) {
+        if (source.isAnyTokenQuery() && property.isDocPropOrHitText()) {
             // Any token query! Choose faster path that just "looks up" 
             // token frequencies in the forward index(es).
             if (HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED) {

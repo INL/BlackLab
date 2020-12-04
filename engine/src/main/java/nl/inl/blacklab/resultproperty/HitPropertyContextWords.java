@@ -424,4 +424,8 @@ public class HitPropertyContextWords extends HitProperty {
         return true;
     }
 
+    @Override
+    public boolean isDocPropOrHitText() {
+        return false;
+    }
 }

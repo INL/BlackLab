@@ -337,7 +337,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
      * return the latter as a DocPropertyStoredField.
      * 
-     * This is used for calculting the relative frequency when grouping on a metadata field.
+     * This is used for calculating the relative frequency when grouping on a metadata field.
      * 
      * @return metadata portion of this property, or null if there is none
      */
@@ -361,11 +361,8 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     /**
-     * Does this represent the hit text for one or more annotations?
+     * Does this property only use the hit's direct annotations (word, lemma, etc... not surrounding context) and/or properties of the hit's document (metadata). 
      * @return true if it does, false if not
      */
-    public boolean isAnnotationsHitText() {
-        return false;
-    }
-
+    public abstract boolean isDocPropOrHitText();
 }

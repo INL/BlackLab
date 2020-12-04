@@ -94,4 +94,8 @@ public class HitPropertyWordRight extends HitPropertyContextBase {
         return reverse ? -cmp : cmp;
     }
 
+    @Override
+    public boolean isDocPropOrHitText() {
+        return false;
+    }
 }

@@ -75,4 +75,8 @@ public class HitPropertyDocumentId extends HitProperty {
         return value;
     }
     
+    @Override
+    public boolean isDocPropOrHitText() {
+        return true;
+    }
 }

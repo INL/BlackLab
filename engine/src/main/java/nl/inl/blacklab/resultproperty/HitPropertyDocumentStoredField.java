@@ -110,4 +110,9 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public PropertyValue docPropValues(PropertyValue value) {
         return value;
     }
+    
+    @Override
+    public boolean isDocPropOrHitText() {
+        return true;
+    }
 }

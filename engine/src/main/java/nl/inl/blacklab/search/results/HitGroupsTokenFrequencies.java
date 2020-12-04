@@ -18,11 +18,16 @@ import org.apache.lucene.search.SimpleCollector;
 import io.dropwizard.metrics5.Timer;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class HitGroupsTokenFrequencies {
@@ -36,14 +41,22 @@ public class HitGroupsTokenFrequencies {
     private static final Timer convertTermIdsToStrings = BlackLab.metrics.timer("converting term ID arrays to propertyvalues and group instances");
 
 
-    private static class IdHash {
-        private int[] id;
+    private static class GroupIdHash {
+        private int[] tokenValues;
+        private PropertyValue[] metadataValues;
         private int hash;
 
-        public IdHash(int[] id) {
-            this.id = id;
-            hash = Arrays.hashCode(id);
-        }
+        /**
+         * 
+         * @param tokenValues
+         * @param metadataValues
+         * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
+         */
+        public GroupIdHash(int[] tokenValues, PropertyValue[] metadataValues, int metadataValuesHash) {
+            this.tokenValues = tokenValues;
+            this.metadataValues = metadataValues;
+            hash = Arrays.hashCode(tokenValues) ^ metadataValuesHash;
+        };
 
         @Override
         public int hashCode() {
@@ -53,26 +66,41 @@ public class HitGroupsTokenFrequencies {
         // Assume only called with other instances of IdHash
         @Override
         public boolean equals(Object obj) {
-            return ((IdHash) obj).hash == this.hash && Arrays.equals(((IdHash) obj).id, this.id);
+            return ((GroupIdHash) obj).hash == this.hash && 
+                Arrays.equals(((GroupIdHash) obj).tokenValues, this.tokenValues) && 
+                Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues);
         }
     }
 
     public static HitGroups get(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
         try {
-            final ConcurrentHashMap<IdHash, Integer> occurances = new ConcurrentHashMap<>();
+            final ConcurrentHashMap<GroupIdHash, Integer> occurances = new ConcurrentHashMap<>();
             
             int numAnnotations;
             List<AnnotationForwardIndex> fis;
             List<MatchSensitivity> sensitivities;
+            List<DocProperty> docProperties; // document properties (metadatafields) that also need to be grouped on (e.g. all tokens, grouped by lemma (hitprop) + year (docprop). I.e. 100 hits for lemma "word" in docs from 2005)
             BlackLabIndex index;
-
-            try (final Timer.Context c = groupingTimer.time()) { 
+            
+            
+            try (final Timer.Context c = groupingTimer.time()) {
                 // Determine the annotation forward indexes we need
                 index = queryInfo.index();
                 fis = property.needsContext().stream().map(a -> index.annotationForwardIndex(a))
                         .collect(Collectors.toList());
                 numAnnotations = fis.size();
                 sensitivities = property.getSensitivities();
+                
+                
+                DocProperty docProp = property.docPropsOnly();
+                if (docProp instanceof DocPropertyMultiple) {
+                    docProperties = ((DocPropertyMultiple) docProp).props();
+                } else if (docProp != null) {
+                    docProperties = Arrays.asList(docProp);
+                } else {
+                    docProperties = new ArrayList<>();
+                }
+                
                 
                 final List<Integer> docIds = new ArrayList<>();
                 try (Timer.Context d = getDocsTimer.time()) {
@@ -104,8 +132,14 @@ public class HitGroupsTokenFrequencies {
                 docIds.parallelStream().forEach(docId -> {
                     try {                        
                         final Document doc = reader.document(docId);
-                        final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                         
+                        // :( still need a propertyvalue
+                        // 
+                        
+                        // separate array per document - need to combine with annotation props still
+                        // so no use wrapping in propertyvaluemultiple
+                        // (besides - propvaluemultiple inside propvaluemultiple is not supported)
+                        final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                         int docLength = -1;
                         
                         try (Timer.Context e = readTermIdsFromForwardIndexTerm.time()) {
@@ -116,6 +150,13 @@ public class HitGroupsTokenFrequencies {
                                 docLength = tokenValues.get(0).length;
                             }
                         }
+                        
+                        final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0 /* todo */, docLength);
+                        final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
+                        final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
+                        for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
+                        
+                        
 
                         // now we have all values for all relevant annotations for this document
                         // iterate again and pair up the nth entries for all annotations, then mark that occurrence.
@@ -125,7 +166,7 @@ public class HitGroupsTokenFrequencies {
                                 for (int fieldIndex = 0; fieldIndex < fiidFieldNames.size(); ++fieldIndex) {
                                     tokenValues[fieldIndex] = tokenValuesPerAnnotation.get(fieldIndex)[tokenIndex];
                                 }
-                                final IdHash groupId = new IdHash(tokenValues);
+                                final GroupIdHash groupId = new GroupIdHash(tokenValues, metadataValuesForGroup, metadataValuesHash);
                                 occurances.compute(groupId, (__, groupSize) -> groupSize != null ? groupSize + 1 : 1);  
                             }
                         }
@@ -139,14 +180,21 @@ public class HitGroupsTokenFrequencies {
             try (final Timer.Context c = convertTermIdsToStrings.time()) {
                 occurances.entrySet().parallelStream().forEach(e -> {
                     // allocate new - is not copied when moving into propertyvaluemultiple
-                    final PropertyValueContextWord[] groupIdAsList = new PropertyValueContextWord[numAnnotations];
-                    final int[] annotationValues = e.getKey().id;
                     final int groupSize = e.getValue();
-                    for (int i = 0; i < numAnnotations; ++i) {
-                        groupIdAsList[i] = new PropertyValueContextWord(index, fis.get(i).annotation(),
-                                sensitivities.get(i), annotationValues[i]);
-                    }
+                    final int[] annotationValues = e.getKey().tokenValues; 
+                    final PropertyValue[] metadataValues = e.getKey().metadataValues;
+                    final PropertyValue[] groupIdAsList = new PropertyValue[annotationValues.length + (metadataValues != null ? metadataValues.length : 0)];
 
+                    for (int i = 0; i < numAnnotations; ++i) {
+                        groupIdAsList[i] = new PropertyValueContextWord(index, fis.get(i).annotation(), sensitivities.get(i), annotationValues[i]);
+                    }
+                    
+                    if (metadataValues != null) {
+                        for (int i = 0; i < metadataValues.length; ++i) {
+                            groupIdAsList[i + numAnnotations] = metadataValues[i];
+                        }
+                    }
+                    
                     // Occurances contains groupings but they are all case-sensitive.
                     // since we may have been tasked to group case-insensitively, 
                     // we still need to collapse groups that only differ by capitalization of their constituent token values
