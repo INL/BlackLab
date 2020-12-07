@@ -125,13 +125,17 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                     .entry("size", group.size());
 
             // Write the raw values for this group
-            ds.startEntry("values").startMap();
+            ds.startEntry("properties").startList();
             for (int j = 0; j < prop.size(); ++j) {
                 final DocProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                ds.entry(hp.serialize(), pv.toString());
+                
+                ds.startItem("property").startMap();
+                ds.entry("name", hp.serialize());
+                ds.entry("value", pv.toString());
+                ds.endMap().endItem();
             }
-            ds.endMap().endEntry();
+            ds.endList().endEntry();
 
             if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
                 ds.entry("numberOfTokens", group.totalTokens());
