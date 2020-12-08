@@ -8,3 +8,9 @@ We're also working on BlackLab Server, a web service interface to BlackLab, so y
 BlackLab and BlackLab Server are licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 More information at the [official project site](http://inl.github.io/BlackLab/).
+
+----
+
+## Special thanks
+
+* <a href="https://www.ej-technologies.com/products/jprofiler/overview.html"><img src="https://www.ej-technologies.com/images/product_banners/jprofiler_medium.png" style="vertical-align: middle;"></img> ej-technologies for providing us with their java profiler</a>

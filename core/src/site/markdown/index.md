@@ -33,3 +33,7 @@ BlackLab was developed at the [Dutch Language Institute (INT)](http://www.ivdnt.
 * [Release history](changelog.html)
 * Follow [@BlackLab_IvdNT](https://twitter.com/BlackLab_IvdNT) on Twitter (low activity)
 * For technical questions, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org)
+
+## Special thanks
+
+* <a href="https://www.ej-technologies.com/products/jprofiler/overview.html"><img src="https://www.ej-technologies.com/images/product_banners/jprofiler_medium.png" style="vertical-align: middle;"></img> ej-technologies for providing us with their java profiler</a>
