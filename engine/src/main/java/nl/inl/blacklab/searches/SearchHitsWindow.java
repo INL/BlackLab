@@ -58,4 +58,9 @@ public class SearchHitsWindow extends SearchHits {
     public String toString() {
         return toString("window", source, first, number);
     }
+    
+    @Override
+    public SearchHits source() {
+        return source;
+    }
 }

@@ -16,12 +16,15 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     private HitProperty property;
     
     private int maxHits;
+    
+    private boolean useFastPath = false;
 
     public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup) {
         super(queryInfo);
         this.source = hitsSearch;
         this.property = groupBy;
         this.maxHits = maxResultsToStorePerGroup;
+        this.useFastPath = fastPathAvailable();
     }
 
     /**
@@ -32,18 +35,10 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        
-        // Choose the fastest way to resolve our search .
-        if (source.isAnyTokenQuery() && property.isDocPropOrHitText()) {
-            // Any token query! Choose faster path that just "looks up" 
-            // token frequencies in the forward index(es).
-            if (HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED) {
-                return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), property, maxHits);
-            }
-        }
-
-        // Just find all the hits and group them.
-        return HitGroups.fromHits(source.execute(), property, maxHits);
+        if (useFastPath) 
+            return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), property, maxHits);
+        else  // Just find all the hits and group them.
+            return HitGroups.fromHits(source.execute(), property, maxHits);
     }
     
     @Override
@@ -83,5 +78,21 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     @Override
     public String toString() {
         return toString("group", source, property, maxHits);
+    }
+    
+    private boolean fastPathAvailable() {
+        // Any token query! Choose faster path that just "looks up" 
+        // token frequencies in the forward index(es).
+        return HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && source.isAnyTokenQuery() && property.isDocPropOrHitText();
+    }
+    
+    /**
+     * When using the fast path, backing hits are not stored in the groups.
+     * This saves a large amount of memory and time, but transforms the query into more of a statistical view on the data
+     * because the individual hits are lost. 
+     * Call this to disable the optimizations and store all Hits (up to maxHits).
+     */
+    public void disableFastPathOptimization() {
+        this.useFastPath = false;
     }
 }

@@ -111,5 +111,8 @@ public abstract class SearchHits extends SearchResults<Hits> {
     protected Query getFilterQuery() {
         return null;
     }
+    
+    /** Get the input search for this hits object. If this instance is already the root, null is returned. */
+    public abstract SearchHits source();
 
 }

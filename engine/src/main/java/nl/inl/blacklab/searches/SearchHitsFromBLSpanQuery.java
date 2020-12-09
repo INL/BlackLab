@@ -86,4 +86,9 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
     protected Query getFilterQuery() {
         return spanQuery;
     }
+    
+    @Override
+    public SearchHits source() {
+        return null;
+    }
 }

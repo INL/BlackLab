@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -9,19 +11,30 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocValuesTermsQuery;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
+import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -41,7 +54,16 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
+import nl.inl.blacklab.search.textpattern.TextPatternSensitive;
+import nl.inl.blacklab.search.textpattern.TextPatternTerm;
+import nl.inl.blacklab.searches.SearchEmpty;
+import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.blacklab.searches.SearchHitGroupsFromHits;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -50,6 +72,7 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
  * Request handler for hit results.
@@ -79,6 +102,7 @@ public class RequestHandlerHits extends RequestHandler {
         ResultsStats hitsCount;
         ResultsStats docsCount;
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
+            HitProperty groupByProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
 
             // Viewing a single group in a grouped hits results
 
@@ -90,6 +114,10 @@ public class RequestHandlerHits extends RequestHandler {
             } catch (InterruptedException | ExecutionException e) {
                 throw RequestHandler.translateSearchException(e);
             }
+            
+           
+            
+            
 
             PropertyValue viewGroupVal = null;
             viewGroupVal = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
@@ -101,6 +129,29 @@ public class RequestHandlerHits extends RequestHandler {
             if (group == null)
                 return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
+            // Not all results were actually stored. Fire a separate query to retrieve them.
+            if (group.storedResults().size() < group.size()) { 
+                SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, groupByProp, hitsGrouped);
+                if (findHitsFromOnlyRequestedGroup == null) {
+                    SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) searchParam.hitsSample().group(groupByProp, Hits.NO_LIMIT);
+                    searchGroups.disableFastPathOptimization();
+                    // now run the separate grouping search, making sure not to run the fast path.
+                    // Sorting of the groups is not applied, but is also not required because the groups aren't shown, only their contents.
+                    job = searchMan.searchNonBlocking(user, searchGroups);
+                } else { 
+                    SearchHitGroups tmp = findHitsFromOnlyRequestedGroup.group(groupByProp, HitGroups.NO_LIMIT);
+                    job = searchMan.searchNonBlocking(user, tmp);    
+                }
+                
+                try {
+                    hitsGrouped = (HitGroups) job.get();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw RequestHandler.translateSearchException(e);
+                }
+                
+                group = hitsGrouped.get(viewGroupVal);
+            }
+            
             // NOTE: sortBy is automatically applied to regular results, but not to results within groups
             // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
             // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
@@ -336,4 +387,103 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry().endMap();
     }
 
+    
+    private SearchHits getQueryForHitsInSpecificGroupOnly(PropertyValue viewGroupVal, HitProperty groupByProp, HitGroups hitsGrouped) throws BlsException {
+        try {
+            // see if we can enhance this query
+            
+            
+            // see if this query matches only singular tokens
+            // (we can't enhance multi-token queries such as ngrams yet)
+            if (hitsGrouped.isSample())
+                return null;
+            
+            
+            SearchHits hitQuery = searchParam.hits();
+            while (hitQuery.source() != null && hitQuery.source() != hitQuery) {
+                hitQuery = hitQuery.source();
+            }
+            
+            TextPattern tp = searchParam.getPattern();
+            BLSpanQuery q;
+           
+            q =tp.toQuery(QueryInfo.create(blIndex()));
+            
+            BooleanQuery.Builder fqb = null;
+            if (searchParam.getFilterQuery() != null) {
+                fqb = new BooleanQuery.Builder();
+                fqb.add(searchParam.getFilterQuery(), Occur.FILTER);
+            }
+            if (!q.producesSingleTokens())
+                return null;
+            
+            // merge!
+            
+                    
+            // decode the grouping properties (oh god :()
+            List<PropertyValue> vals = new ArrayList<>();
+            List<HitProperty> props = new ArrayList<>();
+            if (groupByProp instanceof HitPropertyMultiple)
+                props = ((HitPropertyMultiple) groupByProp).props();
+            else 
+                props.add(groupByProp);
+            
+            if (viewGroupVal instanceof PropertyValueMultiple)
+                vals = ((PropertyValueMultiple) viewGroupVal).values();
+            else 
+                vals.add(viewGroupVal);
+            
+            
+            // some need to be .filtered() on the blacklab search
+            // others can be baked into the query
+            
+            
+            // some things can be done in lucene - which is  the fastest (prolly)
+            // but some other things (like hitposition and decade?) need to be done after the fact
+            int i = 0;
+            for (HitProperty p : props) {
+                if (p instanceof HitPropertyHitText) {
+                    String valueForAnnotation = vals.get(i).toString(); 
+                    HitPropertyHitText prop = ((HitPropertyHitText) p);
+                    Annotation annot = prop.needsContext().get(0);
+                    MatchSensitivity sensitivity = prop.getSensitivities().get(0);
+                    
+                    tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(), new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
+                    
+                    
+                } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
+                    String pid = (String) vals.get(i).value();
+                    int luceneDocId = BlsUtils.getDocIdFromPid(blIndex(), pid);
+                    if (fqb == null)
+                        fqb = new BooleanQuery.Builder();
+                    fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
+                } else if (p instanceof HitPropertyDocumentStoredField) {
+                    if (fqb == null)
+                        fqb = new BooleanQuery.Builder();
+                    fqb.add(new DocValuesTermsQuery(((HitPropertyDocumentStoredField) p).fieldName(), (String) vals.get(i).value()), Occur.FILTER);
+                } else {
+                    logger.info("Can't handle prop {} with value {}", p, vals.get(i));
+                    return null;
+                }
+                
+                ++i;
+            }
+            
+            SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache(), searchLogger);
+            SearchHits hits;
+            BLSpanQuery query = fqb == null ? tp.toQuery(QueryInfo.create(blIndex(), blIndex().mainAnnotatedField())) : tp.toQuery(QueryInfo.create(blIndex(), blIndex().mainAnnotatedField()), fqb.build());
+            hits = search.find(query, SearchSettings.defaults());
+            return hits;
+    //        try {
+    //            Query filter = hasFilter() ? getFilterQuery() : null;
+    //            return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
+            
+            // seems like we could make the query specific enough.
+            // return the hits
+    //        new SearchHitsFromBLSpanQuery(QueryInfo.create(blIndex()), q, )
+        } catch (InvalidQuery e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+    
 }

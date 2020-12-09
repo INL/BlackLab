@@ -544,6 +544,10 @@ public class SearchParameters {
         return map.containsKey(key);
     }
 
+    /** 
+     * @return hits - filtered then sorted then sampled then windowed
+     * @throws BlsException
+     */
     public SearchHits hitsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
         if (windowSettings == null)
@@ -551,6 +555,10 @@ public class SearchParameters {
         return hitsSample().window(windowSettings.first(), windowSettings.size());
     }
 
+    /**
+     * @return hits - filtered then sorted then sampled
+     * @throws BlsException
+     */
     public SearchHits hitsSample() throws BlsException {
         SampleParameters sampleSettings = getSampleSettings();
         if (sampleSettings == null)
@@ -558,6 +566,10 @@ public class SearchParameters {
         return hitsSorted().sample(sampleSettings);
     }
 
+    /**
+     * @return hits - filtered then sorted
+     * @throws BlsException
+     */
     public SearchHits hitsSorted() throws BlsException {
         HitSortSettings hitsSortSettings = hitsSortSettings();
         if (hitsSortSettings == null)
@@ -565,6 +577,10 @@ public class SearchParameters {
         return hitsFiltered().sort(hitsSortSettings.sortBy());
     }
 
+    /**
+     * @return hits - filtered then sorted then sampled then counted
+     * @throws BlsException
+     */
     public SearchCount hitsCount() throws BlsException {
         return hitsSample().hitCount();
     }

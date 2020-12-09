@@ -57,4 +57,9 @@ public class SearchHitsSampled extends SearchHits {
     public String toString() {
         return toString("sample", source, sampleParameters);
     }
+    
+    @Override
+    public SearchHits source() {
+        return source;
+    }
 }

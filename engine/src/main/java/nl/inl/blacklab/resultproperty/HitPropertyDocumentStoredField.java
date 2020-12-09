@@ -115,4 +115,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public boolean isDocPropOrHitText() {
         return true;
     }
+    
+    public String fieldName() {
+        return fieldName;
+    }
 }

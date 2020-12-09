@@ -22,7 +22,7 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWord;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLab;
@@ -176,7 +176,7 @@ public class HitGroupsTokenFrequencies {
                 });
             }
 
-            ConcurrentHashMap<PropertyValueMultiple, HitGroup> groups = new ConcurrentHashMap<>();
+            ConcurrentHashMap<PropertyValue, HitGroup> groups = new ConcurrentHashMap<>();
             try (final Timer.Context c = convertTermIdsToStrings.time()) {
                 occurances.entrySet().parallelStream().forEach(e -> {
                     // allocate new - is not copied when moving into propertyvaluemultiple
@@ -186,7 +186,7 @@ public class HitGroupsTokenFrequencies {
                     final PropertyValue[] groupIdAsList = new PropertyValue[annotationValues.length + (metadataValues != null ? metadataValues.length : 0)];
 
                     for (int i = 0; i < numAnnotations; ++i) {
-                        groupIdAsList[i] = new PropertyValueContextWord(index, fis.get(i).annotation(), sensitivities.get(i), annotationValues[i]);
+                        groupIdAsList[i] = new PropertyValueContextWords(index, fis.get(i).annotation(), sensitivities.get(i), new int[] {annotationValues[i]}, false);
                     }
                     
                     if (metadataValues != null) {
@@ -199,7 +199,7 @@ public class HitGroupsTokenFrequencies {
                     // since we may have been tasked to group case-insensitively, 
                     // we still need to collapse groups that only differ by capitalization of their constituent token values
                     
-                    PropertyValueMultiple groupId = new PropertyValueMultiple(groupIdAsList);
+                    PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
                     // So check if the group already has an entry with different capitalization of the values:
                     
                     // use compute() function as otherwise read + write are non-atomic
