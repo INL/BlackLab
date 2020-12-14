@@ -48,6 +48,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         result = prime * result + maxHits;
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
+        result = prime * result + Boolean.hashCode(useFastPath);
         return result;
     }
 
@@ -72,6 +73,8 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
                 return false;
         } else if (!source.equals(other.source))
             return false;
+        if (other.useFastPath != useFastPath)
+            return false;
         return true;
     }
 
@@ -92,7 +95,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * because the individual hits are lost. 
      * Call this to disable the optimizations and store all Hits (up to maxHits).
      */
-    public void disableFastPathOptimization() {
+    public void forceStoreHits() {
         this.useFastPath = false;
     }
 }

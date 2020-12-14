@@ -57,9 +57,4 @@ public class SearchHitsSorted extends SearchHits {
     public String toString() {
         return toString("sort", source, property);
     }
-    
-    @Override
-    public SearchHits source() {
-        return source;
-    }
 }

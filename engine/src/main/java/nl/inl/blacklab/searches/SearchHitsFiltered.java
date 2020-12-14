@@ -71,9 +71,4 @@ public class SearchHitsFiltered extends SearchHits {
     public boolean isAnyTokenQuery() {
         return source.isAnyTokenQuery();
     }
-    
-    @Override
-    public SearchHits source() {
-        return source;
-    }
 }
