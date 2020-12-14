@@ -202,7 +202,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
         PropertyValue[] values = ((PropertyValueMultiple)value).value();
         for (int i = 0; i < criteria.size(); i++) {
-            if (!canConstructQuery(index, values[i]))
+            if (!criteria.get(i).canConstructQuery(index, values[i]))
                 return false;
         }
         return true;
