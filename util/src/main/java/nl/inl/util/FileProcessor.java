@@ -51,7 +51,7 @@ public class FileProcessor implements AutoCloseable {
         /**
          * Handle a file stream.
          * <p>
-         * For effiency, the {@link FileHandler#file(String, byte[], File)} version will almost always be used. 
+         * For effiency, the {@link FileHandler#file(String, byte[], File)} version will almost always be used.
          * The sole exception is when the {@link FileProcessor#processInputStream(String, InputStream, File)} is called
          * with a file that is not an archive. Files within archives are always returned as byte[].
          * <p>
@@ -70,7 +70,7 @@ public class FileProcessor implements AutoCloseable {
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void file(String path, InputStream is, File file) throws Exception;
-        
+
         /**
          * Handle a byte array.
          * <p>
@@ -172,7 +172,7 @@ public class FileProcessor implements AutoCloseable {
             try (FileProcessor proc = new FileProcessor(1, false, true)) {
                 proc.setFileHandler(fileCapturer);
                 proc.processFile(f);
-            } 
+            }
 
             // FileProcessor must have completed/be closed before result is available
             return fileCapturer.getFile();
@@ -276,7 +276,7 @@ public class FileProcessor implements AutoCloseable {
             executor = new ThreadPoolExecutor(actualThreadsToUse, actualThreadsToUse, Integer.MAX_VALUE, TimeUnit.DAYS,
                 // We don't need a long queue at all
                 // Every queued job holds a full document in memory, and documents can be *very* large (100Meg+)
-                new LinkedBlockingDeque<Runnable>(Math.max(1, actualThreadsToUse / 2)) { 
+                new LinkedBlockingDeque<Runnable>(Math.max(1, actualThreadsToUse / 2)) {
                     @Override
                     public boolean offer(Runnable r) {
                         try {
@@ -305,7 +305,7 @@ public class FileProcessor implements AutoCloseable {
      * @param glob
      */
     public void setFileNameGlob(String glob) {
-        pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
+        pattGlob = Pattern.compile(FileUtil.globToRegex(glob == null ? "*" : glob));
     }
 
     /**
@@ -407,7 +407,7 @@ public class FileProcessor implements AutoCloseable {
             }
         } else {
             try {
-                processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);                
+                processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
             } catch (IOException e) {
                 reportAndAbort(e, file.getAbsolutePath(), file);
                 return;
@@ -450,7 +450,7 @@ public class FileProcessor implements AutoCloseable {
                     .exceptionally(e -> reportAndAbort(e, path, file));
         }
     }
-    
+
     /**
      * Process from a raw file content array, which may be an archive or a regular file.
      *
@@ -461,7 +461,7 @@ public class FileProcessor implements AutoCloseable {
      *
      * @param path filename, optionally including path to the file or path within an
      *            archive
-     * @param contents 
+     * @param contents
      * @param file (optional) the file backing the contents, or - if
      *            the contents array represents a file within an archive - the archive. This is
      *            only used for reporting to FileHandler and ErrorHandler
