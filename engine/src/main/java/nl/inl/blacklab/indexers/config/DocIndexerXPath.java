@@ -525,7 +525,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             }
                             String metadataValue = apMetadata.evalXPathToString();
                             metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                            addMetadataField(f.getName(), metadataValue);
+                            addMetadataField(fieldName, metadataValue);
                         }
                         releaseAutoPilot(apEvalToString);
                     }
