@@ -178,7 +178,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
             // All-negative; node should be rewritten to OR.
             if (rewrNotCl.size() == 1)
                 return rewrCl.get(0).inverted().rewrite(reader);
-            return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
+            BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
+            r.setQueryInfo(this.queryInfo);
+            return r;
         }
 
         if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
@@ -193,12 +195,16 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
         // Combination of positive and possibly negative clauses
         BLSpanQuery includeResult = rewrCl.size() == 1 ? rewrCl.get(0) : new SpanQueryAndNot(rewrCl, null);
+        includeResult.setQueryInfo(this.queryInfo);
         if (rewrNotCl.isEmpty())
             return includeResult.rewrite(reader);
         BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
                 : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
-        return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
+        excludeResult.setQueryInfo(this.queryInfo);
+        BLSpanQuery r = new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
                 true).rewrite(reader);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override

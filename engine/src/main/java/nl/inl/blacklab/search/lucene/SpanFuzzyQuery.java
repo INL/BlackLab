@@ -95,11 +95,14 @@ public class SpanFuzzyQuery extends BLSpanQuery {
             BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
             query.setHitsAreFixedLength(1);
             query.setClausesAreSimpleTermsInSameProperty(true);
+            query.setQueryInfo(this.queryInfo);
             return query;
         }
 
         // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-        return new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
+        BLSpanQuery r = new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
+        r.setQueryInfo(this.queryInfo);
+        return r;
 
     }
 

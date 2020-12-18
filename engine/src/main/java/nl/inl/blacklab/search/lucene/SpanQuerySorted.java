@@ -38,7 +38,9 @@ class SpanQuerySorted extends BLSpanQuery {
                     sortByEndpoint && !rewritten.hitsEndPointSorted();
             if (!mustDedupe && !mustSort)
                 return rewritten;
-            return new SpanQuerySorted(rewritten, sortByEndpoint, eliminateDuplicates);
+            BLSpanQuery r = new SpanQuerySorted(rewritten, sortByEndpoint, eliminateDuplicates);
+            r.setQueryInfo(queryInfo);
+            return r;
         }
         return this;
     }

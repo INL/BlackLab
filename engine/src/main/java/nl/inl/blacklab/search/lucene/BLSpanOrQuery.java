@@ -189,7 +189,10 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             // Note extra rewrite at the end to make sure AND NOT structure is correctly built.
             if (rewrittenCl.size() == 1)
                 return rewrittenCl.get(0).inverted();
-            return (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
+            
+            BLSpanQuery r = (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
+            r.setQueryInfo(this.queryInfo);
+            return r;
         }
 
         if (anyRewritten) {
@@ -200,12 +203,16 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             result.setHitsAreFixedLength(fixedHitLength);
             result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
             result.setField(getRealField());
+            result.setQueryInfo(this.queryInfo);
             return result;
         }
 
         // Node need not be rewritten; return as-is
-        if (inner.getClauses().length == 1)
-            return BLSpanQuery.wrap(inner.getClauses()[0]);
+        if (inner.getClauses().length == 1) {
+            BLSpanQuery r = BLSpanQuery.wrap(inner.getClauses()[0]);
+            r.setQueryInfo(this.queryInfo);
+            return r;
+        } 
         return this;
     }
 

@@ -39,7 +39,9 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
             return this;
         if (cl == null)
             cl = clauses;
-        return new SpanQueryConstrained(cl.get(0), rewrittenConstraint, fiAccessor);
+        BLSpanQuery r = new SpanQueryConstrained(cl.get(0), rewrittenConstraint, fiAccessor);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override

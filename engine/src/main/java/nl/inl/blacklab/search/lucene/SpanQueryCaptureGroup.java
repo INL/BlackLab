@@ -65,7 +65,9 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
-        return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten.get(0), name, leftAdjust, rightAdjust);
+        BLSpanQuery r = rewritten == null ? this : new SpanQueryCaptureGroup(rewritten.get(0), name, leftAdjust, rightAdjust);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override

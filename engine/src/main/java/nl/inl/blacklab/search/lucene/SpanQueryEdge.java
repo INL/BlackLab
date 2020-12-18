@@ -50,7 +50,9 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
-        return rewritten == null ? this : new SpanQueryEdge(rewritten.get(0), rightEdge);
+        BLSpanQuery r = rewritten == null ? this : new SpanQueryEdge(rewritten.get(0), rightEdge);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override

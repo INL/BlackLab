@@ -56,9 +56,13 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         if (rewrittenFilter instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
             // "doesn't implement createWeight" problem.
-            rewrittenFilter = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrittenFilter).rewrite(reader);
+            BLSpanQuery r;
+            rewrittenFilter = r = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrittenFilter).rewrite(reader);
+            r.setQueryInfo(this.queryInfo);
         }
-        return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
+        BLSpanQuery r = rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override

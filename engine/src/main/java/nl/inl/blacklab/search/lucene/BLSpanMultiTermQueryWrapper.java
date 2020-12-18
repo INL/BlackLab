@@ -48,7 +48,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
     }
-
+ 
     @Override
     public String toString(String field) {
         return "SPANWRAP(" + query.getWrappedQuery() + ")";
@@ -72,6 +72,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
                         result.getClass().getSimpleName() + ", getField() == null");
             }
         }
+        result.setQueryInfo(this.queryInfo);
         return result;
     }
 

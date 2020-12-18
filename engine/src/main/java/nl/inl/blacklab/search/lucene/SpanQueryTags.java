@@ -78,8 +78,10 @@ public class SpanQueryTags extends BLSpanQuery {
             filter = attrFilters.get(0);
         else
             filter = new SpanQueryAnd(attrFilters);
-        return new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter,
+        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter,
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
+        r.setQueryInfo(queryInfo);
+        return r;
     }
 
     @Override

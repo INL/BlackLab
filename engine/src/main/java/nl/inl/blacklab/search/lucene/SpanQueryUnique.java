@@ -36,6 +36,7 @@ class SpanQueryUnique extends BLSpanQuery {
 
     public SpanQueryUnique(BLSpanQuery src) {
         this.src = BLSpanQuery.ensureSorted(src);
+        this.queryInfo = src.queryInfo;
     }
 
     @Override
@@ -44,7 +45,9 @@ class SpanQueryUnique extends BLSpanQuery {
         if (rewritten != src) {
             if (rewritten.hitsAreUnique())
                 return rewritten;
-            return new SpanQueryUnique(rewritten);
+            BLSpanQuery r = new SpanQueryUnique(rewritten);
+            r.setQueryInfo(queryInfo);
+            return r;
         }
         return this;
     }

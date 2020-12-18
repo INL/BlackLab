@@ -98,7 +98,9 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             return this;
         if (min == 0 && max == 0)
             return rewritten.get(0); // not really an expansion
-        return new SpanQueryExpansion(rewritten.get(0), direction, min, max);
+        BLSpanQuery r = new SpanQueryExpansion(rewritten.get(0), direction, min, max);
+        r.setQueryInfo(this.queryInfo);
+        return r;
     }
 
     @Override
