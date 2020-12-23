@@ -64,9 +64,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
             return this;
         }
         
-        BLSpanQuery r = new SpanQueryNot(rewritten);
-        r.setQueryInfo(queryInfo);
-        return r;
+        return new SpanQueryNot(rewritten);
     }
 
     @Override

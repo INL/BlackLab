@@ -47,6 +47,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * Matches the union of its clauses.
@@ -75,12 +76,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
+        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo : null);
         inner = new SpanOrQuery(clauses);
         this.field = inner.getField();
         this.luceneField = clauses.length > 0 ? clauses[0].getRealField() : field;
     }
 
-    static BLSpanOrQuery from(SpanOrQuery in) {
+    static BLSpanOrQuery from(QueryInfo queryInfo, SpanOrQuery in) {
         SpanQuery[] clauses = in.getClauses();
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
         String field = null;
@@ -99,7 +101,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     }
                 }
             }
-            blClauses[i] = BLSpanQuery.wrap(clauses[i]);
+            blClauses[i] = BLSpanQuery.wrap(queryInfo, clauses[i]);
         }
         BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
         if (allSimpleTerms && allInSameField)
@@ -190,9 +192,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             if (rewrittenCl.size() == 1)
                 return rewrittenCl.get(0).inverted();
             
-            BLSpanQuery r = (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
-            r.setQueryInfo(this.queryInfo);
-            return r;
+            return (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
         }
 
         if (anyRewritten) {
@@ -203,15 +203,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             result.setHitsAreFixedLength(fixedHitLength);
             result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
             result.setField(getRealField());
-            result.setQueryInfo(this.queryInfo);
             return result;
         }
 
         // Node need not be rewritten; return as-is
         if (inner.getClauses().length == 1) {
-            BLSpanQuery r = BLSpanQuery.wrap(inner.getClauses()[0]);
-            r.setQueryInfo(this.queryInfo);
-            return r;
+            return BLSpanQuery.wrap(queryInfo, inner.getClauses()[0]);
         } 
         return this;
     }

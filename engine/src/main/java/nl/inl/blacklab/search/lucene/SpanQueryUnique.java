@@ -35,6 +35,7 @@ class SpanQueryUnique extends BLSpanQuery {
     BLSpanQuery src;
 
     public SpanQueryUnique(BLSpanQuery src) {
+        super(src.queryInfo);
         this.src = BLSpanQuery.ensureSorted(src);
         this.queryInfo = src.queryInfo;
     }

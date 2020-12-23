@@ -50,11 +50,12 @@ public class SpanQueryTags extends BLSpanQuery {
 
     private String startTagFieldName;
 
-    public SpanQueryTags(String startTagFieldName, String tagName, Map<String, String> attr) {
+    public SpanQueryTags(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
+        super(queryInfo);
         this.tagName = tagName;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
         this.startTagFieldName = startTagFieldName;
-        this.clause = new BLSpanTermQuery(new Term(startTagFieldName, tagName));
+        this.clause = new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, tagName));
         this.attr = attr != null && attr.isEmpty() ? null : attr;
     }
 
@@ -67,7 +68,7 @@ public class SpanQueryTags extends BLSpanQuery {
         List<BLSpanQuery> attrFilters = new ArrayList<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
             String value = "@" + e.getKey() + "__" + e.getValue();
-            attrFilters.add(new BLSpanTermQuery(new Term(startTagFieldName, value)));
+            attrFilters.add(new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, value)));
         }
 
         // Filter the tags
@@ -78,7 +79,7 @@ public class SpanQueryTags extends BLSpanQuery {
             filter = attrFilters.get(0);
         else
             filter = new SpanQueryAnd(attrFilters);
-        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTags(startTagFieldName, tagName, null), filter,
+        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTags(queryInfo, startTagFieldName, tagName, null), filter,
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
         r.setQueryInfo(queryInfo);
         return r;

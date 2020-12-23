@@ -76,7 +76,7 @@ public class TestSearches {
     @Test
     public void testFilteredQuery() {
         expected = Arrays.asList("[The] quick", "over [the] lazy");
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(new Term("contents%word@i", "the"));
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
         Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
     }

@@ -43,26 +43,30 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
     protected List<BLSpanQuery> clauses;
     
-    public BLSpanQueryAbstract() {
-        //
+    public BLSpanQueryAbstract(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
+        super(first != null ? first.queryInfo : second != null ? second.queryInfo : null);
         clauses = Arrays.asList(first, second);
         determineBaseFieldName();
     }
 
     public BLSpanQueryAbstract(BLSpanQuery clause) {
+        super(clause != null ? clause.queryInfo : null);
         clauses = Arrays.asList(clause);
         determineBaseFieldName();
     }
 
     public BLSpanQueryAbstract(Collection<BLSpanQuery> clauscol) {
+        super(clauscol.isEmpty() ? null : clauscol.iterator().next().queryInfo);
         clauses = new ArrayList<>(clauscol);
         determineBaseFieldName();
     }
 
     public BLSpanQueryAbstract(BLSpanQuery[] clauses) {
+        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo : null);
         this.clauses = Arrays.asList(clauses);
         determineBaseFieldName();
     }

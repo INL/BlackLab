@@ -73,33 +73,27 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
-                BLSpanQuery r = new SpanQueryAnyToken(min, max, base.getRealField()); 
-                r.setQueryInfo(queryInfo);
+                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, min, max, base.getRealField()); 
                 return r;
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
-                BLSpanQuery r = new SpanQueryAnyToken(n, n, base.getRealField()); 
-                r.setQueryInfo(queryInfo);
+                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, n, n, base.getRealField()); 
                 return r;
             }
         } else if (baseRewritten.isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it
             // (note the check for min > 0 above, because position filter cannot match the empty sequence)
-            BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(1, 1, base.getRealField()), min, max);
+            BLSpanQuery container = new SpanQueryRepetition(new SpanQueryAnyToken(queryInfo, 1, 1, base.getRealField()), min, max);
             container = container.rewrite(reader);
-            BLSpanQuery r = new SpanQueryPositionFilter(container, baseRewritten.inverted(),
+            return new SpanQueryPositionFilter(container, baseRewritten.inverted(),
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
-            r.setQueryInfo(queryInfo);
-            return r;
         } else if (baseRewritten instanceof SpanQueryRepetition) {
             SpanQueryRepetition tp = (SpanQueryRepetition) baseRewritten;
             if (max == MAX_UNLIMITED && tp.max == MAX_UNLIMITED) {
                 if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
                     // A++, A+*, A*+, A**. Rewrite to single repetition.
-                    BLSpanQuery r = new SpanQueryRepetition(tp.clauses.get(0), min * tp.min, max);
-                    r.setQueryInfo(queryInfo);
-                    return r;
+                    return new SpanQueryRepetition(tp.clauses.get(0), min * tp.min, max);
                 }
             } else {
                 if (min == 0 && max == 1 && tp.min == 0 && tp.max == 1) {
@@ -113,17 +107,13 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
                     // Exact number of repetitions of exact number of repetitions. Just multiply.
                     // e.g. "ha"{3}{2} -> "ha"{6}
                     int n = min * tp.min;
-                    BLSpanQuery r = new SpanQueryRepetition(tp.clauses.get(0), n, n);
-                    r.setQueryInfo(queryInfo);
-                    return r;
+                    return new SpanQueryRepetition(tp.clauses.get(0), n, n);
                 }
             }
         }
         if (baseRewritten == base)
             return this;
-        BLSpanQuery r = new SpanQueryRepetition(baseRewritten, min, max);
-        r.setQueryInfo(queryInfo);
-        return r;
+        return new SpanQueryRepetition(baseRewritten, min, max);
     }
 
     /**

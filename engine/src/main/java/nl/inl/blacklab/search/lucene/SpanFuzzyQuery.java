@@ -30,6 +30,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.search.results.QueryInfo;
+
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
  * Wettin, http://issues.apache.org/jira/browse/LUCENE-522 )
@@ -56,11 +58,12 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 
     private final int prefixLength;
 
-    public SpanFuzzyQuery(Term term) {
-        this(term, defaultMaxEdits, defaultPrefixLength);
+    public SpanFuzzyQuery(QueryInfo queryInfo, Term term) {
+        this(queryInfo, term, defaultMaxEdits, defaultPrefixLength);
     }
 
-    public SpanFuzzyQuery(Term term, int maxEdits, int prefixLength) {
+    public SpanFuzzyQuery(QueryInfo queryInfo, Term term, int maxEdits, int prefixLength) {
+        super(queryInfo);
         this.term = term;
         this.maxEdits = maxEdits;
         this.prefixLength = prefixLength;
@@ -90,18 +93,16 @@ public class SpanFuzzyQuery extends BLSpanQuery {
 
                 // ONLY DIFFERENCE WITH SpanFuzzyQuery:
                 // Use a BLSpanTermQuery instead of default Lucene one.
-                spanQueries[i] = new BLSpanTermQuery(termQuery.getTerm());
+                spanQueries[i] = new BLSpanTermQuery(queryInfo, termQuery.getTerm());
             }
             BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
             query.setHitsAreFixedLength(1);
             query.setClausesAreSimpleTermsInSameProperty(true);
-            query.setQueryInfo(this.queryInfo);
             return query;
         }
 
         // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-        BLSpanQuery r = new BLSpanTermQuery(((TermQuery) rewrittenFuzzyQuery).getTerm());
-        r.setQueryInfo(this.queryInfo);
+        BLSpanQuery r = new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
         return r;
 
     }

@@ -24,6 +24,7 @@ class SpanQuerySorted extends BLSpanQuery {
     boolean eliminateDuplicates;
 
     public SpanQuerySorted(BLSpanQuery src, boolean sortByEndpoint, boolean eliminateDuplicates) {
+        super(src.queryInfo);
         this.src = src;
         this.sortByEndpoint = sortByEndpoint;
         this.eliminateDuplicates = eliminateDuplicates;

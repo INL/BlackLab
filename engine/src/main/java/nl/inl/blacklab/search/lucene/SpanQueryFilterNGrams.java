@@ -75,9 +75,7 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
         if (rewritten == null)
             return this;
-        BLSpanQuery r = new SpanQueryFilterNGrams(rewritten.get(0), op, min, max, leftAdjust, rightAdjust);
-        r.setQueryInfo(this.queryInfo);
-        return r;
+        return new SpanQueryFilterNGrams(rewritten.get(0), op, min, max, leftAdjust, rightAdjust);
     }
 
     @Override

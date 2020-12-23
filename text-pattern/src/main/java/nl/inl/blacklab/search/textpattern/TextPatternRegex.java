@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A TextPattern matching a regular expression.
@@ -47,7 +48,7 @@ public class TextPatternRegex extends TextPatternTerm {
             return result.translate(context);
         String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("^\\^|\\$$", "");
         try {
-            return new BLSpanMultiTermQueryWrapper<>(new RegexpQuery(
+            return new BLSpanMultiTermQueryWrapper<>(QueryInfo.create(context.index(), context.field()), new RegexpQuery(
                     new Term(context.luceneField(),
                             context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
         } catch (IllegalArgumentException e) {

@@ -48,6 +48,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     private List<BLSpanQuery> exclude;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
+        super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
         if (this.include.size() == 0 && this.exclude.size() == 0)
@@ -179,7 +180,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
             if (rewrNotCl.size() == 1)
                 return rewrCl.get(0).inverted().rewrite(reader);
             BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
-            r.setQueryInfo(this.queryInfo);
             return r;
         }
 
@@ -195,16 +195,12 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
         // Combination of positive and possibly negative clauses
         BLSpanQuery includeResult = rewrCl.size() == 1 ? rewrCl.get(0) : new SpanQueryAndNot(rewrCl, null);
-        includeResult.setQueryInfo(this.queryInfo);
         if (rewrNotCl.isEmpty())
             return includeResult.rewrite(reader);
         BLSpanQuery excludeResult = rewrNotCl.size() == 1 ? rewrNotCl.get(0)
                 : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
-        excludeResult.setQueryInfo(this.queryInfo);
-        BLSpanQuery r = new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
+        return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
                 true).rewrite(reader);
-        r.setQueryInfo(this.queryInfo);
-        return r;
     }
 
     @Override

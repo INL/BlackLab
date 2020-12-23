@@ -395,9 +395,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         if (orCl.size() == 1)
             return orCl.get(0);
-        BLSpanQuery r = new BLSpanOrQuery(orCl.toArray(new BLSpanQuery[0])).rewrite(reader);
-        r.setQueryInfo(queryInfo);
-        return r;
+        return new BLSpanOrQuery(orCl.toArray(new BLSpanQuery[0])).rewrite(reader);
     }
 
     /**

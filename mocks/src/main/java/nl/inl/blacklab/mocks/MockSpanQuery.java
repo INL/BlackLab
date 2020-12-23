@@ -50,6 +50,7 @@ public class MockSpanQuery extends BLSpanQuery {
     private boolean uniqueSpans;
 
     public MockSpanQuery(int[] doc, int[] start, int[] end, boolean isSimple) {
+        super(null);
         this.doc = doc;
         this.start = start;
         this.end = end;

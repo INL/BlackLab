@@ -80,9 +80,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = clauses.get(0).rewrite(reader);
         if (rewritten != clauses.get(0)) {
-            BLSpanQuery r = new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, nfaQuery, direction, fiAccessor);
-            r.setQueryInfo(this.queryInfo);
-            return r;
+            return new SpanQueryFiSeq(rewritten, startOfAnchor, nfa, nfaQuery, direction, fiAccessor);
         }
         return this;
     }

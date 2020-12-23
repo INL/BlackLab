@@ -20,6 +20,7 @@ import org.apache.lucene.index.Term;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanFuzzyQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A TextPattern matching a word with fuzzy matching.
@@ -50,7 +51,7 @@ public class TextPatternFuzzy extends TextPattern {
         int prefixLength1 = prefixLength;
         String valuePrefix = context.subannotPrefix(); // for searching in "subproperties" (e.g. PoS features)
         prefixLength1 += valuePrefix.length();
-        return new SpanFuzzyQuery(new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)),
+        return new SpanFuzzyQuery(QueryInfo.create(context.index(), context.field()), new Term(context.luceneField(), valuePrefix + context.optDesensitize(value)),
                 maxEdits, prefixLength1);
     }
 

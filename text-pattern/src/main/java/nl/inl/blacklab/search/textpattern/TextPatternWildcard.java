@@ -23,6 +23,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A textpattern matching a simple wildcard expression.
@@ -41,7 +42,7 @@ public class TextPatternWildcard extends TextPatternTerm {
         if (result != this)
             return result.translate(context);
         try {
-            return new BLSpanMultiTermQueryWrapper<>(new WildcardQuery(new Term(context.luceneField(),
+            return new BLSpanMultiTermQueryWrapper<>(QueryInfo.create(context.index(), context.field()), new WildcardQuery(new Term(context.luceneField(),
                     context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));
         } catch (StackOverflowError e) {
             // If we pass in a really large wildcard expression,

@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -50,8 +51,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     public static final int FIXED_FORWARD_MATCHING_COST = 2;
 
-    public static BLSpanTermQuery from(SpanTermQuery q) {
-        return new BLSpanTermQuery(q);
+    public static BLSpanTermQuery from(QueryInfo queryInfo, SpanTermQuery q) {
+        return new BLSpanTermQuery(queryInfo, q);
     }
 
     SpanTermQuery query;
@@ -67,13 +68,14 @@ public class BLSpanTermQuery extends BLSpanQuery {
      *
      * @param term term to search
      */
-    public BLSpanTermQuery(Term term) {
+    public BLSpanTermQuery(QueryInfo queryInfo, Term term) {
+        super(queryInfo);
         query = new SpanTermQuery(term);
         termContext = null;
     }
 
-    BLSpanTermQuery(SpanTermQuery termQuery) {
-        this(termQuery.getTerm());
+    BLSpanTermQuery(QueryInfo queryInfo, SpanTermQuery termQuery) {
+        this(queryInfo, termQuery.getTerm());
     }
 
     /**
@@ -83,7 +85,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
      * @param term term to search
      * @param context TermContext to use to search the term
      */
-    public BLSpanTermQuery(Term term, TermContext context) {
+    public BLSpanTermQuery(Term term, TermContext context, QueryInfo queryInfo) {
+        super(queryInfo);
         query = new SpanTermQuery(term, context);
         termContext = context;
     }

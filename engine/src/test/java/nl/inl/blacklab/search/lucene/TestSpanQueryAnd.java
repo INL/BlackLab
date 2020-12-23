@@ -26,8 +26,8 @@ public class TestSpanQueryAnd {
     @SuppressWarnings("unused")
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
-        BLSpanTermQuery first = new BLSpanTermQuery(new Term("author", "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(new Term("contents", "bla"));
+        BLSpanTermQuery first = new BLSpanTermQuery(null, new Term("author", "bla"));
+        BLSpanTermQuery second = new BLSpanTermQuery(null, new Term("contents", "bla"));
 
         // Different fields; will throw exception
         new SpanQueryAnd(first, second);
@@ -35,9 +35,9 @@ public class TestSpanQueryAnd {
 
     @Test
     public void testAnnotatedFieldDifferentProperties() {
-        BLSpanTermQuery first = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.annotationField("contents",
+        BLSpanTermQuery first = new BLSpanTermQuery(null, new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop1"), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(new Term(AnnotatedFieldNameUtil.annotationField("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(null, new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop2"), "bla"));
 
         // No exception here because both are properties of annotated field "field"

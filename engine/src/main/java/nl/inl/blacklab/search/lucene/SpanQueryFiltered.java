@@ -56,13 +56,9 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         if (rewrittenFilter instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
             // "doesn't implement createWeight" problem.
-            BLSpanQuery r;
-            rewrittenFilter = r = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrittenFilter).rewrite(reader);
-            r.setQueryInfo(this.queryInfo);
+            rewrittenFilter = new BLSpanMultiTermQueryWrapper<>(queryInfo, (MultiTermQuery) rewrittenFilter).rewrite(reader);
         }
-        BLSpanQuery r = rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
-        r.setQueryInfo(this.queryInfo);
-        return r;
+        return rewritten == null ? this : new SpanQueryFiltered(rewritten.get(0), rewrittenFilter);
     }
 
     @Override
@@ -122,7 +118,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         if (rewrite instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
             // "doesn't implement createWeight" problem.
-            rewrite = new BLSpanMultiTermQueryWrapper<>((MultiTermQuery) rewrite).rewrite(searcher.getIndexReader());
+            rewrite = new BLSpanMultiTermQueryWrapper<>(queryInfo, (MultiTermQuery) rewrite).rewrite(searcher.getIndexReader());
         }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'

@@ -18,6 +18,7 @@ package nl.inl.blacklab.search.textpattern;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A 'gap' of a number of tokens we don't care about, with minimum and maximum
@@ -52,7 +53,7 @@ public class TextPatternAnyToken extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
-        return new SpanQueryAnyToken(min, max, context.luceneField());
+        return new SpanQueryAnyToken(QueryInfo.create(context.index(), context.field()), min, max, context.luceneField());
     }
 
     @Override

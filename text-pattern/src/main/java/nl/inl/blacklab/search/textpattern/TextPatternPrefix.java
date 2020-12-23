@@ -22,6 +22,7 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A TextPattern matching words that start with the specified prefix.
@@ -34,7 +35,7 @@ public class TextPatternPrefix extends TextPatternTerm {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         try {
-            return new BLSpanMultiTermQueryWrapper<>(new PrefixQuery(new Term(context.luceneField(),
+            return new BLSpanMultiTermQueryWrapper<>(QueryInfo.create(context.index(), context.field()), new PrefixQuery(new Term(context.luceneField(),
                     context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));
         } catch (StackOverflowError e) {
             // If we pass in a prefix expression matching a lot of words,

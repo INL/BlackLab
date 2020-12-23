@@ -21,6 +21,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A TextPattern matching a word.
@@ -42,7 +43,7 @@ public class TextPatternTerm extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new BLSpanTermQuery(new Term(context.luceneField(),
+        return new BLSpanTermQuery(QueryInfo.create(context.index(), context.field()), new Term(context.luceneField(),
                 context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value))));
     }
 

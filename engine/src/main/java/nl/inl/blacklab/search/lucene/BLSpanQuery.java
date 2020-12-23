@@ -42,6 +42,10 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
+    public BLSpanQuery(QueryInfo queryInfo) {
+        this.queryInfo = queryInfo;
+    }
+    
     /**
      * Rewrite a SpanQuery after rewrite() to a BLSpanQuery equivalent.
      *
@@ -52,16 +56,16 @@ public abstract class BLSpanQuery extends SpanQuery {
      * @param spanQuery the SpanQuery to BL-ify (if it isn't a BLSpanQuery already)
      * @return resulting BLSpanQuery, or the input query if it was one already
      */
-    public static BLSpanQuery wrap(SpanQuery spanQuery) {
+    public static BLSpanQuery wrap(QueryInfo queryInfo, SpanQuery spanQuery) {
         if (spanQuery instanceof BLSpanQuery) {
             // Already BL-derived, no wrapper needed.
             return (BLSpanQuery) spanQuery;
         } else if (spanQuery instanceof SpanOrQuery) {
             // Translate to a BLSpanOrQuery, recursively translating the clauses.
-            return BLSpanOrQuery.from((SpanOrQuery) spanQuery);
+            return BLSpanOrQuery.from(queryInfo, (SpanOrQuery) spanQuery);
         } else if (spanQuery instanceof SpanTermQuery) {
             // Translate to a BLSpanTermQuery.
-            return BLSpanTermQuery.from((SpanTermQuery) spanQuery);
+            return BLSpanTermQuery.from(queryInfo, (SpanTermQuery) spanQuery);
         } else {
             // After rewrite, we shouldn't encounter any other non-BLSpanQuery classes.
             throw new UnsupportedOperationException("Cannot BL-ify " + spanQuery.getClass().getSimpleName());
