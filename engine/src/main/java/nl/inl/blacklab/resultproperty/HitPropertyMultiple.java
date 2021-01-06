@@ -262,6 +262,9 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         List<DocProperty> crit = properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList());
         if (crit.isEmpty())
             return null;
+        if (crit.size() == 1) {
+            return crit.get(0);
+        }
         return new DocPropertyMultiple(crit);
     }
 
