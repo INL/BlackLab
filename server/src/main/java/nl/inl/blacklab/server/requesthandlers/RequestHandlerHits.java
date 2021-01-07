@@ -113,13 +113,12 @@ public class RequestHandlerHits extends RequestHandler {
                 hits = searchMan.search(user, searchParam.hitsSample());
                 hitsCount = ((BlsCacheEntry<ResultCount>)job).get(); 
                 docsCount = searchMan.search(user, searchParam.docsCount());
-                
-                // Wait until all hits have been counted.
-                if (searchParam.getBoolean("waitfortotal")) {
-                    hitsCount.countedTotal();
-                    docsCount.countedTotal();
-                }
             } 
+            // Wait until all hits have been counted.
+            if (searchParam.getBoolean("waitfortotal")) {
+                hitsCount.countedTotal();
+                docsCount.countedTotal();
+            }
         } catch (InterruptedException | ExecutionException | InvalidQuery e) {
             throw RequestHandler.translateSearchException(e);
         }
@@ -312,7 +311,7 @@ public class RequestHandlerHits extends RequestHandler {
      * 
      * @param viewGroupVal
      * @param groupByProp
-     * @param hitsGrouped check whether the original hitGroups 
+     * @param hitsGrouped
      * 
      * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
      * @throws BlsException
@@ -384,23 +383,29 @@ public class RequestHandlerHits extends RequestHandler {
             throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
         Hits hits = null;
-        if (group.storedResults().size() > 0) { // good, the group has its backing hits available, return those. 
+        // Groups don't always store their backing hits (see HitGroupsTokenFrequencies for example)
+        // When the group has some hits available, show those (the rest may have been culled on purpose due to maximum result limitations)
+        // Only launch a separate search when there are ZERO hits stored in the group
+        if (group.storedResults().size() > 0) { 
+            // Some hits available: return those.
             hits = group.storedResults();
         }
         
-        // Not all results were actually stored. Fire a separate query to retrieve them.
+        // No results were actually stored. Fire a separate query to retrieve them.
         if (group.storedResults().size() == 0) { 
             HitProperty groupByProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
             SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, groupByProp, hitGroups);
             if (findHitsFromOnlyRequestedGroup != null) {
                 // place the group-contents query in the cache and return the results.
-                BlsCacheEntry<Hits> jobHits = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup);
-                return Pair.of(jobHits, jobHits.get());
+                BlsCacheEntry<ResultCount> job = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup.count(true));
+                hits = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup).get();
+                return Pair.of(job, hits);
             }
             
             // This is a special case: 
             // Since the group we got from the cached results didn't contain the hits, we need to get the hits from their original query
             // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
+            // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
             SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) searchParam.hitsSample().group(groupByProp, Hits.NO_LIMIT);
             searchGroups.forceStoreHits();
             // now run the separate grouping search, making sure not to actually store the hits.

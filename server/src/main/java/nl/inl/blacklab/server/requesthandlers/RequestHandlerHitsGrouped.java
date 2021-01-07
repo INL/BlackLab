@@ -11,19 +11,15 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
-import io.dropwizard.metrics5.MetricRegistry;
-import io.dropwizard.metrics5.Timer;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -33,14 +29,12 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.util.BlockTimer;
 
 /**
  * Request handler for grouped hit results.
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
-
-    private final Timer searchTimer = BlackLab.metrics.timer(MetricRegistry.name(RequestHandlerHitsGrouped.class, "search"));
-    private final Timer jsonTimer = BlackLab.metrics.timer(MetricRegistry.name(RequestHandlerHitsGrouped.class, "json"));
 
     public static final boolean INCLUDE_RELATIVE_FREQ = true;
 
@@ -53,7 +47,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         HitGroups groups;
         BlsCacheEntry<HitGroups> search;
-        try(Timer.Context context = searchTimer.time()) {
+        try(BlockTimer t = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
             search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
             // Search is done; construct the results object
@@ -76,7 +70,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), 0, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
-        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        ResultsStats docsStats = groups.docsStats();
+        if (docsStats == null)
+            docsStats = searchMan.search(user, searchParam.docsCount());
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
@@ -112,7 +108,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
 
-        try (Timer.Context c = jsonTimer.time()) {
+        try (BlockTimer t = BlockTimer.create("Serializing groups to JSON")) {
             for (int i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 PropertyValue id = group.identity();

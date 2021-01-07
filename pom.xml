@@ -495,21 +495,6 @@ Central) -->
             <version>1.4</version>
         </dependency>
 
-        <!-- benchmarking -->
-        <!-- https://mvnrepository.com/artifact/io.dropwizard.metrics/metrics-core -->
-        <dependency>
-            <groupId>io.dropwizard.metrics5</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>5.0.0-rc4-SNAPSHOT</version>
-        </dependency>
-        
-           <!-- https://mvnrepository.com/artifact/com.googlecode.concurrent-trees/concurrent-trees -->
-        <dependency>
-            <groupId>com.googlecode.concurrent-trees</groupId>
-            <artifactId>concurrent-trees</artifactId>
-            <version>2.6.1</version>
-        </dependency>
-
     </dependencies>
 
     <reporting>
