@@ -110,7 +110,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
 			XPath xpath = factory.newXPath();
 			xpath.setNamespaceContext(new NamespaceContext() {
 				@Override
-				public Iterator<?> getPrefixes(String arg0) {
+				public Iterator getPrefixes(String arg0) {
 					throw new UnsupportedOperationException();
 				}
 
