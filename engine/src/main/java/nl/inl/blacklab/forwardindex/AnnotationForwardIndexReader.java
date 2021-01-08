@@ -81,7 +81,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         }
 
         if (!tocFile.exists())
-            throw new IllegalArgumentException("No TOC found, and not in index mode!");
+            throw new IllegalArgumentException("No TOC found, and not in index mode: " + tocFile);
         this.collators = collators; // for reading terms file in initialize()
         this.buildTermIndexesOnInit = buildTermIndexesOnInit;
     }
