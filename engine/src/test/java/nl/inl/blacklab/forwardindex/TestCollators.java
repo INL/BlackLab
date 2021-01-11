@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.nio.charset.StandardCharsets;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -9,6 +8,8 @@ import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -51,6 +52,9 @@ public class TestCollators {
         int[] zalgoBytes2 = { 204, 183, 204, 128, 204, 177, 204, 159, 204, 169, 204, 160, 204, 161, 205, 147, 116, 204, 180, 205, 128, 204, 144, 205, 155, 204, 139, 205, 152, 204, 138, 204, 132, 205, 138, 205, 138, 205, 157, 204, 146, 204, 147, 204, 131, 205, 129, 204, 146, 204, 135, 205, 146, 204, 137, 204, 187, 204, 169, 204, 186, 205, 153, 204, 171, 205, 141, 204, 167, 204, 162, 204, 171, 204, 168, 111, 204, 184, 204, 143, 205, 134, 204, 178, 204, 174, 204, 173, 205, 135, 205, 137, 204, 152, 204, 176, 204, 167, 204, 178, 204, 187, 204, 177, 112, 204, 182, 204, 137, 205, 152, 204, 137, 205, 131, 205, 144, 205, 151, 205, 140, 204, 128, 204, 131, 204, 131, 204, 161, 105, 204, 184, 205, 132, 205, 151, 204, 131, 204, 137, 204, 129, 204, 141, 204, 189, 205, 132, 205, 132, 204, 141, 204, 131, 204, 140, 204, 130, 205, 145, 205, 140, 204, 169, 113, 204, 180, 204, 144, 205, 132, 205, 139, 204, 133, 204, 147, 204, 136, 204, 132, 204, 149, 205, 157, 204, 133, 204, 147, 205, 128, 204, 145, 204, 154, 204, 137, 204, 170, 205, 133, 204, 174, 204, 179, 204, 173, 204, 160, 204, 178, 205, 135, 204, 177, 204, 177, 204, 152, 204, 178, 205, 148, 205, 149, 117, 204, 184, 204, 139, 204, 139, 204, 144, 204, 148, 204, 154, 204, 189, 204, 140, 204, 137, 205, 139, 204, 142, 204, 143, 204, 149, 205, 155, 205, 138, 204, 140, 204, 139, 205, 147, 204, 151, 204, 158, 204, 172, 204, 168, 204, 164, 205, 142, 204, 157, 101, 204, 184, 204, 130, 204, 131, 204, 191, 204, 138, 204, 134, 205, 157, 205, 146, 204, 191, 205, 128, 205, 139, 204, 143, 204, 141, 204, 185, 204, 178, 204, 165 };
         zalgo1 = fromIntArrayOfByteNumbers(zalgoBytes1);
         zalgo2 = fromIntArrayOfByteNumbers(zalgoBytes2);
+        
+        System.out.println(zalgo1);
+        System.out.println(zalgo2);
     }
 
     @Test
@@ -60,11 +64,11 @@ public class TestCollators {
         //       We don't yet know the first Java version where it succeeds; could be 9, 10 or 11.
         //       If you're trying to build BlackLab on an older Java version and it fails because of this test, you can try @Ignoring it and you
         //       might be fine, depending on your corpus data.
-        Assert.assertEquals(1, getBlackLabCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(-1, getBlackLabCollator().compare(zalgo1, zalgo2));
     }
 
     public void testZalgoTextWithDefaultCollator() {
         // This should succeed, even on Java 8, but is here just for completeness.
-        Assert.assertEquals(1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(-1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
     }
 }
