@@ -90,15 +90,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         searchLogger.setResultsFound(groups.size());
 
         /* Gather group values per property:
-         * Documents are grouped by one or more "properties", every group represents hits with the same "values" for these properties.
-         * This means there are two structures:
-         * a Map<values, group> that was used to gather the hits.
-         * an Array<group> governing the ordering of those groups.
-         *
-         * A result of this is that we iterate the array (in order to retrieve groups in the requested/correct order),
-         * but the group itself doesn't know the values that it represents.
-         * We need to invert the map so we can find the values from the group.
-         *
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
          * contain the sub properties and values in the same order.
          */
@@ -116,7 +107,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
-                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
+                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
                     subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
                     logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
@@ -125,8 +116,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
                 ds.startItem("hitgroup").startMap();
                 ds
-                .entry("identity", group.identity().serialize())
-                .entry("identityDisplay", group.identity().toString())
+                .entry("identity", id.serialize())
+                .entry("identityDisplay", id.toString())
                 .entry("size", group.size());
 
                 ds.startEntry("properties").startList();

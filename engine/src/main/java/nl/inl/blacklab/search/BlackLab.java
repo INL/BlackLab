@@ -24,28 +24,28 @@ import nl.inl.util.FileUtil;
 
 /**
  * Main BlackLab class, from which indexes can be opened.
- *
+ * 
  * You can either open indices using the static methods in this class,
  * or you can create() a BlackLabEngine and use that to open indices.
- *
+ * 
  * The first approach will implicitly create a default BlackLabEngine
  * in the background, with 4 search threads. If you want a different
  * number of search threads, call create() to create your own instance
  * of BlackLabEngine.
- *
+ * 
  * Don't try to mix these two methods; if an implicit engine exists and
  * you call create(), or if you call e.g. BlackLab.open() when you've
  * already created an engine explicitly, an exception will be thrown.
- *
+ * 
  * If you explicitly create an engine, make sure to close it when you're
  * done. For the implicit engine, this is done automatically when you
- * close your last index.
+ * close your last index. 
  */
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
     private static final int DEFAULT_NUM_SEARCH_THREADS = 4;
-
+    
     private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 2;
 
     /**
@@ -53,12 +53,12 @@ public final class BlackLab {
      * automatically.
      */
     static BlackLabEngine implicitInstance = null;
-
+    
     /**
      * Have we called create()? If so, don't create an implicit instance, but throw an exception.
      */
     private static boolean explicitlyCreated = false;
-
+    
     /**
      * Map from IndexReader to BlackLab, for use from inside SpanQuery/Spans classes
      */
@@ -78,15 +78,15 @@ public final class BlackLab {
         explicitlyCreated = true;
         return new BlackLabEngine(searchThreads, maxThreadsPerSearch);
     }
-
+    
     public static BlackLabEngine createEngine() {
         return createEngine(DEFAULT_NUM_SEARCH_THREADS, DEFAULT_MAX_THREADS_PER_SEARCH);
     }
-
+    
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
         return BlackLabIndex.open(implicitInstance(), dir);
     }
-
+    
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
@@ -121,7 +121,7 @@ public final class BlackLab {
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      * @return index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
@@ -135,19 +135,19 @@ public final class BlackLab {
      * @param config format configuration for this index; used to base the index
      *            metadata on
      * @return a BlackLabIndexWriter for the new index, in index mode
-     * @throws ErrorOpeningIndex if the index couldn't be opened
+     * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
     public static BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
         return openForWriting(indexDir, true, config);
     }
-
-
+    
+    
     /**
      * Return the implicitly created instance of BlackLab.
-     *
+     * 
      * Only used by BlackLabIndex if no BlackLab instance is provided during opening.
      * The instance will have 4 search threads.
-     *
+     * 
      * @return implicitly instantiated BlackLab instance
      */
     public static synchronized BlackLabEngine implicitInstance() {
@@ -162,7 +162,7 @@ public final class BlackLab {
     public static synchronized BlackLabIndex fromIndexReader(IndexReader reader) {
         return blackLabFromIndexReader.get(reader).indexFromReader(reader);
     }
-
+    
     /**
      * Return a list of directories that should be searched for BlackLab-related
      * configuration files.
@@ -201,12 +201,12 @@ public final class BlackLab {
         }
         return new ArrayList<>(configDirs);
     }
-
+    
     /**
      * Get the BlackLab config.
-     *
+     * 
      * If no config has been set, return a default configuration.
-     *
+     * 
      * @return currently set config
      */
     public synchronized static BlackLabConfig config() {
@@ -215,41 +215,40 @@ public final class BlackLab {
         }
         return blackLabConfig;
     }
-
+    
     /**
      * Read blacklab.yaml and set the configuration from that.
-     *
+     * 
      * This must be called before you open the first index, or an exception will be thrown,
      * because another default config has been applied already.
      */
     public static void setConfigFromFile() {
         if (globalSettingsApplied)
             throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
-
+            
         File file = FileUtil.findFile(defaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
         if (file != null) {
             try {
                 blackLabConfig = BlackLabConfig.readConfigFile(file);
             } catch (IOException e) {
-                logger.warn("Could not load default blacklab configuration file " + file + ": "
-+ e.getMessage());
+                logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
             }
         }
     }
-
+    
     /**
      * Set the BlackLab configuration to use.
-     *
+     * 
      * This must be called before you open the first index, or an exception will be thrown,
      * because another default config has been applied already.
-     *
+     * 
      * @param config configuration to use
      */
     public static void setConfig(BlackLabConfig config) {
         if (globalSettingsApplied)
             throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
-
-        blackLabConfig = config;
+        
+        blackLabConfig = config; 
     }
 
     /**
@@ -258,15 +257,16 @@ public final class BlackLab {
      * @param index
      * @throws IOException
      */
-    public synchronized static void applyConfigToIndex(BlackLabIndex index) throws IOException {        ensureGlobalConfigApplied();
-
+    public synchronized static void applyConfigToIndex(BlackLabIndex index) throws IOException {
+        ensureGlobalConfigApplied();
+        
         // Apply search settings from the config to this BlackLabIndex
         blackLabConfig.getSearch().apply(index);
     }
 
     private synchronized static void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
-
+            
             BlackLabConfig blackLabConfig = config();
             // Indexing settings
             BLConfigIndexing indexing = blackLabConfig.getIndexing();
@@ -275,10 +275,10 @@ public final class BlackLab {
             if (indexing.getDownloadCacheDir() != null)
                     DownloadCache.setDir(new File(indexing.getDownloadCacheDir()));
             ZipHandleManager.setMaxOpen(indexing.getZipFilesMaxOpen());
-
+            
             // Plugins settings
             PluginManager.initPlugins(blackLabConfig.getPlugins());
-
+            
             // Log settings
             BLConfigLog log = blackLabConfig.getLog();
             if (log.getTrace().isIndexOpening())
@@ -287,11 +287,11 @@ public final class BlackLab {
                 BlackLabIndexImpl.setTraceOptimization(true);
             if (log.getTrace().isQueryExecution())
                 BlackLabIndexImpl.setTraceQueryExecution(true);
-
+            
             globalSettingsApplied = true;
         }
     }
-
+    
     private BlackLab() { }
-
+    
 }

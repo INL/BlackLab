@@ -120,7 +120,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
     /**
      * Compares two docs on this property
-     *
+     * 
      * @param a first doc
      * @param b second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
@@ -154,12 +154,12 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         }
         return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
-
+    
     @Override
     public boolean isCompound() {
         return true;
     }
-
+    
     @Override
     public List<DocProperty> props() {
         return Collections.unmodifiableList(criteria);
@@ -197,7 +197,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
             return bqb.build();
         return null;
     }
-
+    
     @Override
     public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
         PropertyValue[] values = ((PropertyValueMultiple)value).value();
@@ -207,5 +207,5 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         }
         return true;
     }
-
+    
 }

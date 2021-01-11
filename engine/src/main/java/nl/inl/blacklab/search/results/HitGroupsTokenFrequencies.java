@@ -306,7 +306,6 @@ public class HitGroupsTokenFrequencies {
 
             logger.debug("fast path used for grouping");
             return HitGroups.fromList(queryInfo, groups, numberOfDocs, requestedGroupingProperty, null, null);
-//            return null;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

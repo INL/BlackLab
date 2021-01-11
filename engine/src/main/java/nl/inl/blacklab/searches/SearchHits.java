@@ -111,4 +111,5 @@ public abstract class SearchHits extends SearchResults<Hits> {
     protected Query getFilterQuery() {
         return null;
     }
+
 }

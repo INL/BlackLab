@@ -547,7 +547,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             int numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
-                logger.trace("## DocResults.tokensInMatchingDocs: fast path");
+                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
@@ -574,7 +574,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             } else {
                 // Slow approach: get the stored field value from each Document
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-                logger.trace("## DocResults.tokensInMatchingDocs: SLOW PATH");
+                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
                 numberOfTokens = countTokens ? intSum(propTokens) : -1;

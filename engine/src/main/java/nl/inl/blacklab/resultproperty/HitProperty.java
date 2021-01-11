@@ -234,7 +234,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     public List<Annotation> needsContext() {
         return null;
     }
-    
+
     /**
      * Return the required sensitivies for all Annotations that require context.
      * Sensitivies are returned in the same order as the annotations are returned from {@link #needsContext()}

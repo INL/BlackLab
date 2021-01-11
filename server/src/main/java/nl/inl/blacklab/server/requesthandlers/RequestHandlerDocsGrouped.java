@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -10,7 +9,6 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -97,27 +95,17 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         searchLogger.setResultsFound(groups.size());
 
         /* Gather group values per property:
-         * Documents are grouped by one or more "properties", every group represents documents with the same "values" for these properties.
-         * This means there are two structures:
-         * a Map<values, group> that was used to gather the documents.
-         * an Array<group> governing the ordering of those groups.
-         *
-         * A result of this is that we iterate the array (in order to retrieve groups in the requested/correct order),
-         * but the group itself doesn't know the values that it represents.
-         * We need to invert the map so we can find the values from the group.
-         *
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
         List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
-        Map<DocGroup, PropertyValue> groupsByValue = groups.getGroupMap().inverse();
 
         ds.startEntry("docGroups").startList();
         int last = Math.min(first + number, groups.size());
         for (int i = first; i < last; ++i) {
             DocGroup group = groups.get(i);
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) groupsByValue.get(group)).values() : Arrays.asList(groupsByValue.get(group));
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : Arrays.asList(group.identity());
 
             ds.startItem("docgroup").startMap()
                     .entry("identity", group.identity().serialize())

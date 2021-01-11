@@ -183,7 +183,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
             return r;
         }
-        
+
         if (rewrCl.size() > 1) {
             // If there's more than one positive clause, remove the super general "match all" clause.
             rewrCl = rewrCl.stream().filter(cl -> !(cl instanceof SpanQueryAnyToken)).collect(Collectors.toList());
@@ -193,7 +193,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             // Single positive clause
             return rewrCl.get(0);
         }
-        
+
         if (!anyRewritten && exclude.isEmpty()) {
             // Nothing needs to be rewritten.
             return this;
