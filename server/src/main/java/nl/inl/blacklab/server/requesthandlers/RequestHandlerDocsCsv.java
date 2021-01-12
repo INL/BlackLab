@@ -121,11 +121,16 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (!docs.docsProcessedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().getParameters().getPageSize().getMax();
-            if (searchParam.containsKey("number"))
-                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
-
-            docs = docs.window(first, number);
+            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            if (searchParam.containsKey("number")) {
+                int requested = searchParam.getInteger("number");
+                if (number >= 0 || requested >= 0) { // clamp
+                    number = Math.min(requested, number);
+                }
+            }
+            
+            if (number >= 0)
+                docs = docs.window(first, number);
         }
 
         return new Result(docs, groups, subcorpusResults, viewGroup != null);

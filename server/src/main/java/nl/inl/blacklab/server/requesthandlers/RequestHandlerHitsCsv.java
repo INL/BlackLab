@@ -133,16 +133,21 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
+            
 
-            int number = searchMan.config().getParameters().getPageSize().getMax();
-            if (searchParam.containsKey("number"))
-                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
-
-            hits = hits.window(first, number);
+            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            if (searchParam.containsKey("number")) {
+                int requested = searchParam.getInteger("number");
+                if (number >= 0 || requested >= 0) { // clamp
+                    number = Math.min(requested, number);
+                }
+            }
+            
+            if (number >= 0)
+                hits = hits.window(first, number);
         }
 
         return new Result(hits, groups, subcorpus, viewGroup != null);
-//        return Pair.of(hits, groups);
     }
 
     private void writeGroups(Hits inputHitsForGroups, HitGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
