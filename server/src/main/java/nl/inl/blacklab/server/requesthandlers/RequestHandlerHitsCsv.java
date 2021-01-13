@@ -358,21 +358,11 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         StringBuilder sb = new StringBuilder();
         boolean firstValue = true;
         for (String value : strings) {
-            int offset = 0, strlen = value.length();
-
             if (!firstValue) {
                 sb.append(" ");
             }
             sb.append('"');
-            while (offset < strlen) {
-                int codepoint = value.codePointAt(offset);
-                offset += Character.charCount(codepoint);
-                sb.appendCodePoint(codepoint);
-                if (codepoint == '"') {
-                    sb.appendCodePoint(codepoint);
-                }
-            }
-
+            sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
             sb.append('"');
             firstValue = false;
         }

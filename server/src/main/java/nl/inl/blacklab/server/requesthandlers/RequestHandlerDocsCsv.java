@@ -267,17 +267,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                     boolean firstValue = true;
                     for (String value : doc.getValues(fieldId)) {
-                        int offset = 0, strlen = value.length();
-
                         if (!firstValue) {
                             sb.append(" ");
                         }
                         sb.append('"');
-                        while (offset < strlen) {
-                            // Strip newlines, modify quotes to be double quotes.
-                            value.replace("\n", "").replace("\r", "").replace("\"", "\"\"");
-                        }
-
+                        sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
                         sb.append('"');
                         firstValue = false;
                     }
