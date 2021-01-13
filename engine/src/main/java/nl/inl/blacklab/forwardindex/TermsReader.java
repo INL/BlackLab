@@ -175,7 +175,7 @@ public class TermsReader extends Terms {
     }
 
     private void read(FileChannel fc) throws IOException {
-        System.out.println("Initializing termsreader " + termsFile);
+        logger.debug("Initializing termsreader " + termsFile);
         final long start = System.nanoTime();
 
         long fileLength = termsFile.length();

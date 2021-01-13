@@ -331,8 +331,10 @@ public class RequestHandlerHits extends RequestHandler {
         // Alright, the original query for the Hits lends itself to enhancement. 
         // Create the Query that will do the metadata filtering portion. (Token filtering is done through the TextPattern above) 
         BooleanQuery.Builder fqb = new BooleanQuery.Builder();
+        boolean usedFilter = false;
         if (searchParam.getFilterQuery() != null) {
             fqb.add(searchParam.getFilterQuery(), Occur.FILTER);
+            usedFilter = true;
         }
 
         // Decode the grouping properties, and the values for those properties in the requested group.
@@ -353,9 +355,11 @@ public class RequestHandlerHits extends RequestHandler {
                 Object value = vals.get(i).value();
                 int luceneDocId = value instanceof Doc ? ((Doc) value).id(): BlsUtils.getDocIdFromPid(blIndex(), (String) value);
                 fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
+                usedFilter = true;
             } 
             else if (p instanceof HitPropertyDocumentStoredField) {
                 fqb.add(new DocValuesTermsQuery(((HitPropertyDocumentStoredField) p).fieldName(), (String) vals.get(i).value()), Occur.FILTER);
+                usedFilter = true;
             } else {
                 logger.debug("Cannot merge group specifier into query: {} with value {}", p, vals.get(i));
                 return null;
@@ -367,7 +371,8 @@ public class RequestHandlerHits extends RequestHandler {
         // All specifiers merged! 
         // Construct the query that will get us our hits.
         SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache(), searchLogger);
-        BLSpanQuery query = tp.toQuery(QueryInfo.create(blIndex(), blIndex().mainAnnotatedField()), fqb.build());
+        QueryInfo queryInfo = QueryInfo.create(blIndex(), blIndex().mainAnnotatedField());
+        BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
         SearchHits hits = search.find(query, SearchSettings.defaults());
         return hits;
     }
