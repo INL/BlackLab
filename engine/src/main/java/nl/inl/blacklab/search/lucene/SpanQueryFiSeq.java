@@ -261,4 +261,40 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         return clauses.get(0).canMakeNfa();
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        // NOTE: we don't need to use nfa or fiAccessor because they follow from nfaQuery
+        result = prime * result + direction;
+        result = prime * result + ((nfaQuery == null) ? 0 : nfaQuery.hashCode());
+        result = prime * result + (startOfAnchor ? 1231 : 1237);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryFiSeq other = (SpanQueryFiSeq) obj;
+        // NOTE: we don't need to use nfa or fiAccessor because they follow from nfaQuery
+        if (direction != other.direction)
+            return false;
+        if (nfaQuery == null) {
+            if (other.nfaQuery != null)
+                return false;
+        } else if (!nfaQuery.equals(other.nfaQuery))
+            return false;
+        if (startOfAnchor != other.startOfAnchor)
+            return false;
+        return true;
+    }
+
+
+
+
 }

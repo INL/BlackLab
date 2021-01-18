@@ -63,7 +63,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         if (rewritten == clauses.get(0)) {
             return this;
         }
-        
+
         return new SpanQueryNot(rewritten);
     }
 
@@ -81,14 +81,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     @Override
     public boolean isSingleTokenNot() {
         return true;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof SpanQueryNot) {
-            return super.equals(obj);
-        }
-        return false;
     }
 
     @Override
@@ -200,5 +192,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
     public int forwardMatchingCost() {
         return clauses.get(0).forwardMatchingCost() + 1;
     }
+
+    // no hashCode() and equals() because super class version is sufficient
 
 }

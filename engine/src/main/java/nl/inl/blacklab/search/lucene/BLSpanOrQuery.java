@@ -72,7 +72,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     /**
      * Construct a SpanOrQuery merging the provided clauses. All clauses must have
      * the same field.
-     * 
+     *
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
@@ -111,7 +111,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
     /**
      * Return the clauses whose spans are matched.
-     * 
+     *
      * @return the clauses
      */
     public SpanQuery[] getClauses() {
@@ -191,7 +191,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             // Note extra rewrite at the end to make sure AND NOT structure is correctly built.
             if (rewrittenCl.size() == 1)
                 return rewrittenCl.get(0).inverted();
-            
+
             return (new SpanQueryAnd(rewrittenCl).inverted()).rewrite(reader);
         }
 
@@ -209,7 +209,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         // Node need not be rewritten; return as-is
         if (inner.getClauses().length == 1) {
             return BLSpanQuery.wrap(queryInfo, inner.getClauses()[0]);
-        } 
+        }
         return this;
     }
 
@@ -321,18 +321,28 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o instanceof BLSpanOrQuery) {
-            return inner.equals(((BLSpanOrQuery) o).inner);
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((inner == null) ? 0 : inner.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return inner.hashCode() ^ 0xB1ACC1AB;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BLSpanOrQuery other = (BLSpanOrQuery) obj;
+        if (inner == null) {
+            if (other.inner != null)
+                return false;
+        } else if (!inner.equals(other.inner))
+            return false;
+        return true;
     }
 
     @Override
@@ -732,7 +742,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     /**
      * For great numbers of clauses, approximate by only calculating cost of some
      * terms
-     * 
+     *
      * @param n number of clauses
      * @return number of clauses to skip after every calculation
      */

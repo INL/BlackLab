@@ -116,19 +116,28 @@ class SpanQueryUnique extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o instanceof SpanQueryUnique) {
-            final SpanQueryUnique that = (SpanQueryUnique) o;
-            return src.equals(that.src);
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((src == null) ? 0 : src.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return src.hashCode() ^ 0x98764038;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryUnique other = (SpanQueryUnique) obj;
+        if (src == null) {
+            if (other.src != null)
+                return false;
+        } else if (!src.equals(other.src))
+            return false;
+        return true;
     }
 
     @Override
@@ -180,7 +189,7 @@ class SpanQueryUnique extends BLSpanQuery {
     public int forwardMatchingCost() {
         return src.forwardMatchingCost();
     }
-    
+
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);

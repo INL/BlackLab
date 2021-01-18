@@ -25,15 +25,6 @@ public class SpanQueryNoHits extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof SpanQueryNoHits) {
-            SpanQueryNoHits tp = ((SpanQueryNoHits) obj);
-            return luceneField.equals(tp.luceneField);
-        }
-        return false;
-    }
-
-    @Override
     public BLSpanWeight createWeight(final IndexSearcher searcher, boolean needsScores) throws IOException {
         return new BLSpanWeight(this, searcher, null) {
             @Override
@@ -65,7 +56,27 @@ public class SpanQueryNoHits extends BLSpanQuery {
 
     @Override
     public int hashCode() {
-        return luceneField.hashCode();
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((luceneField == null) ? 0 : luceneField.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryNoHits other = (SpanQueryNoHits) obj;
+        if (luceneField == null) {
+            if (other.luceneField != null)
+                return false;
+        } else if (!luceneField.equals(other.luceneField))
+            return false;
+        return true;
     }
 
     @Override

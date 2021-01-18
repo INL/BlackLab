@@ -60,17 +60,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!super.equals(o))
-            return false;
-
-        final SpanQueryFilterNGrams that = (SpanQueryFilterNGrams) o;
-        return op == that.op && min == that.min && max == that.max;
-    }
-
-    @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
         if (rewritten == null)
@@ -130,12 +119,36 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
     @Override
     public int hashCode() {
-        int h = clauses.hashCode();
-        h ^= (h << 10) | (h >>> 23);
-        h ^= min << 10;
-        h ^= max << 5;
-        h ^= op.hashCode();
-        return h;
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + leftAdjust;
+        result = prime * result + max;
+        result = prime * result + min;
+        result = prime * result + ((op == null) ? 0 : op.hashCode());
+        result = prime * result + rightAdjust;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryFilterNGrams other = (SpanQueryFilterNGrams) obj;
+        if (leftAdjust != other.leftAdjust)
+            return false;
+        if (max != other.max)
+            return false;
+        if (min != other.min)
+            return false;
+        if (op != other.op)
+            return false;
+        if (rightAdjust != other.rightAdjust)
+            return false;
+        return true;
     }
 
     @Override

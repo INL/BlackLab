@@ -36,4 +36,6 @@ public class SpanQueryAnd extends SpanQueryAndNot {
         super(Arrays.asList(clauses), null);
     }
 
+    // no hashCode() and equals() because super class version is sufficient
+
 }

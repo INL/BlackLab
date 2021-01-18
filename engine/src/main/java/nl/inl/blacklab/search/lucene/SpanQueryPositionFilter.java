@@ -91,7 +91,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         BLSpanQuery filter = clauses.get(1).rewrite(reader);
 
         if (!invert && op != SpanQueryPositionFilter.Operation.STARTS_AT
-                && op != SpanQueryPositionFilter.Operation.ENDS_AT && 
+                && op != SpanQueryPositionFilter.Operation.ENDS_AT &&
                 producer instanceof SpanQueryAnyToken) {
             // We're filtering "all n-grams of length min-max".
             // Use the special optimized SpanQueryFilterNGrams.
@@ -304,5 +304,36 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
                     rightAdjust - clause.hitsLengthMin());
         return new SpanQueryPositionFilter(seq, clauses.get(1), op, invert, leftAdjust + clause.hitsLengthMin(),
                 rightAdjust);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + (invert ? 1231 : 1237);
+        result = prime * result + leftAdjust;
+        result = prime * result + ((op == null) ? 0 : op.hashCode());
+        result = prime * result + rightAdjust;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryPositionFilter other = (SpanQueryPositionFilter) obj;
+        if (invert != other.invert)
+            return false;
+        if (leftAdjust != other.leftAdjust)
+            return false;
+        if (op != other.op)
+            return false;
+        if (rightAdjust != other.rightAdjust)
+            return false;
+        return true;
     }
 }

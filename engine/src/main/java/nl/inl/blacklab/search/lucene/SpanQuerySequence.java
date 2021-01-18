@@ -63,7 +63,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     protected static final Logger logger = LogManager.getLogger(SpanQuerySequence.class);
 
     private static final boolean USE_SPANS_SEQUENCE_GAPS = true;
-    
+
     public SpanQuerySequence(BLSpanQuery first, BLSpanQuery second) {
         super(first, second);
     }
@@ -206,7 +206,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         return anyRewritten;
     }
-    
+
     private static String ord(int pass) {
         pass++;
         switch(pass) {
@@ -912,4 +912,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         return seq;
     }
+
+    // no hashCode() and equals() because super class version is sufficient
+
+
 }

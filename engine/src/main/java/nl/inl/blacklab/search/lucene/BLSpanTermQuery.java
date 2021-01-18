@@ -58,9 +58,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
     SpanTermQuery query;
 
     private TermContext termContext;
-    
+
     private boolean hasForwardIndex = false;
-    
+
     private boolean hasForwardIndexDetermined = false;
 
     /**
@@ -137,18 +137,27 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     @Override
     public int hashCode() {
-        return query.hashCode() ^ 0xB1ACC1AB;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((query == null) ? 0 : query.hashCode());
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof BLSpanTermQuery) {
-            BLSpanTermQuery other = (BLSpanTermQuery) obj;
-            return query.equals(other.query);
-        }
-        return false;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BLSpanTermQuery other = (BLSpanTermQuery) obj;
+        if (query == null) {
+            if (other.query != null)
+                return false;
+        } else if (!query.equals(other.query))
+            return false;
+        return true;
     }
 
     @Override
@@ -211,7 +220,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
         }
         if (!hasForwardIndex)
             return false;
-        
+
         // Subproperties aren't stored in forward index, so we can't match them using NFAs
         return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
     }

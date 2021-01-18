@@ -107,20 +107,34 @@ class SpanQuerySorted extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o instanceof SpanQuerySorted) {
-            final SpanQuerySorted that = (SpanQuerySorted) o;
-            return src.equals(that.src) && sortByEndpoint == that.sortByEndpoint
-                    && eliminateDuplicates == that.eliminateDuplicates;
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + (eliminateDuplicates ? 1231 : 1237);
+        result = prime * result + (sortByEndpoint ? 1231 : 1237);
+        result = prime * result + ((src == null) ? 0 : src.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return src.hashCode() ^ 0x98764038 ^ (sortByEndpoint ? 31 : 0) ^ (eliminateDuplicates ? 37 : 0);
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQuerySorted other = (SpanQuerySorted) obj;
+        if (eliminateDuplicates != other.eliminateDuplicates)
+            return false;
+        if (sortByEndpoint != other.sortByEndpoint)
+            return false;
+        if (src == null) {
+            if (other.src != null)
+                return false;
+        } else if (!src.equals(other.src))
+            return false;
+        return true;
     }
 
     @Override
@@ -172,7 +186,7 @@ class SpanQuerySorted extends BLSpanQuery {
     public int forwardMatchingCost() {
         return src.forwardMatchingCost();
     }
-    
+
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);

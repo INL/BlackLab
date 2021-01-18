@@ -204,17 +204,34 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof SpanQueryAndNot) {
-            return include.equals(((SpanQueryAndNot) obj).include) &&
-                    exclude.equals(((SpanQueryAndNot) obj).exclude);
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((exclude == null) ? 0 : exclude.hashCode());
+        result = prime * result + ((include == null) ? 0 : include.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        return include.hashCode() + exclude.hashCode();
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryAndNot other = (SpanQueryAndNot) obj;
+        if (exclude == null) {
+            if (other.exclude != null)
+                return false;
+        } else if (!exclude.equals(other.exclude))
+            return false;
+        if (include == null) {
+            if (other.include != null)
+                return false;
+        } else if (!include.equals(other.include))
+            return false;
+        return true;
     }
 
     @Override
@@ -432,7 +449,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
     }
-    
+
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);

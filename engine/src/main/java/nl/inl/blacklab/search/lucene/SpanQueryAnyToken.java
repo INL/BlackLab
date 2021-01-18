@@ -65,12 +65,34 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     }
 
     @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((luceneField == null) ? 0 : luceneField.hashCode());
+        result = prime * result + max;
+        result = prime * result + min;
+        return result;
+    }
+
+    @Override
     public boolean equals(Object obj) {
-        if (obj instanceof SpanQueryAnyToken) {
-            SpanQueryAnyToken tp = ((SpanQueryAnyToken) obj);
-            return min == tp.min && max == tp.max && luceneField.equals(tp.luceneField);
-        }
-        return false;
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryAnyToken other = (SpanQueryAnyToken) obj;
+        if (luceneField == null) {
+            if (other.luceneField != null)
+                return false;
+        } else if (!luceneField.equals(other.luceneField))
+            return false;
+        if (max != other.max)
+            return false;
+        if (min != other.min)
+            return false;
+        return true;
     }
 
     @Override
@@ -102,11 +124,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     @Override
     public String getRealField() {
         return luceneField;
-    }
-
-    @Override
-    public int hashCode() {
-        return min + 31 * max + luceneField.hashCode();
     }
 
     @Override
@@ -159,7 +176,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public boolean hitsAreUnique() {
         return true;
     }
-    
+
     @Override
     public boolean isSingleAnyToken() {
         return min == 1 && max == 1;

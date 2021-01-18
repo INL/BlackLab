@@ -164,4 +164,61 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
     }
 
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((annotatedField == null) ? 0 : annotatedField.hashCode());
+        result = prime * result + ((annotationNames == null) ? 0 : annotationNames.hashCode());
+        result = prime * result + ((annotationNumbers == null) ? 0 : annotationNumbers.hashCode());
+        result = prime * result + ((fis == null) ? 0 : fis.hashCode());
+        result = prime * result + ((index == null) ? 0 : index.hashCode());
+        result = prime * result + ((terms == null) ? 0 : terms.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        ForwardIndexAccessorImpl other = (ForwardIndexAccessorImpl) obj;
+        if (annotatedField == null) {
+            if (other.annotatedField != null)
+                return false;
+        } else if (!annotatedField.name().equals(other.annotatedField.name()))
+            return false;
+        if (annotationNames == null) {
+            if (other.annotationNames != null)
+                return false;
+        } else if (!annotationNames.equals(other.annotationNames))
+            return false;
+        if (annotationNumbers == null) {
+            if (other.annotationNumbers != null)
+                return false;
+        } else if (!annotationNumbers.equals(other.annotationNumbers))
+            return false;
+        if (fis == null) {
+            if (other.fis != null)
+                return false;
+        } else if (!fis.equals(other.fis))
+            return false;
+        if (index == null) {
+            if (other.index != null)
+                return false;
+        } else if (!index.equals(other.index))
+            return false;
+        if (terms == null) {
+            if (other.terms != null)
+                return false;
+        } else if (!terms.equals(other.terms))
+            return false;
+        return true;
+    }
+
+
+
 }

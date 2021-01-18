@@ -141,21 +141,34 @@ public class SpanFuzzyQuery extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o instanceof SpanFuzzyQuery) {
-            final SpanFuzzyQuery that = (SpanFuzzyQuery) o;
-            return term.equals(that.term) && maxEdits == that.maxEdits && prefixLength == that.prefixLength;
-        }
-        return false;
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + maxEdits;
+        result = prime * result + prefixLength;
+        result = prime * result + ((term == null) ? 0 : term.hashCode());
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        int h = term.hashCode();
-        h ^= maxEdits * 13 + prefixLength * 37;
-        return h;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanFuzzyQuery other = (SpanFuzzyQuery) obj;
+        if (maxEdits != other.maxEdits)
+            return false;
+        if (prefixLength != other.prefixLength)
+            return false;
+        if (term == null) {
+            if (other.term != null)
+                return false;
+        } else if (!term.equals(other.term))
+            return false;
+        return true;
     }
 
     @Override

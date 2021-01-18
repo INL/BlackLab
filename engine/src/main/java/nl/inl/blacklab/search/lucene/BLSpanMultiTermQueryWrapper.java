@@ -27,7 +27,7 @@ import nl.inl.util.StringUtil;
 /**
  * Subclasses SpanMultiTermQueryWrapper so it correctly produces BLSpanOrQuery
  * or BLSpanTermQuery.
- * 
+ *
  * @param <Q> the type of query we're wrapping
  */
 public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
@@ -50,7 +50,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         }
         this.query = new SpanMultiTermQueryWrapper<>(query);
     }
- 
+
     @Override
     public String toString(String field) {
         return "SPANWRAP(" + query.getWrappedQuery() + ")";
@@ -85,18 +85,27 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public int hashCode() {
-        return query.hashCode() ^ 0xB1ACC1AB;
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((query == null) ? 0 : query.hashCode());
+        return result;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof BLSpanMultiTermQueryWrapper) {
-            BLSpanMultiTermQueryWrapper<?> other = (BLSpanMultiTermQueryWrapper<?>) obj;
-            return query.equals(other.query);
-        }
-        return false;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        BLSpanMultiTermQueryWrapper<?> other = (BLSpanMultiTermQueryWrapper<?>) obj;
+        if (query == null) {
+            if (other.query != null)
+                return false;
+        } else if (!query.equals(other.query))
+            return false;
+        return true;
     }
 
     @Override
@@ -215,7 +224,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     /**
      * Count word characters in the regex.
-     * 
+     *
      * We use this to (gu)estimate how slow resolving the terms matching this regex will
      * likely be.
      *

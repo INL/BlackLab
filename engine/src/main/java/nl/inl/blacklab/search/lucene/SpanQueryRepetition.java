@@ -52,17 +52,6 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!super.equals(o))
-            return false;
-
-        final SpanQueryRepetition that = (SpanQueryRepetition) o;
-        return min == that.min && max == that.max;
-    }
-
-    @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery base = clauses.get(0);
         BLSpanQuery baseRewritten = base.rewrite(reader);
@@ -73,12 +62,12 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, min, max, base.getRealField()); 
+                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
                 return r;
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, n, n, base.getRealField()); 
+                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
                 return r;
             }
         } else if (baseRewritten.isSingleTokenNot() && min > 0) {
@@ -173,11 +162,27 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
 
     @Override
     public int hashCode() {
-        int h = clauses.hashCode();
-        h ^= (h << 10) | (h >>> 23);
-        h ^= min << 10;
-        h ^= max << 5;
-        return h;
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + max;
+        result = prime * result + min;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryRepetition other = (SpanQueryRepetition) obj;
+        if (max != other.max)
+            return false;
+        if (min != other.min)
+            return false;
+        return true;
     }
 
     @Override

@@ -130,24 +130,45 @@ public class SpanQueryTags extends BLSpanQuery {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((attr == null) ? 0 : attr.hashCode());
+        result = prime * result + ((clause == null) ? 0 : clause.hashCode());
+        result = prime * result + ((startTagFieldName == null) ? 0 : startTagFieldName.hashCode());
+        result = prime * result + ((tagName == null) ? 0 : tagName.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
             return true;
-        if (o == null || this.getClass() != o.getClass())
+        if (obj == null)
             return false;
-
-        final SpanQueryTags that = (SpanQueryTags) o;
-
-        if (!clause.equals(that.clause))
+        if (getClass() != obj.getClass())
             return false;
+        SpanQueryTags other = (SpanQueryTags) obj;
         if (attr == null) {
-            if (that.attr != null) {
+            if (other.attr != null)
                 return false;
-            }
-        } else if (!attr.equals(that.attr)) {
+        } else if (!attr.equals(other.attr))
             return false;
-        }
-
+        if (clause == null) {
+            if (other.clause != null)
+                return false;
+        } else if (!clause.equals(other.clause))
+            return false;
+        if (startTagFieldName == null) {
+            if (other.startTagFieldName != null)
+                return false;
+        } else if (!startTagFieldName.equals(other.startTagFieldName))
+            return false;
+        if (tagName == null) {
+            if (other.tagName != null)
+                return false;
+        } else if (!tagName.equals(other.tagName))
+            return false;
         return true;
     }
 
@@ -167,15 +188,6 @@ public class SpanQueryTags extends BLSpanQuery {
     @Override
     public String getRealField() {
         return startTagFieldName;
-    }
-
-    @Override
-    public int hashCode() {
-        int h = clause.hashCode();
-        if (attr != null)
-            h ^= attr.hashCode();
-        h ^= (h << 10) | (h >>> 23);
-        return h;
     }
 
     public String getElementName() {
@@ -231,7 +243,7 @@ public class SpanQueryTags extends BLSpanQuery {
     public int forwardMatchingCost() {
         return clause.forwardMatchingCost();
     }
-    
+
     @Override
     public void setQueryInfo(QueryInfo queryInfo) {
         super.setQueryInfo(queryInfo);

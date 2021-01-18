@@ -53,13 +53,13 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     public enum Direction {
         LEFT,
         RIGHT;
-        
+
         @Override
         public String toString() {
             return this == LEFT ? "L" : "R";
         }
     };
-    
+
     /** Whether to expand to left or right */
     Direction direction;
 
@@ -78,17 +78,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             throw new IllegalArgumentException("min > max");
         if (min < 0 || this.max < 0)
             throw new IllegalArgumentException("Expansions cannot be negative");
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!super.equals(o))
-            return false;
-
-        final SpanQueryExpansion that = (SpanQueryExpansion) o;
-        return direction == that.direction && min == that.min && max == that.max;
     }
 
     @Override
@@ -153,12 +142,30 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
 
     @Override
     public int hashCode() {
-        int h = clauses.hashCode();
-        h ^= (h << 10) | (h >>> 23);
-        h ^= min << 10;
-        h ^= max << 5;
-        h ^= direction.hashCode();
-        return h;
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((direction == null) ? 0 : direction.hashCode());
+        result = prime * result + max;
+        result = prime * result + min;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        SpanQueryExpansion other = (SpanQueryExpansion) obj;
+        if (direction != other.direction)
+            return false;
+        if (max != other.max)
+            return false;
+        if (min != other.min)
+            return false;
+        return true;
     }
 
     @Override
