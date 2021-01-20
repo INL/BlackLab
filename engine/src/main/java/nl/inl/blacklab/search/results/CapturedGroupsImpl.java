@@ -31,6 +31,16 @@ public class CapturedGroupsImpl implements CapturedGroups {
         capturedGroups.put(hit, groups);
     }
     
+    /** Copy all groups from other */
+    public void putAll(CapturedGroupsImpl other) {
+        this.capturedGroups.putAll(other.capturedGroups);
+    }
+    
+    /** Copy all groups from other */
+    public void putAll(Map<Hit, Span[]> other) {
+        this.capturedGroups.putAll(other);
+    }
+    
     /**
      * Get the group names
      * 

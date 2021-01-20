@@ -2,15 +2,19 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -23,6 +27,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -32,7 +37,7 @@ import nl.inl.util.BlockTimer;
 import nl.inl.util.ThreadPauser;
 
 public class HitsFromQueryParallel extends Hits {
-    private static class SpansReader2 implements Runnable {
+    private static class SpansReader implements Runnable {
         // Things to get results
         final HitQueryContext hitQueryContext;
         final LeafReaderContext leafReaderContext;
@@ -49,6 +54,8 @@ public class HitsFromQueryParallel extends Hits {
         final AtomicInteger globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
         private final List<Hit> globalResults; 
+        /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
+        private final CapturedGroupsImpl globalCapturedGroups;
 
         // Internal state
         private final ThreadPauser threadPauser = ThreadPauser.create();
@@ -58,14 +65,17 @@ public class HitsFromQueryParallel extends Hits {
         /**
          * 
          * @param spans
-         * @param context
+         * @param leafReaderContext
+         * @param capturedGroups 
          * @param globalHitsProcessed
          * @param globalHitsCounted
          */
-        public SpansReader2(
+        public SpansReader(
             BLSpans spans, 
-            LeafReaderContext context,
+            LeafReaderContext leafReaderContext,
+            HitQueryContext hitQueryContext,
             List<Hit> globalResults,
+            CapturedGroupsImpl globalCapturedGroups, 
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
             AtomicInteger globalHitsProcessed, 
@@ -74,10 +84,11 @@ public class HitsFromQueryParallel extends Hits {
             AtomicInteger globalHitsToCount
         ) {
             this.spans = spans;
-            this.hitQueryContext = new HitQueryContext(spans); // TODO something with capture groups?
-            this.leafReaderContext = context;
+            this.hitQueryContext = hitQueryContext;
+            this.leafReaderContext = leafReaderContext;
             
             this.globalResults = globalResults;
+            this.globalCapturedGroups = globalCapturedGroups;
             this.globalDocsProcessed = globalDocsProcessed;
             this.globalDocsCounted = globalDocsCounted;
             this.globalHitsProcessed = globalHitsProcessed;
@@ -116,7 +127,7 @@ public class HitsFromQueryParallel extends Hits {
         /**
          * Collect all hits from our spans object.
          * Updates the global counters, shared with other SpansReader objects operating on the same result set.
-         * Hits are periodically copied into the {@link SpansReader2#globalResults} list when a large enough batch has been gathered.
+         * Hits are periodically copied into the {@link SpansReader#globalResults} list when a large enough batch has been gathered.
          * 
          * Updating the maximums while this is running is allowed.
          */
@@ -125,28 +136,38 @@ public class HitsFromQueryParallel extends Hits {
             if (isDone)
                 return;
             
-            Bits liveDocs = leafReaderContext.reader().getLiveDocs();
-            List<Hit> results = new ArrayList<>();
+            final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
+            final Map<Hit, Span[]> capturedGroups = numCaptureGroups > 0 ? new HashMap<Hit, Span[]>() : null;
+            
+            final List<Hit> results = new ArrayList<>();
+            final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
+            final IntUnaryOperator incrementUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             
             try {
-                IntUnaryOperator incrementUntilMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c;
                 int prevDoc = spans.docID();
                 while (advanceSpansToNextHit(spans, liveDocs)) {
+                    // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
+                    final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementUnlessAtMax) < this.globalHitsToProcess.get(); 
                     final int doc = spans.docID() + docBase;
-                    final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementUntilMax) < this.globalHitsToProcess.get();
                     if (doc != prevDoc) {
                         globalDocsCounted.incrementAndGet();
                         if (storeThisHit) {
                             globalDocsProcessed.incrementAndGet();                            
                         }
-                        reportHitsIfMoreThan(results, 100); // only once per doc, so hits stay together in the master list
+                        reportHitsIfMoreThan(results, capturedGroups, 100); // only once per doc, so hits from the same doc remain contiguous in the master list
                         prevDoc = doc;
                     }
 
                     if (storeThisHit) {
                         int start = spans.startPosition();
                         int end = spans.endPosition();
-                        results.add(Hit.create(doc, start, end));
+                        Hit hit = Hit.create(doc, start, end); 
+                        results.add(hit);
+                        if (capturedGroups != null) {
+                            Span[] groups = new Span[numCaptureGroups];
+                            hitQueryContext.getCapturedGroups(groups);
+                            capturedGroups.put(hit, groups);
+                        }
                     }
 
                     // Stop if we're done.
@@ -162,18 +183,25 @@ public class HitsFromQueryParallel extends Hits {
                 throw BlackLabRuntimeException.wrap(e);
             } finally {
                 // write out leftover hits in last document/aborted document
-                reportHitsIfMoreThan(results, 0);
+                reportHitsIfMoreThan(results, capturedGroups, 0);
             }
             
             // If we're here, the loop reached its natural end - we're done.
             isDone = true;
         }
         
-        void reportHitsIfMoreThan(List<Hit> hits, int count) {
+        void reportHitsIfMoreThan(List<Hit> hits, Map<Hit, Span[]> capturedGroups, int count) {
             if (hits.size() >= count) {
                 synchronized (globalResults) {
                     globalResults.addAll(hits);
                     hits.clear();
+
+                    if (capturedGroups != null) {
+                        synchronized (globalCapturedGroups) {
+                            globalCapturedGroups.putAll(capturedGroups);
+                            capturedGroups.clear();
+                        }
+                    }
                 }
             }
         }
@@ -194,10 +222,13 @@ public class HitsFromQueryParallel extends Hits {
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
     protected final int maxHitsToCount;
     
+    
     // state
-    private final Lock ensureHitsReadLock = new ReentrantLock();
-    private boolean allSourceSpansFullyRead = false;
-    private List<SpansReader2> spansReaders = new ArrayList<>();
+    protected final HitQueryContext hitQueryContext = new HitQueryContext();
+    protected final Lock ensureHitsReadLock = new ReentrantLock();
+    protected final List<SpansReader> spansReaders = new ArrayList<>();
+//    protected final CapturedGroupsImpl capturedGroups;
+    protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
         super(queryInfo);
@@ -215,7 +246,7 @@ public class HitsFromQueryParallel extends Hits {
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;
         this.maxHitsToCount = configuredMaxHitsToCount;
-        
+                
         try {
             // Override FI match threshold? (debug use only!)
             synchronized(ClauseCombinerNfa.class) {
@@ -243,14 +274,28 @@ public class HitsFromQueryParallel extends Hits {
             }
 
             BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), false);
-
+            
+            // We need to know the captured group names before we can construct the SpansReaders (because they need them)
+            // But we only know the names after we iterated all leaves.
+            // So we need 2 iterations: one to get the names (this one), and one to construct the readers.
+            List<Pair<BLSpans, LeafReaderContext>> mySpans = new ArrayList<>();
+            for (LeafReaderContext leafReaderContext : reader.leaves()) {
+                BLSpans spans = weight.getSpans(leafReaderContext, Postings.OFFSETS);
+                spans.setHitQueryContext(this.hitQueryContext); // NOTE: modifies hitQueryContext object (adding the capture group names)
+                mySpans.add(Pair.of(spans, leafReaderContext));
+            }
+            
+            this.capturedGroups = new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames());
+            
             // Wrap each LeafReaderContext in a SpansReader
-            for (LeafReaderContext context : reader.leaves()) {
+            for (Pair<BLSpans, LeafReaderContext> spansAndContext : mySpans) {
                 spansReaders.add(
-                    new SpansReader2(
-                        weight.getSpans(context, Postings.OFFSETS), 
-                        context, 
+                    new SpansReader(
+                        spansAndContext.getLeft(),
+                        spansAndContext.getRight(),
+                        this.hitQueryContext,
                         this.results,
+                        this.capturedGroups,
                         this.globalDocsProcessed,
                         this.globalDocsCounted,
                         this.globalHitsProcessed, 
@@ -264,13 +309,6 @@ public class HitsFromQueryParallel extends Hits {
                 allSourceSpansFullyRead = true;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public MaxStats maxStats() {
-        synchronized(this.results) {
-            return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);
         }
     }
 
@@ -290,12 +328,12 @@ public class HitsFromQueryParallel extends Hits {
         
         boolean hasLock = false;
         try {
+            /*
+             * Another thread is already working on hits, we don't want to straight up block until it's done
+             * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+             * So instead poll our own state, then if we're still missing results after that just count them ourselves
+             */
             while (!ensureHitsReadLock.tryLock()) {
-                /*
-                 * Another thread is already working on hits, we don't want to straight up block until it's done
-                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
-                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
-                 */
                 synchronized(results) {
                     // synchronize on results just to be sure we're not getting invalid state while a worker thread is writing
                     if (allSourceSpansFullyRead || (results.size() >= number)) {
@@ -308,22 +346,23 @@ public class HitsFromQueryParallel extends Hits {
             // This is the blocking portion, retrieve all hits from the other threads.
             try (BlockTimer t = BlockTimer.create("ensureResultsRead " + number)) {
                 final ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
-                final List<Future<?>> pendingResults = new ArrayList<>();
-                for (SpansReader2 r : spansReaders) {
-                    pendingResults.add(executorService.submit(r));
-                }
-                for (Future<?> f : pendingResults) {
-                    f.get(); // wait for children to complete.
-                }
-                // remove all spansreaders that have finished.
-                Iterator<SpansReader2> it = spansReaders.iterator();
-                while (it.hasNext()) {
-                    if (it.next().isDone) it.remove();
-                }
-                this.allSourceSpansFullyRead = spansReaders.isEmpty();
                 
+                final AtomicInteger i = new AtomicInteger();
+                final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
+                List<Future<?>> pendingResults = spansReaders
+                    .stream()
+                    .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
+                    .values()
+                    .stream()
+                    .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
+                    .collect(Collectors.toList()); // gather the futures
+                
+                for (Future<?> f : pendingResults) { f.get(); } // wait for workers to complete. 
+                Iterator<SpansReader> it = spansReaders.iterator(); 
+                while (it.hasNext()) { if (it.next().isDone) it.remove(); } // remove all SpansReaders that have finished.
+                this.allSourceSpansFullyRead = spansReaders.isEmpty();
             } catch (Exception e) {
-                throw e.getCause(); // go to outer catch
+                throw e.getCause(); // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
             }
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
@@ -335,7 +374,13 @@ public class HitsFromQueryParallel extends Hits {
             if (hasLock) 
                 ensureHitsReadLock.unlock();
         }
-            
+    }
+    
+    @Override
+    public MaxStats maxStats() {
+        synchronized(this.results) {
+            return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);
+        }
     }
 
     @Override
