@@ -14,7 +14,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -66,9 +66,15 @@ public class HitsFromQueryParallel extends Hits {
          * 
          * @param spans
          * @param leafReaderContext
-         * @param capturedGroups 
+         * @param hitQueryContext
+         * @param globalResults
+         * @param globalCapturedGroups
+         * @param globalDocsProcessed
+         * @param globalDocsCounted
          * @param globalHitsProcessed
          * @param globalHitsCounted
+         * @param globalHitsToProcess
+         * @param globalHitsToCount
          */
         public SpansReader(
             BLSpans spans, 
@@ -111,8 +117,10 @@ public class HitsFromQueryParallel extends Hits {
             if (spans.docID() == DocIdSetIterator.NO_MORE_DOCS && spans.startPosition() == Spans.NO_MORE_POSITIONS)  
                 return false;
         
+            if (spans.docID() == -1)
+                spans.nextDoc();
             int start = spans.nextStartPosition();
-            while (start == Spans.NO_MORE_POSITIONS || start == -1) {
+            while (start == Spans.NO_MORE_POSITIONS) {
                 int doc = spans.nextDoc();
                 if (doc == DocIdSetIterator.NO_MORE_DOCS) {
                     return false;
@@ -246,7 +254,7 @@ public class HitsFromQueryParallel extends Hits {
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;
         this.maxHitsToCount = configuredMaxHitsToCount;
-                
+
         try {
             // Override FI match threshold? (debug use only!)
             synchronized(ClauseCombinerNfa.class) {
@@ -278,22 +286,31 @@ public class HitsFromQueryParallel extends Hits {
             // We need to know the captured group names before we can construct the SpansReaders (because they need them)
             // But we only know the names after we iterated all leaves.
             // So we need 2 iterations: one to get the names (this one), and one to construct the readers.
-            List<Pair<BLSpans, LeafReaderContext>> mySpans = new ArrayList<>();
+            List<Triple<BLSpans, LeafReaderContext, HitQueryContext>> mySpans = new ArrayList<>();
             for (LeafReaderContext leafReaderContext : reader.leaves()) {
                 BLSpans spans = weight.getSpans(leafReaderContext, Postings.OFFSETS);
-                spans.setHitQueryContext(this.hitQueryContext); // NOTE: modifies hitQueryContext object (adding the capture group names)
-                mySpans.add(Pair.of(spans, leafReaderContext));
+                if (spans == null)
+                    continue;
+                // NOTE: changes in copy from copyWith write through to source (this.hitQueryContext) 
+                // also the setter doesn't just set but also writes, so our HitQueryContext is populated through this call, adding the group names
+                HitQueryContext hitQueryContextForThisSpans = this.hitQueryContext.copyWith(spans);
+                spans.setHitQueryContext(hitQueryContextForThisSpans);
+                mySpans.add(Triple.of(spans, leafReaderContext, hitQueryContextForThisSpans));
             }
-            
-            this.capturedGroups = new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames());
+
+            // Needs to be null if unused!
+            this.capturedGroups = this.hitQueryContext.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames()) : null;
             
             // Wrap each LeafReaderContext in a SpansReader
-            for (Pair<BLSpans, LeafReaderContext> spansAndContext : mySpans) {
+            for (Triple<BLSpans, LeafReaderContext, HitQueryContext> spansAndAssociatedData : mySpans) {
+                final BLSpans spans = spansAndAssociatedData.getLeft();
+                final LeafReaderContext leafReaderContext = spansAndAssociatedData.getMiddle();
+                final HitQueryContext hitQueryContext = spansAndAssociatedData.getRight();
                 spansReaders.add(
                     new SpansReader(
-                        spansAndContext.getLeft(),
-                        spansAndContext.getRight(),
-                        this.hitQueryContext,
+                        spans,
+                        leafReaderContext,
+                        hitQueryContext,
                         this.results,
                         this.capturedGroups,
                         this.globalDocsProcessed,
