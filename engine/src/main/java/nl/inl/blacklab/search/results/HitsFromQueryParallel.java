@@ -204,7 +204,7 @@ public class HitsFromQueryParallel extends Hits {
                     globalResults.addAll(hits);
                     hits.clear();
 
-                    if (capturedGroups != null) {
+                    if (globalCapturedGroups != null) {
                         synchronized (globalCapturedGroups) {
                             globalCapturedGroups.putAll(capturedGroups);
                             capturedGroups.clear();
