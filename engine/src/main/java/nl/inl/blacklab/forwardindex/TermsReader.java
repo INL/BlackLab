@@ -15,6 +15,8 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import com.ibm.icu.text.RawCollationKey;
+
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -45,7 +47,7 @@ public class TermsReader extends Terms {
     final protected TObjectIntHashMap<byte[]> collationKey2TermDataGroupsIndex = new TObjectIntHashMap<byte[]>(10, 0.75f, -1) {
         // Important: override this!
         protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); }
-        protected boolean equals(Object notnull, Object two) { return two != null && Arrays.equals((byte[]) notnull, (byte[]) two); }
+        protected boolean equals(Object notnull, Object two) { return Arrays.equals((byte[]) notnull, (byte[]) two); }
     };
     /**
      * Go from a string to an index into this array through the {@link #stringHash2TermDataGroupsIndex} or {@link #collationKey2TermDataGroupsIndex}
@@ -193,14 +195,13 @@ public class TermsReader extends Terms {
         ib = null; // garbage collect option
 
 
-        TIntObjectHashMap<IntArrayList> stringHash2TermIds = new TIntObjectHashMap<>();
-        THashMap<byte[], IntArrayList> collationKeyBytes2TermIds = new THashMap<byte[], IntArrayList>() {
+        TIntObjectHashMap<IntArrayList> stringHash2TermIds = new TIntObjectHashMap<>(terms.length); // initialize at proper size, this avoid costly rehashing and saves ~30% time
+        THashMap<byte[], IntArrayList> collationKeyBytes2TermIds = new THashMap<byte[], IntArrayList>(terms.length) { // initialize at proper size, this avoid costly rehashing and saves ~30% time
             protected int hash(Object notnull) { return Arrays.hashCode((byte[]) notnull); };
+            protected boolean equals(Object notnull, Object two) { return Arrays.equals((byte[]) notnull, (byte[]) two); }
         };
 
-
         prepareMapping2TermIds(stringHash2TermIds, collationKeyBytes2TermIds);
-
         fillTermDataGroups(stringHash2TermIds, collationKeyBytes2TermIds, terms);
         final long[] chardataOffsets = fillTermCharData(terms);
         fillTermData(sortPositionSensitive, sortPositionInsensitive, chardataOffsets);
@@ -210,26 +211,34 @@ public class TermsReader extends Terms {
     }
 
     private void prepareMapping2TermIds(TIntObjectHashMap<IntArrayList> stringHash2TermIds, THashMap<byte[], IntArrayList> collationKeyBytes2TermIds) {
+        RawCollationKey rck = new RawCollationKey();
         for (int termId = 0; termId < terms.length; ++termId) {
             final String term = terms[termId];
-            final byte[] collationKeyBytes = collatorInsensitive.getCollationKey(term).toByteArray();
+            final byte[] collationKeyBytes = (rck = collatorInsensitive.getRawCollationKey(term, rck)).releaseBytes(); // don't just use .bytes, make a copy!
             final int hash = term.hashCode();
 
-            if (!stringHash2TermIds.containsKey(hash)) {
-                final IntArrayList newList = new IntArrayList(1);
-                newList.add(termId);
-                stringHash2TermIds.put(hash, newList);
+            // Optimize the common case (>99.9%) which is no collision.
+            // Just go ahead and assume we're creating a new entry, only fixing up our mistake if it turns out there was a collision
+            // This prevents an extra lookup in the list - which saves a noticeable amount of time when done millions of times.
+            IntArrayList newEntry = new IntArrayList(1);
+            newEntry.add(termId);
+            IntArrayList oldEntry = stringHash2TermIds.put(hash, newEntry);
+            if (oldEntry != null) {
+                newEntry.addAll(oldEntry);
+                newEntry.sortThis(); // this shouldn't be required, but just to be paranoid
+                
+                // We modified newEntry, so can't reuse it to insert into collationKeyBytes2TermIds
+                // Create a new array
+                // (only need to do this when modified in this manner).
+                newEntry = new IntArrayList(1);
+                newEntry.add(termId);
             }
-            else
-                stringHash2TermIds.get(hash).add(termId);
 
-            if (!collationKeyBytes2TermIds.containsKey(collationKeyBytes)) {
-                final IntArrayList newList = new IntArrayList(1);
-                newList.add(termId);
-                collationKeyBytes2TermIds.put(collationKeyBytes, newList);
+            oldEntry = collationKeyBytes2TermIds.put(collationKeyBytes, newEntry);
+            if (oldEntry != null) {
+                newEntry.addAll(oldEntry);
+                newEntry.sortThis(); // this shouldn't be required, but just to be paranoid
             }
-            else
-                collationKeyBytes2TermIds.get(collationKeyBytes).add(termId);
         }
     }
 
@@ -321,7 +330,6 @@ public class TermsReader extends Terms {
         // We have the term id, the terms[] array is still intact,
         // which means we can compute the other one and find it.
         // the hash is fairly fast too, so it shouldn't slow us down much.
-
         int collapsedGroups = 0;
         Iterator<Entry<byte[], IntArrayList>> it2 = collationKeyBytes2TermIds.entrySet().iterator();
         while (it2.hasNext()) {
@@ -347,11 +355,11 @@ public class TermsReader extends Terms {
                 termDataGroups[offset++] = termIds.get(i);
             }
         }
-
+    
         // Reclaim the size
         final int sizeBefore = termDataGroups.length;
         final int sizeAfter = offset;
-        logger.debug("Saving " + (sizeBefore - sizeAfter)/1024/1024*4 + "MB by collapsing " + collapsedGroups + " dataGroups - cool!");
+        logger.debug("Saving " + (sizeBefore - sizeAfter)/1024*4 + "KiB by collapsing " + collapsedGroups + " dataGroups - cool!");
         final int[] trimmedTermDataGroups = new int[sizeAfter];
         System.arraycopy(termDataGroups, 0, trimmedTermDataGroups, 0, sizeAfter);
         termDataGroups = trimmedTermDataGroups;
