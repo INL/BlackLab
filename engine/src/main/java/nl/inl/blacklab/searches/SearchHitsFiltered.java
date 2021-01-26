@@ -5,6 +5,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsFiltered extends SearchHits {
@@ -70,5 +71,10 @@ public class SearchHitsFiltered extends SearchHits {
     @Override
     public boolean isAnyTokenQuery() {
         return source.isAnyTokenQuery();
+    }
+
+    @Override
+    protected SearchSettings searchSettings() {
+        return source.searchSettings();
     }
 }

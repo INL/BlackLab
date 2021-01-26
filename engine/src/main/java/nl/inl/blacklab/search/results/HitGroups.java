@@ -65,8 +65,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
     }
 
-    public static HitGroups tokenFrequencies(QueryInfo queryInfo, Query filterQuery, HitProperty property, int maxHits) {
-        return HitGroupsTokenFrequencies.get(queryInfo, filterQuery, property, maxHits);
+    public static HitGroups tokenFrequencies(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty property, int maxHits) {
+        return HitGroupsTokenFrequencies.get(queryInfo, filterQuery, searchSettings, property, maxHits);
     }
 
     private HitProperty criteria;

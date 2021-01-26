@@ -368,7 +368,7 @@ public class SearchParameters {
         return debugMode ? getBoolean("usecache") : true;
     }
 
-    private SearchSettings getSearchSettings() {
+    public SearchSettings getSearchSettings() {
         int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
         int maxRetrieve = getInteger("maxretrieve");
         int maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
@@ -500,7 +500,7 @@ public class SearchParameters {
         return new HitGroupSettings(groupBy);
     }
 
-    private HitSortSettings hitsSortSettings() {
+    public HitSortSettings hitsSortSettings() {
         if (isDocsOperation)
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 

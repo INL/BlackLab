@@ -4,6 +4,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsSorted extends SearchHits {
@@ -56,5 +57,10 @@ public class SearchHitsSorted extends SearchHits {
     @Override
     public String toString() {
         return toString("sort", source, property);
+    }
+
+    @Override
+    protected SearchSettings searchSettings() {
+        return source.searchSettings();
     }
 }

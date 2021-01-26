@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -77,7 +79,7 @@ public class HitGroupsTokenFrequencies {
         }
     }
 
-    public static HitGroups get(QueryInfo queryInfo, Query filterQuery, HitProperty requestedGroupingProperty, int maxHits) {
+    public static HitGroups get(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty requestedGroupingProperty, int maxHitsPerGroup) {
         try {
             /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits (left) and number of docs (right) */
             final ConcurrentHashMap<GroupIdHash, MutablePair<Integer, Integer>> occurances = new ConcurrentHashMap<>();
@@ -195,7 +197,11 @@ public class HitGroupsTokenFrequencies {
                         });
                     }
                 } else {
-                    docIds.parallelStream().forEach(docId -> {
+                    final int maxHitsToProcess = searchSettings.maxHitsToProcess();
+                    final AtomicLong hitsProcessed = new AtomicLong();
+                    final LongUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v; 
+                    final long numberOfDocsProcessed = 
+                    docIds.parallelStream().filter(docId -> {
                         try {
                             
                             // Step 1: read all values for the to-be-grouped annotations for this document
@@ -230,6 +236,9 @@ public class HitGroupsTokenFrequencies {
                             HashSet<GroupIdHash> groupsInThisDocument = new HashSet<>();
                             try (BlockTimer f = c.child("Group tokens")) {
                                 for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
+                                    if (hitsProcessed.getAndUpdate(incrementUntilMax) >= maxHitsToProcess) 
+                                        return true;
+                                    
                                     // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                                     // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
                                     // so in essence it's also an "id", but a case-insensitive one.
@@ -258,13 +267,14 @@ public class HitGroupsTokenFrequencies {
                         } catch (IOException e) {
                             throw BlackLabRuntimeException.wrap(e);
                         }
-                    });
+                        return false;
+                    }).count();
+                    logger.trace("Number of processed docs: " + numberOfDocsProcessed);
                 }
             }
 
-            
             Set<PropertyValue> duplicateGroupsDebug = DEBUG ? new HashSet<PropertyValue>() : null;
-            
+
             List<HitGroup> groups; 
             try (final BlockTimer c = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
@@ -301,9 +311,7 @@ public class HitGroupsTokenFrequencies {
 
                     return new HitGroupWithoutResults(queryInfo, groupId, groupSizeHits, groupSizeDocs, false, false);
                 }).collect(Collectors.toList());
-                
             }
-
             logger.debug("fast path used for grouping");
             return HitGroups.fromList(queryInfo, groups, numberOfDocs, requestedGroupingProperty, null, null);
         } catch (IOException e) {

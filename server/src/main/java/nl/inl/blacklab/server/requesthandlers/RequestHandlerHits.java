@@ -55,7 +55,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
@@ -373,7 +372,13 @@ public class RequestHandlerHits extends RequestHandler {
         SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache(), searchLogger);
         QueryInfo queryInfo = QueryInfo.create(blIndex(), blIndex().mainAnnotatedField());
         BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
-        SearchHits hits = search.find(query, SearchSettings.defaults());
+        SearchHits hits = search.find(query, searchParam.getSearchSettings());
+        if (searchParam.hitsSortSettings() != null) {
+            hits = hits.sort(searchParam.hitsSortSettings().sortBy());
+        }
+        if (searchParam.getSampleSettings() != null) {
+            hits = hits.sample(searchParam.getSampleSettings());
+        }
         return hits;
     }
     

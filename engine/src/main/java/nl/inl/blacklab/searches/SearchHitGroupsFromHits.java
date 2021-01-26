@@ -15,7 +15,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     
     private HitProperty property;
     
-    private int maxHits;
+    private int maxResultsToStorePerGroup;
     
     private boolean useFastPath = false;
 
@@ -23,7 +23,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         super(queryInfo);
         this.source = hitsSearch;
         this.property = groupBy;
-        this.maxHits = maxResultsToStorePerGroup;
+        this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;
         this.useFastPath = fastPathAvailable();
     }
 
@@ -36,16 +36,16 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
         if (useFastPath) 
-            return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), property, maxHits);
+            return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), source.searchSettings(), property, maxResultsToStorePerGroup);
         else  // Just find all the hits and group them.
-            return HitGroups.fromHits(source.execute(), property, maxHits);
+            return HitGroups.fromHits(source.execute(), property, maxResultsToStorePerGroup);
     }
     
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + maxHits;
+        result = prime * result + maxResultsToStorePerGroup;
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + Boolean.hashCode(useFastPath);
@@ -61,7 +61,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         if (getClass() != obj.getClass())
             return false;
         SearchHitGroupsFromHits other = (SearchHitGroupsFromHits) obj;
-        if (maxHits != other.maxHits)
+        if (maxResultsToStorePerGroup != other.maxResultsToStorePerGroup)
             return false;
         if (property == null) {
             if (other.property != null)
@@ -80,7 +80,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
 
     @Override
     public String toString() {
-        return toString("group", source, property, maxHits);
+        return toString("group", source, property, maxResultsToStorePerGroup);
     }
     
     private boolean fastPathAvailable() {
@@ -93,7 +93,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * When using the fast path, backing hits are not stored in the groups.
      * This saves a large amount of memory and time, but transforms the query into more of a statistical view on the data
      * because the individual hits are lost. 
-     * Call this to disable the optimizations and store all Hits (up to maxHits).
+     * Call this to disable the optimizations and store all Hits (up to maxResultsToStorePerGroup).
      */
     public void forceStoreHits() {
         this.useFastPath = false;
