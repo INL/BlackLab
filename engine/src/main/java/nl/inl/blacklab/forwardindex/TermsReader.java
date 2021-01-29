@@ -15,8 +15,6 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import com.ibm.icu.text.RawCollationKey;
-
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.THashMap;
 import gnu.trove.map.hash.TIntIntHashMap;
@@ -82,7 +80,6 @@ public class TermsReader extends Terms {
         if (sensitivity.isCaseSensitive()) {
             results.add(getTermId(term, sensitivity));
         }
-
         // insensitive
         final int groupId = collationKey2TermDataGroupsIndex.get(collatorInsensitive.getCollationKey(term).toByteArray());
         if (groupId == -1) {
@@ -211,10 +208,9 @@ public class TermsReader extends Terms {
     }
 
     private void prepareMapping2TermIds(TIntObjectHashMap<IntArrayList> stringHash2TermIds, THashMap<byte[], IntArrayList> collationKeyBytes2TermIds) {
-        RawCollationKey rck = new RawCollationKey();
         for (int termId = 0; termId < terms.length; ++termId) {
             final String term = terms[termId];
-            final byte[] collationKeyBytes = (rck = collatorInsensitive.getRawCollationKey(term, rck)).releaseBytes(); // don't just use .bytes, make a copy!
+            final byte[] collationKeyBytes = collatorInsensitive.getCollationKey(term).toByteArray();
             final int hash = term.hashCode();
 
             // Optimize the common case (>99.9%) which is no collision.
