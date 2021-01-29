@@ -316,6 +316,8 @@ public final class LuceneUtil {
             if (!sensitive)
                 prefix = StringUtil.stripAccents(prefix).toLowerCase();
             Set<String> results = new TreeSet<>();
+            
+            outerLoop:
             for (LeafReaderContext leafReader : index.leaves()) {
                 Terms terms = leafReader.reader().terms(fieldName);
                 if (terms == null) {
@@ -331,20 +333,21 @@ public final class LuceneUtil {
                     continue;
                 }
                 for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
-                    if (maxResults < 0 || results.size() < maxResults) {
-                        String termText = term.utf8ToString();
-                        boolean startsWithPrefix = sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
-                                : termText.startsWith(prefix);
-                        if (!allTerms && !startsWithPrefix) {
-                            // Doesn't match prefix or different field; no more matches
-                            break;
-                        }
-                        // Match, add term
-                        if (!results.contains(termText))
-                            results.add(termText);
+                    if (maxResults > 0 && results.size() > maxResults)
+                        break outerLoop;
+                    
+                    String termText = term.utf8ToString();
+                    boolean startsWithPrefix = allTerms ? true : sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
+                            : termText.startsWith(prefix);
+                    if (!startsWithPrefix) {
+                        // Doesn't match prefix or different field; no more matches
+                        break;
                     }
+                    // Match, add term
+                    results.add(termText);
                 }
             }
+            
             return new ArrayList<>(results);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);

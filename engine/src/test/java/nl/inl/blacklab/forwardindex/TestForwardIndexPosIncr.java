@@ -16,12 +16,13 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.text.Collator;
 import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.util.UtilsForTesting;
 

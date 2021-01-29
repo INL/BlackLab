@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsWindow extends SearchHits {
@@ -57,5 +58,10 @@ public class SearchHitsWindow extends SearchHits {
     @Override
     public String toString() {
         return toString("window", source, first, number);
+    }
+
+    @Override
+    protected SearchSettings searchSettings() {
+        return source.searchSettings();
     }
 }

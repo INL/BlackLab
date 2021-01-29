@@ -1,8 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -12,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
@@ -51,10 +51,10 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();
-                rules = rules.replace("<'('<')'", ""); // Remove old rules for parentheses
-                rules = ", '(',')' " + rules; // Make parentheses ignorable characters
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
                 valueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
+            } catch (Exception e) {
                 // Oh well, we'll use the collator as-is
                 //throw new RuntimeException();//DEBUG
             }
@@ -216,8 +216,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             String luceneField = as.luceneField();
             if (annotationMatches(annotation.name(), showValuesFor)) {
                 boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                int maxValues = isInlineTagAnnotation ? -1 : MAX_FIELD_VALUES + 1;
-                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, maxValues);
+                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, MAX_FIELD_VALUES + 1); // 1 more to detect when we have all values or not
                 ds.startEntry("values").startList();
 
                 boolean valueListComplete = true;

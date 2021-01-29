@@ -1,7 +1,6 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.File;
-import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +10,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;

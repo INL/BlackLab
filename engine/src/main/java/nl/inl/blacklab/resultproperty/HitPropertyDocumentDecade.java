@@ -121,5 +121,9 @@ public class HitPropertyDocumentDecade extends HitProperty {
     public PropertyValue docPropValues(PropertyValue value) {
         return value;
     }
-    
+
+    @Override
+    public boolean isDocPropOrHitText() {
+        return true;
+    }
 }

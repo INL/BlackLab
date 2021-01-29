@@ -1,10 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -89,35 +92,49 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
         
         ds.endMap().endEntry();
-
         searchLogger.setResultsFound(groups.size());
-        
-        int i = 0;
+
+        /* Gather group values per property:
+         * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
+         * contain the sub properties and values in the same order.
+         */
+        boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
+        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+
         ds.startEntry("docGroups").startList();
-        for (DocGroup group : groups) {
-            if (i >= first && i < first + number) {
+        int last = Math.min(first + number, groups.size());
+        for (int i = first; i < last; ++i) {
+            DocGroup group = groups.get(i);
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : Arrays.asList(group.identity());
+
+            ds.startItem("docgroup").startMap()
+                    .entry("identity", group.identity().serialize())
+                    .entry("identityDisplay", group.identity().toString())
+                    .entry("size", group.size());
+
+            // Write the raw values for this group
+            ds.startEntry("properties").startList();
+            for (int j = 0; j < prop.size(); ++j) {
+                final DocProperty hp = prop.get(j);
+                final PropertyValue pv = valuesForGroup.get(j);
                 
-                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && hasPattern) {
+                ds.startItem("property").startMap();
+                ds.entry("name", hp.serialize());
+                ds.entry("value", pv.toString());
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+
+            if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
+                ds.entry("numberOfTokens", group.totalTokens());
+                if (hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
                     subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
+                    addSubcorpusSize(ds, subcorpusSize);
                 }
-                
-                long numberOfTokens = group.totalTokens();
-                
-                ds.startItem("docgroup").startMap()
-                        .entry("identity", group.identity().serialize())
-                        .entry("identityDisplay", group.identity().toString())
-                        .entry("size", group.size());
-                if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-                    ds.entry("numberOfTokens", numberOfTokens);
-                    if (hasPattern) {
-                        addSubcorpusSize(ds, subcorpusSize);
-                    }
-                }
-                ds.endMap().endItem();
             }
-            i++;
+            ds.endMap().endItem();
         }
         ds.endList().endEntry();
 

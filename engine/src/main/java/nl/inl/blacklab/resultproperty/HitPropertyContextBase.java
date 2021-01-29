@@ -102,6 +102,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
     public List<Annotation> needsContext() {
         return Arrays.asList(annotation);
     }
+    
+    @Override
+    public List<MatchSensitivity> getSensitivities() {
+        return Arrays.asList(sensitivity);
+    }
 
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {

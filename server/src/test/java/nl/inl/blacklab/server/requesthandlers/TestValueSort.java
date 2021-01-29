@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,6 +10,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import com.ibm.icu.text.Collator;
 
 public class TestValueSort {
 

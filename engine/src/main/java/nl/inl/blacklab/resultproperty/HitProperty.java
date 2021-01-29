@@ -27,6 +27,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -235,6 +236,16 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     /**
+     * Return the required sensitivies for all Annotations that require context.
+     * Sensitivies are returned in the same order as the annotations are returned from {@link #needsContext()}
+     * 
+     * @return null if no context is required.
+     */
+    public List<MatchSensitivity> getSensitivities() {
+        return null;
+    }
+
+    /**
      * If this property need context(s), how large should they be?
      * 
      * @param index index, so we can find the default context size if we need to 
@@ -326,7 +337,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
      * return the latter as a DocPropertyStoredField.
      * 
-     * This is used for calculting the relative frequency when grouping on a metadata field.
+     * This is used for calculating the relative frequency when grouping on a metadata field.
      * 
      * @return metadata portion of this property, or null if there is none
      */
@@ -350,11 +361,10 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     /**
-     * Does this represent the hit text for one or more annotations?
+     * Does this property only use the hit's direct annotations (word, lemma, etc... not surrounding context) and/or properties of the hit's document (metadata). 
+     * For example, as derived statistic (such as group size, document length, decade) should return FALSE here. 
+     * Properties that just read docValues and such should return TRUE.
      * @return true if it does, false if not
      */
-    public boolean isAnnotationsHitText() {
-        return false;
-    }
-
+    public abstract boolean isDocPropOrHitText();
 }

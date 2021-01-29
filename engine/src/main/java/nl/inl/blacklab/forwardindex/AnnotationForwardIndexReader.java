@@ -213,38 +213,41 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int fiid, int[] starts, int[] ends) {
         if (!initialized)
             initialize();
 
         if (deleted[fiid] != 0)
             return null;
 
-        int n = start.length;
-        if (n != end.length)
+        int n = starts.length;
+        if (n != ends.length)
             throw new IllegalArgumentException("start and end must be of equal length");
         List<int[]> result = new ArrayList<>(n);
 
         for (int i = 0; i < n; i++) {
-            if (start[i] == -1)
-                start[i] = 0;
-            if (end[i] == -1)
-                end[i] = length[fiid];
-            if (start[i] < 0 || end[i] < 0) {
-                throw new IllegalArgumentException("Illegal values, start = " + start[i] + ", end = "
-                        + end[i]);
+            int start = starts[i]; // don't modify the start/end array contents!
+            int end = ends[i];
+            
+            if (start == -1)
+                start = 0;
+            if (end == -1)
+                end = length[fiid];
+            if (start < 0 || end < 0) {
+                throw new IllegalArgumentException("Illegal values, start = " + start + ", end = "
+                        + end);
             }
-            if (end[i] > length[fiid]) // Can happen while making KWICs because we don't know the
+            if (end > length[fiid]) // Can happen while making KWICs because we don't know the
                                    // doc length until here
-                end[i] = length[fiid];
-            if (start[i] > length[fiid] || end[i] > length[fiid]) {
-                throw new IllegalArgumentException("Value(s) out of range, start = " + start[i]
-                        + ", end = " + end[i] + ", content length = " + length[fiid]);
+                end = length[fiid];
+            if (start > length[fiid] || end > length[fiid]) {
+                throw new IllegalArgumentException("Value(s) out of range, start = " + start
+                        + ", end = " + end + ", content length = " + length[fiid]);
             }
-            if (end[i] <= start[i]) {
+            if (end <= start) {
                 throw new IllegalArgumentException(
-                        "Tried to read empty or negative length snippet (from " + start[i]
-                                + " to " + end[i] + ")");
+                        "Tried to read empty or negative length snippet (from " + start
+                                + " to " + end + ")");
             }
 
             // Get an IntBuffer to read the desired content
@@ -260,8 +263,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + start[i] * SIZEOF_INT
-                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end[i]
+                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
                                 * SIZEOF_INT) {
                     // This one!
                     whichChunk = buffer;
@@ -276,12 +279,12 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             ((Buffer)whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
             ib = whichChunk.asIntBuffer();
 
-            int snippetLength = end[i] - start[i];
+            int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
 
             // The file is mem-mapped (search mode).
             // Position us at the correct place in the file.
-            ((Buffer)ib).position(start[i]);
+            ib.position(start);
             ib.get(snippet);
             result.add(snippet);
         }

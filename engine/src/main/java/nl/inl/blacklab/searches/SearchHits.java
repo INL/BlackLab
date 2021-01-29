@@ -10,6 +10,7 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchResults<Hits> {
@@ -111,5 +112,6 @@ public abstract class SearchHits extends SearchResults<Hits> {
     protected Query getFilterQuery() {
         return null;
     }
-
+    
+    protected abstract SearchSettings searchSettings();
 }

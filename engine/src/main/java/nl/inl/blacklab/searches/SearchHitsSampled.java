@@ -4,6 +4,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
 public class SearchHitsSampled extends SearchHits {
@@ -56,5 +57,10 @@ public class SearchHitsSampled extends SearchHits {
     @Override
     public String toString() {
         return toString("sample", source, sampleParameters);
+    }
+
+    @Override
+    protected SearchSettings searchSettings() {
+        return source.searchSettings();
     }
 }

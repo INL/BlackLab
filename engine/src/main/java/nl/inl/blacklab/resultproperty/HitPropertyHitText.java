@@ -114,10 +114,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         }
         return reverse ? -1 : 1; // a longer than b => a > b
     }
-
-    @Override
-    public boolean isAnnotationsHitText() {
+    
+    public boolean isDocPropOrHitText() {
         return true;
     }
-    
 }

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.nio.charset.StandardCharsets;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -9,6 +8,8 @@ import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -60,11 +61,11 @@ public class TestCollators {
         //       We don't yet know the first Java version where it succeeds; could be 9, 10 or 11.
         //       If you're trying to build BlackLab on an older Java version and it fails because of this test, you can try @Ignoring it and you
         //       might be fine, depending on your corpus data.
-        Assert.assertEquals(1, getBlackLabCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(-1, getBlackLabCollator().compare(zalgo1, zalgo2));
     }
 
     public void testZalgoTextWithDefaultCollator() {
         // This should succeed, even on Java 8, but is here just for completeness.
-        Assert.assertEquals(1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(-1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
     }
 }

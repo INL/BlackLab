@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -181,6 +182,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 return rewrCl.get(0).inverted().rewrite(reader);
             BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
             return r;
+        }
+
+        if (rewrCl.size() > 1) {
+            // If there's more than one positive clause, remove the super general "match all" clause.
+            rewrCl = rewrCl.stream().filter(cl -> !(cl instanceof SpanQueryAnyToken)).collect(Collectors.toList());
         }
 
         if (rewrCl.size() == 1 && rewrNotCl.isEmpty()) {
