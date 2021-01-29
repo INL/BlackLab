@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.search.Query;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
@@ -49,8 +50,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
      * @param windowStats what groups window this is, or null if not applicable
      * @return grouped hits
      */
-    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, Integer totalDocs, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
-        return new HitGroups(queryInfo, results, totalDocs, groupCriteria, sampleParameters, windowStats);
+    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
+        return new HitGroups(queryInfo, results, groupCriteria, sampleParameters, windowStats, hitsStats, docsStats);
     }
 
     /**
@@ -74,21 +75,20 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     /**
      * The groups.
      */
-    // private Map<PropertyValue, HitGroup> groups = new HashMap<>();
     private Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /**
-     * Total number of hits.
+     * Total number of results in the source set of hits. 
+     * Note that unlike other Hits instances (samples/sorts/windows), we should safely be able to copy these from our source, 
+     * because hits are always fully read before constructing groups.
      */
-    private int totalHits = 0;
-    
-    /** 
-     * Total number of documents, if known. Null if unknown.
-     * When initially constructing HitGroups, the number of documents in some cases is known,
-     * and so can be stored as an optimization for when result statistics need to be computed.
-     * When the groups are filtered, sampled, windowed or otherwise refined, will be set to null.
+    protected final ResultsStats hitsStats;
+    /**
+     * Total number of results in the source set of hits. 
+     * Note that unlike other Hits instances (samples/sorts/windows), we should safely be able to copy these from our source, 
+     * because hits are always fully read before constructing groups.
      */
-    private Integer totalDocs = 0;
+    protected final ResultsStats docsStats;
 
     /**
      * Size of the largest group.
@@ -141,7 +141,6 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             if (groupSize > largestGroupSize)
                 largestGroupSize = groupSize;
             groupSizes.put(identity, groupSize);
-            totalHits++;
         }
         resultObjects += groupLists.size();
         for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
@@ -152,34 +151,29 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             groups.put(groupId, group);
             results.add(group);
         }
-        
-        this.totalDocs = hits.docsCountedTotal();
+
+        // Make a copy so we don't keep any references to the source hits
+        this.hitsStats = hits.hitsStats().save();
+        this.docsStats = hits.docsStats().save();
     }
 
-    /**
-     * 
-     * @param queryInfo
-     * @param groups
-     * @param totalDocs null if unknown
-     * @param groupCriteria
-     * @param sampleParameters
-     * @param windowStats
-     */
-    protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, Integer totalDocs, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats) {
+    protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
         super(queryInfo);
         this.criteria = groupCriteria;
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        this.totalDocs = totalDocs;
         resultObjects = 0;
         for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
-            totalHits += group.size();
             results.add(group);
             this.groups.put(group.identity(), group);
             resultObjects += group.numberOfStoredResults() + 1;
         }
+
+        // Make a copy so we don't keep any references to the source hits
+        this.hitsStats = hitsStats.save();
+        this.docsStats = docsStats.save();
     }
 
 
@@ -191,7 +185,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     @Override
     public <P extends ResultProperty<HitGroup>> HitGroups sort(P sortProp) {
         List<HitGroup> sorted = Results.doSort(this, sortProp);
-        return HitGroups.fromList(queryInfo(), sorted, totalDocs, criteria, (SampleParameters)null, (WindowStats)null);
+        // Sorted contains the same hits as us, so we can pass on our result statistics.
+        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null, hitsStats, docsStats);
     }
 
     @Override
@@ -208,8 +203,8 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
         List<HitGroup> sample = Results.doSample(this, sampleParameters);
-        Integer totalDocuments = getDocsCount(sample);
-        return HitGroups.fromList(queryInfo(), sample, totalDocuments, groupCriteria(), sampleParameters, (WindowStats)null);
+        Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
+        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, (WindowStats)null, stats.getLeft(), stats.getRight());
     }
 
     /**
@@ -219,7 +214,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
      */
     @Override
     public int sumOfGroupSizes() {
-        return totalHits;
+        return hitsStats.countedTotal();
     }
 
     /**
@@ -262,15 +257,16 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        Integer totalDocuments = getDocsCount(resultsWindow);
-        return HitGroups.fromList(queryInfo(), resultsWindow, totalDocuments, criteria, (SampleParameters)null, windowStats);
+        // Note: a window is just a subset of the total result set.
+        // We shouldn't recalculate the totals, as windows are "transparent"
+        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
     }
 
     @Override
     public HitGroups filter(ResultProperty<HitGroup> property, PropertyValue value) {
         List<HitGroup> list = Results.doFilter(this, property, value);
-        Integer totalDocuments = getDocsCount(list);  
-        return HitGroups.fromList(queryInfo(), list, totalDocuments, groupCriteria(), (SampleParameters)null, (WindowStats)null);
+        Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
+        return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null, stats.getLeft(), stats.getRight());
     }
 
     @Override
@@ -287,7 +283,16 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return HitGroups.fromList(queryInfo(), truncatedGroups, null, criteria, (SampleParameters)null, windowStats);
+
+        // Since we truncated hits, the number of "processed" (aka stored) hits has changed
+        // So recalculate
+        Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(truncatedGroups, this.hitsStats.maxStats(), this.docsStats.maxStats());
+
+        // Merge back in the count amounts, as those didn't change, but getStatsOfSample can't accurately get a docs count if not all hits are present any more
+        // So we need to copy back in the original docs count.
+        ResultsStats hitsStats = new ResultsStatsStatic(stats.getLeft().processedTotal(), this.hitsStats.countedTotal(), this.hitsStats.maxStats());
+        ResultsStats docsStats = new ResultsStatsStatic(stats.getRight().processedTotal(), this.docsStats.countedTotal(), this.docsStats.maxStats());
+        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats, hitsStats, docsStats);
     }
 
     @Override
@@ -307,106 +312,42 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
 
     /** 
      * Get document stats for these groups, if available. 
-     * 
-     * @return stats if document counts are known (groups not filtered/sampled/truncated), null otherwise.
+     * NOTE: docsCounted will return -1 if this HitGroups instance is a sample and hasn't got all hits stored 
+     * (it is impossible to count accurately in that case as one document may be in more than one group)
+     * @return stats 
      */
     public ResultsStats docsStats() {
-        if (totalDocs == null) {
-            return null;
-        }
-        return new ResultsStats() {
-            @Override
-            public int processedTotal() {
-                return HitGroups.this.totalDocs;
-            }
-            
-            @Override
-            public int processedSoFar() {
-                return processedTotal();
-            }
-            
-            @Override
-            public boolean processedAtLeast(int lowerBound) {
-                return processedTotal() >= lowerBound;
-            }
-            
-            @Override
-            public MaxStats maxStats() {
-                return new MaxStats(false, false); // TODO 
-            }
-            
-            @Override
-            public boolean done() {
-                return true;
-            }
-            
-            @Override
-            public int countedTotal() {
-                return processedTotal();
-            }
-            
-            @Override
-            public int countedSoFar() {
-                return processedTotal();
-            }
-        };
+        return docsStats;
     }
     
     public ResultsStats hitsStats() {
-        return new ResultsStats() {
-            
-            @Override
-            public int processedTotal() {
-                return HitGroups.this.totalHits;
-            }
-            
-            @Override
-            public int processedSoFar() {
-                return processedTotal();
-            }
-            
-            @Override
-            public boolean processedAtLeast(int lowerBound) {
-                return processedTotal() >= lowerBound;
-            }
-            
-            @Override
-            public MaxStats maxStats() {
-                return new MaxStats(false, false); // TODO 
-            }
-            
-            @Override
-            public boolean done() {
-                return true;
-            }
-            
-            @Override
-            public int countedTotal() {
-                return processedTotal();
-            }
-            
-            @Override
-            public int countedSoFar() {
-                return processedTotal();
-            }
-        };
+        return hitsStats;
     }
-    
-    /** Compute total number of documents in the groups, only works if all hits are stored. Null is returned when not all hits are accounted for */ 
-    private static Integer getDocsCount(List<HitGroup> groups) {
-        Integer totalDocuments = 0;
+
+    /**
+     * Compute total number of hits & documents in the sample
+     * NOTE: docsStats might return -1 for totalDocsCounted if not all hits are stored/retrieved
+     *  
+     * @param sample a sample of the full results set
+     * @param maxHitsStatsOfSource copied from source of sample. Since if the source hit the limits, then it follows that the sample is also limited
+     * @param maxDocsStatsOfSource copied from source of sample. Since if the source hit the limits, then it follows that the sample is also limited
+     * @return hitsStats in left, docsStats in right
+     */
+    private static Pair<ResultsStats, ResultsStats> getStatsOfSample(List<HitGroup> sample, MaxStats maxHitsStatsOfSource, MaxStats maxDocsStatsOfSource) {
+        int hitsCounted = 0;
+        int hitsRetrieved = 0;
+        int docsRetrieved = 0;
+        
         IntHashSet docs = new IntHashSet();
-        for (HitGroup h : groups) {
-            if (h.numberOfStoredResults() != h.size()) {
-                totalDocuments = null;
-                break;
-            }
+        for (HitGroup h : sample) {
+            hitsCounted += h.size();
             for (Hit hh : h.storedResults()) {
+                ++hitsRetrieved;
                 if (docs.add(hh.doc())) 
-                    ++totalDocuments;
+                    ++docsRetrieved;
             }
         }
-        
-        return totalDocuments;
+        boolean allHitsRetrieved = hitsRetrieved == hitsCounted;
+        return Pair.of(new ResultsStatsStatic(hitsRetrieved, hitsCounted, maxHitsStatsOfSource), new ResultsStatsStatic(docsRetrieved, allHitsRetrieved ? docsRetrieved : -1, maxDocsStatsOfSource));        
     }
 }

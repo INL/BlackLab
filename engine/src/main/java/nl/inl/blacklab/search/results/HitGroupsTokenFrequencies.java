@@ -7,8 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.LongUnaryOperator;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -130,11 +131,11 @@ public class HitGroupsTokenFrequencies {
                     }
                 }
             }
-            
-            
 
             final int numAnnotations = hitProperties.size();
-            int numberOfDocs;
+            long numberOfDocsProcessed;
+            final AtomicInteger numberOfHitsProcessed = new AtomicInteger();
+            final AtomicBoolean hitMaxHitsToProcess = new AtomicBoolean(false);
 
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
                 final List<Integer> docIds = new ArrayList<>();
@@ -162,7 +163,7 @@ public class HitGroupsTokenFrequencies {
                 }
 
                 
-                numberOfDocs = docIds.size();
+                numberOfDocsProcessed = docIds.size();
                 final IndexReader reader = queryInfo.index().reader();
                 final int[] minusOne = new int[] { -1 };
 
@@ -182,7 +183,9 @@ public class HitGroupsTokenFrequencies {
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
                             final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
-                        
+
+                            numberOfHitsProcessed.addAndGet(docLength);
+
                             // Add all tokens in document to the group.
                             final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray, emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
                             occurances.compute(groupId, (__, groupSizes) -> {
@@ -198,9 +201,8 @@ public class HitGroupsTokenFrequencies {
                     }
                 } else {
                     final int maxHitsToProcess = searchSettings.maxHitsToProcess();
-                    final AtomicLong hitsProcessed = new AtomicLong();
-                    final LongUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v; 
-                    final long numberOfDocsProcessed = 
+                    final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v; 
+                    numberOfDocsProcessed = 
                     docIds.parallelStream().filter(docId -> {
                         try {
                             
@@ -236,8 +238,11 @@ public class HitGroupsTokenFrequencies {
                             HashSet<GroupIdHash> groupsInThisDocument = new HashSet<>();
                             try (BlockTimer f = c.child("Group tokens")) {
                                 for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
-                                    if (hitsProcessed.getAndUpdate(incrementUntilMax) >= maxHitsToProcess) 
-                                        return true;
+                                    if (numberOfHitsProcessed.getAndUpdate(incrementUntilMax) >= maxHitsToProcess) {
+                                        hitMaxHitsToProcess.set(true);
+                                        return tokenIndex > 0; // true if any token of this document made the cut, false if we escaped immediately
+                                    }
+                                
                                     
                                     // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                                     // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
@@ -267,7 +272,7 @@ public class HitGroupsTokenFrequencies {
                         } catch (IOException e) {
                             throw BlackLabRuntimeException.wrap(e);
                         }
-                        return false;
+                        return true;
                     }).count();
                     logger.trace("Number of processed docs: " + numberOfDocsProcessed);
                 }
@@ -313,7 +318,10 @@ public class HitGroupsTokenFrequencies {
                 }).collect(Collectors.toList());
             }
             logger.debug("fast path used for grouping");
-            return HitGroups.fromList(queryInfo, groups, numberOfDocs, requestedGroupingProperty, null, null);
+            
+            ResultsStats hitsStats = new ResultsStatsStatic(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
+            ResultsStats docsStats = new ResultsStatsStatic((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
+            return HitGroups.fromList(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats);
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

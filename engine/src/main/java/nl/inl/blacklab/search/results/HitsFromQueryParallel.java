@@ -235,7 +235,6 @@ public class HitsFromQueryParallel extends Hits {
     protected final HitQueryContext hitQueryContext = new HitQueryContext();
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
-//    protected final CapturedGroupsImpl capturedGroups;
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
