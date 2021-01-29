@@ -200,7 +200,7 @@ public class HitGroupsTokenFrequencies {
                         });
                     }
                 } else {
-                    final int maxHitsToProcess = searchSettings.maxHitsToProcess();
+                    final int maxHitsToProcess = searchSettings.maxHitsToProcess() > 0 ? searchSettings.maxHitsToProcess() : Integer.MAX_VALUE; 
                     final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v; 
                     numberOfDocsProcessed = 
                     docIds.parallelStream().filter(docId -> {
