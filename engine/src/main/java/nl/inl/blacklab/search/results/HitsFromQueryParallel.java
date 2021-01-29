@@ -117,11 +117,13 @@ public class HitsFromQueryParallel extends Hits {
             if (spans.docID() == DocIdSetIterator.NO_MORE_DOCS && spans.startPosition() == Spans.NO_MORE_POSITIONS)  
                 return false;
         
-            if (spans.docID() == -1)
+            int doc = spans.docID();
+            if (doc == -1) // initial document
                 spans.nextDoc();
+
             int start = spans.nextStartPosition();
-            while (start == Spans.NO_MORE_POSITIONS) {
-                int doc = spans.nextDoc();
+            while (start == Spans.NO_MORE_POSITIONS || (liveDocs != null && !liveDocs.get(spans.docID()))) {
+                doc = spans.nextDoc();
                 if (doc == DocIdSetIterator.NO_MORE_DOCS) {
                     return false;
                 }
