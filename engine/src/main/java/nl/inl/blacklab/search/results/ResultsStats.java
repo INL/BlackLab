@@ -65,12 +65,4 @@ public abstract class ResultsStats {
         return false;
     }
     
-    public static ResultsStats combine(ResultsStats a, ResultsStats b) {    
-        return new ResultsStatsStatic(a.processedTotal() + b.processedTotal(), a.countedTotal() + b.countedTotal(), 
-            new MaxStats(
-                a.maxStats().hitsProcessedExceededMaximum() || b.maxStats().hitsProcessedExceededMaximum(),
-                a.maxStats().hitsCountedExceededMaximum() || b.maxStats().hitsCountedExceededMaximum()
-            )
-        );
-    }
 }

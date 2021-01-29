@@ -147,7 +147,6 @@ public class RequestHandlerHits extends RequestHandler {
             totalTokens = perDocResults.subcorpusSize().getTokens();
         }
 
-
         searchLogger.setResultsFound(hitsCount.processedSoFar());
 
         // Search is done; construct the results object

@@ -139,7 +139,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     }
                 }
                 ds.endMap().endItem();
-
             }
         }
         ds.endList().endEntry();

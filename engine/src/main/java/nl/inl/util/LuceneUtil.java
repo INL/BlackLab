@@ -315,7 +315,6 @@ public final class LuceneUtil {
         try {
             if (!sensitive)
                 prefix = StringUtil.stripAccents(prefix).toLowerCase();
-            
             Set<String> results = new TreeSet<>();
             
             outerLoop:

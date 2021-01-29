@@ -23,7 +23,7 @@ public class Collators {
         super();
         this.version = version;
         try {
-            sensitive = (Collator) base.clone();            
+            sensitive = (Collator) base.clone();
             sensitive.setStrength(Collator.TERTIARY);
             insensitive = desensitize((RuleBasedCollator) base.clone(), version);
         } catch (CloneNotSupportedException e) {

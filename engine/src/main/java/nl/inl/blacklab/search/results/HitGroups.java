@@ -311,7 +311,7 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     /** 
-     * Get document stats for these groups, if available. 
+     * Get document stats for these groups.
      * NOTE: docsCounted will return -1 if this HitGroups instance is a sample and hasn't got all hits stored 
      * (it is impossible to count accurately in that case as one document may be in more than one group)
      * @return stats 

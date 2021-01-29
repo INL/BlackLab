@@ -55,13 +55,5 @@ public class DocGroup extends Group<DocResult> {
     public long totalTokens() {
         return totalTokens;
     }
-    
-    @Override
-    public ResultsStats hitsStats() {
-        ResultsStats s = null;
-        for (DocResult r : storedResults()) {
-            s = ResultsStats.combine(r.hitsStats(), s);
-        }
-        return s;
-    }
+
 }

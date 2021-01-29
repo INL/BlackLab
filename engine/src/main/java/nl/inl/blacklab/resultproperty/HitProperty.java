@@ -362,6 +362,8 @@ public abstract class HitProperty implements ResultProperty<Hit> {
 
     /**
      * Does this property only use the hit's direct annotations (word, lemma, etc... not surrounding context) and/or properties of the hit's document (metadata). 
+     * For example, as derived statistic (such as group size, document length, decade) should return FALSE here. 
+     * Properties that just read docValues and such should return TRUE.
      * @return true if it does, false if not
      */
     public abstract boolean isDocPropOrHitText();

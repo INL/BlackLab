@@ -203,4 +203,5 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
             return false;
         return true;
     }
+
 }

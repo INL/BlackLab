@@ -73,7 +73,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
-
+        
         // The list of groups found
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
@@ -84,13 +84,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpus = searchMan.search(user, searchParam.subcorpus());
             subcorpusSize = subcorpus.subcorpusSize();
         }
-
+        
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
-
+        
         ds.endMap().endEntry();
         searchLogger.setResultsFound(groups.size());
 
