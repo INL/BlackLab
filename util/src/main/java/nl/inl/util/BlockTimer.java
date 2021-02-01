@@ -1,9 +1,8 @@
 package nl.inl.util;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -61,7 +60,7 @@ public class BlockTimer implements AutoCloseable {
         private int childTimeInOwnThread = 0;
         
         private List<BlockTimer> instances = new ArrayList<>();
-        private final Map<String, TimerGroup> children = new HashMap<>();
+        private final ConcurrentHashMap<String, TimerGroup> children = new ConcurrentHashMap<>();
 
         
         private TimerGroup(String message, TimerGroup parent) {
