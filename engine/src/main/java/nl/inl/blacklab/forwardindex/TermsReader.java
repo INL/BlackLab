@@ -222,14 +222,10 @@ public class TermsReader extends Terms {
             if (oldEntry != null) {
                 newEntry.addAll(oldEntry);
                 newEntry.sortThis(); // this shouldn't be required, but just to be paranoid
-                
-                // We modified newEntry, so can't reuse it to insert into collationKeyBytes2TermIds
-                // Create a new array
-                // (only need to do this when modified in this manner).
-                newEntry = new IntArrayList(1);
-                newEntry.add(termId);
             }
 
+            newEntry = new IntArrayList(1);
+            newEntry.add(termId);
             oldEntry = collationKeyBytes2TermIds.put(collationKeyBytes, newEntry);
             if (oldEntry != null) {
                 newEntry.addAll(oldEntry);
