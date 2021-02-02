@@ -43,10 +43,12 @@ public class TestQueryRewriteNfa {
         testIndex = new TestIndex();
         index = testIndex.index();
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
+        ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(false);
     }
 
     @AfterClass
     public static void tearDown() {
+        ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(true);
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
         if (index != null)
             index.close();

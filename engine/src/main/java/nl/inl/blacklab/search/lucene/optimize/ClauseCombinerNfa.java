@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
+import nl.inl.util.LuceneUtil;
 
 /**
  * Converts one clause to an NFA and uses the other as the anchor in a FISEQ
@@ -32,11 +33,6 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     private static final int BACKWARD_PRIORITY = 10_000_001;
 
     /**
-     * The default value of nfaThreshold.
-     */
-    public static final long DEFAULT_NFA_THRESHOLD = 900;
-
-    /**
      * The maximum value of nfaFactor, meaning "make as many NFAs as possible".
      */
     public static final long MAX_NFA_MATCHING = Long.MAX_VALUE;
@@ -47,9 +43,14 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     public static final long NO_NFA_MATCHING = 0;
 
     /**
+     * The default value of nfaThreshold.
+     */
+    public static final long DEFAULT_NFA_THRESHOLD = 900; //DISABLE: NO_NFA_MATCHING;
+
+    /**
      * Indicates how expensive fetching a lot of term positions from Lucene is; Used
      * to calculate the cost of "regular" matching.
-     * 
+     *
      * Higher values means "regular" (reverse) matching is considered relatively cheaper.
      */
     private static final long TERM_FREQ_DIVIDER = 500;
@@ -64,8 +65,20 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * The ratio of estimated numbers of hits that we use to decide whether or not
      * to try NFA-matching with two clauses / subsequences. The lower the number,
      * the more we use NFA-matching.
+     *
+     * (we compare this to the absolute "combinability factor"; see below)
      */
     private static long nfaThreshold = DEFAULT_NFA_THRESHOLD;
+
+    /**
+     * Don't NFA optimization if there's too few unique terms?
+     * (disable for testing)
+     */
+    private static boolean onlyUseNfaForManyUniqueTerms = true;
+
+    public static void setOnlyUseNfaForManyUniqueTerms(boolean onlyUseNfaForManyUniqueTerms) {
+        ClauseCombinerNfa.onlyUseNfaForManyUniqueTerms = onlyUseNfaForManyUniqueTerms;
+    }
 
     public static void setNfaThreshold(long nfaThreshold) {
         ClauseCombinerNfa.nfaThreshold = nfaThreshold;
@@ -81,22 +94,48 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             nfaThreshold = doNfaMatching ? DEFAULT_NFA_THRESHOLD : NO_NFA_MATCHING;
     }
 
+    /**
+     * Determines the best direction for NFA and calculates a measure for how desirable NFA matching in this direction is.
+     *
+     * Forward NFA matching means: the left clause is resolved conventionally (using Lucene reverse index); the right clause
+     * is then resolved with NFA matching using the forward index.
+     *
+     * Backward NFA matching means the opposite: the right clause is resolved conventionally, after which the left clause is
+     * resolving with NFA matching using the forward index.
+     *
+     * Returns a number that indicates NFA matching desirability and direction. 0 means not possible/not desirable.
+     * Positive numbers mean forward NFA matching is possible/preferred; the higher, the more desirable it is.
+     * Negative numbers mean backward NFA matching is possible/preferred; the more negative, the more desirable it is.
+     *
+     * @param left left clause
+     * @param right right clause
+     * @param reader index
+     * @return the "combinability factor"
+     */
     private static long getFactor(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         if (nfaThreshold == NO_NFA_MATCHING)
             return 0;
-        boolean leftEmpty = left.matchesEmptySequence();
-        boolean rightEmpty = right.matchesEmptySequence();
+
+        // Estimate the performance cost of matching the whole sequence using reverse matching.
+        // (this number is a very rough estimation of the expected number of results)
         long numLeft = Math.max(1, left.reverseMatchingCost(reader));
         long numRight = Math.max(1, right.reverseMatchingCost(reader));
         long seqReverseCost = Math.min(numLeft, numRight) + (numLeft + numRight) / TERM_FREQ_DIVIDER;
+
+        // Estimate the performance cost of matching either clause using forward matching.
+        // (this number doesn't really mean anything in isolation, only in comparison to other NFA matching costs)
         int fiCostLeft = left.forwardMatchingCost();
         int fiCostRight = right.forwardMatchingCost();
+
+        // Calculate the ratio of NFA matching versus conventional (reverse) matching the whole sequence,
+        // for both directions. The lower the number, the better the NFA approach is.
         long costNfaToReverseForward = COST_RATIO_CONSTANT_FACTOR * numLeft * fiCostRight / seqReverseCost;
         long costNfaToReverseBackward = COST_RATIO_CONSTANT_FACTOR * numRight * fiCostLeft / seqReverseCost;
-        boolean leftNfa = left.canMakeNfa();
-        boolean rightNfa = right.canMakeNfa();
-        boolean backwardPossible = leftNfa && !rightEmpty;
-        boolean forwardPossible = rightNfa && !leftEmpty;
+
+        // Is forward and backward matching even possible?
+        boolean backwardPossible = left.canMakeNfa() && !right.matchesEmptySequence();
+        boolean forwardPossible = right.canMakeNfa() && !left.matchesEmptySequence();
+
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
         if (BlackLabIndexImpl.traceOptimization()) {
@@ -110,6 +149,11 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                     numLeft,
                     numRight));
         }
+
+        // Figure out whether forward or backward is best and return the appropriate number.
+        // (the number returned is the ratio of NFA to reverse matching calculated above for the
+        //  direction chosen, with the number negative if backward NFA matching was chosen. 1 is added/subtracted
+        //  so we don't have a +0/-0 issue and 0 can be reserved to mean "not possible/desirable at all")
         if (forwardPossible || backwardPossible) {
             // Possible.
             if (forwardPossible && backwardPossible) {
@@ -136,6 +180,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 left.log(LogLevel.DETAIL, "(CCNFA: nfa matching switched off)");
             return CANNOT_COMBINE;
         }
+
         long factor = getFactor(left, right, reader);
         if (factor == 0) {
             if (BlackLabIndexImpl.traceOptimization())
@@ -148,6 +193,16 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
+
+        if (onlyUseNfaForManyUniqueTerms) {
+            if (factor > 0 && LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField()) < 10_000 ||
+                factor < 0 && LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField()) < 10_000) {
+
+                // Don't make NFA for fields with very few unique terms (e.g. PoS), because it won't be faster.
+                return CANNOT_COMBINE;
+            }
+        }
+
         return factor > 0 ? FORWARD_PRIORITY - (int) (10_000 / absFactor)
                 : BACKWARD_PRIORITY - (int) (10_000 / absFactor);
     }

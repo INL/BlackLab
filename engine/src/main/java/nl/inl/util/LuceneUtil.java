@@ -54,7 +54,7 @@ public final class LuceneUtil {
 
     /**
      * Get all the terms in the index with low edit distance from the supplied term
-     * 
+     *
      * @param reader the index
      * @param luceneName the field to search in
      * @param searchTerms search terms
@@ -126,7 +126,7 @@ public final class LuceneUtil {
      *
      * NOTE: this may return an array of less than the size requested, if the
      * document ends before the requested end position.
-     * 
+     *
      * @param reader the index
      * @param doc doc id
      * @param luceneName the index field from which to use the term vector
@@ -145,7 +145,7 @@ public final class LuceneUtil {
      *
      * NOTE: this may return an array of less than the size requested, if the
      * document ends before the requested end position.
-     * 
+     *
      * @param reader the index
      * @param doc doc id
      * @param luceneName the index field from which to use the term vector
@@ -258,7 +258,7 @@ public final class LuceneUtil {
 
     /**
      * Return the list of terms that occur in a field.
-     * 
+     *
      * @param index the index
      * @param fieldName the field
      * @return the matching terms
@@ -269,7 +269,7 @@ public final class LuceneUtil {
 
     /**
      * Return the list of terms that occur in a field.
-     * 
+     *
      * @param index the index
      * @param fieldName the field
      * @param maxResults maximum number to return (or -1 for no limit)
@@ -282,7 +282,7 @@ public final class LuceneUtil {
     /**
      * Find terms in the index based on a prefix. Useful for autocomplete. NOTE: no
      * limit on the number of results!
-     * 
+     *
      * @param index the index
      * @param fieldName the field
      * @param prefix the prefix we're looking for
@@ -296,7 +296,7 @@ public final class LuceneUtil {
 
     /**
      * Find terms in the index based on a prefix. Useful for autocomplete.
-     * 
+     *
      * @param index the index
      * @param fieldName the field
      * @param prefix the prefix we're looking for (null or empty string for all
@@ -356,7 +356,7 @@ public final class LuceneUtil {
 
     /**
      * Get term frequencies for an annotation in a subset of documents.
-     * 
+     *
      * @param indexSearcher
      * @param documentFilterQuery document filter, or null for all documents
      * @param annotSensitivity field to get frequencies for
@@ -524,5 +524,30 @@ public final class LuceneUtil {
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
+    }
+
+    /**
+     * Return the maximum number of terms in any one LeafReader.
+     *
+     * This is a measure of the number of unique terms in the index for the specified field.
+     *
+     * It is not an exact number. We only use this to enable/disable certain optimizations for certain fields.
+     *
+     * @param reader index reader
+     * @param fieldName Lucene field name
+     * @return maximum number of terms in a LeafReader
+     */
+    public static long getMaxTermsPerLeafReader(IndexReader reader, String fieldName) {
+        long maxTermsPerLeafReader = 0;
+        try {
+            for (LeafReaderContext leafReader : reader.leaves()) {
+                Terms terms = leafReader.reader().terms(fieldName);
+                if (maxTermsPerLeafReader < terms.size())
+                    maxTermsPerLeafReader = terms.size();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return maxTermsPerLeafReader;
     }
 }

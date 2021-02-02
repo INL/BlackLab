@@ -191,7 +191,7 @@ public class QueryTool {
         /**
          * Get the filter query included in the last query, if any. Only used for
          * ContextQL.
-         * 
+         *
          * @return the filter query, or null if there was none
          */
         Query getIncludedFilterQuery() {
@@ -375,7 +375,7 @@ public class QueryTool {
 
     /**
      * Run the QueryTool in batch mode
-     * 
+     *
      * @param indexDir the index to search
      * @param commandFile the command file to execute
      * @param encoding the output encoding
@@ -387,10 +387,10 @@ public class QueryTool {
 
     /**
      * Run the QueryTool in batch mode
-     * 
+     *
      * @param indexDir the index to search
      * @param commandFile the command file to execute
-     * @throws ErrorOpeningIndex 
+     * @throws ErrorOpeningIndex
      */
     public static void runBatch(File indexDir, File commandFile) throws ErrorOpeningIndex {
         run(indexDir, commandFile, Charset.defaultCharset().name());
@@ -398,7 +398,7 @@ public class QueryTool {
 
     /**
      * Run the QueryTool in interactive mode
-     * 
+     *
      * @param indexDir the index to search
      * @param encoding the output encoding
      * @throws ErrorOpeningIndex if index could not be opened
@@ -409,7 +409,7 @@ public class QueryTool {
 
     /**
      * Run the QueryTool in interactive mode
-     * 
+     *
      * @param indexDir the index to search
      * @throws ErrorOpeningIndex if index could not be opened
      */
@@ -419,14 +419,14 @@ public class QueryTool {
 
     /**
      * Run the query tool.
-     * 
+     *
      * @param indexDir the index to query
      * @param inputFile if specified, run in batch mode. If null, run in interactive
      *            mode
      * @param encoding the output encoding to use
      * @throws UnsupportedEncodingException
      * @throws CorruptIndexException
-     * @throws ErrorOpeningIndex 
+     * @throws ErrorOpeningIndex
      */
     private static void run(File indexDir, File inputFile, String encoding) throws ErrorOpeningIndex {
         if (!indexDir.exists() || !indexDir.isDirectory()) {
@@ -481,7 +481,7 @@ public class QueryTool {
 
     /**
      * Construct the query tool object.
-     * 
+     *
      * @param index the index object (our index)
      * @param in where to read commands from
      * @param out where to write output to
@@ -561,7 +561,7 @@ public class QueryTool {
 
     /**
      * Switch to a different index.
-     * 
+     *
      * @param index the new BlackLabIndex to use
      */
     public void setIndex(BlackLabIndex index) {
@@ -904,9 +904,15 @@ public class QueryTool {
         } else {
             sensitivityDesc = "insensitive only";
         }
-        return annotation.name() + (annotation.hasForwardIndex() ? " (+FI)" : "") + ", " + sensitivityDesc;
+
+        MatchSensitivity s = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE;
+        String fieldName = annotation.sensitivity(s).luceneField();
+        long maxTermsPerLeafReader = LuceneUtil.getMaxTermsPerLeafReader(index.reader(), fieldName);
+        String luceneFieldInfo = " (lucene: " + fieldName + "; max. LR terms = " + maxTermsPerLeafReader + ") ";
+
+        return annotation.name() + luceneFieldInfo + (annotation.hasForwardIndex() ? " (+FI)" : "") + ", " + sensitivityDesc;
     }
-    
+
     private void showIndexMetadata() {
         IndexMetadata s = index.metadata();
         outprintln("INDEX STRUCTURE FOR INDEX " + index.name() + "\n");
@@ -920,7 +926,7 @@ public class QueryTool {
             out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
             out.println("  * " + (cf.hasLengthTokens() ? "Includes" : "No") + " document length field");
         }
-        
+
         out.println("\nMETADATA FIELDS");
         MetadataFields mf = s.metadataFields();
         for (MetadataField field: mf) {
@@ -1120,7 +1126,7 @@ public class QueryTool {
 
     /**
      * Show the a specific page of results.
-     * 
+     *
      * @param pageNumber which page to show
      */
     private void showPage(int pageNumber) {
@@ -1322,7 +1328,7 @@ public class QueryTool {
 
     /**
      * Switch between showing all hits, groups, and the hits in one group.
-     * 
+     *
      * @param showWhat what type of results to show
      */
     private void changeShowSettings(String showWhat) {
@@ -1356,7 +1362,7 @@ public class QueryTool {
 
     /**
      * Report how long an operation took
-     * 
+     *
      * @param time time to report
      */
     private void reportTime(long time) {
