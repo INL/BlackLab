@@ -29,58 +29,48 @@ import nl.inl.util.LogUtil;
 /** Export the metadata of all documents from a BlackLab index. */
 public class ExportMetadata {
 
-    public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
-        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
-
-        if (args.length != 2) {
-            System.out.println("Usage: ExportMetadata <indexDir> <exportFile>");
-            System.exit(1);
-        }
-
-        File indexDir = new File(args[0]);
-        if (!indexDir.isDirectory() || !indexDir.canRead()) {
-            System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
-            System.exit(1);
-        }
-        if (!BlackLabIndex.isIndex(indexDir)) {
-            System.out.println("Not a BlackLab index: " + indexDir);
-            System.exit(1);
-        }
-
-        File exportFile = new File(args[1]);
-
-        ExportMetadata exportMetadata = new ExportMetadata(indexDir);
-        System.out.println("Collecting metadata...");
-        exportMetadata.collect();
-        System.out.println("Exporting metadata...");
-        exportMetadata.exportCsv(exportFile);
-    }
-
-    private void exportCsv(File exportFile) throws FileNotFoundException {
-        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(exportFile), StandardCharsets.UTF_8))) {
-            List<String> listFieldNames = new ArrayList<>(fieldNames);
-            Collections.sort(listFieldNames);
-            for (String fieldName: listFieldNames) {
-                pw.append(fieldName).append("\t");
-            }
-            pw.println();
-            for (Map<String, String> documentMetadata: values) {
-                for (String fieldName: listFieldNames) {
-                    pw.append(escapeTabs(documentMetadata.getOrDefault(fieldName, ""))).append("\t");
-                }
-                pw.println();
-            }
-            System.out.println("Done!");
-        }
-    }
-
     private static String escapeTabs(String str) {
         return str.replaceAll("\t", "\\t");
     }
 
-    BlackLabIndex index;
+    public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
+        try {
+            LogUtil.setupBasicLoggingConfig(Level.DEBUG);
+
+            if (args.length != 2) {
+                System.out.println("Usage: ExportMetadata <indexDir> <exportFile>");
+                System.exit(1);
+            }
+
+            File indexDir = new File(args[0]);
+            if (!indexDir.isDirectory() || !indexDir.canRead()) {
+                System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
+                System.exit(1);
+            }
+            if (!BlackLabIndex.isIndex(indexDir)) {
+                System.out.println("Not a BlackLab index: " + indexDir);
+                System.exit(1);
+            }
+
+            File exportFile = new File(args[1]);
+
+            ExportMetadata exportMetadata = new ExportMetadata(indexDir);
+            System.out.println("Collecting metadata...");
+            exportMetadata.collect();
+            System.out.println("Exporting metadata...");
+            exportMetadata.exportCsv(exportFile);
+            System.out.println("Done exporting metadata.");
+            System.out.flush();
+        } finally {
+            System.out.println("Done closing index.");
+            System.out.flush();
+        }
+        System.out.flush();
+    }
 
     Set<String> fieldNames = new HashSet<>();
+
+    BlackLabIndex index;
 
     List<Map<String, String>> values = new ArrayList<>();
 
@@ -103,9 +93,9 @@ public class ExportMetadata {
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new DocTask() {
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
-
             int docsDone = 0;
+
+            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             @Override
             public void perform(Doc doc) {
@@ -129,5 +119,23 @@ public class ExportMetadata {
                 }
             }
         });
+    }
+
+    private void exportCsv(File exportFile) throws FileNotFoundException {
+        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(exportFile), StandardCharsets.UTF_8))) {
+            List<String> listFieldNames = new ArrayList<>(fieldNames);
+            Collections.sort(listFieldNames);
+            for (String fieldName: listFieldNames) {
+                pw.append(fieldName).append("\t");
+            }
+            pw.println();
+            for (Map<String, String> documentMetadata: values) {
+                for (String fieldName: listFieldNames) {
+                    pw.append(escapeTabs(documentMetadata.getOrDefault(fieldName, ""))).append("\t");
+                }
+                pw.println();
+            }
+            System.out.println("Close export file...");
+        }
     }
 }
