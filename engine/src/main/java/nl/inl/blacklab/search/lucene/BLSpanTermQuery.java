@@ -49,7 +49,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class BLSpanTermQuery extends BLSpanQuery {
 
-    public static final int FIXED_FORWARD_MATCHING_COST = 2;
+    public static final int FIXED_FORWARD_MATCHING_COST = 200;
 
     public static BLSpanTermQuery from(QueryInfo queryInfo, SpanTermQuery q) {
         return new BLSpanTermQuery(queryInfo, q);

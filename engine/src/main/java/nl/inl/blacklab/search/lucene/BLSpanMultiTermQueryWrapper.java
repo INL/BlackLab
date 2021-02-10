@@ -240,7 +240,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public int forwardMatchingCost() {
-        return 3; // more expensive than a single term, because we have to do FI lookup and regex matching
+        return BLSpanTermQuery.FIXED_FORWARD_MATCHING_COST * 3 / 2; // more expensive than a single term, because we have to do FI lookup and regex matching
     }
 
     @Override

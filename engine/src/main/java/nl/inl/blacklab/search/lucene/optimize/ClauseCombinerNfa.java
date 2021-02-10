@@ -101,7 +101,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * is then resolved with NFA matching using the forward index.
      *
      * Backward NFA matching means the opposite: the right clause is resolved conventionally, after which the left clause is
-     * resolving with NFA matching using the forward index.
+     * resolved with NFA matching using the forward index.
      *
      * Returns a number that indicates NFA matching desirability and direction. 0 means not possible/not desirable.
      * Positive numbers mean forward NFA matching is possible/preferred; the higher, the more desirable it is.
@@ -182,21 +182,26 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         }
 
         long factor = getFactor(left, right, reader);
+        left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ")");
         if (factor == 0) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: factor == 0)");
+                left.log(LogLevel.DETAIL, "(CCNFA: cannot combine)");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ", abs(factor) > nfaThreshold (" + nfaThreshold + "))");
+                left.log(LogLevel.DETAIL, "(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
 
         if (onlyUseNfaForManyUniqueTerms) {
-            if (factor > 0 && LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField()) < 10_000 ||
-                factor < 0 && LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField()) < 10_000) {
+            long maxTermsRight = LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField());
+            long maxTermsLeft = LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField());
+            if (BlackLabIndexImpl.traceOptimization())
+                left.log(LogLevel.DETAIL, "(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
+            if (factor > 0 && maxTermsRight < 10_000 ||
+                factor < 0 && maxTermsLeft < 10_000) {
 
                 // Don't make NFA for fields with very few unique terms (e.g. PoS), because it won't be faster.
                 return CANNOT_COMBINE;
