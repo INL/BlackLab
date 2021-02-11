@@ -42,6 +42,10 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     public static final int DIR_TO_RIGHT = 1;
 
+    public static final boolean START_OF_ANCHOR = true;
+
+    public static final boolean END_OF_ANCHOR = false;
+
     boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
@@ -230,7 +234,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     public SpanQueryFiSeq appendNfa(BLSpanQuery originalQuery) {
         NfaTwoWay newNfa = nfa.copy();
         newNfa.append(originalQuery.getNfaTwoWay(fiAccessor, direction));
-        boolean addToRight = direction == 1;
+        boolean addToRight = direction == DIR_TO_RIGHT;
         SpanQuerySequence newNfaQuery = SpanQuerySequence.sequenceInternalize(nfaQuery, originalQuery, addToRight);
         return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, newNfa, newNfaQuery, direction, fiAccessor);
     }

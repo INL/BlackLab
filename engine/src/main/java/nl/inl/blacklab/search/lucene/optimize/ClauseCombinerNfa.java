@@ -220,15 +220,15 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
         if (factor > 0) {
             // Forward (i.e. left is anchor, right is NFA)
-            if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) left).getDirection() == 1) {
+            if (left instanceof SpanQueryFiSeq && ((SpanQueryFiSeq) left).getDirection() == SpanQueryFiSeq.DIR_TO_RIGHT) {
                 // Existing forward FISEQ; add NFA to it (re-use fiAccessor so properties get same index).
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
             ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
                     right.getField());
-            NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, 1);
-            return new SpanQueryFiSeq(left, false, nfaTwoWay, right, 1, fiAccessor);
+            NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
+            return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
         }
 
         // Backward (i.e. right is anchor, left is NFA)
@@ -240,7 +240,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
                 left.getField());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
-        return new SpanQueryFiSeq(right, true, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
+        return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
 
     }
 

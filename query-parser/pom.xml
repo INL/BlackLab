@@ -15,7 +15,73 @@
     <description>
        Query parsers for BlackLab, to translate queries to TextPatterns.
     </description>
+    
+    <build>
+    
+        <pluginManagement>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse 
+                    m2e settings only. It has no influence on the Maven build itself. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>org.codehaus.mojo</groupId>
+                                        <artifactId>javacc-maven-plugin</artifactId>
+                                        <versionRange>[2.6,)</versionRange>
+                                        <goals>
+                                            <goal>javacc</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
 
+            </plugins>
+
+        </pluginManagement>
+        
+        <plugins>
+        
+            <!-- JavaCC plugin for generating query parsers from .jj definition 
+                    files -->    
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>javacc-maven-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>javacc</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>src/main/javacc</sourceDirectory>
+                            <outputDirectory>src/main/java</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.java.dev.javacc</groupId>
+                        <artifactId>javacc</artifactId>
+                        <version>6.1.2</version>
+                    </dependency>
+                </dependencies>
+            </plugin>   
+             
+        </plugins>
+    </build>
+    
     <dependencies>
 
         <dependency>
@@ -23,7 +89,7 @@
             <artifactId>blacklab-text-pattern</artifactId>
             <version>${project.version}</version>
         </dependency>
-
+        
     </dependencies>
 
 
