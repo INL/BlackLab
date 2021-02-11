@@ -1,0 +1,44 @@
+table {
+	border-collapse: collapse;
+	max-width: 17.5cm;
+}
+
+th, td {
+	vertical-align: top;
+	padding: 3px;
+	border: 1px solid black;
+	max-width: 16.5cm;
+}
+
+td.docDesc {
+	font-weight: bold;
+	text-align: center;
+	background-color: #ddd;
+}
+
+#wait {
+	display: none;
+}
+
+div.hide {
+	display: none;
+}
+
+/*input#zoek {
+	border: 0;
+	font-size: 12pt;
+	font-weight: bold;
+	background-color: transparent;
+}*/
+
+.small {
+	font-size: 70%;
+}
+
+td.keyword {
+	font-weigth: bold;
+}
+
+td.left {
+	text-align: right;
+}
