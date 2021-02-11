@@ -92,7 +92,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
 
         try {
-            if (groupBy != null) {
+            if (!StringUtils.isEmpty(groupBy)) {
                 hits = searchMan.search(user, searchParam.hits());
                 groups = searchMan.search(user, searchParam.hitsGrouped());
 
@@ -133,7 +133,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
-            
+
 
             int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
             if (searchParam.containsKey("number")) {
@@ -142,7 +142,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     number = Math.min(requested, number);
                 }
             }
-            
+
             if (number >= 0)
                 hits = hits.window(first, number);
         }

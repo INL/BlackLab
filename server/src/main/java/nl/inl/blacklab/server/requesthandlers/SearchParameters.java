@@ -544,7 +544,7 @@ public class SearchParameters {
         return map.containsKey(key);
     }
 
-    /** 
+    /**
      * @return hits - filtered then sorted then sampled then windowed
      * @throws BlsException
      */
