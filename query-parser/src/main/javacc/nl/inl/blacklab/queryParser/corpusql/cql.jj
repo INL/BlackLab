@@ -194,11 +194,8 @@ TextPattern complexQuery():
     TextPattern a = null, b = null;
     Token op = null;
     Operation oper = Operation.CONTAINING;
-    Token func = null;
-    List<TextPattern> queryFuncParamList;
 }
 {
-    LOOKAHEAD(2)
     a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
     {
         if (op == null)
@@ -209,28 +206,6 @@ TextPattern complexQuery():
         }
         
         return new TextPatternPositionFilter(a, b, oper);
-    }
-|
-    func=<NAME> "(" queryFuncParamList=commaSeparatedListOfQueries()  ")"
-    {
-        String funcName = func.toString(); 
-        if (!funcName.startsWith("_")) {
-            throw new UnsupportedOperationException("Query functions are a BlackLab-specific extension to Corpus Query Language and, to avoid future problems, must start with '_' !");
-        }
-        return new TextPatternQueryFunction(funcName, queryFuncParamList);
-    }
-}
-
-List<TextPattern> commaSeparatedListOfQueries():
-{
-    TextPattern q = null;
-    List<TextPattern> p = new ArrayList<TextPattern>();
-}
-{
-    q=complexQuery() [ "," p=commaSeparatedListOfQueries() ]
-    {
-        p.add(0, q);
-        return p;
     }
 }
 
@@ -387,7 +362,25 @@ TextPattern sequencePart():
 	String label = null;
 }
 {
-	( label=captureLabel() ":")? ( m=tag() | m=position() | "(" m=complexQuery() ")" ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+    LOOKAHEAD(2)
+    ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+    {
+        if (rep != null)
+        {
+            if (m instanceof TextPatternAnyToken)
+            {
+                TextPatternAnyToken any = (TextPatternAnyToken)m;
+                m = any.repeat(rep[0], rep[1]);
+            } else
+                m = new TextPatternRepetition(m, rep[0], rep[1]);
+        }
+        if (label != null) {
+            m = new TextPatternCaptureGroup(m, label);
+        }
+        return m;
+    }
+|
+	label=captureLabel() ":" ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
@@ -403,6 +396,35 @@ TextPattern sequencePart():
 		}
 		return m;
 	}
+}
+
+TextPattern queryFunctionCall():
+{
+    Token func = null;
+    List<TextPattern> queryFuncParamList;
+}
+{
+    func=<NAME> "(" queryFuncParamList=commaSeparatedListOfQueries() ")"
+    {
+        String funcName = func.toString(); 
+        if (!funcName.startsWith("_")) {
+            throw new UnsupportedOperationException("Query functions are a BlackLab-specific extension to Corpus Query Language and, to avoid future problems, must start with '_' !");
+        }
+        return new TextPatternQueryFunction(funcName, queryFuncParamList);
+    }
+}
+
+List<TextPattern> commaSeparatedListOfQueries():
+{
+    TextPattern q = null;
+    List<TextPattern> p = new ArrayList<TextPattern>();
+}
+{
+    q=complexQuery() [ "," p=commaSeparatedListOfQueries() ]
+    {
+        p.add(0, q);
+        return p;
+    }
 }
 
 String captureLabel():

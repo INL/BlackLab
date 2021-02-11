@@ -71,13 +71,13 @@ private int jjMoveStringLiteralDfa0_0(){
          jjmatchedKind = 18;
          return jjMoveNfa_0(0, 0);
       case 42:
-         jjmatchedKind = 25;
+         jjmatchedKind = 24;
          return jjMoveNfa_0(0, 0);
       case 43:
-         jjmatchedKind = 26;
+         jjmatchedKind = 25;
          return jjMoveNfa_0(0, 0);
       case 44:
-         jjmatchedKind = 21;
+         jjmatchedKind = 29;
          return jjMoveNfa_0(0, 0);
       case 45:
          return jjMoveStringLiteralDfa1_0(0x100000000L);
@@ -85,22 +85,22 @@ private int jjMoveStringLiteralDfa0_0(){
          jjmatchedKind = 20;
          return jjMoveNfa_0(0, 0);
       case 47:
-         jjmatchedKind = 23;
+         jjmatchedKind = 22;
          return jjMoveNfa_0(0, 0);
       case 58:
          jjmatchedKind = 33;
          return jjMoveStringLiteralDfa1_0(0x4000L);
       case 60:
-         jjmatchedKind = 22;
+         jjmatchedKind = 21;
          return jjMoveNfa_0(0, 0);
       case 61:
          jjmatchedKind = 15;
          return jjMoveNfa_0(0, 0);
       case 62:
-         jjmatchedKind = 24;
+         jjmatchedKind = 23;
          return jjMoveNfa_0(0, 0);
       case 63:
-         jjmatchedKind = 27;
+         jjmatchedKind = 26;
          return jjMoveNfa_0(0, 0);
       case 67:
          return jjMoveStringLiteralDfa1_0(0x100L);
@@ -117,13 +117,13 @@ private int jjMoveStringLiteralDfa0_0(){
       case 119:
          return jjMoveStringLiteralDfa1_0(0x80L);
       case 123:
-         jjmatchedKind = 28;
+         jjmatchedKind = 27;
          return jjMoveNfa_0(0, 0);
       case 124:
          jjmatchedKind = 31;
          return jjMoveNfa_0(0, 0);
       case 125:
-         jjmatchedKind = 29;
+         jjmatchedKind = 28;
          return jjMoveNfa_0(0, 0);
       default :
          return jjMoveNfa_0(0, 0);
@@ -647,8 +647,8 @@ private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, lo
 /** Token literal values. */
 public static final String[] jjstrLiteralImages = {
 "", null, null, null, null, null, null, null, null, null, null, null, null, 
-null, "\72\72", "\75", "\41\75", "\50", "\51", "\41", "\56", "\54", "\74", "\57", 
-"\76", "\52", "\53", "\77", "\173", "\175", "\46", "\174", "\55\76", "\72", "\133", 
+null, "\72\72", "\75", "\41\75", "\50", "\51", "\41", "\56", "\74", "\57", "\76", 
+"\52", "\53", "\77", "\173", "\175", "\54", "\46", "\174", "\55\76", "\72", "\133", 
 "\135", };
 protected Token jjFillToken()
 {
