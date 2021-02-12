@@ -88,6 +88,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     boolean inited = false;
 
+    protected Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
+
     public void setConfigInputFormat(ConfigInputFormat config) {
         this.config = config;
     }
@@ -215,7 +217,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      * @param ld
      * @param xpathProcessor
      */
-    protected void processLinkedDocument( ConfigLinkedDocument ld, Function<String, String> xpathProcessor) {
+    protected void processLinkedDocument(ConfigLinkedDocument ld, Function<String, String> xpathProcessor) {
         // Resolve linkPaths to get the information needed to fetch the document
         List<String> results = new ArrayList<>();
         for (ConfigLinkValue linkValue : ld.getLinkValues()) {
@@ -239,7 +241,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 results.add(result);
             } else if (valueField != null) {
                 // Fetch value from Lucene doc
-                results.addAll(getMetadataField(valueField));
+                List<String> metadataField = getMetadataField(valueField);
+                if (metadataField == null) {
+                    throw new BlackLabRuntimeException("Link value field " + valueField + " has no values (null)!");
+                }
+                results.addAll(metadataField);
             }
             List<String> resultAfterProcessing = new ArrayList<>();
             for (String inputValue : results) {
@@ -512,7 +518,16 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return value;
     }
 
-    protected Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
+    /**
+     * Add metadata field value.
+     *
+     * We first collect all metadata values before processing to ensure we have all of them
+     * in the case of fields with multiple values and to be able to sort them so sorting/grouping
+     * works correctly on these fields as well.
+     *
+     * @param name field name
+     * @param value value to add
+     */
     @Override
     public void addMetadataField(String name, String value) {
         this.sortedMetadataValues.computeIfAbsent(name, __ -> {
@@ -523,6 +538,28 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 return new ArrayList<>();
             }
         }).add(value);
+    }
+
+    private static List<String> collectionToList(Collection<String> c) {
+        return c == null ? null : c instanceof List ? (List<String>)c : new ArrayList<String>(c);
+    }
+
+    /**
+     * Get a metadata field value.
+     *
+     * Overridden because we collect them in sortedMetadataValues while parsing the document,
+     * and if a value is needed while parsing (such as with linked metadata), we wouldn't
+     * otherwise be able to return it.
+     *
+     * Note that these values aren't processed yet, so that's still an issue.
+     *
+     * @param name field name
+     * @return value(s), or null if not defined
+     */
+    @Override
+    public List<String> getMetadataField(String name) {
+        List<String> v = super.getMetadataField(name);
+        return v == null ? collectionToList(sortedMetadataValues.get(name)) : v;
     }
 
     @Override
