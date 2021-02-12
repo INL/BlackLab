@@ -1,4 +1,11 @@
 $(document).ready(function() {
+
+
+    $('textarea,input').keydown(function (e) {
+      if (e.ctrlKey && e.keyCode == 13) {
+        $("#zoekForm").submit();
+      }
+    });
 	
 	$("#zoekForm").submit(function(event) {
 		event.preventDefault();
