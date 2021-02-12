@@ -10,33 +10,22 @@
 
   <display-name>BlackLab Server</display-name>
 
+  <!-- make sure static resources are forwarded to the default servlet -->
   <filter>  
     <filter-name>default</filter-name>  
     <filter-class>nl.inl.blacklab.server.DefaultFilter</filter-class>  
   </filter>
-
   <filter-mapping>  
     <filter-name>default</filter-name>
     <servlet-name>default</servlet-name>
     <url-pattern>/search-test/*</url-pattern>
-    <url-pattern>*.html</url-pattern>  
-    <url-pattern>*.css</url-pattern>  
-    <url-pattern>*.js</url-pattern>  
-  </filter-mapping>   
+  </filter-mapping>
 
+  <!-- route all other requests through the BlackLabServer entry point class -->
   <servlet>
     <servlet-name>blacklab-server</servlet-name>
     <servlet-class>nl.inl.blacklab.server.BlackLabServer</servlet-class>
   </servlet>
-
-  <servlet-mapping>
-    <servlet-name>default</servlet-name>
-    <url-pattern>/search-test</url-pattern>
-    <url-pattern>*.html</url-pattern>
-    <url-pattern>*.css</url-pattern>
-    <url-pattern>*.js</url-pattern>
-  </servlet-mapping>
-
   <servlet-mapping>
     <servlet-name>blacklab-server</servlet-name>
     <url-pattern>/*</url-pattern>
