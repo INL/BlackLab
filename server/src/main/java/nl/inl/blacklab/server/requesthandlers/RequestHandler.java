@@ -128,7 +128,7 @@ public abstract class RequestHandler {
         }
 
         // Parse the URL
-        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getServletPath()), "/");
+        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         String[] parts = servletPath.split("/", 3);
         String indexName = parts.length >= 1 ? parts[0] : "";
         RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName,
@@ -594,10 +594,10 @@ public abstract class RequestHandler {
 
     /**
      * Returns the annotations to write out.
-     * 
+     *
      * By default, all annotations are returned.
      * Annotations are returned in requested order, or in their definition/display order.
-     * 
+     *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      * @throws BlsException
      */
@@ -619,10 +619,10 @@ public abstract class RequestHandler {
 
     /**
      * Returns a list of metadata fields to write out.
-     * 
+     *
      * By default, all metadata fields are returned.
      * Special fields (pidField, titleField, etc...) are always returned.
-     * 
+     *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      * @throws BlsException
      */
