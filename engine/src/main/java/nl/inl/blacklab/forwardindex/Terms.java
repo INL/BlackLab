@@ -234,8 +234,9 @@ public abstract class Terms {
         return idToSortPosition(termId1, sensitivity) - idToSortPosition(termId2, sensitivity);
     }
 
-    protected abstract void setBlockBasedFile(boolean useBlockBasedTermsFile);
-
+    protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
+        this.useBlockBasedTermsFile = useBlockBasedTermsFile;
+    }
     public static Terms openForReading(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
         return new TermsReader(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
     }
