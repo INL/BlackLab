@@ -47,6 +47,9 @@ public class HitGroupsTokenFrequencies {
     
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
+    /** Document length is always reported as one higher due to punctuation being a trailing value */
+    private static final int subtractClosingToken = -1;
+    
     private static class GroupIdHash {
         private int[] tokenIds;
         private int[] tokenSortPositions;
@@ -178,7 +181,7 @@ public class HitGroupsTokenFrequencies {
                         final int[] emptyTokenValuesArray = new int[0];
                         
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId); // weird, doc length is Long, but group size is Int
+                            final int docLength = (int) propTokens.get(docId) - subtractClosingToken; // Doc length is always one longer than actual length.
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
@@ -222,6 +225,7 @@ public class HitGroupsTokenFrequencies {
                                     docLength = Math.max(docLength, tokenValues.get(0).length);
                                 }
                             }
+                            docLength = docLength - subtractClosingToken; // ignore last token in forward index. 
 
                            // Step 2: retrieve the to-be-grouped metadata for this document
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0 , docLength);
@@ -247,7 +251,6 @@ public class HitGroupsTokenFrequencies {
                                     // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                                     // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
                                     // so in essence it's also an "id", but a case-insensitive one.
-                                    // The code to retrieve these insensitive positions may be slow, not sure.
                                     // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
                                     // that hashes the token ids instead of the sortpositions in that case.
                                     int[] annotationValuesForThisToken = new int[numAnnotations];
