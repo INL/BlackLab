@@ -6,6 +6,9 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
+import java.util.concurrent.ForkJoinWorkerThread;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -38,11 +41,28 @@ public final class BlackLabEngine implements Closeable {
     private ExecutorService searchExecutorService = null;
     
     /** How many threads may a single search use? */
+    
+    
+    
+    
+    
     private int maxThreadsPerSearch;
     
     BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();
-        searchExecutorService = Executors.newWorkStealingPool(searchThreads);
+        this.searchExecutorService = new ForkJoinPool(searchThreads, new ForkJoinWorkerThreadFactory() {
+            @Override
+            public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+                final ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                worker.setName("SearchThread-" + worker.getPoolIndex());
+                return worker;
+            }
+            
+            
+        }, null, true);
+        
+        
+        
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
     

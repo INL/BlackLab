@@ -48,7 +48,7 @@ public class HitGroupsTokenFrequencies {
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
     /** Document length is always reported as one higher due to punctuation being a trailing value */
-    private static final int subtractClosingToken = -1;
+    private static final int subtractClosingToken = 1;
     
     private static class GroupIdHash {
         private int[] tokenIds;

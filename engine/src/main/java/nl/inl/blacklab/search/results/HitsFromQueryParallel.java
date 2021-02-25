@@ -14,7 +14,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
@@ -38,10 +37,16 @@ import nl.inl.util.ThreadPauser;
 
 public class HitsFromQueryParallel extends Hits {
     private static class SpansReader implements Runnable {
-        // Things to get results
-        final HitQueryContext hitQueryContext;
-        final LeafReaderContext leafReaderContext;
-        final BLSpans spans;
+        BLSpanWeight weight; // Weight is set when this is uninitialized, spans is set otherwise
+        BLSpans spans; // usually lazy initialization - takes a long time to set up and holds a large amount of memory. Nulled after we're finished
+
+        /** Root hitQueryContext, needs to be shared between instances of SpansReader due to some internal global state 
+         * TODO refactor or improve documentation in HitQueryContext, the internal backing array is now shared between instances of it, and is modified in copyWith(spans), which seems...dirty and it's rone to errors */
+        HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
+        HitQueryContext hitQueryContext; // Set after initializion. Nulled after we're finished
+
+        // Used to check if doc has been removed from the index. Nulled after we're finished.
+        LeafReaderContext leafReaderContext;
 
         // Global counters, shared between instances of SpansReader in order to coordinate progress
         final AtomicInteger globalDocsProcessed;
@@ -58,11 +63,91 @@ public class HitsFromQueryParallel extends Hits {
         private final CapturedGroupsImpl globalCapturedGroups;
 
         // Internal state
-        private final ThreadPauser threadPauser = ThreadPauser.create();
-        private final int docBase;
         private boolean isDone = false;
-
+        private final ThreadPauser threadPauser = ThreadPauser.create();
+        private boolean isInitialized;
+        private final int docBase;
+        
         /**
+         * Construct an uninitialized spansreader that will retrieve its own Spans object on when it's ran.
+         * 
+         * @param spans
+         * @param leafReaderContext
+         * @param hitQueryContext
+         * @param globalResults
+         * @param globalCapturedGroups
+         * @param globalDocsProcessed
+         * @param globalDocsCounted
+         * @param globalHitsProcessed
+         * @param globalHitsCounted
+         * @param globalHitsToProcess
+         * @param globalHitsToCount
+         */
+        public SpansReader( 
+            BLSpanWeight weight,
+            LeafReaderContext leafReaderContext,
+            HitQueryContext sourceHitQueryContext,
+            
+            List<Hit> globalResults,
+            CapturedGroupsImpl globalCapturedGroups, 
+            AtomicInteger globalDocsProcessed,
+            AtomicInteger globalDocsCounted,
+            AtomicInteger globalHitsProcessed, 
+            AtomicInteger globalHitsCounted, 
+            AtomicInteger globalHitsToProcess, 
+            AtomicInteger globalHitsToCount
+        ) {
+            this.spans = null; // inverted for uninitialized version
+            this.weight = weight;
+
+            this.hitQueryContext = null;
+            this.sourceHitQueryContext = sourceHitQueryContext;
+
+            this.leafReaderContext = leafReaderContext;
+            
+            this.globalResults = globalResults;
+            this.globalCapturedGroups = globalCapturedGroups;
+            this.globalDocsProcessed = globalDocsProcessed;
+            this.globalDocsCounted = globalDocsCounted;
+            this.globalHitsProcessed = globalHitsProcessed;
+            this.globalHitsCounted = globalHitsCounted;
+            this.globalHitsToCount = globalHitsToCount;
+            this.globalHitsToProcess = globalHitsToProcess;
+            
+            this.docBase = leafReaderContext.docBase;
+
+            this.isInitialized = false;
+            this.isDone = false;
+        }
+
+        /** 
+         * Create a pre-initialized SpansReader (meaning its Spans object is already set).
+         * The spans must have had its HitQueryContext object set, which must be passed with the hitQueryContext parameter.
+         * 
+         * This constructor only exists because of an initialization order issue with capture groups.
+         * The issue is as follows:
+         * - we want to lazy-initialize Spans objects: 
+         *   1. because they hold a lot of memory for large indexes.
+         *   2. because only a few SpansReaders are active at a time.
+         *   3. because they take a long time to setup.
+         *   4. because we might not even need them all if a hits limit has been set.
+         *   
+         * So if we precreate them all, we're doing a lot of upfront work we possibly don't need to.
+         * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist simultaneously even though we're not using them simultaneously.
+         * However, in order to know whether a query (such as A:([pos="A.*"]) "schip") uses/produces capture groups (and how many groups) 
+         * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
+         * 
+         * No why we need to know this:
+         * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
+         * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
+         * 
+         * So to summarise: there is an order issue. 
+         * - we want to lazy-init the Spans.
+         * - but we need the capture groups object.
+         * - for that we need at least one Spans object created.
+         * Hence the two constructors here.
+         * 
+         * We'll create one of the Spans objects so we can create the capture groups object, then lazy-init the rest.
          * 
          * @param spans
          * @param leafReaderContext
@@ -80,6 +165,7 @@ public class HitsFromQueryParallel extends Hits {
             BLSpans spans, 
             LeafReaderContext leafReaderContext,
             HitQueryContext hitQueryContext,
+            
             List<Hit> globalResults,
             CapturedGroupsImpl globalCapturedGroups, 
             AtomicInteger globalDocsProcessed,
@@ -89,8 +175,12 @@ public class HitsFromQueryParallel extends Hits {
             AtomicInteger globalHitsToProcess, 
             AtomicInteger globalHitsToCount
         ) {
-            this.spans = spans;
+            this.spans = spans; // inverted for uninitialized version
+            this.weight = null;
+
             this.hitQueryContext = hitQueryContext;
+            this.sourceHitQueryContext = null;
+
             this.leafReaderContext = leafReaderContext;
             
             this.globalResults = globalResults;
@@ -103,6 +193,25 @@ public class HitsFromQueryParallel extends Hits {
             this.globalHitsToProcess = globalHitsToProcess;
             
             this.docBase = leafReaderContext.docBase;
+
+            this.isInitialized = true;
+            this.isDone = false;
+        }
+        
+        private void initialize() {
+            try {
+                this.isInitialized = true;
+                this.spans = this.weight.getSpans(this.leafReaderContext, Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
+                if (spans == null) { // This is normal, sometimes a section of the index does not contain hits.
+                    this.isDone = true;
+                    return;
+                }
+                
+                this.hitQueryContext = this.sourceHitQueryContext.copyWith(this.spans);
+                this.spans.setHitQueryContext(this.hitQueryContext);
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
+            }
         }
 
         /**
@@ -143,7 +252,10 @@ public class HitsFromQueryParallel extends Hits {
          */
         @Override
         public synchronized void run() {
-            if (isDone)
+            if (!isInitialized)
+                this.initialize();
+            
+            if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
                 return;
             
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
@@ -197,7 +309,11 @@ public class HitsFromQueryParallel extends Hits {
             }
             
             // If we're here, the loop reached its natural end - we're done.
-            isDone = true;
+            // Free some objects to avoid holding on to memory
+            this.isDone = true;
+            this.spans = null;
+            this.hitQueryContext = null;
+            this.leafReaderContext = null;
         }
         
         void reportHitsIfMoreThan(List<Hit> hits, Map<Hit, Span[]> capturedGroups, int count) {
@@ -231,8 +347,7 @@ public class HitsFromQueryParallel extends Hits {
     protected final int maxHitsToProcess;
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
     protected final int maxHitsToCount;
-    
-    
+
     // state
     protected final HitQueryContext hitQueryContext = new HitQueryContext();
     protected final Lock ensureHitsReadLock = new ReentrantLock();
@@ -281,48 +396,64 @@ public class HitsFromQueryParallel extends Hits {
                     ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
                 }
             }
-
+            
+            // This call can take a long time
             BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), false);
             
-            // We need to know the captured group names before we can construct the SpansReaders (because they need them)
-            // But we only know the names after we iterated all leaves.
-            // So we need 2 iterations: one to get the names (this one), and one to construct the readers.
-            List<Triple<BLSpans, LeafReaderContext, HitQueryContext>> mySpans = new ArrayList<>();
+            boolean hasInitialized = false;
             for (LeafReaderContext leafReaderContext : reader.leaves()) {
-                BLSpans spans = weight.getSpans(leafReaderContext, Postings.OFFSETS);
-                if (spans == null)
-                    continue;
-                // NOTE: changes in copy from copyWith write through to source (this.hitQueryContext) 
-                // also the setter doesn't just set but also writes, so our HitQueryContext is populated through this call, adding the group names
-                HitQueryContext hitQueryContextForThisSpans = this.hitQueryContext.copyWith(spans);
-                spans.setHitQueryContext(hitQueryContextForThisSpans);
-                mySpans.add(Triple.of(spans, leafReaderContext, hitQueryContextForThisSpans));
-            }
+                if (!hasInitialized) {
+                    BLSpans spans = weight.getSpans(leafReaderContext, Postings.OFFSETS);
+                    if (spans == null)
+                        continue;
+                    
+                    // NOTE: changes in copy from copyWith write through to source (this.hitQueryContext) 
+                    // also the setter doesn't just set but also writes, so our HitQueryContext is populated through this call, adding the group names
+                    HitQueryContext hitQueryContextForThisSpans = this.hitQueryContext.copyWith(spans);
+                    spans.setHitQueryContext(hitQueryContextForThisSpans);
+                    
+                    // Now figure out if we have capture groups
+                    // Needs to be null if unused!
+                    this.capturedGroups = this.hitQueryContext.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames()) : null;
 
-            // Needs to be null if unused!
-            this.capturedGroups = this.hitQueryContext.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames()) : null;
-            
-            // Wrap each LeafReaderContext in a SpansReader
-            for (Triple<BLSpans, LeafReaderContext, HitQueryContext> spansAndAssociatedData : mySpans) {
-                final BLSpans spans = spansAndAssociatedData.getLeft();
-                final LeafReaderContext leafReaderContext = spansAndAssociatedData.getMiddle();
-                final HitQueryContext hitQueryContext = spansAndAssociatedData.getRight();
+                    spansReaders.add(
+                        new SpansReader(
+                            spans,
+                            leafReaderContext,
+                            hitQueryContextForThisSpans,
+                            this.results,
+                            this.capturedGroups,
+                            this.globalDocsProcessed,
+                            this.globalDocsCounted,
+                            this.globalHitsProcessed, 
+                            this.globalHitsCounted, 
+                            this.requestedHitsToProcess,
+                            this.requestedHitsToCount
+                        )
+                    );
+                    
+                    hasInitialized = true;
+                    continue;
+                } 
+                
+                // else add self-initializing spansreader
                 spansReaders.add(
                     new SpansReader(
-                        spans,
+                        weight,
                         leafReaderContext,
-                        hitQueryContext,
+                        this.hitQueryContext,
                         this.results,
                         this.capturedGroups,
                         this.globalDocsProcessed,
                         this.globalDocsCounted,
-                        this.globalHitsProcessed, 
-                        this.globalHitsCounted, 
+                        this.globalHitsProcessed,
+                        this.globalHitsCounted,
                         this.requestedHitsToProcess,
                         this.requestedHitsToCount
                     )
                 );
             }
+
             if (spansReaders.isEmpty())
                 allSourceSpansFullyRead = true;
         } catch (IOException e) {
