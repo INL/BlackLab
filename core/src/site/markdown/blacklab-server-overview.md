@@ -150,11 +150,11 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>filter </td>
-		<td>Document filter query, e.g. “publicationYear:1976” (default: none)</td>
+		<td>Document filter query in [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description), e.g. “publicationYear:1976” (default: none)</td>
 	</tr>
 	<tr>
 		<td>filterlang </td>
-		<td>Query language for filter parameter. Supported are lucene (Lucene Query Language) and (limited) contextql (contextual query language).(default: lucene )</td>
+		<td>Query language for filter parameter. Supported are lucene (Lucene query syntax, the default) and (limited) contextql (contextual query language).(default: lucene )</td>
 	</tr>
 	<tr>
 		<td>docpid </td>
@@ -280,6 +280,8 @@ NOTE: using the original content may cause problems with well-formedness; these 
 
 ## Sorting, grouping, filtering & faceting
 
+NOTE: this is about sorting/grouping and filtering/faceting on groups. For basic filtering on document metadata, see the `filter` parameter above and the [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description).
+
 The sort, group, hitfiltercrit and facets parameters receive one or more criteria (comma-separated) that indicate what to sort, group, filter or facet on.
 
 <table>
@@ -353,7 +355,7 @@ All occurrences of “test” in the “opensonar” corpus (CorpusQL query)
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/hits?patt="test"
 
-All documents having “guide” in the title and “test” in the contents, sorted by author and date, resultats 61-90
+All documents having “guide” in the title and “test” in the contents, sorted by author and date, results 61-90
 
 		http://blacklab.ivdnt.org/blacklab-server/opensonar/docs?filter=title:guide&patt="test"& sort=field:author,field:date&first=61&number=30
 
@@ -528,7 +530,7 @@ Operations that do not return status or error codes and messages (which is all s
 	<tr>
 		<td>400 Bad Request </td>
 		<td>FILTER_SYNTAX_ERROR </td>
-		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE</td>
+		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE <i>(NOTE: see [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description))</i></td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>
