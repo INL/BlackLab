@@ -612,7 +612,7 @@ public class QueryTool {
             }
 
             // Comment after command? Strip.
-            cmd = cmd.replaceAll("#.+$", "").trim();
+            cmd = cmd.replaceAll("\\s#.+$", "").trim();
             if (cmd.length() == 0) {
                 statprintln(""); // output empty lines in stats
                 continue; // no actual command on line, skip
