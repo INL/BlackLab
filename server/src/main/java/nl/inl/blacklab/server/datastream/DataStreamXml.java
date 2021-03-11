@@ -230,7 +230,9 @@ public class DataStreamXml extends DataStream {
             int vIndex = i * valuesPerWord;
             int j = 0;
             indent();
-            print(StringEscapeUtils.escapeXml10(values.get(vIndex)));
+            if (annotationsToList.contains(annotations.get(0))) { // punctuation
+                print(StringEscapeUtils.escapeXml10(values.get(vIndex)));
+            }
             print("<w");
             for (int k = 1; k < annotations.size() - 1; k++) {
                 Annotation annotation = annotations.get(k);
