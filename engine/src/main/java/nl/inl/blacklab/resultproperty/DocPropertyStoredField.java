@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -49,7 +51,8 @@ import nl.inl.util.StringUtil;
  * be "author", "year", and such.
  */
 public class DocPropertyStoredField extends DocProperty {
-
+    private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
+    
     /** Lucene field name */
     private String fieldName;
 
@@ -84,10 +87,8 @@ public class DocPropertyStoredField extends DocProperty {
                 if (index.reader() != null) { // skip for MockIndex (testing)
                     for (LeafReaderContext rc : index.reader().leaves()) {
                         LeafReader r = rc.reader();
-                        SortedSetDocValues sortedDocValues = r.getSortedSetDocValues(fieldName);
-                        if (sortedDocValues != null) {
-                            docValues.put(rc.docBase, sortedDocValues);
-                        }
+                        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
+                        SortedSetDocValues sortedDocValues = r.getSortedSetDocValues(fieldName);                         docValues.put(rc.docBase, sortedDocValues);    
                     }
                 }
                 if (docValues.isEmpty()) {
@@ -115,19 +116,25 @@ public class DocPropertyStoredField extends DocProperty {
                 if (e.getKey() > docId) { break; }
                 target = e;
             }
-
+            
             final List<String> ret = new ArrayList<>();
             if (target != null) {
                 final Integer targetDocBase = target.getKey();
                 final SortedSetDocValues targetDocValues = target.getValue();
-                targetDocValues.setDocument(docId - targetDocBase);
-                for (long ord = targetDocValues.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = targetDocValues.nextOrd()) {
-                    BytesRef val = targetDocValues.lookupOrd(ord);
-                    ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                if (targetDocValues != null) {
+                    targetDocValues.setDocument(docId - targetDocBase);
+                    for (long ord = targetDocValues.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = targetDocValues.nextOrd()) {
+                        BytesRef val = targetDocValues.lookupOrd(ord);
+                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                    }
                 }
+                // If no docvalues for this segment - no values were indexed for this field (in this segment). 
+                // So returning the empty array is good.
             }
             return ret.toArray(new String[ret.size()]);
         }
+        
+        
         // We don't have DocValues; just get the property from the document.
         try {
             return index.reader().document(docId).getValues(fieldName);
