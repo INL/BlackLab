@@ -1,4 +1,4 @@
-package nl.inl.blacklab.searches;
+package nl.inl.blacklab.testutil;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.SearchResult;
 
 /**
  * Future result for a search operation, executed in a thread.
- * 
+ *
  * Because searches run in their own thread, we can interrupt long-running
  * searches halfway. Call {@link #cancel(boolean)} with `true` to interrupt
  * a running search.
@@ -92,5 +92,5 @@ public class FutureSearchResult<T extends SearchResult> implements Future<T> {
     public boolean isDone() {
         return result != null;
     }
-    
+
 }
