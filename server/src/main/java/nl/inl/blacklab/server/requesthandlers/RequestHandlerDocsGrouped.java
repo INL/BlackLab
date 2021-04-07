@@ -85,7 +85,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
         
-        addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaited(), 0, groups, ourWindow);
+        addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else

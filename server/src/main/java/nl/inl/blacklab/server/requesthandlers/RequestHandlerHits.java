@@ -156,11 +156,11 @@ public class RequestHandlerHits extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
 
-        long totalTime = job.threwException() ? -1 : job.timeUserWaited();
+        long totalTime = job.threwException() ? -1 : job.timeUserWaitedMs();
 
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window
-        addSummaryCommonFields(ds, searchParam, job.timeUserWaited(), totalTime, null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, job.timeUserWaitedMs(), totalTime, null, window.windowStats());
         addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);

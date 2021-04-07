@@ -16,7 +16,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadAborter;
 
 /**
  * A list of results of some type.
@@ -101,7 +101,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
-    protected ThreadPauser threadPauser;
+    protected ThreadAborter threadAborter;
     
     /**
      * The results.
@@ -148,7 +148,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     public Results(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
 //        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
-        threadPauser = ThreadPauser.create();
+        threadAborter = ThreadAborter.create();
         results = new ArrayList<>();
     }
 
@@ -186,8 +186,8 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return hitsObjId;
     }
 
-    public ThreadPauser threadPauser() {
-        return threadPauser;
+    public ThreadAborter threadAborter() {
+        return threadAborter;
     }
 
     /**

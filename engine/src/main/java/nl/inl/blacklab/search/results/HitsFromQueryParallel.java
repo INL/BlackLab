@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.BlockTimer;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
     private static class SpansReader implements Runnable {
@@ -63,7 +63,7 @@ public class HitsFromQueryParallel extends Hits {
 
         // Internal state
         private boolean isDone = false;
-        private final ThreadPauser threadPauser = ThreadPauser.create();
+        private final ThreadAborter threadAborter = ThreadAborter.create();
         private boolean isInitialized;
         private final int docBase;
 
@@ -296,7 +296,7 @@ public class HitsFromQueryParallel extends Hits {
                         return;
 
                     // Do this at the end so interruptions don't happen halfway a loop and lead to invalid states
-                    threadPauser.waitIfPaused();
+                    threadAborter.checkAbort();
                 }
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);

@@ -147,7 +147,7 @@ public class RequestHandlerDocs extends RequestHandler {
             totalDocResults.size(); // fetch all
 
         docResults = totalDocResults;
-        totalTime = total.threwException() ? -1 : total.timeUserWaited();
+        totalTime = total.threwException() ? -1 : total.timeUserWaitedMs();
 
         return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
 }
@@ -175,7 +175,7 @@ public class RequestHandlerDocs extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
-        addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), totalTime, null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);

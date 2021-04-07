@@ -292,7 +292,7 @@ public class Contexts implements Iterable<int[]> {
             if (hit.doc() != currentDoc) {
                 if (currentDoc >= 0) {
                     try {
-                        hits.threadPauser().waitIfPaused();
+                        hits.threadAborter().checkAbort();
                     } catch (InterruptedException e) {
                         throw new InterruptedSearch(e);
                     }

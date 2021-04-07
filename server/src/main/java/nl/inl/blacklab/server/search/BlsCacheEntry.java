@@ -15,13 +15,13 @@ import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadAborter;
 
 public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     public static final double ALMOST_ZERO = 0.0001;
 
-    public static final int RUN_PAUSE_PHASE_JUST_STARTED = 5;
+    public static final int JUST_STARTED = 5;
 
     /**
      * How long a job remains "young". Young jobs are treated differently than old
@@ -69,8 +69,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                     result = resultSupplier.get();
                     isResultsInstance = result instanceof Results<?>;
                     if (isResultsInstance) {
-                        // Make sure our results object can be paused
-                        pausing.setThreadPauser(((Results<?>)result).threadPauser());
+                        // Make sure our results object can be aborted
+                        threadAborter = ((Results<?>)result).threadAborter();
                     }
                 } finally {
                     initialSearchDone = true;
@@ -140,8 +140,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Did our task finish, succesfully or otherwise? (set by thread) */
     private boolean fullSearchDone = false;
 
-    /** Handles pausing the results object, and keeping track of pause time */
-    ThreadPauserProxy pausing = new ThreadPauserProxy();
+    /** Handles aborting search if necessary, and keeping track of search time */
+    ThreadAborter threadAborter = null;
 
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
@@ -195,10 +195,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         return worthiness;
     }
 
-    public ThreadPauser threadPauser() {
-        return pausing;
-    }
-
     public Throwable exceptionThrown() {
         return exceptionThrown;
     }
@@ -235,7 +231,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return time since creation (ms)
      */
-    public long timeSinceCreation() {
+    public long timeSinceCreationMs() {
         return now() - createTime;
     }
 
@@ -246,7 +242,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return time since last access (ms)
      */
-    public long timeSinceLastAccess() {
+    public long timeSinceLastAccessMs() {
         return now() - lastAccessTime;
     }
 
@@ -258,7 +254,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return time since search finished (ms)
      */
-    public long timeSinceFinished() {
+    public long timeSinceFinishedMs() {
         return fullSearchDone ? now() - fullSearchDoneTime : 0;
     }
 
@@ -270,7 +266,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return the unused time (ms)
      */
-    public long timeUnused() {
+    public long timeUnusedMs() {
         return isDone() ? now() - lastAccessTime : 0;
     }
 
@@ -282,30 +278,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return user wait time (ms)
      */
-    public long timeUserWaited() {
+    public long timeUserWaitedMs() {
         if (fullSearchDone)
             return fullSearchDoneTime - createTime;
-        else return timeSinceCreation();
-    }
-
-    /**
-     * How long has this job actually been running in total?
-     *
-     * Running time is the total time minus the paused time.
-     *
-     * @return how long the search has actually run (ms)
-     */
-    public long timeRunning() {
-        return timeUserWaited() - pausing.pausedTotal();
-    }
-
-    /**
-     * How long has this job been paused in total?
-     *
-     * @return how long the search has been paused (ms)
-     */
-    public long timePaused() {
-        return pausing.pausedTotal();
+        else return timeSinceCreationMs();
     }
 
     @Override
@@ -363,7 +339,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * an object changing while sorting.
      *
      * 'Worthiness' is a measure indicating how important a job is, and determines
-     * what jobs get the CPU and what jobs are paused or aborted. It also determines
+     * what jobs get the CPU and what jobs are aborted. It also determines
      * what finished jobs are removed from the cache.
      */
     public void calculateWorthiness() {
@@ -375,12 +351,12 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             int sizeScore = Math.max(1, Math.min(100, numberOfStoredHits() * BlsCache.SIZE_OF_HIT / 1000000));
 
             // Run time score from 1-10000; 0.03s per unit, so 10000 corresponds to 5 minutes or longer
-            long runTimeScore = Math.max(1, Math.min(10000, timeRunning() * 10 / 300));
+            long runTimeScore = Math.max(1, Math.min(10000, timeUserWaitedMs() * 10 / 300));
 
             // Last accessed score from 1-100: 3s per unit, so 100 corresponds to 5 minutes or longer
-            long lastAccessScore = Math.max(1, Math.min(100, timeSinceLastAccess() / 3000));
+            long lastAccessScore = Math.max(1, Math.min(100, timeSinceLastAccessMs() / 3000));
 
-            if (timeSinceLastAccess() < 60000) {
+            if (timeSinceLastAccessMs() < 60000) {
                 // For the first minute of the search, pretend it's a search that took really long
                 // and is really small, so it won't be eliminated from the cache right away.
                 worthiness = 10000 / lastAccessScore;
@@ -390,30 +366,16 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 worthiness = (long)((double)runTimeScore / lastAccessScore / sizeScore);
             }
 
-        } else if (timeRunning() > YOUTH_THRESHOLD_SEC) {
+        } else if (timeUserWaitedMs() / 1000 > YOUTH_THRESHOLD_SEC) {
             // 10000 ... 19999: search has been running for a long time and is counting hits
             // 20000 ... 29999: search has been running for a long time and is retrieving hits
             // (younger searches are considered worthier)
             boolean isCount = search instanceof SearchCount;
-            worthiness = Math.max(10000, 19999 - timeRunning()) + (isCount ? 0 : 10000);
+            worthiness = Math.max(10000, 19999 - timeUserWaitedMs() / 1000) + (isCount ? 0 : 10000);
         } else {
-            long runtime = pausing.currentRunPhaseLength();
-            boolean justStartedRunning = runtime > ALMOST_ZERO && runtime < RUN_PAUSE_PHASE_JUST_STARTED;
-            long pause = pausing.currentPauseLength();
-            boolean justPaused = pause > ALMOST_ZERO && pause < RUN_PAUSE_PHASE_JUST_STARTED;
-            if (!justPaused && !justStartedRunning) {
-                // 30000 ... 39999: search has been running for a short time
-                // (older searches are considered worthier, to give searches just started a fair chance of completing)
-                worthiness = Math.min(39999, 30000 + timeRunning());
-            } else if (justPaused) {
-                // 40000 ... 49999: search was just paused
-                // (the longer ago, the worthier)
-                worthiness = Math.min(49999, 40000 + pause);
-            } else {
-                // 50000 ... 59999: search was just resumed
-                // (the more recent, the worthier)
-                worthiness = Math.max(50000, 59999 - runtime);
-            }
+            // 30000 ... 39999: search hasn't been running for very long yet
+            // (the more recent, the worthier)
+            worthiness = Math.max(30000, 39999 - timeUserWaitedMs() / 1000);
         }
     }
 
@@ -492,7 +454,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             return "finished";
         if (isDone())
             return "counting";
-        return pausing.isPaused() ? "paused" : "running";
+        return "running";
     }
 
     public void dataStream(DataStream ds, boolean debugInfo) {
@@ -509,10 +471,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 .entry("futureStatus", futureStatus())
                 .entry("exceptionThrown", exceptionThrown == null ? "" : exceptionThrown.getClass().getSimpleName())
                 .entry("sizeBytes", numberOfStoredHits() * BlsCache.SIZE_OF_HIT)
-                .entry("userWaitTime", timeUserWaited() / 1000.0)
-                .entry("totalExecTime", timeRunning() / 1000.0)
-                .entry("notAccessedFor", timeSinceLastAccess() / 1000.0)
-                .entry("pausedFor", pausing.currentPauseLength() / 1000.0)
+                .entry("userWaitTime", timeUserWaitedMs() / 1000.0)
+                .entry("notAccessedFor", timeSinceLastAccessMs() / 1000.0)
                 //.entry("createdBy", shortUserId())
                 //.entry("refsToJob", refsToJob - 1) // (- 1 because the cache always references it)
                 //.entry("waitingForJobs", waitingFor.size())
@@ -565,12 +525,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     private static void dataStreamDebugInfo(DataStream ds, BlsCacheEntry<?> entry) {
         ds.startMap();
         // More information about job state
-        ds.entry("timeSinceCreation", entry.timeSinceCreation())
-                .entry("timeSinceFinished", entry.timeSinceFinished())
-                .entry("timeSinceLastAccess", entry.timeSinceLastAccess())
-                .entry("timePausedTotal", entry.threadPauser().pausedTotal())
+        ds.entry("timeSinceCreation", entry.timeSinceCreationMs())
+                .entry("timeSinceFinished", entry.timeSinceFinishedMs())
+                .entry("timeSinceLastAccess", entry.timeSinceLastAccessMs())
                 .entry("searchCancelled", entry.isCancelled())
-                .entry("priorityLevel", entry.threadPauser().isPaused() ? "PAUSED" : "RUNNING")
                 .startEntry("thrownException")
                 .startMap();
         // Information about thrown exception, if any
