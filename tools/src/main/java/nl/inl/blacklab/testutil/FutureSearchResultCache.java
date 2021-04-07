@@ -3,7 +3,6 @@ package nl.inl.blacklab.testutil;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -32,12 +31,12 @@ public class FutureSearchResultCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> searchTask) {
+    public <R extends SearchResult> Future<R> getAsync(Search<R> search) {
         Future<R> future;
         synchronized (searches) {
             future = (Future<R>)searches.get(search);
             if (future == null) {
-                future = new FutureSearchResult<>(searchTask);
+                future = new FutureSearchResult<>(search);
                 searches.put(search, future);
                 if (trace)
                     System.out.println("ADDED: " + search);

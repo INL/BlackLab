@@ -4,9 +4,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
 import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.searches.Search;
 
 /**
  * Future result for a search operation, executed in a thread.
@@ -31,10 +31,10 @@ public class FutureSearchResult<T extends SearchResult> implements Future<T> {
     /** Exception thrown by our thread, or null if no exception was thrown */
     private Exception exceptionThrown = null;
 
-    public FutureSearchResult(Supplier<T> supplier) {
+    public FutureSearchResult(Search<T> search) {
         this.thread = new Thread(() -> {
             try {
-                result = supplier.get();
+                result = search.getSupplier().get();
             } catch (Exception e) {
                 exceptionThrown = e;
             }

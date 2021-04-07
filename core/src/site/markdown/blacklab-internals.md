@@ -14,4 +14,4 @@ The implementation of the cache is left up to the user of BlackLab. BlackLab Ser
 
 These are the important interfaces and classes involved in BlackLab's cache system and BLS's implementation:
 - `SearchCache` is the interface that cache implementations must adhere to. Its main two methods are `get()` and `getAsync()`, which take a search description (subclass of `Search<R>`, where `R` is the type of `SearchResult` we expect from the search) and a search task (a `Supplier<R>`) which would be executed if the result is not already available. `get()` will block until the result is available (either found in the cache or executed). `getAsync()` will not block but return a `Future<R>`, that will eventually yield the desired results and can be monitored
-- `Search<R>` and its subclasses represent descriptions of searches (e.g. a query for hits, with optional sorting, grouping, etc.). It has `execute()` and `executeAsync()` methods that 
+- `Search<R>` and its subclasses represent descriptions of searches (e.g. a query for hits, with optional sorting, grouping, etc.). It has `execute()` and `executeAsync()` methods that execute the search.

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -116,13 +115,13 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, Supplier<R> searchTask) {
-        return getFromCache(search, searchTask, false);
+    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search) {
+        return getFromCache(search, false);
     }
 
     @Override
-    public <R extends SearchResult> R get(Search<R> search, Supplier<R> searchTask) throws ExecutionException {
-        BlsCacheEntry<R> entry = getFromCache(search, searchTask, true);
+    public <R extends SearchResult> R get(Search<R> search) throws ExecutionException {
+        BlsCacheEntry<R> entry = getFromCache(search, true);
         try {
             return entry.get();
         } catch (InterruptedException e) {
@@ -131,8 +130,7 @@ public class BlsCache implements SearchCache {
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search,
-            Supplier<R> searchTask, boolean block) {
+    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block) {
         BlsCacheEntry<R> future;
         boolean created = false;
         boolean useCache = search.queryInfo().useCache();
@@ -146,7 +144,7 @@ public class BlsCache implements SearchCache {
                     search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
                     throw e;
                 }
-                future = new BlsCacheEntry<>(search, searchTask);
+                future = new BlsCacheEntry<>(search);
                 created = true;
                 if (!cacheDisabled && useCache)
                     searches.put(search, future);

@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -28,15 +27,13 @@ public interface SearchCache {
      * returned.
      *
      * @param <R> type of SearchResult
-     * @param search search we want the result for
-     * @param searchTask if the search is not in the cache, execute this task,
-     *            returning the future result and putting it in the cache
+     * @param search search we want the result for. if the search is not in the cache, execute it,
+     *            returning the future result and putting it in the cache.
      * @param fetchAllResults if true, and search yield a Results object, will fetch all results before the thread ends
      *                        this can be used for running total counts, for example
-     * @return the future, either one that was already the cache or a new one using
-     *         the supplier
+     * @return the future, either one that was already the cache or a new one
      */
-    <R extends SearchResult> Future<R> getAsync(Search<R> search, Supplier<R> searchTask);
+    <R extends SearchResult> Future<R> getAsync(Search<R> search);
 
     /**
      * Get result for the specified search.
@@ -50,18 +47,16 @@ public interface SearchCache {
      * complete, but other implementations could choose to perform the task on the current thread as well.
      *
      * @param <R> type of SearchResult
-     * @param search search we want the result for
-     * @param searchTask if the search is not in the cache, execute this task,
-     *            returning the future result and putting it in the cache
-     * @return the future, either one that was alrady the cache or a new one using
-     *         the supplier
+     * @param search search we want the result for. if the search is not in the cache, execute it,
+     *            returning the future result and putting it in the cache.
+     * @return the future, either one that was alrady the cache or a new one
      * @throws InterruptedSearch if the task was interrupted
      * @throws ExecutionException if the task threw an exception (see the cause)
      */
-    default <R extends SearchResult> R get(Search<R> search, Supplier<R> searchTask)
+    default <R extends SearchResult> R get(Search<R> search)
             throws ExecutionException {
         try {
-            return getAsync(search, searchTask).get();
+            return getAsync(search).get();
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         }
