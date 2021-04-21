@@ -561,35 +561,36 @@ public abstract class RequestHandler {
 
     protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
         MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
-        Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
-        for (MetadataFieldGroup metaGroup : metaGroups) {
-            for (MetadataField field: metaGroup) {
-                metadataFieldsNotInGroups.remove(field);
-            }
-        }
-
-        ds.startEntry("metadataFieldGroups").startList();
-        boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metaGroups) {
-            ds.startItem("metadataFieldGroup").startMap();
-            ds.entry("name", metaGroup.name());
-            ds.startEntry("fields").startList();
-            for (MetadataField field: metaGroup) {
-                ds.item("field", field.name());
-            }
-            if (!addedRemaining && metaGroup.addRemainingFields()) {
-                addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
-                for (MetadataField field: rest) {
-                    ds.item("field", field.name());
+        synchronized (metaGroups) { // concurrent requests
+            Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
+            for (MetadataFieldGroup metaGroup : metaGroups) {
+                for (MetadataField field: metaGroup) {
+                    metadataFieldsNotInGroups.remove(field);
                 }
             }
+            
+            ds.startEntry("metadataFieldGroups").startList();
+            boolean addedRemaining = false;
+            for (MetadataFieldGroup metaGroup : metaGroups) {
+                ds.startItem("metadataFieldGroup").startMap();
+                ds.entry("name", metaGroup.name());
+                ds.startEntry("fields").startList();
+                for (MetadataField field: metaGroup) {
+                    ds.item("field", field.name());
+                }
+                if (!addedRemaining && metaGroup.addRemainingFields()) {
+                    addedRemaining = true;
+                    List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
+                    rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
+                    for (MetadataField field: rest) {
+                        ds.item("field", field.name());
+                    }
+                }
+                ds.endList().endEntry();
+                ds.endMap().endItem();
+            }
             ds.endList().endEntry();
-            ds.endMap().endItem();
         }
-        ds.endList().endEntry();
-
     }
 
     /**
