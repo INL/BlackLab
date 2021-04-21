@@ -156,7 +156,7 @@ public class HitsFromQuery extends Hits {
     
     @Override
     public String toString() {
-        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hitsSoFar=" + results.size() + ")";
+        return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hitsSoFar=" + hitsCountedSoFar() + ")";
     }
 
     /**
@@ -170,13 +170,13 @@ public class HitsFromQuery extends Hits {
     protected void ensureResultsRead(int number) {
         try {
             // Prevent locking when not required
-            if (sourceSpansFullyRead || (number >= 0 && results.size() > number))
+            if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() > number))
                 return;
     
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - results.size() < FETCH_HITS_MIN)
-                number = results.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
+                number = hitsArrays.size() + FETCH_HITS_MIN;
     
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -185,14 +185,14 @@ public class HitsFromQuery extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (sourceSpansFullyRead || (number >= 0 && results.size() >= number))
+                if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() >= number))
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
                 int maxHitsToCount = searchSettings.maxHitsToCount();
                 int maxHitsToProcess = searchSettings.maxHitsToProcess();
-                while (readAllHits || results.size() < number) {
+                while (readAllHits || hitsArrays.size() < number) {
     
                     // Pause if asked
                     threadPauser.waitIfPaused();
@@ -284,8 +284,8 @@ public class HitsFromQuery extends Hits {
                             hitQueryContext.getCapturedGroups(groups);
                             capturedGroups.put(hit, groups);
                         }
-                        results.add(hit);
-                        if (maxHitsToProcess >= 0 && results.size() >= maxHitsToProcess) {
+                        hitsArrays.add(hit);
+                        if (maxHitsToProcess >= 0 && hitsArrays.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }
                     }

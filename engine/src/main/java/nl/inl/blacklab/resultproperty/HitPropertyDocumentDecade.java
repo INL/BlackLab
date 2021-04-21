@@ -19,9 +19,9 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the
@@ -44,7 +44,7 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     private DocPropertyDecade docPropertyDocumentDecade;
 
-    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Results<Hit> hits, boolean invert) {
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
         this.index = prop.index;
         this.reader = index.reader();
@@ -61,20 +61,21 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDocumentDecade(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueDecade get(Hit result) {
-        return new PropertyValueDecade(docPropertyDocumentDecade.get(result.doc()));
+    public PropertyValueDecade get(int hitIndex) {
+        return docPropertyDocumentDecade.get(hits.hitsArrays().doc(hitIndex));
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
-        int aDecade = docPropertyDocumentDecade.get(a.doc());
-        int bDecade = docPropertyDocumentDecade.get(b.doc());
-        return reverse ? bDecade - aDecade : aDecade - bDecade;
+    public int compare(int indexA, int indexB) {
+        return docPropertyDocumentDecade.compare(
+            hits.hitsArrays().doc(indexA),
+            hits.hitsArrays().doc(indexB)
+        ) * (reverse ? -1 : 1);
     }
 
     @Override
@@ -125,5 +126,10 @@ public class HitPropertyDocumentDecade extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return true;
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return null;
     }
 }

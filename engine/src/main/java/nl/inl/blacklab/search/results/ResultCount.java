@@ -14,7 +14,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     private boolean wasInterrupted = false;
 
-    public ResultCount(Results<?> count, CountType type) {
+    public ResultCount(Results<?, ?> count, CountType type) {
         switch (type) {
         case RESULTS:
             this.count = count.resultsStats();

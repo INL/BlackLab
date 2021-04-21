@@ -28,8 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * Base class for HitPropertyHitText, LeftContext, RightContext, WordLeft and
@@ -62,7 +61,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected MatchSensitivity sensitivity;
 
-    protected ContextSize contextSize;
+//    protected ContextSize contextSize;
 
     protected String name;
 
@@ -70,7 +69,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected BlackLabIndex index;
 
-    public HitPropertyContextBase(HitPropertyContextBase prop, Results<Hit> hits, Contexts contexts, boolean invert) {
+    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.terms = prop.terms;
         this.annotation = prop.annotation;
@@ -80,14 +79,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
                             + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
         }
         this.sensitivity = prop.sensitivity;
-        this.contextSize = prop.contextSize;
+//        this.contextSize = prop.contextSize;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
         this.index = hits == null ? prop.index : hits.index();
     }
 
     public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
-            MatchSensitivity sensitivity, ContextSize contextSize) {
+            MatchSensitivity sensitivity/*, ContextSize contextSize*/) {
         super();
         this.name = name;
         this.serializeName = serializeName;
@@ -95,7 +94,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
         this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
-        this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
+//        this.contextSize = contextSize == null ? index.defaultContextSize() : contextSize;
     }
 
     @Override
@@ -108,10 +107,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return Arrays.asList(sensitivity);
     }
 
-    @Override
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return contextSize;
-    }
+//    @Override
+//    public ContextSize needsContextSize(BlackLabIndex index) {
+//        return contextSize;
+//    }
 
     @Override
     public String name() {
@@ -129,7 +128,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
-        result = prime * result + ((contextSize == null) ? 0 : contextSize.hashCode());
+//        result = prime * result + ((contextSize == null) ? 0 : contextSize.hashCode());
         result = prime * result + ((index == null) ? 0 : index.hashCode());
         result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
         return result;
@@ -149,11 +148,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 return false;
         } else if (!annotation.equals(other.annotation))
             return false;
-        if (contextSize == null) {
-            if (other.contextSize != null)
-                return false;
-        } else if (!contextSize.equals(other.contextSize))
-            return false;
+//        if (contextSize == null) {
+//            if (other.contextSize != null)
+//                return false;
+//        } else if (!contextSize.equals(other.contextSize))
+//            return false;
         if (index == null) {
             if (other.index != null)
                 return false;

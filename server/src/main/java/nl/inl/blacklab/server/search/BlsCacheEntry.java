@@ -67,10 +67,10 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                     Supplier<T> resultSupplier = supplier;
                     supplier = null;
                     result = resultSupplier.get();
-                    isResultsInstance = result instanceof Results<?>;
+                    isResultsInstance = result instanceof Results<?, ?>;
                     if (isResultsInstance) {
                         // Make sure our results object can be paused
-                        pausing.setThreadPauser(((Results<?>)result).threadPauser());
+                        pausing.setThreadPauser(((Results<?, ?>)result).threadPauser());
                     }
                 } finally {
                     initialSearchDone = true;
@@ -78,7 +78,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 if (fetchAllResults) {
                     if (isResultsInstance) {
                         // Fetch all results from the result object
-                        ((Results<?>) result).resultsStats().processedTotal();
+                        ((Results<?, ?>) result).resultsStats().processedTotal();
                     }
                     if (result instanceof ResultCount) {
                         // Complete the count

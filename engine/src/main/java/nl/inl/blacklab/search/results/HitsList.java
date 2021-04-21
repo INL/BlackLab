@@ -1,47 +1,16 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.eclipse.collections.api.iterator.MutableIntIterator;
 
 /**
  * A basic Hits object implemented with a list.
  */
 public class HitsList extends Hits {
-
-    private static List<Hit> createHitList(int[] doc, int[] start, int[] end) {
-        List<Hit> hits = new ArrayList<>();
-        for (int i = 0; i < doc.length; i++) {
-            hits.add(Hit.create(doc[i], start[i], end[i]));
-        }
-        return hits;
-    }
-
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
     
+    /** Our sample parameters, if any. null if not a sample of a larger result set */
     private SampleParameters sampleParameters;
-
-    /**
-     * Make a wrapper Hits object for a list of Hit objects.
-     *
-     * Does not copy the list, but reuses it.
-     *
-     * @param queryInfo query info
-     * @param hits the list of hits to wrap, or null for a new list
-     */
-    protected HitsList(QueryInfo queryInfo, List<Hit> hits) {
-        super(queryInfo);
-        this.results = hits == null ? new ArrayList<>() : hits;
-        hitsCounted = this.results.size();
-        int prevDoc = -1;
-        for (Hit h : this.results) {
-            if (h.doc() != prevDoc) {
-                docsRetrieved++;
-                docsCounted++;
-                prevDoc = h.doc();
-            }
-        }
-    }
 
     /**
      * Make a wrapper Hits object for a list of Hit objects.
@@ -52,32 +21,21 @@ public class HitsList extends Hits {
      * @param hits the list of hits to wrap, or null for a new list
      * @param capturedGroups the list of hits to wrap, or null for no captured groups
      */
-    protected HitsList(QueryInfo queryInfo, List<Hit> hits, CapturedGroups capturedGroups) {
-        this(queryInfo, hits);
+    protected HitsList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
+        super(queryInfo, hits);
         this.capturedGroups = (CapturedGroupsImpl) capturedGroups;
-    }
-
-    /**
-     * Create a list of hits from three arrays.
-     *
-     * Mainly useful for testing.
-     *
-     * @param queryInfo query info
-     * @param doc document ids
-     * @param start hit starts
-     * @param end hit ends
-     */
-    protected HitsList(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
-        this(queryInfo, createHitList(doc, start, end));
-    }
-
-    /**
-     * Make an empty list of hits.
-     *
-     * @param queryInfo query info
-     */
-    protected HitsList(QueryInfo queryInfo) {
-        this(queryInfo, null);
+        
+        hitsCounted = this.hitsArrays.size();
+        int prevDoc = -1;
+        MutableIntIterator it = this.hitsArrays.docs().intIterator();
+        while (it.hasNext()) {
+            int docId = it.next();
+            if (docId != prevDoc) {
+                docsRetrieved++;
+                docsCounted++;
+                prevDoc = docId;
+            }
+        }
     }
     
     /**
@@ -85,13 +43,19 @@ public class HitsList extends Hits {
      * 
      * Should only be used internally.
      */
-    protected HitsList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
-            int hitsCounted, int docsRetrieved, int docsCounted, CapturedGroupsImpl capturedGroups) {
-        super(queryInfo);
-        this.results = results;
+    public HitsList(
+                       QueryInfo queryInfo, 
+                       HitsArrays hits,
+                       WindowStats windowStats, 
+                       SampleParameters sampleParameters,
+                       int hitsCounted, 
+                       int docsRetrieved, 
+                       int docsCounted, 
+                       CapturedGroupsImpl capturedGroups
+                       ) {
+        super(queryInfo, hits);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        
         this.hitsCounted = hitsCounted;
         this.docsRetrieved = docsRetrieved;
         this.docsCounted = docsCounted;
@@ -100,7 +64,7 @@ public class HitsList extends Hits {
 
     @Override
     public String toString() {
-        return "HitsList#" + hitsObjId + " (hits.size()=" + results.size() + "; isWindow=" + isWindow() + ")";
+        return "HitsList#" + hitsObjId + " (hits.size()=" + this.size() + "; isWindow=" + isWindow() + ")";
     }
     
     /**
@@ -134,5 +98,4 @@ public class HitsList extends Hits {
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
     }
-
 }

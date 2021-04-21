@@ -2,14 +2,13 @@ package nl.inl.blacklab.resultproperty;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
  * @param <T> type of result
  */
-public interface ResultProperty<T> extends Comparator<T>, Serializable {
+public interface ResultProperty<T> extends Serializable {
 
     /**
      * Strip sensitivity information.
@@ -25,14 +24,16 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
             return info.substring(0, info.length() - 2);
         return info;
     }
-    
+
     /**
      * Get the property value for a specific result.
      * @param hit result to get property value for
      * @return property value
      */
-    PropertyValue get(T hit);
+//    PropertyValue get(T hit);
 
+//    PropertyValue get(int index);
+    
     /**
      * Compares two hits on this property.
      *
@@ -47,8 +48,9 @@ public interface ResultProperty<T> extends Comparator<T>, Serializable {
      * @param b second hit
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
-    @Override
-    int compare(T a, T b);
+//    @Override
+//    int compare(T a, T b);]
+//    int compare(int aIndex, int bIndex);
 
     /**
      * Get the name of the property

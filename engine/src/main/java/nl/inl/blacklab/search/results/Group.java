@@ -16,6 +16,7 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * A group of results, with its group identity and the results themselves.
@@ -26,11 +27,11 @@ public abstract class Group<T> implements Result<Group<T>> {
     
     protected PropertyValue groupIdentity;
 
-    private Results<T> storedResults;
+    private Results<T, ? extends ResultProperty<T>> storedResults;
     
     private int totalSize;
 
-    protected Group(PropertyValue groupIdentity, Results<T> storedResults, int totalSize) {
+    protected Group(PropertyValue groupIdentity, Results<T, ? extends ResultProperty<T>> storedResults, int totalSize) {
         this.groupIdentity = groupIdentity;
         this.storedResults = storedResults;
         this.totalSize = totalSize;
@@ -40,7 +41,7 @@ public abstract class Group<T> implements Result<Group<T>> {
         return groupIdentity;
     }
     
-    public Results<T> storedResults() {
+    public Results<T, ? extends ResultProperty<T>> storedResults() {
         return storedResults;
     }
     

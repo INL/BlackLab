@@ -23,6 +23,7 @@ import java.util.stream.IntStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -38,10 +39,10 @@ import nl.inl.blacklab.search.results.Results;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitProperty implements ResultProperty<Hit> {
+public abstract class HitProperty implements ResultProperty<Hit>, IntComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(Results<Hit> hits, String serialized) {
+    public static HitProperty deserialize(Results<Hit, HitProperty> hits, String serialized) {
         return deserialize(hits.index(), hits.field(), serialized);
     }
 
@@ -128,7 +129,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
     }
 
     /** The Hits object we're looking at */
-    protected Results<Hit> hits;
+    protected Hits hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
@@ -156,7 +157,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param contexts new contexts to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, Results<Hit> hits, Contexts contexts, boolean invert) {
+    HitProperty(HitProperty prop, Hits hits, Contexts contexts, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
         if (invert)
@@ -215,15 +216,19 @@ public abstract class HitProperty implements ResultProperty<Hit> {
         this.contextIndices.addAll(contextIndices);
     }
 
-    @Override
-    public abstract PropertyValue get(Hit hit);
+//    @Override
+    public abstract PropertyValue get(int hitIndex);
 
+    // A default implementation is nice, but slow.
     @Override
-    public int compare(Hit a, Hit b) {
-        PropertyValue hitPropValueA = get(a);
-        PropertyValue hitPropValueB = get(b);
+    public int compare(int indexA, int indexB) {
+        PropertyValue hitPropValueA = get(indexA);
+        PropertyValue hitPropValueB = get(indexB);
         return hitPropValueA.compareTo(hitPropValueB);
     }
+    
+//    @Override
+//    public abstract int compare(int a, int b);
 
     /**
      * Retrieve context from which field(s) prior to sorting/grouping on this
@@ -251,9 +256,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param index index, so we can find the default context size if we need to 
      * @return required context size
      */
-    public ContextSize needsContextSize(BlackLabIndex index) {
-        return index.defaultContextSize();
-    }
+    public abstract ContextSize needsContextSize(BlackLabIndex index);
 
     @Override
     public abstract String name();
@@ -284,7 +287,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param contexts new Contexts to use, or null for none
      * @return the new HitProperty object
      */
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts) {
         return copyWith(newHits, contexts, false);
     }
 
@@ -297,7 +300,7 @@ public abstract class HitProperty implements ResultProperty<Hit> {
      * @param invert true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert);
+    public abstract HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert);
 
     @Override
     public boolean isReverse() {

@@ -16,9 +16,9 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene
@@ -34,7 +34,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     final private DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Results<Hit> hits, boolean invert) {
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
@@ -51,18 +51,20 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueString get(Hit result) {
-        return DocPropertyStoredField.fromArray(docPropStoredField.get(result.doc()));
+    public PropertyValueString get(int result) {
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.hitsArrays().doc(result)));
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
-        int result = docPropStoredField.compare(a.doc(), b.doc());
+    public int compare(int a, int b) {
+        final int docA = hits.hitsArrays().doc(a);
+        final int docB = hits.hitsArrays().doc(b);
+        int result = docPropStoredField.compare(docA, docB);
         return reverse ? -result : result;
     }
 
@@ -118,5 +120,10 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     
     public String fieldName() {
         return fieldName;
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return null;
     }
 }

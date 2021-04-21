@@ -2,10 +2,8 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +30,7 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
 import nl.inl.util.BlockTimer;
 import nl.inl.util.ThreadPauser;
 
@@ -58,7 +57,7 @@ public class HitsFromQueryParallel extends Hits {
         /** Target number of hits to count, must always be >= {@link globalHitsToProcess} */
         final AtomicInteger globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-        private final List<Hit> globalResults; 
+        private final HitsArrays globalResults; 
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
         private final CapturedGroupsImpl globalCapturedGroups;
 
@@ -88,7 +87,7 @@ public class HitsFromQueryParallel extends Hits {
             LeafReaderContext leafReaderContext,
             HitQueryContext sourceHitQueryContext,
             
-            List<Hit> globalResults,
+            HitsArrays globalResults,
             CapturedGroupsImpl globalCapturedGroups, 
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
@@ -166,7 +165,7 @@ public class HitsFromQueryParallel extends Hits {
             LeafReaderContext leafReaderContext,
             HitQueryContext hitQueryContext,
             
-            List<Hit> globalResults,
+            HitsArrays globalResults,
             CapturedGroupsImpl globalCapturedGroups, 
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
@@ -259,9 +258,9 @@ public class HitsFromQueryParallel extends Hits {
                 return;
             
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
-            final Map<Hit, Span[]> capturedGroups = numCaptureGroups > 0 ? new HashMap<Hit, Span[]>() : null;
+            final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
             
-            final List<Hit> results = new ArrayList<>();
+            final HitsArrays results = new HitsArrays();
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
             final IntUnaryOperator incrementUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             
@@ -288,7 +287,7 @@ public class HitsFromQueryParallel extends Hits {
                         if (capturedGroups != null) {
                             Span[] groups = new Span[numCaptureGroups];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                            capturedGroups.add(groups);
                         }
                     }
 
@@ -316,17 +315,25 @@ public class HitsFromQueryParallel extends Hits {
             this.leafReaderContext = null;
         }
         
-        void reportHitsIfMoreThan(List<Hit> hits, Map<Hit, Span[]> capturedGroups, int count) {
+        void reportHitsIfMoreThan(HitsArrays hits, ArrayList<Span[]> capturedGroups, int count) {
             if (hits.size() >= count) {
-                synchronized (globalResults) {
-                    globalResults.addAll(hits);
-                    hits.clear();
+                globalResults.addAll(hits);
+                hits.withWriteLock(__ -> {
+                    hits.docs().clear();
+                    hits.starts().clear();
+                    hits.ends().clear();
+                });
 
-                    if (globalCapturedGroups != null) {
-                        synchronized (globalCapturedGroups) {
-                            globalCapturedGroups.putAll(capturedGroups);
-                            capturedGroups.clear();
+                if (globalCapturedGroups != null) {
+                    synchronized (globalCapturedGroups) {
+                        HitIterator it = hits.iterator();
+                        int i = 0;
+                        while (it.hasNext()) {
+                            Hit h = it.next().toHit();
+                            globalCapturedGroups.put(h, capturedGroups.get(i));
+                            ++i;
                         }
+                        capturedGroups.clear();
                     }
                 }
             }
@@ -421,7 +428,7 @@ public class HitsFromQueryParallel extends Hits {
                             spans,
                             leafReaderContext,
                             hitQueryContextForThisSpans,
-                            this.results,
+                            this.hitsArrays,
                             this.capturedGroups,
                             this.globalDocsProcessed,
                             this.globalDocsCounted,
@@ -442,7 +449,7 @@ public class HitsFromQueryParallel extends Hits {
                         weight,
                         leafReaderContext,
                         this.hitQueryContext,
-                        this.results,
+                        this.hitsArrays,
                         this.capturedGroups,
                         this.globalDocsProcessed,
                         this.globalDocsCounted,
@@ -465,10 +472,8 @@ public class HitsFromQueryParallel extends Hits {
     protected void ensureResultsRead(int number) {
         number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
         
-        synchronized(results) { // synchronize because worker threads might be writing
-            if (allSourceSpansFullyRead || (results.size() >= number)) {
-                return;
-            }
+        if (allSourceSpansFullyRead || (hitsArrays.size() >= number)) {
+            return;
         }
         
         // clamp number to [currentrequested, number, maxrequested], defaulting to max if number < 0
@@ -483,12 +488,10 @@ public class HitsFromQueryParallel extends Hits {
              * So instead poll our own state, then if we're still missing results after that just count them ourselves
              */
             while (!ensureHitsReadLock.tryLock()) {
-                synchronized(results) {
-                    // synchronize on results just to be sure we're not getting invalid state while a worker thread is writing
-                    if (allSourceSpansFullyRead || (results.size() >= number)) {
-                        return;
-                    }
+                if (allSourceSpansFullyRead || (hitsArrays.size() >= number)) {
+                    return;
                 }
+            
                 Thread.sleep(50);
             }
             hasLock = true;
@@ -527,9 +530,7 @@ public class HitsFromQueryParallel extends Hits {
     
     @Override
     public MaxStats maxStats() {
-        synchronized(this.results) {
-            return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);
-        }
+        return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);    
     }
 
     @Override

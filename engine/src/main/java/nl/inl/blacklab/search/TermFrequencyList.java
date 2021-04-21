@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.util.StringUtil;
 
@@ -34,7 +34,7 @@ import nl.inl.util.StringUtil;
  * also set the total frequency explicitly (after all entries have been added)
  * if you want to calculate relative frequencies based on a different total.
  */
-public class TermFrequencyList extends Results<TermFrequency> {
+public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty<TermFrequency>> {
     
     /**
      * Count occurrences of context words around hit.
@@ -183,7 +183,7 @@ public class TermFrequencyList extends Results<TermFrequency> {
     }
 
     @Override
-    public <P extends ResultProperty<TermFrequency>> TermFrequencyList sort(P sortProp) {
+    public TermFrequencyList sort(ResultProperty<TermFrequency> sortProp) {
         throw new UnsupportedOperationException();
     }
 

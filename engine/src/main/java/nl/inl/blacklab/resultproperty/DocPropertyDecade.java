@@ -47,8 +47,8 @@ public class DocPropertyDecade extends DocProperty {
         docPropStoredField = new DocPropertyStoredField(index, fieldName);
     }
 
-    public int get(int docId) {
-        String strYear = docPropStoredField.getFirstValue(docId);
+    /** Parses the value, UNKNOWN_VALUE is returned if the string is unparseable */
+    public int parse(String strYear) {
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -58,18 +58,22 @@ public class DocPropertyDecade extends DocProperty {
         }
         return year;
     }
-
+    
+    public int getRaw(int docId) {
+        return parse(docPropStoredField.getFirstValue(docId));
+    }
+    
+    public int getRaw(DocResult result) {
+        return parse(docPropStoredField.getFirstValue(result));
+    }
+    
+    public PropertyValueDecade get(int docId) {
+        return new PropertyValueDecade(getRaw(docId));
+    }
+ 
     @Override
     public PropertyValueDecade get(DocResult result) {
-        String strYear = docPropStoredField.getFirstValue(result);
-        int year;
-        try {
-            year = Integer.parseInt(strYear);
-            year -= year % 10;
-        } catch (NumberFormatException e) {
-            year = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-        }
-        return new PropertyValueDecade(year);
+        return new PropertyValueDecade(getRaw(result));
     }
 
     /**
@@ -81,12 +85,8 @@ public class DocPropertyDecade extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        String strYearA = a.identity().luceneDoc().get(fieldName);
-        if (strYearA == null)
-            strYearA = "";
-        String strYearB = b.identity().luceneDoc().get(fieldName);
-        if (strYearB == null)
-            strYearB = "";
+        String strYearA = docPropStoredField.getFirstValue(a);
+        String strYearB = docPropStoredField.getFirstValue(b);
         if (strYearA.length() == 0) { // sort missing year at the end
             if (strYearB.length() == 0)
                 return 0;
@@ -95,21 +95,26 @@ public class DocPropertyDecade extends DocProperty {
         }
         if (strYearB.length() == 0) // sort missing year at the end
             return reverse ? 1 : -1;
-        int year1;
-        try {
-            year1 = Integer.parseInt(strYearB);
-            year1 -= year1 % 10;
-        } catch (NumberFormatException e) {
-            year1 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-        }
-        int year2;
-        try {
-            year2 = Integer.parseInt(strYearB);
-            year2 -= year2 % 10;
-        } catch (NumberFormatException e) {
-            year2 = HitPropertyDocumentDecade.UNKNOWN_VALUE;
-        }
 
+        int year1 = parse(strYearA);
+        int year2 = parse(strYearB);
+        return reverse ? year2 - year1 : year1 - year2;
+    }
+    
+    public int compare(int docIdA, int docIdb) {
+        String strYearA = docPropStoredField.getFirstValue(docIdA);
+        String strYearB = docPropStoredField.getFirstValue(docIdb);
+        if (strYearA.length() == 0) { // sort missing year at the end
+            if (strYearB.length() == 0)
+                return 0;
+            else
+                return reverse ? -1 : 1;
+        }
+        if (strYearB.length() == 0) // sort missing year at the end
+            return reverse ? 1 : -1;
+
+        int year1 = parse(strYearA);
+        int year2 = parse(strYearB);
         return reverse ? year2 - year1 : year1 - year2;
     }
 

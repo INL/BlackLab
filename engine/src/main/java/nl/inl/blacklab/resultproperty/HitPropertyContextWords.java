@@ -25,9 +25,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -197,7 +197,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     int totalWords;
 
-    HitPropertyContextWords(HitPropertyContextWords prop, Results<Hit> hits, Contexts contexts, boolean invert) {
+    HitPropertyContextWords(HitPropertyContextWords prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
         this.annotation = prop.annotation;
         if (!hits.field().equals(this.annotation.field())) {
@@ -267,13 +267,13 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyContextWords(this, newHits, contexts, invert);
     }
 
     @Override
-    public PropertyValueContextWords get(Hit hit) {
-        int[] context = contexts.get(hit);
+    public PropertyValueContextWords get(int hitIndex) {
+        int[] context = contexts.get(hitIndex);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];
@@ -427,5 +427,11 @@ public class HitPropertyContextWords extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return false;
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        int maxContextSize = index.defaultContextSize().left();
+        return this.words.stream().map(w -> ContextSize.get(Math.min(w.maxLength, maxContextSize))).reduce(ContextSize::union).orElse(null);
     }
 }

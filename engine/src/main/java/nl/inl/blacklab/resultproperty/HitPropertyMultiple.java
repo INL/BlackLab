@@ -30,8 +30,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A collection of GroupProperty's identifying a particular group.
@@ -61,7 +60,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** Which of the contexts do the individual properties need? */
     Map<HitProperty, List<Integer>> contextIndicesPerProperty;
     
-    HitPropertyMultiple(HitPropertyMultiple mprop, Results<Hit> newHits, Contexts contexts, boolean invert) {
+    HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
         super(mprop, null, null, invert);
         int n = mprop.properties.size();
         this.contextNeeded = mprop.contextNeeded;
@@ -143,7 +142,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyMultiple(this, newHits, contexts, invert);
     }
 
@@ -203,24 +202,24 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
         // Get ContextSize that's large enough for all our properties
-        return properties.stream().map(p -> p.needsContextSize(index)).reduce( (a, b) -> ContextSize.union(a, b) ).orElse(index.defaultContextSize());
+        return properties.stream().map(p -> p.needsContextSize(index)).filter(s -> s != null).reduce( (a, b) -> ContextSize.union(a, b) ).orElse(null);
     }
 
     @Override
-    public PropertyValueMultiple get(Hit result) {
+    public PropertyValueMultiple get(int hitIndex) {
         PropertyValue[] rv = new PropertyValue[properties.size()];
         int i = 0;
         for (HitProperty crit: properties) {
-            rv[i] = crit.get(result);
+            rv[i] = crit.get(hitIndex);
             i++;
         }
         return new PropertyValueMultiple(rv);
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
+    public int compare(int indexA, int indexB) {
         for (HitProperty crit: properties) {
-            int cmp = reverse ? crit.compare(b, a) : crit.compare(a, b);
+            int cmp = reverse ? crit.compare(indexB, indexA) : crit.compare(indexA, indexB);
             if (cmp != 0)
                 return cmp;
         }

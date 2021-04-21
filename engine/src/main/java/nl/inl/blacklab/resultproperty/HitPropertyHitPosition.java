@@ -15,9 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -29,7 +31,7 @@ public class HitPropertyHitPosition extends HitProperty {
         return new HitPropertyHitPosition();
     }
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, Results<Hit> hits, boolean invert) {
+    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
     }
     
@@ -38,13 +40,13 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyHitPosition(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueInt get(Hit result) {
-        return new PropertyValueInt(result.start());
+    public PropertyValueInt get(int hitIndex) {
+        return new PropertyValueInt(hits.hitsArrays().start(hitIndex));
     }
 
     @Override
@@ -53,10 +55,16 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
-        if (a.start() == b.start())
-            return reverse ? b.end() - a.end() : a.end() - b.end();
-        return reverse ? b.start() - a.start() : a.start() - b.start();
+    public int compare(int indexA, int indexB) {
+        HitsArrays ha = hits.hitsArrays();
+        int startA = ha.start(indexA);
+        int startB = ha.start(indexB);
+        int endA = ha.end(indexA);
+        int endB = ha.end(indexB);
+        
+        if (startA == startB)
+            return reverse ? endB - endA : endA - endB;
+        return reverse ? startB - startA : startA - startB;
     }
 
     @Override
@@ -67,5 +75,10 @@ public class HitPropertyHitPosition extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return false;
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return null;
     }
 }

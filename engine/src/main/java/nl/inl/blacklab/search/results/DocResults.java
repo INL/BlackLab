@@ -40,16 +40,17 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A list of DocResult objects (document-level query results).
  */
-public class DocResults extends Results<DocResult> implements ResultGroups<Hit> {
+public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
 
     static final Logger logger = LogManager.getLogger(DocResults.class);
 
@@ -142,7 +143,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private List<Hit> partialDocHits;
+    private HitsArrays partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -242,10 +243,11 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
-
+    
     @Override
-    public <P extends ResultProperty<DocResult>> DocResults sort(P sortProp) {
-        List<DocResult> sorted = Results.doSort(this, sortProp);
+    public DocResults sort(DocProperty sortProp) {
+        List<DocResult> sorted = new ArrayList<DocResult>(this.results);
+        sorted.sort(sortProp);
         return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
     }
 
@@ -308,21 +310,21 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             try {
                 // Fill list of document results
                 PropertyValueDoc doc = partialDocId;
-                List<Hit> docHits = partialDocHits;
+                HitsArrays docHits = partialDocHits;
                 partialDocId = null;
                 partialDocHits = null;
 
                 while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
 
                     Hit hit = sourceHitsIterator.next();
-                    PropertyValueDoc val = groupByDoc.get(hit);
+                    PropertyValueDoc val = groupByDoc.get(index);
                     if (!val.equals(doc)) {
                         if (docHits != null) {
-                            Hits hits = Hits.fromList(queryInfo(), docHits);
+                            Hits hits = Hits.fromList(queryInfo(), docHits, null);
                             addDocResultToList(doc, hits, hits.size());
                         }
                         doc = val;
-                        docHits = new ArrayList<>();
+                        docHits = new HitsArrays();
                     }
                     docHits.add(hit);
                 }
@@ -332,7 +334,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
                         partialDocId = doc;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
-                        Hits hits = Hits.fromList(queryInfo(), docHits);
+                        Hits hits = Hits.fromList(queryInfo(), docHits, null);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
@@ -346,7 +348,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         }
     }
 
-    private void addDocResultToList(PropertyValue doc, Hits docHits, int totalNumberOfHits) {
+    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, int totalNumberOfHits) {
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
             docResult = DocResult.fromHits(doc, Hits.emptyList(queryInfo()), totalNumberOfHits);
@@ -362,7 +364,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public DocGroups group(ResultProperty<DocResult> groupBy, int maxResultsToStorePerGroup) {
+    public DocGroups group(DocProperty groupBy, int maxResultsToStorePerGroup) {
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
@@ -427,7 +429,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      * @param numProp a numeric property to sum
      * @return the sum
      */
-    public int intSum(ResultProperty<DocResult> numProp) {
+    public int intSum(DocProperty numProp) {
         ensureAllResultsRead();
         int sum = 0;
         for (DocResult result : results) {
@@ -454,16 +456,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     }
 
     @Override
-    public ResultProperty<Hit> groupCriteria() {
+    public HitProperty groupCriteria() {
         return groupByDoc;
     }
-
-    @Override
-    public DocResults filter(ResultProperty<DocResult> property, PropertyValue value) {
-        List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
-    }
-
+    
     @Override
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
@@ -476,6 +472,12 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         return DocResults.fromList(queryInfo(), truncatedGroups, (SampleParameters)null, windowStats);
     }
 
+    @Override
+    public DocResults filter(DocProperty property, PropertyValue value) {
+        List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
+    }
+    
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *

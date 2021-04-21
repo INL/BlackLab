@@ -15,6 +15,7 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,7 @@ import nl.inl.blacklab.search.results.DocResult;
  * Subclasses implement specific grouping criteria (number of hits, the value of
  * a stored field in the Lucene document, ...)
  */
-public abstract class DocProperty implements ResultProperty<DocResult> {
+public abstract class DocProperty implements ResultProperty<DocResult>, Comparator<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */
@@ -63,7 +64,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
      * @return the grouping property. e.g. this might be "Harry Mulisch" when
      *         grouping on author.
      */
-    @Override
     public abstract PropertyValue get(DocResult result);
 
     /**
@@ -73,7 +73,6 @@ public abstract class DocProperty implements ResultProperty<DocResult> {
      * @param b second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
-    @Override
     public int compare(DocResult a, DocResult b) {
         return get(a).compareTo(get(b));
     }

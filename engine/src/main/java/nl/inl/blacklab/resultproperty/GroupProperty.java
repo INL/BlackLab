@@ -15,6 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Comparator;
+
 import nl.inl.blacklab.search.results.Group;
 
 /**
@@ -23,7 +25,7 @@ import nl.inl.blacklab.search.results.Group;
  * @param <T> type of result, e.g. Hit
  * @param <G> group type, e.g. HitGroup
  */
-public abstract class GroupProperty<T, G extends Group<T>> implements ResultProperty<G> {
+public abstract class GroupProperty<T, G extends Group<T>> implements ResultProperty<G>, Comparator<G> {
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
@@ -47,10 +49,8 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
         return false;
     }
 
-    @Override
     public abstract PropertyValue get(G result);
 
-    @Override
     public abstract int compare(G a, G b);
 
     @Override

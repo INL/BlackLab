@@ -21,8 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping on the context of the hit. Requires
@@ -30,38 +29,42 @@ import nl.inl.blacklab.search.results.Results;
  */
 public class HitPropertyLeftContext extends HitPropertyContextBase {
 
+    protected final ContextSize contextSize;
+    
     static HitPropertyLeftContext deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyLeftContext.class, index, field, info);
     }
 
-    HitPropertyLeftContext(HitPropertyLeftContext prop, Results<Hit> hits, Contexts contexts, boolean invert) {
+    HitPropertyLeftContext(HitPropertyLeftContext prop, Hits hits, Contexts contexts, boolean invert) {
         super(prop, hits, contexts, invert);
+        this.contextSize = prop.contextSize;
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, ContextSize contextSize) {
-        super("left context", "left", index, annotation, sensitivity, contextSize);
+        super("left context", "left", index, annotation, sensitivity);
+        this.contextSize = contextSize != null ? contextSize : index.defaultContextSize();
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        super("left context", "left", index, annotation, sensitivity, null);
+        this(index, annotation, sensitivity, null);
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, MatchSensitivity sensitivity) {
-        super("left context", "left", index, null, sensitivity, null);
+        this(index, null, sensitivity, null);
     }
 
     public HitPropertyLeftContext(BlackLabIndex index, Annotation annotation) {
-        super("left context", "left", index, annotation, null, null);
+        this(index, annotation, null, null);
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyLeftContext(this, newHits, contexts, invert);
     }
 
     @Override
-    public PropertyValueContextWords get(Hit result) {
-        int[] context = contexts.get(result);
+    public PropertyValueContextWords get(int hitIndex) {
+        int[] context = contexts.get(hitIndex);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         //int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
         int contextLength = context[Contexts.LENGTH_INDEX];
@@ -86,11 +89,11 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
-        int[] ca = contexts.get(a);
+    public int compare(int indexA, int indexB) {
+        int[] ca = contexts.get(indexA);
         int caHitStart = ca[Contexts.HIT_START_INDEX];
         int caLength = ca[Contexts.LENGTH_INDEX];
-        int[] cb = contexts.get(b);
+        int[] cb = contexts.get(indexB);
         int cbHitStart = cb[Contexts.HIT_START_INDEX];
         int cbLength = cb[Contexts.LENGTH_INDEX];
 
@@ -121,5 +124,15 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
     @Override
     public boolean isDocPropOrHitText() {
         return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        return 31 * super.hashCode() + contextSize.hashCode();
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return contextSize;
     }
 }

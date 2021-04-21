@@ -19,15 +19,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResult> {
+public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, DocGroup>> implements ResultGroups<DocResult> {
     
     /**
      * Construct a DocGroups from a list of groups.
@@ -86,11 +87,34 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public DocGroup get(PropertyValue groupId) {
         return groups.get(groupId);
     }
+    
+    @Override
+    public DocGroups sort(GroupProperty<DocResult, DocGroup> sortProp) {
+        List<DocGroup> sorted = new ArrayList<DocGroup>(this.results);
+        sorted.sort(sortProp);
+        return new DocGroups(
+            this.queryInfo(), 
+            sorted,
+            this.groupBy, 
+            (SampleParameters)null, 
+            (WindowStats)null
+       );
+    }
 
     @Override
-    public <P extends ResultProperty<DocGroup>> DocGroups sort(P sortProp) {
-        List<DocGroup> sorted = Results.doSort(this, sortProp);
-        return DocGroups.fromList(queryInfo(), sorted, groupBy, (SampleParameters)null, (WindowStats)null);
+    public ResultGroups<DocGroup> group(GroupProperty<DocResult, DocGroup> criteria, int maxResultsToStorePerGroup) {
+        throw new UnsupportedOperationException("Cannot group DocGroups");
+    }
+
+    @Override
+    public DocGroups filter(GroupProperty<DocResult, DocGroup> property, PropertyValue value) {
+        return new DocGroups(
+            this.queryInfo(), 
+            this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()), 
+            this.groupBy, 
+            (SampleParameters)null, 
+            (WindowStats)null
+       );
     }
 
     @Override
@@ -119,17 +143,6 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     @Override
     protected void ensureResultsRead(int number) {
         // NOP
-    }
-
-    @Override
-    public DocGroups filter(ResultProperty<DocGroup> property, PropertyValue value) {
-        List<DocGroup> list = Results.doFilter(this, property, value);
-        return new DocGroups(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null);
-    }
-
-    @Override
-    public ResultGroups<DocGroup> group(ResultProperty<DocGroup> criteria, int maxResultsToStorePerGroup) {
-        throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 
     @Override
@@ -170,4 +183,5 @@ public class DocGroups extends Results<DocGroup> implements ResultGroups<DocResu
     public int numberOfResultObjects() {
         return resultObjects;
     }
+
 }

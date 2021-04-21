@@ -15,9 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.Hits;
 
 /**
  * A hit property for grouping per document id.
@@ -31,7 +32,7 @@ public class HitPropertyDocumentId extends HitProperty {
         return new HitPropertyDocumentId();
     }
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, Results<Hit> hits, boolean invert) {
+    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);
     }
 
@@ -40,13 +41,13 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Results<Hit> newHits, Contexts contexts, boolean invert) {
+    public HitProperty copyWith(Hits newHits, Contexts contexts, boolean invert) {
         return new HitPropertyDocumentId(this, newHits, invert);
     }
 
     @Override
-    public PropertyValueInt get(Hit result) {
-        return new PropertyValueInt(result.doc());
+    public PropertyValueInt get(int hitIndex) {
+        return new PropertyValueInt(hits.hitsArrays().doc(hitIndex));
     }
 
     @Override
@@ -55,8 +56,10 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public int compare(Hit a, Hit b) {
-        return reverse ? b.doc() - a.doc() : a.doc() - b.doc();
+    public int compare(int indexA, int indexB) {
+        final int docA = hits.hitsArrays().doc(indexA);
+        final int docB = hits.hitsArrays().doc(indexB);
+        return reverse ? docB - docA : docA - docB;
     }
 
     @Override
@@ -78,5 +81,10 @@ public class HitPropertyDocumentId extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return true;
+    }
+    
+    @Override
+    public ContextSize needsContextSize(BlackLabIndex index) {
+        return null;
     }
 }

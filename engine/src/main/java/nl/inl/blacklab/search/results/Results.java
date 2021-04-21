@@ -2,13 +2,10 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -23,7 +20,7 @@ import nl.inl.util.ThreadPauser;
  *
  * @param <T> result type, e.g. Hit
  */
-public abstract class Results<T> implements SearchResult, Iterable<T> {
+public abstract class Results<T, P extends ResultProperty<T>> implements SearchResult, Iterable<T> {
 
     /** When setting how many hits to retrieve/count/store in group, this means "no limit". */
     public static final int NO_LIMIT = -1;
@@ -36,7 +33,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     }
     
     // Perform simple generic sampling operation
-    protected static <T> List<T> doSample(Results<T> source, SampleParameters sampleParameters) {
+    protected static <T, P extends ResultProperty<T>> List<T> doSample(ResultsList<T, P> source, SampleParameters sampleParameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         
@@ -65,7 +62,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return results;
     }
 
-    protected static <T> List<T> doWindow(Results<T> results, int first, int number) {
+    protected static <T, P extends ResultProperty<T>> List<T> doWindow(ResultsList<T, P> results, int first, int number) {
         if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
             //throw new BlackLabRuntimeException("First hit out of range");
             return Collections.emptyList();
@@ -80,16 +77,16 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return new ArrayList<T>(results.resultsSubList(first, first + actualSize));
     }
 
-    protected static <T> List<T> doFilter(Results<T> results, ResultProperty<T> property, PropertyValue value) {
-        return results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-    }
-
-    protected static <P extends ResultProperty<T>, T> List<T> doSort(Results<T> results, P sortProp) {
-        results.ensureAllResultsRead();
-        List<T> sorted = new ArrayList<>(results.resultsList());
-        sorted.sort(sortProp);
-        return sorted;
-    }
+//    protected static <T, P extends ResultProperty<T>> List<T> doFilter(ResultsList<T, P> results, ResultProperty<T> property, PropertyValue value) {
+//        return results.stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+//    }
+//
+//    protected static <T, P extends ResultProperty<T>> List<T> doSort(ResultsList<T, P> results, P sortProp) {
+//        results.ensureAllResultsRead();
+//        List<T> sorted = new ArrayList<>(results.resultsList());
+//        sorted.sort(sortProp);
+//        return sorted;
+//    }
 
     /** Unique id of this Hits instance (for debugging) */
     protected final int hitsObjId = getNextHitsObjId();
@@ -103,11 +100,6 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      */
     protected ThreadPauser threadPauser;
     
-    /**
-     * The results.
-     */
-    protected List<T> results;
-
     private ResultsStats resultsStats = new ResultsStats() {
         @Override
         public boolean processedAtLeast(int lowerBound) {
@@ -149,7 +141,6 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         this.queryInfo = queryInfo;
 //        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
         threadPauser = ThreadPauser.create();
-        results = new ArrayList<>();
     }
 
     /**
@@ -246,59 +237,16 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return StreamSupport.stream(this.spliterator(), true);
     }
 
-    /**
-     * Return an iterator over these hits.
-     *
-     * @return the iterator
-     */
-    @Override
-    public Iterator<T> iterator() {
-        // Construct a custom iterator that iterates over the hits in the hits
-        // list, but can also take into account the Spans object that may not have
-        // been fully read. This ensures we don't instantiate Hit objects for all hits
-        // if we just want to display the first few.
-        return new Iterator<T>() {
-        
-            int index = -1;
-        
-            @Override
-            public boolean hasNext() {
-                // Do we still have hits in the hits list?
-                ensureResultsRead(index + 2);
-                return results.size() >= index + 2;
-            }
-        
-            @Override
-            public T next() {
-                // Check if there is a next, taking unread hits from Spans into account
-                if (hasNext()) {
-                    index++;
-                    return results.get(index);
-                }
-                throw new NoSuchElementException();
-            }
-        
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        
-        };
-    }
+    
     
     /**
      * Return the specified hit.
+     * Implementations of this method should be thread-safe.
      *
      * @param i index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
-    public synchronized T get(int i) {
-        ensureResultsRead(i + 1);
-        if (i >= results.size())
-            return null;
-        return results.get(i);
-    }
-    
+    public abstract T get(int i);
     
     /**
      * Group these hits by a criterium (or several criteria).
@@ -307,16 +255,16 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param maxResultsToStorePerGroup maximum number of results to store per group, or -1 for all
      * @return a HitGroups object representing the grouped hits
      */
-    public abstract ResultGroups<T> group(ResultProperty<T> criteria, int maxResultsToStorePerGroup);
+    public abstract ResultGroups<T> group(P criteria, int maxResultsToStorePerGroup);
 
     /**
-     * Select only the hits where the specified property has the specified value.
+     * Select only the results where the specified property has the specified value.
      * 
      * @param property property to select on, e.g. "word left of hit"
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
-    public abstract Results<T> filter(ResultProperty<T> property, PropertyValue value);
+    public abstract Results<T, P> filter(P property, PropertyValue value);
 
     /**
      * Return a new Results object with these results sorted by the given property.
@@ -328,7 +276,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param sortProp the property to sort on
      * @return a new Results object with the same results, sorted in the specified way
      */
-    public abstract <P extends ResultProperty<T>> Results<T> sort(P sortProp);
+    public abstract Results<T, P> sort(P sortProp);
 
     /**
      * Take a sample of results.
@@ -336,7 +284,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param sampleParameters sample parameters 
      * @return the sample
      */
-    public abstract Results<T> sample(SampleParameters sampleParameters);
+    public abstract Results<T, P> sample(SampleParameters sampleParameters);
 
     /**
      * Get a window into this list of results.
@@ -352,7 +300,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @param windowSize desired size of the window (if there's enough results)
      * @return the window
      */
-    public abstract Results<T> window(int first, int windowSize);
+    public abstract Results<T, P> window(int first, int windowSize);
     
     @Override
     public String toString() {
@@ -379,10 +327,7 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return resultsStats;
     }
     
-    protected boolean resultsProcessedAtLeast(int lowerBound) {
-        ensureResultsRead(lowerBound);
-        return results.size() >= lowerBound;
-    }
+    protected abstract boolean resultsProcessedAtLeast(int lowerBound);
 
     /**
      * This is an alias of resultsProcessedTotal().
@@ -393,14 +338,9 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
         return resultsProcessedTotal();
     }
 
-    protected int resultsProcessedTotal() {
-        ensureAllResultsRead();
-        return results.size();
-    }
+    protected abstract int resultsProcessedTotal();
 
-    protected int resultsProcessedSoFar() {
-        return results.size();
-    }
+    protected abstract int resultsProcessedSoFar();
 
     protected int resultsCountedSoFar() {
         return resultsProcessedSoFar();
@@ -408,38 +348,6 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
     
     protected int resultsCountedTotal() {
         return resultsProcessedTotal();
-    }
-    
-    /**
-     * Get part of the list of results.
-     * 
-     * Clients shouldn't use this. Used internally for certain performance-sensitive
-     * operations like sorting.
-     * 
-     * The returned list is a view backed by the results list.
-     * 
-     * If toIndex is out of range, no exception is thrown, but a smaller list is returned.
-     * 
-     * @return the list of hits
-     */
-    protected List<T> resultsSubList(int fromIndex, int toIndex) {
-        ensureResultsRead(toIndex);
-        if (toIndex > results.size())
-            toIndex = results.size();
-        return results.subList(fromIndex, toIndex);
-    }
-
-    /**
-     * Get the list of results.
-     * 
-     * Clients shouldn't use this. Used internally for certain performance-sensitive
-     * operations like sorting.
-     * 
-     * @return the list of hits
-     */
-    protected List<T> resultsList() {
-        ensureAllResultsRead();
-        return Collections.unmodifiableList(results);
     }
 
     /**
@@ -451,6 +359,4 @@ public abstract class Results<T> implements SearchResult, Iterable<T> {
      * @return true iff all hits have been retrieved/counted.
      */
     public abstract boolean doneProcessingAndCounting();
-
-    
 }

@@ -1,7 +1,8 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.resultproperty.GroupProperty;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -13,9 +14,9 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     
     private SearchHitGroups source;
     
-    private ResultProperty<HitGroup> property;
+    private GroupProperty<Hit, HitGroup> property;
 
-    public SearchHitGroupsSorted(QueryInfo queryInfo, SearchHitGroups source, ResultProperty<HitGroup> sortBy) {
+    public SearchHitGroupsSorted(QueryInfo queryInfo, SearchHitGroups source, GroupProperty<Hit, HitGroup> sortBy) {
         super(queryInfo);
         this.source = source;
         this.property = sortBy;

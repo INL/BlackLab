@@ -99,8 +99,17 @@ public class Kwics {
         }
         
         Map<Hit, Kwic> conc1 = new HashMap<>();
-        for (List<Hit> l : hitsPerDocument.values()) {
-            Contexts.makeKwicsSingleDocForwardIndex(l, wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+        int lastDocId = hits.size() > 0 ? hits.hitsArrays().doc(0) : -1;
+        int firstIndexWithCurrentDocId = 0;
+        for (int i = 1; i < hits.size(); ++i) {
+            int curDocId = hits.hitsArrays().doc(i);
+            if (curDocId != lastDocId || i == (hits.size() - 1)) {
+                Contexts.makeKwicsSingleDocForwardIndex(
+                    hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId), 
+                    wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+                lastDocId = curDocId;
+                firstIndexWithCurrentDocId = i;
+            }
         }
         return conc1;
     }

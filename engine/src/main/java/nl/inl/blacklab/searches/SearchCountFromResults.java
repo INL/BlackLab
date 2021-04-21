@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.Results;
  * A search operation that yields a count as its result.
  * @param <T> result type, e.g. Hit
  */
-public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
+public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
     
     private SearchResults<T> source;
     private CountType type;

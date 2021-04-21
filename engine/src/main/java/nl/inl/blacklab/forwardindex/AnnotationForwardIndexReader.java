@@ -291,6 +291,85 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
         return result;
     }
+    
+    public List<int[]> retrievePartsIntAllocationless(int fiid, int[] starts, int[] ends, List<int[]> ret) {
+        if (!initialized)
+            initialize();
+
+        if (deleted[fiid] != 0)
+            return null;
+
+        int n = starts.length;
+        if (n != ends.length)
+            throw new IllegalArgumentException("start and end must be of equal length");
+        List<int[]> result = new ArrayList<>(n);
+
+        for (int i = 0; i < n; i++) {
+            int start = starts[i]; // don't modify the start/end array contents!
+            int end = ends[i];
+            
+            if (start == -1)
+                start = 0;
+            if (end == -1)
+                end = length[fiid];
+            if (start < 0 || end < 0) {
+                throw new IllegalArgumentException("Illegal values, start = " + start + ", end = "
+                        + end);
+            }
+            if (end > length[fiid]) // Can happen while making KWICs because we don't know the
+                                   // doc length until here
+                end = length[fiid];
+            if (start > length[fiid] || end > length[fiid]) {
+                throw new IllegalArgumentException("Value(s) out of range, start = " + start
+                        + ", end = " + end + ", content length = " + length[fiid]);
+            }
+            if (end <= start) {
+                throw new IllegalArgumentException(
+                        "Tried to read empty or negative length snippet (from " + start
+                                + " to " + end + ")");
+            }
+
+            // Get an IntBuffer to read the desired content
+            IntBuffer ib = null;
+
+            // The tokens file has has been mapped to memory.
+            // Get an int buffer into the file.
+
+            // Figure out which chunk to access.
+            ByteBuffer whichChunk = null;
+            long chunkOffsetBytes = -1;
+            long entryOffsetBytes = offset[fiid] * SIZEOF_INT;
+            for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
+                long offsetBytes = tokensFileChunkOffsetBytes.get(j);
+                ByteBuffer buffer = tokensFileChunks.get(j);
+                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
+                                * SIZEOF_INT) {
+                    // This one!
+                    whichChunk = buffer;
+                    chunkOffsetBytes = offsetBytes;
+                    break;
+                }
+            }
+
+            if (whichChunk == null) {
+                throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+            }
+            ((Buffer)whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
+            ib = whichChunk.asIntBuffer();
+
+            int snippetLength = end - start;
+            int[] snippet = new int[snippetLength];
+
+            // The file is mem-mapped (search mode).
+            // Position us at the correct place in the file.
+            ib.position(start);
+            ib.get(snippet);
+            result.add(snippet);
+        }
+
+        return result;
+    }
 
     @Override
     public void deleteDocument(int fiid) {

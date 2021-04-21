@@ -1,8 +1,9 @@
 package nl.inl.blacklab.searches;
 
+import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -21,7 +22,7 @@ public abstract class SearchHitGroups extends SearchResults<HitGroups> {
      * @param sortBy what to sort by
      * @return resulting operation
      */
-    public SearchHitGroups sort(ResultProperty<HitGroup> sortBy) {
+    public SearchHitGroups sort(GroupProperty<Hit, HitGroup> sortBy) {
         if (sortBy == null)
             return this;
         return new SearchHitGroupsSorted(queryInfo(), this, sortBy);

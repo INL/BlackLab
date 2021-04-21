@@ -102,8 +102,7 @@ public class ContextSize {
         ContextSize other = (ContextSize) obj;
         if (includeHit != other.includeHit)
             return false;
-        if (left != other.left)
-            return false;
+        if (left != other.left)            return false;
         return right == other.right;
     }
     
@@ -111,5 +110,4 @@ public class ContextSize {
     public String toString() {
         return "ContextSize(" + left + ", " + right + ", " + includeHit + ")";
     }
-
 }

@@ -28,7 +28,7 @@ public class DocResult extends HitGroup {
         return new DocResult(queryInfo, doc, score, totalNumberOfHits);
     }
     
-    public static DocResult fromHits(PropertyValue doc, Hits storedHits, int totalNumberOfHits) {
+    public static DocResult fromHits(PropertyValueDoc doc, Hits storedHits, int totalNumberOfHits) {
         return new DocResult(doc, storedHits, totalNumberOfHits);
     }
     

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,7 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import nl.inl.util.XmlHighlighter;
 
 /** Concordances for a list of hits. */
@@ -31,7 +31,7 @@ public class Concordances {
     /**
      * @param hits
      */
-    Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
+    public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
         if (contextSize.left() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
         if (type == ConcordanceType.FORWARD_INDEX) {
@@ -128,18 +128,18 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsArrays> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {
-            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsArrays hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = new ArrayList<>();
+                hitsInDoc = new HitsArrays();
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (List<Hit> l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = Hits.fromList(queryInfo, l);
+        for (HitsArrays l : hitsPerDocument.values()) {
+            Hits hitsInThisDoc = Hits.fromList(queryInfo, l, null);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

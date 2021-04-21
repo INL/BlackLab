@@ -19,16 +19,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.search.Query;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.forwardindex.FiidLookup;
+import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -37,7 +39,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * access to the hits. Note that this means that all hits found must be
  * retrieved, which may be infeasible for large results sets.
  */
-public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
+public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup>> implements ResultGroups<Hit> {
 
     /**
      * Construct HitGroups from a list of HitGroup instances.
@@ -117,16 +119,17 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
         List<Annotation> requiredContext = criteria.needsContext();
         List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index().reader());
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
-
+        
         //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, List<Hit>> groupLists = new HashMap<>();
+        Map<PropertyValue, HitsArrays> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
+        int i = 0;
         for (Hit hit: hits) {
-            PropertyValue identity = criteria.get(hit);
-            List<Hit> group = groupLists.get(identity);
+            PropertyValue identity = criteria.get(i);
+            HitsArrays group = groupLists.get(identity);
             if (group == null) {
-                group = new ArrayList<>();
+                group = new HitsArrays();
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -141,11 +144,12 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
             if (groupSize > largestGroupSize)
                 largestGroupSize = groupSize;
             groupSizes.put(identity, groupSize);
+            ++i;
         }
         resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, List<Hit>> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsArrays> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
-            List<Hit> hitList = e.getValue();
+            HitsArrays hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
@@ -183,17 +187,18 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     @Override
-    public <P extends ResultProperty<HitGroup>> HitGroups sort(P sortProp) {
-        List<HitGroup> sorted = Results.doSort(this, sortProp);
-        // Sorted contains the same hits as us, so we can pass on our result statistics.
-        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null, hitsStats, docsStats);
-    }
-
-    @Override
     protected void ensureResultsRead(int number) {
         // NOP
     }
 
+    @Override
+    public HitGroups sort(GroupProperty<Hit, HitGroup> sortProp) {
+        List<HitGroup> sorted = new ArrayList<HitGroup>(this.results);
+        sorted.sort(sortProp);
+        // Sorted contains the same hits as us, so we can pass on our result statistics.
+        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null, hitsStats, docsStats);
+    }
+    
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
@@ -263,14 +268,14 @@ public class HitGroups extends Results<HitGroup> implements ResultGroups<Hit> {
     }
 
     @Override
-    public HitGroups filter(ResultProperty<HitGroup> property, PropertyValue value) {
-        List<HitGroup> list = Results.doFilter(this, property, value);
+    public HitGroups filter(GroupProperty<Hit, HitGroup> property, PropertyValue value) {
+        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()); 
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
         return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null, stats.getLeft(), stats.getRight());
     }
 
     @Override
-    public ResultGroups<HitGroup> group(ResultProperty<HitGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<HitGroup> group(GroupProperty<Hit, HitGroup> criteria, int maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 
