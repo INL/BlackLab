@@ -60,11 +60,11 @@ public class TestCollators {
         //       We don't yet know the first Java version where it succeeds; could be 9, 10 or 11.
         //       If you're trying to build BlackLab on an older Java version and it fails because of this test, you can try @Ignoring it and you
         //       might be fine, depending on your corpus data.
-        Assert.assertEquals(-1, getBlackLabCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(1, getBlackLabCollator().compare(zalgo1, zalgo2));
     }
 
     public void testZalgoTextWithDefaultCollator() {
         // This should succeed, even on Java 8, but is here just for completeness.
-        Assert.assertEquals(-1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
+        Assert.assertEquals(1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
     }
 }
