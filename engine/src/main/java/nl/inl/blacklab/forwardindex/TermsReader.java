@@ -5,17 +5,16 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
+import java.text.Collator;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
-
-import com.ibm.icu.text.Collator;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;

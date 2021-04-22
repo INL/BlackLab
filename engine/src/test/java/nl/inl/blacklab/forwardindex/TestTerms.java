@@ -16,6 +16,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.text.Collator;
 import java.util.Locale;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -24,8 +25,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;

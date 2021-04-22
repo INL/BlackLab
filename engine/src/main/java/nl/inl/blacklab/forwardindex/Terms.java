@@ -8,10 +8,9 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
+import java.text.Collator;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
-import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 

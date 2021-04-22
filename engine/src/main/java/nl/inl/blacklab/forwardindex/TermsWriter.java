@@ -23,6 +23,7 @@ import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
+import java.text.CollationKey;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -31,8 +32,6 @@ import java.util.TreeMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
-import com.ibm.icu.text.CollationKey;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;

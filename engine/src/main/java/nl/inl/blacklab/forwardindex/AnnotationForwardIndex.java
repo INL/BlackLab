@@ -1,12 +1,11 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
+import java.text.Collator;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-
-import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;

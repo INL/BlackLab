@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.Collator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -36,8 +37,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
-
-import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
