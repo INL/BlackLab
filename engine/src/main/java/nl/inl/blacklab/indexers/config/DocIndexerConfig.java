@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
@@ -345,15 +346,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    static final Pattern mainPosPattern = Pattern.compile("^([^\\(]+)(\\s*\\(.*\\))?$");
+    static final Pattern featurePattern = Pattern.compile("^[^\\(]+(\\s*\\((.*)\\))?$");
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
         result = result.trim();
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A
-            return result.replaceAll("^([^\\(]+)(\\s*\\(.*\\))?$", "$1");
+            return mainPosPattern.matcher(result).replaceAll("$1");
         } else {
             //  Get feature: A(b=c,d=e) -> e  (if field == d)
-            String featuresString = result.replaceAll("^[^\\(]+(\\s*\\((.*)\\))?$", "$2");
+            String featuresString = featurePattern.matcher(result).replaceAll("$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
                 .filter(featParts -> featParts[0].trim().equals(field))
@@ -403,11 +406,20 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     private List<String> opSplit(String result, Map<String, String> param) {
         // Split on a separator regex and keep one or all parts (first part by default)
         String separator = param.getOrDefault("separator", ";");
+        separator = "\\" + separator;
         String keep = param.getOrDefault("keep", "-1").toLowerCase();
         String[] parts = result.split(separator, -1);
 
         if (keep.equals("all")) {
             return Arrays.asList(parts);
+        }
+        if (keep.equals("both")) {
+            ArrayList<String> r = new ArrayList<>();
+            r.add(result);
+            for (String s : parts) {
+                r.add(s);
+            }
+            return r;
         }
 
         int i = -1;
