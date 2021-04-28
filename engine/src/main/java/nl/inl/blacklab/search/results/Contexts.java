@@ -172,7 +172,6 @@ public class Contexts implements Iterable<int[]> {
 
             startsOfSnippets[i] = contextSz >= hit.start ? 0 : hit.start - contextSz;
             endsOfSnippets[i] = hit.end + contextSz;
-            i++;
         }
 
         int fiNumber = 0;

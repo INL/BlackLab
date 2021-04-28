@@ -99,18 +99,33 @@ public class Kwics {
         }
         
         Map<Hit, Kwic> conc1 = new HashMap<>();
-        int lastDocId = hits.size() > 0 ? hits.hitsArrays().doc(0) : -1;
+        
+        /*
+         * if doc not is last doc 
+         *  process section if needed
+         *  save start of new section
+         *  
+         * process end section
+         */
+        int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
         for (int i = 1; i < hits.size(); ++i) {
             int curDocId = hits.hitsArrays().doc(i);
-            if (curDocId != lastDocId || i == (hits.size() - 1)) {
-                Contexts.makeKwicsSingleDocForwardIndex(
-                    hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId), 
-                    wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
-                lastDocId = curDocId;
+            if (curDocId != lastDocId) {
+                if (firstIndexWithCurrentDocId != i) {
+                    Contexts.makeKwicsSingleDocForwardIndex(
+                        hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId), 
+                        wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+                }
                 firstIndexWithCurrentDocId = i;
+                lastDocId = curDocId;
             }
         }
+        // last part
+        Contexts.makeKwicsSingleDocForwardIndex(
+            hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId), 
+            wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+        
         return conc1;
     }
     
