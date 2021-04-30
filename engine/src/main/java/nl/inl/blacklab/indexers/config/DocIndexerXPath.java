@@ -1,6 +1,40 @@
 package nl.inl.blacklab.indexers.config;
 
-import com.ximpleware.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.function.Function;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.tuple.Pair;
+
+import com.ximpleware.AutoPilot;
+import com.ximpleware.BookMark;
+import com.ximpleware.NavException;
+import com.ximpleware.VTDException;
+import com.ximpleware.VTDGen;
+import com.ximpleware.VTDNav;
+import com.ximpleware.XPathEvalException;
+import com.ximpleware.XPathParseException;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -12,16 +46,6 @@ import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.io.*;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.function.Function;
 
 /**
  * An indexer configured using full XPath 1.0 expressions.
@@ -589,7 +613,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
 
             // Find matches for this annotation.
-            String annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
+            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null, null);
 
             // For each configured subannotation...
             Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment 
@@ -612,41 +636,75 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     while (apForEach.evalXPath() != -1) {
                         // Find the name and value for this forEach match
                         apName.resetXPath();
-                        apValue.resetXPath();
+//                        apValue.resetXPath();
 
                         String name = apName.evalXPathToString();
                         String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
                         ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
 
-                        String value = null;
-                        if (actualSubAnnot != null) {
-                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString(); 
-                            value = processString(value, subAnnot.getProcess(), null);
-                            // Also apply process defined in named subannotation, if any
-                            value = processString(value, actualSubAnnot.getProcess(), null);
+                        // This for-each now processing for a sibling sub-annotation that has its own config, so use that config.
+                        // BUT, use the xpath from the for-each, not the from sibling definition (if it configures an xpath, that will run on its own at another point in the loop)
+                        // 
+                        if (actualSubAnnot != null) { 
+                            if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
+                                // this sibling subannotation has its own value path, 
+                                // skip it while processing the for-each.
+                                continue;
+                            }
+                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) && 
+                                actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                                actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                                actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
+                            
+                            findAnnotationMatches(actualSubAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
                         } else {
-                            value = subAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
-                            value = processString(value, subAnnot.getProcess(), null);
+                            // The annotation on whose behalf we're indexing does not have its own definition
+                            // So use the for-each as stand-in
+                            
+                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) && 
+                                subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                                subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                                subAnnot.isCaptureXml() == annotation.isCaptureXml();
+                            
+                            // Note: pass null as process, findAnnotationMatches will use them already from the subAnnot argument.
+                            findAnnotationMatches(subAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
                         }
-                        if (!alreadySeen.contains(subannotationName)) {
-                            // First occurrence of this annotation
-                            annotation(subannotationName, value, 1, indexAtPositions);
-                            alreadySeen.add(subannotationName);
-                        } else {
-                            // Subsequent occurrence of this annotation
-                            annotation(subannotationName, value, 0, indexAtPositions);
-                        }
+                        
+//                        String value = null;
+//                        if (actualSubAnnot != null) {
+//                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString(); 
+//                            value = processString(value, subAnnot.getProcess(), null);
+//                            // Also apply process defined in named subannotation, if any
+//                            value = processString(value, actualSubAnnot.getProcess(), null);
+//                        } else {
+//                            value = subAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
+//                            value = processString(value, subAnnot.getProcess(), null);
+//                        }
+//                        if (!alreadySeen.contains(subannotationName)) {
+//                            // First occurrence of this annotation
+//                            annotation(subannotationName, value, 1, indexAtPositions);
+//                            alreadySeen.add(subannotationName);
+//                        } else {
+//                            // Subsequent occurrence of this annotation
+//                            annotation(subannotationName, value, 0, indexAtPositions);
+//                        }
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
                     navpop();
                 } else {
                     // Regular subannotation; just the fieldName and an XPath expression for the value
-                    String subValuePath = subAnnot.getValuePath();
-                    String reuseValue = subValuePath.equals(valuePath) && subAnnot.isCaptureXml() == annotation.isCaptureXml() ? annotValue : null;
-                    findAnnotationMatches(subAnnot, subValuePath, indexAtPositions, reuseValue);
+//                    String subValuePath = subAnnot.getValuePath();
+                    
+                    boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) && 
+                        subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                        subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                        subAnnot.isCaptureXml() == annotation.isCaptureXml();
+                    
+//                    String reuseValue = subValuePath.equals(valuePath) && subAnnot.isCaptureXml() == annotation.isCaptureXml() ? annotValue : null;
+                    findAnnotationMatches(subAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
                 }
-                releaseAutoPilot(apValue);
+//                releaseAutoPilot(apValue);
             }
 
         } finally {
@@ -656,65 +714,99 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
         }
     }
+    
+    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
+                                                       List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot, List<ConfigProcessStep> processInParentAnnotation)
+                                                       throws XPathParseException, XPathEvalException, NavException {
+        return findAnnotationMatches(annotation, acquireAutoPilot(valuePath), indexAtPositions, reuseValueFromParentAnnot, processInParentAnnotation);
+    }
+    
 
-    protected String findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, String reuseValueFromParentAnnot)
+    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, AutoPilot apValuePath,
+            List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot, List<ConfigProcessStep> processInParentAnnotation)
             throws XPathParseException, XPathEvalException, NavException {
-        String annotValueForReuse = null;
+//        String annotValueForReuse = null;
         boolean evalXml = annotation.isCaptureXml();
 
         if (reuseValueFromParentAnnot == null) {
+            reuseValueFromParentAnnot = new ArrayList<String>();
             navpush();
-            AutoPilot apValuePath = acquireAutoPilot(valuePath);
+                    
             if (annotation.isMultipleValues()) {
-                // If we don't want duplicates, keep track of the values we've indexed
-                Set<String> valuesAlreadyIndexed = null;
-                if (!annotation.isAllowDuplicateValues())
-                    valuesAlreadyIndexed = new HashSet<>();
-                
                 // Multiple matches will be indexed at the same position.
                 AutoPilot apValue = acquireAutoPilot(".");
-                boolean firstValue = true;
+                
+                
+                
+//                boolean firstValue = true;
                 while (apValuePath.evalXPath() != -1) {
                     apValue.resetXPath();
                     String unprocessedValue = evalXml ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
-                    for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
-                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value.toLowerCase())) {
-                            int increment = firstValue ? 1 : 0;
-                            annotation(annotation.getName(), value, increment, indexAtPositions);
-                            firstValue = false;
-                            if (valuesAlreadyIndexed != null) {
-                                // Keep track of values seen so we can discard duplicates
-                                valuesAlreadyIndexed.add(value.toLowerCase());
-                            }
-                        }
-                    }
+                    reuseValueFromParentAnnot.add(unprocessedValue);
+                    
+                    
+//                    for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
+//                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value.toLowerCase())) {
+//                            int increment = firstValue ? 1 : 0;
+//                            annotation(annotation.getName(), value, increment, indexAtPositions);
+//                            firstValue = false;
+//                            if (valuesAlreadyIndexed != null) {
+//                                // Keep track of values seen so we can discard duplicates
+//                                valuesAlreadyIndexed.add(value.toLowerCase());
+//                            }
+//                        }
+//                    }
                 }
                 releaseAutoPilot(apValue);
 
+                
                 // No annotations have been added, the result of the xPath query must have been empty.
-                if (firstValue) {
-                    // Add default value(s)
-                    for (String value : processStringMultipleValues("", annotation.getProcess(), null)) {
-                        int increment = firstValue ? 1 : 0;
-                        annotation(annotation.getName(), value, increment, indexAtPositions);
-                    }
+                if (reuseValueFromParentAnnot.isEmpty()) {
+                    reuseValueFromParentAnnot.add("");
                 }
+//                if (firstValue) {
+//                    // Add default value(s)
+//                    for (String value : processStringMultipleValues("", annotation.getProcess(), null)) {
+//                        int increment = firstValue ? 1 : 0;
+//                        annotation(annotation.getName(), value, increment, indexAtPositions);
+//                    }
+//                }
             } else {
                 // Single value expected
-                annotValueForReuse = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
-                String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
-                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+                String unprocessedValue = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
+                reuseValueFromParentAnnot.add(unprocessedValue);
+//                String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
+//                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
             releaseAutoPilot(apValuePath);
             navpop();
+        } 
+        
+        
+        // Now apply process and add to index
+        if (annotation.isMultipleValues()) {
+            int i = 0; 
+            for (String raw : reuseValueFromParentAnnot) {
+                for (String processed : processStringMultipleValues(raw, annotation.getProcess(), null)) {
+                    annotation(annotation.getName(), processed, i++ > 0 ? 0 : 1, indexAtPositions);
+                }
+            }
         } else {
-            // We can reuse the value from the parent annotation, with different processing
-            annotValueForReuse = reuseValueFromParentAnnot;
-            String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
-            annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+            // single value (the collection should only contain one entry)
+            for (String raw : reuseValueFromParentAnnot) {
+                String processed = processString(raw, annotation.getProcess(), null);
+                annotation(annotation.getName(), processed, 1, indexAtPositions);
+                break;
+            }
         }
-        return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath
+        
+            // We can reuse the value from the parent annotation, with different processing
+//            annotValueForReuse = reuseValueFromParentAnnot;
+//            String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
+//            annotation(annotation.getName(), annotValue, 1, indexAtPositions);
+//        }
+        return reuseValueFromParentAnnot;
+//        return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath
     }
 
     @Override

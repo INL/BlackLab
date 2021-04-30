@@ -11,7 +11,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -284,10 +283,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
+        
         List<String> result = Arrays.asList(input);
 
         for (ConfigProcessStep step : process) {
             String method = step.getMethod();
+//            if (input.indexOf("f|m") >= 0 && method.equals("split")) {
+//                System.out.println("");
+//            }
             Map<String, String> param = step.getParam();
 
             switch (method) {
@@ -306,11 +309,16 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     result.set(i, opAppend(result.get(i), param));
                 }
                 break;
-            case "split":
-                result = result.stream()
-                    .flatMap(r -> opSplit(r, param).stream())
-                    .collect(Collectors.toCollection(ArrayList<String>::new));
+            case "split": {
+                ArrayList<String> r = new ArrayList<>();
+                for (String s : result) {
+                    for (String out : opSplit(s, param)) {
+                        r.add(out);
+                    }
+                }
+                result = r;
                 break;
+            }
             case "chatFormatAgeToMonths":
                 for (int i = 0; i < result.size(); ++i) {
                     result.set(i, opChatFormatAgeToMonths(result.get(i)));
@@ -406,7 +414,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     private List<String> opSplit(String result, Map<String, String> param) {
         // Split on a separator regex and keep one or all parts (first part by default)
         String separator = param.getOrDefault("separator", ";");
-        separator = "\\" + separator;
         String keep = param.getOrDefault("keep", "-1").toLowerCase();
         String[] parts = result.split(separator, -1);
 
