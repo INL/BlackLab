@@ -625,7 +625,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     continue;
 
                 // Capture this subannotation value
-                AutoPilot apValue = acquireAutoPilot(subAnnot.getValuePath());
                 if (subAnnot.isForEach()) {
                     // "forEach" subannotation specification
                     // (allows us to capture multiple subannotations with 3 XPath expressions)
@@ -636,7 +635,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     while (apForEach.evalXPath() != -1) {
                         // Find the name and value for this forEach match
                         apName.resetXPath();
-//                        apValue.resetXPath();
 
                         String name = apName.evalXPathToString();
                         String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
@@ -656,7 +654,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                                 actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
                             
-                            findAnnotationMatches(actualSubAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
+                            findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
                         } else {
                             // The annotation on whose behalf we're indexing does not have its own definition
                             // So use the for-each as stand-in
@@ -667,44 +665,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 subAnnot.isCaptureXml() == annotation.isCaptureXml();
                             
                             // Note: pass null as process, findAnnotationMatches will use them already from the subAnnot argument.
-                            findAnnotationMatches(subAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
+                            findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
                         }
-                        
-//                        String value = null;
-//                        if (actualSubAnnot != null) {
-//                            value = actualSubAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString(); 
-//                            value = processString(value, subAnnot.getProcess(), null);
-//                            // Also apply process defined in named subannotation, if any
-//                            value = processString(value, actualSubAnnot.getProcess(), null);
-//                        } else {
-//                            value = subAnnot.isCaptureXml()? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
-//                            value = processString(value, subAnnot.getProcess(), null);
-//                        }
-//                        if (!alreadySeen.contains(subannotationName)) {
-//                            // First occurrence of this annotation
-//                            annotation(subannotationName, value, 1, indexAtPositions);
-//                            alreadySeen.add(subannotationName);
-//                        } else {
-//                            // Subsequent occurrence of this annotation
-//                            annotation(subannotationName, value, 0, indexAtPositions);
-//                        }
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
                     navpop();
                 } else {
                     // Regular subannotation; just the fieldName and an XPath expression for the value
-//                    String subValuePath = subAnnot.getValuePath();
-                    
+
                     boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) && 
                         subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
                         subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                         subAnnot.isCaptureXml() == annotation.isCaptureXml();
                     
-//                    String reuseValue = subValuePath.equals(valuePath) && subAnnot.isCaptureXml() == annotation.isCaptureXml() ? annotValue : null;
-                    findAnnotationMatches(subAnnot, apValue, indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
+                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
                 }
-//                releaseAutoPilot(apValue);
             }
 
         } finally {
@@ -715,73 +691,38 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
     
+    protected AutoPilot apDot = null;
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-                                                       List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot, List<ConfigProcessStep> processInParentAnnotation)
-                                                       throws XPathParseException, XPathEvalException, NavException {
-        return findAnnotationMatches(annotation, acquireAutoPilot(valuePath), indexAtPositions, reuseValueFromParentAnnot, processInParentAnnotation);
-    }
-    
-
-    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, AutoPilot apValuePath,
             List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot, List<ConfigProcessStep> processInParentAnnotation)
             throws XPathParseException, XPathEvalException, NavException {
-//        String annotValueForReuse = null;
         boolean evalXml = annotation.isCaptureXml();
 
         if (reuseValueFromParentAnnot == null) {
             reuseValueFromParentAnnot = new ArrayList<String>();
             navpush();
                     
+            AutoPilot apValuePath = acquireAutoPilot(valuePath);
             if (annotation.isMultipleValues()) {
                 // Multiple matches will be indexed at the same position.
-                AutoPilot apValue = acquireAutoPilot(".");
+                AutoPilot apValue = apDot == null ? apDot = acquireAutoPilot(".") : apDot;
                 
-                
-                
-//                boolean firstValue = true;
                 while (apValuePath.evalXPath() != -1) {
-                    apValue.resetXPath();
                     String unprocessedValue = evalXml ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
                     reuseValueFromParentAnnot.add(unprocessedValue);
-                    
-                    
-//                    for (String value : processStringMultipleValues(unprocessedValue, annotation.getProcess(), null)) {
-//                        if (valuesAlreadyIndexed == null || !valuesAlreadyIndexed.contains(value.toLowerCase())) {
-//                            int increment = firstValue ? 1 : 0;
-//                            annotation(annotation.getName(), value, increment, indexAtPositions);
-//                            firstValue = false;
-//                            if (valuesAlreadyIndexed != null) {
-//                                // Keep track of values seen so we can discard duplicates
-//                                valuesAlreadyIndexed.add(value.toLowerCase());
-//                            }
-//                        }
-//                    }
                 }
-                releaseAutoPilot(apValue);
-
                 
                 // No annotations have been added, the result of the xPath query must have been empty.
                 if (reuseValueFromParentAnnot.isEmpty()) {
                     reuseValueFromParentAnnot.add("");
                 }
-//                if (firstValue) {
-//                    // Add default value(s)
-//                    for (String value : processStringMultipleValues("", annotation.getProcess(), null)) {
-//                        int increment = firstValue ? 1 : 0;
-//                        annotation(annotation.getName(), value, increment, indexAtPositions);
-//                    }
-//                }
             } else {
                 // Single value expected
                 String unprocessedValue = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
                 reuseValueFromParentAnnot.add(unprocessedValue);
-//                String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
-//                annotation(annotation.getName(), annotValue, 1, indexAtPositions);
             }
             releaseAutoPilot(apValuePath);
             navpop();
-        } 
-        
+        }
         
         // Now apply process and add to index
         if (annotation.isMultipleValues()) {
@@ -799,14 +740,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 break;
             }
         }
-        
-            // We can reuse the value from the parent annotation, with different processing
-//            annotValueForReuse = reuseValueFromParentAnnot;
-//            String annotValue = processString(annotValueForReuse, annotation.getProcess(), null);
-//            annotation(annotation.getName(), annotValue, 1, indexAtPositions);
-//        }
-        return reuseValueFromParentAnnot;
-//        return annotValueForReuse; // so subannotations can reuse it if they use the same valuePath
+        return reuseValueFromParentAnnot; // so subannotations can reuse it if they use the same valuePath
     }
 
     @Override
