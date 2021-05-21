@@ -55,7 +55,8 @@ public class BlsUtils {
                 QueryParser parser = new QueryParser("", analyzer) {
                     @Override
                     protected org.apache.lucene.search.Query newRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) {
-                        MetadataField mf = index.metadataField(field);
+                        
+                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
                         if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
                             try {
                                 return NumericRangeQuery.newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2), startInclusive, endInclusive);
@@ -68,7 +69,7 @@ public class BlsUtils {
                     
                     @Override
                     protected org.apache.lucene.search.Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
-                        MetadataField mf = index.metadataField(field);
+                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
                         if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
                             return newRangeQuery(field, queryText, queryText, true, true);
                         }
