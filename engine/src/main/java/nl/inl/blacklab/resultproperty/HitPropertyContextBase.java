@@ -26,7 +26,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -43,13 +42,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
                 : MatchSensitivity.SENSITIVE;
-        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
-                : index.defaultContextSize();
+//        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
+//                : index.defaultContextSize();
         Annotation annotation = field.annotation(propName);
         try {
-            Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class,
-                    ContextSize.class);
-            return ctor.newInstance(index, annotation, sensitivity, contextSize);
+            Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class);
+            return ctor.newInstance(index, annotation, sensitivity);
         } catch (ReflectiveOperationException | SecurityException | IllegalArgumentException e) {
             throw new BlackLabRuntimeException("Couldn't deserialize hit property: " + cls.getName() + ":" + info, e);
         }

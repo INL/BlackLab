@@ -170,8 +170,8 @@ public class Contexts implements Iterable<int[]> {
         for (int i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
 
-            startsOfSnippets[i] = contextSz >= hit.start ? 0 : hit.start - contextSz;
-            endsOfSnippets[i] = hit.end + contextSz;
+            startsOfSnippets[i - start] = contextSz >= hit.start ? 0 : hit.start - contextSz;
+            endsOfSnippets[i - start] = hit.end + contextSz;
         }
 
         int fiNumber = 0;
@@ -315,7 +315,7 @@ public class Contexts implements Iterable<int[]> {
                 int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
                 for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
                 // start a new document
-                firstHitInCurrentDoc = curDoc; 
+                firstHitInCurrentDoc = i; 
             }
         }
         // Process trailing hits 
