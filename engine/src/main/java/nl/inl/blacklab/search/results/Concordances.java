@@ -32,7 +32,7 @@ public class Concordances {
      * @param hits
      */
     public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
-        if (contextSize.left() < 0)
+        if (contextSize.left() < 0 || contextSize.right() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
         if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
@@ -86,15 +86,14 @@ public class Concordances {
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
-        int contextSz = wordsAroundHit.left();
         for (Hit hit : hits) {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 
-            int start = hitStart - contextSz;
+            int start = hitStart - wordsAroundHit.left();
             if (start < 0)
                 start = 0;
-            int end = hitEnd + contextSz;
+            int end = hitEnd + wordsAroundHit.right();
 
             startsOfWords[startEndArrayIndex] = start;
             startsOfWords[startEndArrayIndex + 1] = hitStart;

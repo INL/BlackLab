@@ -28,6 +28,8 @@ public class ContextSize {
 	
     ContextSize(int size) {
         this.left = size;
+        this.right = size;
+        this.includeHit = true;
     }
 
     public int left() {

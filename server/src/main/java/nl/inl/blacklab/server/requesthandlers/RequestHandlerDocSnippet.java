@@ -66,13 +66,13 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             wordsAroundHit = ContextSize.hitOnly();
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit.left() * 2 + end - start <= 0 || end < start || wordsAroundHit.left() < 0) {
+        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start < end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
         // Clamp snippet to max size
         int snippetStart = Math.max(0, start - wordsAroundHit.left());
-        int snippetEnd = end + wordsAroundHit.left();
+        int snippetEnd = end + wordsAroundHit.right();
         int maxContextSize = searchMan.config().getParameters().getContextSize().getMax();
         if (snippetEnd - snippetStart > maxContextSize) {
             int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);

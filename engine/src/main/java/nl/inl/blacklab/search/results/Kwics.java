@@ -30,7 +30,7 @@ public class Kwics {
      * @param hits
      */
     protected Kwics(Hits hits, ContextSize contextSize) {
-        if (contextSize.left() < 0)
+        if (contextSize.left() < 0 || contextSize.right() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative");
     
         // Get the concordances
