@@ -30,7 +30,6 @@ import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.BlsCache;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
@@ -257,7 +256,7 @@ public class Index {
         //logger.debug("    Opening index '" + id + "', dir = " + dir);
         try {
             index = searchMan.blackLabInstance().open(this.dir);
-            if (BlsCache.ENABLE_NEW_CACHE)
+//            if (BlsCache.ENABLE_NEW_CACHE)
                 index.setCache(searchMan.getBlackLabCache());
             //logger.debug("Done opening index '" + id + "'");
         } catch (IndexTooOld e) {

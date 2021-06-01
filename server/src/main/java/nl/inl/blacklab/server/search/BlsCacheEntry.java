@@ -67,6 +67,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                     Supplier<T> resultSupplier = supplier;
                     supplier = null;
                     result = resultSupplier.get();
+                    System.out.println("RESULT " + System.identityHashCode(result) + ": " + resultSupplier);
                     isResultsInstance = result instanceof Results<?>;
                     if (isResultsInstance) {
                         // Make sure our results object can be paused

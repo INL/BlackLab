@@ -31,7 +31,6 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.util.BlockTimer;
 import nl.inl.util.ThreadPauser;
 
 public class HitsFromQueryParallel extends Hits {
@@ -492,7 +491,7 @@ public class HitsFromQueryParallel extends Hits {
             }
             hasLock = true;
             // This is the blocking portion, retrieve all hits from the other threads.
-            try (BlockTimer t = BlockTimer.create("ensureResultsRead " + number)) {
+            try {
                 final ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
 
                 final AtomicInteger i = new AtomicInteger();
