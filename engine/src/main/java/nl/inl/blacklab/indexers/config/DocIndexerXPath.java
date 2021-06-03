@@ -507,7 +507,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             while (apMetadata.evalXPath() != -1) {
                                 apEvalToString.resetXPath();
                                 String unprocessedValue = apEvalToString.evalXPathToString();
-                                for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), null)) {
+                                for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
                                     // Also execute process defined for named metadata field, if any
                                     for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
                                         addMetadataField(fieldName, processedValue);
@@ -516,7 +516,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             }
                         } catch (XPathEvalException e) {
                             // An xpath like string(@value) will make evalXPath() fail.
-                            // There is no good way to check wether this exception will occur
+                            // There is no good way to check whether this exception will occur
                             // When the exception occurs we try to evaluate the xpath as string
                             // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
                             if (logger.isDebugEnabled()) {
@@ -524,9 +524,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                         "string(.//tei:availability[1]/@status='free')",
                                         "string(//tei:availability[1]/@status='free')"));
                             }
-                            String metadataValue = apMetadata.evalXPathToString();
-                            metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                            addMetadataField(fieldName, metadataValue);
+                            String unprocessedValue = apMetadata.evalXPathToString();
+                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                                for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
+                                    addMetadataField(fieldName, processedValue);
+                                }
+                            }
                         }
                         releaseAutoPilot(apEvalToString);
                     }
@@ -555,9 +558,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                     "string(.//tei:availability[1]/@status='free')",
                                     "string(//tei:availability[1]/@status='free')"));
                         }
-                        String metadataValue = apMetadata.evalXPathToString();
-                        metadataValue = processString(metadataValue, f.getProcess(), f.getMapValues());
-                        addMetadataField(f.getName(), metadataValue);
+                        String unprocessedValue = apEvalToString.evalXPathToString();
+                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                            addMetadataField(f.getName(), value);
+                        }
                     }
                     releaseAutoPilot(apEvalToString);
                 }

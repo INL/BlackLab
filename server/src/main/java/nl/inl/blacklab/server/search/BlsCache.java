@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -133,53 +134,28 @@ public class BlsCache implements SearchCache {
     private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search,
             Supplier<R> searchTask, boolean block) {
         BlsCacheEntry<R> future;
-//        boolean created = false;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         
         synchronized (this) {
             future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
-                checkFreeMemory(); // check that we have sufficient available memory - throws if not
-                future = new BlsCacheEntry<>(search, searchTask);
-                if (useCache) {
-                    searches.put(search, future);
+                try {
+                    checkFreeMemory(); // check that we have sufficient available memory - throws if not
+                } catch (InsufficientMemoryAvailable e) {
+                    search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
+                    throw e;
                 }
                 
-                
-            
-//                search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
-//                try {
-//                } catch (InsufficientMemoryAvailable e) {
-////                    search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
-//                    throw e;
-//                }
-                
-                if (trace) logger.info("-- STARTING {}: {}", System.identityHashCode(future), search);
-//                if (!block)
+                future = new BlsCacheEntry<>(search, searchTask);
+                if (useCache) searches.put(search, future);
+                if (trace) search.log(LogLevel.BASIC, "-- STARTING " + System.identityHashCode(future) + ": " + search);
                 future.start(block);
-                
-//                if (!cacheDisabled && useCache)
-//                    searches.put(search, future);
-//            } else {
-//                search.log(LogLevel.BASIC, "found in cache (" + future.status() + "): " + search);
             } else {
-                if (trace) logger.info("-- FOUND {}: {}", System.identityHashCode(future), search);
+                if (trace) search.log(LogLevel.BASIC, "-- FOUND " + System.identityHashCode(future) + ": " + search);
                 future.updateLastAccess();
             }
         }
         
-        
-        
-//        if (created) {
-//            if (trace)
-//                logger.info("-- ADDED: " + search);
-//            if (block)
-//                future.start(true);
-//        } else {
-//            if (trace)
-//                logger.info("-- FOUND: " + search);
-//            future.updateLastAccess();
-//        }
         return future;
     }
 
