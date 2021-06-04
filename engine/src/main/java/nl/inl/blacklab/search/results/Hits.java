@@ -290,51 +290,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                     starts.set(b, tmp.start);
                     ends.set(b, tmp.end);
                 }
-                // Dit gaat blocken
-                // we zitten in een write lock
-                // en dan gaat dat ding vanbinnen een read lock proberen te openen?
-                // of is ie reeantrant en ziet hij, oh we zijn locked dus ga je gang?
                 @Override
                 public int compare(int a, int b) {
                     return p.compare(a, b);
-//                    getEphemeral(a, ephA);
-//                    getEphemeral(b, ephA);
-//                    return p.compare(this, a, b);
                 }
             }, 0, this.size());
-            
-//            int[] indices = new int[this.size()];
-//            for (int i = 0; i < indices.length; ++i) indices[i] = i;
-//            
-//            EphemeralHitImpl2 ephA = new EphemeralHitImpl2();
-//            EphemeralHitImpl2 ephB = new EphemeralHitImpl2();
-//            Sort.sort(this, 0, this.size());
-//            
-//            IntArrays.quickSort(indices, (a, b) -> {
-//                getEphemeral(a, ephA);
-//                getEphemeral(b, ephA);
-//                return p.compare(ephA, ephB);
-//            });
-//            
-//            // now to sort our data!
-//            for (int targetIndex = 0; targetIndex < indices.length; ++targetIndex) {
-//                int sourceIndex = indices[targetIndex];
-//                // the source index is lower than the current index, it was already overwritten in a previous iteration, see where the data was swapped to
-//                while (sourceIndex < targetIndex) sourceIndex = indices[sourceIndex];
-//                if (sourceIndex == targetIndex) continue; // already in place!
-//                
-//                getEphemeral(targetIndex, ephA); // copy to-be-overwritten data
-//                this.docs.set(targetIndex, this.docs.get(sourceIndex));
-//                this.starts.set(targetIndex, this.starts.get(sourceIndex));
-//                this.ends.set(targetIndex, this.ends.get(sourceIndex));
-//                
-//                // save just-overwritten-data at the just freed location
-//                this.docs.set(sourceIndex, ephA.doc);
-//                this.starts.set(sourceIndex, ephA.start);
-//                this.ends.set(sourceIndex, ephA.end);
-//            }
-//            
-//            this.lock.writeLock().unlock();
         }
         
         public HitsArrays sort(HitProperty p) {
@@ -343,18 +303,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             int[] indices = new int[this.size()];
             for (int i = 0; i < indices.length; ++i) indices[i] = i;
             
-//            EphemeralHit ephA = new EphemeralHit ();
-//            EphemeralHit ephB = new EphemeralHit ();
-            IntArrays.quickSort(indices, (a, b) -> {
-//                getEphemeral(a, ephA);
-//                getEphemeral(b, ephA);
-                return p.compare(a, b);
-            });
+            IntArrays.quickSort(indices, p::compare);
             
             HitsArrays r = new HitsArrays();
             EphemeralHit eph = new EphemeralHit();
             for (int i = 0; i < indices.length; ++i) { 
-                getEphemeral(i, eph);
+                getEphemeral(indices[i], eph);
                 r.add(eph);
             }
             this.lock.readLock().unlock();

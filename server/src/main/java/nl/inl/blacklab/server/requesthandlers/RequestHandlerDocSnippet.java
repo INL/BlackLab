@@ -66,7 +66,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             wordsAroundHit = ContextSize.hitOnly();
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start < end) {
+        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 

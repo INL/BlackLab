@@ -168,7 +168,7 @@ public class Contexts implements Iterable<int[]> {
         for (int i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
             startsOfSnippets[i - start] = Math.max(0, hit.start - contextSize.left());
-            endsOfSnippets[i - start] = hit.end - 1 + contextSize.right();
+            endsOfSnippets[i - start] = hit.end + contextSize.right();
         }
 
         int fiNumber = 0;
