@@ -32,22 +32,24 @@ import nl.inl.util.ThreadPauser;
 import nl.inl.util.ThreadPauserImpl;
 
 public class BlsCache implements SearchCache {
-    
-    private static final int ONE_MINUTE_MS = 60000;
 
     private static final Logger logger = LogManager.getLogger(BlsCache.class);
-    
-    public static final boolean ENABLE_NEW_CACHE = true;
+
+    /** Milliseconds per minute */
+    private static final int ONE_MINUTE_MS = 60_000;
+
+    /** Bytes in one megabyte */
+    private static final long ONE_MB_BYTES = 1_000_000;
 
     /** Very rough measure of how large result objects are, based on a Hit (3 ints + 12 bytes object overhead) */
     public static final int SIZE_OF_HIT = 24;
 
     protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
-    
+
     protected boolean trace = false;
 
     private boolean cacheDisabled;
-    
+
     private LogDatabase logDatabase = null;
 
     public BlsCache(BLSConfig config) {
@@ -70,7 +72,7 @@ public class BlsCache implements SearchCache {
         loadManagerThread = null;
         clear(true);
     }
-    
+
     /**
      * Remove all cache entries for the specified index.
      *
@@ -103,8 +105,8 @@ public class BlsCache implements SearchCache {
         }
         searches.clear();
         logger.debug("Cache cleared.");
-    }    
-    
+    }
+
     public boolean isTrace() {
         return trace;
     }
@@ -132,50 +134,37 @@ public class BlsCache implements SearchCache {
     private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search,
             Supplier<R> searchTask, boolean block) {
         BlsCacheEntry<R> future;
-        boolean created = false;
-        boolean useCache = search.queryInfo().useCache();
+        boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
+        
         synchronized (this) {
             future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
-                search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
                 try {
-                    checkFreeMemory(); // check that we have sufficient available memory
+                    checkFreeMemory(); // check that we have sufficient available memory - throws if not
                 } catch (InsufficientMemoryAvailable e) {
                     search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
                     throw e;
                 }
+                
                 future = new BlsCacheEntry<>(search, searchTask);
-                created = true;
-                if (!cacheDisabled && useCache)
-                    searches.put(search, future);
-                if (!block)
-                    future.start(false);
+                if (useCache) searches.put(search, future);
+                if (trace) search.log(LogLevel.BASIC, "-- STARTING " + System.identityHashCode(future) + ": " + search);
+                future.start(block);
             } else {
-                search.log(LogLevel.BASIC, "found in cache (" + future.status() + "): " + search);
+                if (trace) search.log(LogLevel.BASIC, "-- FOUND " + System.identityHashCode(future) + ": " + search);
+                future.updateLastAccess();
             }
         }
-        if (created) {
-            if (trace)
-                logger.info("-- ADDED: " + search);
-            if (block)
-                future.start(true);
-        } else {
-            if (trace)
-                logger.info("-- FOUND: " + search);
-            future.updateLastAccess();
-        }
+        
         return future;
     }
-    
+
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
-        BlsCacheEntry<R> future = null;
-        synchronized (this) {
-            future = (BlsCacheEntry<R>) searches.remove(search);
-            if (future != null && trace)
-                logger.info("-- REMOVED: " + search);
-        }
+    synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
+        BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
+        if (future != null && trace)
+            logger.info("-- REMOVED: " + search);
         return future;
     }
 
@@ -229,10 +218,10 @@ public class BlsCache implements SearchCache {
     }
 
     private BLSConfigCache config;
-    
+
     private BLSConfigPerformance perfConfig;
-    
-    private Comparator<BlsCacheEntry<?>> wortinessComparator;
+
+    private Comparator<BlsCacheEntry<?>> worthinessComparator;
 
     private int resultsObjectsInCache;
 
@@ -241,25 +230,25 @@ public class BlsCache implements SearchCache {
     private long lastCacheLog = 0;
 
     private long lastCacheSnapshot = 0;
-    
+
     private void initLoadManagement(BLSConfigCache config, BLSConfigPerformance perfConfig) {
         this.config = config;
         this.perfConfig = perfConfig;
-        
+
         // Make sure long operations can be paused.
         ThreadPauserImpl.setEnabled(perfConfig.isPausingEnabled());
         finishInit();
     }
 
     private void finishInit() {
-        wortinessComparator = new Comparator<BlsCacheEntry<?>>() {
+        worthinessComparator = new Comparator<BlsCacheEntry<?>>() {
             @Override
             public int compare(BlsCacheEntry<?> o1, BlsCacheEntry<?> o2) {
                 long result = o2.worthiness() - o1.worthiness();
                 return result == 0 ? 0 : (result < 0 ? -1 : 1);
             }
         };
-        
+
         loadManagerThread = new LoadManagerThread();
         loadManagerThread.start();
     }
@@ -272,13 +261,13 @@ public class BlsCache implements SearchCache {
         }
         return resultsObjectsInCache;
     }
-    
+
     /**
      * Evaluate what we need to do (if anything) with each search given the current
      * server load.
      */
     synchronized void performLoadManagement() {
-        
+
         determineCacheSize();
         long cacheSizeBytes = (long)resultsObjectsInCache * SIZE_OF_HIT;
 
@@ -313,14 +302,14 @@ public class BlsCache implements SearchCache {
         // Sort the searches based on descending "worthiness"
         for (BlsCacheEntry<?> s : searches)
             s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
-        searches.sort(wortinessComparator);
+        searches.sort(worthinessComparator);
 
         //------------------
         // STEP 1: remove least worthy, finished searches from cache
 
         // If we're low on memory, remove searches from cache until we're not.
-        long freeMegs = MemoryUtil.getFree() / 1000000;
-        long memoryToFreeUp = config.getTargetFreeMemMegs() - freeMegs;
+        long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
+        long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
 
         // Look at searches from least worthy to worthiest.
         // Get rid of old searches
@@ -337,7 +326,7 @@ public class BlsCache implements SearchCache {
                     logger.debug("  Cancelling searchjob: " + search1);
                 }
                 remove(search1.search());
-                cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
+                cacheSizeBytes -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT;
                 numberOfSearchesInCache--;
                 removed.add(search1);
                 search1.cancelSearch();
@@ -352,7 +341,7 @@ public class BlsCache implements SearchCache {
                 if (lookAtCacheSizeAndSearchAccessTime) {
                     tooManySearches = config.getMaxNumberOfJobs() >= 0
                             && numberOfSearchesInCache > config.getMaxNumberOfJobs();
-                    cacheSizeMegs = cacheSizeBytes / 1000000;
+                    cacheSizeMegs = cacheSizeBytes / ONE_MB_BYTES;
                     tooMuchMemory = config.getMaxSizeMegs() >= 0
                             && cacheSizeMegs > config.getMaxSizeMegs();
                     isCacheTooBig = tooManySearches || tooMuchMemory;
@@ -364,12 +353,12 @@ public class BlsCache implements SearchCache {
                     }
                     removeBecauseOfCacheSizeOrAge = isCacheTooBig || isSearchTooOld;
                 }
-                if (memoryToFreeUp > 0 || removeBecauseOfCacheSizeOrAge) {
+                if (memoryToFreeUpMegs > 0 || removeBecauseOfCacheSizeOrAge) {
                     // Search is too old or cache is too big. Keep removing searches until that's no
                     // longer the case
                     // logger.debug("Remove from cache: " + search);
                     if (trace) {
-                        if (memoryToFreeUp > 0)
+                        if (memoryToFreeUpMegs > 0)
                             logger.debug("Not enough free mem (free " + freeMegs + "M < min free "
                                     + config.getTargetFreeMemMegs() + "M)");
                         else if (tooManySearches)
@@ -384,11 +373,11 @@ public class BlsCache implements SearchCache {
                         logger.debug("  Removing searchjob: " + search1);
                     }
                     remove(search1.search());
-                    cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
+                    cacheSizeBytes -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT;
                     numberOfSearchesInCache--;
                     removed.add(search1);
-                    memoryToFreeUp -= search1.numberOfStoredHits() * SIZE_OF_HIT;
-                    
+                    memoryToFreeUpMegs -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES;
+
                 } else {
                     // Cache is no longer too big and these searches are not too old. Stop checking
                     // that,
@@ -482,9 +471,9 @@ public class BlsCache implements SearchCache {
             break;
         }
     }
-    
+
     private void checkFreeMemory() {
-        long freeMegs = MemoryUtil.getFree() / 1000000;
+        long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
         if (freeMegs < config.getMinFreeMemForSearchMegs()) {
             performLoadManagement(); //removeOldSearches(); // try to free up space for next search
             logger.warn(
@@ -496,7 +485,7 @@ public class BlsCache implements SearchCache {
         }
         // logger.debug("Enough free memory: " + freeMegs + "M");
     }
-    
+
     /**
      * Dump information about the cache status.
      * @param ds where to write information to
@@ -513,7 +502,7 @@ public class BlsCache implements SearchCache {
                 .entry("freeMemory", MemoryUtil.getFree())
                 .endMap();
     }
-    
+
     /**
      * Dump cache contents.
      * @param ds where to write information to
@@ -528,5 +517,5 @@ public class BlsCache implements SearchCache {
         }
         ds.endList();
     }
- 
+
 }

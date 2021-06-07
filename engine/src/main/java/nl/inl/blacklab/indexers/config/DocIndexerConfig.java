@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -283,10 +283,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
+        
         List<String> result = Arrays.asList(input);
 
         for (ConfigProcessStep step : process) {
             String method = step.getMethod();
+//            if (input.indexOf("f|m") >= 0 && method.equals("split")) {
+//                System.out.println("");
+//            }
             Map<String, String> param = step.getParam();
 
             switch (method) {
@@ -305,11 +309,16 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     result.set(i, opAppend(result.get(i), param));
                 }
                 break;
-            case "split":
-                result = result.stream()
-                    .flatMap(r -> opSplit(r, param).stream())
-                    .collect(Collectors.toCollection(ArrayList<String>::new));
+            case "split": {
+                ArrayList<String> r = new ArrayList<>();
+                for (String s : result) {
+                    for (String out : opSplit(s, param)) {
+                        r.add(out);
+                    }
+                }
+                result = r;
                 break;
+            }
             case "chatFormatAgeToMonths":
                 for (int i = 0; i < result.size(); ++i) {
                     result.set(i, opChatFormatAgeToMonths(result.get(i)));
@@ -345,15 +354,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
+    static final Pattern mainPosPattern = Pattern.compile("^([^\\(]+)(\\s*\\(.*\\))?$");
+    static final Pattern featurePattern = Pattern.compile("^[^\\(]+(\\s*\\((.*)\\))?$");
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
         result = result.trim();
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A
-            return result.replaceAll("^([^\\(]+)(\\s*\\(.*\\))?$", "$1");
+            return mainPosPattern.matcher(result).replaceAll("$1");
         } else {
             //  Get feature: A(b=c,d=e) -> e  (if field == d)
-            String featuresString = result.replaceAll("^[^\\(]+(\\s*\\((.*)\\))?$", "$2");
+            String featuresString = featurePattern.matcher(result).replaceAll("$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
                 .filter(featParts -> featParts[0].trim().equals(field))
@@ -408,6 +419,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
         if (keep.equals("all")) {
             return Arrays.asList(parts);
+        }
+        if (keep.equals("both")) {
+            ArrayList<String> r = new ArrayList<>();
+            r.add(result);
+            for (String s : parts) {
+                r.add(s);
+            }
+            return r;
         }
 
         int i = -1;

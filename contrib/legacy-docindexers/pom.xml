@@ -65,7 +65,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-core</artifactId>
+            <artifactId>blacklab</artifactId>
             <version>${project.version}</version>
         </dependency>
 

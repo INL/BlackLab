@@ -1,7 +1,8 @@
 package nl.inl.blacklab.forwardindex;
 
-import com.ibm.icu.text.Collator;
-import com.ibm.icu.text.RuleBasedCollator;
+import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
@@ -22,13 +23,9 @@ public class Collators {
     public Collators(Collator base, CollatorVersion version) {
         super();
         this.version = version;
-        try {
-            sensitive = (Collator) base.clone();
-            sensitive.setStrength(Collator.TERTIARY);
-            insensitive = desensitize((RuleBasedCollator) base.clone(), version);
-        } catch (CloneNotSupportedException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        sensitive = (Collator) base.clone();
+        sensitive.setStrength(Collator.TERTIARY);
+        insensitive = desensitize((RuleBasedCollator) base.clone(), version);
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -49,30 +46,30 @@ public class Collators {
      * @param coll collator to make insensitive
      * @param collatorVersion version of the insensitive collator we want
      * @return insensitive collator
-     * @throws CloneNotSupportedException 
      */
-    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) throws CloneNotSupportedException {
-        try {
-            switch (collatorVersion) {
-            case V1:
-                // Basic case- and accent-insensitive collator
-                // Note that this ignores dashes and spaces, which is different
-                // from how the rest of blacklab deals with term equality.
-                // Hence V2.
-                RuleBasedCollator cl = new RuleBasedCollator(coll.getRules() + "&\u0000=' '='-'");
-                cl.setStrength(Collator.PRIMARY);
-                return cl;
-            case V2:
-            default:
-                // Case- and accent-insensitive collator that doesn't
-                // ignore dash and space like the regular insensitive collator (V1) does.
-                // sort dash and space before underscore
-                coll = new RuleBasedCollator(coll.getRules() + "&' '<'-'<'_'");
+    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) {
+        switch (collatorVersion) {
+        case V1:
+            // Basic case- and accent-insensitive collator
+            // Note that this ignores dashes and spaces, which is different
+            // from how the rest of blacklab deals with term equality.
+            // Hence V2.
+            Collator cl = (Collator) coll.clone();
+            cl.setStrength(Collator.PRIMARY);
+            return cl;
+        case V2:
+        default:
+            // Case- and accent-insensitive collator that doesn't
+            // ignore dash and space like the regular insensitive collator (V1) does.
+            String rules = coll.getRules().replaceAll(",'-'", ""); // don't ignore dash
+            rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+            try {
+                coll = new RuleBasedCollator(rules);
                 coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
                 return coll;
+            } catch (ParseException e) {
+                throw BlackLabRuntimeException.wrap(e);
             }
-        } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

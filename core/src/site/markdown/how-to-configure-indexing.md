@@ -795,7 +795,9 @@ These are all the available generic processing steps:
 - `replace(find, replace)`: do a regex search for 'find' and replace each match with 'replace'. Group references may be used.
 - `default(value)` or `default(field)`: if the field is empty, set its value to either the specified value or the value of the specified field. If you refer to a field, make sure it is defined before this field (fields are processed in order).
 - `append(value)` or `append(field)`: append the specified value or the value of the specified field, using a space as the separator character. You may also specify a different `separator` is you wish, including the empty string (`""`).
-- `split(separator, keep)`: split the field's value on the given separator and keep only the part indicated by keep (a 1-based integer). If `keep` is omitted, keep the first part. If `separator` is omitted, use `;`.
+- `split(separator, keep)`: split the field's value on the given separator and keep only the part indicated by keep (a 1-based integer). If `keep` is omitted, keep the first part. If `separator` is omitted, use `;`.  
+Note that the separator is a regex, and to split on special characters, those should be escaped by using a double backslash (`\\`).  
+`Keep` also allows two special values: `all` to keep all splits (instead of one the one at an index), and `both` to keep both the unsplit value as well as all the split parts. For `both` to work, the annotation should also specify `multipleValues` to be true.
 - `strip(chars)`: strip specified chars from beginning and end. If `chars` is omitted, use space.
 
 These processing steps are more specific to certain data formats:

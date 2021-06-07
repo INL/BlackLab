@@ -138,14 +138,8 @@
 		    <artifactId>trove4j</artifactId>
 		    <version>3.0.3</version>
 		</dependency>
-		
-		<!-- faster and more memory efficient string collation, which is a large bottleneck in forward index/term reading -->
-        <!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j -->
-		<dependency>
-		    <groupId>com.ibm.icu</groupId>
-		    <artifactId>icu4j</artifactId>
-		    <version>68.1</version>
-		</dependency>
+		        
+
     </dependencies>
 
 

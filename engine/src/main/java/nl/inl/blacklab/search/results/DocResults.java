@@ -549,7 +549,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             int numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
-                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
+//                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
@@ -576,7 +576,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             } else {
                 // Slow approach: get the stored field value from each Document
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
+//                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
                 numberOfTokens = countTokens ? intSum(propTokens) : -1;
