@@ -30,7 +30,6 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
-import nl.inl.util.BlockTimer;
 import nl.inl.util.ThreadPauser;
 
 public class HitsFromQueryParallel extends Hits {
@@ -281,8 +280,7 @@ public class HitsFromQueryParallel extends Hits {
                     if (storeThisHit) {
                         int start = spans.startPosition();
                         int end = spans.endPosition();
-                        Hit hit = Hit.create(doc, start, end);
-                        results.add(hit);
+                        results.add(doc, start, end);
                         if (capturedGroups != null) {
                             Span[] groups = new Span[numCaptureGroups];
                             hitQueryContext.getCapturedGroups(groups);
