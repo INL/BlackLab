@@ -15,14 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -142,7 +140,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
      * the context(s) they need in the result set. (in the same order as reported by
      * needsContext()).
      */
-    List<Integer> contextIndices;
+    IntArrayList contextIndices;
 
     public HitProperty() {
         this.hits = null;
@@ -190,8 +188,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
             this.contexts = contexts;
     
             // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
-            if (contexts != null)
-                this.contextIndices = IntStream.range(0, contexts.size()).boxed().collect(Collectors.toList());
+            if (contexts != null) {
+                int count = contexts.size();
+                this.contextIndices = new IntArrayList(count);
+                for (int i = 0; i < count; ++i) this.contextIndices.add(i, i);
+            }
         }
         return this;
     }
@@ -208,9 +209,9 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
      * @param contextIndices the indices, in the same order as reported by
      *            needsContext().
      */
-    protected void setContextIndices(List<Integer> contextIndices) {
+    protected void setContextIndices(IntArrayList contextIndices) {
         if (this.contextIndices == null)
-            this.contextIndices = new ArrayList<>();
+            this.contextIndices = new IntArrayList();
         else
             this.contextIndices.clear();
         this.contextIndices.addAll(contextIndices);
