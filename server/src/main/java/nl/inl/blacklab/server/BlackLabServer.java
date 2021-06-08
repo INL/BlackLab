@@ -188,6 +188,11 @@ public class BlackLabServer extends HttpServlet {
             logger.error(ex);
         }
 
+	    //Respond to prometheus requests.
+	    if (Metrics.handlePrometheus(request, responseObject)) {
+	        return;
+        }
+
         synchronized (this) {
             if (!configRead) {
                 try {
