@@ -74,7 +74,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         if (n <= 0)
             return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], true);
         int[] dest = new int[n];
-        int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         System.arraycopy(context, contextStart, dest, 0, n);
 
         // Reverse the order of the array, because we want to sort from right to left
@@ -98,7 +98,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         int cbLength = cb[Contexts.LENGTH_INDEX];
 
         // Compare the left context for these two hits, starting at the end
-        int contextIndex = contextIndices.get(0);
+        int contextIndex = contextIndices.getInt(0);
         int ai = caHitStart - 1;
         int bi = cbHitStart - 1;
         while (ai >= 0 && bi >= 0) {

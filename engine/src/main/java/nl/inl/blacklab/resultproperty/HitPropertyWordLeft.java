@@ -70,7 +70,7 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
 
         if (contextHitStart <= 0)
             return new PropertyValueContextWord(index, annotation, sensitivity, Terms.NO_TERM);
-        int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         return new PropertyValueContextWord(index, annotation, sensitivity, context[contextStart
                         + contextHitStart - 1]);
     }
@@ -89,7 +89,7 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
         if (cbHitStart <= 0)
             return reverse ? -1 : 1;
         // Compare one word to the left of the hit
-        int contextIndex = contextIndices.get(0);
+        int contextIndex = contextIndices.getInt(0);
 
         int cmp = terms.compareSortPosition(
                 ca[contextIndex * caLength + caHitStart - 1 + Contexts.NUMBER_OF_BOOKKEEPING_INTS],

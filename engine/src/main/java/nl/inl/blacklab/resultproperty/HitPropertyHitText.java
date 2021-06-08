@@ -76,7 +76,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         if (n <= 0)
             return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], false);
         int[] dest = new int[n];
-        int contextStart = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
+        int contextStart = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
         System.arraycopy(context, contextStart + contextHitStart, dest, 0, n);
         return new PropertyValueContextWords(index, annotation, sensitivity, dest, false);
     }
@@ -93,7 +93,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         int cbLength = cb[Contexts.LENGTH_INDEX];
 
         // Compare the hit context for these two hits
-        int contextIndex = contextIndices.get(0);
+        int contextIndex = contextIndices.getInt(0);
         int ai = caHitStart;
         int bi = cbHitStart;
         while (ai < caRightStart && bi < cbRightStart) {

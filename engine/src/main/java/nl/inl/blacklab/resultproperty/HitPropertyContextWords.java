@@ -325,7 +325,7 @@ public class HitPropertyContextWords extends HitProperty {
             }
             // Copy the words we want to our dest array
             int valuesCopied = 0;
-            int contextStartIndex = contextLength * contextIndices.get(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
+            int contextStartIndex = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
             if (valuesToCopy) {
                 for (int srcIndex = firstWordSrcIndex; srcIndex != firstInvalidSrcIndex; srcIndex += srcDirection) {
                     dest[destIndex] = context[contextStartIndex + srcIndex];
