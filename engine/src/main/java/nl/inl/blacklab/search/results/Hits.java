@@ -630,6 +630,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     
     @Override
     public HitGroups group(HitProperty criteria, int maxResultsToStorePerGroup) {
+        ensureAllResultsRead();
         return HitGroups.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
     }
     

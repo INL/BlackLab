@@ -249,6 +249,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     
     @Override
     public DocResults sort(DocProperty sortProp) {
+        ensureAllResultsRead();
         List<DocResult> sorted = new ArrayList<DocResult>(this.results);
         sorted.sort(sortProp);
         return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
@@ -317,7 +318,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 partialDocId = null;
                 partialDocHits = null;
                 
-                while (sourceHitsIterator.hasNext() && (index < 0 || index < results.size())) {
+                while (sourceHitsIterator.hasNext() && (index < 0 || index > results.size())) {
                     Hit hit = sourceHitsIterator.next();
                     PropertyValueDoc val = groupByDoc.get(sourceHitsIndex);
                     if (!val.equals(doc)) {
@@ -369,6 +370,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     @Override
     public DocGroups group(DocProperty groupBy, int maxResultsToStorePerGroup) {
+        ensureAllResultsRead();
+        
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();

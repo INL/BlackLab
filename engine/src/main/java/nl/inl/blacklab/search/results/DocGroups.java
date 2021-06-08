@@ -90,6 +90,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     @Override
     public DocGroups sort(GroupProperty<DocResult, DocGroup> sortProp) {
+        ensureAllResultsRead();
         List<DocGroup> sorted = new ArrayList<DocGroup>(this.results);
         sorted.sort(sortProp);
         return new DocGroups(

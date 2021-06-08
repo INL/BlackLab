@@ -193,6 +193,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
     @Override
     public HitGroups sort(GroupProperty<Hit, HitGroup> sortProp) {
+        ensureAllResultsRead();
         List<HitGroup> sorted = new ArrayList<HitGroup>(this.results);
         sorted.sort(sortProp);
         // Sorted contains the same hits as us, so we can pass on our result statistics.
