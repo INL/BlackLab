@@ -45,6 +45,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
+import nl.inl.blacklab.search.results.Hits.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
@@ -136,8 +137,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     /**
      * Iterator in our source hits object
      */
-    private Iterator<Hit> sourceHitsIterator;
-
+    private Iterator<EphemeralHit> sourceHitsIterator;
+//    private Iterator<Hit> sourceHitsIterator;
+    private int sourceHitsIndex = 0;
+    
     /**
      * A partial list of hits in a doc, because we stopped iterating through the
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
@@ -185,7 +188,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo) {
         super(queryInfo);
-        groupByDoc = new HitPropertyDoc(queryInfo.index());
     }
 
     /**
@@ -197,7 +199,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
         this(queryInfo);
-        this.sourceHitsIterator = hits.iterator();
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
+        this.sourceHitsIterator = hits.ephemeralIterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
@@ -313,11 +316,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 HitsArrays docHits = partialDocHits;
                 partialDocId = null;
                 partialDocHits = null;
-
-                while ((index < 0 || results.size() <= index) && sourceHitsIterator.hasNext()) {
-
+                
+                while (sourceHitsIterator.hasNext() && (index < 0 || index < results.size())) {
                     Hit hit = sourceHitsIterator.next();
-                    PropertyValueDoc val = groupByDoc.get(index);
+                    PropertyValueDoc val = groupByDoc.get(sourceHitsIndex);
                     if (!val.equals(doc)) {
                         if (docHits != null) {
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
@@ -327,6 +329,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         docHits = new HitsArrays();
                     }
                     docHits.add(hit);
+                    
+                    ++sourceHitsIndex; // dumb, required for HitProperty
                 }
                 // add the final dr instance to the results collection
                 if (docHits != null) {
