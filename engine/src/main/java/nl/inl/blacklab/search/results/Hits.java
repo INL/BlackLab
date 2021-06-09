@@ -32,11 +32,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         public int doc = -1;
         public int start = -1;
         public int end = -1;
-        
-        public HitImpl toHit() { 
+
+        public HitImpl toHit() {
             return new HitImpl(doc, start, end);
         }
-        
+
         @Override
         public int doc() {
             return doc;
@@ -52,22 +52,22 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             return end;
         }
     }
-    
+
     public static class HitsArrays implements Iterable<EphemeralHit> {
         @FunctionalInterface
         public static interface HitConsumer {
             public void consume(int doc, int start, int end);
         }
-        
+
         public static class HitIterator implements Iterator<EphemeralHit> {
-            private HitsArrays hits; 
+            private HitsArrays hits;
             private int pos = 0;
             private final EphemeralHit hit = new EphemeralHit();
-            
+
             private HitIterator(HitsArrays h) {
                 this.hits = h;
             }
-            
+
             @Override
             public boolean hasNext() {
                 // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
@@ -83,34 +83,42 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                 return this.hit;
             }
 
-            public int doc() { return this.hit.doc; }
-            public int start() { return this.hit.start; }
-            public int end() { return this.hit.end; }
+            public int doc() {
+                return this.hit.doc;
+            }
+
+            public int start() {
+                return this.hit.start;
+            }
+
+            public int end() {
+                return this.hit.end;
+            }
         }
-        
+
         private ReadWriteLock lock = new ReentrantReadWriteLock();
-        
+
         private final IntArrayList docs;
         private final IntArrayList starts;
         private final IntArrayList ends;
-        
+
         public HitsArrays() {
             this.docs = new IntArrayList();
             this.starts = new IntArrayList();
             this.ends = new IntArrayList();
         }
-        
+
         public HitsArrays(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
             if (docs == null || starts == null || ends == null)
                 throw new NullPointerException();
-            if (docs.size() != starts.size() || docs.size() != ends.size()) 
+            if (docs.size() != starts.size() || docs.size() != ends.size())
                 throw new IllegalArgumentException("Passed differently sized hit component arrays to Hits object");
-            
+
             this.docs = docs;
             this.starts = starts;
             this.ends = ends;
         }
-         
+
         public void add(int doc, int start, int end) {
             this.lock.writeLock().lock();
             docs.add(doc);
@@ -118,7 +126,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             ends.add(end);
             this.lock.writeLock().unlock();
         }
-        
+
         public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
             this.lock.writeLock().lock();
             this.docs.addAll(docs);
@@ -126,7 +134,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.ends.addAll(ends);
             this.lock.writeLock().unlock();
         }
-        
+
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
         public void add(EphemeralHit hit) {
             this.lock.writeLock().lock();
@@ -135,7 +143,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             ends.add(hit.end);
             this.lock.writeLock().unlock();
         }
-        
+
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
         public void add(Hit hit) {
             this.lock.writeLock().lock();
@@ -144,7 +152,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             ends.add(hit.end());
             this.lock.writeLock().unlock();
         }
-        
+
         public void addAll(List<Hit> hits) {
             this.lock.writeLock().lock();
             for (Hit hit : hits) {
@@ -154,7 +162,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             }
             this.lock.writeLock().unlock();
         }
-        
+
         public void addAll(HitsArrays hits) {
             this.lock.writeLock().lock();
             hits.lock.readLock().lock();
@@ -170,36 +178,37 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             cons.accept(this);
             lock.readLock().unlock();
         }
-        
+
         public void withWriteLock(Consumer<HitsArrays> cons) {
             lock.writeLock().lock();
             cons.accept(this);
             lock.writeLock().unlock();
         }
-        
+
         public void use(int index, HitConsumer cons) {
             lock.readLock().lock();
             cons.consume(docs.get(index), starts.get(index), ends.get(index));
             lock.readLock().unlock();
         }
-        
+
         public HitImpl get(int index) {
             lock.readLock().lock();
             HitImpl h = new HitImpl(docs.get(index), starts.get(index), ends.get(index));
             lock.readLock().unlock();
             return h;
         }
-        
-        /** 
+
+        /**
          * Copy values into the ephemeral hit, for use in a hot loop or somesuch.
          * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
          * Example:
+         * 
          * <pre>
          * EphemeralHitImpl h = new EphemeralHitImpl();
          * int size = hits.size();
-         * for (int i = 0; i < size; ++i) { 
-         *   hits.getEphemeral(i, h);
-         *   // use h now
+         * for (int i = 0; i < size; ++i) {
+         *     hits.getEphemeral(i, h);
+         *     // use h now
          * }
          * </pre>
          */
@@ -210,104 +219,117 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             h.end = ends.get(index);
             lock.readLock().unlock();
         }
-        
+
         public int doc(int index) {
             lock.readLock().lock();
             int doc = this.docs.get(index);
             lock.readLock().unlock();
             return doc;
         }
-        
+
         public int start(int index) {
             lock.readLock().lock();
             int start = this.starts.get(index);
             lock.readLock().unlock();
             return start;
         }
-        
+
         public int end(int index) {
             lock.readLock().lock();
             int end = this.ends.get(index);
             lock.readLock().unlock();
             return end;
         }
-        
+
         public int size() {
             lock.readLock().lock();
             int size = docs.size();
             lock.readLock().unlock();
             return size;
         }
-        
-        /** 
+
+        /**
          * Expert use: get the internal docs array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
+         * 
          * @return
          */
-        public IntArrayList docs() { return docs; }
-        /** 
+        public IntArrayList docs() {
+            return docs;
+        }
+
+        /**
          * Expert use: get the internal starts array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
+         * 
          * @return
          */
-        public IntArrayList starts() { return starts; }
-        /** 
+        public IntArrayList starts() {
+            return starts;
+        }
+
+        /**
          * Expert use: get the internal ends array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
+         * 
          * @return
          */
-        public IntArrayList ends() { return ends; }
-        
-        
+        public IntArrayList ends() {
+            return ends;
+        }
+
         /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
         @Override
         public HitIterator iterator() {
             return new HitIterator(this);
         }
-        
+
         /**
          * Sort this instance. If you want a copy of the data anyway, it's better to use regular sort()
-         * Note this will be less efficient than regular sort(), because this avoids allocating copies of internal data, thus needing more swaps. 
-         * In order to do that, more swaps and pointer chases are required (in practice, 0.5n pointer chases of average length log2(n), and 0.5n swaps)
+         * Note this will be less efficient than regular sort(), because this avoids allocating copies of internal data, thus needing more swaps.
+         * In order to do that, more swaps and pointer chases are required (in practice, 0.5n pointer chases of average length log2(n), and 0.5n
+         * swaps)
          */
         public void sortInPlace(HitProperty p) {
             this.lock.writeLock().lock();
-            
+
             final EphemeralHit tmp = new EphemeralHit();
             Sort.sort(new Sortable() {
                 @Override
                 public void swap(int a, int b) {
                     getEphemeral(a, tmp);
-                    
+
                     docs.set(a, docs.get(b));
                     starts.set(a, starts.get(b));
                     ends.set(a, ends.get(b));
-                    
+
                     docs.set(b, tmp.doc);
                     starts.set(b, tmp.start);
                     ends.set(b, tmp.end);
                 }
+
                 @Override
                 public int compare(int a, int b) {
                     return p.compare(a, b);
                 }
             }, 0, this.size());
         }
-        
+
         public HitsArrays sort(HitProperty p) {
             this.lock.readLock().lock();
-            
+
             int[] indices = new int[this.size()];
-            for (int i = 0; i < indices.length; ++i) indices[i] = i;
-            
+            for (int i = 0; i < indices.length; ++i)
+                indices[i] = i;
+
             IntArrays.quickSort(indices, p::compare);
-            
+
             HitsArrays r = new HitsArrays();
             EphemeralHit eph = new EphemeralHit();
-            for (int i = 0; i < indices.length; ++i) { 
+            for (int i = 0; i < indices.length; ++i) {
                 getEphemeral(indices[i], eph);
                 r.add(eph);
             }
@@ -315,7 +337,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             return r;
         }
     }
-    
+
     protected final HitsArrays hitsArrays;
 
     protected static final Logger logger = LogManager.getLogger(Hits.class);
@@ -326,7 +348,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
      * @param searchSettings settings such as max. hits to process/count
-     * @return hits found   
+     * @return hits found
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
     public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) throws WildcardTermTooBroad {
@@ -353,37 +375,35 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     public static Hits fromArrays(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
         return new HitsList(queryInfo, new HitsArrays(new IntArrayList(docs), new IntArrayList(starts), new IntArrayList(ends)), null);
     }
-    
+
     public static Hits fromList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
         return new HitsList(queryInfo, hits, capturedGroups);
     }
-    
+
     public static Hits fromList(
-                                QueryInfo queryInfo, 
+                                QueryInfo queryInfo,
                                 HitsArrays hits,
-                                WindowStats windowStats, 
+                                WindowStats windowStats,
                                 SampleParameters sampleParameters,
-                                int hitsCounted, 
-                                int docsRetrieved, 
-                                int docsCounted, 
-                                CapturedGroupsImpl capturedGroups
-                                ) {
+                                int hitsCounted,
+                                int docsRetrieved,
+                                int docsCounted,
+                                CapturedGroupsImpl capturedGroups) {
         return new HitsList(
-            queryInfo, 
-            hits, 
-            windowStats, 
-            sampleParameters, 
-            hitsCounted, 
-            docsRetrieved, 
-            docsCounted, 
-            capturedGroups
-        );
+                            queryInfo,
+                            hits,
+                            windowStats,
+                            sampleParameters,
+                            hitsCounted,
+                            docsRetrieved,
+                            docsCounted,
+                            capturedGroups);
     }
 
     /**
      * Construct an empty Hits object.
      * 
-     * @param queryInfo query info 
+     * @param queryInfo query info
      * @return hits found
      */
     public static Hits emptyList(QueryInfo queryInfo) {
@@ -403,7 +423,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Our captured groups, or null if we have none.
      */
     protected CapturedGroupsImpl capturedGroups;
-    
+
     /**
      * The number of hits we've seen and counted so far. May be more than the number
      * of hits we've retrieved if that exceeds maxHitsToRetrieve.
@@ -460,13 +480,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         public MaxStats maxStats() {
             return Hits.this.maxStats();
         }
-        
+
     };
-    
+
     public Hits(QueryInfo queryInfo) {
         this(queryInfo, new HitsArrays());
     }
-    
+
     public Hits(QueryInfo queryInfo, HitsArrays hits) {
         super(queryInfo);
         this.hitsArrays = hits != null ? hits : new HitsArrays();
@@ -474,7 +494,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     // Inherited from Results
     //--------------------------------------------------------------------
-    
+
     /**
      * Get a window into this list of hits.
      *
@@ -495,7 +515,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         WindowStats windowStats;
         boolean emptyResultSet = !hitsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
-                (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
+            (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
             //throw new IllegalArgumentException("First hit out of range");
             return Hits.emptyList(queryInfo());
         }
@@ -505,14 +525,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         // Instead, first call ensureResultsRead so we block until we have either have enough or finish
         this.ensureResultsRead(first + windowSize);
         // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        int number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first; 
-        
-        
+        int number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
+
         // Copy the hits we're interested in.
         CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsArrays window = new HitsArrays(); 
-        
+        HitsArrays window = new HitsArrays();
+
         this.hitsArrays.withReadLock(h -> {
             int prevDoc = -1;
             EphemeralHit hit = new EphemeralHit();
@@ -523,7 +542,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                     capturedGroups.put(hh, capturedGroups().get(hh));
                 }
                 // OPT: copy context as well..?
-                
+
                 int doc = hit.doc;
                 if (doc != prevDoc) {
                     docsRetrieved.add(1);
@@ -540,7 +559,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     @Override
@@ -566,11 +585,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                 chosenHitIndices.add(hitIndex);
             }
         }
-        
+
         MutableInt docsInSample = new MutableInt(0);
         CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         HitsArrays sample = new HitsArrays();
-        
+
         this.hitsArrays.withReadLock(__ -> {
             int previousDoc = -1;
             EphemeralHit hit = new EphemeralHit();
@@ -580,7 +599,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                     docsInSample.add(1);
                     previousDoc = hit.doc;
                 }
-                
+
                 sample.add(hit);
                 if (capturedGroups != null) {
                     Hit h = hit.toHit();
@@ -591,13 +610,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(), docsInSample.getValue(), docsInSample.getValue(), null);
     }
-    
 
     /**
      * Return a new Hits object with these hits sorted by the given property.
      *
      * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset. 
+     * different sorts of the same resultset.
      *
      * @param sortProp the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
@@ -606,15 +624,14 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     public Hits sort(HitProperty sortProp) {
         if (!(sortProp instanceof HitProperty))
             throw new UnsupportedOperationException("Can only sort Hits by an instance of HitProperty!");
-        HitProperty hitProp = (HitProperty)sortProp;
-        
+        HitProperty hitProp = (HitProperty) sortProp;
 
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = hitProp.needsContext();
         List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, queryInfo().index().reader());
         hitProp = hitProp.copyWith(this,
-                requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index()), fiidLookups));
+            requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index()), fiidLookups));
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
@@ -626,14 +643,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         int docsCounted = docsCountedSoFar();
         return Hits.fromList(queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
-    
-    
+
     @Override
     public HitGroups group(HitProperty criteria, int maxResultsToStorePerGroup) {
         ensureAllResultsRead();
-        return HitGroups.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
+        return HitGroups.fromHits(this, (HitProperty) criteria, maxResultsToStorePerGroup);
     }
-    
+
     /**
      * Select only the hits where the specified property has the specified value.
      * 
@@ -643,9 +659,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      */
     @Override
     public Hits filter(HitProperty property, PropertyValue value) {
-        return new HitsFiltered(this, (HitProperty)property, value);
+        return new HitsFiltered(this, (HitProperty) property, value);
     }
-    
+
     @Override
     protected int resultsCountedTotal() {
         return hitsCountedTotal();
@@ -656,11 +672,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return hitsCountedSoFar();
     }
 
-//    @Override
-//    protected void ensureResultsRead(int number) {
-//        
-//        
-//    }
+    //    @Override
+    //    protected void ensureResultsRead(int number) {
+    //        
+    //        
+    //    }
 
     @Override
     protected boolean resultsProcessedAtLeast(int lowerBound) {
@@ -678,12 +694,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return hitsProcessedSoFar();
     }
 
-//    @Override
-//    public boolean doneProcessingAndCounting() {
-//        
-//        
-//    }
-    
+    //    @Override
+    //    public boolean doneProcessingAndCounting() {
+    //        
+    //        
+    //    }
+
     @Override
     public int numberOfResultObjects() {
         return this.hitsArrays.size();
@@ -691,20 +707,27 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     @Override
     public Iterator<Hit> iterator() {
+        ensureAllResultsRead();
         // We need to wrap the internal iterator, as we probably shouldn't  
         return new Iterator<Hit>() {
             Iterator<EphemeralHit> i = hitsArrays.iterator();
+
             @Override
-            public boolean hasNext() { return i.hasNext(); }
+            public boolean hasNext() {
+                return i.hasNext();
+            }
+
             @Override
-            public Hit next() { return i.next().toHit(); }
+            public Hit next() {
+                return i.next().toHit();
+            }
         };
     }
-    
+
     public Iterator<EphemeralHit> ephemeralIterator() {
         return hitsArrays.iterator();
     }
-  
+
     @Override
     public Hit get(int i) {
         return this.hitsArrays.get(i);
@@ -713,7 +736,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     /**
      * Did we exceed the maximum number of hits to process/count?
      * 
-     * NOTE: this is only valid for the original Hits instance (that 
+     * NOTE: this is only valid for the original Hits instance (that
      * executes the query), and not for any derived Hits instance (window, sorted, filtered, ...).
      * 
      * The reason that this is not part of QueryInfo is that this creates a brittle
@@ -723,9 +746,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
      */
     public abstract MaxStats maxStats();
-    
+
     /**
      * Count occurrences of context words around hit.
+     * 
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * @param sensitivity what sensitivity to use
@@ -741,6 +765,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Count occurrences of context words around hit.
      *
      * Sorts the results from most to least frequent.
+     * 
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * @param sensitivity what sensitivity to use
@@ -754,6 +779,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Count occurrences of context words around hit.
      *
      * Matches case- and diacritics-sensitively, and sorts the results from most to least frequent.
+     * 
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * 
@@ -765,14 +791,14 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Return a per-document view of these hits.
-     * @param maxHits 
+     * 
+     * @param maxHits
      *
      * @return the per-document view.
      */
     public DocResults perDocResults(int maxHits) {
         return DocResults.fromHits(queryInfo(), this, maxHits);
     }
- 
 
     /**
      * Create concordances from the forward index.
@@ -783,8 +809,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     public Concordances concordances(ContextSize contextSize) {
         return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
     }
- 
-    
+
     // Getting / iterating over the hits
     //--------------------------------------------------------------------
 
@@ -793,15 +818,15 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         HitsArrays r = new HitsArrays();
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsArrays) {
-            if (h.doc == docid) 
+            if (h.doc == docid)
                 r.add(h);
         }
         return new HitsList(queryInfo(), r, null);
     }
-    
+
     // Stats
     // ---------------------------------------------------------------
-    
+
     public ResultsStats hitsStats() {
         return resultsStats();
     }
@@ -818,7 +843,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     protected int hitsProcessedSoFar() {
         return this.hitsArrays.size();
     }
-    
+
     protected int hitsCountedTotal() {
         ensureAllResultsRead();
         return hitsCounted;
@@ -850,17 +875,16 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return docsRetrieved;
     }
 
-
     // Deriving other Hits / Results instances
     //--------------------------------------------------------------------
-    
+
     /** Assumes this hit is within our lists. */
     public Hits window(Hit hit) {
         int size = this.size();
-        
+
         boolean isLastHit = this.hitsArrays.get(this.hitsArrays.size() - 1).equals(hit);
         boolean hasMoreHits = isLastHit ? resultsProcessedAtLeast(size + 1) : true;
-        
+
         CapturedGroupsImpl capturedGroups = null;
         if (this.capturedGroups != null) {
             capturedGroups = new CapturedGroupsImpl(this.capturedGroups.names());
@@ -869,23 +893,21 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         HitsArrays r = new HitsArrays();
         r.add(hit);
-        
+
         return Hits.fromList(
-            this.queryInfo(), 
+            this.queryInfo(),
             r,
-            new WindowStats(hasMoreHits, 1, 1, 1), 
+            new WindowStats(hasMoreHits, 1, 1, 1),
             null, // window is not sampled 
             1,
             1,
             1,
-            capturedGroups
-        );
+            capturedGroups);
     }
-    
-    
+
     // Captured groups
     //--------------------------------------------------------------------
-    
+
     public CapturedGroupsImpl capturedGroups() {
         return capturedGroups;
     }
@@ -896,7 +918,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     // Hits display
     //--------------------------------------------------------------------
-    
+
     public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
         if (contextSize == null)
             contextSize = index().defaultContextSize();
@@ -910,8 +932,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             contextSize = index().defaultContextSize();
         return new Kwics(this, contextSize);
     }
-    
-    public HitsArrays hitsArrays() { 
-        return hitsArrays; 
+
+    public HitsArrays hitsArrays() {
+        return hitsArrays;
     }
 }
