@@ -24,9 +24,11 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -57,9 +59,9 @@ public class DocPropertyStoredField extends DocProperty {
     /** Display name for the field */
     private String friendlyName;
 
-    /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
-    private Map<Integer, SortedSetDocValues> docValues = null;
-
+    /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
+    private Map<Integer, Pair<SortedDocValues, SortedSetDocValues>> docValues = null;
+    
     /** Our index */
     private BlackLabIndex index;
 
@@ -86,8 +88,11 @@ public class DocPropertyStoredField extends DocProperty {
                     for (LeafReaderContext rc : index.reader().leaves()) {
                         LeafReader r = rc.reader();
                         // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
-                        SortedSetDocValues sortedDocValues = r.getSortedSetDocValues(fieldName);
-                        docValues.put(rc.docBase, sortedDocValues);
+                        SortedSetDocValues sortedSetDocValues = r.getSortedSetDocValues(fieldName);
+                        SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
+                        if (sortedSetDocValues != null || sortedDocValues != null) {
+                            docValues.put(rc.docBase, Pair.of(sortedDocValues, sortedSetDocValues));
+                        }
                     }
                 }
                 if (docValues.isEmpty()) {
@@ -110,8 +115,8 @@ public class DocPropertyStoredField extends DocProperty {
     public String[] get(int docId) {
         if  (docValues != null) {
             // Find the fiid in the correct segment
-            Entry<Integer, SortedSetDocValues> target = null;
-            for (Entry<Integer, SortedSetDocValues> e : this.docValues.entrySet()) {
+            Entry<Integer, Pair<SortedDocValues, SortedSetDocValues>> target = null;
+            for (Entry<Integer, Pair<SortedDocValues, SortedSetDocValues>> e : this.docValues.entrySet()) {
                 if (e.getKey() > docId) { break; }
                 target = e;
             }
@@ -119,12 +124,19 @@ public class DocPropertyStoredField extends DocProperty {
             final List<String> ret = new ArrayList<>();
             if (target != null) {
                 final Integer targetDocBase = target.getKey();
-                final SortedSetDocValues targetDocValues = target.getValue();
+                final Pair<SortedDocValues, SortedSetDocValues> targetDocValues = target.getValue();
                 if (targetDocValues != null) {
-                    targetDocValues.setDocument(docId - targetDocBase);
-                    for (long ord = targetDocValues.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = targetDocValues.nextOrd()) {
-                        BytesRef val = targetDocValues.lookupOrd(ord);
+                    SortedDocValues a = targetDocValues.getLeft();
+                    SortedSetDocValues b = targetDocValues.getRight();
+                    if (a != null) { // old index, only one value
+                        BytesRef val = a.get(docId - targetDocBase);
                         ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                    } else { // newer index, (possibly) multiple values.
+                        b.setDocument(docId - targetDocBase);
+                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
+                            BytesRef val = b.lookupOrd(ord);
+                            ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                        }
                     }
                 }
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
@@ -132,7 +144,6 @@ public class DocPropertyStoredField extends DocProperty {
             }
             return ret.toArray(new String[ret.size()]);
         }
-
 
         // We don't have DocValues; just get the property from the document.
         try {
