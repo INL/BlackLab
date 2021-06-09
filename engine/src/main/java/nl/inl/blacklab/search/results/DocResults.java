@@ -152,7 +152,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * id of the partial doc we've done (because we stopped iterating through the
      * Hits), or -1 for no partial doc.
      */
-    private PropertyValueDoc partialDocId = null;
+    private int partialDocId = -1;
 
     private HitPropertyDoc groupByDoc;
 
@@ -313,34 +313,37 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
             try {
                 // Fill list of document results
-                PropertyValueDoc doc = partialDocId;
                 HitsArrays docHits = partialDocHits;
-                partialDocId = null;
-                partialDocHits = null;
+                int lastDocId = partialDocId;
                 
                 while (sourceHitsIterator.hasNext() && (index < 0 || index > results.size())) {
-                    Hit hit = sourceHitsIterator.next();
-                    PropertyValueDoc val = groupByDoc.get(sourceHitsIndex);
-                    if (!val.equals(doc)) {
+                    EphemeralHit h = sourceHitsIterator.next();
+                    int curDoc = h.doc;
+                    if (curDoc != lastDocId) {
                         if (docHits != null) {
+                            PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                            addDocResultToList(doc, hits, hits.size());
+                            int size = docHits.size();
+                            addDocResultToList(doc, hits, size);
                         }
-                        doc = val;
+                        
                         docHits = new HitsArrays();
                     }
-                    docHits.add(hit);
                     
-                    ++sourceHitsIndex; // dumb, required for HitProperty
+                    docHits.add(h);
+                    lastDocId = curDoc;
                 }
+                
                 // add the final dr instance to the results collection
-                if (docHits != null) {
+                if (docHits != null && docHits.size() > 0) {
                     if (sourceHitsIterator.hasNext()) {
-                        partialDocId = doc;
+                        partialDocId = lastDocId;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
+                        PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                         Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                        addDocResultToList(doc, hits, docHits.size());
+                        int size = docHits.size();
+                        addDocResultToList(doc, hits, size);
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
                     }

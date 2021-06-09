@@ -37,7 +37,7 @@ public class HitGroup extends Group<Hit> {
     }
 
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
-        this(groupIdentity, Hits.emptyList(queryInfo), totalSize);
+        this(groupIdentity, null, totalSize);
     }
 
     /**

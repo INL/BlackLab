@@ -46,7 +46,7 @@ public abstract class Group<T> implements Result<Group<T>> {
     }
     
     public int numberOfStoredResults() {
-        return storedResults.size();
+        return storedResults != null ? storedResults.size() : 0;
     }
 
     public int size() {
