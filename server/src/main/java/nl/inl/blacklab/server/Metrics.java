@@ -35,7 +35,7 @@ import java.util.function.Supplier;
 
 public class Metrics {
     private static final Logger logger = LogManager.getLogger(Metrics.class);
-    static final String CW_NAMESPACE = "Application";
+    static final String CW_NAMESPACE = "Blacklab";
     static final String CW_NAMESPACE_PROPERTY = "metrics.cloudwatch.namespace";
     static final String METRICS_ENABLED = "metrics.enabled";
 
