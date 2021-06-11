@@ -23,7 +23,6 @@ import nl.inl.blacklab.search.results.Hits.HitsArrays;
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
 public class HitGroup extends Group<Hit> {
-    
     public static HitGroup empty(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }
@@ -37,7 +36,7 @@ public class HitGroup extends Group<Hit> {
     }
 
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
-        this(groupIdentity, null, totalSize);
+        this(groupIdentity, Hits.emptyList(queryInfo), totalSize);
     }
 
     /**

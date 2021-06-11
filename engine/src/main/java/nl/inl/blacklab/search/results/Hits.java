@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -338,6 +339,16 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
     }
 
+    private static final HitsArrays EMPTY_SINGLETON = new HitsArrays() {
+        public void add(EphemeralHit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        public void add(Hit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }; 
+        public void add(int doc, int start, int end){throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }; 
+        public void addAll(HitsArrays hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        public void addAll(java.util.List<Hit> hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+    };
+    
+    
     protected final HitsArrays hitsArrays;
 
     protected static final Logger logger = LogManager.getLogger(Hits.class);
@@ -484,12 +495,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     };
 
     public Hits(QueryInfo queryInfo) {
-        this(queryInfo, new HitsArrays());
+        this(queryInfo, EMPTY_SINGLETON);
     }
 
     public Hits(QueryInfo queryInfo, HitsArrays hits) {
         super(queryInfo);
-        this.hitsArrays = hits != null ? hits : new HitsArrays();
+        this.hitsArrays = hits != null ? hits : EMPTY_SINGLETON;
     }
 
     // Inherited from Results
@@ -672,12 +683,6 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return hitsCountedSoFar();
     }
 
-    //    @Override
-    //    protected void ensureResultsRead(int number) {
-    //        
-    //        
-    //    }
-
     @Override
     protected boolean resultsProcessedAtLeast(int lowerBound) {
         return this.hitsArrays.size() >= lowerBound;
@@ -693,12 +698,6 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     protected int resultsProcessedSoFar() {
         return hitsProcessedSoFar();
     }
-
-    //    @Override
-    //    public boolean doneProcessingAndCounting() {
-    //        
-    //        
-    //    }
 
     @Override
     public int numberOfResultObjects() {

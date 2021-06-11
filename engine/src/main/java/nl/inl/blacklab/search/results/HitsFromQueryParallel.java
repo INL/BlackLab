@@ -359,7 +359,7 @@ public class HitsFromQueryParallel extends Hits {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo);
+        super(queryInfo, new HitsArrays()); // explicitly construct HitsArrays so they're writeable
         this.searchSettings = searchSettings;
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
