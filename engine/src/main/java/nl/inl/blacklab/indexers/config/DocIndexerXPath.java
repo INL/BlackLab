@@ -499,6 +499,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         }
                         ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
 
+                        // This metadata field is matched by a for-each, but if it specifies its own xpath ignore it in the for-each section
+                        // It will capture values on its own at another point in the outer loop.
+                        // Note that we check whether there is any path at all: otherwise an identical path to the for-each would capture values twice.
+                        if (metadataField.getValuePath() != null && !metadataField.getValuePath().isEmpty())
+                            continue;
+                        
                         apMetadata.resetXPath();
 
                         // Multiple matches will be indexed at the same position.
@@ -550,7 +556,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         }
                     } catch(XPathEvalException e) {
                         // An xpath like string(@value) will make evalXPath() fail.
-                        // There is no good way to check wether this exception will occur
+                        // There is no good way to check whether this exception will occur
                         // When the exception occurs we try to evaluate the xpath as string
                         // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
                         if (logger.isDebugEnabled()) {
@@ -558,7 +564,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                     "string(.//tei:availability[1]/@status='free')",
                                     "string(//tei:availability[1]/@status='free')"));
                         }
-                        String unprocessedValue = apEvalToString.evalXPathToString();
+                        String unprocessedValue = apMetadata.evalXPathToString();
                         for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
                             addMetadataField(f.getName(), value);
                         }
