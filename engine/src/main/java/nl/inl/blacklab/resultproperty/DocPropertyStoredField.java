@@ -92,6 +92,8 @@ public class DocPropertyStoredField extends DocProperty {
                         SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
                         if (sortedSetDocValues != null || sortedDocValues != null) {
                             docValues.put(rc.docBase, Pair.of(sortedDocValues, sortedSetDocValues));
+                        } else {
+                            docValues.put(rc.docBase, null);
                         }
                     }
                 }
