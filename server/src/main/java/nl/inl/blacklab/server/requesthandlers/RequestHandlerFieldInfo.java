@@ -4,12 +4,12 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -216,36 +216,41 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             String luceneField = as.luceneField();
             if (annotationMatches(annotation.name(), showValuesFor)) {
                 boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, MAX_FIELD_VALUES + 1); // 1 more to detect when we have all values or not
                 ds.startEntry("values").startList();
 
-                boolean valueListComplete = true;
-                int n = 0;
+                // Arrays because we have to access them from the closures
+                boolean[] valueListComplete = { true };
+                
+                final Set<String> terms = new TreeSet<>();
                 if (isInlineTagAnnotation) {
-                    for (String value : values) {
-                        if (!value.startsWith("@")) {
-                            ds.item("value", value);
-                            n++;
+                    LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                    	if (!term.startsWith("@") && !terms.contains(term)) {
+                    		if (terms.size() >= MAX_FIELD_VALUES) {
+                    			valueListComplete[0] = false;
+                    			return false;
+                    		}
+                    		terms.add(term);
                         }
-                        if (n == MAX_FIELD_VALUES) {
-                            valueListComplete = false;
-                            break;
-                        }
-                    }
+                    	return true;
+                    });
                 } else {
-                    for (String value : values) {
-                        if (!value.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR)) {
-                            ds.item("value", value);
-                            n++;
+                	LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                    	if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(term)) {
+                    		if (terms.size() >= MAX_FIELD_VALUES) {
+                    			valueListComplete[0] = false;
+                    			return false;
+                    		}
+                    		terms.add(term);
                         }
-                        if (n == MAX_FIELD_VALUES) {
-                            valueListComplete = false;
-                            break;
-                        }
-                    }
+                    	return true;
+                    });
                 }
+                for (String term: terms) {
+                	ds.item("value", term);
+                }
+                
                 ds.endList().endEntry();
-                ds.entry("valueListComplete", valueListComplete);
+                ds.entry("valueListComplete", valueListComplete[0]);
             }
             boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
             if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
