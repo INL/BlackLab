@@ -20,5 +20,8 @@ COPY docker/blacklab-server.yaml /etc/blacklab/
 # Copy the WAR file
 COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/blacklab-server.war
 
+# Copy JARs for the commandline tools
+COPY --from=builder /app/core/target/blacklab-*.jar /app/core/target/lib /usr/local/lib/blacklab-tools/
+
 # Our data directory (either an anonymous volume or a named volume mounted by user)
 VOLUME /data

@@ -5,4 +5,4 @@ cd $(dirname "$0")/..
 pwd
 
 # Build the docker image
-docker build -f docker/Dockerfile.blacklab-server -t instituutnederlandsetaal/blacklab-server .
+docker build -f docker/Dockerfile -t instituutnederlandsetaal/blacklab .
