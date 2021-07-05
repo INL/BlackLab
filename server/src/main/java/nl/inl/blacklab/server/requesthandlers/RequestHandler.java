@@ -568,7 +568,7 @@ public abstract class RequestHandler {
                     metadataFieldsNotInGroups.remove(field);
                 }
             }
-            
+
             ds.startEntry("metadataFieldGroups").startList();
             boolean addedRemaining = false;
             for (MetadataFieldGroup metaGroup : metaGroups) {
@@ -815,7 +815,7 @@ public abstract class RequestHandler {
     static void addSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
         ds.startEntry("subcorpusSize").startMap()
             .entry("documents", subcorpusSize.getDocuments());
-        if (subcorpusSize.getTokens() >= 0)
+        if (subcorpusSize.hasTokenCount())
             ds.entry("tokens", subcorpusSize.getTokens());
         ds.endMap().endEntry();
     }

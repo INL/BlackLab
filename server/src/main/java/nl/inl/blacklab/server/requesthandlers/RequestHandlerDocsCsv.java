@@ -128,7 +128,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     number = Math.min(requested, number);
                 }
             }
-            
+
             if (number >= 0)
                 docs = docs.window(first, number);
         }
@@ -185,8 +185,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     if (searchParam.hasPattern()) {
                         PropertyValue docPropValues = group.identity();
                         CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues, true);
-                        row.add(groupSubcorpusSize.getTokens() > 0 ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
-                        row.add(groupSubcorpusSize.getDocuments() > 0 ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
+                        row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
+                        row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
                     } else {
                         row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
                         row.add(Integer.toString(group.storedResults().subcorpusSize().getDocuments()));
