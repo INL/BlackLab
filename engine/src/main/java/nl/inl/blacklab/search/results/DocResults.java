@@ -543,7 +543,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
      */
     public CorpusSize subcorpusSize(boolean countTokens) {
         if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
-            int numberOfTokens;
+            long numberOfTokens;
             int numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field

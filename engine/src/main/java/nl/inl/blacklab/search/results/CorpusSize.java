@@ -34,4 +34,9 @@ public final class CorpusSize {
     public boolean hasTokenCount() { return tokens >= 0; }
     public boolean hasDocumentCount() { return documents >= 0; }
 
+    @Override
+    public String toString() {
+        return String.format("CorpusSize(%d docs, %d tokens)", documents, tokens);
+    }
+
 }
