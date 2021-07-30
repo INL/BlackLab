@@ -26,3 +26,6 @@ bin
 
 # vscode project settings
 .factorypath
+
+# Exclude *.env files except default .env
+?*.env
