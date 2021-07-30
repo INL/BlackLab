@@ -1,8 +1,22 @@
 # Ignore these subdirs when building Docker image
 **/target
+**/bin
 **/.settings
+**/.idea
+**/*.iml
+**/.vscode
 **/doc
-docker/Dockerfile.*
-docker/*.sh
+**/.project
+**/.classpath
+**/.factorypath
+**/.apt_generated/
+**/.apt_generated_tests/
+
 .git
 vmtouch
+
+# vi temporary files
+**/*.swp
+
+# log files, such as JVM crash files
+**/*.log

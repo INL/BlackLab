@@ -366,10 +366,10 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
-        
+
         String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
-        
+
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
             List<DocResult> group = groupLists.get(groupId);
@@ -515,39 +515,39 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
     public long tokensInMatchingDocs() {
         return subcorpusSize().getTokens();
     }
-    
+
     /**
      * Determine the size of the subcorpus defined by this set of documents.
-     * 
+     *
      * Counts number of documents and tokens.
      *
      * This is fast if the query was created from a Query object (and the index contains DocValues),
      * but slower if it was created from Hits or a list of DocResult objects.
-     * 
+     *
      * @return subcorpus size
      */
     public CorpusSize subcorpusSize() {
         return subcorpusSize(true);
     }
-    
+
     /**
      * Determine the size of the subcorpus defined by this set of documents.
-     * 
+     *
      * Counts number of documents and tokens (if countTokens is true).
      *
      * This is fast if the query was created from a Query object (and the index contains DocValues),
      * but slower if it was created from Hits or a list of DocResult objects.
-     * 
+     *
      * @param countTokens whether or not to count tokens (slower)
      * @return subcorpus size
      */
     public CorpusSize subcorpusSize(boolean countTokens) {
-        if (corpusSize == null || countTokens && corpusSize.getTokens() == 0) {
-            int numberOfTokens;
+        if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
+            long numberOfTokens;
             int numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
-                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
+//                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
@@ -574,7 +574,7 @@ public class DocResults extends Results<DocResult> implements ResultGroups<Hit> 
             } else {
                 // Slow approach: get the stored field value from each Document
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
+//                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
                 String fieldName = queryInfo().index().mainAnnotatedField().name();
                 DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
                 numberOfTokens = countTokens ? intSum(propTokens) : -1;

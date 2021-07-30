@@ -2,23 +2,89 @@
 
 This is an experimental Docker image for BlackLab Server.
 
-To build it, change to the top-level directory of the repository and run:
+To build it, run:
 
-    docker build -f docker/Dockerfile.blacklab-server -t instituutnederlandsetaal/blacklab-server .
+```bash
+docker build -f Dockerfile -t instituutnederlandsetaal/blacklab ..
+```
 
-This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`. It will look for indexes in `/data/`.
+This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`; if necessary, you can overwrite this with your own version.
 
-If you have some indexes on the local machine and want to use a bind mount to access them from a BlackLab Server container, use:
+## Making indexes available
 
-    docker run --rm -p 8080:8080 --name blacklab-server --mount 'type=bind,src=/path/to/my/indexes,dst=/data' instituutnederlandsetaal/blacklab-server
+The default configuration will look for indexes in `/data/`.
 
-(this assumes your indexes are in `/path/to/my/indexes/index1`, etc.)
+### OPTION 1: Index files inside the container
 
+This is the easiest way to use this image (especially using Docker Compose; see below), and probably preferable to using bind mounts (although those can have their uses as well).
 
+It is strongly recommended to use a named volume for `/data/`, where your indexes should be stored to be read by BlackLab Server. Otherwise, an anonymous volume will be created, making it difficult to keep track of your data and increasing the risk of accidental deletion.
 
-## TODO
-- use volumes
-- offer a separate Docker image for indexing data into a volume
-- user?
-- 
-- (more to come)
+To index files in the container, bind mount the input files and run IndexTool:
+
+```bash
+# Run the indexing command in the container,
+# Start the container with bind mounts for your input files and format config file,
+# and a named volume /data where your indexes will be stored.
+docker run --rm \
+    --name blacklab-indexer \
+    --mount 'type=bind,src=/path/to/my/input-files,dst=/input' \
+    --mount 'type=bind,src=/path/to/my/formats,dst=/etc/blacklab/formats' \
+    --mount 'type=volume,src=blacklab-data,dst=/data' \
+    instituutnederlandsetaal/blacklab \
+    /bin/bash -c "cd /usr/local/lib/blacklab-tools && \
+    java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/my-index /input/my-input-files/ my-file-format"
+
+# Run a BlackLab server container with port 8080 mapped and the named volume with your index
+docker run -d -p 8080:8080 --name blacklab --mount 'type=volume,src=blacklab-data,dst=/data' instituutnederlandsetaal/blacklab
+```
+
+Of course, it makes sense to capture this in a Docker Compose file. The included Compose file does just that. It can be configured using environment variables. The easiest is to create an environment variable file and pass that to Compose.
+
+Create a file named `test.env` with your indexing configuration:
+
+```ini
+# What version of the blacklab image to use
+IMAGE_VERSION=latest
+
+# Where your .blf.yaml (input format configuration) files live.
+BLACKLAB_FORMATS_DIR=/path/to/my/formats
+
+# Name for your index
+INDEX_NAME=my-index
+
+# Input file format (refers to the corresponding .blf.yaml file)
+INDEX_FORMAT=my-file-format
+
+# Where your input files are located
+INDEX_INPUT_DIR=/path/to/my/input-files
+
+# Ensure JVM has enough heap memory
+JAVA_OPTS=-Xmx10G
+```
+
+Pass this to Docker Compose to index your data:
+
+```bash
+docker-compose --env-file test.env run --rm indexer
+```
+
+Your data will be indexed just like with the above command. Now start the server:
+
+```bash
+docker-compose up -d
+```
+
+Your index should now be accessible at `http://localhost:8080/blacklab-server/my-index`.
+
+### OPTION 2: Add indexes using a bind mount
+
+If you already have some indexes on the local machine and want to use a bind mount to access them from a BlackLab Server container, use:
+
+```bash
+docker run -d -p 8080:8080 --name blacklab --mount 'type=bind,src=/path/to/my/indexes,dst=/data' instituutnederlandsetaal/blacklab
+```
+
+(this assumes your indexes are in `/path/to/my/indexes`, so e.g.  `/path/to/my/indexes/my-first-index`; change this to your location)
+
+If you want to go this route, you can take the provided Compose file, remove the `indexer` service and add your bind mount(s) to the `server` service.

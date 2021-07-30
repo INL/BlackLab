@@ -477,6 +477,8 @@ class SpansPositionFilter extends BLSpans {
     public int startPosition() {
         if (alreadyAtFirstMatch)
             return -1; // nextStartPosition() hasn't been called yet
+        if (producerDoc == NO_MORE_DOCS)
+            return NO_MORE_POSITIONS;
         return producerStart;
     }
 

@@ -158,7 +158,7 @@ public class TermsReader extends Terms {
 
             // reuse sensitive group when it contains the same data
             if (numTermIds == 1) {
-                final int termId = termIds.get(0);
+                final int termId = termIds.getInt(0);
                 final int sensitivePosition = this.termId2SensitivePosition[termId];
                 final int groupId = this.sensitivePosition2GroupId[sensitivePosition];
 
@@ -170,7 +170,7 @@ public class TermsReader extends Terms {
             this.insensitivePosition2GroupId[insensitivePosition] = offset;
             this.groupId2TermIds[offset++] = numTermIds;
             for (int i = 0; i < numTermIds; ++i) {
-              groupId2TermIds[offset++] = termIds.get(i);
+              groupId2TermIds[offset++] = termIds.getInt(i);
             }
         }
 

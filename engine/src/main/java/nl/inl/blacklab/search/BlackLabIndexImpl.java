@@ -600,7 +600,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             // Open Lucene index
             if (traceIndexOpening)
                 logger.debug("  Following symlinks...");
-            Path indexPath = indexDir.toPath();
+            Path indexPath = indexDir.toPath().toRealPath();
             while (Files.isSymbolicLink(indexPath)) {
                 // Resolve symlinks, as FSDirectory.open() can't handle them
                 indexPath = Files.readSymbolicLink(indexPath);

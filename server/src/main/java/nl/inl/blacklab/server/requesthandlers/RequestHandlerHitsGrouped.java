@@ -109,7 +109,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
                     subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
-                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
+//                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
                 int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();

@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -130,8 +129,7 @@ public class BlsCache implements SearchCache {
     @SuppressWarnings("unchecked")
     private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block) {
         BlsCacheEntry<R> future;
-        boolean created = false;
-        boolean useCache = search.queryInfo().useCache();
+        boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         synchronized (this) {
             future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
             if (future == null) {
@@ -146,34 +144,23 @@ public class BlsCache implements SearchCache {
                 created = true;
                 if (!cacheDisabled && useCache)
                     searches.put(search, future);
-                if (!block)
-                    future.start(false);
+                }
+                if (trace) logger.info("-- STARTING: {}", search);
+                future.start(block);
             } else {
-                search.log(LogLevel.BASIC, "found in cache (" + future.status() + "): " + search);
+                if (trace) logger.info("-- FOUND: {}", search);
+                future.updateLastAccess();
             }
-        }
-        if (created) {
-            if (trace)
-                logger.info("-- ADDED: " + search);
-            if (block)
-                future.start(true);
-        } else {
-            if (trace)
-                logger.info("-- FOUND: " + search);
-            future.updateLastAccess();
         }
         return future;
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
-        BlsCacheEntry<R> future = null;
-        synchronized (this) {
-            future = (BlsCacheEntry<R>) searches.remove(search);
-            if (future != null && trace)
-                logger.info("-- REMOVED: " + search);
-        }
+    synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
+        BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
+        if (future != null && trace)
+            logger.info("-- REMOVED: " + search);
         return future;
     }
 

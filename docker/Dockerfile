@@ -14,11 +14,21 @@ RUN mvn package
 #--------------------------------------
 FROM tomcat:9
 
+# Install custom server.xml
+# (URIEncoding=utf-8)
+COPY docker/server.xml /usr/local/tomcat/conf/
+
 # Copy the configuration file
 COPY docker/blacklab-server.yaml /etc/blacklab/
 
+# Create directory for formats
+RUN mkdir /etc/blacklab/formats
+
 # Copy the WAR file
 COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/blacklab-server.war
+
+# Copy JARs for the commandline tools
+COPY --from=builder /app/core/target/blacklab-*.jar /app/core/target/lib /usr/local/lib/blacklab-tools/
 
 # Our data directory (either an anonymous volume or a named volume mounted by user)
 VOLUME /data
