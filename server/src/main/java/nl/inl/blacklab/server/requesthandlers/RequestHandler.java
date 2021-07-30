@@ -730,10 +730,11 @@ public abstract class RequestHandler {
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
-        MetadataField pidField = index.metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
-        if (pidField == null)
+        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
+        String pid = pidField == null ? null : document.get(pidField.name());
+        if (pid == null)
             return Integer.toString(luceneDocId);
-        return document.get(pidField.name());
+        return pid;
     }
 
     /**
