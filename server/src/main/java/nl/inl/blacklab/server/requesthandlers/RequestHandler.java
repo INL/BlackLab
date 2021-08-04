@@ -295,11 +295,11 @@ public abstract class RequestHandler {
                                 return errorObj.unknownOperation(urlPathInfo);
                             }
                         } else if (handlerName.equals("hits") || handlerName.equals("docs")) {
-                            if (request.getParameter("group") != null) {
+                            if (!StringUtils.isBlank(request.getParameter("group"))) {
                                 String viewgroup = request.getParameter("viewgroup");
-                                if (viewgroup == null || viewgroup.length() == 0)
+                                if (StringUtils.isEmpty(viewgroup))
                                     handlerName += "-grouped"; // list of groups instead of contents
-                            } else if (request.getParameter("viewgroup") != null) {
+                            } else if (!StringUtils.isEmpty(request.getParameter("viewgroup"))) {
                                 // "viewgroup" parameter without "group" parameter; error.
 
                                 return errorObj.badRequest("ERROR_IN_GROUP_VALUE",
