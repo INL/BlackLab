@@ -93,7 +93,7 @@ public class SearchParameters {
         defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
         defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultParameterValues.put("waitfortotal", "no");
-        defaultParameterValues.put("number", "20");
+        defaultParameterValues.put("number", "50");
         defaultParameterValues.put("wordsaroundhit", "5");
         defaultParameterValues.put("maxretrieve", "1000000");
         defaultParameterValues.put("maxcount", "10000000");
