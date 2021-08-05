@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -141,10 +142,8 @@ public class BlsCache implements SearchCache {
                     throw e;
                 }
                 future = new BlsCacheEntry<>(search);
-                created = true;
                 if (!cacheDisabled && useCache)
                     searches.put(search, future);
-                }
                 if (trace) logger.info("-- STARTING: {}", search);
                 future.start(block);
             } else {

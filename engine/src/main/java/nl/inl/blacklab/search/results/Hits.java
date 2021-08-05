@@ -26,7 +26,7 @@ public abstract class Hits extends Results<Hit> {
 
     /**
      * Construct a Hits object from a SpanQuery.
-     * 
+     *
      * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
      * @param searchSettings settings such as max. hits to process/count
@@ -34,7 +34,7 @@ public abstract class Hits extends Results<Hit> {
      * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
     public static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        
+
         if (queryInfo.index().blackLab().maxThreadsPerSearch() <= 1) {
             // We don't want to use multi-threaded search. Stick with the single-threaded version.
             return new HitsFromQuery(queryInfo, query, searchSettings);
@@ -47,7 +47,7 @@ public abstract class Hits extends Results<Hit> {
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Does not copy the list, but reuses it.
-     * 
+     *
      * @param queryInfo information about the original query
      * @param hits the list of hits to wrap, or null for empty Hits object
      * @return hits found
@@ -74,7 +74,7 @@ public abstract class Hits extends Results<Hit> {
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * 
+     *
      * @param queryInfo information about the original query
      * @param doc doc ids
      * @param start hit starts
@@ -84,7 +84,7 @@ public abstract class Hits extends Results<Hit> {
     public static Hits fromArrays(QueryInfo queryInfo, int[] doc, int[] start, int[] end) {
         return new HitsList(queryInfo, doc, start, end);
     }
-    
+
     public static Hits fromList(QueryInfo queryInfo, List<Hit> results, WindowStats windowStats, SampleParameters sampleParameters,
             int hitsCounted, int docsRetrieved, int docsCounted, CapturedGroupsImpl capturedGroups) {
         return new HitsList(queryInfo, results, windowStats, sampleParameters, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
@@ -92,8 +92,8 @@ public abstract class Hits extends Results<Hit> {
 
     /**
      * Construct an empty Hits object.
-     * 
-     * @param queryInfo query info 
+     *
+     * @param queryInfo query info
      * @return hits found
      */
     public static Hits emptyList(QueryInfo queryInfo) {
@@ -103,14 +103,14 @@ public abstract class Hits extends Results<Hit> {
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     @Override
     public Hits sample(SampleParameters sampleParameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        
+
         List<Hit> results = new ArrayList<>();
         int hitsCounted = 0;
         int docsRetrieved = 0;
@@ -131,7 +131,7 @@ public abstract class Hits extends Results<Hit> {
             } while (chosenHitIndices.contains(hitIndex));
             chosenHitIndices.add(hitIndex);
         }
-        
+
         // Add the hits in order of their index
         int previousDoc = -1;
         if (hasCapturedGroups())
@@ -148,15 +148,15 @@ public abstract class Hits extends Results<Hit> {
                 capturedGroups.put(hit, this.capturedGroups.get(hit));
             hitsCounted++;
         }
-        
-        return Hits.fromList(queryInfo(), results, null, sampleParameters, hitsCounted, docsRetrieved, docsCounted, null);
+
+        return Hits.fromList(queryInfo(), results, null, sampleParameters, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
 
     /**
      * Minimum number of hits to fetch in an ensureHitsRead() block.
-     * 
+     *
      * This prevents locking again and again for a single hit when iterating.
-     * 
+     *
      * See {@link HitsFromQuery} and {@link HitsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
@@ -165,7 +165,7 @@ public abstract class Hits extends Results<Hit> {
      * Our captured groups, or null if we have none.
      */
     protected CapturedGroupsImpl capturedGroups;
-    
+
     /**
      * The number of hits we've seen and counted so far. May be more than the number
      * of hits we've retrieved if that exceeds maxHitsToRetrieve.
@@ -222,16 +222,16 @@ public abstract class Hits extends Results<Hit> {
         public MaxStats maxStats() {
             return Hits.this.maxStats();
         }
-        
+
     };
-    
+
     public Hits(QueryInfo queryInfo) {
         super(queryInfo);
     }
 
     // Inherited from Results
     //--------------------------------------------------------------------
-    
+
     /**
      * Get a window into this list of hits.
      *
@@ -279,7 +279,7 @@ public abstract class Hits extends Results<Hit> {
             if (capturedGroups != null)
                 capturedGroups.put(hit, capturedGroups().get(hit));
             // OPT: copy context as well..?
-            
+
             if (hit.doc() != prevDoc) {
                 docsRetrieved++;
                 docsCounted++;
@@ -323,7 +323,7 @@ public abstract class Hits extends Results<Hit> {
      * Matches case- and diacritics-sensitively, and sorts the results from most to least frequent.
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
-     * 
+     *
      * @return the frequency of each occurring token
      */
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize) {
@@ -332,22 +332,22 @@ public abstract class Hits extends Results<Hit> {
 
     /**
      * Return a per-document view of these hits.
-     * @param maxHits 
+     * @param maxHits
      *
      * @return the per-document view.
      */
     public DocResults perDocResults(int maxHits) {
         return DocResults.fromHits(queryInfo(), this, maxHits);
     }
-    
+
     @Override
     public HitGroups group(ResultProperty<Hit> criteria, int maxResultsToStorePerGroup) {
         return HitGroups.fromHits(this, (HitProperty)criteria, maxResultsToStorePerGroup);
     }
-    
+
     /**
      * Select only the hits where the specified property has the specified value.
-     * 
+     *
      * @param property property to select on, e.g. "word left of hit"
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
@@ -356,22 +356,22 @@ public abstract class Hits extends Results<Hit> {
     public Hits filter(ResultProperty<Hit> property, PropertyValue value) {
         return new HitsFiltered(this, (HitProperty)property, value);
     }
-    
+
     /**
      * Create concordances from the forward index.
-     * 
+     *
      * @param contextSize desired context size
      * @return concordances
      */
     public Concordances concordances(ContextSize contextSize) {
         return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
     }
-    
+
     @Override
     public int size() {
         return hitsProcessedTotal();
     }
-    
+
     // Getting / iterating over the hits
     //--------------------------------------------------------------------
 
@@ -384,10 +384,10 @@ public abstract class Hits extends Results<Hit> {
         }
         return Hits.fromList(queryInfo(), hitsInDoc);
     }
-    
+
     // Stats
     // ---------------------------------------------------------------
-    
+
     public ResultsStats hitsStats() {
         return resultsStats();
     }
@@ -403,7 +403,7 @@ public abstract class Hits extends Results<Hit> {
     protected int hitsProcessedSoFar() {
         return resultsProcessedSoFar();
     }
-    
+
     protected int hitsCountedTotal() {
         ensureAllResultsRead();
         return hitsCounted;
@@ -447,12 +447,12 @@ public abstract class Hits extends Results<Hit> {
 
     // Deriving other Hits / Results instances
     //--------------------------------------------------------------------
-    
+
     public Hits window(Hit hit) {
         ensureAllResultsRead();
         return window(results.indexOf(hit), 1);
     }
-    
+
     /**
      * Return a new Hits object with these hits sorted by the given property.
      *
@@ -468,7 +468,7 @@ public abstract class Hits extends Results<Hit> {
         if (!(sortProp instanceof HitProperty))
             throw new UnsupportedOperationException("Can only sort Hits by an instance of HitProperty!");
         HitProperty hitProp = (HitProperty)sortProp;
-        
+
         List<Hit> sorted = new ArrayList<>(resultsList());
 
         // We need a HitProperty with the correct Hits object
@@ -487,10 +487,10 @@ public abstract class Hits extends Results<Hit> {
         int docsCounted = docsCountedSoFar();
         return Hits.fromList(queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
     }
-    
+
     // Captured groups
     //--------------------------------------------------------------------
-    
+
     public CapturedGroupsImpl capturedGroups() {
         return capturedGroups;
     }
@@ -501,7 +501,7 @@ public abstract class Hits extends Results<Hit> {
 
     // Hits display
     //--------------------------------------------------------------------
-    
+
     public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
         if (contextSize == null)
             contextSize = index().defaultContextSize();
@@ -518,18 +518,18 @@ public abstract class Hits extends Results<Hit> {
 
     /**
      * Did we exceed the maximum number of hits to process/count?
-     * 
-     * NOTE: this is only valid for the original Hits instance (that 
+     *
+     * NOTE: this is only valid for the original Hits instance (that
      * executes the query), and not for any derived Hits instance (window, sorted, filtered, ...).
-     * 
+     *
      * The reason that this is not part of QueryInfo is that this creates a brittle
      * link between derived Hits instances and the original Hits instances, which by now
      * may have been aborted, leaving the max stats in a frozen, incorrect state.
-     * 
+     *
      * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
      */
     public abstract MaxStats maxStats();
-    
+
     @Override
     public int numberOfResultObjects() {
         return hitsProcessedSoFar();

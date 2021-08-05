@@ -31,7 +31,6 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.util.BlockTimer;
 import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
@@ -66,10 +65,10 @@ public class HitsFromQueryParallel extends Hits {
         private final ThreadAborter threadAborter = ThreadAborter.create();
         private boolean isInitialized;
         private final int docBase;
-        
+
         private boolean hasPrefetchedHit = false;
         private int prevDoc = -1;
-        
+
         /**
          * Construct an uninitialized spansreader that will retrieve its own Spans object on when it's ran.
          *
@@ -267,32 +266,32 @@ public class HitsFromQueryParallel extends Hits {
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
             final IntUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             final IntUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
-            
+
             try {
                 // we moeten een hit fetchen als:
                 // dit nog niet gebeurt is
-                
+
                 // we moeten markeren dat we een hit gefetched hebben als:
                 // we de hit niet konder registreren
-                
+
                 // we moeten de hit proberen te registeren als:
                 // altijd?
-                
+
                 if (!hasPrefetchedHit) {
                     prevDoc = spans.docID();
                     hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
                 }
-                
+
                 while (hasPrefetchedHit) {
-                    // probeer te registreren, als dat niet lukt, return 
+                    // probeer te registreren, als dat niet lukt, return
                     // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
                     final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax) >= this.globalHitsToCount.get();
                     if (abortBeforeCounting) return;
-                    
+
                     // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
                     final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
-                    
-                    
+
+
                     final int doc = spans.docID() + docBase;
                     if (doc != prevDoc) {
                         globalDocsCounted.incrementAndGet();
@@ -316,7 +315,7 @@ public class HitsFromQueryParallel extends Hits {
 
                     hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
                     prevDoc = doc;
-                    
+
                     // Do this at the end so interruptions don't happen halfway a loop and lead to invalid states
                     threadAborter.checkAbort();
                 }
@@ -435,7 +434,7 @@ public class HitsFromQueryParallel extends Hits {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    this.capturedGroups = this.hitQueryContext.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames()) : null;
+                    this.capturedGroups = hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames()) : null;
 
                     spansReaders.add(
                         new SpansReader(
@@ -454,25 +453,24 @@ public class HitsFromQueryParallel extends Hits {
                     );
 
                     hasInitialized = true;
-                    continue;
+                } else {
+                    // add self-initializing spansreader
+                    spansReaders.add(
+                        new SpansReader(
+                            weight,
+                            leafReaderContext,
+                            this.hitQueryContext,
+                            this.results,
+                            this.capturedGroups,
+                            this.globalDocsProcessed,
+                            this.globalDocsCounted,
+                            this.globalHitsProcessed,
+                            this.globalHitsCounted,
+                            this.requestedHitsToProcess,
+                            this.requestedHitsToCount
+                        )
+                    );
                 }
-
-                // else add self-initializing spansreader
-                spansReaders.add(
-                    new SpansReader(
-                        weight,
-                        leafReaderContext,
-                        this.hitQueryContext,
-                        this.results,
-                        this.capturedGroups,
-                        this.globalDocsProcessed,
-                        this.globalDocsCounted,
-                        this.globalHitsProcessed,
-                        this.globalHitsCounted,
-                        this.requestedHitsToProcess,
-                        this.requestedHitsToCount
-                    )
-                );
             }
 
             if (spansReaders.isEmpty())

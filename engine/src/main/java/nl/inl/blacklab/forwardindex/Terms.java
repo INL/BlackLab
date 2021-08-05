@@ -103,6 +103,33 @@ public abstract class Terms {
         long fileMapStart = 0;
         long fileMapLength = Math.min(maxMapSize, fileLength);
         MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+
+        /*
+        Below is some code from the old termv3 branch that attempted to:
+        - do away with useBlockBasedTermsFile,
+        - detect version 1 and 2 of the terms file
+        - implement a v3+ that includes a version number in the file and might have other advantages
+          (such as better mappability, faster startup times, etc.); this wasn't finished though.
+
+        We should probably do something like this eventually to simplify the code and make it easier to
+        change file format versions. We'll probably drop support for v1.
+
+        numberOfTerms = buf.getInt();
+        if (numberOfTerms == -1) {
+            // V3 and later: first int is -1, second int is version, third int is number of terms
+            version = buf.getInt();
+            numberOfTerms = buf.getInt();
+        }
+        terms = new String[numberOfTerms];
+
+        if (version == 0) {
+            // Not version 3+; is it version 1 or 2?
+            // Version 1 always has a 0 as the second int, while version 2 always has nonzero.
+            int secondIntInFile = buf.getInt(0);
+            version = secondIntInFile == 0 ? 1 : 2;
+        }
+        */
+
         int n = buf.getInt();
         IntBuffer ib = buf.asIntBuffer();
         numberOfTerms = n;

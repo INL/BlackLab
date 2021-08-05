@@ -42,3 +42,7 @@ Your index should now be accessible at `http://localhost:8080/blacklab-server/my
 
 
 See the [Docker README](docker/README.md) for more details.
+
+## Special thanks
+
+* ej-technologies for the <a href="https://www.ej-technologies.com/products/jprofiler/overview.html">JProfiler Java profiler</a>

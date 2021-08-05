@@ -39,6 +39,35 @@ services:
       - ${INDEX_INPUT_DIR}:/input
       - blacklab-data:/data
 
+  # Indexes the test data and starts the server
+  testserver:
+    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    profiles:
+      - tools
+    build:
+        context: .
+        dockerfile: docker/Dockerfile
+    command: >-
+        /bin/bash -c 
+        "cd /usr/local/lib/blacklab-tools && 
+        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/test /input voice-tei &&
+        cd $CATALINA_HOME && catalina.sh run"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./test/data:/input
+      - ./test/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
+
+  # Runs the tests on the test server
+  test:
+    profiles:
+      - tools
+    environment:
+      - APP_URL=http://testserver:8080/blacklab-server
+    build: test
+    depends_on:
+      - testserver
+
 
 # Volume where our indexes will be stored.
 volumes:

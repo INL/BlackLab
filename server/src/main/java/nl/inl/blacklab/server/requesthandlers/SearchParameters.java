@@ -93,7 +93,7 @@ public class SearchParameters {
         defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
         defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultParameterValues.put("waitfortotal", "no");
-        defaultParameterValues.put("number", "20");
+        defaultParameterValues.put("number", "50");
         defaultParameterValues.put("wordsaroundhit", "5");
         defaultParameterValues.put("maxretrieve", "1000000");
         defaultParameterValues.put("maxcount", "10000000");
@@ -504,7 +504,7 @@ public class SearchParameters {
         if (isDocsOperation)
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 
-        String groupBy = getString("groupby");
+        String groupBy = getString("group");
         if (groupBy != null && !groupBy.isEmpty())
             return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
