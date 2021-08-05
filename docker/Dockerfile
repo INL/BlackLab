@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Build the WAR
-RUN mvn package
+RUN mvn --no-transfer-progress package
 
 
 # Tomcat container with the WAR file
