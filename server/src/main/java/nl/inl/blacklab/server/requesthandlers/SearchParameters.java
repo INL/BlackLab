@@ -504,7 +504,7 @@ public class SearchParameters {
         if (isDocsOperation)
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 
-        String groupBy = getString("groupby");
+        String groupBy = getString("group");
         if (groupBy != null && !groupBy.isEmpty())
             return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
