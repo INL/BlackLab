@@ -17,7 +17,7 @@ function expectHitsGrouped(pattern, groupBy, numberOfGroups, numberOfHits, numbe
                 .get('/test/hits')
                 .query({
                     patt: pattern,
-                    sort: "size", // TODO: size,identity would be better but multiple hit group props not supported yet
+                    sort: "size,identity",
                     wordsaroundhit: 1,
                     group: groupBy,
                 })
@@ -56,7 +56,7 @@ function expectHitsGrouped(pattern, groupBy, numberOfGroups, numberOfHits, numbe
                     "searchParam": {
                         "indexname": "test",
                         "patt": pattern,
-                        "sort": "size",
+                        "sort": "size,identity",
                         "wordsaroundhit": "1",
                         "group": groupBy,
                     },
@@ -89,15 +89,30 @@ expectHitsGrouped('"very"', 'wordright:word:i', 6, 7, 2, {
     "identityDisplay": "much",
     "size": 2,
     "properties": [
-      {
-        "name": "wordright:word:i",
-        "value": "much"
-      }
+        {
+            "name": "wordright:word:i",
+            "value": "much"
+        }
     ],
     "numberOfDocs": 2
 });
 
-
+expectHitsGrouped('"a"', 'field:title', 3, 17, 3, {
+    "identity": "str:interview about conference experience and impressions of city",
+    "identityDisplay": "interview about conference experience and impressions of city",
+    "size": 8,
+    "properties": [
+      {
+        "name": "field:title",
+        "value": "interview about conference experience and impressions of city"
+      }
+    ],
+    "numberOfDocs": 1,
+    "subcorpusSize": {
+      "documents": 1,
+      "tokens": 268
+    }
+});
 
 // A few simpler tests, just checking matching text
 //expectHitsGrouped('"two|four"', 3, 1, "two");

@@ -59,7 +59,7 @@ services:
       - ./test/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
 
   # Runs the tests on the test server
-  tests:
+  test:
     profiles:
       - tools
     environment:
