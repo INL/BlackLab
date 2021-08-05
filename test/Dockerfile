@@ -17,4 +17,4 @@ RUN npm install
 COPY . .
 
 # Run the tests (after sleeping for a few seconds to let the server start up)
-CMD [ "npm", "run", "sleep-test"]
+CMD [ "/bin/sh", "./run-tests.sh"]

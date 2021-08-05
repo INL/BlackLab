@@ -20,3 +20,6 @@ vmtouch
 
 # log files, such as JVM crash files
 **/*.log
+
+# Test defines its own container and doesn't need to be included in the main container context
+test

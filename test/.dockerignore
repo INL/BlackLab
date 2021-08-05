@@ -1,0 +1,5 @@
+# Node libraries
+node_modules
+
+# Test data (will be bind mounted to testserver, not needed in this container)
+data
