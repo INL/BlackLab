@@ -357,7 +357,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, int totalNumberOfHits) {
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
-            docResult = DocResult.fromHits(doc, Hits.emptyList(queryInfo()), totalNumberOfHits);
+            docResult = DocResult.fromHits(doc, Hits.immutableEmptyList(queryInfo()), totalNumberOfHits);
         else if (maxHitsToStorePerDoc > 0 && docHits.size() > maxHitsToStorePerDoc)
             docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
         else

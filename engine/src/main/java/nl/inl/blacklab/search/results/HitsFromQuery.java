@@ -98,7 +98,7 @@ public class HitsFromQuery extends Hits {
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        super(queryInfo);
+        super(queryInfo, false);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;

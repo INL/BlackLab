@@ -43,7 +43,7 @@ public class HitsList extends Hits {
      * 
      * Should only be used internally.
      */
-    public HitsList(
+    protected HitsList(
                        QueryInfo queryInfo, 
                        HitsArrays hits,
                        WindowStats windowStats, 

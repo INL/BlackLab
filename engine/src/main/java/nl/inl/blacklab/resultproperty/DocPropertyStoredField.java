@@ -62,7 +62,6 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
     private Map<Integer, Pair<SortedDocValues, SortedSetDocValues>> docValues = null;
-
     /** Null unless the field is numeric. */
     private Map<Integer, NumericDocValues> numericDocValues = null;
 

@@ -422,9 +422,32 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      *
      * @param queryInfo query info
      * @return hits found
+     *
+     * @deprecated use {@link #immutableEmptyList(QueryInfo)} or {@link #mutableEmptyList(QueryInfo)}.
      */
+    @Deprecated
     public static Hits emptyList(QueryInfo queryInfo) {
         return new HitsList(queryInfo, null, null);
+    }
+
+    /**
+     * Construct an immutable empty Hits object.
+     *
+     * @param queryInfo query info
+     * @return hits found
+     */
+    public static Hits immutableEmptyList(QueryInfo queryInfo) {
+        return new HitsList(queryInfo, EMPTY_SINGLETON, null);
+    }
+
+    /**
+     * Construct a mutable empty Hits object.
+     *
+     * @param queryInfo query info
+     * @return hits found
+     */
+    public static Hits mutableEmptyList(QueryInfo queryInfo) {
+        return new HitsList(queryInfo, new HitsArrays(), null);
     }
 
     /**
@@ -500,13 +523,36 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     };
 
+    /** Construct an empty, mutable Hits object.
+     *
+     * @param queryInfo query info for corresponding query
+     * @deprecated if you need an empty Hits object, use {@link #Hits(QueryInfo, boolean)}; otherwise, use {@link #Hits(QueryInfo, HitsArrays)}
+     */
+    @Deprecated
     public Hits(QueryInfo queryInfo) {
-        this(queryInfo, EMPTY_SINGLETON);
+        this(queryInfo, false);
     }
 
+    /** Construct an empty Hits object.
+     *
+     * @param queryInfo query info for corresponding query
+     * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
+     */
+    public Hits(QueryInfo queryInfo, boolean readOnly) {
+        this(queryInfo, readOnly ? EMPTY_SINGLETON : new HitsArrays());
+    }
+
+    /**
+     * Construct a Hits object from a hits array.
+     *
+     * NOTE: if you pass null, a new, mutable HitsArray is used. For an immutable empty Hits object, use {@link #Hits(QueryInfo, boolean)}.
+     *
+     * @param queryInfo query info for corresponding query
+     * @param hits hits array to use for this object. The array is used as-is, not copied.
+     */
     public Hits(QueryInfo queryInfo, HitsArrays hits) {
         super(queryInfo);
-        this.hitsArrays = hits != null ? hits : EMPTY_SINGLETON;
+        this.hitsArrays = hits == null ? new HitsArrays() : hits;
     }
 
     // Inherited from Results
@@ -625,7 +671,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             }
         });
 
-        return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(), docsInSample.getValue(), docsInSample.getValue(), null);
+        return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(), docsInSample.getValue(), docsInSample.getValue(), capturedGroups);
     }
 
     /**
@@ -639,18 +685,16 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      */
     @Override
     public Hits sort(HitProperty sortProp) {
-        HitProperty hitProp = sortProp;
-
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
-        List<Annotation> requiredContext = hitProp.needsContext();
+        List<Annotation> requiredContext = sortProp.needsContext();
         List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, queryInfo().index().reader());
-        hitProp = hitProp.copyWith(this,
-            requiredContext == null ? null : new Contexts(this, requiredContext, hitProp.needsContextSize(index()), fiidLookups));
+        sortProp = sortProp.copyWith(this,
+            requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index()), fiidLookups));
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
-        HitsArrays sorted = this.hitsArrays.sort(hitProp); // TODO use wrapper objects
+        HitsArrays sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
 
         CapturedGroupsImpl capturedGroups = capturedGroups();
         int hitsCounted = hitsCountedSoFar();
