@@ -17,7 +17,7 @@ function expectHitsImpl(pattern, numberOfHits, numberOfDocs, expectedFirstHitJso
                 .get('/test/hits')
                 .query({
                     patt: pattern,
-                    sort: "wordleft:word:i",
+                    sort: "wordleft:word:i,wordright:word:i,field:pid",
                     wordsaroundhit: 1
                 })
                 .set('Accept', 'application/json')
@@ -40,7 +40,7 @@ function expectHitsImpl(pattern, numberOfHits, numberOfDocs, expectedFirstHitJso
                     "searchParam": {
                         "indexname": "test",
                         "patt": pattern,
-                        "sort": "wordleft:word:i",
+                        "sort": "wordleft:word:i,wordright:word:i,field:pid",
                         "wordsaroundhit": "1"
                     },
                     "windowFirstResult": 0,
@@ -214,7 +214,7 @@ expectHitsJson('"one" A:[]', 2, 1, {
 });
 
 // A few simpler tests, just checking matching text
-expectHitsText('[]', 766, 3, "hello");
+expectHitsText('[]', 766, 3, "f_hallo");
 expectHitsText('"two|four"', 3, 1, "two");
 expectHitsText('"two"|"four"', 3, 1, "two");
 expectHitsText('[lemma="be" & word="are"]', 7, 2, "are");
