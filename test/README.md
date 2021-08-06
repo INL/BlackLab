@@ -13,7 +13,7 @@ The easiest way to do this is to run this process in Docker; this automates the 
 
 ```bash
 # Run the tests
-docker-compose run test
+docker-compose run --rm test
 ```
 
 NOTE: if you've made changes and want to ensure the latest BlackLab code and tests are being used:
@@ -26,7 +26,7 @@ docker-compose up -d --build testserver
 docker-compose build test
 
 # Run the tests
-docker-compose run test
+docker-compose run --rm test
 ```
 
 The tests should now be run and the output shown. If all tests succeed, `$?` should have the value `0`.

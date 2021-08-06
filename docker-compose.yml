@@ -51,7 +51,7 @@ services:
         /bin/bash -c 
         "cd /usr/local/lib/blacklab-tools && 
         java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/test /input voice-tei &&
-        cd $CATALINA_HOME && catalina.sh run"
+        cd /usr/local/tomcat && catalina.sh run"
     ports:
       - "8080:8080"
     volumes:
