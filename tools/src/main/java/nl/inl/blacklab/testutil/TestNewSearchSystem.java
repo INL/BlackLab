@@ -23,10 +23,9 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.searches.FutureSearchResultCache;
 
 public class TestNewSearchSystem {
-    
+
     public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
         if (args.length == 0) {
             System.err.println("Please specify index directory.");
@@ -35,15 +34,15 @@ public class TestNewSearchSystem {
         File indexDir = new File(args[0]);
         System.out.println("Opening index " + indexDir + "...");
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
-                
+
             FutureSearchResultCache cache = new FutureSearchResultCache();
             cache.setTrace(true);
             index.setCache(cache); //new SearchCacheDebug());
-            
+
             String cqlLemmaSchip = "[lemma=\"schip\"]";
             Annotation annotLemma = index.mainAnnotatedField().annotation("lemma");
             MetadataField titleField = index.metadata().metadataFields().special("title");
-            
+
             System.out.println("\nFirst 20 hits for 'schip':");
             Hits hits = index.search().find(CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index)), index.searchSettings())
                     .window(0, 20)
@@ -66,7 +65,7 @@ public class TestNewSearchSystem {
                     .forEach(doc -> {
                         Document document = doc.identity().luceneDoc();
                         String title = document.get(titleField.name());
-                        System.out.println("- " + title + " (" + doc + ")"); 
+                        System.out.println("- " + title + " (" + doc + ")");
                     });
             System.out.flush();
 
@@ -78,7 +77,7 @@ public class TestNewSearchSystem {
                     .forEach(doc -> {
                         Document document = doc.identity().luceneDoc();
                         String title = document.get(titleField.name());
-                        System.out.println("- " + title + " (" + doc + ")"); 
+                        System.out.println("- " + title + " (" + doc + ")");
                     });
             System.out.flush();
 
@@ -90,12 +89,12 @@ public class TestNewSearchSystem {
                     .forEach(doc -> {
                         Document document = doc.identity().luceneDoc();
                         String title = document.get(titleField.name());
-                        System.out.println("- " + title + " (" + doc + ")"); 
+                        System.out.println("- " + title + " (" + doc + ")");
                     });
             System.out.flush();
 
             BLSpanQuery q = CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index));
-            System.out.println("\nCount number of hits for 'schip': " + 
+            System.out.println("\nCount number of hits for 'schip': " +
                     index.search().find(q, index.searchSettings())
                     .count()
                     .execute()

@@ -4,7 +4,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,28 +17,22 @@ import nl.inl.blacklab.search.results.SearchResult;
  * Abstract base class for all Search implementations,
  * to enforce that equals() and hashCode are implemented
  * (to ensure proper caching)
- * 
+ *
  * @param <R> results type, e.g. Hits
  */
 public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
-	
+
     private QueryInfo queryInfo;
-    
+
     public AbstractSearch(QueryInfo queryInfo) {
-        this.queryInfo = queryInfo;  
+        this.queryInfo = queryInfo;
     }
-    
+
     @Override
     public Future<R> executeAsync() {
-        return getFromCache(this, () -> {
-            try {
-                return executeInternal();
-            } catch (InvalidQuery e) {
-                throw new CompletionException(e);
-            }
-        });
+        return getFromCache(this);
     }
-    
+
     @Override
     public final R execute() throws InvalidQuery {
         Future<R> future = executeAsync();
@@ -68,23 +61,19 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
             }
         }
     }
-    
+
     @Override
     public abstract R executeInternal() throws InvalidQuery;
-    
-    protected Future<R> getFromCache(Search<R> search, Supplier<R> searchTask) {
-        return queryInfo.index().cache().getAsync(search, searchTask);
+
+    protected Future<R> getFromCache(Search<R> search) {
+        return queryInfo.index().cache().getAsync(search);
     }
-    
-    protected SearchResult getFromCacheBlock(Search<R> search, Supplier<R> searchTask) throws ExecutionException {
-        return queryInfo.index().cache().get(search, searchTask);
-    }
-    
+
     protected void cancelSearch(CompletableFuture<? extends SearchResult> future) {
         queryInfo.index().cache().remove(this);
         future.cancel(false);
     }
-    
+
     @Override
     public QueryInfo queryInfo() {
         return queryInfo;
@@ -118,5 +107,5 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     protected static String toString(String operation, Object... param) {
         return operation + "(" + StringUtils.join(param, ", ") + ")";
     }
-	
+
 }

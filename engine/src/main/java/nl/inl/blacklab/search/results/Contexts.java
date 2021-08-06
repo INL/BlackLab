@@ -44,7 +44,7 @@ public class Contexts implements Iterable<int[]> {
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
      * context) for a number of hits in the same document from the ContentStore.
-     * 
+     *
      * NOTE: this destroys any existing contexts!
      *
      * @param forwardIndex Forward index for the words
@@ -54,26 +54,26 @@ public class Contexts implements Iterable<int[]> {
      * @param theKwics where to add the KWICs
      */
     static void makeKwicsSingleDocForwardIndex(
-                                               Hits hits, 
+                                               Hits hits,
                                                AnnotationForwardIndex forwardIndex,
-                                               AnnotationForwardIndex punctForwardIndex, 
+                                               AnnotationForwardIndex punctForwardIndex,
                                                Map<Annotation, AnnotationForwardIndex> attrForwardIndices,
-                                               Map<Annotation, FiidLookup> fiidLookups, 
-                                               ContextSize wordsAroundHit, 
+                                               Map<Annotation, FiidLookup> fiidLookups,
+                                               ContextSize wordsAroundHit,
                                                Map<Hit, Kwic> theKwics
                                                ) {
         if (hits.size() == 0)
             return;
-    
+
         // TODO: more efficient to get all contexts with one getContextWords() call!
-    
+
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
             punctContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, Arrays.asList(punctForwardIndex), Arrays.asList(fiidLookups.get(punctForwardIndex.annotation())));
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
-    
+
         // Get attributes context
         Annotation[] attrName = null;
         Terms[] attrTerms = null;
@@ -93,11 +93,11 @@ public class Contexts implements Iterable<int[]> {
                 i++;
             }
         }
-    
+
         // Get word context
         int[][] wordContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, Arrays.asList(forwardIndex), Arrays.asList(fiidLookups.get(forwardIndex.annotation())));
         Terms terms = forwardIndex.terms();
-    
+
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();
         Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
@@ -111,7 +111,7 @@ public class Contexts implements Iterable<int[]> {
             int contextHitStart = context[Contexts.HIT_START_INDEX];
             int indexInContext = Contexts.NUMBER_OF_BOOKKEEPING_INTS;
             for (int j = 0; j < contextLength; j++, indexInContext++) {
-    
+
                 // Add punctuation before word
                 // (Applications may choose to ignore punctuation before the first word)
                 if (punctTerms == null) {
@@ -120,20 +120,20 @@ public class Contexts implements Iterable<int[]> {
                     tokens.add(" ");
                 } else
                     tokens.add(punctTerms.get(punctContext[i][indexInContext]));
-    
+
                 // Add extra attributes (e.g. lemma, pos)
                 if (attrContext != null) {
                     for (int k = 0; k < attrContext.length; k++) {
                         tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
                     }
                 }
-    
+
                 // Add word
                 if (terms != null)
                     tokens.add(terms.get(context[indexInContext]));
                 else
                     tokens.add(""); // weird, but make sure the numbers add up at the end
-    
+
             }
             List<Annotation> annotations = new ArrayList<>();
             annotations.add(concPunctFI);
@@ -163,7 +163,7 @@ public class Contexts implements Iterable<int[]> {
             return new int[0][];
         int[] startsOfSnippets = new int[n];
         int[] endsOfSnippets = new int[n];
-        
+
         EphemeralHit hit = new EphemeralHit();
         for (int i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
@@ -185,16 +185,16 @@ public class Contexts implements Iterable<int[]> {
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
             }
-    
+
             // Build the actual concordances
 //            int hitNum = 0;
             for (int i = 0; i < n; ++i) {
                 int hitIndex = start + i;
                 int[] theseWords = words.get(i);
-                hits.getEphemeral(hitIndex, hit); 
-                
+                hits.getEphemeral(hitIndex, hit);
+
                 int firstWordIndex = startsOfSnippets[i];
-    
+
                 if (fiNumber == 0) {
                     // Allocate context array and set hit and right start and context length
                     contexts[i] = new int[NUMBER_OF_BOOKKEEPING_INTS
@@ -207,7 +207,7 @@ public class Contexts implements Iterable<int[]> {
                 int copyStart = fiNumber * theseWords.length + NUMBER_OF_BOOKKEEPING_INTS;
                 System.arraycopy(theseWords, 0, contexts[i], copyStart, theseWords.length);
             }
-    
+
             fiNumber++;
         }
         return contexts;
@@ -218,15 +218,15 @@ public class Contexts implements Iterable<int[]> {
      *
      * There may be multiple contexts for each hit. Each
      * int array starts with three bookkeeping integers, followed by the contexts
-     * information. The bookkeeping integers are: 
-     * 0 = hit start, index of the hit word (and length of the left context), counted from the start the context 
+     * information. The bookkeeping integers are:
+     * 0 = hit start, index of the hit word (and length of the left context), counted from the start the context
      * 1 = right start, start of the right context, counted from the start the context
      * 2 = context length, length of 1 context. As stated above, there may be multiple contexts.
      *
      * The first context therefore starts at index 3.
      */
     private List<int[]> contexts;
-    
+
     /**
      * If we have context information, this specifies the annotation(s) (i.e. word,
      * lemma, pos) the context came from. Otherwise, it is null.
@@ -239,7 +239,7 @@ public class Contexts implements Iterable<int[]> {
     /**
      * Return a new Contexts instance that only includes the specified annotations
      * in the specified order.
-     * 
+     *
      * @param annotations annotations we want
      */
     @SuppressWarnings("unused")
@@ -252,11 +252,11 @@ public class Contexts implements Iterable<int[]> {
         }
         if (contextsToSelect.size() < annotations.size())
             throw new BlackLabRuntimeException("Not all requested contexts were present");
-    
+
         // Copy only the requested contexts
         int numberOfHits = source.contexts.size();
         contexts = new ArrayList<>(numberOfHits);
-        
+
         for (int i = 0; i < source.contexts.size(); ++i) {
             int[] context = source.contexts.get(i);
             int hitContextLength = (context.length - NUMBER_OF_BOOKKEEPING_INTS)
@@ -271,14 +271,14 @@ public class Contexts implements Iterable<int[]> {
                         NUMBER_OF_BOOKKEEPING_INTS);
                 resultContextNumber++;
             }
-            contexts.add(result); 
+            contexts.add(result);
         }
         this.annotations = annotations;
     }
 
     /**
      * Retrieve context words for the hits.
-     * 
+     *
      * @param hits hits to find contexts for
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
@@ -287,7 +287,7 @@ public class Contexts implements Iterable<int[]> {
     public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize, List<FiidLookup> fiidLookups) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
-        
+
         hits.ensureAllResultsRead(); // make sure all hits have been read
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
@@ -296,26 +296,26 @@ public class Contexts implements Iterable<int[]> {
 
         // Get the context
         // Group hits per document
-        
+
         // setup first iteration
         HitsArrays ha = hits.hitsArrays;
         int prevDoc = ha.doc(0);
         int firstHitInCurrentDoc = 0;
         contexts = new ArrayList<>(hits.size());
-        
+
         final int size = ha.size(); // TODO ugly, might be slow because of required locking
         for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
             final int curDoc = ha.doc(i);
             if (curDoc != prevDoc) {
-                try { hits.threadPauser().waitIfPaused(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
+                try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
                 // process hits in this document:
                 int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
                 for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
                 // start a new document
-                firstHitInCurrentDoc = i; 
+                firstHitInCurrentDoc = i;
             }
         }
-        // Process trailing hits 
+        // Process trailing hits
         int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, fiidLookups);
         for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
 
@@ -333,7 +333,7 @@ public class Contexts implements Iterable<int[]> {
 
     /**
      * Return the context(s) for the specified hit number
-     * 
+     *
      * @param hit which hit we want the context(s) for
      * @return the context(s)
      */
@@ -347,16 +347,16 @@ public class Contexts implements Iterable<int[]> {
 
     /**
      * Iterate over the context arrays.
-     * 
+     *
      * Note that the order is unspecified.
-     * 
+     *
      * @return iterator
      */
     @Override
     public Iterator<int[]> iterator() {
         return contexts.iterator();
     }
-    
+
     @Override
     public String toString() {
         return "Contexts(" + StringUtils.join(annotations, ", ") + ")";

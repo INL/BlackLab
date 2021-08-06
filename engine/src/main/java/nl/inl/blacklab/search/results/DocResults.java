@@ -138,9 +138,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * Iterator in our source hits object
      */
     private Iterator<EphemeralHit> sourceHitsIterator;
-//    private Iterator<Hit> sourceHitsIterator;
-    private int sourceHitsIndex = 0;
-    
+
     /**
      * A partial list of hits in a doc, because we stopped iterating through the
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
@@ -246,7 +244,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
-    
+
     @Override
     public DocResults sort(DocProperty sortProp) {
         ensureAllResultsRead();
@@ -315,7 +313,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 // Fill list of document results
                 HitsArrays docHits = partialDocHits;
                 int lastDocId = partialDocId;
-                
+
                 while (sourceHitsIterator.hasNext() && (index < 0 || index > results.size())) {
                     EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc;
@@ -326,14 +324,14 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                             int size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
-                        
+
                         docHits = new HitsArrays();
                     }
-                    
+
                     docHits.add(h);
                     lastDocId = curDoc;
                 }
-                
+
                 // add the final dr instance to the results collection
                 if (docHits != null && docHits.size() > 0) {
                     if (sourceHitsIterator.hasNext()) {
@@ -374,14 +372,14 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocGroups group(DocProperty groupBy, int maxResultsToStorePerGroup) {
         ensureAllResultsRead();
-        
+
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
-        
+
         String tokenLengthFieldName = queryInfo().index().mainAnnotatedField().tokenLengthField();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
-        
+
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
             List<DocResult> group = groupLists.get(groupId);
@@ -409,7 +407,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, (DocProperty)groupBy, (SampleParameters)null, (WindowStats)null);
+        return DocGroups.fromList(queryInfo(), results, groupBy, (SampleParameters)null, (WindowStats)null);
     }
 
     /**
@@ -469,7 +467,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     public HitProperty groupCriteria() {
         return groupByDoc;
     }
-    
+
     @Override
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
@@ -487,7 +485,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
         return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
     }
-    
+
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
@@ -527,35 +525,35 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     public long tokensInMatchingDocs() {
         return subcorpusSize().getTokens();
     }
-    
+
     /**
      * Determine the size of the subcorpus defined by this set of documents.
-     * 
+     *
      * Counts number of documents and tokens.
      *
      * This is fast if the query was created from a Query object (and the index contains DocValues),
      * but slower if it was created from Hits or a list of DocResult objects.
-     * 
+     *
      * @return subcorpus size
      */
     public CorpusSize subcorpusSize() {
         return subcorpusSize(true);
     }
-    
+
     /**
      * Determine the size of the subcorpus defined by this set of documents.
-     * 
+     *
      * Counts number of documents and tokens (if countTokens is true).
      *
      * This is fast if the query was created from a Query object (and the index contains DocValues),
      * but slower if it was created from Hits or a list of DocResult objects.
-     * 
+     *
      * @param countTokens whether or not to count tokens (slower)
      * @return subcorpus size
      */
     public CorpusSize subcorpusSize(boolean countTokens) {
-        if (corpusSize == null || countTokens && corpusSize.getTokens() == 0) {
-            int numberOfTokens;
+        if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
+            long numberOfTokens;
             int numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field

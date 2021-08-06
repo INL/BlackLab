@@ -129,18 +129,6 @@
     		// Should be set no higher than the number of cores in the machine. 
     		"maxConcurrentSearches": 4,
     		
-    		// Maximum number of paused searched.
-    		// Pausing too many searches will just fill up memory, so don't
-    		// set this too high. 
-            "maxPausedSearches": 10,
-            
-            // Long-running counts take up a lot of CPU and memory. If a client hasn't
-            // checked the status of a count, we'd like to pause it and eventually abort
-            // it so we don't waste resources on something nobody's interested in anymore.
-            // This setting controls after how many seconds such an "abandoned" count is
-            // paused. The client might come back to it, so we don't abort it right away.
-            "abandonedCountPauseTimeSec": 10,
-            
             // Similar to the previous setting, this setting controls after how many seconds
             // an "abandoned" count is aborted.
             "abandonedCountAbortTimeSec": 600

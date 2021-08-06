@@ -37,20 +37,20 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
-    
+
     protected DocProperty(DocProperty prop, boolean invert) {
         reverse = invert ? !prop.reverse : prop.reverse;
     }
-    
+
     protected DocProperty() {
         this.reverse = sortDescendingByDefault();
     }
 
     /**
      * Is the default for this property to sort descending?
-     * 
+     *
      * This is usually a good default for "group size" or "number of hits".
-     * 
+     *
      * @return whether to sort descending by default
      */
     protected boolean sortDescendingByDefault() {
@@ -68,11 +68,12 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
     /**
      * Compares two docs on this property
-     * 
+     *
      * @param a first doc
      * @param b second doc
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
+    @Override
     public int compare(DocResult a, DocResult b) {
         return get(a).compareTo(get(b));
     }
@@ -85,7 +86,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
     /**
      * Used by subclasses to add a dash for reverse when serializing
-     * 
+     *
      * @return either a dash or the empty string
      */
     @Override
@@ -129,11 +130,11 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
         case "fieldlen":
             result = DocPropertyAnnotatedFieldLength.deserialize(index, ResultProperty.ignoreSensitivity(info));
             break;
-            
+
         case "docid":
         case "doc":
             throw new BlackLabRuntimeException("Grouping doc results by " + type + " is not yet supported");
-            
+
         case "hit":
         case "left":
         case "right":
@@ -142,7 +143,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
         case "context":
         case "hitposition":
             throw new BlackLabRuntimeException("Cannot group doc results by " + type);
-            
+
         default:
             logger.debug("Unknown DocProperty '" + type + "'");
             return null;
@@ -154,7 +155,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
     /**
      * Is the comparison reversed?
-     * 
+     *
      * @return true if it is, false if not
      */
     @Override
@@ -164,7 +165,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
     /**
      * Reverse the comparison.
-     * 
+     *
      * @return document property with the comparison reversed
      */
     @Override
@@ -219,5 +220,5 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
     public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
         return false;
     }
-    
+
 }

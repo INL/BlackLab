@@ -138,7 +138,7 @@ public class OldBlsConfigCacheAndPerformance {
             abandonedCountPauseTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountPauseTimeSec", 10);
             abandonedCountAbortTimeSec = JsonUtil.getIntProp(serverLoadSettings, "abandonedCountAbortTimeSec", 60);
         }
-        
+
         maxJobAgeMs = maxJobAgeSec * 1000L;
         abandonedCountPauseTimeMs = abandonedCountPauseTimeSec * 1000L;
         abandonedCountAbortTimeMs = abandonedCountAbortTimeSec * 1000L;
@@ -235,12 +235,12 @@ public class OldBlsConfigCacheAndPerformance {
     public BLSConfigPerformance getBlsConfigPerformance() {
         BLSConfigPerformance result = new BLSConfigPerformance();
         result.setMaxConcurrentSearches(getMaxConcurrentSearches());
-        result.setMaxPausedSearches(getMaxPausedSearches());
         result.setMaxRunningJobsPerUser(getMaxRunningJobsPerUser());
         result.setMaxThreadsPerSearch(2);
-        result.setPausingEnabled(enableThreadPausing());
+        //result.setMaxPausedSearches(getMaxPausedSearches());
+        //result.setPausingEnabled(enableThreadPausing());
+        //result.setAbandonedCountPauseTimeSec(abandonedCountPauseTimeSec);
         result.setAutodetectMaxConcurrent(shouldAutoDetectMaxConcurrent());
-        result.setAbandonedCountPauseTimeSec(abandonedCountPauseTimeSec);
         result.setAbandonedCountAbortTimeSec(abandonedCountAbortTimeSec);
         return result;
     }

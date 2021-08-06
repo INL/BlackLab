@@ -188,8 +188,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Integer.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize .getDocuments() > 0 ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
-                    row.add(groupSubcorpusSize .getTokens() > 0 ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
                 }
 
                 printer.printRecord(row);

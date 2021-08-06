@@ -35,11 +35,11 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     public static HitGroupPropertySize size() {
         return propSize;
     }
-    
+
     HitGroupProperty(HitGroupProperty prop, boolean invert) {
         super(prop, invert);
     }
-    
+
     public HitGroupProperty() {
         super();
     }
@@ -49,7 +49,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
     /**
      * Compares two groups on this property
-     * 
+     *
      * @param a first group
      * @param b second group
      * @return 0 if equal, negative if a < b, positive if a > b.
@@ -62,7 +62,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
     /**
      * Used by subclasses to add a dash for reverse when serializing
-     * 
+     *
      * @return either a dash or the empty string
      */
     @Override
@@ -71,6 +71,18 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     }
 
     public static HitGroupProperty deserialize(String serialized) {
+        if (PropertySerializeUtil.isMultiple(serialized)) {
+            boolean reverse = false;
+            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+                reverse = true;
+                serialized = serialized.substring(2, serialized.length() - 1);
+            }
+            HitGroupProperty result = HitGroupPropertyMultiple.deserializeProp(serialized);
+            if (reverse)
+                result = result.reverse();
+            return result;
+        }
+
         boolean reverse = false;
         if (serialized.length() > 0 && serialized.charAt(0) == '-') {
             reverse = true;
@@ -89,7 +101,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
     /**
      * Is the comparison reversed?
-     * 
+     *
      * @return true if it is, false if not
      */
     @Override
@@ -99,8 +111,8 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
     /**
      * Reverse the comparison.
-     * 
-     * @return doc group property with reversed comparison 
+     *
+     * @return doc group property with reversed comparison
      */
     @Override
     public abstract HitGroupProperty reverse();

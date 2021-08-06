@@ -37,10 +37,10 @@ public class HitsFromQuery extends Hits {
 
     /** Settings such as max. hits to process/count. */
     SearchSettings searchSettings;
-    
+
     /** Did we exceed the maximums? */
     MaxStats maxStats;
-    
+
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
      * the current one's done.
@@ -78,10 +78,10 @@ public class HitsFromQuery extends Hits {
     private boolean sourceSpansFullyRead = true;
 
     private Lock ensureHitsReadLock = new ReentrantLock();
-    
+
     /** Context of our query; mostly used to keep track of captured groups. */
     private HitQueryContext hitQueryContext;
-    
+
     /**
      * Document the previous hit was in, so we can count separate documents.
      */
@@ -106,23 +106,23 @@ public class HitsFromQuery extends Hits {
         try {
             BlackLabIndex index = queryInfo.index();
             IndexReader reader = index.reader();
-            
+
             // Override FI match threshold? (debug use only!)
             long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
             if (searchSettings.fiMatchFactor() != -1) {
                 queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                 ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
             }
-            
+
             sourceQuery.setQueryInfo(queryInfo);
             queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
-            
+
             BLSpanQuery optimize = sourceQuery.optimize(reader);
             queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
 
             BLSpanQuery spanQuery = optimize.rewrite(reader);
             queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
-            
+
             // Restore previous FI match threshold
             if (searchSettings.fiMatchFactor() != -1) {
                 ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
@@ -136,7 +136,7 @@ public class HitsFromQuery extends Hits {
             weight.extractTerms(terms);
             for (Term term : terms) {
                 try {
-                    threadPauser.waitIfPaused();
+                    threadAborter.checkAbort();
                 } catch (InterruptedException e) {
                     throw new InterruptedSearch(e);
                 }
@@ -153,7 +153,7 @@ public class HitsFromQuery extends Hits {
 
         sourceSpansFullyRead = false;
     }
-    
+
     @Override
     public String toString() {
         return "Hits#" + hitsObjId + " (fullyRead=" + sourceSpansFullyRead + ", hitsSoFar=" + hitsCountedSoFar() + ")";
@@ -172,12 +172,12 @@ public class HitsFromQuery extends Hits {
             // Prevent locking when not required
             if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() > number))
                 return;
-    
+
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
             if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
                 number = hitsArrays.size() + FETCH_HITS_MIN;
-    
+
             while (!ensureHitsReadLock.tryLock()) {
                 /*
                  * Another thread is already counting, we don't want to straight up block until it's done
@@ -193,22 +193,22 @@ public class HitsFromQuery extends Hits {
                 int maxHitsToCount = searchSettings.maxHitsToCount();
                 int maxHitsToProcess = searchSettings.maxHitsToProcess();
                 while (readAllHits || hitsArrays.size() < number) {
-    
-                    // Pause if asked
-                    threadPauser.waitIfPaused();
-    
+
+                    // Abort if asked
+                    threadAborter.checkAbort();
+
                     // Stop if we're at the maximum number of hits we want to count
                     if (maxHitsToCount >= 0 && hitsCounted >= maxHitsToCount) {
                         maxStats.setHitsCountedExceededMaximum();
                         break;
                     }
-    
+
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
                     while (true) {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.
-    
+
                             atomicReaderContextIndex++;
                             if (atomicReaderContextIndex >= atomicReaderContexts.size()) {
                                 setFinished();
@@ -236,7 +236,7 @@ public class HitsFromQuery extends Hits {
                                 if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
                                     capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
-                                
+
                                 int doc;
                                 boolean alive = false;
                                 do {
@@ -247,7 +247,7 @@ public class HitsFromQuery extends Hits {
                                 } while(currentSourceSpans != null && !alive);
                             }
                         }
-    
+
                         // Advance to next hit
                         int start = currentSourceSpans.nextStartPosition();
                         if (start == Spans.NO_MORE_POSITIONS) {
@@ -265,7 +265,7 @@ public class HitsFromQuery extends Hits {
                             break;
                         }
                     }
-    
+
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)
                     hitsCounted++;
@@ -307,7 +307,7 @@ public class HitsFromQuery extends Hits {
 
     private void setFinished() {
         sourceSpansFullyRead = true;
-        
+
         // We no longer need these; allow them to be GC'ed
         weight = null;
         atomicReaderContexts = null;
@@ -320,7 +320,7 @@ public class HitsFromQuery extends Hits {
     public boolean doneProcessingAndCounting() {
         return sourceSpansFullyRead || maxStats.hitsCountedExceededMaximum();
     }
-    
+
     @Override
     public MaxStats maxStats() {
         return maxStats;

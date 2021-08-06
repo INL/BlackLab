@@ -28,6 +28,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
@@ -61,7 +62,10 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
     private Map<Integer, Pair<SortedDocValues, SortedSetDocValues>> docValues = null;
-    
+
+    /** Null unless the field is numeric. */
+    private Map<Integer, NumericDocValues> numericDocValues = null;
+
     /** Our index */
     private BlackLabIndex index;
 
@@ -81,10 +85,18 @@ public class DocPropertyStoredField extends DocProperty {
         this.fieldName = fieldName;
         this.friendlyName = friendlyName;
 
-        if (!fieldName.endsWith("Numeric")) { // TODO: use actual data from IndexMetadata
-            docValues = new TreeMap<>();
-            try {
-                if (index.reader() != null) { // skip for MockIndex (testing)
+        try {
+            if (index.reader() != null) { // skip for MockIndex (testing)
+                if (index.metadataField(fieldName).type().equals(FieldType.NUMERIC)) {
+                    numericDocValues = new TreeMap<>();
+                    for (LeafReaderContext rc : index.reader().leaves()) {
+                        LeafReader r = rc.reader();
+                        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
+                        NumericDocValues values = r.getNumericDocValues(fieldName);
+                        numericDocValues.put(rc.docBase, values);
+                    }
+                } else { // regular string doc values.
+                    docValues = new TreeMap<>();
                     for (LeafReaderContext rc : index.reader().leaves()) {
                         LeafReader r = rc.reader();
                         // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
@@ -92,16 +104,18 @@ public class DocPropertyStoredField extends DocProperty {
                         SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
                         if (sortedSetDocValues != null || sortedDocValues != null) {
                             docValues.put(rc.docBase, Pair.of(sortedDocValues, sortedSetDocValues));
+                        } else {
+                            docValues.put(rc.docBase, null);
                         }
                     }
+                    if (docValues.isEmpty()) {
+                        // We don't actually have DocValues.
+                        docValues = null;
+                    }
                 }
-                if (docValues.isEmpty()) {
-                    // We don't actually have DocValues.
-                    docValues = null;
-                }
-            } catch (IOException e) {
-                BlackLabRuntimeException.wrap(e);
             }
+        } catch (IOException e) {
+            BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -138,6 +152,25 @@ public class DocPropertyStoredField extends DocProperty {
                             ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
                         }
                     }
+                }
+                // If no docvalues for this segment - no values were indexed for this field (in this segment).
+                // So returning the empty array is good.
+            }
+            return ret.toArray(new String[ret.size()]);
+        } else if (numericDocValues != null) {
+            // Find the fiid in the correct segment
+            Entry<Integer, NumericDocValues> target = null;
+            for (Entry<Integer, NumericDocValues> e : this.numericDocValues.entrySet()) {
+                if (e.getKey() > docId) { break; }
+                target = e;
+            }
+
+            final List<String> ret = new ArrayList<>();
+            if (target != null) {
+                final Integer targetDocBase = target.getKey();
+                final NumericDocValues targetDocValues = target.getValue();
+                if (targetDocValues != null) {
+                    ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
                 }
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.

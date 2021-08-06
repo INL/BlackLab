@@ -199,19 +199,6 @@ performance:
     # search may queue all other searches until it's done)
     maxThreadsPerSearch: 3
 
-    # Do we want to automatically pause long-running searches if there's 
-    # many simultaneous users?
-    pausingEnabled: true
-
-    # How many searches may be paused at most before we start aborting them
-    # (higher values means fewer aborted searches when multiple users are searching 
-    # simultaneously, but it may also lead to memory being exhausted)
-    maxPausedSearches: 6
-
-    # Pause a count if the client hasn't asked about it for 10s
-    # (lower values are easier on the CPU, but might take up more memory)
-    abandonedCountPauseTimeSec: 10
-
     # Abhort a count if the client hasn't asked about it for 30s
     # (lower values are easier on the server, but might abort a count too soon)
     abandonedCountAbortTimeSec: 30

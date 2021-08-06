@@ -256,8 +256,7 @@ public class Index {
         //logger.debug("    Opening index '" + id + "', dir = " + dir);
         try {
             index = searchMan.blackLabInstance().open(this.dir);
-//            if (BlsCache.ENABLE_NEW_CACHE)
-                index.setCache(searchMan.getBlackLabCache());
+            index.setCache(searchMan.getBlackLabCache());
             //logger.debug("Done opening index '" + id + "'");
         } catch (IndexTooOld e) {
             throw e;
@@ -423,7 +422,7 @@ public class Index {
         // Superuser can read anything
         if (user.isSuperuser())
             return true;
-        
+
         // There are no restrictions on who can read non-user (public) indices
         if (!isUserIndex())
             return true;
@@ -435,7 +434,7 @@ public class Index {
         // Any user the index is explicitly shared with can read it too
         return shareWithUsers.contains(user.getUserId());
     }
-    
+
     private boolean authorizedForIndex(User user) {
         // You are authorized (can add to, can delete) a private index if it's yours or you're the superuser
         return isUserIndex() && (getUserId().equals(user.getUserId()) || user.isSuperuser());
@@ -444,7 +443,7 @@ public class Index {
     public boolean userMayAddData(User user) {
         return authorizedForIndex(user);
     }
-    
+
     public boolean userMayDelete(User user) {
         return authorizedForIndex(user);
     }

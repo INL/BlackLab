@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class HitsFiltered extends Hits {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
-    
+
     /**
      * Document the previous hit was in, so we can count separate documents.
      */
@@ -27,15 +27,15 @@ public class HitsFiltered extends Hits {
     private HitProperty filterProperty;
 
     private PropertyValue filterValue;
-    
+
     private boolean doneFiltering = false;
-    
+
     private int indexInSource = -1;
 
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo());
         this.source = hits;
-        
+
         // If the filter property requires contexts, fetch them now.
         List<Annotation> contextsNeeded = property.needsContext();
         if (contextsNeeded != null) {
@@ -48,10 +48,10 @@ public class HitsFiltered extends Hits {
         } else {
             filterProperty = property.copyWith(hits, null);
         }
-        
+
         this.filterValue = value;
     }
-    
+
     @Override
     public String toString() {
         return "HitsFilter#" + hitsObjId;
@@ -70,12 +70,12 @@ public class HitsFiltered extends Hits {
             // Prevent locking when not required
             if (doneFiltering || number >= 0 && hitsArrays.size() > number)
                 return;
-            
+
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
             if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
                 number = hitsArrays.size() + FETCH_HITS_MIN;
-    
+
             while (!ensureHitsReadLock.tryLock()) {
                 /*
                  * Another thread is already counting, we don't want to straight up block until it's done
@@ -89,9 +89,9 @@ public class HitsFiltered extends Hits {
             try {
                 boolean readAllHits = number < 0;
                 while (!doneFiltering && (readAllHits || hitsArrays.size() < number)) {
-                    // Pause if asked
-                    threadPauser.waitIfPaused();
-    
+                 // Abort if asked
+                    threadAborter.checkAbort();
+
                     // Advance to next hit
                     indexInSource++;
                     if (source.hitsProcessedAtLeast(indexInSource + 1)) {
@@ -123,7 +123,7 @@ public class HitsFiltered extends Hits {
     public boolean doneProcessingAndCounting() {
         return doneFiltering;
     }
-    
+
     @Override
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;

@@ -4,25 +4,19 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class BLSConfigPerformance {
-    
+
     static final int MAX_CONCURRENT_SEARCHES_AT_LEAST = 4;
 
     private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
-    
+
     boolean autodetectMaxConcurrent = false;
-    
+
     int maxConcurrentSearches = 4;
-    
+
     int maxThreadsPerSearch = 2;
-    
-    boolean pausingEnabled = false;
-    
-    int maxPausedSearches = 6;
-    
-    int abandonedCountPauseTimeSec = 10;
-    
+
     int abandonedCountAbortTimeSec = 30;
-    
+
     int maxRunningJobsPerUser = 10;
 
     public int getMaxConcurrentSearches() {
@@ -46,12 +40,14 @@ public class BLSConfigPerformance {
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
 
+    @Deprecated
     public int getMaxPausedSearches() {
-        return maxPausedSearches;
+        return 0; //maxPausedSearches;
     }
 
+    @Deprecated
     public void setMaxPausedSearches(int maxPausedSearches) {
-        this.maxPausedSearches = maxPausedSearches;
+        //this.maxPausedSearches = maxPausedSearches;
     }
 
     public int getMaxRunningJobsPerUser() {
@@ -62,12 +58,14 @@ public class BLSConfigPerformance {
         this.maxRunningJobsPerUser = maxRunningJobsPerUser;
     }
 
+    @Deprecated
     public boolean isPausingEnabled() {
-        return pausingEnabled;
+        return false; //pausingEnabled;
     }
 
+    @Deprecated
     public void setPausingEnabled(boolean pausingEnabled) {
-        this.pausingEnabled = pausingEnabled;
+        //this.pausingEnabled = pausingEnabled;
     }
 
     public boolean isAutodetectMaxConcurrent() {
@@ -83,12 +81,14 @@ public class BLSConfigPerformance {
         }
     }
 
+    @Deprecated
     public int getAbandonedCountPauseTimeSec() {
-        return abandonedCountPauseTimeSec;
+        return -1; //abandonedCountPauseTimeSec;
     }
 
+    @Deprecated
     public void setAbandonedCountPauseTimeSec(int abandonedCountPauseTimeSec) {
-        this.abandonedCountPauseTimeSec = abandonedCountPauseTimeSec;
+        //this.abandonedCountPauseTimeSec = abandonedCountPauseTimeSec;
     }
 
     public int getAbandonedCountAbortTimeSec() {
@@ -98,5 +98,5 @@ public class BLSConfigPerformance {
     public void setAbandonedCountAbortTimeSec(int abandonedCountAbortTimeSec) {
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
     }
-    
+
 }

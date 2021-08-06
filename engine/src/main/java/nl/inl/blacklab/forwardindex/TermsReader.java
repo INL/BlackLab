@@ -170,7 +170,7 @@ public class TermsReader extends Terms {
             this.insensitivePosition2GroupId[insensitivePosition] = offset;
             this.groupId2TermIds[offset++] = numTermIds;
             for (int i = 0; i < numTermIds; ++i) {
-              groupId2TermIds[offset++] = termIds.getInt(0);
+                groupId2TermIds[offset++] = termIds.getInt(i); // NOTE: became termIds.getInt(0) in move to IntArrayList; probably a typo?
             }
         }
 

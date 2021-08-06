@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -173,7 +174,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * 
+     *
      * Set the document to index.
      *
      * @param contents document contents
@@ -505,6 +506,7 @@ public abstract class DocIndexer implements AutoCloseable {
                 numFieldName += "Numeric";
             }
 
+            boolean firstValue = true;
             for (String value : values) {
                 // Index these fields as numeric too, for faster range queries
                 // (we do both because fields sometimes aren't exclusively numeric)
@@ -518,7 +520,12 @@ public abstract class DocIndexer implements AutoCloseable {
                 }
                 IntField nf = new IntField(numFieldName, n, Store.YES);
                 currentLuceneDoc.add(nf);
-                currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
+                if (firstValue)
+                    currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
+                else {
+                    warn(documentName + " contains multiple values for single-valued numeric field " + numFieldName + "(values: " + StringUtils.join(values, "; ") + ")");
+                }
+                firstValue = false;
             }
         }
     }

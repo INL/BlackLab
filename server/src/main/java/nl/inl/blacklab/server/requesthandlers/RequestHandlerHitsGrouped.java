@@ -68,7 +68,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
-        addSummaryCommonFields(ds, searchParam, search.timeUserWaited(), 0, groups, ourWindow);
+        addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)

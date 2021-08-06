@@ -1,0 +1,74 @@
+# Base Docker Compose file for Woordcombinaties, which defines the
+# production configuration. (docker-compose.override.yml contains
+# development overrides)
+#
+# The included Makefile will automatically use the development configuration
+# when running locally, and production configuration when deploying remotely.
+
+version: '3.9'
+
+services:
+
+  server:
+    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    build:
+        context: .
+        dockerfile: docker/Dockerfile
+    environment:
+      # Give JVM enough heap memory
+      - "JAVA_OPTS=-Xmx10G"
+    ports:
+      - "8080:8080"
+    volumes:
+      - blacklab-data:/data
+
+  # Creates new index
+  indexer:
+    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    profiles:
+      - tools
+    build:
+        context: .
+        dockerfile: docker/Dockerfile
+    command: >-
+        /bin/bash -c 
+        "cd /usr/local/lib/blacklab-tools && 
+        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/${INDEX_NAME} /input ${INDEX_FORMAT}"
+    volumes:
+      - ${BLACKLAB_FORMATS_DIR}:/etc/blacklab/formats
+      - ${INDEX_INPUT_DIR}:/input
+      - blacklab-data:/data
+
+  # Indexes the test data and starts the server
+  testserver:
+    image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
+    profiles:
+      - tools
+    build:
+        context: .
+        dockerfile: docker/Dockerfile
+    command: >-
+        /bin/bash -c 
+        "cd /usr/local/lib/blacklab-tools && 
+        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/test /input voice-tei &&
+        cd /usr/local/tomcat && catalina.sh run"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./test/data:/input
+      - ./test/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
+
+  # Runs the tests on the test server
+  test:
+    profiles:
+      - tools
+    environment:
+      - APP_URL=http://testserver:8080/blacklab-server
+    build: test
+    depends_on:
+      - testserver
+
+
+# Volume where our indexes will be stored.
+volumes:
+  blacklab-data: {}

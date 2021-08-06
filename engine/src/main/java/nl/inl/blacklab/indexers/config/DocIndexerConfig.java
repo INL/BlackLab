@@ -408,6 +408,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      *      if "keep" <= 0 returns the first part.
      *      if "keep" > number of splits return empty string.
      *      if "keep" == "all" return all parts
+     *      if "keep" == "both" return both the original (unsplit) string and all parts
      * </pre>
      * @return
      */

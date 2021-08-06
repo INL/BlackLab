@@ -51,6 +51,7 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
 
     public abstract PropertyValue get(G result);
 
+    @Override
     public abstract int compare(G a, G b);
 
     @Override

@@ -13,7 +13,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadAborter;
 
 /**
  * A list of results of some type.
@@ -31,14 +31,14 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     private static synchronized int getNextHitsObjId() {
         return nextHitsObjId++;
     }
-    
+
     // Perform simple generic sampling operation
     protected static <T, P extends ResultProperty<T>> List<T> doSample(ResultsList<T, P> source, SampleParameters sampleParameters) {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        
+
         List<T> results = new ArrayList<>();
-        
+
         Random random = new Random(sampleParameters.seed());
         int numberOfHitsToSelect = sampleParameters.numberOfHits(source.size());
         if (numberOfHitsToSelect > source.size())
@@ -53,7 +53,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
             } while (chosenHitIndices.contains(hitIndex));
             chosenHitIndices.add(hitIndex);
         }
-        
+
         // Add the hits in order of their index
         for (Integer hitIndex : chosenHitIndices) {
             T hit = source.get(hitIndex);
@@ -67,12 +67,12 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
             //throw new BlackLabRuntimeException("First hit out of range");
             return Collections.emptyList();
         }
-    
+
         // Auto-clamp number
         int actualSize = number;
         if (!results.resultsProcessedAtLeast(first + actualSize))
             actualSize = results.size() - first;
-    
+
         // Make sublist (copy results from List.subList() to avoid lingering references large lists)
         return new ArrayList<T>(results.resultsSubList(first, first + actualSize));
     }
@@ -90,16 +90,16 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /** Unique id of this Hits instance (for debugging) */
     protected final int hitsObjId = getNextHitsObjId();
-    
+
     /** Information about the original query: index, field, max settings, max stats. */
     private QueryInfo queryInfo;
-    
+
     /**
      * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
-    protected ThreadPauser threadPauser;
-    
+    protected ThreadAborter threadAborter;
+
     private ResultsStats resultsStats = new ResultsStats() {
         @Override
         public boolean processedAtLeast(int lowerBound) {
@@ -140,15 +140,15 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     public Results(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
 //        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
-        threadPauser = ThreadPauser.create();
+        threadAborter = ThreadAborter.create();
     }
 
     /**
      * Get information about the original query.
-     * 
+     *
      * This includes the index, field, max. settings, and max. stats
      * (whether the max. settings were reached).
-     * 
+     *
      * @return query info
      */
     public QueryInfo queryInfo() {
@@ -157,7 +157,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * Get the field these hits are from.
-     * 
+     *
      * @return field
      */
     public AnnotatedField field() {
@@ -166,24 +166,24 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * Get the index these hits are from.
-     * 
+     *
      * @return index
      */
     public BlackLabIndex index() {
         return queryInfo().index();
     }
-    
+
     public int resultsObjId() {
         return hitsObjId;
     }
 
-    public ThreadPauser threadPauser() {
-        return threadPauser;
+    public ThreadAborter threadAborter() {
+        return threadAborter;
     }
 
     /**
      * Is this a hits window?
-     * 
+     *
      * @return true if it's a window, false if not
      */
     public boolean isWindow() {
@@ -192,7 +192,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * If this is a hits window, return the window stats.
-     * 
+     *
      * @return window stats, or null if this is not a hits window
      */
     public WindowStats windowStats() {
@@ -201,7 +201,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * Is this sampled from another instance?
-     * 
+     *
      * @return true if it's a sample, false if not
      */
     public boolean isSample() {
@@ -210,35 +210,35 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * If this is a sample, return the sample parameters.
-     * 
-     * Also includes the explicitly set or randomly chosen seed. 
-     * 
+     *
+     * Also includes the explicitly set or randomly chosen seed.
+     *
      * @return sample parameters, or null if this is not a sample
      */
     public SampleParameters sampleParameters() {
         return null;
     }
-    
+
     /**
      * Return a stream of these hits.
-     * 
+     *
      * @return stream
      */
     public Stream<T> stream() {
         return StreamSupport.stream(this.spliterator(), false);
     }
-    
+
     /**
      * Return a parallel stream of these hits.
-     * 
+     *
      * @return stream
      */
     public Stream<T> parallelStream() {
         return StreamSupport.stream(this.spliterator(), true);
     }
 
-    
-    
+
+
     /**
      * Return the specified hit.
      * Implementations of this method should be thread-safe.
@@ -247,7 +247,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * @return the hit, or null if it's beyond the last hit
      */
     public abstract T get(int i);
-    
+
     /**
      * Group these hits by a criterium (or several criteria).
      *
@@ -259,7 +259,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     /**
      * Select only the results where the specified property has the specified value.
-     * 
+     *
      * @param property property to select on, e.g. "word left of hit"
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
@@ -281,7 +281,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     /**
      * Take a sample of results.
      *
-     * @param sampleParameters sample parameters 
+     * @param sampleParameters sample parameters
      * @return the sample
      */
     public abstract Results<T, P> sample(SampleParameters sampleParameters);
@@ -293,7 +293,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * interface. It makes sure BlackLab only works with the results you want to
      * display and doesn't do any unnecessary processing on the other hits.
      *
-     * The resulting instance will has "window stats" to assist with paging, 
+     * The resulting instance will has "window stats" to assist with paging,
      * like figuring out if there hits before or after the window.
      *
      * @param first first result in the window (0-based)
@@ -301,7 +301,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * @return the window
      */
     public abstract Results<T, P> window(int first, int windowSize);
-    
+
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(#" + hitsObjId + ")";
@@ -322,16 +322,16 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     protected void ensureAllResultsRead() {
         ensureResultsRead(-1);
     }
-    
+
     public ResultsStats resultsStats() {
         return resultsStats;
     }
-    
+
     protected abstract boolean resultsProcessedAtLeast(int lowerBound);
 
     /**
      * This is an alias of resultsProcessedTotal().
-     * 
+     *
      * @return number of hits processed total
      */
     public int size() {
@@ -345,7 +345,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     protected int resultsCountedSoFar() {
         return resultsProcessedSoFar();
     }
-    
+
     protected int resultsCountedTotal() {
         return resultsProcessedTotal();
     }

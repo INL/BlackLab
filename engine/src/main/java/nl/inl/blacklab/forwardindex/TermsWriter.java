@@ -157,6 +157,7 @@ class TermsWriter extends Terms {
                     MappedByteBuffer buf;
                     IntBuffer ib;
                     if (!useBlockBasedTermsFile) {
+                        // Old version of terms file (that can't grow larger than 2 GB)
                         long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize
                                 + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
                         fc.truncate(fileLength); // truncate if necessary
@@ -186,6 +187,7 @@ class TermsWriter extends Terms {
                         buf.put(termStrings);
                         ib = buf.asIntBuffer();
                     } else {
+                        // Newer, "block-based" version of terms file that can grow larger than 2 GB.
                         long fileMapStart = 0, fileMapLength = maxMapSize;
                         buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
                         buf.putInt(n); // Start with the number of terms      //@4
@@ -261,7 +263,7 @@ class TermsWriter extends Terms {
                         // running total) and truncate the file if necessary
                         // (we can do this now, even though we still have to write the sort buffers,
                         // because we know how large the file will eventually be)
-                        fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+                        fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * (long)n;
 
                         if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
                             logger.error("***** fileLength < 0 !!!");

@@ -203,7 +203,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * Copy values into the ephemeral hit, for use in a hot loop or somesuch.
          * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
          * Example:
-         * 
+         *
          * <pre>
          * EphemeralHitImpl h = new EphemeralHitImpl();
          * int size = hits.size();
@@ -253,7 +253,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * Expert use: get the internal docs array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
-         * 
+         *
          * @return
          */
         public IntArrayList docs() {
@@ -264,7 +264,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * Expert use: get the internal starts array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
-         * 
+         *
          * @return
          */
         public IntArrayList starts() {
@@ -275,7 +275,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * Expert use: get the internal ends array.
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
-         * 
+         *
          * @return
          */
         public IntArrayList ends() {
@@ -340,22 +340,28 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     }
 
     private static final HitsArrays EMPTY_SINGLETON = new HitsArrays() {
+        @Override
         public void add(EphemeralHit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
-        public void add(Hit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }; 
-        public void add(int doc, int start, int end){throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }; 
+        @Override
+        public void add(Hit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        @Override
+        public void add(int doc, int start, int end){throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        @Override
         public void addAll(HitsArrays hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        @Override
         public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+        @Override
         public void addAll(java.util.List<Hit> hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
     };
-    
-    
+
+
     protected final HitsArrays hitsArrays;
 
     protected static final Logger logger = LogManager.getLogger(Hits.class);
 
     /**
      * Construct a Hits object from a SpanQuery.
-     * 
+     *
      * @param queryInfo information about the original query
      * @param query the query to execute to get the hits
      * @param searchSettings settings such as max. hits to process/count
@@ -376,7 +382,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      *
      * Will create Hit objects from the arrays. Mainly useful for testing.
      * Prefer using @link { {@link #fromArrays(QueryInfo, IntArrayList, IntArrayList, IntArrayList) }
-     * 
+     *
      * @param queryInfo information about the original query
      * @param doc doc ids
      * @param start hit starts
@@ -413,7 +419,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Construct an empty Hits object.
-     * 
+     *
      * @param queryInfo query info
      * @return hits found
      */
@@ -423,9 +429,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Minimum number of hits to fetch in an ensureHitsRead() block.
-     * 
+     *
      * This prevents locking again and again for a single hit when iterating.
-     * 
+     *
      * See {@link HitsFromQuery} and {@link HitsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
@@ -633,9 +639,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      */
     @Override
     public Hits sort(HitProperty sortProp) {
-        if (!(sortProp instanceof HitProperty))
-            throw new UnsupportedOperationException("Can only sort Hits by an instance of HitProperty!");
-        HitProperty hitProp = (HitProperty) sortProp;
+        HitProperty hitProp = sortProp;
 
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
@@ -658,19 +662,19 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     @Override
     public HitGroups group(HitProperty criteria, int maxResultsToStorePerGroup) {
         ensureAllResultsRead();
-        return HitGroups.fromHits(this, (HitProperty) criteria, maxResultsToStorePerGroup);
+        return HitGroups.fromHits(this, criteria, maxResultsToStorePerGroup);
     }
 
     /**
      * Select only the hits where the specified property has the specified value.
-     * 
+     *
      * @param property property to select on, e.g. "word left of hit"
      * @param value value to select on, e.g. 'the'
      * @return filtered hits
      */
     @Override
     public Hits filter(HitProperty property, PropertyValue value) {
-        return new HitsFiltered(this, (HitProperty) property, value);
+        return new HitsFiltered(this, property, value);
     }
 
     @Override
@@ -707,7 +711,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     @Override
     public Iterator<Hit> iterator() {
         ensureAllResultsRead();
-        // We need to wrap the internal iterator, as we probably shouldn't  
+        // We need to wrap the internal iterator, as we probably shouldn't
         return new Iterator<Hit>() {
             Iterator<EphemeralHit> i = hitsArrays.iterator();
 
@@ -734,21 +738,21 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Did we exceed the maximum number of hits to process/count?
-     * 
+     *
      * NOTE: this is only valid for the original Hits instance (that
      * executes the query), and not for any derived Hits instance (window, sorted, filtered, ...).
-     * 
+     *
      * The reason that this is not part of QueryInfo is that this creates a brittle
      * link between derived Hits instances and the original Hits instances, which by now
      * may have been aborted, leaving the max stats in a frozen, incorrect state.
-     * 
+     *
      * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
      */
     public abstract MaxStats maxStats();
 
     /**
      * Count occurrences of context words around hit.
-     * 
+     *
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * @param sensitivity what sensitivity to use
@@ -764,7 +768,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Count occurrences of context words around hit.
      *
      * Sorts the results from most to least frequent.
-     * 
+     *
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
      * @param sensitivity what sensitivity to use
@@ -778,10 +782,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Count occurrences of context words around hit.
      *
      * Matches case- and diacritics-sensitively, and sorts the results from most to least frequent.
-     * 
+     *
      * @param annotation what annotation to get collocations for
      * @param contextSize how many words around the hits to use
-     * 
+     *
      * @return the frequency of each occurring token
      */
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize) {
@@ -790,7 +794,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Return a per-document view of these hits.
-     * 
+     *
      * @param maxHits
      *
      * @return the per-document view.
@@ -801,7 +805,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /**
      * Create concordances from the forward index.
-     * 
+     *
      * @param contextSize desired context size
      * @return concordances
      */
@@ -897,7 +901,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.queryInfo(),
             r,
             new WindowStats(hasMoreHits, 1, 1, 1),
-            null, // window is not sampled 
+            null, // window is not sampled
             1,
             1,
             1,

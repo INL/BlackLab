@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
-import nl.inl.util.ThreadPauser;
+import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
     private static class SpansReader implements Runnable {
@@ -55,15 +55,18 @@ public class HitsFromQueryParallel extends Hits {
         /** Target number of hits to count, must always be >= {@link globalHitsToProcess} */
         final AtomicInteger globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-        private final HitsArrays globalResults; 
+        private final HitsArrays globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
         private final CapturedGroupsImpl globalCapturedGroups;
 
         // Internal state
         private boolean isDone = false;
-        private final ThreadPauser threadPauser = ThreadPauser.create();
+        private final ThreadAborter threadAborter = ThreadAborter.create();
         private boolean isInitialized;
         private final int docBase;
+
+        private boolean hasPrefetchedHit = false;
+        private int prevDoc = -1;
 
         /**
          * Construct an uninitialized spansreader that will retrieve its own Spans object on when it's ran.
@@ -84,9 +87,9 @@ public class HitsFromQueryParallel extends Hits {
             BLSpanWeight weight,
             LeafReaderContext leafReaderContext,
             HitQueryContext sourceHitQueryContext,
-            
+
             HitsArrays globalResults,
-            CapturedGroupsImpl globalCapturedGroups, 
+            CapturedGroupsImpl globalCapturedGroups,
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
             AtomicInteger globalHitsProcessed,
@@ -162,9 +165,9 @@ public class HitsFromQueryParallel extends Hits {
             BLSpans spans,
             LeafReaderContext leafReaderContext,
             HitQueryContext hitQueryContext,
-            
+
             HitsArrays globalResults,
-            CapturedGroupsImpl globalCapturedGroups, 
+            CapturedGroupsImpl globalCapturedGroups,
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
             AtomicInteger globalHitsProcessed,
@@ -257,16 +260,37 @@ public class HitsFromQueryParallel extends Hits {
 
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
             final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
-            
+
             final HitsArrays results = new HitsArrays();
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
-            final IntUnaryOperator incrementUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
+            final IntUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
+            final IntUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
 
             try {
-                int prevDoc = spans.docID();
-                while (advanceSpansToNextHit(spans, liveDocs)) {
+                // we moeten een hit fetchen als:
+                // dit nog niet gebeurt is
+
+                // we moeten markeren dat we een hit gefetched hebben als:
+                // we de hit niet konder registreren
+
+                // we moeten de hit proberen te registeren als:
+                // altijd?
+
+                if (!hasPrefetchedHit) {
+                    prevDoc = spans.docID();
+                    hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
+                }
+
+                while (hasPrefetchedHit) {
+                    // probeer te registreren, als dat niet lukt, return
                     // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
-                    final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementUnlessAtMax) < this.globalHitsToProcess.get();
+                    final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax) >= this.globalHitsToCount.get();
+                    if (abortBeforeCounting) return;
+
+                    // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
+                    final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
+
+
                     final int doc = spans.docID() + docBase;
                     if (doc != prevDoc) {
                         globalDocsCounted.incrementAndGet();
@@ -274,7 +298,6 @@ public class HitsFromQueryParallel extends Hits {
                             globalDocsProcessed.incrementAndGet();
                         }
                         reportHitsIfMoreThan(results, capturedGroups, 100); // only once per doc, so hits from the same doc remain contiguous in the master list
-                        prevDoc = doc;
                     }
 
                     if (storeThisHit) {
@@ -288,12 +311,11 @@ public class HitsFromQueryParallel extends Hits {
                         }
                     }
 
-                    // Stop if we're done.
-                    if (this.globalHitsCounted.incrementAndGet() >= this.globalHitsToCount.get())
-                        return;
+                    hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
+                    prevDoc = doc;
 
                     // Do this at the end so interruptions don't happen halfway a loop and lead to invalid states
-                    threadPauser.waitIfPaused();
+                    threadAborter.checkAbort();
                 }
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);
@@ -311,7 +333,7 @@ public class HitsFromQueryParallel extends Hits {
             this.hitQueryContext = null;
             this.leafReaderContext = null;
         }
-        
+
         void reportHitsIfMoreThan(HitsArrays hits, ArrayList<Span[]> capturedGroups, int count) {
             if (hits.size() >= count) {
                 globalResults.addAll(hits);
@@ -418,7 +440,7 @@ public class HitsFromQueryParallel extends Hits {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    this.capturedGroups = this.hitQueryContext.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(this.hitQueryContext.getCapturedGroupNames()) : null;
+                    this.capturedGroups = hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0 ? new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames()) : null;
 
                     spansReaders.add(
                         new SpansReader(
@@ -437,25 +459,24 @@ public class HitsFromQueryParallel extends Hits {
                     );
 
                     hasInitialized = true;
-                    continue;
+                } else {
+                    // add self-initializing spansreader
+                    spansReaders.add(
+                        new SpansReader(
+                            weight,
+                            leafReaderContext,
+                            this.hitQueryContext,
+                            this.hitsArrays,
+                            this.capturedGroups,
+                            this.globalDocsProcessed,
+                            this.globalDocsCounted,
+                            this.globalHitsProcessed,
+                            this.globalHitsCounted,
+                            this.requestedHitsToProcess,
+                            this.requestedHitsToCount
+                        )
+                    );
                 }
-
-                // else add self-initializing spansreader
-                spansReaders.add(
-                    new SpansReader(
-                        weight,
-                        leafReaderContext,
-                        this.hitQueryContext,
-                        this.hitsArrays,
-                        this.capturedGroups,
-                        this.globalDocsProcessed,
-                        this.globalDocsCounted,
-                        this.globalHitsProcessed,
-                        this.globalHitsCounted,
-                        this.requestedHitsToProcess,
-                        this.requestedHitsToCount
-                    )
-                );
             }
 
             if (spansReaders.isEmpty())
@@ -468,7 +489,7 @@ public class HitsFromQueryParallel extends Hits {
     @Override
     protected void ensureResultsRead(int number) {
         number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
-        
+
         if (allSourceSpansFullyRead || (hitsArrays.size() >= number)) {
             return;
         }
@@ -488,7 +509,7 @@ public class HitsFromQueryParallel extends Hits {
                 if (allSourceSpansFullyRead || (hitsArrays.size() >= number)) {
                     return;
                 }
-            
+
                 Thread.sleep(50);
             }
             hasLock = true;
@@ -511,6 +532,7 @@ public class HitsFromQueryParallel extends Hits {
                 while (it.hasNext()) { if (it.next().isDone) it.remove(); } // remove all SpansReaders that have finished.
                 this.allSourceSpansFullyRead = spansReaders.isEmpty();
             } catch (Exception e) {
+                e.printStackTrace();
                 throw e.getCause(); // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
             }
         } catch (InterruptedException e) {
@@ -527,7 +549,7 @@ public class HitsFromQueryParallel extends Hits {
 
     @Override
     public MaxStats maxStats() {
-        return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);    
+        return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);
     }
 
     @Override

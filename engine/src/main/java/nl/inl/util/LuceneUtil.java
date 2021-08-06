@@ -293,6 +293,58 @@ public final class LuceneUtil {
             String prefix, boolean sensitive) {
         return findTermsByPrefix(index, fieldName, prefix, sensitive, -1);
     }
+    
+    /** Handle a term. */
+    @FunctionalInterface
+    public interface TermHandler {
+    	/** Handle a term.
+    	 * 
+    	 * @param term term to handle
+    	 * @return whether or not to continue iterating over terms.
+    	 */
+    	boolean term(String term);
+    }
+    
+    /**
+     * Find terms in the index based on a prefix. Useful for autocomplete.
+     *
+     * @param index the index
+     * @param fieldName the field to find terms for
+     * @param startFrom (prefix of a) term to start iterating from, or null to start at the beginning
+     * @param handler called to handle terms found, until it returns false (or we run out of terms)
+     * @return the matching terms
+     */
+    public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
+    	boolean allTerms = startFrom == null || startFrom.length() == 0;
+        if (allTerms) {
+        	startFrom = "";
+        }
+        try {
+            outerLoop:
+            for (LeafReaderContext leafReader : index.leaves()) {
+                Terms terms = leafReader.reader().terms(fieldName);
+                if (terms == null) {
+                    if (logger.isDebugEnabled())
+                        logger.debug("no terms for field " + fieldName + " in leafReader, skipping");
+                    continue;
+                }
+                TermsEnum termsEnum = terms.iterator();
+                BytesRef brPrefix = new BytesRef(startFrom.getBytes(LUCENE_DEFAULT_CHARSET));
+                TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(brPrefix);
+
+                if (seekStatus == TermsEnum.SeekStatus.END) {
+                    continue;
+                }
+                for (BytesRef term = termsEnum.term(); term != null; term = termsEnum.next()) {
+                    String termText = term.utf8ToString();
+                    if (!handler.term(termText))
+                    	break outerLoop;
+                }
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
 
     /**
      * Find terms in the index based on a prefix. Useful for autocomplete.

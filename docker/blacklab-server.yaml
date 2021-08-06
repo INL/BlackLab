@@ -1,179 +1,47 @@
 ---
-    # BlackLab Server config file
-    # ===============================================================
-    # NOTE: this file is in JSON format, with end-of-line comments (#) allowed.
-    
-    
-    # The location and parameters for each index
-    # ---------------------------------------------------------------
-    # (missing indices will be skipped)
-    
-    # Index collections are multiple indices under a single directory.
-    # BLS will detect when an index is added and make it available to
-    # query. It will also detect if it is removed.
-    # NOTE: if multiple accessible collections contain indices with the 
-    # same name, one of them is picked at random (i.e. don't do this).  
-    indexCollections:
-    - /data/
-    
-    # Settings related to debugging and troubleshooting
-    debug:
-      # A list of IPs that will run in debug mode.
-      # In debug mode, ...
-      # - the /cache-info resource show the contents of the job cache
-      #   (other debug information resources may be added in the 
-      #   future)
-      # - output is prettyprinted by default (can be overriden with the
-      #   "prettyprint"
-      #   GET parameter)
-      addresses:
-      - 127.0.0.1
-      - '0:0:0:0:0:0:0:1'
-    
-      # Trace settings. Controls per-subject detail logging.
-      trace:
-        indexOpening: false      # logs details about index opening
-        optimization: true       # logs optimization info to sqlite db, if configured
-        queryExecution: false    # (currently does nothing)
-        cache: false             # logs search cache management
-        requestHandling: false   # logs request handling phases
-    
-    
-    # Configuration that affects how requests are handled
-    # ---------------------------------------------------------------
-    requests:
-      # Default number of hits/results per page.
-      # The "number" GET parameter overrides this value.
-      defaultPageSize: 20
-    
-      # Default sensitivity of searches:
-      # - sensitive (case- and diacritics-sensitive)
-      # - insensitive (case- and diacritics-insensitive)
-      # - case (case-sensitive, diacritics-insensitive)
-      # - diacritics (case-insensitive, diacritics-sensitive)
-      # The "sensitive" GET parameter overrides this value (yes or no only).
-      # You can also override this setting by specifying the desired sensitivity in the pattern:
-      # Insensitive search: [lemma="(?i)test"] Sensitive search: [word="(?-i)Test"]
-      defaultSearchSensitivity: insensitive
-    
-      # Default number of words around hit.
-      # The "wordsaroundhit" GET parameter overrides this value.
-      defaultContextSize: 5
-    
-      # Maximum context size allowed. Only applies to sets of hits, not to individual snippets.
-      maxContextSize: 20
-    
-      # Maximum snippet size allowed. If this is too big, users can view the whole document even
-      # if they may not be allowed to.
-      # (this applies to the "wordsaroundhit" GET parameter of the /docs/ID/snippet resource)
-      maxSnippetSize: 120
-    
-      # The default maximum number of hits to retrieve
-      # (retrieved hits are used for sorting, grouping, etc.)
-      # -1 means no limit, but be careful, this may overload your server.
-      defaultMaxHitsToRetrieve: 1000000
-    
-      # The default maximum number of hits to count.
-      # (counted hits are only counted, not retrieved, and are therefore not used
-      #  for sorting, grouping, etc.)
-      # -1 means no limit, but be careful, this may overload your server.
-      defaultMaxHitsToCount: 5000000
-    
-      # The maximum allowed number of hits to retrieve.
-      # (users may override the default - this is the maximum number they may specify)
-      # -1 means no limit, but be careful, this may overload your server.
-      maxHitsToRetrieveAllowed: 2000000
-    
-      # The maximum allowed number of hits to count.
-      # (users may override the default - this is the maximum number they may specify)
-      # -1 means no limit, but be careful, this may overload your server.
-      maxHitsToCountAllowed: 10000000
-    
-      # Clients from these IPs may choose their own user id and send it along in a GET parameter "userid".
-      # This setting exists for web applications that contact the webservice (partly) through the
-      # server component. They would get the same session id for each user, making them likely 
-      # to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of
-      # their clients and send them along with any request to the webservice.
-      overrideUserIdIps:
-      - 127.0.0.1
-      - '0:0:0:0:0:0:0:1'
-    
-      # When true exclude empty word properties (lemma, pos,...) in 
-      # result (default is to include empty properties)
-      omitEmptyProperties: false
-      
-      # By default, BLS will send the Access-Control-Allow-Origin
-      # header to allow all origins to connect, but you can override
-      # this behaviour here.
-      accessControlAllowOrigin: "*"
-    
-    # Settings related to tuning server load and client responsiveness
-    # ---------------------------------------------------------------
-    performance:
-    
-      # Settings for controlling server load
-      serverLoad:
-    
-        # Maximum number of concurrent searches.
-        # Should be set no higher than the number of cores in the machine. 
-        maxConcurrentSearches: 2
-    
-        # Maximum number of paused searched.
-        # Pausing too many searches will just fill up memory, so don't
-        # set this too high. 
-        maxPausedSearches: 4
-    
-        # Long-running counts take up a lot of CPU and memory. If a client hasn't
-        # checked the status of a count, we'd like to pause it and eventually abort
-        # it so we don't waste resources on something nobody's interested in anymore.
-        # This setting controls after how many seconds such an "abandoned" count is
-        # paused. The client might come back to it, so we don't abort it right away.
-        abandonedCountPauseTimeSec: 10
-    
-        # Similar to the previous setting, this setting controls after how many seconds
-        # an "abandoned" count is aborted.
-        abandonedCountAbortTimeSec: 600
-    
-      # Settings for job caching.
-      cache:
-    
-        # How many search jobs will we cache at most? (or -1 for no limit)
-        # A note about jobs: a request to BlackLab Server routinely results in 3+ simultaneous search jobs
-        # being launched: a job to get a window into the sorted hits, which launches a job to get sorted hits,
-        # which launches a job to get the unsorted hits. There's also usually a separate job for keeping track
-        # of the running total number of hits found (which re-uses the unsorted hits job). The reason for this
-        # architecture is that jobs can be more easily re-used in subsequent searches that way: if the sort changes,
-        # we can still use the unsorted hits job, etc. Practical upshot of this: number of jobs does not
-        # equal number of searches.
-        maxNumberOfJobs: 50
-    
-        # After how much time will a search job be removed from the cache? (in seconds)
-        maxJobAgeSec: 1800
-    
-        # Maximum size the cache may grow to (in megabytes), or -1 for no limit.
-        # [IMPLEMENTED IN 2.0; FOR EARLIER VERSIONS, LEAVE THIS AT -1 ]
-        maxSizeMegs: 100
-    
-        # How much free memory the cache should shoot for (in megabytes) while cleaning up.
-        # Because we don't have direct control over the garbage collector, we can't reliably clean up until
-        # this exact number is available. Instead we just get rid of a few cached jobs whenever a
-        # new job is added and we're under this target number.
-        targetFreeMemMegs: 100
-    
-      # The minimum amount of free memory required to start a new search job. If this memory is not available,
-      # an error message is returned.
-      minFreeMemForSearchMegs: 30
-    
-      # The maximum number of jobs a user is allowed to have running at the same time. This does not
-      # include finished jobs in the cache, only jobs that have not finished yet.
-      # The above remark about jobs applies here too: one search request will start multiple jobs.
-      # Therefore, this value shouldn't be set too low. This setting is meant to prevent over-eager scripts 
-      # and other abuse from bringing down the server. Regular users should never hit this limit.
-      maxRunningJobsPerUser: 10
-    
-      # How long the client may keep results we give them in their local (browser) cache.
-      # This is used to write HTTP cache headers. Low values mean clients might re-request
-      # the same information, making clients less responsive and consuming more network resources.
-      # Higher values make clients more responsive but could cause problems if the data (or worse,
-      # the protocol) changes after an update. A value of an hour or so seems reasonable.
-      clientCacheTimeSec: 3600
+# BlackLab Server config file
+# ===============================================================
+
+# This indicates we're using the new index format.
+configVersion: 2
+
+# Where indexes can be found
+# (list directories whose subdirectories are indexes, or directories containing a single index)
+indexLocations:
+- /data
+
+
+# Settings related to tuning server load and client responsiveness
+performance:
+
+    # How many search tasks should be able to run simultaneously
+    # (set this to take advantage of the cores/threads available to the machine;
+    # probably don't set it any larger, as this won't help and might hurt)
+    # (-1 to autodetect)
+    maxConcurrentSearches: 6
+
+    # How many threads may a single search task use at most?
+    # (lower values will allow more simultaneous searches to run;
+    # higher values improve search performance, but will crowd out other searches.
+    # e.g. if you set this to the same number as maxConcurrentSearches, a single 
+    # search may queue all other searches until it's done)
+    maxThreadsPerSearch: 2
+
+
+# Settings for diagnosing problems
+debug:
+    #  A list of IPs that will run in debug mode.
+    #  In debug mode, ...
+    #  - the /cache-info resource show the contents of the job cache
+    #    (other debug information resources may be added in the future)
+    #  - output is prettyprinted by default (can be overriden with the prettyprint
+    #    GET parameter)
+    addresses:
+    - 127.0.0.1       #  IPv4 localhost
+    - 0:0:0:0:0:0:0:1 #  IPv6 localhost
+    - 172.16.10.19    #  Firewall DMZ
+    - 132.229.188.253 #  Proxy
+
+    # Always allow debug info? (default: no)
+    # Useful for development. Disable in production.
+    alwaysAllowDebugInfo: yes
