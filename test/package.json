@@ -4,7 +4,8 @@
   "description": "API tests for BlackLab Server",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "sleep-test": "sleep 5 && mocha"
   },
   "devDependencies": {
     "chai": "^4.3.4",
