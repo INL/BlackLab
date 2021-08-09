@@ -441,11 +441,11 @@ public class HitsFromQueryParallel extends Hits {
             if (allSourceSpansFullyRead || (results.size() >= number)) {
                 return;
             }
-        }
 
-        // clamp number to [currentrequested, number, maxrequested], defaulting to max if number < 0
-        this.requestedHitsToCount.set(Math.max(Math.min(number, maxHitsToCount), requestedHitsToCount.get())); // update count
-        this.requestedHitsToProcess.set(Math.max(Math.min(number, maxHitsToProcess), requestedHitsToProcess.get())); // update process
+            // clamp number to [currentrequested, number, maxrequested], defaulting to max if number < 0
+            this.requestedHitsToCount.set(Math.max(Math.min(number, maxHitsToCount), requestedHitsToCount.get())); // update count
+            this.requestedHitsToProcess.set(Math.max(Math.min(number, maxHitsToProcess), requestedHitsToProcess.get())); // update process
+        }
 
         boolean hasLock = false;
         try {
