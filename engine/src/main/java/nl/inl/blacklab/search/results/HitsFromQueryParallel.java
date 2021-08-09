@@ -275,6 +275,7 @@ public class HitsFromQueryParallel extends Hits {
                     if (storeThisHit) {
                         int start = spans.startPosition();
                         int end = spans.endPosition();
+                        // NOTE JN: could these be kept in HitsArrays as well?
                         Hit hit = Hit.create(doc, start, end);
                         results.add(hit);
                         if (capturedGroups != null) {
@@ -447,17 +448,17 @@ public class HitsFromQueryParallel extends Hits {
 
     @Override
     protected void ensureResultsRead(int number) {
-        number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
+        final int clampedNumber = number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
         synchronized(results) { // synchronize because worker threads might be writing
-            if (allSourceSpansFullyRead || (results.size() >= number)) {
+            if (allSourceSpansFullyRead || (results.size() >= clampedNumber)) {
                 return;
             }
-
-            // clamp number to [currentrequested, number, maxrequested], defaulting to max if number < 0
-            this.requestedHitsToCount.set(Math.max(Math.min(number, maxHitsToCount), requestedHitsToCount.get())); // update count
-            this.requestedHitsToProcess.set(Math.max(Math.min(number, maxHitsToProcess), requestedHitsToProcess.get())); // update process
         }
+
+        // clamp number to [currentrequested, number, maxrequested], defaulting to max if number < 0
+        this.requestedHitsToCount.getAndUpdate(c -> Math.max(Math.min(clampedNumber, maxHitsToCount), c)); // update count
+        this.requestedHitsToProcess.getAndUpdate(c -> Math.max(Math.min(clampedNumber, maxHitsToProcess), c)); // update process
 
         boolean hasLock = false;
         try {
@@ -469,7 +470,7 @@ public class HitsFromQueryParallel extends Hits {
             while (!ensureHitsReadLock.tryLock()) {
                 synchronized(results) {
                     // synchronize on results just to be sure we're not getting invalid state while a worker thread is writing
-                    if (allSourceSpansFullyRead || (results.size() >= number)) {
+                    if (allSourceSpansFullyRead || (results.size() >= clampedNumber)) {
                         return;
                     }
                 }
@@ -489,10 +490,15 @@ public class HitsFromQueryParallel extends Hits {
                     .stream()
                     .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
                     .collect(Collectors.toList()); // gather the futures
-
-                for (Future<?> f : pendingResults) { f.get(); } // wait for workers to complete.
+                // Wait for workers to complete.
+                for (Future<?> f : pendingResults)
+                    f.get();
+                // Remove all SpansReaders that have finished.
                 Iterator<SpansReader> it = spansReaders.iterator();
-                while (it.hasNext()) { if (it.next().isDone) it.remove(); } // remove all SpansReaders that have finished.
+                while (it.hasNext()) {
+                    if (it.next().isDone)
+                        it.remove();
+                }
                 this.allSourceSpansFullyRead = spansReaders.isEmpty();
             } catch (Exception e) {
                 e.printStackTrace();
