@@ -35,6 +35,10 @@ import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
     private static class SpansReader implements Runnable {
+
+        /** How many hits should we collect (at least) before we add them to the global results? */
+        private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
+
         BLSpanWeight weight; // Weight is set when this is uninitialized, spans is set otherwise
         BLSpans spans; // usually lazy initialization - takes a long time to set up and holds a large amount of memory. Nulled after we're finished
 
@@ -161,6 +165,7 @@ public class HitsFromQueryParallel extends Hits {
             try {
                 this.isInitialized = true;
                 this.spans = this.weight.getSpans(this.leafReaderContext, Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
+                this.weight = null;
                 if (spans == null) { // This is normal, sometimes a section of the index does not contain hits.
                     this.isDone = true;
                     return;
@@ -168,6 +173,7 @@ public class HitsFromQueryParallel extends Hits {
 
                 this.hitQueryContext = this.sourceHitQueryContext.copyWith(this.spans);
                 this.spans.setHitQueryContext(this.hitQueryContext);
+                this.sourceHitQueryContext = null;
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -242,13 +248,13 @@ public class HitsFromQueryParallel extends Hits {
 
                 while (hasPrefetchedHit) {
                     // probeer te registreren, als dat niet lukt, return
-                    // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
+                    // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax) >= this.globalHitsToCount.get();
-                    if (abortBeforeCounting) return;
+                    if (abortBeforeCounting)
+                        return;
 
                     // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
                     final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
-
 
                     final int doc = spans.docID() + docBase;
                     if (doc != prevDoc) {
@@ -256,7 +262,14 @@ public class HitsFromQueryParallel extends Hits {
                         if (storeThisHit) {
                             globalDocsProcessed.incrementAndGet();
                         }
-                        reportHitsIfMoreThan(results, capturedGroups, 100); // only once per doc, so hits from the same doc remain contiguous in the master list
+                        if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
+                            // We've built up a batch of hits. Add them to the global results.
+                            // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
+                            // [NOTE JN: does this matter? and if so, doesn't it also matter that docId increases throughout the
+                            //           master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
+                            //           require these properties to hold.]
+                            addToGlobalResults(results, capturedGroups);
+                        }
                     }
 
                     if (storeThisHit) {
@@ -283,7 +296,8 @@ public class HitsFromQueryParallel extends Hits {
                 throw BlackLabRuntimeException.wrap(e);
             } finally {
                 // write out leftover hits in last document/aborted document
-                reportHitsIfMoreThan(results, capturedGroups, 0);
+                if (!results.isEmpty())
+                    addToGlobalResults(results, capturedGroups);
             }
 
             // If we're here, the loop reached its natural end - we're done.
@@ -294,17 +308,15 @@ public class HitsFromQueryParallel extends Hits {
             this.leafReaderContext = null;
         }
 
-        void reportHitsIfMoreThan(List<Hit> hits, Map<Hit, Span[]> capturedGroups, int count) {
-            if (hits.size() >= count) {
-                synchronized (globalResults) {
-                    globalResults.addAll(hits);
-                    hits.clear();
+        void addToGlobalResults(List<Hit> hits, Map<Hit, Span[]> capturedGroups) {
+            synchronized (globalResults) {
+                globalResults.addAll(hits);
+                hits.clear();
 
-                    if (globalCapturedGroups != null) {
-                        synchronized (globalCapturedGroups) {
-                            globalCapturedGroups.putAll(capturedGroups);
-                            capturedGroups.clear();
-                        }
+                if (globalCapturedGroups != null) {
+                    synchronized (globalCapturedGroups) {
+                        globalCapturedGroups.putAll(capturedGroups);
+                        capturedGroups.clear();
                     }
                 }
             }
