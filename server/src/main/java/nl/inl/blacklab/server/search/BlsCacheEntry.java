@@ -19,9 +19,8 @@ import nl.inl.util.ThreadAborter;
 
 public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
-    public static final double ALMOST_ZERO = 0.0001;
-
-    public static final int JUST_STARTED = 5;
+    /** When waiting for the task to complete, poll how often? (ms) */
+    private static final int POLLING_TIME_MS = 100;
 
     /**
      * How long a job remains "young". Young jobs are treated differently than old
@@ -310,8 +309,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         // Wait until result available
         long ms = unit.toMillis(time);
         while (ms > 0 && !initialSearchDone && !futureDone() && !cancelled) {
-            Thread.sleep(100);
-            ms -= 100;
+            Thread.sleep(POLLING_TIME_MS);
+            ms -= POLLING_TIME_MS;
         }
         if (cancelled || futureCancelled())
             throw new InterruptedSearch("Search was cancelled");

@@ -21,9 +21,7 @@ import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
-import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
-import nl.inl.blacklab.server.config.BLSConfigPerformance;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.util.MemoryUtil;
@@ -49,11 +47,10 @@ public class BlsCache implements SearchCache {
 
     private LogDatabase logDatabase = null;
 
-    public BlsCache(BLSConfig config) {
-        BLSConfigCache cacheConfig = config.getCache();
-        initLoadManagement(cacheConfig, config.getPerformance());
-        this.trace = config.getLog().getTrace().isCache();
-        cacheDisabled = cacheConfig.getMaxNumberOfJobs() == 0 || cacheConfig.getMaxJobAgeSec() == 0 || cacheConfig.getMaxSizeMegs() == 0;
+    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
+        initLoadManagement(config, maxConcurrentSearches, abandonedCountAbortTimeSec);
+        this.trace = trace;
+        cacheDisabled = config.getMaxNumberOfJobs() == 0 || config.getMaxJobAgeSec() == 0 || config.getMaxSizeMegs() == 0;
     }
 
     public void setLogDatabase(LogDatabase logDatabase) {
@@ -212,8 +209,6 @@ public class BlsCache implements SearchCache {
 
     private BLSConfigCache config;
 
-    private BLSConfigPerformance perfConfig;
-
     private Comparator<BlsCacheEntry<?>> worthinessComparator;
 
     private int resultsObjectsInCache;
@@ -224,9 +219,16 @@ public class BlsCache implements SearchCache {
 
     private long lastCacheSnapshot = 0;
 
-    private void initLoadManagement(BLSConfigCache config, BLSConfigPerformance perfConfig) {
+    /** Allow how many concurrent searches? */
+    private int maxConcurrentSearches;
+
+    /** Abort an abandoned count after how much time? (s) */
+    private int abandonedCountAbortTimeSec;
+
+    private void initLoadManagement(BLSConfigCache config, int maxConcurrentSearches, int countAbortTimeSec) {
         this.config = config;
-        this.perfConfig = perfConfig;
+        this.maxConcurrentSearches = maxConcurrentSearches;
+        this.abandonedCountAbortTimeSec = countAbortTimeSec;
 
         worthinessComparator = new Comparator<BlsCacheEntry<?>>() {
             @Override
@@ -382,49 +384,38 @@ public class BlsCache implements SearchCache {
         // STEP 2: make sure the most worthy searches get the CPU, and abort
         //         any others to avoid bringing down the server.
 
-        int coresLeft = perfConfig.getMaxConcurrentSearches();
+        int coresLeft = maxConcurrentSearches;
         for (BlsCacheEntry<?> search : searches) {
-            if (search.isDone()) {
-                // Finished search. Keep in cache?
-
-                // NOTE: we'll leave this to removeOldSearches() for now.
-                // Later we'll integrate the two.
-            } else {
+            // NOTE: we'll leave removing finished searching from cache to removeOldSearches() for now.
+            // Later we'll integrate the two.
+            if (!search.isDone()) {
                 // Running search. Run or abort?
                 boolean isCount = search.search() instanceof SearchCount;
-                if (isCount && search.timeSinceLastAccessMs() > perfConfig.getAbandonedCountAbortTimeSec() * 1000L) {
-                    applyAction(search, ServerLoadQueryAction.ABORT, "abandoned count");
+                if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
+                    abortSearch(search, "abandoned count");
                 } else if (coresLeft > 0) {
                     // A core is available. Run the search.
                     coresLeft--;
                 } else {
                     // No cores. Abort the search.
-                    applyAction(search, ServerLoadQueryAction.ABORT, "no cores left");
+                    abortSearch(search, "no cores left");
                 }
             }
         }
     }
 
     /**
-     * Apply one of the load managing actions to a search.
+     * Abort a search.
      *
      * @param search the search
-     * @param action the action to apply
-     * @param reason the reason for this action, so we can log it
+     * @param reason the reason for aborting it, so we can log it
      */
-    private void applyAction(BlsCacheEntry<?> search, ServerLoadQueryAction action, String reason) {
-        // See what to do with the current search
-        switch (action) {
-        case ABORT:
-            if (!search.isSearchDone()) {
-                // TODO: Maybe we should blacklist certain searches for a time?
-                if (trace)
-                    logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
-                remove(search.search());
-                search.cancelSearch();
-            }
-            break;
-        }
+    private void abortSearch(BlsCacheEntry<?> search, String reason) {
+        // TODO: Maybe we should blacklist certain searches for a time?
+        if (trace)
+            logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
+        remove(search.search());
+        search.cancelSearch();
     }
 
     private void checkFreeMemory() {
