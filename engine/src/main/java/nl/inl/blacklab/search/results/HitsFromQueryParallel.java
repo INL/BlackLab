@@ -34,6 +34,10 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
+
+    /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
+    private static final int HIT_POLLING_TIME_MS = 50;
+
     private static class SpansReader implements Runnable {
 
         /** How many hits should we collect (at least) before we add them to the global results? */
@@ -474,7 +478,7 @@ public class HitsFromQueryParallel extends Hits {
                         return;
                     }
                 }
-                Thread.sleep(50);
+                Thread.sleep(HIT_POLLING_TIME_MS);
             }
             hasLock = true;
             // This is the blocking portion, retrieve all hits from the other threads.
