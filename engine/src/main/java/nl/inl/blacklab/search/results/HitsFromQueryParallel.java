@@ -507,9 +507,7 @@ public class HitsFromQueryParallel extends Hits {
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         } catch (Throwable e) {
-            if (e instanceof BlackLabRuntimeException)
-                throw (BlackLabRuntimeException) e;
-            throw new BlackLabRuntimeException(e);
+            throw BlackLabRuntimeException.wrap(e);
         } finally {
             if (hasLock)
                 ensureHitsReadLock.unlock();
