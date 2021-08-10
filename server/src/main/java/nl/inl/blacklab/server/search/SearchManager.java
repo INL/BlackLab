@@ -44,10 +44,9 @@ public class SearchManager {
         blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
 
         // Create the cache
-        int maxConcurrentSearches = config.getPerformance().getMaxConcurrentSearches();
         int abandonedCountAbortTimeSec = config.getPerformance().getAbandonedCountAbortTimeSec();
         boolean traceCache = config.getLog().getTrace().isCache();
-        cache = new BlsCache(config.getCache(), maxConcurrentSearches, abandonedCountAbortTimeSec, traceCache);
+        cache = new BlsCache(config.getCache(), abandonedCountAbortTimeSec, traceCache);
 
         // Find the indices
         indexMan = new IndexManager(this, config);

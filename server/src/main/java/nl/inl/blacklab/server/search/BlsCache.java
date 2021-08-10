@@ -47,10 +47,24 @@ public class BlsCache implements SearchCache {
 
     private LogDatabase logDatabase = null;
 
-    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
-        initLoadManagement(config, maxConcurrentSearches, abandonedCountAbortTimeSec);
+    public BlsCache(BLSConfigCache config, int abandonedCountAbortTimeSec, boolean trace) {
+        this.config = config;
+        this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
         cacheDisabled = config.getMaxNumberOfJobs() == 0 || config.getMaxJobAgeSec() == 0 || config.getMaxSizeMegs() == 0;
+
+        if (!cacheDisabled) {
+            worthinessComparator = new Comparator<BlsCacheEntry<?>>() {
+                @Override
+                public int compare(BlsCacheEntry<?> o1, BlsCacheEntry<?> o2) {
+                    long result = o2.worthiness() - o1.worthiness();
+                    return result == 0 ? 0 : (result < 0 ? -1 : 1);
+                }
+            };
+
+            cleanupThread = new CleanupSearchesThread();
+            cleanupThread.start();
+        }
     }
 
     public void setLogDatabase(LogDatabase logDatabase) {
@@ -62,8 +76,10 @@ public class BlsCache implements SearchCache {
      */
     @Override
     public void cleanup() {
-        cleanUpThread.interrupt();
-        cleanUpThread = null;
+        if (cleanupThread != null) {
+            cleanupThread.interrupt();
+            cleanupThread = null;
+        }
         clear(true);
     }
 
@@ -135,7 +151,7 @@ public class BlsCache implements SearchCache {
                 try {
                     long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
                     if (freeMegs < config.getMinFreeMemForSearchMegs()) {
-                        cleanUpSearches();  // try to free up space for next search
+                        cleanupSearches();  // try to free up space for next search
                         logger.warn(
                                 "Can't start new search, not enough memory (" + freeMegs + "M < "
                                         + config.getMinFreeMemForSearchMegs() + "M)");
@@ -177,12 +193,12 @@ public class BlsCache implements SearchCache {
      * A thread that regularly calls cleanUpSearches() to
      * ensure that cache cleanup continues even if no new requests are coming in.
      */
-    class CleanUpSearchesThread extends Thread implements UncaughtExceptionHandler {
+    class CleanupSearchesThread extends Thread implements UncaughtExceptionHandler {
 
         private static final int CLEAN_UP_CACHE_INTERVAL_MS = 500;
 
         /** Construct the load manager thread object. */
-        public CleanUpSearchesThread() {
+        public CleanupSearchesThread() {
             super("BlsLoadManagerThread");
             setUncaughtExceptionHandler(this);
         }
@@ -196,11 +212,11 @@ public class BlsCache implements SearchCache {
                 try {
                     Thread.sleep(CLEAN_UP_CACHE_INTERVAL_MS);
                 } catch (InterruptedException e) {
-                    logger.info("LOADMGR interrupted");
+                    logger.info("CACHE-CLEANUP interrupted");
                     return;
                 }
 
-                cleanUpSearches();
+                cleanupSearches();
             }
         }
 
@@ -218,34 +234,14 @@ public class BlsCache implements SearchCache {
 
     private int resultsObjectsInCache;
 
-    private CleanUpSearchesThread cleanUpThread;
+    private CleanupSearchesThread cleanupThread;
 
     private long lastCacheLog = 0;
 
     private long lastCacheSnapshot = 0;
 
-    /** Allow how many concurrent searches? */
-    private int maxConcurrentSearches;
-
     /** Abort an abandoned count after how much time? (s) */
     private int abandonedCountAbortTimeSec;
-
-    private void initLoadManagement(BLSConfigCache config, int maxConcurrentSearches, int countAbortTimeSec) {
-        this.config = config;
-        this.maxConcurrentSearches = maxConcurrentSearches;
-        this.abandonedCountAbortTimeSec = countAbortTimeSec;
-
-        worthinessComparator = new Comparator<BlsCacheEntry<?>>() {
-            @Override
-            public int compare(BlsCacheEntry<?> o1, BlsCacheEntry<?> o2) {
-                long result = o2.worthiness() - o1.worthiness();
-                return result == 0 ? 0 : (result < 0 ? -1 : 1);
-            }
-        };
-
-        cleanUpThread = new CleanUpSearchesThread();
-        cleanUpThread.start();
-    }
 
     /**
      * Estimate number of result objects (e.g. Hits) in cache.
@@ -269,7 +265,7 @@ public class BlsCache implements SearchCache {
      * Abort searches if too much memory is in use or the search is taking too long.
      * Remove older finished searches from cache.
      */
-    synchronized void cleanUpSearches() {
+    synchronized void cleanupSearches() {
 
         estimateResultObjectsInCache();
         long cacheSizeBytes = (long)resultsObjectsInCache * SIZE_OF_HIT;
@@ -305,10 +301,9 @@ public class BlsCache implements SearchCache {
                 }
 
                 // Cancel search
-                remove(search1.search());
                 cacheSizeBytes -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT;
                 numberOfSearchesInCache--;
-                search1.cancelSearch();
+                abortSearch(search1, "taking too long");
                 if (trace)
                     logger.debug("  Cancelling searchjob: " + search1);
                 i++; // don't skip an element
@@ -371,30 +366,32 @@ public class BlsCache implements SearchCache {
         }
 
         //------------------
-        // STEP 2: allow no more than maxConcurrentSearches searches to run.
-        //         abort any long-running counts that no client has asked about for a while.
-        int coresLeft = maxConcurrentSearches;
+        // STEP 2: abort any long-running counts that no client has asked about for a while.
         for (int i = 0; i < searches.size(); i++) {
             BlsCacheEntry<?> search = searches.get(i);
-
-            // NOTE: we'll leave removing finished searching from cache to removeOldSearches() for now.
-            // Later we'll integrate the two.
             if (!search.isDone()) {
                 // Running search. Run or abort?
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
                     abortSearch(search, "abandoned count");
                     i--; // don't skip an element
-                } else if (coresLeft > 0) {
-                    // A core is available. Run the search.
-                    coresLeft--;
-                } else {
-                    // No cores. Abort the search.
-                    abortSearch(search, "no cores left");
-                    i--; // don't skip an element
                 }
             }
         }
+    }
+
+    /**
+     * Abort a search.
+     *
+     * @param search the search
+     * @param reason the reason for aborting it, so we can log it
+     */
+    private void abortSearch(BlsCacheEntry<?> search, String reason) {
+        // TODO: Maybe we should blacklist certain searches for a time?
+        if (trace)
+            logger.warn("CACHE-CLEANUP: Aborting search: " + search + " (" + reason + ")");
+        remove(search.search());
+        search.cancelSearch();
     }
 
     private void logCacheState(long cacheSizeBytes, List<BlsCacheEntry<?>> searches) {
@@ -420,20 +417,6 @@ public class BlsCache implements SearchCache {
             }
             logDatabase.addCacheInfo(snapshot, searches.size(), numberRunning, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
         }
-    }
-
-    /**
-     * Abort a search.
-     *
-     * @param search the search
-     * @param reason the reason for aborting it, so we can log it
-     */
-    private void abortSearch(BlsCacheEntry<?> search, String reason) {
-        // TODO: Maybe we should blacklist certain searches for a time?
-        if (trace)
-            logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
-        remove(search.search());
-        search.cancelSearch();
     }
 
     /**
