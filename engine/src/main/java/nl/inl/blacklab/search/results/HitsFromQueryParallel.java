@@ -236,14 +236,9 @@ public class HitsFromQueryParallel extends Hits {
             final IntUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
 
             try {
-                // we moeten een hit fetchen als:
-                // dit nog niet gebeurt is
-
-                // we moeten markeren dat we een hit gefetched hebben als:
-                // we de hit niet konder registreren
-
-                // we moeten de hit proberen te registeren als:
-                // altijd?
+                // Try to set the spans to a valid hit.
+                // Mark if it is at a valid hit.
+                // Count and store the hit (if we're not at the limits yet)
 
                 if (!hasPrefetchedHit) {
                     prevDoc = spans.docID();
@@ -251,8 +246,8 @@ public class HitsFromQueryParallel extends Hits {
                 }
 
                 while (hasPrefetchedHit) {
-                    // probeer te registreren, als dat niet lukt, return
-                    // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
+                    // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
+                    // Otherwise, don't store it either. We're done, just return.
                     final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax) >= this.globalHitsToCount.get();
                     if (abortBeforeCounting)
                         return;
@@ -292,7 +287,7 @@ public class HitsFromQueryParallel extends Hits {
                     hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
                     prevDoc = doc;
 
-                    // Do this at the end so interruptions don't happen halfway a loop and lead to invalid states
+                    // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
                     threadAborter.checkAbort();
                 }
             } catch (InterruptedException e) {
