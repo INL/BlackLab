@@ -218,7 +218,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * Note that if the result is available, it does not necessarily
      * mean the results object has e.g. read all its hits. For that,
-     * see {@link #isSearchDone()}.
+     * see {@link #isFullSearchDone()}.
      */
     @Override
     public boolean isDone() {
@@ -401,7 +401,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      *
      * @return true if the search is fully complete (or threw and exception)
      */
-    public boolean isSearchDone() {
+    public boolean isFullSearchDone() {
         return fullSearchDone;
     }
 
@@ -449,7 +449,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     public String status() {
-        if (isSearchDone())
+        if (isFullSearchDone())
             return "finished";
         if (isDone())
             return "counting";
