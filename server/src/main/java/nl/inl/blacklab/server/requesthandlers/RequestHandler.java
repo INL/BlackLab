@@ -76,6 +76,9 @@ public abstract class RequestHandler {
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
+    // Header for Ann's requests IDs
+    private static final String ANN_REQUEST_ID_HEADER_NAME = "X-Request-ID";
+
     /** The available request handlers by name */
     static Map<String, Class<? extends RequestHandler>> availableHandlers;
 
@@ -435,7 +438,12 @@ public abstract class RequestHandler {
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
-            logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
+            String requestId = request.getHeader(ANN_REQUEST_ID_HEADER_NAME);
+            if (requestId == null) {
+                requestId = "unknown";
+            }
+            String requestIdInfo  = String.format("RequestId:%s", requestId);
+            logger.info(ServletUtil.shortenIpv6(requestIdInfo + " " + request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
 
