@@ -293,7 +293,6 @@ public class BlsCache implements SearchCache {
 
         // Look at searches from least worthy to worthiest.
         // Get rid of old searches
-        List<BlsCacheEntry<?>> removed = new ArrayList<>();
         boolean lookAtCacheSizeAndSearchAccessTime = true;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search1 = searches.get(i);
@@ -309,10 +308,10 @@ public class BlsCache implements SearchCache {
                 remove(search1.search());
                 cacheSizeBytes -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT;
                 numberOfSearchesInCache--;
-                removed.add(search1);
                 search1.cancelSearch();
                 if (trace)
                     logger.debug("  Cancelling searchjob: " + search1);
+                i++; // don't skip an element
 
             } else if (search1.isDone()) {
                 // Finished search
@@ -354,32 +353,30 @@ public class BlsCache implements SearchCache {
                         else
                             logger.debug("Searchjob too old (age " + (int)(search1.timeUnusedMs()/1000) + "s > max age "
                                     + config.getMaxJobAgeSec() + "s)");
-                        logger.debug("  Removing searchjob: " + search1);
                     }
                     remove(search1.search());
                     cacheSizeBytes -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT;
                     numberOfSearchesInCache--;
-                    removed.add(search1);
                     memoryToFreeUpMegs -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES;
+                    if (trace)
+                        logger.debug("  Removing searchjob: " + search1);
+                    i++; // don't skip an element
 
                 } else {
                     // Cache is no longer too big and these searches are not too old. Stop checking
-                    // that,
-                    // just check for long-running searches
+                    // that and just check for long-running searches.
                     lookAtCacheSizeAndSearchAccessTime = false;
                 }
             }
-        }
-        // Make sure we don't look at the searches we removed again in the next step
-        for (BlsCacheEntry<?> r : removed) {
-            searches.remove(r);
         }
 
         //------------------
         // STEP 2: allow no more than maxConcurrentSearches searches to run.
         //         abort any long-running counts that no client has asked about for a while.
         int coresLeft = maxConcurrentSearches;
-        for (BlsCacheEntry<?> search : searches) {
+        for (int i = 0; i < searches.size(); i++) {
+            BlsCacheEntry<?> search = searches.get(i);
+
             // NOTE: we'll leave removing finished searching from cache to removeOldSearches() for now.
             // Later we'll integrate the two.
             if (!search.isDone()) {
@@ -387,12 +384,14 @@ public class BlsCache implements SearchCache {
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
                     abortSearch(search, "abandoned count");
+                    i--; // don't skip an element
                 } else if (coresLeft > 0) {
                     // A core is available. Run the search.
                     coresLeft--;
                 } else {
                     // No cores. Abort the search.
                     abortSearch(search, "no cores left");
+                    i--; // don't skip an element
                 }
             }
         }
