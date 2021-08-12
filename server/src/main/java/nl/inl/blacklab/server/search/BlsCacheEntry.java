@@ -8,8 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.search.results.ResultCount;
-import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCount;
@@ -120,28 +118,13 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Perform the requested search.
      *
      * {@link #start(boolean)} submits a Runnable to the search executor service that calls this.
-     *
-     * @param fetchAllResults if true, we should fetch all results right away
      */
     public void executeSearch() {
         try {
-            boolean fetchAllResults = search.fetchAllResults();
-            boolean isResultsInstance = false;
             try {
                 result = search.executeInternal();
-                isResultsInstance = result instanceof Results<?>;
             } finally {
                 initialSearchDone = true;
-            }
-            if (fetchAllResults) {
-                if (isResultsInstance) {
-                    // Fetch all results from the result object
-                    ((Results<?>) result).resultsStats().processedTotal();
-                }
-                if (result instanceof ResultCount) {
-                    // Complete the count
-                    ((ResultCount)result).processedTotal();
-                }
             }
         } catch (Throwable e) {
             // NOTE: we catch Throwable here (while it's normally good practice to
@@ -356,7 +339,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public boolean cancel(boolean interrupt) {
         if (initialSearchDone)
-            return false; // cannot cancel
+            return false; // cannot cancel   TODO: why not? (e.g. can't we stop gathering hits? but see cancelSearch()...)
         cancelled = true;
         Future<?> theFuture = future; // avoid locking
         if (interrupt && theFuture != null) {

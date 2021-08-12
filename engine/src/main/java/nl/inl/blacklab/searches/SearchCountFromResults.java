@@ -11,28 +11,27 @@ import nl.inl.blacklab.search.results.Results;
  * @param <T> result type, e.g. Hit
  */
 public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
-    
+
     private SearchResults<T> source;
     private CountType type;
-    private boolean fetchAllResults;
 
-    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, CountType type, boolean fetchAllResults) {
+    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, CountType type) {
         super(queryInfo);
         this.source = source;
         this.type = type;
-        this.fetchAllResults = fetchAllResults;
     }
 
     @Override
     public ResultCount executeInternal() throws InvalidQuery {
-        return new ResultCount(source.execute(), type);
+        ResultCount resultCount = new ResultCount(source.execute(), type);
+        resultCount.processedTotal(); // make sure count is complete
+        return resultCount;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + (fetchAllResults ? 1231 : 1237);
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
@@ -48,8 +47,6 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
             return false;
         @SuppressWarnings("unchecked")
         SearchCountFromResults<T> other = (SearchCountFromResults<T>) obj;
-        if (fetchAllResults != other.fetchAllResults)
-            return false;
         if (source == null) {
             if (other.source != null)
                 return false;
@@ -62,12 +59,7 @@ public class SearchCountFromResults<T extends Results<?>> extends SearchCount {
 
     @Override
     public String toString() {
-        return toString("count", source, type, fetchAllResults);
-    }
-    
-    @Override
-    public boolean fetchAllResults() {
-        return fetchAllResults;
+        return toString("count", source, type);
     }
 
 }

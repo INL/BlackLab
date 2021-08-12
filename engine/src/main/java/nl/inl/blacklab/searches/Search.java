@@ -48,20 +48,6 @@ public interface Search<R extends SearchResult> {
     String toString();
 
     /**
-     * Should we fetch all results in the cache thread?
-     *
-     * Normally, the cache thread just makes sure the results instance exists,
-     * but doesn't explicitly fetch any results. For total counts, however, we want
-     * the cache thread to actually keep fetching all results, so we can keep track
-     * of the total count.
-     *
-     * @return true if cache thread should fetch all results
-     */
-    default boolean fetchAllResults() {
-        return false;
-    }
-
-    /**
      * Log details about the search's execution.
      * @param level log level
      * @param msg message to log

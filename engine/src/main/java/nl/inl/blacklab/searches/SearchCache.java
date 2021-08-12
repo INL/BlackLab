@@ -29,8 +29,6 @@ public interface SearchCache {
      * @param <R> type of SearchResult
      * @param search search we want the result for. if the search is not in the cache, execute it,
      *            returning the future result and putting it in the cache.
-     * @param fetchAllResults if true, and search yield a Results object, will fetch all results before the thread ends
-     *                        this can be used for running total counts, for example
      * @return the future, either one that was already the cache or a new one
      */
     <R extends SearchResult> Future<R> getAsync(Search<R> search);
