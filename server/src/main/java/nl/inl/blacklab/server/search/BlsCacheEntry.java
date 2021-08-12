@@ -44,54 +44,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         return n;
     }
 
-    /** Our thread */
-    class SearchTask implements Runnable {
-
-        private boolean fetchAllResults;
-
-        public SearchTask(boolean fetchAllResults) {
-            this.fetchAllResults = fetchAllResults;
-        }
-
-        /**
-         * Run the thread, performing the requested search.
-         */
-        @Override
-        public void run() {
-            try {
-                boolean isResultsInstance = false;
-                try {
-                    result = search.executeInternal();
-                    isResultsInstance = result instanceof Results<?>;
-                } finally {
-                    initialSearchDone = true;
-                }
-                if (fetchAllResults) {
-                    if (isResultsInstance) {
-                        // Fetch all results from the result object
-                        ((Results<?>) result).resultsStats().processedTotal();
-                    }
-                    if (result instanceof ResultCount) {
-                        // Complete the count
-                        ((ResultCount) result).processedTotal();
-                    }
-                }
-            } catch (Throwable e) {
-                // NOTE: we catch Throwable here (while it's normally good practice to
-                //  catch only Exception and derived classes) because we need to know if
-                //  our thread crashed or not. The Throwable will be re-thrown by the
-                //  main thread, so any non-Exception Throwables will then go uncaught
-                //  as they "should".
-                exceptionThrown = e;
-            } finally {
-                fullSearchDoneTime = now();
-                fullSearchDone = true;
-                future = null;
-            }
-        }
-
-    }
-
     /** Unique entry id */
     long id;
 
@@ -150,8 +102,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @param block if true, blocks until the result is available
      */
     public void start(boolean block) {
-        SearchTask runnable = new SearchTask(search.fetchAllResults());
-        future = search.queryInfo().index().blackLab().searchExecutorService().submit(runnable);
+        future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> executeSearch());
         if (block) {
             try {
                 // Wait until result available
@@ -163,6 +114,46 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);
             }
+        }
+    }
+
+    /** Perform the requested search.
+     *
+     * {@link #start(boolean)} submits a Runnable to the search executor service that calls this.
+     *
+     * @param fetchAllResults if true, we should fetch all results right away
+     */
+    public void executeSearch() {
+        try {
+            boolean fetchAllResults = search.fetchAllResults();
+            boolean isResultsInstance = false;
+            try {
+                result = search.executeInternal();
+                isResultsInstance = result instanceof Results<?>;
+            } finally {
+                initialSearchDone = true;
+            }
+            if (fetchAllResults) {
+                if (isResultsInstance) {
+                    // Fetch all results from the result object
+                    ((Results<?>) result).resultsStats().processedTotal();
+                }
+                if (result instanceof ResultCount) {
+                    // Complete the count
+                    ((ResultCount)result).processedTotal();
+                }
+            }
+        } catch (Throwable e) {
+            // NOTE: we catch Throwable here (while it's normally good practice to
+            //  catch only Exception and derived classes) because we need to know if
+            //  our thread crashed or not. The Throwable will be re-thrown by the
+            //  main thread, so any non-Exception Throwables will then go uncaught
+            //  as they "should".
+            exceptionThrown = e;
+        } finally {
+            fullSearchDoneTime = now();
+            fullSearchDone = true;
+            future = null;
         }
     }
 
