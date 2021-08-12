@@ -34,7 +34,7 @@ public class FutureSearchResult<T extends SearchResult> implements Future<T> {
     public FutureSearchResult(Search<T> search) {
         this.thread = new Thread(() -> {
             try {
-                result = search.getSupplier().get();
+                result = search.executeInternal();
             } catch (Exception e) {
                 exceptionThrown = e;
             }

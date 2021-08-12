@@ -1,8 +1,6 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.requestlogging.LogLevel;
@@ -70,20 +68,6 @@ public interface Search<R extends SearchResult> {
      */
     default void log(LogLevel level, String msg) {
         queryInfo().log(level, msg);
-    }
-
-    /**
-     * Get a supplier for the result of this search.
-     * @return supplier
-     */
-    default Supplier<R> getSupplier() {
-        return () -> {
-            try {
-                return executeInternal();
-            } catch (InvalidQuery e) {
-                throw new CompletionException(e);
-            }
-        };
     }
 
 }

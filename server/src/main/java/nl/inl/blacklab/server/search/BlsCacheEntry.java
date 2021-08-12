@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Supplier;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -15,7 +14,6 @@ import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.util.ThreadAborter;
 
 public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
@@ -63,14 +61,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             try {
                 boolean isResultsInstance = false;
                 try {
-                    Supplier<T> resultSupplier = supplier;
-                    supplier = null;
-                    result = resultSupplier.get();
+                    result = search.executeInternal();
                     isResultsInstance = result instanceof Results<?>;
-                    if (isResultsInstance) {
-                        // Make sure our results object can be aborted
-                        threadAborter = ((Results<?>)result).threadAborter();
-                    }
                 } finally {
                     initialSearchDone = true;
                 }
@@ -106,9 +98,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Our search */
     private Search<T> search;
 
-    /** Supplier of our result, if the thread hasn't been created yet (cleared by thread) */
-    private Supplier<T> supplier;
-
 
     // OUTCOMES
 
@@ -139,9 +128,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Did our task finish, succesfully or otherwise? (set by thread) */
     private boolean fullSearchDone = false;
 
-    /** Handles aborting search if necessary, and keeping track of search time */
-    ThreadAborter threadAborter = null;
-
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
 
@@ -151,11 +137,9 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * Construct a cache entry.
      *
      * @param search the search
-     * @param supplier the result supplier
      */
     public BlsCacheEntry(Search<T> search) {
         this.search = search;
-        this.supplier = search.getSupplier();
         id = getNextEntryId();
         createTime = lastAccessTime = now();
     }
