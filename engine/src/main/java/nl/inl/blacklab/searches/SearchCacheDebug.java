@@ -3,8 +3,10 @@ package nl.inl.blacklab.searches;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Future;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -17,7 +19,13 @@ public class SearchCacheDebug implements SearchCache {
     public <R extends SearchResult> Future<R> getAsync(Search<R> search) {
         CompletableFuture<R> result = (CompletableFuture<R>) searches.get(search);
         if (result == null) {
-            result = CompletableFuture.supplyAsync(search.getSupplier());
+            R searchResults;
+            try {
+                searchResults = search.execute();
+            } catch (InvalidQuery e) {
+                throw new CompletionException(e);
+            }
+            result = CompletableFuture.completedFuture(searchResults);
             searches.put(search, result);
             System.out.println("Not found in cache, adding now: " + search);
         } else {

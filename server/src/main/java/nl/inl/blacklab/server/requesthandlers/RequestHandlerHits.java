@@ -406,7 +406,7 @@ public class RequestHandlerHits extends RequestHandler {
             SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, groupByProp, hitGroups);
             if (findHitsFromOnlyRequestedGroup != null) {
                 // place the group-contents query in the cache and return the results.
-                BlsCacheEntry<ResultCount> job = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup.count(true));
+                BlsCacheEntry<ResultCount> job = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup.count());
                 hits = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup).get();
                 return Pair.of(job, hits);
             }

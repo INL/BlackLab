@@ -3,13 +3,13 @@ package nl.inl.blacklab.search.results;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
 public class ResultCount extends ResultsStats implements SearchResult {
-    
+
     public enum CountType {
         RESULTS, // number of results
         HITS,    // number of hits represented by results
         DOCS     // number of docs represented by results
     }
-    
+
     private ResultsStats count;
 
     private boolean wasInterrupted = false;
@@ -54,7 +54,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
             count = count.save();
         }
     }
-    
+
     @Override
     public int processedSoFar() {
         update();

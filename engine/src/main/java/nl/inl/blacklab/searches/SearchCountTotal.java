@@ -3,32 +3,25 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
-import nl.inl.blacklab.search.results.ResultCount.CountType;
 import nl.inl.blacklab.search.results.Results;
 
 /**
- * A search operation that yields a count as its result.
+ * Given a (running) SearchCount, determine the final total count.
  * @param <T> result type, e.g. Hit
  */
-public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
+public class SearchCountTotal<T extends Results<?, ?>> extends SearchCount {
 
-    private SearchResults<T> source;
-    private CountType type;
+    private ResultCount source;
 
-    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, CountType type) {
+    public SearchCountTotal(QueryInfo queryInfo, ResultCount source) {
         super(queryInfo);
         this.source = source;
-        this.type = type;
     }
 
     @Override
     public ResultCount executeInternal() throws InvalidQuery {
-        ResultCount resultCount = new ResultCount(source.execute(), type);
-
-        // Ensure that the all hits will be counted in a separate thread.
-        queryInfo().index().cache().getAsync(new SearchCountTotal<>(queryInfo(), resultCount));
-
-        return resultCount;
+        source.processedTotal();
+        return source;
     }
 
     @Override
@@ -36,7 +29,6 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         final int prime = 31;
         int result = super.hashCode();
         result = prime * result + ((source == null) ? 0 : source.hashCode());
-        result = prime * result + ((type == null) ? 0 : type.hashCode());
         return result;
     }
 
@@ -49,20 +41,18 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         if (getClass() != obj.getClass())
             return false;
         @SuppressWarnings("unchecked")
-        SearchCountFromResults<T> other = (SearchCountFromResults<T>) obj;
+        SearchCountTotal<T> other = (SearchCountTotal<T>) obj;
         if (source == null) {
             if (other.source != null)
                 return false;
         } else if (!source.equals(other.source))
-            return false;
-        if (type != other.type)
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return toString("count", source, type);
+        return toString("count", source);
     }
 
 }

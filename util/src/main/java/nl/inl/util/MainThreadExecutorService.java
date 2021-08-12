@@ -29,7 +29,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
 
     MainThreadExecutorService(RejectedExecutionHandler h) {
         if (h == null)
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("No RejectedExecutionHandler specified");
         this.handler = h;
     }
 
