@@ -7,6 +7,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -243,23 +244,11 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException {
-        // Wait until result available
-        while (!initialSearchDone && !futureDone() && !cancelled) {
-            Thread.sleep(100);
+        try {
+            return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
-        if (cancelled || futureCancelled())
-            throw new InterruptedSearch("Search was cancelled");
-        if (exceptionThrown != null)
-            throw new ExecutionException(exceptionThrown);
-        return result;
-    }
-
-    private boolean futureCancelled() {
-        return future != null && future.isCancelled();
-    }
-
-    private boolean futureDone() {
-        return future != null && future.isDone();
     }
 
     @Override
@@ -277,6 +266,14 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         if (!initialSearchDone)
             throw new TimeoutException("Result still not available after " + ms + "ms");
         return result;
+    }
+
+    private boolean futureCancelled() {
+        return future != null && future.isCancelled();
+    }
+
+    private boolean futureDone() {
+        return future != null && future.isDone();
     }
 
     /**
