@@ -58,9 +58,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** Exception thrown by our thread, or null if no exception was thrown (set by thread) */
     private Throwable exceptionThrown = null;
 
-    /** True if this search was canceled, false if not */
-    private boolean cancelled = false;
-
 
     // TIMING
 
@@ -70,14 +67,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     /** When was this entry last accessed (ms) */
     private long lastAccessTime;
 
-    /** Did the initial search finish, succesfully or otherwise? (set by thread) */
-    private boolean initialSearchDone = false;
-
     /** When did we finish our task? (ms; only valid when finished; set by thread) */
-    private long fullSearchDoneTime = 0;
-
-    /** Did our task finish, succesfully or otherwise? (set by thread) */
-    private boolean fullSearchDone = false;
+    private long doneTime = 0;
 
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
@@ -101,14 +92,16 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @param block if true, blocks until the result is available
      */
     public void start(boolean block) {
+        if (future != null)
+            throw new RuntimeException("Search already started");
         future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> executeSearch());
         if (block) {
             try {
                 // Wait until result available
-                while (!initialSearchDone && !futureDone() && !cancelled) {
-                    Thread.sleep(100);
+                while (!isDone() && !isCancelled()) {
+                    Thread.sleep(POLLING_TIME_MS);
                 }
-                if (cancelled || futureCancelled())
+                if (isCancelled())
                     throw new InterruptedSearch("Search was cancelled");
             } catch (InterruptedException e) {
                 throw new InterruptedSearch(e);
@@ -122,11 +115,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      */
     public void executeSearch() {
         try {
-            try {
-                result = search.executeInternal();
-            } finally {
-                initialSearchDone = true;
-            }
+            result = search.executeInternal();
         } catch (Throwable e) {
             // NOTE: we catch Throwable here (while it's normally good practice to
             //  catch only Exception and derived classes) because we need to know if
@@ -135,9 +124,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
             //  as they "should".
             exceptionThrown = e;
         } finally {
-            fullSearchDoneTime = now();
-            fullSearchDone = true;
-            future = null;
+            doneTime = now();
         }
     }
 
@@ -167,7 +154,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     @Override
     public boolean isCancelled() {
-        return cancelled;
+        return future != null && future.isCancelled();
     }
 
     /**
@@ -176,12 +163,11 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * This means our result is available, or an error occurred.
      *
      * Note that if the result is available, it does not necessarily
-     * mean the results object has e.g. read all its hits. For that,
-     * see {@link #isFullSearchDone()}.
+     * mean the results object has e.g. read all its hits.
      */
     @Override
     public boolean isDone() {
-        return initialSearchDone;
+        return future != null && future.isDone();
     }
 
     /**
@@ -213,7 +199,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return time since search finished (ms)
      */
     public long timeSinceFinishedMs() {
-        return fullSearchDone ? now() - fullSearchDoneTime : 0;
+        return isDone() ? now() - doneTime : 0;
     }
 
     /**
@@ -237,8 +223,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
      * @return user wait time (ms)
      */
     public long timeUserWaitedMs() {
-        if (fullSearchDone)
-            return fullSearchDoneTime - createTime;
+        if (isDone())
+            return doneTime - createTime;
         else return timeSinceCreationMs();
     }
 
@@ -255,25 +241,17 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         // Wait until result available
         long ms = unit.toMillis(time);
-        while (ms > 0 && !initialSearchDone && !futureDone() && !cancelled) {
+        while (ms > 0 && !isDone() && !isCancelled()) {
             Thread.sleep(POLLING_TIME_MS);
             ms -= POLLING_TIME_MS;
         }
-        if (cancelled || futureCancelled())
+        if (isCancelled())
             throw new InterruptedSearch("Search was cancelled");
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
-        if (!initialSearchDone)
+        if (!isDone())
             throw new TimeoutException("Result still not available after " + ms + "ms");
         return result;
-    }
-
-    private boolean futureCancelled() {
-        return future != null && future.isCancelled();
-    }
-
-    private boolean futureDone() {
-        return future != null && future.isDone();
     }
 
     /**
@@ -333,64 +311,21 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
         }
     }
 
-    @Override
-    public boolean cancel(boolean interrupt) {
-        if (initialSearchDone)
-            return false; // cannot cancel   TODO: why not? (e.g. can't we stop gathering hits? but see cancelSearch()...)
-        cancelled = true;
-        Future<?> theFuture = future; // avoid locking
-        if (interrupt && theFuture != null) {
-            theFuture.cancel(interrupt);
-            future = null;
-        }
-        return true;
-    }
-
-    /**
-     * Is this search done, even fetching all hits (if that was requested)
-     *
-     * This method exists because our search operation can sometimes continue even after
-     * isDone() starts returning true. Total counts work this way, because we want to keep
-     * track of the count while it's happening, so we need access to the result object
-     * before the count is complete.
-     *
-     * @return true if the search is fully complete (or threw and exception)
-     */
-    public boolean isFullSearchDone() {
-        return fullSearchDone;
-    }
-
     /**
      * Cancel the search, including fetching all hits (if that's being done).
      *
-     * This method exists because the Future contract states that you cannot cancel
-     * a Future after isDone() starts returning true. But our "total counts" are a
-     * special case, where the thread keeps running to fetch all hits to calculate the
-     * total, even when the result object is available (because we want to keep track
-     * of the count as it goes).
-     *
-     * To circumvent this, we implement our own method that's not bound by the contract.
-     *
-     * This method will always interrupt the operation if it's running.
-     *
-     * It will only affect the cancelled status of the Future if the Future hadn't
-     * completed yet.
-     *
+     * @param interrupt
      * @return true if the search was cancelled, false if it could not be cancelled (because it wasn't running anymore)
      */
-    public boolean cancelSearch() {
-        if (!initialSearchDone) {
-            // Regular situation; use regular cancel method.
-            return cancel(true);
-        }
-        if (fullSearchDone)
-            return false; // cannot cancel
+    @Override
+    public boolean cancel(boolean interrupt) {
         Future<?> theFuture = future; // avoid locking
+        boolean result = false;
         if (theFuture != null) {
-            theFuture.cancel(true);
+            result = theFuture.cancel(interrupt);
             future = null;
         }
-        return true;
+        return result;
     }
 
     public boolean threwException() {
@@ -404,10 +339,8 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     }
 
     public String status() {
-        if (isFullSearchDone())
-            return "finished";
         if (isDone())
-            return "counting";
+            return "finished";
         return "running";
     }
 
@@ -421,7 +354,7 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
                 .startMap()
                 .entry("type", isCount ? "count" : "search")
                 .entry("status", status())
-                .entry("cancelled", cancelled)
+                .entry("cancelled", isCancelled())
                 .entry("futureStatus", futureStatus())
                 .entry("exceptionThrown", exceptionThrown == null ? "" : exceptionThrown.getClass().getSimpleName())
                 .entry("sizeBytes", numberOfStoredHits() * BlsCache.SIZE_OF_HIT)

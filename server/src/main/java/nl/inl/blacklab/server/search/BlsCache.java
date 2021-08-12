@@ -137,8 +137,7 @@ public class BlsCache implements SearchCache {
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
             if (entry.getValue().search().queryInfo().index() == index) {
-                if (!entry.getValue().isFullSearchDone())
-                    entry.getValue().cancelSearch();
+                entry.getValue().cancel(true);
                 it.remove();
             }
         }
@@ -152,8 +151,7 @@ public class BlsCache implements SearchCache {
     @Override
     public void clear(boolean cancelRunning) {
         for (BlsCacheEntry<? extends SearchResult> cachedSearch : searches.values()) {
-            if (!cachedSearch.isFullSearchDone())
-                cachedSearch.cancelSearch();
+            cachedSearch.cancel(true);
         }
         searches.clear();
         logger.debug("Cache cleared.");
@@ -290,7 +288,7 @@ public class BlsCache implements SearchCache {
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search1 = searches.get(i);
 
-            boolean runningSearchTakingTooLong = !search1.isFullSearchDone() && search1.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L;
+            boolean runningSearchTakingTooLong = !search1.isDone() && search1.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L;
             boolean initialSearchDone = search1.isDone();
             if (runningSearchTakingTooLong) {
                 // Search is taking too long. Cancel it.
@@ -381,7 +379,7 @@ public class BlsCache implements SearchCache {
         // TODO: Maybe we should blacklist certain searches for a time?
         dbgtrace("CleanupSearchesThread: aborting search: " + search + " (" + reason + ")");
         remove(search.search());
-        search.cancelSearch();
+        search.cancel(true);
         cacheSizeBytes -= (long)search.numberOfStoredHits() * SIZE_OF_HIT;
     }
 
@@ -401,7 +399,7 @@ public class BlsCache implements SearchCache {
             int largestEntryHits = 0;
             long oldestEntryAgeMs = 0;
             for (BlsCacheEntry<?> s: searches.values()) {
-                if (!s.isFullSearchDone())
+                if (!s.isDone())
                     numberRunning++;
                 if (s.numberOfStoredHits() > largestEntryHits)
                     largestEntryHits = s.numberOfStoredHits();
