@@ -104,6 +104,7 @@ public class BlsCache implements SearchCache {
             };
 
             cleanupThread = new CleanupSearchesThread();
+            cleanupThread.setDaemon(true); // don't prevent JVM from exiting.
             cleanupThread.start();
         }
     }
