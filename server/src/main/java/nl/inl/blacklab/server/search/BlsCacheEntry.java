@@ -52,6 +52,9 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     // OUTCOMES
 
+    /** Future result of the search task */
+    private Future<?> future;
+
     /** Result of the search (set by thread) */
     private T result = null;
 
@@ -72,8 +75,6 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
-
-    private Future<?> future;
 
     /**
      * Construct a cache entry.
