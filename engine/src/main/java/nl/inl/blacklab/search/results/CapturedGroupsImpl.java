@@ -9,10 +9,10 @@ import nl.inl.blacklab.search.Span;
 
 /** Captured group information for a list of hits. */
 public class CapturedGroupsImpl implements CapturedGroups {
-    
+
     /** The captured groups per hit. */
     private Map<Hit, Span[]> capturedGroups;
-    
+
     /** Capture group names. */
     private List<String> capturedGroupNames;
 
@@ -23,27 +23,27 @@ public class CapturedGroupsImpl implements CapturedGroups {
 
     /**
      * Add groups for a hit
-     * 
-     * @param hit the hit 
+     *
+     * @param hit the hit
      * @param groups groups for thishit
      */
     public void put(Hit hit, Span[] groups) {
         capturedGroups.put(hit, groups);
     }
-    
+
     /** Copy all groups from other */
     public void putAll(CapturedGroupsImpl other) {
         this.capturedGroups.putAll(other.capturedGroups);
     }
-    
+
     /** Copy all groups from other */
     public void putAll(Map<Hit, Span[]> other) {
         this.capturedGroups.putAll(other);
     }
-    
+
     /**
      * Get the group names
-     * 
+     *
      * @return group names
      */
     @Override
@@ -53,7 +53,7 @@ public class CapturedGroupsImpl implements CapturedGroups {
 
     /**
      * Get the captured groups.
-     * 
+     *
      * @param hit hit to get groups for
      * @return groups
      */
@@ -66,9 +66,9 @@ public class CapturedGroupsImpl implements CapturedGroups {
 
     /**
      * Get a map of the captured groups.
-     * 
+     *
      * Relatively slow. If you care about performance, prefer {@link #get(Hit)}.
-     * 
+     *
      * @param hit hit to get groups for
      * @return groups
      */
@@ -76,11 +76,11 @@ public class CapturedGroupsImpl implements CapturedGroups {
     public Map<String, Span> getMap(Hit hit) {
         if (capturedGroups == null)
             return null;
-        Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
         List<String> names = names();
         Span[] groups = capturedGroups.get(hit);
         if (groups == null)
             return null;
+        Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
         for (int i = 0; i < names.size(); i++) {
             result.put(names.get(i), groups[i]);
         }

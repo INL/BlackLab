@@ -224,19 +224,19 @@ public class RequestHandlerHits extends RequestHandler {
 
             if (window.hasCapturedGroups()) {
                 Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
-                ds.startEntry("captureGroups").startList();
-
-                for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                    if (capturedGroup.getValue() != null) {
-                        ds.startItem("group").startMap();
-                        ds.entry("name", capturedGroup.getKey());
-                        ds.entry("start", capturedGroup.getValue().start());
-                        ds.entry("end", capturedGroup.getValue().end());
-                        ds.endMap().endItem();
+                if (capturedGroups != null) {
+                    ds.startEntry("captureGroups").startList();
+                    for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+                        if (capturedGroup.getValue() != null) {
+                            ds.startItem("group").startMap();
+                            ds.entry("name", capturedGroup.getKey());
+                            ds.entry("start", capturedGroup.getValue().start());
+                            ds.entry("end", capturedGroup.getValue().end());
+                            ds.endMap().endItem();
+                        }
                     }
+                    ds.endList().endEntry();
                 }
-
-                ds.endList().endEntry();
             }
 
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
