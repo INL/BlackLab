@@ -754,10 +754,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     @Override
     public Iterator<Hit> iterator() {
-        ensureAllResultsRead();
         // We need to wrap the internal iterator, as we probably shouldn't
         return new Iterator<Hit>() {
-            Iterator<EphemeralHit> i = hitsArrays.iterator();
+            Iterator<EphemeralHit> i = ephemeralIterator();
 
             @Override
             public boolean hasNext() {
@@ -772,6 +771,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     }
 
     public Iterator<EphemeralHit> ephemeralIterator() {
+        ensureAllResultsRead();
         return hitsArrays.iterator();
     }
 
