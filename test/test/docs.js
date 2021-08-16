@@ -106,6 +106,12 @@ function expectDocs(pattern, filter, numberOfHits, numberOfDocs, firstDocJsonInc
     });
 }
 
+// Test that all hits are fetched before the document result is created!
+expectDocs('[]', '', 766, 3, {
+    "docPid": "PBsve430",
+    "numberOfHits": 334
+});
+
 expectDocs('"she"', '', 5, 1, {
     "docPid": "PBsve430",
     "numberOfHits": 5,
