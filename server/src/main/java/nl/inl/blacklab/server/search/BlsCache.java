@@ -39,8 +39,8 @@ public class BlsCache implements SearchCache {
     
     public static final boolean ENABLE_NEW_CACHE = true;
 
-    /** Very rough measure of how large result objects are, based on a Hit (3 ints + 12 bytes object overhead) */
-    public static final int SIZE_OF_HIT = 24;
+    /** Very rough measure of how large result objects are, based on a Hit (4 ints + 12 bytes object overhead) */
+    public static final int SIZE_OF_HIT = 28;
 
     protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
     
