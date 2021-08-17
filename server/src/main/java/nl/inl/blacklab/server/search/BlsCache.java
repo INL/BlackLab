@@ -214,7 +214,7 @@ public class BlsCache implements SearchCache {
     synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
         BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
         if (future != null && trace)
-            logger.info("-- REMOVED: " + search);
+            logger.info("-- REMOVED: " + search + " (" + searches.size() + " searches left)");
         return future;
     }
 
@@ -294,7 +294,7 @@ public class BlsCache implements SearchCache {
                 // Search is taking too long. Cancel it.
                 dbgtrace("Search is taking too long (time " + (search1.timeUserWaitedMs()/1000) + "s > max time " + config.getMaxSearchTimeSec() + "s)");
                 abortSearch(search1, "taking too long");
-                i++; // don't skip an element
+                searches.remove(i);
 
             } else if (initialSearchDone) {
                 // Finished its initial search, but may still be gathering hits.
@@ -342,7 +342,7 @@ public class BlsCache implements SearchCache {
                     }
                     abortSearch(search1, reason);
                     memoryToFreeUpMegs -= (long)search1.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES;
-                    i++; // don't skip an element
+                    searches.remove(i);
 
                 } else {
                     // Cache is no longer too big and these searches are not too old. Stop checking
@@ -363,6 +363,7 @@ public class BlsCache implements SearchCache {
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
                     abortSearch(search, "abandoned count");
+                    searches.remove(i);
                     i--; // don't skip an element
                 }
             }
