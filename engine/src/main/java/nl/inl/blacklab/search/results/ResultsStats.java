@@ -65,4 +65,7 @@ public abstract class ResultsStats {
         return false;
     }
 
+    @Override
+    public abstract String toString();
+
 }

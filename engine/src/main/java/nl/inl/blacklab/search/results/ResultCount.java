@@ -142,4 +142,11 @@ public class ResultCount extends ResultsStats implements SearchResult {
         return wasInterrupted;
     }
 
+    @Override
+    public String toString() {
+        return "ResultCount [count=" + count + ", wasInterrupted=" + wasInterrupted + "]";
+    }
+
+
+
 }

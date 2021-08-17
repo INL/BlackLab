@@ -135,6 +135,11 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
         public MaxStats maxStats() {
             return (Results.this instanceof Hits ? ((Hits)Results.this).maxStats() : MaxStats.NOT_EXCEEDED);
         }
+
+        @Override
+        public String toString() {
+            return "ResultsStats(" + Results.this.toString() + ")";
+        }
     };
 
     public Results(QueryInfo queryInfo) {

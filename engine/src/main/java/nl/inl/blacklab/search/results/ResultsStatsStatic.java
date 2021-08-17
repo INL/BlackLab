@@ -6,13 +6,13 @@ package nl.inl.blacklab.search.results;
  * keep a reference to the search.
  */
 public class ResultsStatsStatic extends ResultsStats {
-    
+
     private int processed;
-    
+
     private int counted;
-    
+
     private MaxStats maxStats;
-    
+
     public ResultsStatsStatic(int processed, int counted, MaxStats maxStats) {
         this.processed = processed;
         this.counted = counted;
@@ -57,6 +57,11 @@ public class ResultsStatsStatic extends ResultsStats {
     @Override
     public MaxStats maxStats() {
         return maxStats;
+    }
+
+    @Override
+    public String toString() {
+        return "ResultsStatsStatic [processed=" + processed + ", counted=" + counted + ", maxStats=" + maxStats + "]";
     }
 
 }

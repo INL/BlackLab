@@ -521,6 +521,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             return Hits.this.maxStats();
         }
 
+        @Override
+        public String toString() {
+            return "ResultsStats(" + Hits.this.toString() + ")";
+        }
+
     };
 
     /** Construct an empty, mutable Hits object.
