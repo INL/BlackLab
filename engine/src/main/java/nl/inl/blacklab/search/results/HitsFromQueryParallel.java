@@ -305,13 +305,8 @@ public class HitsFromQueryParallel extends Hits {
             this.leafReaderContext = null;
         }
 
-        void addToGlobalResults(HitsArrays hits, ArrayList<Span[]> capturedGroups) {
+        void addToGlobalResults(HitsArrays hits, List<Span[]> capturedGroups) {
             globalResults.addAll(hits);
-            hits.withWriteLock(__ -> {
-                hits.docs().clear();
-                hits.starts().clear();
-                hits.ends().clear();
-            });
 
             if (globalCapturedGroups != null) {
                 synchronized (globalCapturedGroups) {
@@ -325,6 +320,12 @@ public class HitsFromQueryParallel extends Hits {
                     capturedGroups.clear();
                 }
             }
+
+            hits.withWriteLock(__ -> {
+                hits.docs().clear();
+                hits.starts().clear();
+                hits.ends().clear();
+            });
         }
 
         public HitQueryContext getHitContext() {

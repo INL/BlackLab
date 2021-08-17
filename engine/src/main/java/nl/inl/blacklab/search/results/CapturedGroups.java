@@ -55,4 +55,7 @@ public interface CapturedGroups {
 
     Map<? extends Hit, ? extends Span[]> getAll();
 
+    @Override
+    String toString();
+
 }

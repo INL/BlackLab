@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.search.Span;
 
 /** Captured group information for a list of hits. */
@@ -93,6 +95,12 @@ public class CapturedGroupsImpl implements CapturedGroups {
             result.put(names.get(i), groups[i]);
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        String grp = StringUtils.abbreviate(capturedGroups.toString(), 80);
+        return "CapturedGroupsImpl(names=" + capturedGroupNames + ", groups=" + grp + ")";
     }
 
 }
