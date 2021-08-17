@@ -27,16 +27,24 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @param hit the hit
      * @param groups groups for thishit
      */
+    @Override
     public void put(Hit hit, Span[] groups) {
         capturedGroups.put(hit, groups);
     }
 
     /** Copy all groups from other */
-    public void putAll(CapturedGroupsImpl other) {
-        this.capturedGroups.putAll(other.capturedGroups);
+    @Override
+    public void putAll(CapturedGroups other) {
+        this.capturedGroups.putAll(other.getAll());
+    }
+
+    @Override
+    public Map<? extends Hit, ? extends Span[]> getAll() {
+        return capturedGroups;
     }
 
     /** Copy all groups from other */
+    @Override
     public void putAll(Map<Hit, Span[]> other) {
         this.capturedGroups.putAll(other);
     }

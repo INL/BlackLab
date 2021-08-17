@@ -8,7 +8,7 @@ import org.eclipse.collections.api.iterator.MutableIntIterator;
 public class HitsList extends Hits {
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
-    
+
     /** Our sample parameters, if any. null if not a sample of a larger result set */
     private SampleParameters sampleParameters;
 
@@ -23,8 +23,8 @@ public class HitsList extends Hits {
      */
     protected HitsList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
         super(queryInfo, hits);
-        this.capturedGroups = (CapturedGroupsImpl) capturedGroups;
-        
+        this.capturedGroups = capturedGroups;
+
         hitsCounted = this.hitsArrays.size();
         int prevDoc = -1;
         MutableIntIterator it = this.hitsArrays.docs().intIterator();
@@ -37,21 +37,21 @@ public class HitsList extends Hits {
             }
         }
     }
-    
+
     /**
      * Construct a HitsList from all its components.
-     * 
+     *
      * Should only be used internally.
      */
     protected HitsList(
-                       QueryInfo queryInfo, 
+                       QueryInfo queryInfo,
                        HitsArrays hits,
-                       WindowStats windowStats, 
+                       WindowStats windowStats,
                        SampleParameters sampleParameters,
-                       int hitsCounted, 
-                       int docsRetrieved, 
-                       int docsCounted, 
-                       CapturedGroupsImpl capturedGroups
+                       int hitsCounted,
+                       int docsRetrieved,
+                       int docsCounted,
+                       CapturedGroups capturedGroups
                        ) {
         super(queryInfo, hits);
         this.windowStats = windowStats;
@@ -66,7 +66,7 @@ public class HitsList extends Hits {
     public String toString() {
         return "HitsList#" + hitsObjId + " (hits.size()=" + this.size() + "; isWindow=" + isWindow() + ")";
     }
-    
+
     /**
      * Ensure that we have read at least as many hits as specified in the parameter.
      *

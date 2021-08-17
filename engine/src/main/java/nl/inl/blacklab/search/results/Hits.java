@@ -405,7 +405,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                                 int hitsCounted,
                                 int docsRetrieved,
                                 int docsCounted,
-                                CapturedGroupsImpl capturedGroups) {
+                                CapturedGroups capturedGroups) {
         return new HitsList(
                             queryInfo,
                             hits,
@@ -462,7 +462,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     /**
      * Our captured groups, or null if we have none.
      */
-    protected CapturedGroupsImpl capturedGroups;
+    protected CapturedGroups capturedGroups;
 
     /**
      * The number of hits we've seen and counted so far. May be more than the number
@@ -596,7 +596,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         int number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
 
         // Copy the hits we're interested in.
-        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
+        CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
         HitsArrays window = new HitsArrays();
 
@@ -655,7 +655,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         MutableInt docsInSample = new MutableInt(0);
-        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
+        CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         HitsArrays sample = new HitsArrays();
 
         this.hitsArrays.withReadLock(__ -> {
@@ -701,7 +701,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         this.ensureAllResultsRead();
         HitsArrays sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
 
-        CapturedGroupsImpl capturedGroups = capturedGroups();
+        CapturedGroups capturedGroups = capturedGroups();
         int hitsCounted = hitsCountedSoFar();
         int docsRetrieved = docsProcessedSoFar();
         int docsCounted = docsCountedSoFar();
@@ -937,7 +937,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         boolean isLastHit = this.hitsArrays.get(this.hitsArrays.size() - 1).equals(hit);
         boolean hasMoreHits = isLastHit ? resultsProcessedAtLeast(size + 1) : true;
 
-        CapturedGroupsImpl capturedGroups = null;
+        CapturedGroups capturedGroups = null;
         if (this.capturedGroups != null) {
             capturedGroups = new CapturedGroupsImpl(this.capturedGroups.names());
             capturedGroups.put(hit, this.capturedGroups.get(hit));
@@ -960,7 +960,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     // Captured groups
     //--------------------------------------------------------------------
 
-    public CapturedGroupsImpl capturedGroups() {
+    public CapturedGroups capturedGroups() {
         return capturedGroups;
     }
 

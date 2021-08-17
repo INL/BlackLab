@@ -69,7 +69,7 @@ public class HitsFromQueryParallel extends Hits {
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
         private final HitsArrays globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
-        private CapturedGroupsImpl globalCapturedGroups;
+        private CapturedGroups globalCapturedGroups;
 
         // Internal state
         private boolean isDone = false;
@@ -133,7 +133,7 @@ public class HitsFromQueryParallel extends Hits {
             HitQueryContext sourceHitQueryContext,
 
             HitsArrays globalResults,
-            CapturedGroupsImpl globalCapturedGroups,
+            CapturedGroups globalCapturedGroups,
             AtomicInteger globalDocsProcessed,
             AtomicInteger globalDocsCounted,
             AtomicInteger globalHitsProcessed,
@@ -331,7 +331,7 @@ public class HitsFromQueryParallel extends Hits {
             return hitQueryContext;
         }
 
-        public void setCapturedGroups(CapturedGroupsImpl capturedGroups) {
+        public void setCapturedGroups(CapturedGroups capturedGroups) {
             globalCapturedGroups = capturedGroups;
         }
     }
