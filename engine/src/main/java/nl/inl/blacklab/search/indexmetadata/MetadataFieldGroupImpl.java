@@ -10,13 +10,13 @@ import org.apache.logging.log4j.Logger;
 
 /**
  * A named, ordered list of metadata fields.
- * 
+ *
  * Used to divide metadata into logical groups.
  */
 public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
-    
+
     private MetadataFields metadataFieldsAccessor;
 
     private String name;
@@ -48,7 +48,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         return addRemainingFields;
     }
 
-    private void ensureFieldsFetched() {
+    private synchronized void ensureFieldsFetched() {
         if (fieldsInGroup == null) {
             fieldsInGroup = new ArrayList<>();
             for (String fieldName: fieldNamesInGroup) {
