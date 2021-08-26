@@ -62,7 +62,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
 
-NOTE: If you want to use BlackLab Server and [BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For the configuration file, see [BlackLab Server overview](blacklab-server-overview.html).
+NOTE: If you want to use BlackLab Server and [BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](blacklab-server-overview.html).
 
 <a id="preparing-your-data"></a>
 
