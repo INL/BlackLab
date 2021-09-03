@@ -299,25 +299,27 @@ public class Contexts implements Iterable<int[]> {
 
         // setup first iteration
         HitsArrays ha = hits.hitsArrays;
-        int prevDoc = ha.doc(0);
+        final int size = ha.size(); // TODO ugly, might be slow because of required locking
+        int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;
         contexts = new ArrayList<>(hits.size());
 
-        final int size = ha.size(); // TODO ugly, might be slow because of required locking
-        for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-            final int curDoc = ha.doc(i);
-            if (curDoc != prevDoc) {
-                try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
-                // process hits in this document:
-                int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
-                for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
-                // start a new document
-                firstHitInCurrentDoc = i;
+        if (size > 0) {
+            for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
+                final int curDoc = ha.doc(i);
+                if (curDoc != prevDoc) {
+                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
+                    // process hits in this document:
+                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
+                    for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
+                    // start a new document
+                    firstHitInCurrentDoc = i;
+                }
             }
+            // Process trailing hits
+            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, fiidLookups);
+            for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
         }
-        // Process trailing hits
-        int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, fiidLookups);
-        for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
 
         this.annotations = new ArrayList<>(annotations);
     }
