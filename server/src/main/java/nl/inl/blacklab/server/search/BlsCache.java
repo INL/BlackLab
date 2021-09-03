@@ -197,7 +197,7 @@ public class BlsCache implements SearchCache {
                     throw e;
                 }
                 future = new BlsCacheEntry<>(search);
-                if (!cacheDisabled && useCache)
+                if (useCache)
                     searches.put(search, future);
                 if (trace) logger.info("-- STARTING: {}", search);
                 future.start(block);
