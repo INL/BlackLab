@@ -585,7 +585,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         if (first < 0 || (emptyResultSet && first > 0) ||
             (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
             //throw new IllegalArgumentException("First hit out of range");
-            return Hits.emptyList(queryInfo());
+            return Hits.immutableEmptyList(queryInfo());
         }
 
         // Auto-clamp number
