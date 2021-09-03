@@ -491,9 +491,19 @@ public class HitsFromQueryParallel extends Hits {
                     .stream()
                     .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
                     .collect(Collectors.toList()); // gather the futures
+
                 // Wait for workers to complete.
-                for (Future<?> f : pendingResults)
-                    f.get();
+                try {
+                    while (!pendingResults.stream().allMatch(f -> f.isCancelled() || f.isDone())) {
+                        Thread.sleep(HIT_POLLING_TIME_MS);
+                        threadAborter.checkAbort();
+                    }
+                } catch (InterruptedException e) {
+                    // Interrupt our worker threads as well
+                    pendingResults.forEach(f -> f.cancel(true));
+                    throw e;
+                }
+
                 // Remove all SpansReaders that have finished.
                 Iterator<SpansReader> it = spansReaders.iterator();
                 while (it.hasNext()) {
