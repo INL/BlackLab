@@ -45,8 +45,9 @@ public class SearchManager {
 
         // Create the cache
         int abandonedCountAbortTimeSec = config.getPerformance().getAbandonedCountAbortTimeSec();
+        int maxConcurrentSearches = config.getPerformance().getMaxConcurrentSearches();
         boolean traceCache = config.getLog().getTrace().isCache();
-        cache = new BlsCache(config.getCache(), abandonedCountAbortTimeSec, traceCache);
+        cache = new BlsCache(config.getCache(), maxConcurrentSearches, abandonedCountAbortTimeSec, traceCache);
 
         // Find the indices
         indexMan = new IndexManager(this, config);

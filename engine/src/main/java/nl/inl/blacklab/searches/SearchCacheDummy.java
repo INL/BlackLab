@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.SearchResult;
 public final class SearchCacheDummy implements SearchCache {
 
     @Override
-    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search) {
+    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         try {
             return SearchCacheEntry.fromFuture(ConcurrentUtils.constantFuture(search.executeInternal())); // It's never in cache, and don't add it either
         } catch (InvalidQuery e) {

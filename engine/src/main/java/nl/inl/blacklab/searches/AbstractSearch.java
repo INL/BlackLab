@@ -28,9 +28,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
 
     @Override
     public SearchCacheEntry<R> executeAsync(boolean allowQueue) {
-        SearchCacheEntry<R> future = queryInfo.index().cache().getAsync(this);
-        if (!allowQueue)
-            future.startIfQueued();
+        SearchCacheEntry<R> future = queryInfo.index().cache().getAsync(this, allowQueue);
         return future;
     }
 

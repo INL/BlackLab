@@ -31,7 +31,7 @@ public class FutureSearchResultCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search) {
+    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         SearchCacheEntry<R> future;
         synchronized (searches) {
             future = (SearchCacheEntry<R>)searches.get(search);

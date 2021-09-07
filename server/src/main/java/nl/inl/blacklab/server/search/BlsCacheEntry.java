@@ -58,7 +58,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      * Note that the actual result of this future is never retrieved,
      * because the thread sets our result instance variable directly.
      */
-    private Future<?> future;
+    private Future<?> future = null;
 
     /** Result of the search (set directly by thread) */
     private T result = null;
@@ -81,6 +81,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
 
+    /** Is this search queued because load is too high? */
+    private boolean queued = true;
+
     /**
      * Construct a cache entry.
      *
@@ -100,6 +103,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     public void start(boolean block) {
         if (future != null)
             throw new RuntimeException("Search already started");
+        queued = false;
         future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> executeSearch());
         if (block) {
             try {
@@ -467,12 +471,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     @Override
     public boolean isQueued() {
-        return false; // TODO
+        return queued;
     }
 
     @Override
     public void startQueuedSearchImpl() {
-        // TO IMPLEMENT
+        start(false);
     }
 
 }

@@ -15,7 +15,7 @@ public class SearchCacheDebug implements SearchCache {
 
     @SuppressWarnings("unchecked")
     @Override
-    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search) {
+    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         SearchCacheEntry<R> result = (SearchCacheEntry<R>) searches.get(search);
         if (result == null) {
             R searchResults;

@@ -28,7 +28,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
      * The load management system will also start queued searches if server load
      * is low enough.
      */
-    void startIfQueued() {
+    public void startIfQueued() {
         if (isQueued())
             startQueuedSearchImpl();
     }
@@ -40,5 +40,13 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     static <S extends SearchResult> SearchCacheEntry<S> fromFuture(Future<S> future) {
         return new SearchCacheEntryFromFuture<S>(future);
+    }
+
+    /**
+     * Is this search currently running?
+     * @return true if the search is running (not queued, cancelled or done)
+     */
+    public boolean isRunning() {
+        return !isQueued() && !isCancelled() && !isDone();
     }
 }

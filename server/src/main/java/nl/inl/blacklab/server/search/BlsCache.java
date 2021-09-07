@@ -78,16 +78,34 @@ public class BlsCache implements SearchCache {
 
     }
 
+    private BLSConfigCache config;
+
+    private int maxConcurrentSearches;
+
+    /** Abort an abandoned count after how much time? (s) */
+    private int abandonedCountAbortTimeSec;
+
     protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
 
     protected boolean trace = false;
 
     private boolean cacheDisabled;
 
+    private Comparator<BlsCacheEntry<?>> worthinessComparator;
+
+    private long cacheSizeBytes;
+
+    private CleanupSearchesThread cleanupThread;
+
     private LogDatabase logDatabase = null;
 
-    public BlsCache(BLSConfigCache config, int abandonedCountAbortTimeSec, boolean trace) {
+    private long lastCacheLogMs = 0;
+
+    private long lastCacheSnapshotMs = 0;
+
+    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
         this.config = config;
+        this.maxConcurrentSearches = maxConcurrentSearches;
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
         cacheDisabled = config.getMaxNumberOfJobs() == 0 || config.getMaxJobAgeSec() == 0 || config.getMaxSizeMegs() == 0;
@@ -156,12 +174,12 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search) {
-        return getFromCache(search, false);
+    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
+        return getFromCache(search, false, allowQueue);
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block) {
+    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         synchronized (this) {
@@ -188,7 +206,17 @@ public class BlsCache implements SearchCache {
                 if (useCache)
                     searches.put(search, future);
                 if (trace) logger.info("-- STARTING: {}", search);
-                future.start(block);
+
+                if (block) {
+                    // Blocking search. Run it now.
+                    future.start(block);
+                } else if (!allowQueue) {
+                    // No queueing allowed. Start the search right away.
+                    future.startIfQueued();
+                } else {
+                    // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
+                    checkStartQueuedSearch();
+                }
             } else {
                 if (trace) logger.info("-- FOUND: {}", search);
                 future.updateLastAccess();
@@ -205,21 +233,6 @@ public class BlsCache implements SearchCache {
             logger.info("-- REMOVED: " + search + " (" + searches.size() + " searches left)");
         return future;
     }
-
-    private BLSConfigCache config;
-
-    private Comparator<BlsCacheEntry<?>> worthinessComparator;
-
-    private long cacheSizeBytes;
-
-    private CleanupSearchesThread cleanupThread;
-
-    private long lastCacheLogMs = 0;
-
-    private long lastCacheSnapshotMs = 0;
-
-    /** Abort an abandoned count after how much time? (s) */
-    private int abandonedCountAbortTimeSec;
 
     /**
      * Estimate number of result objects (e.g. Hits) in cache.
@@ -242,6 +255,33 @@ public class BlsCache implements SearchCache {
     void dbgtrace(String msg) {
         if (trace) {
             logger.debug(msg);
+        }
+    }
+
+    public int numberOfRunningSearches() {
+        return (int) searches.values().stream().filter(s -> s.isRunning()).count();
+    }
+
+    synchronized void checkStartQueuedSearch() {
+        // Sort the searches based on descending "worthiness"
+        List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
+        for (BlsCacheEntry<?> s : searches)
+            s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
+        searches.sort(worthinessComparator);
+        int runningSearches = numberOfRunningSearches();
+        for (int i = searches.size() - 1; i >= 0; i--) {
+            BlsCacheEntry<?> search1 = searches.get(i);
+
+            // Has this search not been started yet?
+            if (search1.isQueued()) {
+                // Search hasn't been started yet. Start it now?
+                if (runningSearches < maxConcurrentSearches) {
+                    // Yes!
+                    search1.startIfQueued();
+                    runningSearches++;
+                    break; // only start one per iteration (give it a little time to start its subtasks)
+                }
+            }
         }
     }
 
@@ -272,6 +312,7 @@ public class BlsCache implements SearchCache {
 
         // Look at searches from least worthy to worthiest.
         // Get rid of old searches
+        // Start queued searches if server load allows it
         boolean lookAtCacheSizeAndSearchAccessTime = true;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search1 = searches.get(i);
@@ -356,6 +397,9 @@ public class BlsCache implements SearchCache {
                 }
             }
         }
+
+        // See if we can start a queued search
+        checkStartQueuedSearch();
     }
 
     /**
