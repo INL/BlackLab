@@ -1,12 +1,12 @@
 package nl.inl.blacklab.testutil;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 
 /**
  * Future result for a search operation, executed in a thread.
@@ -17,7 +17,7 @@ import nl.inl.blacklab.searches.Search;
  *
  * @param <T> search result type
  */
-public class FutureSearchResult<T extends SearchResult> implements Future<T> {
+public class FutureSearchResult<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** Thread running the search */
     private Thread thread;
@@ -91,6 +91,16 @@ public class FutureSearchResult<T extends SearchResult> implements Future<T> {
     @Override
     public boolean isDone() {
         return result != null;
+    }
+
+    @Override
+    public boolean isQueued() {
+        return false;
+    }
+
+    @Override
+    public void startQueuedSearchImpl() {
+        // Never queued, so not implemented
     }
 
 }

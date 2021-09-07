@@ -11,10 +11,11 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.datastream.DataStream;
 
-public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
+public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** When waiting for the task to complete, poll how often? (ms) */
     private static final int POLLING_TIME_MS = 100;
@@ -52,10 +53,14 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
 
     // OUTCOMES
 
-    /** Future result of the search task */
+    /**
+     * Future result of the search task.
+     * Note that the actual result of this future is never retrieved,
+     * because the thread sets our result instance variable directly.
+     */
     private Future<?> future;
 
-    /** Result of the search (set by thread) */
+    /** Result of the search (set directly by thread) */
     private T result = null;
 
     /** Exception thrown by our thread, or null if no exception was thrown (set by thread) */
@@ -458,6 +463,16 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     @Override
     public String toString() {
         return "BlsCacheEntry(" + search + ", " + status() + ")";
+    }
+
+    @Override
+    public boolean isQueued() {
+        return false; // TODO
+    }
+
+    @Override
+    public void startQueuedSearchImpl() {
+        // TO IMPLEMENT
     }
 
 }

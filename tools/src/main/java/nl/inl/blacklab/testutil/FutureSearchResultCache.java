@@ -2,12 +2,12 @@ package nl.inl.blacklab.testutil;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 
 /**
  * A cache containing [future] results for searches.
@@ -17,7 +17,7 @@ import nl.inl.blacklab.searches.SearchCache;
  */
 public class FutureSearchResultCache implements SearchCache {
 
-    protected Map<Search<?>, Future<? extends SearchResult>> searches = new HashMap<>();
+    protected Map<Search<?>, SearchCacheEntry<? extends SearchResult>> searches = new HashMap<>();
 
     protected boolean trace = false;
 
@@ -31,10 +31,10 @@ public class FutureSearchResultCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> Future<R> getAsync(Search<R> search) {
-        Future<R> future;
+    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search) {
+        SearchCacheEntry<R> future;
         synchronized (searches) {
-            future = (Future<R>)searches.get(search);
+            future = (SearchCacheEntry<R>)searches.get(search);
             if (future == null) {
                 future = new FutureSearchResult<>(search);
                 searches.put(search, future);
@@ -50,10 +50,10 @@ public class FutureSearchResultCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> Future<R> remove(Search<R> search) {
-        Future<R> future;
+    public <R extends SearchResult> SearchCacheEntry<R> remove(Search<R> search) {
+        SearchCacheEntry<R> future;
         synchronized (searches) {
-            future = (Future<R>)searches.remove(search);
+            future = (SearchCacheEntry<R>)searches.remove(search);
             if (trace)
                 System.out.println("REMOVED: " + search);
         }

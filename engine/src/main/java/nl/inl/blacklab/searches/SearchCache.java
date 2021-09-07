@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.Future;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -29,7 +27,7 @@ public interface SearchCache {
      *            returning the future result and putting it in the cache.
      * @return the future, either one that was already the cache or a new one
      */
-    <R extends SearchResult> Future<R> getAsync(Search<R> search);
+    <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search);
 
     /**
      * Remove a search from the cache.
@@ -38,7 +36,7 @@ public interface SearchCache {
      * @param search search to remove
      * @return the removed search's future
      */
-    <R extends SearchResult> Future<R> remove(Search<R> search);
+    <R extends SearchResult> SearchCacheEntry<R> remove(Search<R> search);
 
     /**
      * Remove all searches for a particular index.

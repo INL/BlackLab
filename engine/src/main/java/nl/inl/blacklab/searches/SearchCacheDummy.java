@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.Future;
-
 import org.apache.commons.lang3.concurrent.ConcurrentUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -13,16 +11,16 @@ import nl.inl.blacklab.search.results.SearchResult;
 public final class SearchCacheDummy implements SearchCache {
 
     @Override
-    public <R extends SearchResult> Future<R> getAsync(Search<R> search) {
+    public <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search) {
         try {
-            return ConcurrentUtils.constantFuture(search.executeInternal()); // It's never in cache, and don't add it either
+            return SearchCacheEntry.fromFuture(ConcurrentUtils.constantFuture(search.executeInternal())); // It's never in cache, and don't add it either
         } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
 
     @Override
-    public <R extends SearchResult> Future<R> remove(Search<R> search) {
+    public <R extends SearchResult> SearchCacheEntry<R> remove(Search<R> search) {
         // Do nothing.
         return null;
     }
