@@ -26,7 +26,11 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         ResultCount resultCount = new ResultCount(source.execute(), type);
 
         // Ensure that the all hits will be counted in a separate thread.
-        queryInfo().index().cache().getAsync(new SearchCountTotal<>(queryInfo(), resultCount));
+        // (Why a separate thread? Because SearchCountFromResults immediately returns its
+        //  result object, and the caller can monitor this object to see the running total
+        //  while it is being counted)
+        SearchCountTotal<Results<?, ?>> searchCountTotal = new SearchCountTotal<>(queryInfo(), resultCount);
+        searchCountTotal.executeAsync();
 
         return resultCount;
     }
