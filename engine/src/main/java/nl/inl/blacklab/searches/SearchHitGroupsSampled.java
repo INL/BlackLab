@@ -9,9 +9,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
  * A search operation that yields groups of hits.
  */
 public class SearchHitGroupsSampled extends SearchHitGroups {
-    
+
     private SearchHitGroups source;
-    
+
     private SampleParameters sampleParameters;
 
     public SearchHitGroupsSampled(QueryInfo queryInfo, SearchHitGroups source, SampleParameters sampleParameters) {
@@ -22,9 +22,9 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
 
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return source.execute().sample(sampleParameters);
+        return source.executeNoQueue().sample(sampleParameters);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

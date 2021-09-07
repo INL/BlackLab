@@ -20,7 +20,7 @@ public class SearchCacheDebug implements SearchCache {
         if (result == null) {
             R searchResults;
             try {
-                searchResults = search.execute();
+                searchResults = search.executeNoQueue();
             } catch (InvalidQuery e) {
                 throw new CompletionException(e);
             }

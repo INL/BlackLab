@@ -8,11 +8,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 /** A search that yields groups of documents. */
 public class SearchDocGroupsFiltered extends SearchDocGroups {
-    
+
     private SearchDocGroups source;
 
     private DocGroupProperty property;
-    
+
     private PropertyValue value;
 
     public SearchDocGroupsFiltered(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
@@ -21,12 +21,12 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
         this.property = property;
         this.value = value;
     }
-    
+
     @Override
     public DocGroups executeInternal() throws InvalidQuery {
-        return source.execute().filter(property, value);
+        return source.executeNoQueue().filter(property, value);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

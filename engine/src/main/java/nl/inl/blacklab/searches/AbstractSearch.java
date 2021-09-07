@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -28,13 +27,16 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
-    public Future<R> executeAsync() {
-        return queryInfo.index().cache().getAsync(this);
+    public SearchCacheEntry<R> executeAsync(boolean allowQueue) {
+        SearchCacheEntry<R> future = queryInfo.index().cache().getAsync(this);
+        if (!allowQueue)
+            future.startIfQueued();
+        return future;
     }
 
     @Override
-    public final R execute() throws InvalidQuery {
-        Future<R> future = executeAsync();
+    public final R execute(boolean allowQueue) throws InvalidQuery {
+        SearchCacheEntry<R> future = executeAsync(allowQueue);
         try {
             return future.get();
         } catch (ExecutionException e) {

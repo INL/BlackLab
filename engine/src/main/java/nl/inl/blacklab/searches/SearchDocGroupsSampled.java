@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that yields groups of documents. */
 public class SearchDocGroupsSampled extends SearchDocGroups {
-    
+
     private SearchDocGroups source;
 
     private SampleParameters sampleParameters;
@@ -17,12 +17,12 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
         this.source = source;
         this.sampleParameters = sampleParameters;
     }
-    
+
     @Override
     public DocGroups executeInternal() throws InvalidQuery {
-        return source.execute().sample(sampleParameters);
+        return source.executeNoQueue().sample(sampleParameters);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

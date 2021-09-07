@@ -22,7 +22,7 @@ public class SearchCollocationsWindow extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return source.executeNoQueue().window(first, number);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SearchCollocationsWindow extends SearchCollocations {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("window", source, first, number);

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.Future;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -19,10 +17,43 @@ public interface Search<R extends SearchResult> {
      *
      * Executes the search synchronously.
      *
+     * This search may be queued if load is high. To avoid this (and potential
+     * deadlock situations because of it), use {@link #executeNoQueue()} or {@link #execute(boolean)}.
+     *
      * @return result of the operation
      * @throws InvalidQuery
      */
-    R execute() throws InvalidQuery;
+    default R execute() throws InvalidQuery {
+        return execute(true);
+    }
+
+    /**
+     * Execute the search operation, returning the final response.
+     *
+     * Executes the search synchronously.
+     *
+     * This search will not be queued, even if load is high.
+     * For more control, use {@link #execute(boolean)}.
+     *
+     * @return result of the operation
+     * @throws InvalidQuery
+     */
+    default R executeNoQueue() throws InvalidQuery {
+        return execute(false);
+    }
+
+    /**
+     * Execute the search operation, returning the final response.
+     *
+     * Executes the search synchronously.
+     *
+     * @param allowQueue may this search be queued if load is high? Set to
+     * false (for searches initiated by other searches) to prevent deadlock,
+     * or true (for user-initiated searches) to allow load management to happen.
+     * @return result of the operation
+     * @throws InvalidQuery
+     */
+    R execute(boolean allowQueue) throws InvalidQuery;
 
     /**
      * Execute the search operation asynchronously.
@@ -30,9 +61,43 @@ public interface Search<R extends SearchResult> {
      * Runs the search in a separate thread and passes the result through
      * the returned Future.
      *
+     * This search may be queued if load is high. To avoid this (and potential
+     * deadlock situations because of it), use {@link #executeAsyncNoQueue()} or {@link #executeAsync(boolean)}.
+     *
      * @return future result
      */
-    Future<R> executeAsync();
+    default SearchCacheEntry<R> executeAsync() {
+        return executeAsync(true);
+    }
+
+    /**
+     * Execute the search operation asynchronously.
+     *
+     * Runs the search in a separate thread and passes the result through
+     * the returned Future.
+     *
+     * This search will not be queued, even if load is high.
+     * For more control, use {@link #executeAsync(boolean)}.
+     *
+     * @return future result
+     */
+    default SearchCacheEntry<R> executeAsyncNoQueue() {
+        return executeAsync(false);
+    }
+
+    /**
+     * Execute the search operation asynchronously.
+     *
+     * Runs the search in a separate thread and passes the result through
+     * the returned Future.
+     *
+     * @param allowQueue may this search be queued if load is high? Set to
+     * false (for searches initiated by other searches) to prevent deadlock,
+     * or true (for user-initiated searches) to allow load management to happen.
+     *
+     * @return future result
+     */
+    SearchCacheEntry<R> executeAsync(boolean allowQueue);
 
     R executeInternal() throws InvalidQuery;
 

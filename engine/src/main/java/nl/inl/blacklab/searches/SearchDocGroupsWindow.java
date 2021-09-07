@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 /** A search that yields groups of documents. */
 public class SearchDocGroupsWindow extends SearchDocGroups {
-    
+
     private SearchDocGroups source;
     private int first;
     private int number;
@@ -17,12 +17,12 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
         this.first = first;
         this.number = number;
     }
-    
+
     @Override
     public DocGroups executeInternal() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return source.executeNoQueue().window(first, number);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

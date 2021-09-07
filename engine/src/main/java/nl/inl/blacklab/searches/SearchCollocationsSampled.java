@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.SampleParameters;
 public class SearchCollocationsSampled extends SearchCollocations {
 
     private SearchCollocations source;
-    
+
     private SampleParameters sampleParameters;
 
     public SearchCollocationsSampled(QueryInfo queryInfo, SearchCollocations source, SampleParameters sampleParameters) {
@@ -22,7 +22,7 @@ public class SearchCollocationsSampled extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().sample(sampleParameters);
+        return source.executeNoQueue().sample(sampleParameters);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SearchCollocationsSampled extends SearchCollocations {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("sample", source, sampleParameters);

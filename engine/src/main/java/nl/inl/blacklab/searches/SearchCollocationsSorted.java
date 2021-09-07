@@ -22,7 +22,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().sort(property);
+        return source.executeNoQueue().sort(property);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("sort", source, property);

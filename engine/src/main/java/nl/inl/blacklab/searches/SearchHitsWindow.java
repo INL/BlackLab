@@ -18,12 +18,12 @@ public class SearchHitsWindow extends SearchHits {
         this.first = first;
         this.number = number;
     }
-    
+
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return source.executeNoQueue().window(first, number);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

@@ -23,14 +23,14 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
 
     @Override
     public ResultCount executeInternal() throws InvalidQuery {
-        ResultCount resultCount = new ResultCount(source.execute(), type);
+        ResultCount resultCount = new ResultCount(source.executeNoQueue(), type);
 
         // Ensure that the all hits will be counted in a separate thread.
         // (Why a separate thread? Because SearchCountFromResults immediately returns its
         //  result object, and the caller can monitor this object to see the running total
         //  while it is being counted)
         SearchCountTotal<Results<?, ?>> searchCountTotal = new SearchCountTotal<>(queryInfo(), resultCount);
-        searchCountTotal.executeAsync();
+        searchCountTotal.executeAsyncNoQueue();
 
         return resultCount;
     }

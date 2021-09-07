@@ -10,13 +10,13 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A search operation that yields groups of hits.
  */
 public class SearchHitGroupsFromHits extends SearchHitGroups {
-    
+
     private SearchHits source;
-    
+
     private HitProperty property;
-    
+
     private int maxResultsToStorePerGroup;
-    
+
     private boolean useFastPath = false;
 
     public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup) {
@@ -29,18 +29,18 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
 
     /**
      * Execute the search operation, returning the final response.
-     *  
+     *
      * @return result of the operation
-     * @throws InvalidQuery 
+     * @throws InvalidQuery
      */
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        if (useFastPath) 
+        if (useFastPath)
             return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), source.searchSettings(), property, maxResultsToStorePerGroup);
         else  // Just find all the hits and group them.
-            return HitGroups.fromHits(source.execute(), property, maxResultsToStorePerGroup);
+            return HitGroups.fromHits(source.executeNoQueue(), property, maxResultsToStorePerGroup);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -82,17 +82,17 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     public String toString() {
         return toString("group", source, property, maxResultsToStorePerGroup);
     }
-    
+
     private boolean fastPathAvailable() {
-        // Any token query! Choose faster path that just "looks up" 
+        // Any token query! Choose faster path that just "looks up"
         // token frequencies in the forward index(es).
         return HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && source.isAnyTokenQuery() && property.isDocPropOrHitText();
     }
-    
+
     /**
      * When using the fast path, backing hits are not stored in the groups.
      * This saves a large amount of memory and time, but transforms the query into more of a statistical view on the data
-     * because the individual hits are lost. 
+     * because the individual hits are lost.
      * Call this to disable the optimizations and store all Hits (up to maxResultsToStorePerGroup).
      */
     public void forceStoreHits() {

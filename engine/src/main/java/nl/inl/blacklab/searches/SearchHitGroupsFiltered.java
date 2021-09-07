@@ -10,11 +10,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A search operation that yields groups of hits.
  */
 public class SearchHitGroupsFiltered extends SearchHitGroups {
-    
+
     private SearchHitGroups source;
-    
+
     private HitGroupProperty property;
-    
+
     private PropertyValue value;
 
     public SearchHitGroupsFiltered(QueryInfo queryInfo, SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
@@ -26,9 +26,9 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
 
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return source.execute().filter(property, value);
+        return source.executeNoQueue().filter(property, value);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

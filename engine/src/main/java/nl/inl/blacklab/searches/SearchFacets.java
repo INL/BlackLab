@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 /** A search that yields multiple doc groupings with only counts (no stored results). */
 public class SearchFacets extends AbstractSearch<Facets> {
-    
+
     private SearchDocs source;
     private List<DocProperty> properties;
 
@@ -21,7 +21,7 @@ public class SearchFacets extends AbstractSearch<Facets> {
 
     @Override
     public Facets executeInternal() throws InvalidQuery {
-        return new Facets(source.execute(), properties);
+        return new Facets(source.executeNoQueue(), properties);
     }
 
     @Override
@@ -54,5 +54,5 @@ public class SearchFacets extends AbstractSearch<Facets> {
             return false;
         return true;
     }
-    
+
 }

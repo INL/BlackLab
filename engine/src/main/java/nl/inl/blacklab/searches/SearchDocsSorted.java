@@ -19,9 +19,9 @@ public class SearchDocsSorted extends SearchDocs {
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return source.execute().sort(property);
+        return source.executeNoQueue().sort(property);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

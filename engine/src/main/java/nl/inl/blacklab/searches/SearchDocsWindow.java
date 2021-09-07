@@ -21,9 +21,9 @@ public class SearchDocsWindow extends SearchDocs {
 
     @Override
     public DocResults executeInternal() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return source.executeNoQueue().window(first, number);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

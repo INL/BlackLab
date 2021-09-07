@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 /** A search that yields groups of documents. */
 public class SearchDocGroupsFromDocs extends SearchDocGroups {
-    
+
     private SearchDocs source;
 
     private DocProperty property;
@@ -20,12 +20,12 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
         this.property = property;
         this.maxDocs = maxDocsToStorePerGroup;
     }
-    
+
     @Override
     public DocGroups executeInternal() throws InvalidQuery {
-        return source.execute().group(property, maxDocs);
+        return source.executeNoQueue().group(property, maxDocs);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -64,5 +64,5 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     public String toString() {
         return toString("group", source, property, maxDocs);
     }
-    
+
 }

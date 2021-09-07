@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SearchCollocationsFiltered extends SearchCollocations {
 
     private SearchCollocations source;
-    
+
     private ResultProperty<TermFrequency> property;
-    
+
     private PropertyValue value;
 
     public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
@@ -27,7 +27,7 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().filter(property, value);
+        return source.executeNoQueue().filter(property, value);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class SearchCollocationsFiltered extends SearchCollocations {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("filter", source, property, value);

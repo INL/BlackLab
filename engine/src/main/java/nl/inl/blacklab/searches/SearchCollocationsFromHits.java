@@ -27,7 +27,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal() throws InvalidQuery {
-        return source.execute().collocations(annotation, contextSize, sensitivity);
+        return source.executeNoQueue().collocations(annotation, contextSize, sensitivity);
     }
 
     @Override
@@ -69,7 +69,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
             return false;
         return true;
     }
-    
+
     @Override
     public String toString() {
         return toString("colloc", source, annotation, contextSize, sensitivity);

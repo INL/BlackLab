@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A search operation that yields groups of hits.
  */
 public class SearchHitGroupsWindow extends SearchHitGroups {
-    
+
     private SearchHitGroups source;
     private int first;
     private int number;
@@ -22,9 +22,9 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
 
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        return source.execute().window(first, number);
+        return source.executeNoQueue().window(first, number);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

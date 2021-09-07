@@ -20,12 +20,12 @@ public class SearchHitsFiltered extends SearchHits {
         this.property = property;
         this.value = value;
     }
-    
+
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return source.execute().filter(property, value);
+        return source.executeNoQueue().filter(property, value);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -67,7 +67,7 @@ public class SearchHitsFiltered extends SearchHits {
     public String toString() {
         return toString("filter", source, property, value);
     }
-    
+
     @Override
     public boolean isAnyTokenQuery() {
         return source.isAnyTokenQuery();
