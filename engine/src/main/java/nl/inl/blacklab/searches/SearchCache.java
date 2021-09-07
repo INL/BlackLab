@@ -1,9 +1,7 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -32,33 +30,6 @@ public interface SearchCache {
      * @return the future, either one that was already the cache or a new one
      */
     <R extends SearchResult> Future<R> getAsync(Search<R> search);
-
-    /**
-     * Get result for the specified search.
-     *
-     * Will block until the result is available. If the search was already in the cache,
-     * its existing future will be used. If the search is not in the cache, it
-     * will be started and added to the cache, then its result will be
-     * returned.
-     *
-     * The default implementation simply calls getAsync() and waits for the future to
-     * complete, but other implementations could choose to perform the task on the current thread as well.
-     *
-     * @param <R> type of SearchResult
-     * @param search search we want the result for. if the search is not in the cache, execute it,
-     *            returning the future result and putting it in the cache.
-     * @return the future, either one that was alrady the cache or a new one
-     * @throws InterruptedSearch if the task was interrupted
-     * @throws ExecutionException if the task threw an exception (see the cause)
-     */
-    default <R extends SearchResult> R get(Search<R> search)
-            throws ExecutionException {
-        try {
-            return getAsync(search).get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        }
-    }
 
     /**
      * Remove a search from the cache.

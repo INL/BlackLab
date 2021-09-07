@@ -8,13 +8,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -160,16 +158,6 @@ public class BlsCache implements SearchCache {
     @Override
     public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search) {
         return getFromCache(search, false);
-    }
-
-    @Override
-    public <R extends SearchResult> R get(Search<R> search) throws ExecutionException {
-        BlsCacheEntry<R> entry = getFromCache(search, true);
-        try {
-            return entry.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        }
     }
 
     @SuppressWarnings("unchecked")
