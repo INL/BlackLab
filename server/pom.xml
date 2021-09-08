@@ -278,6 +278,12 @@
             <artifactId>ec2</artifactId>
             <version>2.16.61</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-catalina</artifactId>
+            <version>9.0.50</version>
+        </dependency>
+
 
 
     </dependencies>
