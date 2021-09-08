@@ -210,8 +210,9 @@ public class BlsCache implements SearchCache {
                 if (block) {
                     // Blocking search. Run it now.
                     future.start(block);
-                } else if (!allowQueue) {
+                } else if (!allowQueue || !useCache) {
                     // No queueing allowed. Start the search right away.
+                    // (we also do this if you bypass the cache, because then queueing doesn't work)
                     future.startIfQueued();
                 } else {
                     // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
