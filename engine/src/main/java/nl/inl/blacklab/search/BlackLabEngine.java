@@ -6,9 +6,8 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinPool.ForkJoinWorkerThreadFactory;
-import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.index.IndexReader;
 
@@ -17,16 +16,16 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 
 /**
  * Main BlackLab instance, from which indexes can be opened.
- * 
+ *
  * If you don't instantiate this, but call BlackLab.openIndex() directly,
  * an implicit instance will be created that will be closed when you close
  * the last index.
- * 
+ *
  * Instantiating this explicitly has the advantage of being able to pass
  * parameters, such as the number of search thread you want (default 4).
  */
 public final class BlackLabEngine implements Closeable {
-    
+
     /**
      * Map from IndexReader to BlackLabIndex, for use from inside SpanQuery/Spans classes
      */
@@ -35,37 +34,33 @@ public final class BlackLabEngine implements Closeable {
     /** Thread on which we run initializations (opening forward indexes, etc.).
      *  Single-threaded because these kinds of initializations are memory and CPU heavy. */
     private ExecutorService initializationExecutorService = null;
-    
-    /** Thread on which we run searches. Unless we change the default, there will be
-     *  four threads available. */
+
+    /** Threads on which we run searches. This pool is not limited in size,
+     *  but new top-level searches (i.e. not started by other searches) are queued
+     *  until server load is deemed low enough that they can start.
+     */
     private ExecutorService searchExecutorService = null;
-    
+
     /** How many threads may a single search use? */
-    
-    
-    
-    
-    
     private int maxThreadsPerSearch;
-    
+
+    AtomicInteger threadCounter = new AtomicInteger(1);
+
     BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();
-        this.searchExecutorService = new ForkJoinPool(searchThreads, new ForkJoinWorkerThreadFactory() {
-            @Override
-            public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
-                final ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
-                worker.setName("SearchThread-" + worker.getPoolIndex());
+        this.searchExecutorService = Executors.newCachedThreadPool(new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable runnable) {
+				Thread worker = Executors.defaultThreadFactory().newThread(runnable);
+				int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
+				worker.setName("SearchThread-" + threadNumber);
                 return worker;
             }
-            
-            
-        }, null, true);
-        
-        
-        
+		});
+
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
-    
+
     @Override
     public void close() {
         if (searchExecutorService != null) {
@@ -85,7 +80,7 @@ public final class BlackLabEngine implements Closeable {
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         return BlackLabIndex.open(this, indexDir);
     }
-    
+
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
@@ -120,7 +115,7 @@ public final class BlackLabEngine implements Closeable {
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      * @return index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened 
+     * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
@@ -134,7 +129,7 @@ public final class BlackLabEngine implements Closeable {
      * @param config format configuration for this index; used to base the index
      *            metadata on
      * @return a BlackLabIndexWriter for the new index, in index mode
-     * @throws ErrorOpeningIndex if the index couldn't be opened 
+     * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
         return openForWriting(indexDir, true, config);
