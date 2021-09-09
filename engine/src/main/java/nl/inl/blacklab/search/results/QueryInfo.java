@@ -31,9 +31,6 @@ public final class QueryInfo {
     /** The field these hits came from (will also be used as concordance field) */
     private AnnotatedField field;
 
-//    /** The results object id of the original query (for debugging). */
-//    private int resultsObjectId = -1;
-
     /** Should we use the cache for this query, or bypass it? */
     private boolean useCache;
 
@@ -47,12 +44,12 @@ public final class QueryInfo {
         this.useCache = useCache;
         this.searchLogger = searchLogger;
     }
-    
+
     /**
      * Return a copy with a different index.
-     * 
+     *
      * If this is the same index, simply returns this object.
-     * 
+     *
      * @param newIndex index to use
      * @return QueryInfo with the specified index
      */
@@ -61,11 +58,11 @@ public final class QueryInfo {
             return this;
         return new QueryInfo(newIndex, field, useCache, searchLogger);
     }
-    
+
     /**
      * Log to the configured search logger, if any.
-     * 
-     * @param level log level 
+     *
+     * @param level log level
      * @param msg message to log
      */
     public void log(LogLevel level, String msg) {
@@ -87,29 +84,6 @@ public final class QueryInfo {
     public boolean useCache() {
         return useCache;
     }
-//
-//    /** @return the results object id of the original query. */
-//    public int resultsObjectId() {
-//        return resultsObjectId;
-//    }
-
-//    /**
-//     * Set the results object id of the original query.
-//     * 
-//     * This is only done exactly once, by the original query as it's constructed.
-//     * Attempting to change it later throws an exception. It is only used for debugging.
-//     * 
-//     * @param resultsObjectId results object id
-//     * @throws UnsupportedOperationException if you attempt to set it again
-//     * 
-//     */
-//    public synchronized void ensureResultsObjectIdSet(int resultsObjectId) {
-//        if (this.resultsObjectId == -1) {
-//            if (resultsObjectId == -1)
-//                throw new UnsupportedOperationException("Invalid resultsObjectId: -1");
-//            this.resultsObjectId = resultsObjectId;
-//        }
-//    }
 
     @Override
     public int hashCode() {
