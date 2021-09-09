@@ -90,7 +90,7 @@ public class FutureSearchResult<T extends SearchResult> extends SearchCacheEntry
 
     @Override
     public boolean isDone() {
-        return result != null;
+        return !isCancelled() && result != null;
     }
 
     @Override

@@ -108,7 +108,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         if (block) {
             try {
                 // Wait until result available
-                while (!isDone() && !isCancelled()) {
+                while (!isDone()) {
                     Thread.sleep(POLLING_TIME_MS);
                 }
                 if (isCancelled())
@@ -349,6 +349,10 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     public String status() {
+        if (isQueued())
+            return "queued";
+        if (isCancelled())
+            return "cancelled";
         if (isDone())
             return "finished";
         return "running";

@@ -37,11 +37,23 @@ class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntr
         return future.get(arg0, arg1);
     }
 
+    /**
+     * Was this future cancelled?
+     *
+     * If it was, {@link #isDone()} will also return true.
+     *
+     * @return true if it was, false if not
+     */
     @Override
     public boolean isCancelled() {
         return future.isCancelled();
     }
 
+    /**
+     * Is this future done (cancelled or completed)?
+     *
+     * @return true if it is, false if not
+     */
     @Override
     public boolean isDone() {
         return future.isDone();

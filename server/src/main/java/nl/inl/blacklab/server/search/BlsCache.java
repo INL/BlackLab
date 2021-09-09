@@ -313,10 +313,11 @@ public class BlsCache implements SearchCache {
 
         // Look at searches from least worthy to worthiest.
         // Get rid of old searches
-        // Start queued searches if server load allows it
         boolean lookAtCacheSizeAndSearchAccessTime = true;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search1 = searches.get(i);
+            if (search1.isQueued())
+                continue; // handled below
 
             boolean runningSearchTakingTooLong = !search1.isDone() && search1.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L;
             boolean initialSearchDone = search1.isDone();
@@ -388,7 +389,7 @@ public class BlsCache implements SearchCache {
         // STEP 2: abort any long-running counts that no client has asked about for a while.
         for (int i = 0; i < searches.size(); i++) {
             BlsCacheEntry<?> search = searches.get(i);
-            if (!search.isDone()) {
+            if (search.isRunning()) {
                 // Running search. Run or abort?
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {

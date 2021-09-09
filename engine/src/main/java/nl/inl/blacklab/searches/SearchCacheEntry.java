@@ -44,9 +44,9 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     /**
      * Is this search currently running?
-     * @return true if the search is running (not queued, cancelled or done)
+     * @return true if the search is running (not queued, cancelled or completed)
      */
     public boolean isRunning() {
-        return !isQueued() && !isCancelled() && !isDone();
+        return !isQueued() && !isDone();
     }
 }
