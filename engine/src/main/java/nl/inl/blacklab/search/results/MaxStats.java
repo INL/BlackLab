@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.results;
 
 /** Information about whether we reached the limit of processing/counting */
 public class MaxStats {
-    
+
     public static final MaxStats NOT_EXCEEDED = new MaxStats(false, false);
 
     /** If true, we've stopped retrieving hits because there are more than the
@@ -60,4 +60,8 @@ public class MaxStats {
         return maxHitsCounted == other.maxHitsCounted && maxHitsProcessed == other.maxHitsProcessed;
     }
 
+    @Override
+    public String toString() {
+        return "MaxStats(" + maxHitsProcessed + ", " + maxHitsCounted + ")";
+    }
 }

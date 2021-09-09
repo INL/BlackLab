@@ -49,7 +49,7 @@ public class BlsCache implements SearchCache {
 
         /** Construct the load manager thread object. */
         public CleanupSearchesThread() {
-            super("CleanupSearchesThread");
+            super("CleanupSearches");
             setUncaughtExceptionHandler(this);
         }
 
@@ -66,7 +66,7 @@ public class BlsCache implements SearchCache {
                     return;
                 }
 
-                cleanupSearches();
+                updateCache();
             }
         }
 
@@ -103,9 +103,11 @@ public class BlsCache implements SearchCache {
 
     private long lastCacheSnapshotMs = 0;
 
+    private String previousCacheStatsMessage = "";
+
     public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
         this.config = config;
-        this.maxConcurrentSearches = maxConcurrentSearches;
+        this.maxConcurrentSearches = 2; //@@@DEBUG maxConcurrentSearches;
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
         cacheDisabled = config.getMaxNumberOfJobs() == 0 || config.getMaxJobAgeSec() == 0 || config.getMaxSizeMegs() == 0;
@@ -149,6 +151,7 @@ public class BlsCache implements SearchCache {
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
+        if (trace) logger.info("Remove searches for index: " + index.name());
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
@@ -170,7 +173,7 @@ public class BlsCache implements SearchCache {
             cachedSearch.cancel(true);
         }
         searches.clear();
-        logger.debug("Cache cleared.");
+        if (trace) logger.info("Cache cleared.");
     }
 
     @Override
@@ -180,6 +183,7 @@ public class BlsCache implements SearchCache {
 
     @SuppressWarnings("unchecked")
     private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
+        if (trace) logger.info("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         synchronized (this) {
@@ -189,7 +193,7 @@ public class BlsCache implements SearchCache {
                 try {
                     long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
                     if (freeMegs < config.getMinFreeMemForSearchMegs()) {
-                        cleanupSearches();  // try to free up space for next search
+                        updateCache();  // try to free up space for next search
                         logger.warn(
                                 "Can't start new search, not enough memory (" + freeMegs + "M < "
                                         + config.getMinFreeMemForSearchMegs() + "M)");
@@ -205,25 +209,65 @@ public class BlsCache implements SearchCache {
                 future = new BlsCacheEntry<>(search);
                 if (useCache)
                     searches.put(search, future);
-                if (trace) logger.info("-- STARTING: {}", search);
 
                 if (block) {
                     // Blocking search. Run it now.
+                    if (trace) logger.info("-- STARTING: {} (BLOCKING SEARCH)", search);
                     future.start(block);
                 } else if (!allowQueue || !useCache) {
                     // No queueing allowed. Start the search right away.
                     // (we also do this if you bypass the cache, because then queueing doesn't work)
+                    if (trace) {
+                        if (!allowQueue)
+                            logger.info("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
+                        else
+                            logger.info("-- STARTING: {} (NOT USING CACHE)", search);
+                    }
                     future.startIfQueued();
                 } else {
                     // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
-                    checkStartQueuedSearch();
+                    checkStartQueuedSearch(false);
+                    if (future.isQueued()) {
+                        if (trace) logger.info("-- QUEUEING: {}", search);
+                    } else {
+                        if (trace) logger.info("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
+                    }
                 }
             } else {
-                if (trace) logger.info("-- FOUND: {}", search);
+                // Already in cache.
+                if (trace) logger.info("-- FOUND:    {}", search);
                 future.updateLastAccess();
             }
         }
+        traceCacheStats("   CACHE AFTER GET", false);
         return future;
+    }
+
+    String getCacheStats() {
+        if (trace) {
+            int queued = 0, running = 0, finished = 0, cancelled = 0;
+            for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
+                if (entry.isQueued())
+                    queued++;
+                else if (entry.isCancelled())
+                    cancelled++;
+                else if (entry.isDone())
+                    finished++;
+                else
+                    running++;
+            }
+            return String.format("%d queued, %d running, %d finished, %d cancelled", queued, running, finished, cancelled);
+        }
+        return "";
+    }
+
+    void traceCacheStats(String prompt, boolean onlyIfDifferent) {
+        if (trace) {
+            String msg = getCacheStats();
+            if (!onlyIfDifferent || !msg.equals(previousCacheStatsMessage))
+                logger.info("{}: {}", prompt, msg);
+            previousCacheStatsMessage = msg;
+        }
     }
 
     @Override
@@ -231,7 +275,7 @@ public class BlsCache implements SearchCache {
     synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
         BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
         if (future != null && trace)
-            logger.info("-- REMOVED: " + search + " (" + searches.size() + " searches left)");
+            logger.info("-- REMOVED:  {} ({} searches left)", search, searches.size());
         return future;
     }
 
@@ -263,7 +307,7 @@ public class BlsCache implements SearchCache {
         return (int) searches.values().stream().filter(s -> s.isRunning()).count();
     }
 
-    synchronized void checkStartQueuedSearch() {
+    synchronized void checkStartQueuedSearch(boolean report) {
         // Sort the searches based on descending "worthiness"
         List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
         for (BlsCacheEntry<?> s : searches)
@@ -278,6 +322,8 @@ public class BlsCache implements SearchCache {
                 // Search hasn't been started yet. Start it now?
                 if (runningSearches < maxConcurrentSearches) {
                     // Yes!
+                    if (trace && report)
+                        logger.info("-- UNQUEUE:  {}", search1);
                     search1.startIfQueued();
                     runningSearches++;
                     break; // only start one per iteration (give it a little time to start its subtasks)
@@ -288,10 +334,9 @@ public class BlsCache implements SearchCache {
 
     /**
      * Abort searches if too much memory is in use or the search is taking too long.
-     * Remove older finished searches from cache.
+     * Remove older finished searches from cache. Start a queued search if load is low enough.
      */
-    synchronized void cleanupSearches() {
-
+    synchronized void updateCache() {
         long resultsObjectsInCache = estimateResultObjectsInCache();
         cacheSizeBytes = resultsObjectsInCache * SIZE_OF_HIT;
 
@@ -401,7 +446,8 @@ public class BlsCache implements SearchCache {
         }
 
         // See if we can start a queued search
-        checkStartQueuedSearch();
+        checkStartQueuedSearch(true);
+        traceCacheStats("CACHE AFTER UPDATE", true);
     }
 
     /**
@@ -421,7 +467,7 @@ public class BlsCache implements SearchCache {
     /**
      * Regularly log state of the cache to the log database.
      *
-     * Logs the current state every LOG_CACHE_STATE_INTERVAL_SEC, and a snapshot every
+     * Logs the current state every LOG_CACLEANUPCHE_STATE_INTERVAL_SEC, and a snapshot every
      * LOG_CACHE_SNAPSHOT_INTERVAL_SEC.
      *
      * @param cacheSizeBytes
