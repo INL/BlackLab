@@ -107,7 +107,7 @@ public class BlsCache implements SearchCache {
 
     public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
         this.config = config;
-        this.maxConcurrentSearches = 2; //@@@DEBUG maxConcurrentSearches;
+        this.maxConcurrentSearches = maxConcurrentSearches;
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
         cacheDisabled = config.getMaxNumberOfJobs() == 0 || config.getMaxJobAgeSec() == 0 || config.getMaxSizeMegs() == 0;
