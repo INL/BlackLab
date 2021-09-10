@@ -155,7 +155,7 @@ public class BlsCache implements SearchCache {
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
-        if (trace) logger.info("Remove searches for index: " + index.name());
+        traceInfo("Remove searches for index: " + index.name());
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
@@ -177,7 +177,7 @@ public class BlsCache implements SearchCache {
             cachedSearch.cancel(true);
         }
         searches.clear();
-        if (trace) logger.info("Cache cleared.");
+        traceInfo("Cache cleared.");
     }
 
     @Override
@@ -187,7 +187,7 @@ public class BlsCache implements SearchCache {
 
     @SuppressWarnings("unchecked")
     private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
-        if (trace) logger.info("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
+        traceInfo("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         synchronized (this) {
@@ -205,30 +205,28 @@ public class BlsCache implements SearchCache {
 
                 if (block) {
                     // Blocking search. Run it now.
-                    if (trace) logger.info("-- STARTING: {} (BLOCKING SEARCH)", search);
+                    traceInfo("-- STARTING: {} (BLOCKING SEARCH)", search);
                     future.start(block);
                 } else if (!allowQueue || !useCache) {
                     // No queueing allowed. Start the search right away.
                     // (we also do this if you bypass the cache, because then queueing doesn't work)
-                    if (trace) {
-                        if (!allowQueue)
-                            logger.info("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
-                        else
-                            logger.info("-- STARTING: {} (NOT USING CACHE)", search);
-                    }
+                    if (!allowQueue)
+                        traceInfo("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
+                    else
+                        traceInfo("-- STARTING: {} (NOT USING CACHE)", search);
                     future.startIfQueued();
                 } else {
                     // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
                     checkStartQueuedSearch(false);
                     if (future.isQueued()) {
-                        if (trace) logger.info("-- QUEUEING: {}", search);
+                        traceInfo("-- QUEUEING: {}", search);
                     } else {
-                        if (trace) logger.info("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
+                        traceInfo("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
                     }
                 }
             } else {
                 // Already in cache.
-                if (trace) logger.info("-- FOUND:    {}", search);
+                traceInfo("-- FOUND:    {}", search);
                 future.updateLastAccess();
             }
         }
@@ -259,7 +257,7 @@ public class BlsCache implements SearchCache {
         if (trace) {
             String msg = getCacheStats();
             if (!onlyIfDifferent || !msg.equals(previousCacheStatsMessage))
-                logger.info("{}: {}", prompt, msg);
+                traceInfo("{}: {}", prompt, msg);
             previousCacheStatsMessage = msg;
         }
     }
@@ -268,8 +266,8 @@ public class BlsCache implements SearchCache {
     @SuppressWarnings("unchecked")
     synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
         BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
-        if (future != null && trace)
-            logger.info("-- REMOVED:  {} ({} searches left)", search, searches.size());
+        if (future != null)
+            traceInfo("-- REMOVED:  {} ({} searches left)", search, searches.size());
         return future;
     }
 
@@ -291,9 +289,9 @@ public class BlsCache implements SearchCache {
         return resultsObjectsInCache;
     }
 
-    void dbgtrace(String msg) {
+    void traceInfo(String msg, Object... params) {
         if (trace) {
-            logger.debug(msg);
+            logger.info(msg, params);
         }
     }
 
@@ -327,8 +325,8 @@ public class BlsCache implements SearchCache {
             // Find & start oldest queued search
             BlsCacheEntry<?> search1 = searches.stream().filter(s -> s.isQueued()).findFirst().orElse(null);
             if (search1 != null) {
-                if (trace && report)
-                    logger.info("-- UNQUEUE:  {}", search1);
+                if (report)
+                    traceInfo("-- UNQUEUE:  {}", search1);
                 search1.startIfQueued();
             }
         }
@@ -374,8 +372,9 @@ public class BlsCache implements SearchCache {
             BlsCacheEntry<?> search = searches.get(i);
             if (search.isRunning() && search.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L) {
                 // Search is taking too long. Cancel it.
-                dbgtrace("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + config.getMaxSearchTimeSec() + "s)");
-                abortSearch(search, "taking too long", false);
+                traceInfo("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + config.getMaxSearchTimeSec() + "s)");
+                traceInfo("-- ABORT (taking too long): {}", search);
+                search.cancel(true);
                 searches.remove(i);
             }
         }
@@ -388,8 +387,8 @@ public class BlsCache implements SearchCache {
         long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search = searches.get(i);
-            if (search.isQueued())
-                continue; // handled below
+            if (search.isQueued() || search.isRunning())
+                continue;
 
             boolean isSearchTooOld = false;
             if (search.isCancelled()) {
@@ -406,15 +405,17 @@ public class BlsCache implements SearchCache {
                 // logger.debug("Remove from cache: " + search);
                 String reason = "?";
                 if (memoryToFreeUpMegs > 0) {
-                    dbgtrace("Not enough free mem (free " + freeMegs + "M < min free "
+                    traceInfo("Not enough free mem (free " + freeMegs + "M < min free "
                             + config.getTargetFreeMemMegs() + "M)");
                     reason = "free up memory";
                 } else {
-                    dbgtrace("Searchjob too old (age " + (int)(search.timeUnusedMs()/1000) + "s > max age "
+                    traceInfo("Searchjob too old (age " + (int)(search.timeUnusedMs()/1000) + "s > max age "
                             + config.getMaxJobAgeSec() + "s)");
                     reason = "search too old";
                 }
-                abortSearch(search, reason, false);
+                traceInfo("-- REMOVE ({}): {}", reason, search);
+                remove(search.search());
+
                 memoryToFreeUpMegs -= (long)search.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES; // NB very rough guess, but ok
                 searches.remove(i);
             }
@@ -428,7 +429,11 @@ public class BlsCache implements SearchCache {
                 // Running search. Run or abort?
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
-                    abortSearch(search, "abandoned count", true);
+                    // Abandoned counts are removed right away, because we do this quite quickly (e.g. 30s)
+                    // and don't want to penalize users if they decide to come back to this search.
+                    remove(search.search());
+                    traceInfo("-- ABORT (abandoned count): {}", search);
+                    search.cancel(true);
                     searches.remove(i);
                     i--; // don't skip an element
                 }
@@ -440,26 +445,6 @@ public class BlsCache implements SearchCache {
 
         // Report the cache status (if it changed)
         traceCacheStats("CACHE AFTER UPDATE", true);
-    }
-
-    /**
-     * Abort a search.
-     *
-     * @param search the search
-     * @param reason the reason for aborting it, so we can log it
-     * @param removeFromCache remove the search from cache (counts) or keep it to deny resubmits (other searches)?
-     */
-    private void abortSearch(BlsCacheEntry<?> search, String reason, boolean removeFromCache) {
-        dbgtrace("CleanupSearchesThread: aborting search: " + search + " (" + reason + ")");
-
-        // We used to always remove aborted searches, but maybe it's better to keep them around
-        // for a little while, in case the user tries them again immediately.
-        // A sort temporary "deny list" if you will.
-        // (we do this now, except for abandoned counts, which are removed right away)
-        if (removeFromCache)
-            remove(search.search());
-
-        search.cancel(true);
     }
 
     /**
