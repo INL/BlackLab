@@ -172,7 +172,7 @@ public class BlsCache implements SearchCache {
      * @param cancelRunning if true, cancels all running searches as well.
      */
     @Override
-    public void clear(boolean cancelRunning) {
+    public synchronized void clear(boolean cancelRunning) {
         for (BlsCacheEntry<? extends SearchResult> cachedSearch : searches.values()) {
             cachedSearch.cancel(true);
         }
@@ -186,55 +186,53 @@ public class BlsCache implements SearchCache {
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
+    private synchronized <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
         traceInfo("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
-        synchronized (this) {
-            future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
-            if (future == null) {
-                search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
-                int numQueued = numberOfQueuedSearches();
-                if (numQueued >= config.getMaxQueuedSearches()) {
-                    logger.warn("Can't start new search, too many queued searches (maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
-                    throw new ServerOverloaded("The server is too busy right now (too many queued searches). Please try again later.");
-                }
-                future = new BlsCacheEntry<>(search);
-                if (useCache)
-                    searches.put(search, future);
-
-                if (block) {
-                    // Blocking search. Run it now.
-                    traceInfo("-- STARTING: {} (BLOCKING SEARCH)", search);
-                    future.start(block);
-                } else if (!allowQueue || !useCache) {
-                    // No queueing allowed. Start the search right away.
-                    // (we also do this if you bypass the cache, because then queueing doesn't work)
-                    if (!allowQueue)
-                        traceInfo("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
-                    else
-                        traceInfo("-- STARTING: {} (NOT USING CACHE)", search);
-                    future.startIfQueued();
-                } else {
-                    // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
-                    checkStartQueuedSearch(false);
-                    if (future.isQueued()) {
-                        traceInfo("-- QUEUEING: {}", search);
-                    } else {
-                        traceInfo("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
-                    }
-                }
-            } else {
-                // Already in cache.
-                traceInfo("-- FOUND:    {}", search);
-                future.updateLastAccess();
+        future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
+        if (future == null) {
+            search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
+            int numQueued = numberOfQueuedSearches();
+            if (numQueued >= config.getMaxQueuedSearches()) {
+                logger.warn("Can't start new search, too many queued searches (maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
+                throw new ServerOverloaded("The server is too busy right now (too many queued searches). Please try again later.");
             }
+            future = new BlsCacheEntry<>(search);
+            if (useCache)
+                searches.put(search, future);
+
+            if (block) {
+                // Blocking search. Run it now.
+                traceInfo("-- STARTING: {} (BLOCKING SEARCH)", search);
+                future.start(block);
+            } else if (!allowQueue || !useCache) {
+                // No queueing allowed. Start the search right away.
+                // (we also do this if you bypass the cache, because then queueing doesn't work)
+                if (!allowQueue)
+                    traceInfo("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
+                else
+                    traceInfo("-- STARTING: {} (NOT USING CACHE)", search);
+                future.startIfQueued();
+            } else {
+                // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
+                checkStartQueuedSearch(false);
+                if (future.isQueued()) {
+                    traceInfo("-- QUEUEING: {}", search);
+                } else {
+                    traceInfo("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
+                }
+            }
+        } else {
+            // Already in cache.
+            traceInfo("-- FOUND:    {}", search);
+            future.updateLastAccess();
         }
         traceCacheStats("   CACHE AFTER GET", false);
         return future;
     }
 
-    String getCacheStats() {
+    synchronized String getCacheStats() {
         if (trace) {
             int queued = 0, running = 0, finished = 0, cancelled = 0;
             for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
@@ -295,11 +293,11 @@ public class BlsCache implements SearchCache {
         }
     }
 
-    public int numberOfRunningSearches() {
+    public synchronized int numberOfRunningSearches() {
         return (int) searches.values().stream().filter(s -> s.isRunning()).count();
     }
 
-    private int numberOfQueuedSearches() {
+    private synchronized int numberOfQueuedSearches() {
         return (int) searches.values().stream().filter(s -> s.isQueued()).count();
     }
 
@@ -456,7 +454,7 @@ public class BlsCache implements SearchCache {
      * @param cacheSizeBytes
      * @param searches
      */
-    private void logCacheState() {
+    private synchronized void logCacheState() {
         // Log cache state
         if (logDatabase != null && System.currentTimeMillis() - lastCacheLogMs > LOG_CACHE_STATE_INTERVAL_SEC * 1000) {
             int numberRunning = 0;
