@@ -187,7 +187,7 @@ public class BlsCache implements SearchCache {
 
     @SuppressWarnings("unchecked")
     private synchronized <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
-        traceInfo("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
+        //if (trace) logger.debug("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
@@ -228,7 +228,7 @@ public class BlsCache implements SearchCache {
             traceInfo("-- FOUND:    {}", search);
             future.updateLastAccess();
         }
-        traceCacheStats("   CACHE AFTER GET", false);
+        //traceCacheStats("   CACHE AFTER GET", false);
         return future;
     }
 

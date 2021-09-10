@@ -512,7 +512,8 @@ public class HitsFromQueryParallel extends Hits {
                 }
                 this.allSourceSpansFullyRead = spansReaders.isEmpty();
             } catch (Exception e) {
-                e.printStackTrace();
+                if (!(e instanceof InterruptedException))
+                    e.printStackTrace();
                 throw e.getCause(); // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
             }
         } catch (InterruptedException e) {
