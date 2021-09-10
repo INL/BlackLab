@@ -245,8 +245,7 @@ public class BlsCache implements SearchCache {
                 else
                     running++;
             }
-            long freeGigs = MemoryUtil.getFree() / ONE_GB_BYTES;
-            return String.format("%d queued, %d running, %d finished, %d cancelled, %dG free heap", queued, running, finished, cancelled, freeGigs);
+            return String.format("%d queued, %d running, %d finished, %d cancelled", queued, running, finished, cancelled);
         }
         return "";
     }
@@ -254,8 +253,10 @@ public class BlsCache implements SearchCache {
     void traceCacheStats(String prompt, boolean onlyIfDifferent) {
         if (trace) {
             String msg = getCacheStats();
-            if (!onlyIfDifferent || !msg.equals(previousCacheStatsMessage))
-                traceInfo("{}: {}", prompt, msg);
+            if (!onlyIfDifferent || !msg.equals(previousCacheStatsMessage)) {
+                double freeGigs = (double)(MemoryUtil.getFree() * 10 / ONE_GB_BYTES) / 10;
+                traceInfo("{}: {}, {}G free heap", prompt, msg, freeGigs);
+            }
             previousCacheStatsMessage = msg;
         }
     }
