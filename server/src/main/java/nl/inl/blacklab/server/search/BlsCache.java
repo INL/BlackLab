@@ -375,7 +375,7 @@ public class BlsCache implements SearchCache {
             if (search.isRunning() && search.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L) {
                 // Search is taking too long. Cancel it.
                 dbgtrace("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + config.getMaxSearchTimeSec() + "s)");
-                abortSearch(search, "taking too long");
+                abortSearch(search, "taking too long", false);
                 searches.remove(i);
             }
         }
@@ -414,7 +414,7 @@ public class BlsCache implements SearchCache {
                             + config.getMaxJobAgeSec() + "s)");
                     reason = "search too old";
                 }
-                abortSearch(search, reason);
+                abortSearch(search, reason, false);
                 memoryToFreeUpMegs -= (long)search.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES; // NB very rough guess, but ok
                 searches.remove(i);
             }
@@ -428,7 +428,7 @@ public class BlsCache implements SearchCache {
                 // Running search. Run or abort?
                 boolean isCount = search.search() instanceof SearchCount;
                 if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
-                    abortSearch(search, "abandoned count");
+                    abortSearch(search, "abandoned count", true);
                     searches.remove(i);
                     i--; // don't skip an element
                 }
@@ -447,14 +447,17 @@ public class BlsCache implements SearchCache {
      *
      * @param search the search
      * @param reason the reason for aborting it, so we can log it
+     * @param removeFromCache remove the search from cache (counts) or keep it to deny resubmits (other searches)?
      */
-    private void abortSearch(BlsCacheEntry<?> search, String reason) {
+    private void abortSearch(BlsCacheEntry<?> search, String reason, boolean removeFromCache) {
         dbgtrace("CleanupSearchesThread: aborting search: " + search + " (" + reason + ")");
 
-        // We used to remove aborted searches, but maybe it's better to keep them around
+        // We used to always remove aborted searches, but maybe it's better to keep them around
         // for a little while, in case the user tries them again immediately.
         // A sort temporary "deny list" if you will.
-        //remove(search.search());
+        // (we do this now, except for abandoned counts, which are removed right away)
+        if (removeFromCache)
+            remove(search.search());
 
         search.cancel(true);
     }

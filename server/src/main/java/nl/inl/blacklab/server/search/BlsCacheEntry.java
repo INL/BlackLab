@@ -84,6 +84,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** Is this search queued because load is too high? */
     private boolean queued = true;
 
+    /** Was this cancelled? (future is set to null in that case, to free the memory, so we need this status) */
+    private boolean wasCancelled = false;
+
     /**
      * Construct a cache entry.
      *
@@ -330,8 +333,13 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         Future<?> theFuture = future; // avoid locking
         boolean result = false;
         if (theFuture != null) {
+            wasCancelled = true;
             result = theFuture.cancel(interrupt);
+
+            // Ensure memory can be freed
             future = null;
+            this.result = null;
+
             doneTime = now();
         }
         return result;
@@ -405,9 +413,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     public String futureStatus() {
-        if (future == null)
-            return "null";
-        if (future.isCancelled())
+        if (wasCancelled || future.isCancelled())
             return "cancelled";
         if (future.isDone()) {
             try {
