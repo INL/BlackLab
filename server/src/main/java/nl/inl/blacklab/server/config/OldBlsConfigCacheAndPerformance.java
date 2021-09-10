@@ -15,6 +15,7 @@ public class OldBlsConfigCacheAndPerformance {
     private long maxSizeMegs = -1;
 
     /** Maximum number of searches to cache, or -1 for no limit. Defaults to 100. */
+    @Deprecated
     private int maxNumberOfJobs = 100;
 
     /**
@@ -157,6 +158,7 @@ public class OldBlsConfigCacheAndPerformance {
         return maxSizeMegs;
     }
 
+    @Deprecated
     public int getMaxNumberOfJobs() {
         return maxNumberOfJobs;
     }
@@ -221,6 +223,7 @@ public class OldBlsConfigCacheAndPerformance {
         return maxSearchTimeMs;
     }
 
+    @SuppressWarnings("deprecation")
     public BLSConfigCache getBlsConfigCache() {
         BLSConfigCache result = new BLSConfigCache();
         result.setClientCacheTimeSec(getClientCacheTimeSec());

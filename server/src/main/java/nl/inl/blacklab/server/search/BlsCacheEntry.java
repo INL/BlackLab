@@ -75,7 +75,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** When was this entry last accessed (ms) */
     private long lastAccessTime;
 
-    /** When did we finish our task? (ms; only valid when finished; set by thread) */
+    /** When did we finish or cancel our task? (ms; set by thread) */
     private long doneTime = 0;
 
     /** Worthiness of this search in the cache, once calculated */
@@ -287,7 +287,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     public void calculateWorthiness() {
         if (isDone()) {
             // 0 ... 9999 : search is finished
-            // (the more recently used, the worthier)
+            // - the more recently used, the worthier
+            // - the longer it took to execute, the worthier
+            // - the smaller, the worthier
 
             // Size score from 1-100; 1M per unit, so 100 corresponds to 100M or larger
             int sizeScore = Math.max(1, Math.min(100, numberOfStoredHits() * BlsCache.SIZE_OF_HIT / 1000000));
@@ -308,16 +310,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
                 worthiness = (long)((double)runTimeScore / lastAccessScore / sizeScore);
             }
 
-        } else if (timeUserWaitedMs() / 1000 > YOUTH_THRESHOLD_SEC) {
+        } else {
             // 10000 ... 19999: search has been running for a long time and is counting hits
             // 20000 ... 29999: search has been running for a long time and is retrieving hits
-            // (younger searches are considered worthier)
+            // - the younger, the worthier
             boolean isCount = search instanceof SearchCount;
             worthiness = Math.max(10000, 19999 - timeUserWaitedMs() / 1000) + (isCount ? 0 : 10000);
-        } else {
-            // 30000 ... 39999: search hasn't been running for very long yet
-            // (the more recent, the worthier)
-            worthiness = Math.max(30000, 39999 - timeUserWaitedMs() / 1000);
         }
     }
 
@@ -334,6 +332,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         if (theFuture != null) {
             result = theFuture.cancel(interrupt);
             future = null;
+            doneTime = now();
         }
         return result;
     }

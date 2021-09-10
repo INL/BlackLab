@@ -90,6 +90,9 @@ protocol:
     # If true, use the old element names in responses: complexField, property, etc.
     # It is recommended to set this to false. The old element names will eventually be removed.
     useOldElementNames: false
+    
+    # If there is no value for an annotation, omit it from the results altogether?
+    omitEmptyProperties: false
 
 
 # Defaults and maximum values for parameters
@@ -139,32 +142,6 @@ parameters:
 #  Settings for job caching.
 cache:
 
-    # Maximum size the cache may grow to (in megabytes), or -1 for no limit.
-    # (we can only approximate the cache size, because different tasks refer to the same data.
-    # In the real-world we will probably stay well under this. On the other hand, cache size is 
-    # a lot smaller than peak memory usage, so don't this too high either; around 15% of total 
-    # memory should be an okay value)
-    maxSizeMegs: 500
-
-    # How many search tasks will we cache at most? (or -1 for no limit)
-    # A note about tasks: a request to BlackLab Server routinely results in 3+ simultaneous search tasks
-    # being launched: a task to get a window into the sorted hits, which launches a task to get sorted hits,
-    # which launches a task to get the unsorted hits. There's also usually a separate task for keeping track
-    # of the running total number of hits found (which re-uses the unsorted hits task). The reason for this
-    # architecture is that the results of tasks can be more easily re-used in subsequent searches that way:
-    # if the sort changes, we can still use the unsorted hits task, etc. Practical upshot of this: number of 
-    # tasks does not equal number of searches. Don't set this too low.
-    # Also, a better way to limit cache size is using maxSizeMegs, not by specifying an arbitrary number of tasks.
-    maxNumberOfJobs: 100
-
-    # After how much time will a completed search task be removed from the cache? (in seconds)
-    # (don't set this too low; instead, set maxSizeMegs, the target size for the cache)
-    maxJobAgeSec: 3600
-
-    # After how much time should a running search be aborted?
-    # (larger values put stress on the server, but allow complicated searches to complete)
-    maxSearchTimeSec: 300
-
     # How much free memory the cache should shoot for (in megabytes) while cleaning up.
     # Because we don't have direct control over the garbage collector, we can't reliably clean up until
     # this exact number is available. Instead we just get rid of a few cached tasks whenever a
@@ -172,8 +149,27 @@ cache:
     targetFreeMemMegs: 100
 
     # The minimum amount of free memory required to start a new search task. If this memory is not available,
-    # an error message is returned.
+    # your search will be queued.
     minFreeMemForSearchMegs: 50
+    
+    # Maximum number of searches that may be queued. If you try to add another search, this will return an error.
+    # Queued searches don't take up memory, but it's no use building up a huge queue that will take a very long time
+    # to get through. Better to ask users to return when server load is lower.
+    maxQueuedSearches: 20,
+
+    # How long after it was last accessed will a completed search task be removed from 
+    # the cache? (in seconds)
+    # (don't set this too low; instead, set maxSizeMegs, the target size for the cache)
+    # If you want to disable the cache altogether, set this to 0.
+    maxJobAgeSec: 3600
+
+    # If a search is aborted, how long should we keep the search in the cache to prevent
+    # the client from resubmitting right away? A sort of "deny list" if you will.
+    denyAbortedSearchSec: 600
+
+    # After how much time should a running search be aborted?
+    # (larger values put stress on the server, but allow complicated searches to complete)
+    maxSearchTimeSec: 300
 
     # How long the client may keep results we give them in their local (browser) cache.
     # This is used to write HTTP cache headers. Low values mean clients might re-request
@@ -181,6 +177,17 @@ cache:
     # Higher values make clients more responsive but could cause problems if the data (or worse,
     # the protocol) changes after an update. A value of an hour or so seems reasonable.
     clientCacheTimeSec: 3600
+    
+    # [DEPRECATED, NO LONGER USED]
+    # Use targetFreeMemMegs to set a "free memory goal" as that can be measured
+    # accurately.
+    maxSizeMegs: 500
+
+    # [DEPRECATED, NO LONGER USED]
+    # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
+    # "cache cleanup goal".
+    maxNumberOfJobs: 100
+
 
 
 # Settings related to tuning server load and client responsiveness
@@ -189,6 +196,9 @@ performance:
     # How many search tasks should be able to run simultaneously
     # (set this to take advantage of the cores/threads available to the machine;
     # probably don't set it any larger, as this won't help and might hurt)
+    # Note that this is a rough guideline, not an absolute maximum number of threads
+    # that will ever be running. New searches are only started (unqueued) if there's 
+    # fewer than this number of threads running.
     # (-1 to autodetect)
     maxConcurrentSearches: 6
 
