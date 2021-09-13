@@ -27,7 +27,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.requesthandlers.ElementNames;
 import nl.inl.blacklab.server.util.JsonUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -138,7 +137,7 @@ public class OldBlsConfig extends YamlJsonReader {
                     logger.debug("Debug address found: " + addr);
                 }
             }
-            
+
             if (debugProp.has("sqliteLogDatabase")) {
                 logDatabase = new File(debugProp.get("sqliteLogDatabase").textValue());
             }
@@ -171,11 +170,6 @@ public class OldBlsConfig extends YamlJsonReader {
                         reqProp.get("defaultOutputType").textValue(), DataFormat.XML);
             if (reqProp.has("omitEmptyProperties"))
                 omitEmptyProperties = reqProp.get("omitEmptyProperties").booleanValue();
-            if (reqProp.has("useOldElementNames")) {
-                // Use the old names for elements (complexField, property, etc. instead of annotatedField, annotation)?
-                boolean useOldElementNames = reqProp.get("useOldElementNames").booleanValue();
-                ElementNames.setUseOldElementNames(useOldElementNames);
-            }
             defaultPageSize = JsonUtil.getIntProp(reqProp, "defaultPageSize", 20);
             maxPageSize = JsonUtil.getIntProp(reqProp, "maxPageSize", 100_000);
             String defaultSearchSensitivity = JsonUtil.getProperty(reqProp,
@@ -334,7 +328,7 @@ public class OldBlsConfig extends YamlJsonReader {
     public File logDatabase() {
         return logDatabase;
     }
-    
+
     public BLSConfig getNewConfig() {
         try {
             BLSConfig config = new BLSConfig();
@@ -347,10 +341,10 @@ public class OldBlsConfig extends YamlJsonReader {
             config.setLog(getBLConfigLog());
             config.setParameters(getBlsConfigParameters());
             config.setProtocol(getBlsConfigProtocol());
-            
+
             // Load blacklab.yaml (new config doesn't do this anymore, but gets these settings from blacklab-server.yaml as well)
             config.setBLConfig(BlackLab.config());
-            
+
             return config;
         } catch (IOException e) {
             throw new InvalidConfiguration("Error converting old configuration format to new", e);
@@ -359,7 +353,6 @@ public class OldBlsConfig extends YamlJsonReader {
 
     private BLSConfigProtocol getBlsConfigProtocol() {
         BLSConfigProtocol config = new BLSConfigProtocol();
-        config.setUseOldElementNames(ElementNames.isUseOldElementNames());
         config.setAccessControlAllowOrigin(allowOrigin);
         config.setDefaultOutputType(defaultOutputType.toString());
         config.setOmitEmptyProperties(omitEmptyProperties);
@@ -399,7 +392,7 @@ public class OldBlsConfig extends YamlJsonReader {
 
     private List<String> getBlsConfigIndexes() throws IOException {
         List<String> config = new ArrayList<>();
-        
+
         if (properties.has("indices")) {
             JsonNode indicesMap = properties.get("indices");
             Iterator<Entry<String, JsonNode>> it = indicesMap.fields();

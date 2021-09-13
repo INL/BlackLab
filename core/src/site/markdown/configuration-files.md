@@ -86,10 +86,15 @@ userIndexes: /data/blacklab/indexes/users
 # Settings related to BlackLab Server's protocol, i.e. requests and responses
 protocol:
 
-    # If false, use the new element names in responses: annotatedField, annotation, etc.
-    # If true, use the old element names in responses: complexField, property, etc.
-    # It is recommended to set this to false. The old element names will eventually be removed.
-    useOldElementNames: false
+    # If true, omits empty annotation values from XML results.
+    omitEmptyProperties: false
+    
+    # Default response type (XML or JSON; default XML)
+    defaultOutputType: XML
+    
+    # Value for the Access-Control-Allow-Origin HTTP header (default: *)
+    accessControlAllowOrigin: "*"
+    
 
 
 # Defaults and maximum values for parameters

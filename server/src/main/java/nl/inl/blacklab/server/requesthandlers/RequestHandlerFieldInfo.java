@@ -110,7 +110,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexName != null)
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fd.name())
-                .entry(ElementNames.isAnnotatedField, false)
+                .entry("isAnnotatedField", false)
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
@@ -188,20 +188,20 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         Annotations annotations = fieldDesc.annotations();
         ds
                 .entry("fieldName", fieldDesc.name())
-                .entry(ElementNames.isAnnotatedField, true)
+                .entry("isAnnotatedField", true)
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
-        ds.entry(ElementNames.mainProperty, annotations.main().name());
+        ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
-        ds.startEntry(ElementNames.annotations).startMap();
+        ds.startEntry("annotations").startMap();
         for (Annotation annotation: annotations) {
-            ds.startAttrEntry(ElementNames.annotation, "name", annotation.name()).startMap();
+            ds.startAttrEntry("annotation", "name", annotation.name()).startMap();
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
             String offsetsAlternative = offsetsSensitivity == null ? "" : offsetsSensitivity.sensitivity().luceneFieldSuffix();
             ds
@@ -258,11 +258,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     // Older index, where the subannotations are stored in the same Lucene field as their parent annotation.
                     // Detecting these requires enumerating all terms, so only do it when asked.
                     Map<String, Set<String>> subprops = LuceneUtil.getOldSingleFieldSubprops(index.reader(), luceneField);
-                    ds.startEntry(ElementNames.subannotations).startMap();
+                    ds.startEntry("subannotations").startMap();
                     for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
                         String name = subprop.getKey();
                         Set<String> values = subprop.getValue();
-                        ds.startAttrEntry(ElementNames.subannotation, "name", name).startList();
+                        ds.startAttrEntry("subannotation", "name", name).startList();
                         for (String value : values) {
                             ds.item("value", value);
                         }
@@ -272,9 +272,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 } else if (!annotation.subannotationNames().isEmpty()) {
                     // Newer index, where the subannotations are stored in their own Lucene fields.
                     // Always show these.
-                    ds.startEntry(ElementNames.subannotations).startList();
+                    ds.startEntry("subannotations").startList();
                     for (String name: annotation.subannotationNames()) {
-                        ds.item(ElementNames.subannotation, name);
+                        ds.item("subannotation", name);
                     }
                     ds.endList().endEntry();
                 }
