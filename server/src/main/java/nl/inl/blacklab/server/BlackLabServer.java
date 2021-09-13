@@ -26,7 +26,6 @@ import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.OldBlsConfig;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -85,24 +84,14 @@ public class BlackLabServer extends HttpServlet {
             searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
             searchDirs.addAll(BlackLab.defaultConfigDirs());
             ConfigFileReader configFile = new ConfigFileReader(searchDirs, configFileName);
-            try {
-                BLSConfig config;
-                if (configFile.isOldConfig()) {
-                    // Convert old config to new config structure
-                    config = new OldBlsConfig(configFile.getJsonConfig()).getNewConfig();
-                } else {
-                    config = configFile.getConfig();
-                }
-                // load blacklab's internal config before doing anything
-                // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
-                BlackLab.setConfig(config.getBLConfig());
+            BLSConfig config = configFile.getConfig();
+            // load blacklab's internal config before doing anything
+            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
+            BlackLab.setConfig(config.getBLConfig());
 
-                if (config.getProtocol().isUseOldElementNames())
-                    logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
-                searchManager = new SearchManager(config);
-            } catch (IOException e) {
-                throw new ConfigurationException("Error reading config file: " + configFile.getConfigFileRead(), e);
-            }
+            if (config.getProtocol().isUseOldElementNames())
+                logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
+            searchManager = new SearchManager(config);
 
             // Open log database
             try {

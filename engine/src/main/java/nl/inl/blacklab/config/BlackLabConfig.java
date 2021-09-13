@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.Json;
 
 public class BlackLabConfig {
-    
+
     private static final Logger logger = LogManager.getLogger(BlackLabConfig.class);
 
     private static BlackLabConfig read(Reader reader, boolean isJson) throws InvalidConfiguration {
@@ -82,28 +82,29 @@ public class BlackLabConfig {
         } catch (IOException e) {
             throw new InvalidConfiguration("Error reading BlackLab config file (" + fileName + "): " + e.getMessage(), e);
         }
-        
+
         // Is this the new config format, or the old one?
         if (parsedConfig.get("configVersion") != null) {
             // New config format
             return BlackLabConfig.read(new StringReader(fileContents), isJson);
         } else {
             // Old config format
-            logger.warn("You are using the old configuration file format. Please upgrade to the new format.");
-            return OldConfigReader.readGlobalSettings(parsedConfig);
+            logger.error("You are using the old configuration file format. This is no longer supported.");
+            logger.error("Please upgrade to the new format. See https://inl.github.io/BlackLab/configuration-files.html");
+            throw new InvalidConfiguration("Your configuration files are in the old, no longer supported format. Please upgrade: https://inl.github.io/BlackLab/configuration-files.html");
         }
     }
 
     private int configVersion = 2;
 
     private BLConfigSearch search = new BLConfigSearch();
-    
+
     private BLConfigIndexing indexing = new BLConfigIndexing();
-    
+
     private BLConfigPlugins plugins = new BLConfigPlugins();
-    
+
     BLConfigLog log = new BLConfigLog();
-    
+
     public int getConfigVersion() {
         return configVersion;
     }
