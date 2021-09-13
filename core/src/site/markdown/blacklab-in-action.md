@@ -9,7 +9,7 @@ For a quick example of a BlackLab application, have a look at either of these:
 If you have a [CLARIN](https://clarin.eu/) account, you might also want to check out:
 
 - [Corpus Hedendaags Nederlands](https://chn.ivdnt.org/)
-- [OpenSonar](http://opensonar.inl.nl/)
+- [OpenSonar](https://opensonar.ivdnt.org/)
 
 Here are a few searches you can try:
 

@@ -449,7 +449,7 @@ public class BlsCache implements SearchCache {
     /**
      * Regularly log state of the cache to the log database.
      *
-     * Logs the current state every LOG_CACLEANUPCHE_STATE_INTERVAL_SEC, and a snapshot every
+     * Logs the current state every LOG_CACHE_STATE_INTERVAL_SEC, and a snapshot every
      * LOG_CACHE_SNAPSHOT_INTERVAL_SEC.
      *
      * @param cacheSizeBytes
