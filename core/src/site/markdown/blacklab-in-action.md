@@ -3,12 +3,12 @@
 
 For a quick example of a BlackLab application, have a look at either of these:
 
-- [Brieven als Buit](http://brievenalsbuit.inl.nl/) ("Letters as Loot"), where you can search a collection of historical letters to and from sailors from the 17th to the 19th century
-- [Corpus Gysseling](http://tinyurl.com/gysseling), a small corpus of historic Dutch (1200-1300)
+- [Brieven als Buit](https://brievenalsbuit.ivdnt.org/) ("Letters as Loot"), where you can search a collection of historical letters to and from sailors from the 17th to the 19th century
+- [Corpus Gysseling](https://corpusgysseling.ivdnt.org/), a small corpus of historic Dutch (1200-1300)
 
-If you have a [CLARIN](http://clarin.eu/) account, you might also want to check out:
+If you have a [CLARIN](https://clarin.eu/) account, you might also want to check out:
 
-- [Corpus Hedendaags Nederlands](http://chn.inl.nl/)
+- [Corpus Hedendaags Nederlands](https://chn.ivdnt.org/)
 - [OpenSonar](http://opensonar.inl.nl/)
 
 Here are a few searches you can try:
