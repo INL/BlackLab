@@ -1,10 +1,12 @@
 package nl.inl.blacklab.server.config;
 
 public class BLSConfigProtocol {
+
+    @Deprecated
     private boolean useOldElementNames = false;
-    
+
     private boolean omitEmptyProperties = false;
-    
+
     public boolean isOmitEmptyProperties() {
         return omitEmptyProperties;
     }
@@ -14,7 +16,7 @@ public class BLSConfigProtocol {
     }
 
     private String accessControlAllowOrigin = "*";
-    
+
     private String defaultOutputType = "XML";
 
     public String getDefaultOutputType() {
@@ -33,12 +35,14 @@ public class BLSConfigProtocol {
         this.accessControlAllowOrigin = accessControlAllowOrigin;
     }
 
+    @Deprecated
     public boolean isUseOldElementNames() {
         return useOldElementNames;
     }
 
+    @Deprecated
     public void setUseOldElementNames(boolean useOldElementNames) {
         this.useOldElementNames = useOldElementNames;
     }
-    
+
 }
