@@ -13,7 +13,8 @@
 * Improved time to first result in (very) large indices.
 * Improved performance by instantiating fewer objects (e.g. using IntArrayLists instead of Hit objects)
 * Greatly improved speed of grouping on "any token" query, e.g. generating a frequency list for all or part of the corpus.
-* Searches will now be queued if server load is too high. Removed paused searches.
+* Searches will now be queued (not started yet) if server load is too high.
+  Pausing already-started searches was removed, as this can keep a lot of memory from being used for running searches.
 * If a search is aborted for taking too long, it will be held in cache for a while to prevent clients from immediately resubmitting.
 * /search-test/ debug interface.
 * Improved experimental Dockerfile.

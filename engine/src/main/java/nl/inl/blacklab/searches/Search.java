@@ -17,7 +17,7 @@ public interface Search<R extends SearchResult> {
      *
      * Executes the search synchronously.
      *
-     * This search may be queued if load is high. To avoid this (and potential
+     * This search may be queued (i.e. kept from starting until later) if load is high. To avoid this (and potential
      * deadlock situations because of it), use {@link #executeNoQueue()} or {@link #execute(boolean)}.
      *
      * @return result of the operation
@@ -32,7 +32,7 @@ public interface Search<R extends SearchResult> {
      *
      * Executes the search synchronously.
      *
-     * This search will not be queued, even if load is high.
+     * This search will be started right away, even if load is high.
      * For more control, use {@link #execute(boolean)}.
      *
      * @return result of the operation
@@ -47,8 +47,9 @@ public interface Search<R extends SearchResult> {
      *
      * Executes the search synchronously.
      *
-     * @param allowQueue may this search be queued if load is high? Set to
-     * false (for searches initiated by other searches) to prevent deadlock,
+     * @param allowQueue may this search be queued (i.e. kept from starting until later)
+     * if load is high? Set to false (for searches initiated by other searches)
+     * to prevent deadlock,
      * or true (for user-initiated searches) to allow load management to happen.
      * @return result of the operation
      * @throws InvalidQuery
@@ -61,8 +62,9 @@ public interface Search<R extends SearchResult> {
      * Runs the search in a separate thread and passes the result through
      * the returned Future.
      *
-     * This search may be queued if load is high. To avoid this (and potential
-     * deadlock situations because of it), use {@link #executeAsyncNoQueue()} or {@link #executeAsync(boolean)}.
+     * This search may be queued (i.e. kept from starting until later) if load is high.
+     * To avoid this (and potential deadlock situations because of it), use
+     * {@link #executeAsyncNoQueue()} or {@link #executeAsync(boolean)}.
      *
      * @return future result
      */
@@ -76,7 +78,7 @@ public interface Search<R extends SearchResult> {
      * Runs the search in a separate thread and passes the result through
      * the returned Future.
      *
-     * This search will not be queued, even if load is high.
+     * This search will be started right away, even if load is high.
      * For more control, use {@link #executeAsync(boolean)}.
      *
      * @return future result
@@ -91,8 +93,9 @@ public interface Search<R extends SearchResult> {
      * Runs the search in a separate thread and passes the result through
      * the returned Future.
      *
-     * @param allowQueue may this search be queued if load is high? Set to
-     * false (for searches initiated by other searches) to prevent deadlock,
+     * @param allowQueue may this search be queued (i.e. kept from starting until later)
+     * if load is high? Set to false (for searches initiated by other searches) to
+     * prevent deadlock,
      * or true (for user-initiated searches) to allow load management to happen.
      *
      * @return future result

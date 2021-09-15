@@ -25,7 +25,8 @@ public interface SearchCache {
      * @param <R> type of SearchResult
      * @param search search we want the result for. if the search is not in the cache, execute it,
      *            returning the future result and putting it in the cache.
-     * @param allowQueue allow this search to be queued if load is too high right now?
+     * @param allowQueue allow this search to be queued (i.e. kept from starting until later)
+     * if load is too high right now?
      * @return the future, either one that was already the cache or a new one
      */
     <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search, boolean allowQueue);

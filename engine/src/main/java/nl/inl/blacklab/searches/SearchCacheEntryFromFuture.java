@@ -60,12 +60,12 @@ class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntr
     }
 
     @Override
-    public boolean isQueued() {
-        return false;
+    public boolean wasStarted() {
+        return true;
     }
 
     @Override
-    public void startQueuedSearchImpl() {
+    public void start() {
         // never queued, so not implemented
     }
 }

@@ -8,10 +8,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.ServerOverloaded;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -198,29 +203,37 @@ public class BlsCache implements SearchCache {
                 logger.warn("Can't start new search, too many queued searches (maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
                 throw new ServerOverloaded("The server is too busy right now (too many queued searches). Please try again later.");
             }
+
+            // Create the cache entry.
+            // Note that all entries start "queued" (i.e. the search itself hasn't been started yet).
+            // We will see if it can be started below.
             future = new BlsCacheEntry<>(search);
             if (useCache)
                 searches.put(search, future);
 
+            // Can we start the search, or should it remain queued for now?
             if (block) {
                 // Blocking search. Run it now.
                 traceInfo("-- STARTING: {} (BLOCKING SEARCH)", search);
-                future.start(block);
+                future.start();
+                waitUntilDone(future);
             } else if (!allowQueue || !useCache) {
-                // No queueing allowed. Start the search right away.
+                // No queueing allowed (i.e. subtask required by another subtask). Start the search right away.
                 // (we also do this if you bypass the cache, because then queueing doesn't work)
                 if (!allowQueue)
                     traceInfo("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
                 else
                     traceInfo("-- STARTING: {} (NOT USING CACHE)", search);
-                future.startIfQueued();
+                future.start();
             } else {
-                // Queueing is allowed. Check if it (or another queued search) can be started right away, otherwise queue it.
-                checkStartQueuedSearch(false);
-                if (future.isQueued()) {
-                    traceInfo("-- QUEUEING: {}", search);
-                } else {
+                // Queueing is allowed.
+                // The new search hasn't been started yet (therefore it is "queued").
+                // Check if it (or an older queued search) can be started now.
+                startSearchIfPossible(false);
+                if (future.wasStarted()) {
                     traceInfo("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
+                } else {
+                    traceInfo("-- QUEUEING: {}", search);
                 }
             }
         } else {
@@ -236,7 +249,7 @@ public class BlsCache implements SearchCache {
         if (trace) {
             int queued = 0, running = 0, finished = 0, cancelled = 0;
             for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
-                if (entry.isQueued())
+                if (!entry.wasStarted())
                     queued++;
                 else if (entry.isCancelled())
                     cancelled++;
@@ -299,17 +312,15 @@ public class BlsCache implements SearchCache {
     }
 
     private synchronized int numberOfQueuedSearches() {
-        return (int) searches.values().stream().filter(s -> s.isQueued()).count();
+        return (int) searches.values().stream().filter(s -> !s.wasStarted()).count();
     }
 
     /**
-     * Can we start one queued search?
-     *
-     * Finds the oldest queued search, decides
+     * If we can start another search, finds the oldest queued search and start it.
      *
      * @param report if true (and trace is on), report the search we started
      */
-    synchronized void checkStartQueuedSearch(boolean report) {
+    synchronized void startSearchIfPossible(boolean report) {
         // Is server load low enough to start a search?
         if (canStartAnotherSearch()) {
             // Find the oldest queued search and start it.
@@ -322,11 +333,11 @@ public class BlsCache implements SearchCache {
             searches.sort(worthinessComparator);
 
             // Find & start oldest queued search
-            BlsCacheEntry<?> search1 = searches.stream().filter(s -> s.isQueued()).findFirst().orElse(null);
+            BlsCacheEntry<?> search1 = searches.stream().filter(s -> !s.wasStarted()).findFirst().orElse(null);
             if (search1 != null) {
                 if (report)
                     traceInfo("-- UNQUEUE:  {}", search1);
-                search1.startIfQueued();
+                search1.start();
             }
         }
     }
@@ -386,7 +397,7 @@ public class BlsCache implements SearchCache {
         long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search = searches.get(i);
-            if (search.isQueued() || search.isRunning())
+            if (!search.isDone())
                 continue;
 
             boolean isSearchTooOld = false;
@@ -394,7 +405,7 @@ public class BlsCache implements SearchCache {
                 // Cancelled (aborted) search kept in cache to prevent clients from resubmitting right away.
                 isSearchTooOld = checkLastAccessTime && (search.timeSinceFinishedMs() > config.getDenyAbortedSearchSec() * 1000L ||
                         search.timeSinceCreationMs() > config.getMaxJobAgeSec() * 1000L);
-            } else if (search.isDone()) {
+            } else {
                 // Finished search.
                 isSearchTooOld = checkLastAccessTime && search.timeUnusedMs() > config.getMaxJobAgeSec() * 1000L;
             }
@@ -440,7 +451,7 @@ public class BlsCache implements SearchCache {
         }
 
         // See if we can start a queued search
-        checkStartQueuedSearch(true);
+        startSearchIfPossible(true);
 
         // Report the cache status (if it changed)
         traceCacheStats("CACHE AFTER UPDATE", true);
@@ -511,6 +522,16 @@ public class BlsCache implements SearchCache {
             ds.endItem();
         }
         ds.endList();
+    }
+
+    public static void waitUntilDone(BlsCacheEntry<?> entry) {
+        try {
+            entry.get(Long.MAX_VALUE, TimeUnit.DAYS);
+        } catch (InterruptedException e1) {
+            throw new InterruptedSearch(e1);
+        } catch (ExecutionException|TimeoutException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
+        }
     }
 
 }

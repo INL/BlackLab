@@ -94,12 +94,12 @@ public class FutureSearchResult<T extends SearchResult> extends SearchCacheEntry
     }
 
     @Override
-    public boolean isQueued() {
-        return false;
+    public boolean wasStarted() {
+        return true;
     }
 
     @Override
-    public void startQueuedSearchImpl() {
+    public void start() {
         // Never queued, so not implemented
     }
 

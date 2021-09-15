@@ -18,7 +18,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** When waiting for the task to complete, poll how often? (ms) */
-    private static final int POLLING_TIME_MS = 100;
+    static final int POLLING_TIME_MS = 100;
 
     /**
      * How long a job remains "young". Young jobs are treated differently than old
@@ -81,11 +81,16 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** Worthiness of this search in the cache, once calculated */
     private long worthiness = 0;
 
-    /** Is this search queued because load is too high? */
-    private boolean queued = true;
+    /** Has this search been started yet, or has it been queued because load is too high?
+     *
+     * All searches start with this set to false. When it is decided that the search can be
+     * started (because another search task needs its results, or because load is low enough for
+     * "new" searches), start() is called and this is set to true.
+     */
+    private boolean started = false;
 
     /** Was this cancelled? (future is set to null in that case, to free the memory, so we need this status) */
-    private boolean wasCancelled = false;
+    private boolean cancelled = false;
 
     /**
      * Construct a cache entry.
@@ -103,23 +108,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @param block if true, blocks until the result is available
      */
-    public void start(boolean block) {
+    @Override
+    public void start() {
         if (future != null)
             throw new RuntimeException("Search already started");
-        queued = false;
+        started = true;
         future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> executeSearch());
-        if (block) {
-            try {
-                // Wait until result available
-                while (!isDone()) {
-                    Thread.sleep(POLLING_TIME_MS);
-                }
-                if (isCancelled())
-                    throw new InterruptedSearch("Search was cancelled");
-            } catch (InterruptedException e) {
-                throw new InterruptedSearch(e);
-            }
-        }
     }
 
     /** Perform the requested search.
@@ -167,7 +161,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     @Override
     public boolean isCancelled() {
-        return future != null && future.isCancelled();
+        return cancelled || future != null && future.isCancelled();
     }
 
     /**
@@ -180,7 +174,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      */
     @Override
     public boolean isDone() {
-        return future != null && future.isDone();
+        return future != null && future.isDone() || cancelled;
     }
 
     /**
@@ -332,8 +326,8 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     public boolean cancel(boolean interrupt) {
         Future<?> theFuture = future; // avoid locking
         boolean result = false;
-        if (theFuture != null) {
-            wasCancelled = true;
+        if (theFuture != null && !theFuture.isDone()) {
+            cancelled = true;
             result = theFuture.cancel(interrupt);
 
             // Ensure memory can be freed
@@ -356,7 +350,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     public String status() {
-        if (isQueued())
+        if (!wasStarted())
             return "queued";
         if (isCancelled())
             return "cancelled";
@@ -413,8 +407,10 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     public String futureStatus() {
-        if (wasCancelled || future.isCancelled())
+        if (cancelled || future.isCancelled())
             return "cancelled";
+        if (future == null)
+            return "future==null";
         if (future.isDone()) {
             try {
                 future.get();
@@ -479,13 +475,8 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     @Override
-    public boolean isQueued() {
-        return queued;
-    }
-
-    @Override
-    public void startQueuedSearchImpl() {
-        start(false);
+    public boolean wasStarted() {
+        return started;
     }
 
 }

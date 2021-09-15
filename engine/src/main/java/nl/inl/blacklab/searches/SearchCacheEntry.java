@@ -14,29 +14,20 @@ import nl.inl.blacklab.search.results.SearchResult;
 public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R> {
 
     /**
-     * Is this search queued?
-     * @return true if it is, false if not
+     * Has this search been started?
+     *
+     * @return true if it was, false if not
      */
-    public abstract boolean isQueued();
+    public abstract boolean wasStarted();
 
     /**
-     * If this search is queued, start it now.
+     * Subclasses should implement this to start the search.
      *
-     * If a Search requires the result of another Search, it should call this method
-     * to make sure no deadlock occurs.
-     *
-     * The load management system will also start queued searches if server load
-     * is low enough.
+     * Search entries initially haven't been started. We call unstarted searches 'queued',
+     * because they are waiting for enough resources to be available to be started.
+     * When there are, this method is called to start the search.
      */
-    public void startIfQueued() {
-        if (isQueued())
-            startQueuedSearchImpl();
-    }
-
-    /**
-     * Subclasses should implement this to start the queued search.
-     */
-    public abstract void startQueuedSearchImpl();
+    public abstract void start();
 
     static <S extends SearchResult> SearchCacheEntry<S> fromFuture(Future<S> future) {
         return new SearchCacheEntryFromFuture<S>(future);
@@ -47,6 +38,6 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
      * @return true if the search is running (not queued, cancelled or completed)
      */
     public boolean isRunning() {
-        return !isQueued() && !isDone();
+        return wasStarted() && !isDone();
     }
 }
