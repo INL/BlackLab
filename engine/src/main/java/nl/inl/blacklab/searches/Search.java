@@ -99,6 +99,17 @@ public interface Search<R extends SearchResult> {
      */
     SearchCacheEntry<R> executeAsync(boolean allowQueue);
 
+    /**
+     * Actually executes this search operation.
+     *
+     * This is where subclasses should implement the actual search operation.
+     *
+     * executeAsync submits this search to the cache, which then calls this method from a Runnable
+     * to run the search.
+     *
+     * @return result of the operation
+     * @throws InvalidQuery
+     */
     R executeInternal() throws InvalidQuery;
 
     @Override

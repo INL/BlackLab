@@ -381,7 +381,7 @@ public class BlsCache implements SearchCache {
         // Look at completed searches.
         // Get rid of completed searches that haven't been accessed in a while (maxJobAgeSec).
         // If we're low on memory, remove searches so they will be garbage collected (targetFreeMemMegs).
-        boolean checkLastAccessTime = config.getMaxJobAgeSec() * 1000L >= 0;
+        boolean checkLastAccessTime = config.getMaxJobAgeSec() >= 0;
         long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
         long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
         for (int i = searches.size() - 1; i >= 0; i--) {
