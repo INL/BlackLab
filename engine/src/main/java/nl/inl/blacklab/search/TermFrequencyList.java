@@ -58,7 +58,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         List<Annotation> annotations = Arrays.asList(annotation);
         List<FiidLookup> fiidLookups = FiidLookup.getList(annotations, hits.queryInfo().index().reader());
         Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
-        MutableIntIntMap coll = IntIntMaps.mutable.empty();
+        MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
         for (int[] context: contexts) {
             // Count words
             int contextHitStart = context[Contexts.HIT_START_INDEX];
@@ -68,23 +68,23 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
             for (int i = 0; i < contextLength; i++, indexInContent++) {
                 if (i >= contextHitStart && i < contextRightStart)
                     continue; // don't count words in hit itself, just around [option..?]
-                int w = context[indexInContent];
-                int n;
-                if (!coll.containsKey(w))
-                    n = 1;
+                int wordId = context[indexInContent];
+                int count;
+                if (!countPerWord.containsKey(wordId))
+                    count = 1;
                 else
-                    n = coll.get(w) + 1;
-                coll.put(w, n);
+                    count = countPerWord.get(wordId) + 1;
+                countPerWord.put(wordId, count);
             }
         }
 
         // Get the actual words from the sort positions
         Terms terms = index.annotationForwardIndex(contexts.annotations().get(0)).terms();
         Map<String, Integer> wordFreq = new HashMap<>();
-        for (IntIntPair e : coll.keyValuesView()) {
-            int key = e.getOne();
-            int value = e.getTwo();
-            String word = terms.get(key);
+        for (IntIntPair e : countPerWord.keyValuesView()) {
+            int wordId = e.getOne();
+            int count = e.getTwo();
+            String word = terms.get(wordId);
             if (!sensitivity.isDiacriticsSensitive()) {
                 word = StringUtil.stripAccents(word);
             }
@@ -93,12 +93,12 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
             }
             // Note that multiple ids may map to the same word (because of sensitivity settings)
             // Here, those groups are merged.
-            Integer n = wordFreq.get(word);
-            if (n == null) {
-                n = 0;
+            Integer mergedCount = wordFreq.get(word);
+            if (mergedCount == null) {
+                mergedCount = 0;
             }
-            n += value;
-            wordFreq.put(word, n);
+            mergedCount += count;
+            wordFreq.put(word, mergedCount);
         }
 
         // Transfer from map to list
