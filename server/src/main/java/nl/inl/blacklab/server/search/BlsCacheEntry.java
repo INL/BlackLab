@@ -348,17 +348,18 @@ public class BlsCacheEntry<T extends SearchResult> implements Future<T> {
     public void dataStream(DataStream ds, boolean debugInfo) {
         boolean isCount = search instanceof SearchCount;
         ds.startMap()
-                .entry("id", id)
+                //.entry("id", id)
                 .entry("class", search.getClass().getSimpleName())
                 .entry("jobDesc", search.toString())
                 .startEntry("stats")
                 .startMap()
                 .entry("type", isCount ? "count" : "search")
-                .entry("status", status())
-                .entry("cancelled", isCancelled())
-                .entry("futureStatus", futureStatus())
-                .entry("exceptionThrown", exceptionThrown == null ? "" : exceptionThrown.getClass().getSimpleName())
-                .entry("sizeBytes", numberOfStoredHits() * BlsCache.SIZE_OF_HIT)
+                .entry("status", status());
+                //.entry("cancelled", isCancelled());
+                //.entry("futureStatus", futureStatus())
+        if (exceptionThrown != null)
+             ds.entry("exceptionThrown", exceptionThrown.getClass().getSimpleName());
+        ds.entry("numberOfStoredHits", numberOfStoredHits())
                 .entry("userWaitTime", timeUserWaitedMs() / 1000.0)
                 .entry("notAccessedFor", timeSinceLastAccessMs() / 1000.0)
                 //.entry("createdBy", shortUserId())
