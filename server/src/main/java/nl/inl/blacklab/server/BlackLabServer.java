@@ -32,6 +32,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.logging.ConsoleLogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.logging.LogDatabaseImpl;
@@ -104,6 +105,9 @@ public class BlackLabServer extends HttpServlet {
 
             // Open log database
             try {
+                // Default instrumentation logging, logs at the trace level.
+                logDatabase = new ConsoleLogDatabase();
+                searchManager.setLogDatabase(logDatabase);
                 String sqliteDatabase = searchManager.config().getLog().getSqliteDatabase();
                 if (sqliteDatabase != null) {
                     File dbFile = new File(sqliteDatabase);

@@ -1,11 +1,14 @@
 package nl.inl.blacklab.server.search;
 
+import io.micrometer.core.instrument.Tag;
+import io.micrometer.core.instrument.Tags;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.server.Metrics;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -15,6 +18,9 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
 
 public class SearchManager {
 
@@ -45,6 +51,7 @@ public class SearchManager {
         int numberOfSearchThreads = config.getPerformance().getMaxConcurrentSearches();
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
         blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
+        startMonitoringOfThreadPools(blackLab);
 
         // Create the cache
         newCache = new BlsCache(config);
@@ -63,6 +70,24 @@ public class SearchManager {
         SearchParameters.setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
         SearchParameters.setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
+
+    private void startMonitoringOfThreadPools(BlackLabEngine blackLab) {
+        publishSearchExecutorsQueueSize(blackLab.searchExecutorService());
+    }
+
+    private void publishSearchExecutorsQueueSize(ExecutorService searchExecutorService) {
+        assert searchExecutorService instanceof ForkJoinPool;
+        ForkJoinPool executorService = (ForkJoinPool) searchExecutorService;
+        String name = "SearchExecutorQueueLen";
+        String description = "A metric tracking the lengths of all the queues in the SearchExecutorQueue";
+        Metrics.createGauge(name, description,  Tags.of("name", "submission"), executorService,
+                Metrics.toDoubleFn(ForkJoinPool::getQueuedSubmissionCount));
+        Metrics.createGauge(name, description,  Tags.of("name", "task"), executorService,
+                Metrics.toDoubleFn(ForkJoinPool::getQueuedTaskCount));
+        Metrics.createGauge(name, description,  Tags.of("name", "steal"), executorService,
+                Metrics.toDoubleFn(ForkJoinPool::getStealCount));
+    }
+
 
     /**
      * Clean up resources.

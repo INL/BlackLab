@@ -3,12 +3,12 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.requestlogging.LogLevel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -59,10 +59,18 @@ import nl.inl.blacklab.server.search.BlsCacheEntry;
 public class RequestHandlerHits extends RequestHandler {
 
     private static final Logger logger = LogManager.getLogger(RequestHandlerHits.class);
+    private static final String ANN_DOC_COUNT_HEADER = "X-Ann-Doc-Count";
+    private final String ruleId;
+    private final String annDocCount;
 
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
+        ruleId = getRuleId().orElse("unknown");
+        String annCountHeader = request.getHeader(ANN_DOC_COUNT_HEADER);
+        annDocCount = annCountHeader == null ? "unknown" : annCountHeader;
+
+        logger.info("Will start search for rule id: {}", ruleId);
     }
 
     @Override
@@ -193,6 +201,7 @@ public class RequestHandlerHits extends RequestHandler {
         ds.startEntry("summary").startMap();
 
         long totalTime = job.threwException() ? -1 : job.timeUserWaited();
+        logger.info("For rule:{}. Total execution time is:{} ms and docs:{}", ruleId, totalTime, annDocCount);
 
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window

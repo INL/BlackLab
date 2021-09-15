@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +23,7 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -78,6 +82,8 @@ public abstract class RequestHandler {
 
     // Header for Ann's requests IDs
     private static final String ANN_REQUEST_ID_HEADER_NAME = "X-Request-ID";
+    // Header for Ann's rule IDs
+    private static final String ANN_RULE_ID_HEADER_NAME = "X-Ann-Rule-ID";
 
     /** The available request handlers by name */
     static Map<String, Class<? extends RequestHandler>> availableHandlers;
@@ -438,12 +444,8 @@ public abstract class RequestHandler {
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
-            String requestId = request.getHeader(ANN_REQUEST_ID_HEADER_NAME);
-            if (requestId == null) {
-                requestId = "unknown";
-            }
-            String requestIdInfo  = String.format("RequestId:%s", requestId);
-            logger.info(ServletUtil.shortenIpv6(requestIdInfo + " " + request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
+            setRequestIds();
+            logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
 
@@ -454,6 +456,25 @@ public abstract class RequestHandler {
         this.urlPathInfo = urlPathInfo;
         this.user = user;
 
+    }
+
+    protected String getAnnRequestId() {
+        String requestId = request.getHeader(ANN_REQUEST_ID_HEADER_NAME);
+        if (requestId == null) {
+            requestId = "unknown";
+        }
+        return  requestId;
+    }
+    protected Optional<String> getRuleId() {
+        String ruleId = request.getHeader(ANN_RULE_ID_HEADER_NAME);
+        return Optional.ofNullable(ruleId);
+    }
+
+    protected void setRequestIds() {
+        // During search requests request id is acquired from the rule id header
+        String reqId = getRuleId().orElse(
+            Base64.getUrlEncoder().encodeToString(UUID.randomUUID().toString().getBytes()));
+        ThreadContext.put("requestId", String.format("%s/%s", getAnnRequestId(), reqId));
     }
 
     public void cleanup() {

@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
+import org.apache.logging.log4j.ThreadContext;
 
 /**
  * Abstract base class for all Search implementations,
@@ -31,8 +32,10 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     
     @Override
     public Future<R> executeAsync() {
+        final String requestId = ThreadContext.get("requestId");
         return getFromCache(this, () -> {
             try {
+                ThreadContext.put("requestId", requestId);
                 return executeInternal();
             } catch (InvalidQuery e) {
                 throw new CompletionException(e);
