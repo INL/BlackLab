@@ -247,20 +247,35 @@ public class BlsCache implements SearchCache {
 
     synchronized String getCacheStats() {
         if (trace) {
-            int queued = 0, running = 0, finished = 0, cancelled = 0;
-            for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
-                if (!entry.wasStarted())
-                    queued++;
-                else if (entry.isCancelled())
-                    cancelled++;
-                else if (entry.isDone())
-                    finished++;
-                else
-                    running++;
-            }
-            return String.format("%d queued, %d running, %d finished, %d cancelled", queued, running, finished, cancelled);
+            Map<String, Integer> counts = getCountsPerStatus();
+            return String.format("%d queued, %d running, %d finished, %d cancelled",
+                counts.get("queued"),
+                counts.get("running"),
+                counts.get("finished"),
+                counts.get("cancelled")
+            );
         }
         return "";
+    }
+
+    private Map<String, Integer> getCountsPerStatus() {
+        int queued = 0, running = 0, finished = 0, cancelled = 0;
+        for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
+            if (!entry.wasStarted())
+                queued++;
+            else if (entry.isCancelled())
+                cancelled++;
+            else if (entry.isDone())
+                finished++;
+            else
+                running++;
+        }
+        Map<String, Integer> countPerStatus = new HashMap<>();
+        countPerStatus.put("queued", queued);
+        countPerStatus.put("running", running);
+        countPerStatus.put("finished", finished);
+        countPerStatus.put("cancelled", cancelled);
+        return countPerStatus;
     }
 
     void traceCacheStats(String prompt, boolean onlyIfDifferent) {
@@ -496,17 +511,25 @@ public class BlsCache implements SearchCache {
      * @param ds where to write information to
      */
     public synchronized void dataStreamCacheStatus(DataStream ds) {
-        ds.startMap()
-                .entry("targetFreeMemMegs", config.getTargetFreeMemMegs())
-                .entry("minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs())
-                .entry("maxQueuedSearches", config.getMaxQueuedSearches())
-                .entry("maxSearchTimeSec", config.getMaxSearchTimeSec())
-                .entry("maxJobAgeSec", config.getMaxJobAgeSec())
-                .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
-                .entry("sizeBytes", cacheSizeBytes)
-                .entry("numberOfSearches", searches.size())
-                .entry("freeMemory", MemoryUtil.getFree())
-                .endMap();
+        Map<String, Integer> counts = getCountsPerStatus();
+        ds.startMap();
+            ds.entry("targetFreeMemMegs", config.getTargetFreeMemMegs())
+            .entry("minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs())
+            .entry("maxQueuedSearches", config.getMaxQueuedSearches())
+            .entry("maxSearchTimeSec", config.getMaxSearchTimeSec())
+            .entry("maxJobAgeSec", config.getMaxJobAgeSec())
+            .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
+            .entry("sizeBytes", cacheSizeBytes)
+            .entry("numberOfSearches", searches.size())
+            .entry("freeMemory", MemoryUtil.getFree())
+            .startEntry("countsPerStatus").startMap();
+                ds.entry("queued", counts.get("queued"))
+                .entry("running", counts.get("running"))
+                .entry("finished", counts.get("finished"))
+                .entry("cancelled", counts.get("cancelled"));
+            ds.endEntry().endMap();
+            ds.endMap();
+        ds.endMap();
     }
 
     /**
