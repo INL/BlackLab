@@ -35,15 +35,15 @@ import nl.inl.util.StringUtil;
  * if you want to calculate relative frequencies based on a different total.
  */
 public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty<TermFrequency>> {
-    
+
     /**
      * Count occurrences of context words around hit.
-     * @param hits hits to get collocations for 
+     * @param hits hits to get collocations for
      * @param annotation annotation to use for the collocations, or null if default
-     * @param contextSize how many words around hits to use 
+     * @param contextSize how many words around hits to use
      * @param sensitivity what sensitivity to use
      * @param sort whether or not to sort the list by descending frequency
-     * 
+     *
      * @return the frequency of each occurring token
      */
     public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
@@ -54,7 +54,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
             contextSize = index.defaultContextSize();
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
-        
+
         List<Annotation> annotations = Arrays.asList(annotation);
         List<FiidLookup> fiidLookups = FiidLookup.getList(annotations, hits.queryInfo().index().reader());
         Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
@@ -70,7 +70,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
                     continue; // don't count words in hit itself, just around [option..?]
                 int w = context[indexInContent];
                 int n;
-                if (!coll.contains(w))
+                if (!coll.containsKey(w))
                     n = 1;
                 else
                     n = coll.get(w) + 1;
