@@ -12,24 +12,23 @@ const util = require('./util');
 function expectHitsImpl(pattern, numberOfHits, numberOfDocs, expectedFirstHitJson, expectedFirstHitText, firstHitJsonIncludes) {
     describe(`/hits with pattern ${pattern}`, () => {
         it('should return expected response (#hits/docs, structure)', done => {
-            chai
-                .request(constants.SERVER_URL)
-                .get('/test/hits')
-                .query({
-                    patt: pattern,
-                    sort: "wordleft:word:i,wordright:word:i,field:pid",
-                    wordsaroundhit: 1
-                })
-                .set('Accept', 'application/json')
-                .end((err, res) => {
-                    expect(err).to.be.null;
-                    expect(res).to.have.status(200);
-                    const body = res.body;
-                    expect(body).to.be.a("object").that.has.all.keys(
-                        "summary",
-                        "hits",
-                        "docInfos"
-                    );
+            chai.request(constants.SERVER_URL)
+            .get('/test/hits')
+            .query({
+                patt: pattern,
+                sort: "wordleft:word:i,wordright:word:i,field:pid",
+                wordsaroundhit: 1
+            })
+            .set('Accept', 'application/json')
+            .end((err, res) => {
+                expect(err).to.be.null;
+                expect(res).to.have.status(200);
+                const body = res.body;
+                expect(body).to.be.a("object").that.has.all.keys(
+                    "summary",
+                    "hits",
+                    "docInfos"
+                );
 
                 const numberOfHitsInResponse = Math.min(constants.DEFAULT_WINDOW_SIZE, numberOfHits);
 
