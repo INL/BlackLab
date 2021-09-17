@@ -86,7 +86,7 @@ class SpansFilterNGramsRaw extends BLSpans {
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
 
-    /** How much to subtract from length (for ignoring closing token) */
+    /** How much to subtract from length (for ignoring "extra closing token") */
     private int subtractClosingToken;
 
     private boolean alreadyAtFirstHit;
@@ -115,7 +115,7 @@ class SpansFilterNGramsRaw extends BLSpans {
     /**
      * For test, we don't have an index reader, so use default values (all docs are
      * 5 tokens long)
-     * 
+     *
      * @param b true if we're testing, false if not
      */
     public void setTest(boolean b) {

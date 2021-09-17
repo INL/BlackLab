@@ -302,7 +302,7 @@ public class AnnotationWriter {
 
         // Special case: if previous value was the empty string and position increment is 0,
         // replace the previous value. This is convenient to keep all the annotations synched
-        // up while indexing (by adding a dummy empty string if we don't have a value for a
+        // up while indexing (by adding an empty string if we don't have a value for a
         // annotation), while still being able to add a value to this position later (for example,
         // when we encounter an XML close tag.
         int lastIndex = values.size() - 1;

@@ -467,8 +467,8 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void storeWholeDocument(String document) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
-        // (Note that we do this after adding the dummy token, so the character
-        // positions for the dummy token still make (some) sense)
+        // (Note that we do this after adding the "extra closing token", so the character
+        // positions for the closing token still make (some) sense)
         String contentIdFieldName;
         String contentStoreName = getContentStoreName();
         if (contentStoreName == null) {
@@ -494,8 +494,8 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
-        // (Note that we do this after adding the dummy token, so the character
-        // positions for the dummy token still make (some) sense)
+        // (Note that we do this after adding the "extra closing token", so the character
+        // positions for the closing token still make (some) sense)
         String contentIdFieldName;
         String contentStoreName = getContentStoreName();
         if (contentStoreName == null) {

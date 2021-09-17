@@ -132,8 +132,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // Finish storing the document in the document store (parts of it
             // may already have been written because we write in chunks to save memory),
             // retrieve the content id, and store that in Lucene.
-            // (Note that we do this after adding the dummy token, so the character
-            // positions for the dummy token still make (some) sense)
+            // (Note that we do this after adding the "extra closing token", so the character
+            // positions for the closing token still make (some) sense)
             int contentId = storeCapturedContent();
             currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
                     .contentIdField(contentsField.name()), contentId,
@@ -418,7 +418,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         // positions
         propTags.setHasForwardIndex(false);
     }
-    
+
     public void registerContentsField() {
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);

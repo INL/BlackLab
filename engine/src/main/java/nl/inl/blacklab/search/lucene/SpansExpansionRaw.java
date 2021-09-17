@@ -85,7 +85,7 @@ class SpansExpansionRaw extends BLSpans {
     /** Used to get the field length in tokens for a document */
     private DocFieldLengthGetter lengthGetter;
 
-    /** How much to subtract from length (for ignoring closing token) */
+    /** How much to subtract from length (for ignoring "extra closing token") */
     private int subtractClosingToken;
 
     private boolean alreadyAtFirstHit;
@@ -128,7 +128,7 @@ class SpansExpansionRaw extends BLSpans {
     /**
      * For test, we don't have an index reader, so use default values (all docs are
      * 5 tokens long)
-     * 
+     *
      * @param b true if we're testing, false if not
      */
     public void setTest(boolean b) {
@@ -355,11 +355,11 @@ class SpansExpansionRaw extends BLSpans {
     public Direction direction() {
         return direction;
     }
-    
+
     public BLSpans clause() {
         return clause;
     }
-    
+
     public Gap gap() {
         return Gap.variable(min, max);
     }

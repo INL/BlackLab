@@ -59,7 +59,7 @@ class SpansNot extends BLSpans {
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
 
-    /** How much to subtract from length (for ignoring closing token) */
+    /** How much to subtract from length (for ignoring "extra closing token") */
     private int subtractClosingToken;
 
     /** Highest document id plus one */

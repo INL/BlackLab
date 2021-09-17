@@ -82,7 +82,7 @@ public class AnnotatedFieldWriter {
 
     /**
      * Construct a AnnotatedFieldWriter object with a main annotation
-     * 
+     *
      * @param name field name
      * @param mainAnnotationName main annotation name (e.g. "word")
      * @param sensitivity ways to index main annotation, with respect to case- and
@@ -142,7 +142,7 @@ public class AnnotatedFieldWriter {
         // because we need to be able to find this annotation quickly
         // for SpanQueryNot.
         // (Also note that this is the actual number of words + 1,
-        //  because we always store a dummy "closing token" at the end
+        //  because we always store a "extra closing token" at the end
         //  that doesn't contain a word but may contain trailing punctuation)
         String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         int lengthTokensValue = numberOfTokens();
@@ -223,10 +223,10 @@ public class AnnotatedFieldWriter {
     public AnnotatedField field() {
         return field;
     }
-    
+
     @Override
     public String toString() {
         return "AnnotatedFieldWriter(" + fieldName + ")";
     }
-    
+
 }

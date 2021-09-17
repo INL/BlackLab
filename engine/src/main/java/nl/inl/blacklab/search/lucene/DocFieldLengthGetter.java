@@ -63,7 +63,7 @@ class DocFieldLengthGetter implements Closeable {
         if (fieldName.equals(Indexer.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up
             try {
-                
+
                 cachedFieldLengths = reader.getNumericDocValues(lengthTokensFieldName);
                 if (cachedFieldLengths == null) {
                     // Use UninvertingReader to simulate DocValues (slower)
@@ -122,9 +122,9 @@ class DocFieldLengthGetter implements Closeable {
      *
      * Used to produce all tokens that aren't hits in our clause.
      *
-     * NOTE: this includes the "dummy" token at the end that may contain punctuation
-     * after the last word! You must subtract 1 for indices that have these dummy
-     * tokens (all recent indices do).
+     * NOTE: this includes the "extra closing token" at the end that may contain punctuation
+     * after the last word! You must subtract 1 for indices that have this extra closing
+     * token (all recent indices do).
      *
      * @param doc the document
      * @return the number of tokens

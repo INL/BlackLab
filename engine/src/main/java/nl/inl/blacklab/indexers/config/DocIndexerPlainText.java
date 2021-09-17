@@ -119,7 +119,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     punct.append(line.substring(i, line.length()));
                 }
             }
-            punctuation(punct.toString()); // Put the last bit of punctuation (on the "dummy token" at the end)
+            punctuation(punct.toString()); // Put the last bit of punctuation (on the "extra closing token" at the end)
             punct.setLength(0);
         }
 

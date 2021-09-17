@@ -136,7 +136,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
         @Override
         public int getDocLength(int docId) {
-            // NOTE: we subtract one because we always have a closing token at the end that doesn't
+            // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
             return fis.get(0).docLength(getFiid(0, docId)) - 1;
         }
