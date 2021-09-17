@@ -36,11 +36,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         BlsCacheEntry<ResultCount> originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
+            originalHitsSearch = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync();
         }
         // Get the window we're interested in
         DocResults docResults = searchMan.search(user, searchParam.docs());
-        BlsCacheEntry<DocGroups> groupSearch = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
+        BlsCacheEntry<DocGroups> groupSearch = (BlsCacheEntry<DocGroups>)searchParam.docsGrouped().executeAsync();
         DocGroups groups;
         try {
             groups = groupSearch.get();
@@ -73,7 +73,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
         ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
-        
+
         // The list of groups found
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
@@ -84,13 +84,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpus = searchMan.search(user, searchParam.subcorpus());
             subcorpusSize = subcorpus.subcorpusSize();
         }
-        
+
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
-        
+
         ds.endMap().endEntry();
         searchLogger.setResultsFound(groups.size());
 
@@ -117,7 +117,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             for (int j = 0; j < prop.size(); ++j) {
                 final DocProperty hp = prop.get(j);
                 final PropertyValue pv = valuesForGroup.get(j);
-                
+
                 ds.startItem("property").startMap();
                 ds.entry("name", hp.serialize());
                 ds.entry("value", pv.toString());

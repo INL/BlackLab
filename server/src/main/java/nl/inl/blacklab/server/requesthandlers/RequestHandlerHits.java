@@ -108,7 +108,7 @@ public class RequestHandlerHits extends RequestHandler {
                 hitsCount = hits.hitsStats();
                 docsCount = hits.docsStats();
             } else {
-                job = searchMan.searchNonBlocking(user, searchParam.hitsCount()); // always launch totals nonblocking!
+                job = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync(); // always launch totals nonblocking!
                 hits = searchMan.search(user, searchParam.hitsSample());
                 hitsCount = ((BlsCacheEntry<ResultCount>)job).get();
                 docsCount = searchMan.search(user, searchParam.docsCount());
@@ -385,7 +385,7 @@ public class RequestHandlerHits extends RequestHandler {
         PropertyValue viewGroupVal = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
         if (viewGroupVal == null)
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-        BlsCacheEntry<HitGroups> jobHitGroups = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
+        BlsCacheEntry<HitGroups> jobHitGroups = (BlsCacheEntry<HitGroups>)searchParam.hitsGrouped().executeAsync();
         HitGroups hitGroups = jobHitGroups.get();
         HitGroup group = hitGroups.get(viewGroupVal);
         if (group == null)
@@ -406,8 +406,8 @@ public class RequestHandlerHits extends RequestHandler {
             SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, groupByProp, hitGroups);
             if (findHitsFromOnlyRequestedGroup != null) {
                 // place the group-contents query in the cache and return the results.
-                BlsCacheEntry<ResultCount> job = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup.count());
-                hits = searchMan.searchNonBlocking(user, findHitsFromOnlyRequestedGroup).get();
+                BlsCacheEntry<ResultCount> job = (BlsCacheEntry<ResultCount>)findHitsFromOnlyRequestedGroup.count().executeAsync();
+                hits = ((BlsCacheEntry<Hits>)findHitsFromOnlyRequestedGroup.executeAsync()).get();
                 return Pair.of(job, hits);
             }
 
@@ -420,7 +420,7 @@ public class RequestHandlerHits extends RequestHandler {
             // now run the separate grouping search, making sure not to actually store the hits.
             // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
             // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
-            jobHitGroups = searchMan.searchNonBlocking(user, searchGroups); // place groups with hits in search cache
+            jobHitGroups = (BlsCacheEntry<HitGroups>)searchGroups.executeAsync(); // place groups with hits in search cache
             hits = jobHitGroups
                 .get() //get grouped results
                 .get(viewGroupVal) // get group

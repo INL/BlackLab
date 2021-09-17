@@ -49,7 +49,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         BlsCacheEntry<HitGroups> search;
         try(BlockTimer t = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
-            search = searchMan.searchNonBlocking(user, searchParam.hitsGrouped());
+            search = (BlsCacheEntry<HitGroups>)searchParam.hitsGrouped().executeAsync();
             // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -124,7 +124,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 for (int j = 0; j < prop.size(); ++j) {
                     final HitProperty hp = prop.get(j);
                     final PropertyValue pv = valuesForGroup.get(j);
-                    
+
                     ds.startItem("property").startMap();
                     ds.entry("name", hp.serialize());
                     ds.entry("value", pv.toString());

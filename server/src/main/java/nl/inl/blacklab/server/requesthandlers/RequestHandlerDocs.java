@@ -63,7 +63,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchMan.searchNonBlocking(user, searchParam.hitsCount());
+            originalHitsSearch = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync();
         }
 
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
@@ -83,7 +83,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
         BlsCacheEntry<DocGroups> docGroupFuture;
         // Yes. Group, then show hits from the specified group
-        search = docGroupFuture = searchMan.searchNonBlocking(user, searchParam.docsGrouped());
+        search = docGroupFuture = (BlsCacheEntry<DocGroups>)searchParam.docsGrouped().executeAsync();
         DocGroups groups;
         try {
             groups = docGroupFuture.get();
@@ -128,11 +128,11 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException {
-        BlsCacheEntry<DocResults> searchWindow = searchMan.searchNonBlocking(user, searchParam.docsWindow());
+        BlsCacheEntry<DocResults> searchWindow = (BlsCacheEntry<DocResults>)searchParam.docsWindow().executeAsync();
         search = searchWindow;
 
         // Also determine the total number of hits
-        BlsCacheEntry<DocResults> total = searchMan.searchNonBlocking(user, searchParam.docs());
+        BlsCacheEntry<DocResults> total = (BlsCacheEntry<DocResults>)searchParam.docs().executeAsync();
 
         try {
             window = searchWindow.get();
@@ -183,7 +183,7 @@ public class RequestHandlerDocs extends RequestHandler {
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
-        
+
         ds.startEntry("docFields");
         RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
         ds.endEntry();
@@ -191,7 +191,7 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.startEntry("metadataFieldDisplayNames");
         RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
         ds.endEntry();
-        
+
         ds.endMap().endEntry();
 
         searchLogger.setResultsFound(docsStats.processedSoFar());

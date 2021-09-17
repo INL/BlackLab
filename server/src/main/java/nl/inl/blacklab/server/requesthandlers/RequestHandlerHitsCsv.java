@@ -119,7 +119,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             } else {
                 // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                job = searchMan.searchNonBlocking(user, searchParam.hitsSample());
+                job = (BlsCacheEntry<Hits>)searchParam.hitsSample().executeAsync();
                 hits = (Hits) job.get();
             }
         } catch (InterruptedException | ExecutionException e) {
