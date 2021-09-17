@@ -25,6 +25,7 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -313,7 +314,7 @@ public abstract class RequestHandler {
                             return errorObj.unknownOperation(handlerName);
 
                         @SuppressWarnings("resource")
-                        SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
+                        SearchLogger logger = servlet.getSearchManager().getLogDatabase().addRequest(indexName, handlerName, request.getParameterMap());
                         boolean succesfullyCreatedRequestHandler = false;
                         try {
                             Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
@@ -509,7 +510,7 @@ public abstract class RequestHandler {
      * @throws BlsException if the query can't be executed
      * @throws InterruptedSearch if the thread was interrupted
      */
-    public abstract int handle(DataStream ds) throws BlsException;
+    public abstract int handle(DataStream ds) throws BlsException, InvalidQuery;
 
     /**
      * Stream document information (metadata, contents authorization)
@@ -660,10 +661,9 @@ public abstract class RequestHandler {
         return indexMetadata.contentViewable();
     }
 
-    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc)
-            throws BlsException {
+    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc) throws InvalidQuery {
 
-        Facets facets = searchMan.search(user, facetDesc);
+        Facets facets = facetDesc.execute();
         Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
 
         ds.startMap();

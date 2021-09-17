@@ -16,6 +16,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -72,9 +73,10 @@ public class RequestHandlerHitsCsv extends RequestHandler {
      * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
      *         within a group, Groups if looking at grouped hits.
      * @throws BlsException
+     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    private Result getHits() throws BlsException {
+    private Result getHits() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -89,12 +91,12 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         BlsCacheEntry<?> job = null;
         Hits hits = null;
         HitGroups groups = null;
-        DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
+        DocResults subcorpus = searchParam.subcorpus().execute();
 
         try {
             if (!StringUtils.isEmpty(groupBy)) {
-                hits = searchMan.search(user, searchParam.hits());
-                groups = searchMan.search(user, searchParam.hitsGrouped());
+                hits = searchParam.hits().execute();
+                groups = searchParam.hitsGrouped().execute();
 
                 if (viewGroup != null) {
                     PropertyValue groupId = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
@@ -307,7 +309,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         Result result = getHits();
         if (result.groups != null && !result.isViewGroup)
             writeGroups(result.hits, result.groups, result.subcorpusResults, (DataStreamPlain) ds);

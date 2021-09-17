@@ -27,6 +27,7 @@ import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
+import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
 
@@ -106,20 +107,22 @@ public class BlsCache implements SearchCache {
 
     private CleanupSearchesThread cleanupThread;
 
-    private LogDatabase logDatabase = null;
-
     private long lastCacheLogMs = 0;
 
     private long lastCacheSnapshotMs = 0;
 
     private String previousCacheStatsMessage = "";
 
+    /** SQLite database to log all our searches to (if enabled) */
+    private LogDatabase logDatabase = new LogDatabaseDummy();
+
     @SuppressWarnings("deprecation")
-    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
+    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace, LogDatabase logDatabase) {
         this.config = config;
         this.maxConcurrentSearches = maxConcurrentSearches;
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
+        this.logDatabase = logDatabase;
         cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
 
         if (!cacheDisabled) {
@@ -135,10 +138,6 @@ public class BlsCache implements SearchCache {
             cleanupThread.setDaemon(true); // don't prevent JVM from exiting.
             cleanupThread.start();
         }
-    }
-
-    public void setLogDatabase(LogDatabase logDatabase) {
-        this.logDatabase = logDatabase;
     }
 
     /**

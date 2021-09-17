@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -50,7 +51,7 @@ public class RequestHandlerDocs extends RequestHandler {
     private long totalTime;
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
         String groupBy = searchParam.getString("group");
         if (groupBy == null)
@@ -78,7 +79,7 @@ public class RequestHandlerDocs extends RequestHandler {
         return response;
     }
 
-    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException {
+    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException, InvalidQuery {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
         BlsCacheEntry<DocGroups> docGroupFuture;
@@ -127,7 +128,7 @@ public class RequestHandlerDocs extends RequestHandler {
         return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
     }
 
-    private int doRegularDocs(DataStream ds) throws BlsException {
+    private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
         BlsCacheEntry<DocResults> searchWindow = (BlsCacheEntry<DocResults>)searchParam.docsWindow().executeAsync();
         search = searchWindow;
 
@@ -152,7 +153,7 @@ public class RequestHandlerDocs extends RequestHandler {
         return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
 }
 
-    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException {
+    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
@@ -174,7 +175,7 @@ public class RequestHandlerDocs extends RequestHandler {
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
         }
-        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        ResultCount docsStats = searchParam.docsCount().execute();
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)

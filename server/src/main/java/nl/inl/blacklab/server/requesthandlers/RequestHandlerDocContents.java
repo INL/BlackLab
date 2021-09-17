@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.results.Hits;
@@ -70,7 +71,7 @@ public class RequestHandlerDocContents extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream dso) throws BlsException {
+    public int handle(DataStream dso) throws BlsException, InvalidQuery {
         DataStreamXml ds = (DataStreamXml)dso;
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
@@ -93,7 +94,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (searchParam.hasPattern()) {
             //@@@ TODO: filter on document!
             searchParam.put("docpid", docPid);
-            hits = searchMan.search(user, searchParam.hits());
+            hits = searchParam.hits().execute();
         }
 
         String content;

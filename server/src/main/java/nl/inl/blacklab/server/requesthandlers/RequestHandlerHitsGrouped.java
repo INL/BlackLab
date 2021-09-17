@@ -11,6 +11,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
@@ -44,7 +45,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         HitGroups groups;
         BlsCacheEntry<HitGroups> search;
         try(BlockTimer t = BlockTimer.create("Searching hit groups")) {
@@ -72,7 +73,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
-            docsStats = searchMan.search(user, searchParam.docsCount());
+            docsStats = searchParam.docsCount().execute();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
@@ -80,7 +81,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         CorpusSize subcorpusSize = null;
         if (INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-            subcorpus = searchMan.search(user, searchParam.subcorpus());
+            subcorpus = searchParam.subcorpus().execute();
             subcorpusSize = subcorpus.subcorpusSize();
         }
 

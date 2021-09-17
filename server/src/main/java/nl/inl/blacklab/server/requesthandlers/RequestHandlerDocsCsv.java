@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -65,9 +66,10 @@ public class RequestHandlerDocsCsv extends RequestHandler {
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
      * @throws BlsException
+     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits
-    private Result getDocs() throws BlsException {
+    private Result getDocs() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -81,11 +83,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
         DocResults docs = null;
         DocGroups groups = null;
-        DocResults subcorpusResults = searchMan.search(user, searchParam.subcorpus());
+        DocResults subcorpusResults = searchParam.subcorpus().execute();
 
         if (groupBy != null) {
-            groups = searchMan.search(user, searchParam.docsGrouped());
-            docs = searchMan.search(user, searchParam.docs());
+            groups = searchParam.docsGrouped().execute();
+            docs = searchParam.docs().execute();
 
             if (viewGroup != null) {
                 PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -110,7 +112,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             }
         } else {
             // Don't use JobDocsAll, as we only might not need them all.
-            docs = searchMan.search(user, searchParam.docsSorted());
+            docs = searchParam.docsSorted().execute();
         }
 
         // apply window settings
@@ -295,7 +297,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         Result result = getDocs();
         if (result.groups == null || result.isViewGroup)
             writeDocs(result.docs, result.groups, result.subcorpusResults, (DataStreamPlain) ds);

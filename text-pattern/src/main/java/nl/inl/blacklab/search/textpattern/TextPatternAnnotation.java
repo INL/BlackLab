@@ -43,7 +43,7 @@ public class TextPatternAnnotation extends TextPattern {
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         String[] parts = annotationName.split("/", -1);
         if (parts.length > 2)
-            throw new InvalidQuery("Annotation name contains more than one colon: " + annotationName);
+            throw new InvalidQuery("Annotation name contains more than one slash: " + annotationName);
         Annotation annotation;
         if (context.index().metadata().subannotationsStoredWithParent()) {
             // Old-style index, where subannotations are stored in their parent's Lucene field

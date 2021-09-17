@@ -85,7 +85,7 @@ public class RequestHandlerHits extends RequestHandler {
 
     @SuppressWarnings("unchecked")
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
         String groupBy = searchParam.getString("group");
         if (groupBy == null)
@@ -109,9 +109,9 @@ public class RequestHandlerHits extends RequestHandler {
                 docsCount = hits.docsStats();
             } else {
                 job = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync(); // always launch totals nonblocking!
-                hits = searchMan.search(user, searchParam.hitsSample());
+                hits = searchParam.hitsSample().execute();
                 hitsCount = ((BlsCacheEntry<ResultCount>)job).get();
-                docsCount = searchMan.search(user, searchParam.docsCount());
+                docsCount = searchParam.docsCount().execute();
             }
             // Wait until all hits have been counted.
             if (searchParam.getBoolean("waitfortotal")) {

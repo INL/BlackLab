@@ -6,6 +6,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -31,7 +32,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
 
         // Make sure we have the hits search, so we can later determine totals.
         BlsCacheEntry<ResultCount> originalHitsSearch = null;
@@ -39,7 +40,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             originalHitsSearch = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync();
         }
         // Get the window we're interested in
-        DocResults docResults = searchMan.search(user, searchParam.docs());
+        DocResults docResults = searchParam.docs().execute();
         BlsCacheEntry<DocGroups> groupSearch = (BlsCacheEntry<DocGroups>)searchParam.docsGrouped().executeAsync();
         DocGroups groups;
         try {
@@ -72,7 +73,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
         }
-        ResultCount docsStats = searchMan.search(user, searchParam.docsCount());
+        ResultCount docsStats = searchParam.docsCount().execute();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
@@ -81,7 +82,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         boolean hasPattern = searchParam.hasPattern();
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria();
-            subcorpus = searchMan.search(user, searchParam.subcorpus());
+            subcorpus = searchParam.subcorpus().execute();
             subcorpusSize = subcorpus.subcorpusSize();
         }
 

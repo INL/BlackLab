@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -31,9 +32,6 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.logging.LogDatabase;
-import nl.inl.blacklab.server.logging.LogDatabaseDummy;
-import nl.inl.blacklab.server.logging.LogDatabaseImpl;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
@@ -55,9 +53,6 @@ public class BlackLabServer extends HttpServlet {
 
     /** Manages all our searches */
     private SearchManager searchManager;
-
-    /** SQLite database to log all our searches to (if enabled) */
-    private LogDatabase logDatabase = new LogDatabaseDummy();
 
     private boolean configRead = false;
 
@@ -92,20 +87,6 @@ public class BlackLabServer extends HttpServlet {
             if (config.getProtocol().isUseOldElementNames())
                 logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
             searchManager = new SearchManager(config);
-
-            // Open log database
-            try {
-                String sqliteDatabase = searchManager.config().getLog().getSqliteDatabase();
-                if (sqliteDatabase != null) {
-                    File dbFile = new File(sqliteDatabase);
-                    String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
-                    Class.forName("org.sqlite.JDBC");
-                    logDatabase = new LogDatabaseImpl(url);
-                    searchManager.setLogDatabase(logDatabase);
-                }
-            } catch (IOException | ClassNotFoundException e) {
-                throw new RuntimeException("Error opening log database", e);
-            }
 
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);
@@ -261,6 +242,8 @@ public class BlackLabServer extends HttpServlet {
         } else {
             try {
                 httpCode = requestHandler.handle(ds);
+            } catch (InvalidQuery e) {
+                httpCode = Response.error(es, "INVALID_QUERY", "Invalid query: " + e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
             } catch (InternalServerError e) {
                 String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
                 httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
@@ -308,13 +291,6 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public void destroy() {
 
-        try {
-            if (logDatabase != null)
-                logDatabase.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
         // Stops the load management thread
         if (searchManager != null)
             searchManager.cleanup();
@@ -358,10 +334,6 @@ public class BlackLabServer extends HttpServlet {
 
     public SearchManager getSearchManager() {
         return searchManager;
-    }
-
-    public LogDatabase logDatabase() {
-        return logDatabase;
     }
 
 }
