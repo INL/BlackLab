@@ -528,7 +528,6 @@ public class BlsCache implements SearchCache {
                 .entry("finished", counts.get("finished"))
                 .entry("cancelled", counts.get("cancelled"));
             ds.endEntry().endMap();
-            ds.endMap();
         ds.endMap();
     }
 
