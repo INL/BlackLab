@@ -88,7 +88,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        BlsCacheEntry<?> job = null;
+        BlsCacheEntry<?> cacheEntry = null;
         Hits hits = null;
         HitGroups groups = null;
         DocResults subcorpus = searchParam.subcorpus().execute();
@@ -120,9 +120,9 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     }
                 }
             } else {
-                // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                job = (BlsCacheEntry<Hits>)searchParam.hitsSample().executeAsync();
-                hits = (Hits) job.get();
+                // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
+                cacheEntry = (BlsCacheEntry<Hits>)searchParam.hitsSample().executeAsync();
+                hits = (Hits) cacheEntry.get();
             }
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);

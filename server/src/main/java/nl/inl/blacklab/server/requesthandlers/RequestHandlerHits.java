@@ -94,7 +94,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (viewGroup == null)
             viewGroup = "";
 
-        BlsCacheEntry<?> job;
+        BlsCacheEntry<?> cacheEntry;
         Hits hits;
         ResultsStats hitsCount;
         ResultsStats docsCount;
@@ -102,15 +102,15 @@ public class RequestHandlerHits extends RequestHandler {
         try {
             if (groupBy.length() > 0 && viewGroup.length() > 0) {
                 Pair<BlsCacheEntry<?>, Hits> res = getHitsFromGroup(groupBy, viewGroup);
-                job = res.getLeft();
+                cacheEntry = res.getLeft();
                 hits = res.getRight();
                 // The hits are already complete - get the stats directly.
                 hitsCount = hits.hitsStats();
                 docsCount = hits.docsStats();
             } else {
-                job = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync(); // always launch totals nonblocking!
+                cacheEntry = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync(); // always launch totals nonblocking!
                 hits = searchParam.hitsSample().execute();
-                hitsCount = ((BlsCacheEntry<ResultCount>)job).get();
+                hitsCount = ((BlsCacheEntry<ResultCount>)cacheEntry).get();
                 docsCount = searchParam.docsCount().execute();
             }
             // Wait until all hits have been counted.
@@ -156,11 +156,11 @@ public class RequestHandlerHits extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
 
-        long totalTime = job.threwException() ? -1 : job.timeUserWaitedMs();
+        long totalTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
 
         // TODO timing is now broken because we always retrieve total and use a window on top of it,
         // so we can no longer differentiate the total time from the time to retrieve the requested window
-        addSummaryCommonFields(ds, searchParam, job.timeUserWaitedMs(), totalTime, null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, cacheEntry.timeUserWaitedMs(), totalTime, null, window.windowStats());
         addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
@@ -406,9 +406,9 @@ public class RequestHandlerHits extends RequestHandler {
             SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, groupByProp, hitGroups);
             if (findHitsFromOnlyRequestedGroup != null) {
                 // place the group-contents query in the cache and return the results.
-                BlsCacheEntry<ResultCount> job = (BlsCacheEntry<ResultCount>)findHitsFromOnlyRequestedGroup.count().executeAsync();
+                BlsCacheEntry<ResultCount> cacheEntry = (BlsCacheEntry<ResultCount>)findHitsFromOnlyRequestedGroup.count().executeAsync();
                 hits = ((BlsCacheEntry<Hits>)findHitsFromOnlyRequestedGroup.executeAsync()).get();
-                return Pair.of(job, hits);
+                return Pair.of(cacheEntry, hits);
             }
 
             // This is a special case:
