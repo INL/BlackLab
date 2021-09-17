@@ -1,17 +1,21 @@
 package nl.inl.blacklab.exceptions;
 
+import nl.inl.blacklab.searches.SearchCacheEntry;
+
 /**
  * Thrown in response to InterruptedException to indicate that a thread was interrupted.
- * 
- * E.g. BlackLab Search aborts searches that run for too long, causing this exception 
+ *
+ * E.g. BlackLab Search aborts searches that run for too long, causing this exception
  * to be thrown.
  */
 public class InterruptedSearch extends BlackLabRuntimeException {
 
+    private SearchCacheEntry<?> cacheEntry;
+
     public InterruptedSearch() {
         super();
     }
-    
+
     public InterruptedSearch(InterruptedException e) {
         super(e);
     }
@@ -19,9 +23,21 @@ public class InterruptedSearch extends BlackLabRuntimeException {
     public InterruptedSearch(String message) {
         super(message);
     }
-    
+
     public InterruptedSearch(String message, InterruptedException e) {
         super(message, e);
     }
-    
+
+    public void setCacheEntry(SearchCacheEntry<?> cacheEntry) {
+        this.cacheEntry = cacheEntry;
+    }
+
+    public SearchCacheEntry<?> getCacheEntry() {
+        return cacheEntry;
+    }
+
+    public String getReason() {
+        return cacheEntry == null ? "" : cacheEntry.getReason();
+    }
+
 }

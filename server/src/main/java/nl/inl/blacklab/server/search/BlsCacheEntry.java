@@ -20,14 +20,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** When waiting for the task to complete, poll how often? (ms) */
     static final int POLLING_TIME_MS = 100;
 
-    /**
-     * How long a job remains "young". Young jobs are treated differently than old
-     * jobs when it comes to load management, because we want to give new searches a
-     * fair chance, but we also want to eventually put demanding searches on the
-     * back burner if the system is overloaded.
-     */
-    public static final int YOUTH_THRESHOLD_SEC = 20;
-
     /** id for the next job started */
     private static Long nextEntryId = 0L;
 
@@ -66,6 +58,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** Exception thrown by our thread, or null if no exception was thrown (set by thread) */
     private Throwable exceptionThrown = null;
 
+    /** If the search couldn't complete or was aborted, this may contain the exact reason why, e.g.
+     *  "Search aborted because it took longer than the maximum of 5 minutes. This may be a very demanding
+     *   search, or the server may be under heavy load. Please try again later."
+     */
+    private String reason = "";
+
 
     // TIMING
 
@@ -91,12 +89,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** Was this cancelled? (future is set to null in that case, to free the memory, so we need this status) */
     private boolean cancelled = false;
-
-    /** If the search couldn't complete or was aborted, this may contain the exact reason why, e.g.
-     *  "Search aborted because it took longer than the maximum of 5 minutes. This may be a very demanding
-     *   search, or the server may be under heavy load."
-     */
-    private String reason = "";
 
     /**
      * Construct a cache entry.
@@ -130,6 +122,14 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         try {
             result = search.executeInternal();
         } catch (Throwable e) {
+
+            if (e instanceof InterruptedSearch) {
+                // Inject ourselves into the exception object, so
+                // the code that eventually catches it can access us,
+                // e.g. to find out the exact reason a search was cancelled
+                ((InterruptedSearch)e).setCacheEntry(this);
+            }
+
             // NOTE: we catch Throwable here (while it's normally good practice to
             //  catch only Exception and derived classes) because we need to know if
             //  our thread crashed or not. The Throwable will be re-thrown by the
@@ -500,6 +500,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @return descriptive reason or empty string
      */
+    @Override
     public String getReason() {
         return reason;
     }

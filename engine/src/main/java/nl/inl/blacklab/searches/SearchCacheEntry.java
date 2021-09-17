@@ -40,4 +40,13 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
     public boolean isRunning() {
         return wasStarted() && !isDone();
     }
+
+    /**
+     * If this search couldn't complete or was aborted, what it the reason?
+     *
+     * @return descriptive reason or empty string
+     */
+    public String getReason() {
+        return "";
+    }
 }
