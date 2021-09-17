@@ -92,6 +92,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /** Was this cancelled? (future is set to null in that case, to free the memory, so we need this status) */
     private boolean cancelled = false;
 
+    /** If the search couldn't complete or was aborted, this may contain the exact reason why, e.g.
+     *  "Search aborted because it took longer than the maximum of 5 minutes. This may be a very demanding
+     *   search, or the server may be under heavy load."
+     */
+    private String reason = "";
+
     /**
      * Construct a cache entry.
      *
@@ -478,6 +484,24 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     @Override
     public boolean wasStarted() {
         return started;
+    }
+
+    /**
+     * Set reason the search was cancelled or could not complete.
+     *
+     * @param reason descriptive reason
+     */
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    /**
+     * Get reason the search was cancelled or could not complete.
+     *
+     * @return descriptive reason or empty string
+     */
+    public String getReason() {
+        return reason;
     }
 
 }

@@ -50,12 +50,12 @@ public class BlsUtils {
         if (filterLang.equals("luceneql")) {
             try {
                 // We need to override a couple of query implementations to allow searching on numeric fields
-                // By default lucene will interpret everything as text, and thus not return any matches when 
+                // By default lucene will interpret everything as text, and thus not return any matches when
                 // a query touches a field that is actually numeric.
                 QueryParser parser = new QueryParser("", analyzer) {
                     @Override
                     protected org.apache.lucene.search.Query newRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) {
-                        
+
                         MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
                         if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
                             try {
@@ -66,14 +66,14 @@ public class BlsUtils {
                         }
                         return super.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
                     }
-                    
+
                     @Override
                     protected org.apache.lucene.search.Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
                         MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
                         if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
                             return newRangeQuery(field, queryText, queryText, true, true);
                         }
-                        
+
                         return super.newFieldQuery(analyzer, field, queryText, quoted);
                     }
                 };
@@ -246,4 +246,20 @@ public class BlsUtils {
             return f.isDirectory() && f.canRead();
         }
     };
+
+    /**
+     * Convert a number of seconds to a M:SS string.
+     *
+     * @param sec number of seconds
+     * @return a string of the form M:SS, e.g. 1s, 5m or 12m34s
+     */
+    public static String describeIntervalSec(int sec) {
+        int min = sec / 60;
+        sec = sec % 60;
+        if (min == 0)
+            return sec + "s";
+        if (sec == 0)
+            return min + "m";
+        return String.format("%dm%02ds", min, sec);
+    }
 }

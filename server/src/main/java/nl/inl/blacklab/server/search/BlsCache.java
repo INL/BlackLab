@@ -27,6 +27,7 @@ import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
+import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
 
 public class BlsCache implements SearchCache {
@@ -395,10 +396,16 @@ public class BlsCache implements SearchCache {
         // Abort searches that are taking too long (longer than maxSearchTimeSec)
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search = searches.get(i);
-            if (search.isRunning() && search.timeUserWaitedMs() > config.getMaxSearchTimeSec() * 1000L) {
+            int maxSearchTimeSec = config.getMaxSearchTimeSec();
+            if (search.isRunning() && search.timeUserWaitedMs() > maxSearchTimeSec * 1000L) {
                 // Search is taking too long. Cancel it.
-                traceInfo("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + config.getMaxSearchTimeSec() + "s)");
+                traceInfo("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + maxSearchTimeSec + "s)");
                 traceInfo("-- ABORT (taking too long): {}", search);
+                String maxTime = BlsUtils.describeIntervalSec(maxSearchTimeSec);
+                String retryTime = BlsUtils.describeIntervalSec(config.getDenyAbortedSearchSec());
+                search.setReason("Running search aborted because it took longer than " + maxTime + ". " +
+                        "This is done to ease server load. If you need the results of this count, please wait " +
+                        retryTime + " and try again.");
                 search.cancel(true);
                 searches.remove(i);
             }
@@ -458,6 +465,9 @@ public class BlsCache implements SearchCache {
                     // and don't want to penalize users if they decide to come back to this search.
                     remove(search.search());
                     traceInfo("-- ABORT (abandoned count): {}", search);
+                    String maxTime = BlsUtils.describeIntervalSec(abandonedCountAbortTimeSec);
+                    search.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
+                            "This is done to ease server load. If you need the results of this count, please try your search again.");
                     search.cancel(true);
                     searches.remove(i);
                     i--; // don't skip an element
