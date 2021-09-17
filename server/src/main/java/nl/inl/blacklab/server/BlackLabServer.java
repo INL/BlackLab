@@ -88,6 +88,9 @@ public class BlackLabServer extends HttpServlet {
                 logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
             searchManager = new SearchManager(config);
 
+            // Set default parameter settings from config
+            SearchParameters.setDefaults(config.getParameters());
+
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);
         } catch (IOException e) {

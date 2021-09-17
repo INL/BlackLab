@@ -3,21 +3,18 @@ package nl.inl.blacklab.server.search;
 import java.io.File;
 import java.io.IOException;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.logging.LogDatabaseImpl;
-import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 
+/**
+ * Manages the lifetime of a number of objects needed for the web service.
+ */
 public class SearchManager {
 
     //private static final Logger logger = LogManager.getLogger(SearchManager.class);
@@ -74,17 +71,6 @@ public class SearchManager {
 
         // Init auth system
         authSystem = new AuthManager(config.getAuthentication());
-
-        // Set up the parameter default values
-        BLSConfigParameters param = config.getParameters();
-        SearchParameters.setDefault("number", "" + param.getPageSize().getDefaultValue());
-        SearchParameters.setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
-        SearchParameters.setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
-        SearchParameters.setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
-        SearchParameters.setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-
-
-
     }
 
     /**

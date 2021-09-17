@@ -33,6 +33,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -45,6 +46,7 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -114,6 +116,18 @@ public class SearchParameters {
 
     public static void setDefault(String name, String value) {
         defaultParameterValues.put(name, value);
+    }
+
+    /**
+     * Set up parameter default values from the configuration.
+     */
+    public static void setDefaults(BLSConfigParameters param) {
+        // Set up the parameter default values
+        setDefault("number", "" + param.getPageSize().getDefaultValue());
+        setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
+        setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
+        setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
+        setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
 
     public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName,
