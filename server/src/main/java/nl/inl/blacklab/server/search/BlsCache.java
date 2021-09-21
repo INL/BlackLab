@@ -403,8 +403,8 @@ public class BlsCache implements SearchCache {
                 String maxTime = BlsUtils.describeIntervalSec(maxSearchTimeSec);
                 String retryTime = BlsUtils.describeIntervalSec(config.getDenyAbortedSearchSec());
                 search.setReason("Running search aborted because it took longer than " + maxTime + ". " +
-                        "This is done to ease server load. If you need the results of this count, please wait " +
-                        retryTime + " and try again.");
+                        "This is done to ease server load. If you want to try again, please wait " +
+                        retryTime + ".");
                 search.cancel(true);
                 searches.remove(i);
             }
