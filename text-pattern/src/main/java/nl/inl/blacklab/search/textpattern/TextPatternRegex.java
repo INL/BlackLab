@@ -52,7 +52,7 @@ public class TextPatternRegex extends TextPatternTerm {
                     new Term(context.luceneField(),
                             context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
         } catch (IllegalArgumentException e) {
-            throw new InvalidQuery(e.getMessage() + " (while parsing regex)");
+            throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {
             // If we pass in a really large regular expression, like a huge
             // list of words combined with OR, stack overflow occurs inside

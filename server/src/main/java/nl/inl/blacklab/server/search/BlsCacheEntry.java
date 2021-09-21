@@ -7,6 +7,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -377,8 +379,11 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
                 .entry("status", status());
                 //.entry("cancelled", isCancelled());
                 //.entry("futureStatus", futureStatus())
-        if (exceptionThrown != null)
+        if (exceptionThrown != null) {
              ds.entry("exceptionThrown", exceptionThrown.getClass().getSimpleName());
+        }
+        if (!StringUtils.isEmpty(reason))
+            ds.entry("cancelReason", reason);
         ds.entry("numberOfStoredHits", numberOfStoredHits())
                 .entry("userWaitTime", timeUserWaitedMs() / 1000.0)
                 .entry("notAccessedFor", timeSinceLastAccessMs() / 1000.0)

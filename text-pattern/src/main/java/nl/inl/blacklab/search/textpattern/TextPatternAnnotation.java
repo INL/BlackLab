@@ -43,13 +43,13 @@ public class TextPatternAnnotation extends TextPattern {
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         String[] parts = annotationName.split("/", -1);
         if (parts.length > 2)
-            throw new InvalidQuery("Annotation name contains more than one slash: " + annotationName);
+            throw new InvalidQuery("Invalid query: annotation name '" + annotationName + "' contains more than one slash");
         Annotation annotation;
         if (context.index().metadata().subannotationsStoredWithParent()) {
             // Old-style index, where subannotations are stored in their parent's Lucene field
             annotation = context.field().annotation(parts[0]);
             if (annotation == null)
-                throw new InvalidQuery("Annotation doesn't exist: " + annotationName);
+                throw new InvalidQuery("Invalid query: annotation '" + annotationName + "' doesn't exist");
             if (parts.length > 1)
                 annotation = annotation.subannotation(parts[1]);
         } else {
@@ -59,7 +59,7 @@ public class TextPatternAnnotation extends TextPattern {
                 name += AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + parts[1];
             annotation = context.field().annotation(name);
             if (annotation == null)
-                throw new InvalidQuery("Annotation doesn't exist: " + name);
+                throw new InvalidQuery("Invalid query: annotation '" + name + "' doesn't exist");
         }
         return input.translate(context.withAnnotation(annotation));
     }

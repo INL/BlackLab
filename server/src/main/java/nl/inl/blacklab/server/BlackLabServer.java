@@ -246,14 +246,14 @@ public class BlackLabServer extends HttpServlet {
             try {
                 httpCode = requestHandler.handle(ds);
             } catch (InvalidQuery e) {
-                httpCode = Response.error(es, "INVALID_QUERY", "Invalid query: " + e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+                httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
             } catch (InternalServerError e) {
                 String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
                 httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode());
             } catch (BlsException e) {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
             } catch (InterruptedSearch e) {
-                httpCode = Response.error(es, "INTERRUPTED", "Search was interrupted", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             } catch (InsufficientMemoryAvailable e) {
                 httpCode = Response.error(es, "INSUFFICIENT_MEMORY", e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             } catch (RuntimeException e) {
