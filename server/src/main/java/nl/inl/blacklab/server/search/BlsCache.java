@@ -200,8 +200,8 @@ public class BlsCache implements SearchCache {
             search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
             int numQueued = numberOfQueuedSearches();
             if (numQueued >= config.getMaxQueuedSearches()) {
-                logger.warn("Can't start new search, too many queued searches (maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
-                throw new ServerOverloaded("The server is too busy right now (too many queued searches). Please try again later.");
+                logger.warn("Can't start new search, too many queued searches (numQueued = " + numQueued + ", maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
+                throw new ServerOverloaded("The server is too busy right now (" + numQueued + " searches queued). Please try again later.");
             }
 
             // Create the cache entry.

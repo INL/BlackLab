@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
@@ -254,8 +253,6 @@ public class BlackLabServer extends HttpServlet {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
             } catch (InterruptedSearch e) {
                 httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-            } catch (InsufficientMemoryAvailable e) {
-                httpCode = Response.error(es, "INSUFFICIENT_MEMORY", e.getMessage(), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, "INTERR_HANDLING_REQUEST");
             } finally {
