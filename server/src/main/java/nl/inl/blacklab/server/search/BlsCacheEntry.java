@@ -260,8 +260,11 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             Thread.sleep(POLLING_TIME_MS);
             ms -= POLLING_TIME_MS;
         }
-        if (isCancelled())
-            throw new InterruptedSearch("Search was cancelled");
+        if (isCancelled()) {
+            InterruptedSearch interruptedSearch = new InterruptedSearch("Search was cancelled");
+            interruptedSearch.setCacheEntry(this);
+            throw interruptedSearch;
+        }
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
         if (!isDone())
