@@ -36,6 +36,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocImpl;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
@@ -44,12 +45,12 @@ public class HitGroupsTokenFrequencies {
 
     public static final boolean TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED = true;
     public static final boolean DEBUG = true;
-    
+
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
     /** Document length is always reported as one higher due to punctuation being a trailing value */
     private static final int subtractClosingToken = 1;
-    
+
     private static class GroupIdHash {
         private int[] tokenIds;
         private int[] tokenSortPositions;
@@ -57,7 +58,7 @@ public class HitGroupsTokenFrequencies {
         private int hash;
 
         /**
-         * 
+         *
          * @param tokenValues
          * @param metadataValues
          * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
@@ -89,25 +90,25 @@ public class HitGroupsTokenFrequencies {
             final ConcurrentHashMap<GroupIdHash, MutablePair<Integer, Integer>> occurances = new ConcurrentHashMap<>();
 
             final BlackLabIndex index = queryInfo.index();
-            /** 
-             * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year") 
-             * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc. 
+            /**
+             * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
+             * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
              */
-            final List<DocProperty> docProperties = new ArrayList<>(); 
+            final List<DocProperty> docProperties = new ArrayList<>();
             /** Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms */
             final List<Triple<AnnotationForwardIndex, MatchSensitivity, Terms>> hitProperties = new ArrayList<>();
-            /** 
-             * Stores the original index every (doc|hit)property has in the original interleaved/intertwined list. 
+            /**
+             * Stores the original index every (doc|hit)property has in the original interleaved/intertwined list.
              * The requestedGroupingProperty sometimes represents more than one property (in the form of HitPropertyMultiple) such as 3 properties: [token text, document year, token lemma]
-             * The groups always get an id that is (roughly) the concatenation of the properties (in the example case [token text, document year, token lemma]), 
+             * The groups always get an id that is (roughly) the concatenation of the properties (in the example case [token text, document year, token lemma]),
              * and it's important this id contains the respective values in the same order.
              * We need to keep this list because otherwise we'd potentially change the order.
-             * 
+             *
              * Integer contains index in the source list (docProperties or hitProperties, from just above)
              * Boolean is true when origin list was docProperties, false for hitProperties.
              */
             final List<Pair<Integer, Boolean>> originalOrderOfUnpackedProperties = new ArrayList<>();
-            
+
             // Unpack the requestedGroupingProperty into its constituents and sort those into the appropriate categories: hit and doc properties.
             {
                 @SuppressWarnings("unchecked")
@@ -115,8 +116,8 @@ public class HitGroupsTokenFrequencies {
                 for (HitProperty p : props) {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
-                        if (DEBUG && asDocPropIfApplicable.props() != null) { 
-                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen (when this code was originally written)"); 
+                        if (DEBUG && asDocPropIfApplicable.props() != null) {
+                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen (when this code was originally written)");
                         }
                         final int positionInUnpackedList = docProperties.size();
                         docProperties.add(asDocPropIfApplicable);
@@ -126,7 +127,7 @@ public class HitGroupsTokenFrequencies {
                         if (DEBUG && (annot == null || annot.size() != 1)) {
                             throw new RuntimeException("Grouping property does not apply to singular annotation (nested propertymultiple? non-annotation grouping?) should never happen.");
                         }
-                        
+
                         final int positionInUnpackedList = hitProperties.size();
                         final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annot.get(0));
                         hitProperties.add(Triple.of(annotationFI, p.getSensitivities().get(0), annotationFI.terms()));
@@ -165,7 +166,7 @@ public class HitGroupsTokenFrequencies {
                     });
                 }
 
-                
+
                 numberOfDocsProcessed = docIds.size();
                 final IndexReader reader = queryInfo.index().reader();
                 final int[] minusOne = new int[] { -1 };
@@ -179,9 +180,9 @@ public class HitGroupsTokenFrequencies {
                         String fieldName = index.mainAnnotatedField().name();
                         DocPropertyAnnotatedFieldLength propTokens = new DocPropertyAnnotatedFieldLength(index, fieldName);
                         final int[] emptyTokenValuesArray = new int[0];
-                        
+
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId) - subtractClosingToken; // Doc length is always one longer than actual length.
+                            final int docLength = (int) propTokens.get(docId) - subtractClosingToken; // ignore "extra closing token"
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
@@ -203,40 +204,39 @@ public class HitGroupsTokenFrequencies {
                         });
                     }
                 } else {
-                    final int maxHitsToProcess = searchSettings.maxHitsToProcess() > 0 ? searchSettings.maxHitsToProcess() : Integer.MAX_VALUE; 
-                    final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v; 
-                    numberOfDocsProcessed = 
-                    docIds.parallelStream().filter(docId -> {
+                    final int maxHitsToProcess = searchSettings.maxHitsToProcess() > 0 ? searchSettings.maxHitsToProcess() : Integer.MAX_VALUE;
+                    final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v;
+                    final String fieldName = index.mainAnnotatedField().name();
+                    final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
+                    numberOfDocsProcessed = docIds.parallelStream().filter(docId -> {
                         try {
-                            
+
                             // Step 1: read all values for the to-be-grouped annotations for this document
                             // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
                             final Document doc = reader.document(docId);
                             final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
-                            int docLength = -1;
-                            
+
                             try (BlockTimer e = c.child("Read annotations from forward index")) {
                                 for (Triple<AnnotationForwardIndex, MatchSensitivity, Terms> annot : hitProperties) {
                                     final String annotationFIName = annot.getLeft().annotation().forwardIndexIdField();
                                     final int fiid = doc.getField(annotationFIName).numericValue().intValue();
                                     final List<int[]> tokenValues = annot.getLeft().retrievePartsInt(fiid, minusOne, minusOne);
                                     tokenValuesPerAnnotation.addAll(tokenValues);
-                                    docLength = Math.max(docLength, tokenValues.get(0).length);
                                 }
                             }
-                            docLength = docLength - subtractClosingToken; // ignore last token in forward index. 
 
-                           // Step 2: retrieve the to-be-grouped metadata for this document
-                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0 , docLength);
+                            // Step 2: retrieve the to-be-grouped metadata for this document
+                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - subtractClosingToken; // ignore "extra closing token"
+                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
                             final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
 
                             // now we have all values for all relevant annotations for this document
                             // iterate again and pair up the nth entries for all annotations, then store that as a group.
-                            /** 
-                             * Bookkeeping: track which groups we've already seen in this document, 
+                            /**
+                             * Bookkeeping: track which groups we've already seen in this document,
                              * so we only count this document once per group
                              */
                             HashSet<GroupIdHash> groupsInThisDocument = new HashSet<>();
@@ -246,8 +246,8 @@ public class HitGroupsTokenFrequencies {
                                         hitMaxHitsToProcess.set(true);
                                         return tokenIndex > 0; // true if any token of this document made the cut, false if we escaped immediately
                                     }
-                                
-                                    
+
+
                                     // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                                     // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
                                     // so in essence it's also an "id", but a case-insensitive one.
@@ -256,8 +256,12 @@ public class HitGroupsTokenFrequencies {
                                     int[] annotationValuesForThisToken = new int[numAnnotations];
                                     int[] sortPositions = new int[annotationValuesForThisToken.length];
                                     for (int annotationIndex = 0; annotationIndex < numAnnotations; ++annotationIndex) {
-                                        final int termId = annotationValuesForThisToken[annotationIndex] = tokenValuesPerAnnotation.get(annotationIndex)[tokenIndex];
-                                        sortPositions[annotationIndex] = hitProperties.get(annotationIndex).getRight().idToSortPosition(termId, hitProperties.get(annotationIndex).getMiddle());
+                                        int[] tokenValuesThisAnnotation = tokenValuesPerAnnotation.get(annotationIndex);
+                                        final int termId = annotationValuesForThisToken[annotationIndex] = tokenValuesThisAnnotation[tokenIndex];
+                                        Triple<AnnotationForwardIndex, MatchSensitivity, Terms> currentHitProp = hitProperties.get(annotationIndex);
+                                        MatchSensitivity matchSensitivity = currentHitProp.getMiddle();
+                                        Terms terms = currentHitProp.getRight();
+                                        sortPositions[annotationIndex] = terms.idToSortPosition(termId, matchSensitivity);
                                     }
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
                                     occurances.compute(groupId, (__, groupSize) -> {
@@ -268,7 +272,7 @@ public class HitGroupsTokenFrequencies {
                                             return groupSize;
                                         } else {
                                             return MutablePair.of(1, groupsInThisDocument.add(groupId) ? 1 : 0); // should always return true, but we need to add this group anyway!
-                                        } 
+                                        }
                                     });
                                 }
                             }
@@ -283,13 +287,13 @@ public class HitGroupsTokenFrequencies {
 
             Set<PropertyValue> duplicateGroupsDebug = DEBUG ? new HashSet<PropertyValue>() : null;
 
-            List<HitGroup> groups; 
+            List<HitGroup> groups;
             try (final BlockTimer c = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
                 groups = occurances.entrySet().parallelStream().map(e -> {
                     final int groupSizeHits = e.getValue().getLeft();
                     final int groupSizeDocs = e.getValue().getRight();
-                    final int[] annotationValues = e.getKey().tokenIds; 
+                    final int[] annotationValues = e.getKey().tokenIds;
                     final PropertyValue[] metadataValues = e.getKey().metadataValues;
                     // allocate new - is not copied when moving into propertyvaluemultiple
                     final PropertyValue[] groupIdAsList = new PropertyValue[numAnnotations + numMetadataValues];
@@ -312,7 +316,7 @@ public class HitGroupsTokenFrequencies {
                     if (DEBUG) {
                         synchronized (duplicateGroupsDebug) {
                             if (!duplicateGroupsDebug.add(groupId)) {
-                                throw new RuntimeException("Identical groups - should never happen");                    
+                                throw new RuntimeException("Identical groups - should never happen");
                             }
                         }
                     }
@@ -321,7 +325,7 @@ public class HitGroupsTokenFrequencies {
                 }).collect(Collectors.toList());
             }
             logger.debug("fast path used for grouping");
-            
+
             ResultsStats hitsStats = new ResultsStatsStatic(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
             ResultsStats docsStats = new ResultsStatsStatic((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
             return HitGroups.fromList(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats);
