@@ -161,7 +161,7 @@ cache:
 
     # How long after it was last accessed will a completed search task be removed from 
     # the cache? (in seconds)
-    # (don't set this too low; instead, set maxSizeMegs, the target size for the cache)
+    # (don't set this too low; instead, set targetFreeMemMegs, the target amount of free memory)
     # If you want to disable the cache altogether, set this to 0.
     maxJobAgeSec: 3600
 
