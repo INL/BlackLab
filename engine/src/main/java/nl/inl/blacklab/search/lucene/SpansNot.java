@@ -241,7 +241,7 @@ class SpansNot extends BLSpans {
             return NO_MORE_POSITIONS;
         }
         // Advance us to just before the requested start point, then call nextStartPosition().
-        clauseStart = clause.advanceStartPosition(target);
+        clauseStart = clause == null ? NO_MORE_POSITIONS : clause.advanceStartPosition(target);
         currentStart = target - 1;
         currentEnd = target;
         return nextStartPosition();
