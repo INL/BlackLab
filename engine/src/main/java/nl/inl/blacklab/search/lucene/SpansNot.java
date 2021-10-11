@@ -31,24 +31,24 @@ import nl.inl.blacklab.search.Span;
  * Each token is returned as a single hit.
  */
 class SpansNot extends BLSpans {
-    /** The spans to invert */
+    /** The spans to invert, or null if we want all tokens */
     private BLSpans clause;
 
     private int clauseDoc = -1;
 
-    /** Current token position in clause */
+    /** Current token position in clause (if valid), or -1 for none yet, or NO_MORE_POSITIONS for no more. */
     private int clauseStart = -1;
 
-    /** Current document */
+    /** Current document, or -1 for none yet, or NO_MORE_DOCS for no more. */
     private int currentDoc = -1;
 
-    /** Current document length */
+    /** Current document length (if currentDoc is valid) */
     private long currentDocLength = -1;
 
-    /** Current hit start position */
+    /** Current hit start position, or -1 if we're not at a hit yet, or NO_MORE_POSITIONS if no more hits. */
     private int currentStart = -1;
 
-    /** Current hit end position */
+    /** Current hit end position, or -1 if we're not at a hit, or NO_MORE_POSITIONS if no more hits. */
     private int currentEnd = -1;
 
     /**
@@ -100,7 +100,7 @@ class SpansNot extends BLSpans {
         liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
         subtractClosingToken = 1;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
-        this.clause = clause == null ? null : clause; //Sort(clause);
+        this.clause = clause;
     }
 
     /**
@@ -168,7 +168,7 @@ class SpansNot extends BLSpans {
             return currentStart;
         }
 
-        if (currentDoc == NO_MORE_DOCS || currentStart == NO_MORE_POSITIONS) {
+        if (currentDoc < 0 || currentDoc == NO_MORE_DOCS || currentStart == NO_MORE_POSITIONS) {
             return NO_MORE_POSITIONS;
         }
 
@@ -185,10 +185,10 @@ class SpansNot extends BLSpans {
                 // A - We haven't started yet.
                 return -1;
 
-            } else if (clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS) {
+            } else if (clause != null && clauseDoc == currentDoc && clauseStart != NO_MORE_POSITIONS) {
 
-                // B - Spans is at currentDoc.
-                //     Look at hit, adjust currentToken
+                // B - There is a clause, and it is positioning within currentDoc.
+                //     Look at the hit and adjust currentToken if necessary.
 
                 // Current hit beyond currentToken?
                 if (clauseStart > currentStart) {
@@ -211,9 +211,9 @@ class SpansNot extends BLSpans {
 
             } else {
 
-                // C - Spans is depleted or is pointing beyond current doc.
-                //     Either produce next token (because it's obviously not in
-                //     the spans matches), or move to next doc if we're done with this doc.
+                // C - We have no clause, or the clause was depleted, or it is pointing beyond current doc.
+                //     Either produce next token (because it's obviously not a match of the
+                //     clause to exclude), or move to next doc if we're done with this doc.
                 if (currentStart < currentDocLength) {
 
                     // Token is fine to produce.
@@ -230,20 +230,20 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public int advanceStartPosition(int target) throws IOException {
+    public int advanceStartPosition(int targetPosition) throws IOException {
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
-            if (currentStart >= target)
+            if (currentStart >= targetPosition)
                 return currentStart;
         }
-        if (target >= currentDocLength) {
+        if (currentDocLength >= 0 && targetPosition >= currentDocLength) {
             currentStart = currentEnd = NO_MORE_POSITIONS;
             return NO_MORE_POSITIONS;
         }
         // Advance us to just before the requested start point, then call nextStartPosition().
-        clauseStart = clause == null ? NO_MORE_POSITIONS : clause.advanceStartPosition(target);
-        currentStart = target - 1;
-        currentEnd = target;
+        clauseStart = clause == null ? NO_MORE_POSITIONS : clause.advanceStartPosition(targetPosition);
+        currentStart = targetPosition - 1;
+        currentEnd = targetPosition;
         return nextStartPosition();
     }
 
