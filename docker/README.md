@@ -77,6 +77,15 @@ docker-compose up -d
 
 Your index should now be accessible at `http://localhost:8080/blacklab-server/my-index`.
 
+**Please note:** the Compose override file `docker-compose.override.yml` enables
+'remote' debugging, allowing you to easily debug BlackLab even while
+running in a container. Compose automatically uses this file if you don't
+tell it otherwise. To start a server without remote debugging (e.g. in production), use:
+
+```bash
+docker-compose -f docker-compose.yml up -d 
+```
+
 ### OPTION 2: Add indexes using a bind mount
 
 If you already have some indexes on the local machine and want to use a bind mount to access them from a BlackLab Server container, use:

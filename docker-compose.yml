@@ -1,9 +1,5 @@
-# Base Docker Compose file for Woordcombinaties, which defines the
-# production configuration. (docker-compose.override.yml contains
-# development overrides)
-#
-# The included Makefile will automatically use the development configuration
-# when running locally, and production configuration when deploying remotely.
+# Base Docker Compose file for BlackLab.
+# (docker-compose.override.yml contains development overrides)
 
 version: '3.9'
 
@@ -40,6 +36,7 @@ services:
       - blacklab-data:/data
 
   # Indexes the test data and starts the server
+  # (remote debugging is always enabled)
   testserver:
     image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
     profiles:
@@ -47,13 +44,19 @@ services:
     build:
         context: .
         dockerfile: docker/Dockerfile
+    # JPDA settings, to allow remote debugging
+    environment:
+      - JPDA_ADDRESS=*:5005
+      - JPDA_TRANSPORT=dt_socket
+    # Create test index. Run Tomcat with JPDA enabled
     command: >-
         /bin/bash -c 
         "cd /usr/local/lib/blacklab-tools && 
         java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/test /input voice-tei &&
-        cd /usr/local/tomcat && catalina.sh run"
+        cd /usr/local/tomcat && catalina.sh jpda run"
     ports:
       - "8080:8080"
+      - "5005:5005"
     volumes:
       - ./test/data:/input
       - ./test/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml

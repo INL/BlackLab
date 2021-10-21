@@ -38,7 +38,7 @@ Now start the server:
 docker-compose up -d
 ```
 
-Your index should now be accessible at `http://localhost:8080/blacklab-server/my-index`.
+Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
 
 See the [Docker README](docker/README.md) for more details.
