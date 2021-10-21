@@ -34,6 +34,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
@@ -424,7 +425,7 @@ public final class LuceneUtil {
 
             Weight weight = null;
             if (documentFilterQuery != null) {
-                weight = indexSearcher.createNormalizedWeight(documentFilterQuery, false);
+                weight = indexSearcher.createWeight(documentFilterQuery,ScoreMode.COMPLETE_NO_SCORES,1.0f);
                 if (weight == null)
                     throw new BlackLabRuntimeException("weight == null");
             }

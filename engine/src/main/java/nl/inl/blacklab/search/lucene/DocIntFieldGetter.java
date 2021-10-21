@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.uninverting.UninvertingReader;
+import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -41,9 +41,9 @@ public class DocIntFieldGetter implements Closeable {
             if (docValues == null) {
                 // Use UninvertingReader to simulate DocValues (slower)
                 Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                fields.put(intFieldName, UninvertingReader.Type.INTEGER);
+                fields.put(intFieldName, UninvertingReader.Type.INTEGER_POINT);
                 @SuppressWarnings("resource")
-                UninvertingReader uninv = new UninvertingReader(reader, fields);
+                LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                 docValues = uninv.getNumericDocValues(intFieldName);
             }
         } catch (IOException e) {
@@ -72,7 +72,12 @@ public class DocIntFieldGetter implements Closeable {
 
         // Cached doc values?
         if (docValues != null) {
-            return (int) docValues.get(doc);
+        	try {
+        		docValues.advanceExact(doc);
+				return (int)docValues.longValue();
+			} catch (IOException e) {
+				BlackLabRuntimeException.wrap(e);
+			}
         }
 
         // No; get the field value from the Document object.

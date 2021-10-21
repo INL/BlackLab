@@ -119,7 +119,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 return;
 
             listener().fileStarted(documentName);
-            int docsDoneBefore = indexWriter.writer().numDocs();
+            int docsDoneBefore = indexWriter.writer().getDocStats().numDocs;
             long tokensDoneBefore = listener().getTokensProcessed();
 
             indexer.index();
@@ -128,7 +128,7 @@ class IndexerImpl implements DocWriter, Indexer {
             // FIXME the following checks are broken in multithreaded indexing, as the listener is shared between threads
             // So a docIndexer that didn't index anything can slip through if another thread did index some data in the
             // meantime
-            int docsDoneAfter = indexWriter.writer().numDocs();
+            int docsDoneAfter = indexWriter.writer().getDocStats().numDocs;
             if (docsDoneAfter == docsDoneBefore) {
                 logger.warn("No docs found in " + documentName + "; wrong format?");
             }
@@ -639,7 +639,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public synchronized int docsToDoLeft() {
         if (maxNumberOfDocsToIndex < 0)
             return maxNumberOfDocsToIndex;
-        int docsDone = indexWriter.writer().numDocs();
+        int docsDone = indexWriter.writer().getDocStats().numDocs;
         return Math.max(0, maxNumberOfDocsToIndex - docsDone);
     }
 

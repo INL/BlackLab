@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
@@ -403,7 +404,7 @@ public class HitsFromQueryParallel extends Hits {
             }
 
             // This call can take a long time
-            BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), false);
+            BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
 
             boolean hasInitialized = false;
             for (LeafReaderContext leafReaderContext : reader.leaves()) {

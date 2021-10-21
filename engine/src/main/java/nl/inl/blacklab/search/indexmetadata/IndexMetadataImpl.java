@@ -23,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
@@ -510,7 +511,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // check the FieldType to see if it has offsets or not, as that information
         // is incorrect at search time (always set to false, even if it has offsets).
 
-        Bits liveDocs = MultiFields.getLiveDocs(reader);
+        Bits liveDocs = MultiBits.getLiveDocs(reader);
         for (int n = 0; n < reader.maxDoc(); n++) {
             if (liveDocs == null || liveDocs.get(n)) {
                 try {
@@ -743,7 +744,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-        FieldInfos fis = reader == null ? null : MultiFields.getMergedFieldInfos(reader);
+        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
         if (fieldInfo.has("namingScheme")) {
             // Yes.
             namingScheme = fieldInfo.get("namingScheme").textValue();

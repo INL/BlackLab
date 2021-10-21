@@ -12,8 +12,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
@@ -60,7 +61,7 @@ public class HitsFromQuery extends Hits {
     /**
      * Term contexts for the terms in the query.
      */
-    private Map<Term, TermContext> termContexts;
+    private Map<Term, TermStates> termStates;
 
     /**
      * docBase of the segment we're currently in
@@ -129,10 +130,10 @@ public class HitsFromQuery extends Hits {
             }
 
             //System.err.println(spanQuery);
-            termContexts = new HashMap<>();
+            termStates = new HashMap<>();
             Set<Term> terms = new HashSet<>();
             spanQuery = BLSpanQuery.ensureSortedUnique(spanQuery);
-            weight = spanQuery.createWeight(index.searcher(), false);
+            weight = spanQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES,1.0f);
             weight.extractTerms(terms);
             for (Term term : terms) {
                 try {
@@ -140,7 +141,7 @@ public class HitsFromQuery extends Hits {
                 } catch (InterruptedException e) {
                     throw new InterruptedSearch(e);
                 }
-                termContexts.put(term, TermContext.build(reader.getContext(), term));
+                termStates.put(term, TermStates.build(reader.getContext(), term, true));
             }
 
             currentSourceSpans = null;
@@ -311,7 +312,7 @@ public class HitsFromQuery extends Hits {
         // We no longer need these; allow them to be GC'ed
         weight = null;
         atomicReaderContexts = null;
-        termContexts = null;
+        termStates = null;
         currentSourceSpans = null;
         hitQueryContext = null;
     }

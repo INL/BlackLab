@@ -18,7 +18,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
@@ -97,7 +97,7 @@ class SpansNot extends BLSpans {
      */
     public SpansNot(LeafReader reader, String fieldName, BLSpans clause) {
         maxDoc = reader == null ? -1 : reader.maxDoc();
-        liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
+        liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
         subtractClosingToken = 1;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         this.clause = clause;

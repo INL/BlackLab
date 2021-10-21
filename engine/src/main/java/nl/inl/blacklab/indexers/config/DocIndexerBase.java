@@ -21,7 +21,8 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -488,7 +489,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             ContentStore contentStore = docWriter.contentStore(contentStoreName);
             contentId = contentStore.store(document);
         }
-        currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
+        currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
+        currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
     }
 
     protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
@@ -515,7 +517,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             ContentStore contentStore = docWriter.contentStore(contentStoreName);
             contentId = contentStore.store(content, offset, length, cs);
         }
-        currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
+        currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
+        currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
     }
 
     /**

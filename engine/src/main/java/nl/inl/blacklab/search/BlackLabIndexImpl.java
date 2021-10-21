@@ -26,11 +26,12 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.MultiFields;
+import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
@@ -449,7 +450,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     @Override
     public void forEachDocument(DocTask task) {
         final int maxDoc = reader().maxDoc();
-        final Bits liveDocs = MultiFields.getLiveDocs(reader());
+        final Bits liveDocs = MultiBits.getLiveDocs(reader());
         for (int docId = 0; docId < maxDoc; docId++) {
             if (liveDocs == null || liveDocs.get(docId)) {
                 task.perform(doc(docId));
@@ -595,7 +596,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             indexWriter = openIndexWriter(indexDir, createNewIndex, null);
             if (traceIndexOpening)
                 logger.debug("  Opening corresponding IndexReader...");
-            reader = DirectoryReader.open(indexWriter, false);
+            reader = DirectoryReader.open(indexWriter, false, false);//applyAllDeletes is false and  writeAllDeletes is false
         } else {
             // Open Lucene index
             if (traceIndexOpening)
@@ -639,7 +640,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
             if (traceIndexOpening)
                 logger.debug("  IndexReader too...");
-            reader = DirectoryReader.open(indexWriter, false);
+            reader = DirectoryReader.open(indexWriter, false, false);//applyAllDeletes is false and  writeAllDeletes is false
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
@@ -771,7 +772,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     public boolean docExists(int docId) {
         if (docId < 0 || docId >= reader.maxDoc())
             return false;
-        Bits liveDocs = MultiFields.getLiveDocs(reader);
+        Bits liveDocs = MultiBits.getLiveDocs(reader);
         return liveDocs == null || liveDocs.get(docId);
     }
 
@@ -893,10 +894,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
         try {
             // Open a fresh reader to execute the query
-            try (IndexReader freshReader = DirectoryReader.open(indexWriter, false)) {
+            try (IndexReader freshReader = DirectoryReader.open(indexWriter, false, false)) {
                 // Execute the query, iterate over the docs and delete from FI and CS.
                 IndexSearcher s = new IndexSearcher(freshReader);
-                Weight w = s.createNormalizedWeight(q, false);
+                Weight w = s.createWeight(q, ScoreMode.COMPLETE_NO_SCORES, 1.0f);// equals to s.createNormalizedWeight(q, false);
                 logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
                 for (LeafReaderContext leafContext : freshReader.leaves()) {
                     Bits liveDocs = leafContext.reader().getLiveDocs();

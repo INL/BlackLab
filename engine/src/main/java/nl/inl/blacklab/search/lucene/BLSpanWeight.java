@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
@@ -16,12 +16,18 @@ import org.apache.lucene.search.spans.SpanWeight;
  */
 public abstract class BLSpanWeight extends SpanWeight {
 
-    public BLSpanWeight(SpanQuery query, IndexSearcher searcher, Map<Term, TermContext> termContexts)
+    public BLSpanWeight(SpanQuery query, IndexSearcher searcher, Map<Term, TermStates> termStates, float boost)
             throws IOException {
-        super(query, searcher, termContexts);
+        super(query, searcher, termStates,boost);
     }
 
     @Override
     public abstract BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException;
+    
+	@Override
+	public boolean isCacheable(LeafReaderContext ctx) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 }

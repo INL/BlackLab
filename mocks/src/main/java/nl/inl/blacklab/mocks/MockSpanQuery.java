@@ -23,8 +23,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
@@ -85,8 +86,8 @@ public class MockSpanQuery extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        return new BLSpanWeight(this, searcher, null) {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        return new BLSpanWeight(this, searcher, null, boost) {
 
             @Override
             public void extractTerms(Set<Term> terms) {
@@ -94,7 +95,7 @@ public class MockSpanQuery extends BLSpanQuery {
             }
 
             @Override
-            public void extractTermContexts(Map<Term, TermContext> contexts) {
+            public void extractTermStates(Map<Term, TermStates> contexts) {
                 // NOP
             }
 

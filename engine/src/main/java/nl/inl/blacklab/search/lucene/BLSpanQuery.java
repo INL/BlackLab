@@ -21,6 +21,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
@@ -167,7 +168,7 @@ public abstract class BLSpanQuery extends SpanQuery {
     public abstract BLSpanQuery rewrite(IndexReader reader) throws IOException;
 
     @Override
-    public abstract BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException;
+    public abstract BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException;
 
     /**
      * Does this query match the empty sequence?

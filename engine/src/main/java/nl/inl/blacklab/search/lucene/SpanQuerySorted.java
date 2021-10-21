@@ -7,8 +7,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -57,18 +58,18 @@ class SpanQuerySorted extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight weight = src.createWeight(searcher, needsScores);
-        return new SpanWeightSorted(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight weight = src.createWeight(searcher, scoreMode, boost);
+        return new SpanWeightSorted(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
     class SpanWeightSorted extends BLSpanWeight {
 
         final BLSpanWeight weight;
 
-        public SpanWeightSorted(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightSorted(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQuerySorted.this, searcher, terms);
+            super(SpanQuerySorted.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -78,8 +79,8 @@ class SpanQuerySorted extends BLSpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            weight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            weight.extractTermStates(contexts);
         }
 
         @Override

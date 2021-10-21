@@ -40,10 +40,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedSetDocValuesField;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -518,8 +518,9 @@ public abstract class DocIndexer implements AutoCloseable {
                     // descriptive text like "around 1900". OK to ignore.
                     n = 0;
                 }
-                IntField nf = new IntField(numFieldName, n, Store.YES);
+                IntPoint nf = new IntPoint(numFieldName, n);
                 currentLuceneDoc.add(nf);
+                currentLuceneDoc.add(new StoredField(numFieldName, n));
                 if (firstValue)
                     currentLuceneDoc.add(new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
                 else {

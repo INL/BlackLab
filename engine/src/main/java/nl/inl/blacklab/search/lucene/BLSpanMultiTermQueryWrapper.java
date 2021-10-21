@@ -12,6 +12,7 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -78,7 +79,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores)
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
             throws IOException {
         throw new IllegalArgumentException("Rewrite first!");
     }

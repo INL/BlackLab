@@ -26,8 +26,9 @@ import java.util.stream.Collectors;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 
@@ -241,25 +242,25 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (!exclude.isEmpty())
             throw new BlackLabRuntimeException("Query should've been rewritten! (exclude clauses left)");
 
         List<BLSpanWeight> weights = new ArrayList<>();
         for (BLSpanQuery clause : include) {
-            weights.add(clause.createWeight(searcher, needsScores));
+            weights.add(clause.createWeight(searcher, scoreMode, boost));
         }
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
-        return new SpanWeightAnd(weights, searcher, contexts);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(weights.toArray(new SpanWeight[0])) : null;
+        return new SpanWeightAnd(weights, searcher, contexts, boost);
     }
 
     class SpanWeightAnd extends BLSpanWeight {
 
         final List<BLSpanWeight> weights;
 
-        public SpanWeightAnd(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightAnd(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryAndNot.this, searcher, terms);
+            super(SpanQueryAndNot.this, searcher, terms, boost);
             this.weights = weights;
         }
 
@@ -271,9 +272,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
+        public void extractTermStates(Map<Term, TermStates> contexts) {
             for (BLSpanWeight weight : weights) {
-                weight.extractTermContexts(contexts);
+                weight.extractTermStates(contexts);
             }
         }
 
@@ -294,6 +295,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             }
             return combi;
         }
+
     }
 
     @Override

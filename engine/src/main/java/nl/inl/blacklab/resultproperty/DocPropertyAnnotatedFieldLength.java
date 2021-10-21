@@ -24,7 +24,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.uninverting.UninvertingReader;
+import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -69,9 +69,9 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                 if (numericDocValues == null) {
                     // Use UninvertingReader to simulate DocValues (slower)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                    fields.put(fieldName, UninvertingReader.Type.INTEGER);
+                    fields.put(fieldName, UninvertingReader.Type.INTEGER_POINT);
                     @SuppressWarnings("resource")
-                    UninvertingReader uninv = new UninvertingReader(r, fields);
+                    LeafReader uninv = UninvertingReader.wrap(r, fields::get);
                     numericDocValues = uninv.getNumericDocValues(fieldName);
                 }
                 if (numericDocValues != null) {
@@ -102,14 +102,24 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
+                    try {
+                    	prevDocValues.advanceExact(docId - prevDocBase);
+ 						return prevDocValues.longValue();
+ 					} catch (IOException e1) {
+ 						 throw BlackLabRuntimeException.wrap(e1);
+ 					}
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
+            try {
+            	prevDocValues.advanceExact(docId - prevDocBase);
+				return prevDocValues.longValue();
+			} catch (IOException e1) {
+				 throw BlackLabRuntimeException.wrap(e1);
+			}
         }
         
         // Not cached; find fiid by reading stored value from Document now

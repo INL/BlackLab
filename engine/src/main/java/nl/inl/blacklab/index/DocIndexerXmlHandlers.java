@@ -31,7 +31,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -135,9 +136,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             // (Note that we do this after adding the "extra closing token", so the character
             // positions for the closing token still make (some) sense)
             int contentId = storeCapturedContent();
-            currentLuceneDoc.add(new IntField(AnnotatedFieldNameUtil
-                    .contentIdField(contentsField.name()), contentId,
-                    Store.YES));
+            String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentsField.name());
+            currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
+            currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
 
             // Store the different properties of the annotated contents field that
             // were gathered in

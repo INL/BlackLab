@@ -10,12 +10,13 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.solr.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
@@ -174,11 +175,6 @@ public class RunTermQuery {
             private int docBase;
 
             @Override
-            public void setScorer(Scorer scorer) {
-                // ignore scorer
-            }
-
-            @Override
             protected void doSetNextReader(LeafReaderContext context)
                     throws IOException {
                 docBase = context.docBase;
@@ -193,10 +189,10 @@ public class RunTermQuery {
                 docsFound = true;
             }
 
-            @Override
-            public boolean needsScores() {
-                return false;
-            }
+			@Override
+			public ScoreMode scoreMode() {
+				return ScoreMode.COMPLETE_NO_SCORES;
+			}
         });
         if (!docsFound)
             System.out.println("  (no matching docs)");
@@ -213,7 +209,8 @@ public class RunTermQuery {
 
         System.out.println("USING LEAVES:");
         boolean hitsFound = false;
-        SpanWeight weight = spanQuery.createWeight(searcher, false);
+        float boost=1.0f;
+        SpanWeight weight = spanQuery.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, boost);
         for (LeafReaderContext arc : reader.leaves()) {
             Spans spans = weight.getSpans(arc, Postings.OFFSETS);
             while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {

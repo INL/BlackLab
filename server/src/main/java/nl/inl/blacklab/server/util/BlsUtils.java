@@ -11,7 +11,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.NumericRangeQuery;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -59,7 +59,7 @@ public class BlsUtils {
                         MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
                         if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
                             try {
-                                return NumericRangeQuery.newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2), startInclusive, endInclusive);
+                                return IntPoint.newRangeQuery(field, Integer.parseInt(part1), Integer.parseInt(part2)/*, startInclusive, endInclusive*/);// both include start and end default
                             } catch (NumberFormatException e) {
                                 // there is nothing we can do here, just return the default implementation, which will likely return no results
                             }

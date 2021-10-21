@@ -139,18 +139,23 @@ public class DocPropertyStoredField extends DocProperty {
                 final Integer targetDocBase = target.getKey();
                 final Pair<SortedDocValues, SortedSetDocValues> targetDocValues = target.getValue();
                 if (targetDocValues != null) {
-                    SortedDocValues a = targetDocValues.getLeft();
-                    SortedSetDocValues b = targetDocValues.getRight();
-                    if (a != null) { // old index, only one value
-                        BytesRef val = a.get(docId - targetDocBase);
-                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
-                    } else { // newer index, (possibly) multiple values.
-                        b.setDocument(docId - targetDocBase);
-                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
-                            BytesRef val = b.lookupOrd(ord);
-                            ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
-                        }
-                    }
+                	try {
+	                    SortedDocValues a = targetDocValues.getLeft();
+	                    SortedSetDocValues b = targetDocValues.getRight();
+	                    if (a != null) { // old index, only one value
+	                    	a.advanceExact(docId - targetDocBase);
+	                        BytesRef val= a.binaryValue();//zyw BytesRef val = a.get(docId - targetDocBase);
+	                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+	                    } else { // newer index, (possibly) multiple values.
+	                        b.advanceExact(docId - targetDocBase);//zyw b.setDocument(docId - targetDocBase);
+	                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
+	                            BytesRef val = b.lookupOrd(ord);
+	                            ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+	                        }
+	                    }
+                	} catch (IOException e1) {
+						throw new BlackLabRuntimeException("Could not fetch document " + docId, e1);
+					}
                 }
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.
@@ -169,7 +174,11 @@ public class DocPropertyStoredField extends DocProperty {
                 final Integer targetDocBase = target.getKey();
                 final NumericDocValues targetDocValues = target.getValue();
                 if (targetDocValues != null) {
-                    ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
+                	try {
+						ret.add(Long.toString(targetDocValues.advance(docId - targetDocBase)));// zyw ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
+					} catch (IOException e1) {
+						throw new BlackLabRuntimeException("Could not fetch document " + docId, e1);
+					}
                 }
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.

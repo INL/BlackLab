@@ -25,8 +25,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.StoredField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
@@ -146,7 +147,8 @@ public class AnnotatedFieldWriter {
         //  that doesn't contain a word but may contain trailing punctuation)
         String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         int lengthTokensValue = numberOfTokens();
-        doc.add(new IntField(lengthTokensFieldName, lengthTokensValue, Field.Store.YES));
+        doc.add(new IntPoint(lengthTokensFieldName, lengthTokensValue));
+        doc.add(new StoredField(lengthTokensFieldName, lengthTokensValue));//store value
         doc.add(new NumericDocValuesField(lengthTokensFieldName, lengthTokensValue)); // docvalues for fast retrieval
     }
 

@@ -24,8 +24,10 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -83,20 +85,20 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         return true;
     }
 
-    @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanQuery query = clauses.get(0);
-        BLSpanWeight weight = query == null ? null : query.createWeight(searcher, needsScores);
-        return new SpanWeightNot(weight, searcher, needsScores ? getTermContexts(weight) : null);
-    }
+	@Override
+	public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+		BLSpanQuery query = clauses.get(0);
+        BLSpanWeight weight = query == null ? null : query.createWeight(searcher, scoreMode, boost);
+        return new SpanWeightNot(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
+	}
 
     class SpanWeightNot extends BLSpanWeight {
 
         final BLSpanWeight weight;
 
-        public SpanWeightNot(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightNot(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryNot.this, searcher, terms);
+            super(SpanQueryNot.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -107,9 +109,9 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
+        public void extractTermStates(Map<Term, TermStates> contexts) {
             if (weight != null)
-                weight.extractTermContexts(contexts);
+                weight.extractTermStates(contexts);
         }
 
         @Override
