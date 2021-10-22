@@ -144,10 +144,10 @@ public class DocPropertyStoredField extends DocProperty {
 	                    SortedSetDocValues b = targetDocValues.getRight();
 	                    if (a != null) { // old index, only one value
 	                    	a.advanceExact(docId - targetDocBase);
-	                        BytesRef val= a.binaryValue();//zyw BytesRef val = a.get(docId - targetDocBase);
+	                        BytesRef val = a.binaryValue();// equals to a.get(docId - targetDocBase)?
 	                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
 	                    } else { // newer index, (possibly) multiple values.
-	                        b.advanceExact(docId - targetDocBase);//zyw b.setDocument(docId - targetDocBase);
+	                        b.advanceExact(docId - targetDocBase);//equals to b.setDocument(docId - targetDocBase)?
 	                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
 	                            BytesRef val = b.lookupOrd(ord);
 	                            ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
@@ -175,7 +175,8 @@ public class DocPropertyStoredField extends DocProperty {
                 final NumericDocValues targetDocValues = target.getValue();
                 if (targetDocValues != null) {
                 	try {
-						ret.add(Long.toString(targetDocValues.advance(docId - targetDocBase)));// zyw ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
+                		targetDocValues.advanceExact(docId - targetDocBase);
+						ret.add(Long.toString(targetDocValues.longValue()));
 					} catch (IOException e1) {
 						throw new BlackLabRuntimeException("Could not fetch document " + docId, e1);
 					}
