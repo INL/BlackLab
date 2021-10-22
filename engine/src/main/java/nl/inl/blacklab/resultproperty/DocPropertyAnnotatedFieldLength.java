@@ -104,7 +104,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     NumericDocValues prevDocValues = prev.getValue();
                     try {
                     	prevDocValues.advanceExact(docId - prevDocBase);
- 						return prevDocValues.longValue();
+ 						return prevDocValues.longValue() - subtractClosingToken;
  					} catch (IOException e1) {
  						 throw BlackLabRuntimeException.wrap(e1);
  					}
@@ -116,7 +116,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             NumericDocValues prevDocValues = prev.getValue();
             try {
             	prevDocValues.advanceExact(docId - prevDocBase);
-				return prevDocValues.longValue();
+				return prevDocValues.longValue() - subtractClosingToken;
 			} catch (IOException e1) {
 				 throw BlackLabRuntimeException.wrap(e1);
 			}
